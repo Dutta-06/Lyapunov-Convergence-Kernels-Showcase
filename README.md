@@ -1,6 +1,6 @@
 # Adaptive Control via Self-Organizing RBF Networks
 
-**Copyright (c) 2026 Dutta. All Rights Reserved.**
+**Copyright (c) 2026 Odwitiyo Dutta. All Rights Reserved.**
 
 This repository contains the experimental evaluation, baseline comparisons, and simulation results for a novel **Continuous-Time Adaptive Control Architecture**. 
 
