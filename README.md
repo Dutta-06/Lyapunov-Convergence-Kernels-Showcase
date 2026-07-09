@@ -10,7 +10,7 @@ The proposed architecture leverages a dynamically self-organizing network of Rad
 
 ---
 
-## 🚀 Applications & Theoretical Properties
+## Applications & Theoretical Properties
 
 1. **Dimensionality Reduction in State-Space Covering:** The architecture replaces static grid requirements with dynamic allocation. By governing RBF centers and bandwidths via Lyapunov-derived gradient flows, a highly sparse network (m=27) is able to represent complex topologies that would classically require $O(k^n)$ parameters.
 2. **Strict Parameter Boundedness in Continuous-Time:** The proposed *Smooth Projection Boundary Layer* mathematically guarantees that network weights and basis parameters remain strictly bounded during continuous-time integration, preventing gradient explosion and classical Zeno behavior (chattering) without the need for unprincipled gradient clipping.
@@ -20,7 +20,7 @@ The proposed architecture leverages a dynamically self-organizing network of Rad
 
 ---
 
-## 📊 Experimental Results
+## Experimental Results
 
 ### 1. Chaotic Reference Tracking (Lorenz System)
 To evaluate the architecture's representational capacity, the controller was tasked with tracking a highly chaotic Lorenz reference trajectory using only 27 kernels. 
@@ -46,7 +46,7 @@ The vectorized Jacobian-Vector Product (JVP) updates allow the architecture to s
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 The following evaluation components are provided:
 
