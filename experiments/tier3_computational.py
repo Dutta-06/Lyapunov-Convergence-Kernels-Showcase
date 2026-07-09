@@ -1,118 +1,207 @@
 """
-Tier 3: Computational Overhead Benchmarking
-===========================================
+Tier 3: Optimized Computational Overhead Benchmarking
+=====================================================
 
-Benchmarks the wall-clock time per integration step of the proposed
-fully adaptive architecture versus the classical fixed-grid architecture.
+Compares wall-clock time per integration step across three configurations:
 
-The goal is to demonstrate that while analytical Jacobians and projection
-operators add overhead, the cost is marginal and suitable for real-time
-control applications.
+  1. Baseline   — weights-only adaptation (γ_c=0, γ_σ=0)
+  2. Dense      — full Γ matrices + dense Jacobian construction (original path)
+  3. Optimized  — diagonal Γ exploit + inline Jacobian-vector products
+
+The Dense and Optimized paths produce *mathematically identical* results;
+the difference is purely computational.
+
+Expected outcome: the Optimized path should collapse the ~286× overhead
+factor (measured in tier3_computational.py) down to single-digit overhead
+relative to the baseline.
 """
 
 import os
 import sys
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.core.plant_models import LorenzPlant
 from src.core.controller import AdaptiveController
-from src.baselines.sigma_mod import SigmaModController
+from src.core.plant_models import LorenzPlant
 
-def benchmark_controller(ctrl, plant, x_state, n_steps=1000):
-    """Benchmark the raw control and adaptation law evaluation."""
-    x = x_state
-    W = np.zeros((ctrl.m, ctrl.n))
-    c = np.zeros((ctrl.m, ctrl.n))
-    sigma = np.ones(ctrl.m)
-    
-    t_val = 0.0
-    x_ref = plant.x_ref(t_val)
-    x_ref_dot = plant.x_ref_dot(t_val)
-    e = x - x_ref
-    
-    start_time = time.time()
-    for _ in tqdm(range(n_steps), desc="Benchmarking", leave=False):
-        # In a real step, e, x_ref, etc. change, but for profiling the overhead
-        # of the math operations, static values are fine.
-        u = ctrl.control_law(x, x_ref, x_ref_dot, W, c, sigma)
-        W_dot, c_dot, sigma_dot = ctrl.adaptation_laws(x, e, W, c, sigma)
-        
-        # Add a tiny mutation to avoid aggressive compiler optimizations
-        W[0, 0] += 1e-10
-        
-    end_time = time.time()
-    return (end_time - start_time) / n_steps * 1e6 # microseconds per step
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+
+def benchmark_controller(controller, plant, n_warmup=50, n_steps=500,
+                         dt=0.01):
+    """
+    Benchmark the wall-clock time per integration step.
+
+    Runs n_warmup steps to warm caches, then times n_steps and returns
+    the median time in microseconds.
+    """
+    n = controller.n
+    m = controller.m
+
+    # Deterministic initial conditions
+    rng = np.random.RandomState(42)
+    x = rng.randn(n) * 0.5
+    x_ref = np.zeros(n)
+    x_ref_dot = np.zeros(n)
+    W = rng.randn(m, n) * 0.1
+    c = rng.randn(m, n) * 0.5
+    sigma = np.ones(m) * 1.0
+
+    # Warm-up (cache, branch prediction, etc.)
+    for _ in range(n_warmup):
+        e = x - x_ref
+        u = controller.control_law(x, x_ref, x_ref_dot, W, c, sigma)
+        W_dot, c_dot, sigma_dot = controller.adaptation_laws(
+            x, e, W, c, sigma)
+        W = W + dt * W_dot
+        c = (c.flatten() + dt * c_dot).reshape(m, n)
+        sigma = np.clip(sigma + dt * sigma_dot, 0.1, 5.0)
+        x = x + dt * (plant.f(x, 0) + u)
+
+    # Timed run
+    times = []
+    for _ in range(n_steps):
+        e = x - x_ref
+
+        t0 = time.perf_counter()
+        u = controller.control_law(x, x_ref, x_ref_dot, W, c, sigma)
+        W_dot, c_dot, sigma_dot = controller.adaptation_laws(
+            x, e, W, c, sigma)
+        t1 = time.perf_counter()
+
+        times.append(t1 - t0)
+
+        # Euler integration step
+        W = W + dt * W_dot
+        c = (c.flatten() + dt * c_dot).reshape(m, n)
+        sigma = np.clip(sigma + dt * sigma_dot, 0.1, 5.0)
+        x = x + dt * (plant.f(x, 0) + u)
+
+    return np.median(times) * 1e6  # → microseconds
 
 
 def run_experiment():
-    print("Setting up Computational Benchmarking...")
-    
-    plant = LorenzPlant()
-    n = 3
-    x_state = np.array([1.0, 1.0, 1.0])
-    
-    # We will test scaling with the number of kernels m
-    m_values = [8, 27, 64, 125, 216] # 2^3, 3^3, 4^3, 5^3, 6^3 grids
-    
-    times_proposed = []
-    times_baseline = []
-    
-    for m in m_values:
-        print(f"Benchmarking m = {m} kernels...")
-        
-        # Proposed Controller
-        ctrl_proj = AdaptiveController(
-            m=m, n=n, ke=5.0, 
-            gamma_W=10.0, gamma_c=10.0, gamma_sigma=1.0,
-            W_max=50.0, c_max=20.0, sigma_min=0.5, sigma_max=5.0, delta_min=0.1
-        )
-        
-        # Baseline Controller (σ-mod, fixed grid)
-        ctrl_sigma = SigmaModController(
-            m=m, n=n, ke=5.0, gamma_W=10.0, sigma_mod=0.1
-        )
-        
-        # Warmup
-        benchmark_controller(ctrl_proj, plant, x_state, n_steps=100)
-        benchmark_controller(ctrl_sigma, plant, x_state, n_steps=100)
-        
-        # Benchmark
-        t_proj = benchmark_controller(ctrl_proj, plant, x_state, n_steps=2000)
-        t_sig = benchmark_controller(ctrl_sigma, plant, x_state, n_steps=2000)
-        
-        times_proposed.append(t_proj)
-        times_baseline.append(t_sig)
-        
-    # Plot Results
-    print("Generating plots...")
-    os.makedirs('results', exist_ok=True)
-    
-    plt.figure(figsize=(8, 6))
-    
-    plt.plot(m_values, times_proposed, 'bo-', linewidth=2, label='Proposed (Full Adaptation + Projection)')
-    plt.plot(m_values, times_baseline, 'rs--', linewidth=2, label='Baseline (Weights Only, No Projection)')
-    
-    plt.xlabel('Number of Kernels (m)')
-    plt.ylabel('Computation Time per Step (μs)')
-    plt.title('Computational Overhead Scaling')
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    
-    # Add an annotation about the relative cost
-    avg_ratio = np.mean(np.array(times_proposed) / np.array(times_baseline))
-    plt.annotate(f'Average overhead factor: {avg_ratio:.1f}x', 
-                 xy=(0.05, 0.8), xycoords='axes fraction',
-                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
-                 
-    plt.tight_layout()
-    plt.savefig('results/tier3_computational.png', dpi=300)
-    print("Plot saved to results/tier3_computational.png")
+    print("Setting up Optimized Computational Overhead benchmark...")
+    print("=" * 68)
 
-if __name__ == "__main__":
+    n = 3  # Lorenz system dimension
+    plant = LorenzPlant()
+
+    kernel_counts = [5, 10, 25, 50, 75, 125, 216]
+
+    times_baseline = []
+    times_dense = []
+    times_optimized = []
+
+    for m in tqdm(kernel_counts, desc="Benchmarking kernel counts"):
+        # ── Baseline: weights only (scalar gammas, c & σ frozen) ──
+        ctrl_base = AdaptiveController(
+            m=m, n=n, ke=5.0,
+            gamma_W=1.0, gamma_c=0.0, gamma_sigma=0.0,
+            W_max=10.0, c_max=10.0,
+            sigma_min=0.1, sigma_max=5.0,
+            delta_min=0.01, proj_epsilon=0.05
+        )
+        t_base = benchmark_controller(ctrl_base, plant)
+        times_baseline.append(t_base)
+
+        # ── Dense: pass full Γ MATRICES → forces dense code path ──
+        ctrl_dense = AdaptiveController(
+            m=m, n=n, ke=5.0,
+            gamma_W=1.0 * np.eye(m * n),
+            gamma_c=0.5 * np.eye(m * n),
+            gamma_sigma=0.3 * np.eye(m),
+            W_max=10.0, c_max=10.0,
+            sigma_min=0.1, sigma_max=5.0,
+            delta_min=0.01, proj_epsilon=0.05
+        )
+        t_dense = benchmark_controller(ctrl_dense, plant)
+        times_dense.append(t_dense)
+
+        # ── Optimized: pass SCALAR gammas → triggers fast path ──
+        ctrl_opt = AdaptiveController(
+            m=m, n=n, ke=5.0,
+            gamma_W=1.0, gamma_c=0.5, gamma_sigma=0.3,
+            W_max=10.0, c_max=10.0,
+            sigma_min=0.1, sigma_max=5.0,
+            delta_min=0.01, proj_epsilon=0.05
+        )
+        t_opt = benchmark_controller(ctrl_opt, plant)
+        times_optimized.append(t_opt)
+
+        speedup = t_dense / t_opt if t_opt > 0 else float('inf')
+        overhead = t_opt / t_base if t_base > 0 else float('inf')
+        print(f"  m={m:>4d}:  baseline={t_base:>8.1f}μs  "
+              f"dense={t_dense:>8.1f}μs  optimized={t_opt:>8.1f}μs  "
+              f"speedup={speedup:>6.1f}×  overhead={overhead:>5.1f}×")
+
+    # ── Plotting ──────────────────────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Left panel: absolute wall-clock times
+    ax = axes[0]
+    ax.plot(kernel_counts, times_baseline, 'r--s',
+            label='Baseline (W only)', linewidth=2, markersize=8)
+    ax.plot(kernel_counts, times_dense, 'b--o',
+            label='Dense (Original)', linewidth=2, markersize=8)
+    ax.plot(kernel_counts, times_optimized, 'g-^',
+            label='Optimized (Diagonal Γ + JVP)', linewidth=2, markersize=8)
+    ax.set_xlabel('Number of Kernels (m)', fontsize=13)
+    ax.set_ylabel('Computation Time per Step (μs)', fontsize=13)
+    ax.set_title('Computational Overhead Scaling', fontsize=15)
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3)
+
+    # Right panel: speedup and remaining overhead factors
+    ax2 = axes[1]
+    speedups = [d / o if o > 0 else 1.0
+                for d, o in zip(times_dense, times_optimized)]
+    overheads = [o / b if b > 0 else 1.0
+                 for o, b in zip(times_optimized, times_baseline)]
+
+    ax2.plot(kernel_counts, speedups, 'g-^',
+             label='Speedup vs Dense', linewidth=2, markersize=8)
+    ax2.plot(kernel_counts, overheads, 'm-d',
+             label='Remaining Overhead vs Baseline',
+             linewidth=2, markersize=8)
+    ax2.axhline(y=1.0, color='k', linestyle='--', alpha=0.4, label='Parity')
+
+    avg_speedup = np.mean(speedups)
+    ax2.axhline(y=avg_speedup, color='g', linestyle=':',
+                alpha=0.5, label=f'Avg speedup: {avg_speedup:.1f}×')
+
+    ax2.set_xlabel('Number of Kernels (m)', fontsize=13)
+    ax2.set_ylabel('Factor (×)', fontsize=13)
+    ax2.set_title('Speedup & Remaining Overhead', fontsize=15)
+    ax2.legend(fontsize=11)
+    ax2.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    results_dir = os.path.join(os.path.dirname(__file__), '..', 'results')
+    os.makedirs(results_dir, exist_ok=True)
+    save_path = os.path.join(results_dir, 'tier3_computational_optimized.png')
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"\nPlot saved → {save_path}")
+
+    # ── Summary ───────────────────────────────────────────────────
+    avg_overhead = np.mean(overheads)
+    max_speedup = np.max(speedups)
+    best_m = kernel_counts[np.argmax(speedups)]
+    print(f"\n{'=' * 68}")
+    print(f"  Average speedup over dense path  : {avg_speedup:>7.1f}×")
+    print(f"  Peak speedup (m={best_m:>3d})             : {max_speedup:>7.1f}×")
+    print(f"  Average remaining overhead       : {avg_overhead:>7.1f}×")
+    print(f"  Original overhead (tier3)        : ~286.7×")
+    print(f"{'=' * 68}")
+
+
+if __name__ == '__main__':
     run_experiment()
