@@ -10,7 +10,7 @@ The proposed architecture leverages a dynamically self-organizing network of Rad
 
 ---
 
-## 🧠 Theory Summary (For ML & Optimization Audiences)
+## 🧠 Theory Summary
 
 In continuous-time online learning, maintaining bounded network parameters is critical to prevent gradient explosion and system instability. Classical approaches in Deep Learning often rely on ad-hoc gradient clipping or weight decay. In Control Theory, standard projection operators enforce hard boundaries, but these introduce discontinuous vector fields, causing severe chattering at the boundary.
 
