@@ -1,5 +1,7 @@
 # Adaptive Control via Self-Organizing RBF Networks
 
+**Copyright (c) 2026 Dutta. All Rights Reserved.**
+
 This repository contains the experimental evaluation, baseline comparisons, and simulation results for a novel **Continuous-Time Adaptive Control Architecture**. 
 
 The proposed architecture leverages a dynamically self-organizing network of Radial Basis Functions (RBFs) bounded by a mathematically rigorous **Smooth Convex Projection Operator**. This combination fundamentally solves the "Curse of Dimensionality" in adaptive control of chaotic, non-stationary systems.
