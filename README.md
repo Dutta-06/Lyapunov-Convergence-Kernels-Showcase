@@ -6,7 +6,7 @@ This repository contains the experimental evaluation, baseline comparisons, and 
 
 The proposed architecture leverages a dynamically self-organizing network of Radial Basis Functions (RBFs) bounded by a mathematically rigorous **Smooth Convex Projection Operator**. This combination addresses the curse of dimensionality in the adaptive control of non-stationary, chaotic systems.
 
-*(Note: The evaluation infrastructure, classical baseline algorithms, mathematical plant models, and raw result plots are provided here for peer verification. The core control algorithms are withheld pending publication.)*
+*(Note: The evaluation infrastructure, classical baseline algorithms, mathematical plant models, and raw result plots are provided here for peer verification. The core control algorithms are withheld.)*
 
 ---
 
