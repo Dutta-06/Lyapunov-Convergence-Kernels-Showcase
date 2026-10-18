@@ -3172,7 +3172,12 @@ the continuity of the integrand; so Λ_ε ≠ 0 excludes reversibility. ∎
   within the resolution of the runs at larger k_e) in the single-kernel instance (where, in one state dimension, U_odd ≡ 0 —
   a 1-form integrated over a path that retraces itself
   — and the whole odd effect comes from b_osc; a reference with the time-reversal symmetry x_m(θ₀ + θ) = x_m(θ₀ − θ), such
-  as a sinusoid, has no odd effect at all, since its reversal is a time shift).
+  as a sinusoid, has no odd effect at all, since its reversal is a time shift). As a design rule: a
+  time-symmetric reference (one whose Fourier series carries only cosines after a time shift, such as x_m = X[cos θ + r₂cos 2θ])
+  removes b_osc and U_odd identically, so its first-order correction is the performative term G_m∇U_even alone, which is
+  reciprocal exactly when Theorem I's A_even ≡ 0; a reference traversed one way carries both, and the odd part can be used
+  (Proposition K) or cancelled by reversing the traversal. Checked: for the cosine reference the code's b_osc and ⟨u∧u̇⟩ are
+  10⁻¹⁷ at every point tested.
 - *Non-equilibrium.* (e) says that the dithered learning loop, at stationarity, is not in detailed balance even to first
   order: the periodic forcing alone (the term π⟨u∧u̇⟩, the signed area swept by the fast parameter loop) breaks the
   time-reversal symmetry, and the slow dynamics carries in addition the current j₁ of Proposition J′.2, nonzero exactly

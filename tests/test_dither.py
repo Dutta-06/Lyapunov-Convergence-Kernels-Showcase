@@ -161,3 +161,33 @@ def test_corollary_J3_mean_field_minimiser_and_gibbs_sampler_consistency():
     assert 0.5 < acc <= 1.0
     for k, phi_g in enumerate((grid.AL, grid.GA)):
         assert abs(mean[k] - grid.expect(phi_g)) < 3 * max(se[k], 2e-3), (k, mean[k], se[k], grid.expect(phi_g))
+
+
+def test_time_symmetric_reference_has_no_oscillation_correction():
+    """Remark J′.1: a reference with x_m(θ₀ + θ) = x_m(θ₀ − θ) (here a cosine series) has b_osc ≡ 0 and ⟨u∧u̇⟩ ≡ 0, and in
+    one state dimension U_odd ≡ 0 for every reference, so its first-order drift is the performative term alone and the two
+    orientations give identical averaged data; the sine series of the experiment's instance has b_osc ≠ 0 and odd."""
+    f = lambda X: np.exp(-(X - 0.5) ** 2 / 0.5) + 0.4 * X
+    df = lambda X: np.exp(-(X - 0.5) ** 2 / 0.5) * (-2 * (X - 0.5) / 0.5) + 0.4
+
+    class Cosine(Dt.SingleKernelInstance):
+        def x_ref(self, t):
+            w = self.omega * self.orientation * np.asarray(t, float)
+            return self.X * (np.cos(w) + self.r2 * np.cos(2 * w))
+
+        def x_ref_dot(self, t):
+            w = self.omega * self.orientation * np.asarray(t, float)
+            return -self.X * self.omega * self.orientation * (np.sin(w) + 2 * self.r2 * np.sin(2 * w))
+
+    al, ga = np.array([0.7, -0.4, 1.2]), np.array([0.3, 1.1, -0.5])
+    data = {}
+    for o in (+1, -1):
+        inst = Cosine(f, df, a_max=3.0, c_max=2.5, s=0.6, G=(2.0, 2.0), sigma0=0.4, tau0=0.1, X=1.5, omega=1.0, r2=1.0 / 3.0, orientation=o, N_theta=512)
+        inst.xm = inst.x_ref(inst.ths); inst.xmd = inst.x_ref_dot(inst.ths)
+        data[o] = inst.averaged(al, ga)
+        assert np.abs(data[o]['b_osc']).max() < 1e-12 and np.abs(data[o]['uu']).max() < 1e-12
+    assert np.allclose(data[+1]['b_fr'], data[-1]['b_fr'], atol=1e-12)
+    d_plus = _instance(orientation=+1, N_theta=512).averaged(al, ga)
+    d_minus = _instance(orientation=-1, N_theta=512).averaged(al, ga)
+    assert np.abs(d_plus['b_osc']).max() > 1e-2
+    assert np.allclose(d_plus['b_osc'], -d_minus['b_osc'], atol=1e-12) and np.allclose(d_plus['b_fr'], d_minus['b_fr'], atol=1e-12)

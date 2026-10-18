@@ -144,7 +144,7 @@ n = 3 and NTK results contradict them.
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3, 5 and 6, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 77 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 78 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -153,7 +153,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 77 tests, about 17 minutes
+python -m pytest tests                          # 78 tests, about 17 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 
