@@ -296,3 +296,26 @@ def test_corollary_E0prime_2_envelope_on_the_implemented_loop():
     assert worst <= 1.0, worst
     assert np.linalg.norm(Sdiag * np.concatenate([res['x'][-1] - plant.x_ref(res['t'][-1]), (res['P'][-1] - P_star).reshape(-1)])) < 0.5 * np.linalg.norm(w0)
 
+
+
+def test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution():
+    """Corollary E.0′.3 on Ψ = (sin t, cos t), Σ = √(2·10⁻³) I: the explicit bound on limsup E‖ζ‖² dominates the exact
+    periodic stationary covariance of (LTV_τ) at k = 20, 50, 200 for δ = 0.1 and 0.2, the ratio decreases toward
+    1/(1 − δ) (within 6% at k = 200), and the exact value agrees with the averaged Langevin covariance k·tr X (M̄X + XM̄ = ΣΣᵀ)
+    within 2/k² (the deviation is ≈ 1.25/k²)."""
+    Psi = lambda t: np.array([[np.sin(t), np.cos(t)]])
+    Psid = lambda t: np.array([[np.cos(t), -np.sin(t)]])
+    S = X.SlowRegimeLyapunov(Psi, Psid, 2 * np.pi, N=1024)
+    Sig = np.eye(2) * np.sqrt(2e-3)
+    for delta in (0.2, 0.1):
+        ratios = []
+        for k in (20.0, 50.0, 200.0):
+            b = X.dither_covariance_bound(S, k, delta, Sig)
+            ex = X.exact_stationary_covariance(Psi, k, Sig, 2 * np.pi)
+            assert b['bound_zeta'] >= ex['zeta_mean'] and b['bound_zeta'] >= ex['zeta_max']
+            assert b['bound_w'] >= ex['e_mean'] * 0.5                              # E‖w‖² ≥ ½E‖e‖² − ‖e₂‖² terms; loose sanity check
+            assert abs(ex['zeta_mean'] / b['averaged_zeta'] - 1) < 2.0 / k ** 2                 # the deviation is ≈ 1.25/k²
+            assert b['nu_grid'] <= b['nu_explicit'] * (1 + 1e-9)
+            ratios.append(b['bound_zeta'] / ex['zeta_mean'])
+        assert ratios[0] > ratios[1] > ratios[2] > 1 / (1 - delta)
+        assert ratios[2] < 1.06 / (1 - delta)

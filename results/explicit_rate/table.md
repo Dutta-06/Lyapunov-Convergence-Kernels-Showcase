@@ -73,4 +73,23 @@ Reading: above the threshold the guaranteed rate of Lemma E.0′ is the averaged
 
 Reading: on this well-conditioned regressor (κ ≈ 7) Lemma E.0 is only an order of magnitude conservative, and the corollary trades the certified ball for the rate: its nonlinear rate is within a small factor of the exact linear rate (the factor 2 of the Lyapunov argument times 1/(1 − δ)), while its ball radius carries the anisotropy p_lo/p_hi ≈ 1/β of the quadratic form. On ill-conditioned regressors the rate improves by the factor of Remark E.0a (table 4); the radius comparison was not computed there.
 
+## 6. Corollary E.0′.3 — the stationary parameter spread of the dithered (LTV), Σ = √(2·10⁻³)·I
+
+| instance (κ(M̄)) | k | δ | exact period mean of E‖ζ‖² | exact max over the period | averaged k·tr X | explicit bound 2ν̄/(γ lo) | bound / exact | 1/(1 − δ) | ν̄ grid / explicit | exact E‖e‖² | bound on E‖w‖² |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ideal of table 4 (7.78e+03) | 300 | 0.2 | 1.5094e+06 | 1.5094e+06 | 1.5089e+06 | 2.6444e+07 | 17.519 | 1.250 | 0.997 | 5.000e-05 | 3.747e+04 |
+| ideal of table 4 (7.78e+03) | 300 | 0.1 | 1.5094e+06 | 1.5094e+06 | — | — (conditions fail) | — | 1.111 | — | 5.000e-05 | — |
+| ideal of table 4 (7.78e+03) | 400 | 0.2 | 2.0123e+06 | 2.0123e+06 | 2.0119e+06 | 3.5053e+07 | 17.420 | 1.250 | 0.998 | 3.750e-05 | 4.979e+04 |
+| ideal of table 4 (7.78e+03) | 400 | 0.1 | 2.0123e+06 | 2.0123e+06 | 2.0119e+06 | 3.1147e+07 | 15.478 | 1.111 | 0.998 | 3.750e-05 | 2.212e+04 |
+| ideal of table 4 (7.78e+03) | 600 | 0.2 | 3.0181e+06 | 3.0181e+06 | 3.0179e+06 | 5.2329e+07 | 17.338 | 1.250 | 0.998 | 2.500e-05 | 7.451e+04 |
+| ideal of table 4 (7.78e+03) | 600 | 0.1 | 3.0181e+06 | 3.0181e+06 | 3.0179e+06 | 4.6507e+07 | 15.409 | 1.111 | 0.998 | 2.500e-05 | 3.311e+04 |
+| Ψ = (sin t, cos t) (1) | 20 | 0.2 | 8.0250e-02 | 8.0250e-02 | 8.0000e-02 | 2.1599e-01 | 2.691 | 1.250 | 0.816 | 1.000e-04 | 5.167e-03 |
+| Ψ = (sin t, cos t) (1) | 20 | 0.1 | 8.0250e-02 | 8.0250e-02 | 8.0000e-02 | 2.0249e-01 | 2.523 | 1.111 | 0.791 | 1.000e-04 | 2.422e-03 |
+| Ψ = (sin t, cos t) (1) | 50 | 0.2 | 2.0010e-01 | 2.0010e-01 | 2.0000e-01 | 3.1506e-01 | 1.575 | 1.250 | 0.933 | 4.000e-05 | 1.186e-02 |
+| Ψ = (sin t, cos t) (1) | 50 | 0.1 | 2.0010e-01 | 2.0010e-01 | 2.0000e-01 | 2.8203e-01 | 1.409 | 1.111 | 0.928 | 4.000e-05 | 5.307e-03 |
+| Ψ = (sin t, cos t) (1) | 200 | 0.2 | 8.0002e-01 | 8.0002e-01 | 8.0000e-01 | 1.0509e+00 | 1.314 | 1.250 | 0.984 | 1.000e-05 | 4.901e-02 |
+| Ψ = (sin t, cos t) (1) | 200 | 0.1 | 8.0002e-01 | 8.0002e-01 | 8.0000e-01 | 9.3452e-01 | 1.168 | 1.111 | 0.984 | 1.000e-05 | 2.179e-02 |
+
+Reading: the exact stationary spread is the averaged Langevin value k·tr X (M̄X + XM̄ = ΣΣᵀ) up to O(k⁻²) on both instances. On the isotropic sinusoid (κ = 1) the explicit bound exceeds the exact value by a factor that decreases toward 1/(1 − δ) as k grows (the Itô term's hi/lo factors and βL_M² are O(1/k)); on the ill-conditioned ideal the bound pays the condition number of M̄ in the trace (it replaces every 1/λ_i by 1/λ_min), as a scalar Lyapunov function must. The bound on E‖w‖² (the error off its slow manifold) is coarse: the exact E‖e‖² is of order ‖Σ‖²_F/k² while the bound carries the factor 1/β.
+
 Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand.

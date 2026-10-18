@@ -164,11 +164,47 @@ def corollary_table():
     return dict(S=S, ke=ke, r=r, L_J=L_J, old=old, fl=fl, rows=rows, thr02=S.threshold(0.2), thr01=S.threshold(0.1))
 
 
+def dither_table():
+    """Corollary E.0′.3: the explicit bound on the stationary parameter spread of the dithered (LTV) against the exact
+    periodic stationary covariance and the averaged Langevin value, on the ideal of table 4 (k = 300, 400, 600) and on the
+    sinusoid Ψ = (sin t, cos t) (k = 20, 50, 200), with Σ = √(2·10⁻³)·I (the ratios do not depend on the scale of Σ)."""
+    rows = []
+    rng = np.random.default_rng(12)
+    m, n = 3, 2
+    ctrl = T.TransportController(m, n, ke=6.0, g_a=30.0, g_c=30.0, g_s=15.0, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = T.sample_lifted_ideal(m, n, ctrl, rng, min_sep=0.9)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=2.5)
+    per = 20 * np.pi
+    g = 0.01
+    G_diag = np.concatenate([np.full(n, 2 * g), np.full(n, 2 * g), [g]])
+    reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
+    S = X.SlowRegimeLyapunov(reg.Psi, reg.Psidot, per, N=2048)
+    q = m * (2 * n + 1)
+    Sig = np.eye(q) * np.sqrt(2e-3)
+    for k in (300.0, 400.0, 600.0):
+        ex = X.exact_stationary_covariance(reg.Psi, k, Sig, per)
+        for delta in (0.2, 0.1):
+            c = S.constants(k, delta)
+            b = X.dither_covariance_bound(S, k, delta, Sig) if c['ok'] else None
+            rows.append(dict(inst='ideal of table 4', k=k, delta=delta, ex=ex, b=b, kappa=S.lam_max / S.lam_min))
+    Psi = lambda t: np.array([[np.sin(t), np.cos(t)]]); Psid = lambda t: np.array([[np.cos(t), -np.sin(t)]])
+    S2 = X.SlowRegimeLyapunov(Psi, Psid, 2 * np.pi, N=1024)
+    Sig2 = np.eye(2) * np.sqrt(2e-3)
+    for k in (20.0, 50.0, 200.0):
+        ex = X.exact_stationary_covariance(Psi, k, Sig2, 2 * np.pi)
+        for delta in (0.2, 0.1):
+            c = S2.constants(k, delta)
+            b = X.dither_covariance_bound(S2, k, delta, Sig2) if c['ok'] else None
+            rows.append(dict(inst='Ψ = (sin t, cos t)', k=k, delta=delta, ex=ex, b=b, kappa=1.0))
+    return rows
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     r1, r2, r3 = remark_E1_table(), slow_limit_table(), window_table()
     head4, r4 = slow_regime_table()
     c5 = corollary_table()
+    r6 = dither_table()
     L = ["# Lemma E.0: the explicit rate against the exact Floquet rate (`exp_explicit_rate.py`)", "",
          "The explicit rate lies below the exact rate in every row. The ordering is numerical: Ψ_M, Ψ_D are grid maxima "
          "(80–100 samples per period), α a converged quadrature (checked by refinement), ε a finite grid; the margins are at "
@@ -231,6 +267,21 @@ def main():
           "certified ball for the rate: its nonlinear rate is within a small factor of the exact linear rate (the factor 2 of the Lyapunov argument "
           "times 1/(1 − δ)), while its ball radius carries the anisotropy p_lo/p_hi ≈ 1/β of the quadratic form. On ill-conditioned regressors "
           "the rate improves by the factor of Remark E.0a (table 4); the radius comparison was not computed there.", "",
+          "## 6. Corollary E.0′.3 — the stationary parameter spread of the dithered (LTV), Σ = √(2·10⁻³)·I", "",
+          "| instance (κ(M̄)) | k | δ | exact period mean of E‖ζ‖² | exact max over the period | averaged k·tr X | explicit bound 2ν̄/(γ lo) | bound / exact | 1/(1 − δ) | ν̄ grid / explicit | exact E‖e‖² | bound on E‖w‖² |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in r6:
+        ex, b = r['ex'], r['b']
+        if b is None:
+            L.append(f"| {r['inst']} ({r['kappa']:.3g}) | {r['k']:g} | {r['delta']} | {ex['zeta_mean']:.4e} | {ex['zeta_max']:.4e} | — | — (conditions fail) | — | {1 / (1 - r['delta']):.3f} | — | {ex['e_mean']:.3e} | — |")
+        else:
+            L.append(f"| {r['inst']} ({r['kappa']:.3g}) | {r['k']:g} | {r['delta']} | {ex['zeta_mean']:.4e} | {ex['zeta_max']:.4e} | {b['averaged_zeta']:.4e} | {b['bound_zeta']:.4e} | "
+                     f"{b['bound_zeta'] / ex['zeta_mean']:.3f} | {1 / (1 - r['delta']):.3f} | {b['nu_grid'] / b['nu_explicit']:.3f} | {ex['e_mean']:.3e} | {b['bound_w']:.3e} |")
+    L += ["", "Reading: the exact stationary spread is the averaged Langevin value k·tr X (M̄X + XM̄ = ΣΣᵀ) up to O(k⁻²) on both instances. "
+          "On the isotropic sinusoid (κ = 1) the explicit bound exceeds the exact value by a factor that decreases toward 1/(1 − δ) as k grows "
+          "(the Itô term's hi/lo factors and βL_M² are O(1/k)); on the ill-conditioned ideal the bound pays the condition number of M̄ in the "
+          "trace (it replaces every 1/λ_i by 1/λ_min), as a scalar Lyapunov function must. The bound on E‖w‖² (the error off its slow manifold) "
+          "is coarse: the exact E‖e‖² is of order ‖Σ‖²_F/k² while the bound carries the factor 1/β.", "",
           "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'table.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(L) + "\n")

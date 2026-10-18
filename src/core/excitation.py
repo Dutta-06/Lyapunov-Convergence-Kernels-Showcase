@@ -516,3 +516,87 @@ def slow_regime_theorem_E_constants(slow, k, delta, m, G_diag, r, L_J):
                 Sinv_norm=Sinv_norm, c0=c0, r0_w=r0_w, r0_z=r0_w / S_norm, c0_VOT=r0_w ** 2 / 2.0,
                 rate_nonlinear=gamma / 4.0, C=np.sqrt(2.0 * p_hi / p_lo))
 
+
+
+# ---------------------------------------------------------------------------- Corollary E.0′.3: the dithered (LTV)
+def dither_covariance_bound(slow, k, delta, Sigma):
+    """
+    Corollary E.0′.3 (PARADIGM.md §6).  Along the dithered linearised loop
+
+        ė = −k e − Ψ(t)ζ,    dζ = Ψ(t)ᵀe dt + Σ dB_t,                                              (LTV_τ)
+
+    with Σ ∈ ℝ^{q×q′} constant, Itô's formula and Lemma E.0′'s pointwise inequality V̇_det ≤ −γV give
+    d/dt E V ≤ −γ E V + ν(t) with ν(t) := ½ tr(Σᵀ(H_ζ(t) + βL(t)ᵀL(t))Σ), the Itô correction of V = ½xᵀ𝐇(t)x on the ζ-block
+    of 𝐇; hence
+
+        limsup_t E V ≤ ν̄/γ,  ν̄ := sup_t ν(t) ≤ ½‖Σ‖_F²(1 + εp₁ + ε²p₂ + βL_M²),
+        limsup_t E‖ζ‖² ≤ 2ν̄/(γ(1 − εp₁ − ε²p₂)),    limsup_t E‖w‖² ≤ 2ν̄/(γβ),    w := e − e₂(ζ, t).
+
+    The averaged Langevin dynamics ζ̇ = −(1/k)M̄ζ + Σ Ḃ has the exact stationary covariance C̄ = kX with M̄X + XM̄ = ΣΣᵀ, so
+    tr C̄ = k tr X (= (k/2)tr(M̄⁻¹ΣΣᵀ) when ΣΣᵀ commutes with M̄); the bound is within (1 + O(ε))/(1 − δ) of it when M̄ is
+    isotropic and pays the condition number of M̄ in the trace otherwise.  Returns the constants, the explicit bound, the grid
+    value of ν̄ and the averaged value.
+    """
+    from scipy.linalg import solve_continuous_lyapunov
+    c = slow.constants(k, delta)
+    if not c['ok']:
+        raise ValueError(f"the conditions of Lemma E.0′ fail at k = {k}, δ = {delta}: {c['conds']}")
+    Sigma = np.atleast_2d(np.asarray(Sigma, float))
+    e = 1.0 / k
+    L_M = e * slow.Psi_M + e ** 2 * slow.Psi_D + e ** 3 * slow.Psi_M ** 3
+    SF2 = float(np.sum(Sigma ** 2))
+    nu_explicit = 0.5 * SF2 * (c['hi'] + c['beta'] * L_M ** 2)
+    nu_grid = 0.0
+    n = slow.n
+    for i in np.linspace(0, slow.N - 1, 256).astype(int):
+        H, _ = slow.quadratic_forms(i, k, c['beta'])
+        Hzz = H[n:, n:]
+        nu_grid = max(nu_grid, 0.5 * float(np.trace(Sigma.T @ Hzz @ Sigma)))
+    X = solve_continuous_lyapunov(slow.Mbar, Sigma @ Sigma.T)            # M̄X + XM̄ = ΣΣᵀ
+    averaged = k * float(np.trace(X))
+    return dict(c, L_M=L_M, Sigma_F2=SF2, nu_explicit=nu_explicit, nu_grid=nu_grid,
+                bound_V=nu_explicit / c['gamma'], bound_zeta=2 * nu_explicit / (c['gamma'] * c['lo']),
+                bound_w=2 * nu_explicit / (c['gamma'] * c['beta']), averaged_zeta=averaged)
+
+
+def exact_stationary_covariance(Psi_fun, k, Sigma, period, n_steps=4000):
+    """
+    The periodic stationary covariance of (LTV_τ): with A(t) := ltv_matrix(Ψ(t), k) and Σ̃ := [0; Σ], integrate Φ̇ = AΦ and
+    Ẅ := Ẇ = AW + WAᵀ + Σ̃Σ̃ᵀ over one period (RK4, k·dt ≤ 1/4), solve C₀ = ΦC₀Φᵀ + W (the discrete Lyapunov equation for
+    the covariance at the period's start), then integrate Ċ = AC + CAᵀ + Σ̃Σ̃ᵀ from C₀ over the period and return the
+    period averages of E‖ζ‖² = tr C_ζζ and E‖e‖² = tr C_ee together with their maxima over the period.
+    """
+    from scipy.linalg import solve_discrete_lyapunov
+    P0 = Psi_fun(0.0)
+    n, q = P0.shape
+    d = n + q
+    Sigma = np.atleast_2d(np.asarray(Sigma, float))
+    St = np.zeros((d, Sigma.shape[1])); St[n:, :] = Sigma
+    Q = St @ St.T
+    n_steps = max(int(n_steps), int(np.ceil(4.0 * k * period)))
+    dt = period / n_steps
+    Phi, W = np.eye(d), np.zeros((d, d))
+
+    def rhs(t, Phi, W):
+        A = ltv_matrix(Psi_fun(t), k)
+        return A @ Phi, A @ W + W @ A.T + Q
+
+    for j in range(n_steps):
+        t = j * dt
+        k1p, k1w = rhs(t, Phi, W)
+        k2p, k2w = rhs(t + 0.5 * dt, Phi + 0.5 * dt * k1p, W + 0.5 * dt * k1w)
+        k3p, k3w = rhs(t + 0.5 * dt, Phi + 0.5 * dt * k2p, W + 0.5 * dt * k2w)
+        k4p, k4w = rhs(t + dt, Phi + dt * k3p, W + dt * k3w)
+        Phi = Phi + dt / 6 * (k1p + 2 * k2p + 2 * k3p + k4p)
+        W = W + dt / 6 * (k1w + 2 * k2w + 2 * k3w + k4w)
+    C = solve_discrete_lyapunov(Phi, W)                                   # C = Φ C Φᵀ + W
+    C = 0.5 * (C + C.T)
+    tz, te, mz, me = 0.0, 0.0, 0.0, 0.0
+    for j in range(n_steps):
+        t = j * dt
+        trz, tre = float(np.trace(C[n:, n:])), float(np.trace(C[:n, :n]))
+        tz += trz; te += tre; mz = max(mz, trz); me = max(me, tre)
+        f = lambda tt, CC: (lambda A: A @ CC + CC @ A.T + Q)(ltv_matrix(Psi_fun(tt), k))
+        k1 = f(t, C); k2 = f(t + 0.5 * dt, C + 0.5 * dt * k1); k3 = f(t + 0.5 * dt, C + 0.5 * dt * k2); k4 = f(t + dt, C + dt * k3)
+        C = C + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+    return dict(zeta_mean=tz / n_steps, e_mean=te / n_steps, zeta_max=mz, e_max=me, C0=C)

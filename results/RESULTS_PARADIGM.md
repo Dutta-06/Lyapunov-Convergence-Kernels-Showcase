@@ -240,6 +240,11 @@ every row (a numerical ordering: Ψ_M, Ψ_D are grid maxima and ε a grid optimu
   slow-adaptation ideal at k = 400 (ratio ≤ 1.5; more than 10⁴ above Lemma E.0's rate).
   Corollary E.0′.2: the explicit envelope on the implemented single-kernel loop at k_e = 40 over 1.5 e-folds (dt = 0.005,
   below the fixed-step discretisation floor).
+- Corollary E.0′.3 (table 6): the explicit bound on the stationary parameter spread of the dithered (LTV), with Σ = (2·10⁻³)^{1/2}I,
+  against the exact periodic stationary covariance: on Ψ = (sin t, cos t) the ratio bound/exact is 2.69, 1.58, 1.31 (δ = 0.2) and
+  2.52, 1.41, 1.17 (δ = 0.1) at k = 20, 50, 200, falling toward 1/(1 − δ); on the Theorem E ideal (κ = 7.8·10³) it is 15.4–17.5,
+  the price of q = 15 directions charged at the worst excitation; the exact value equals the averaged Langevin covariance k·tr X
+  within 3·10⁻⁴ (ideal) and 1.25/k² (sinusoid), and E‖e‖² = ‖Σ‖_F²/k² to four digits.
 
 ## Theorem J — periodic orbits of the finite-m closed loop (`exp_periodic_orbit.py` → `periodic_orbit/`)
 

@@ -51,7 +51,7 @@ particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive l
 | B | A label-free Lyapunov function ½‖e‖² + ½W(μ, μ*)², with a two-regime matched remainder | proved and checked |
 | C | Optimal-transport σ-modification: exact dissipation, a gap-protected strict inequality, a local exponential estimate; the labelled leak reshuffles kernels | proved and checked |
 | D | The mean-field closed loop: well-posedness, a Dobrushin estimate, the many-kernel limit | proved |
-| E | Label-free local exponential convergence under tangential persistent excitation, with explicit radius, overshoot and rate (Lemma E.0: a self-contained strict Lyapunov function; Lemma E.0′: in the slow-adaptation regime a second one whose rate is the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, paying for the ill-conditioning of the excitation once) | proved and checked; E.0's rate is conservative in a quantified way, E.0′'s is within 12% of the exact rate above its threshold |
+| E | Label-free local exponential convergence under tangential persistent excitation, with explicit radius, overshoot and rate (Lemma E.0: a self-contained strict Lyapunov function; Lemma E.0′: in the slow-adaptation regime a second one whose rate is the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, paying for the ill-conditioning of the excitation once); under dither the same function bounds the stationary parameter spread explicitly (Corollary E.0′.3) | proved and checked; E.0's rate is conservative in a quantified way, E.0′'s is within 12% of the exact rate above its threshold |
 | F | The Wasserstein length of learning is bounded by the integrated tracking error | proved and checked |
 | G | The slow kernel geometry follows variable projection in the metric induced on the slow manifold; plain variable projection needs a flatness condition | formal; checked, with a counterexample |
 | H | With saturated features, σ-modification and parameter dither, the averaged loop is mean-field Langevin dynamics and converges globally to the regularised optimum | proved for the averaged system |
@@ -144,7 +144,7 @@ n = 3 and NTK results contradict them.
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3, 5 and 6, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 78 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 79 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -153,7 +153,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 78 tests, about 17 minutes
+python -m pytest tests                          # 79 tests, about 17 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 

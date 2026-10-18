@@ -91,7 +91,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | C | OT σ-modification: exact dissipation for selection solutions; a gap-protected strict inequality with √C ≤ b + 2η; a local exponential estimate, m-uniform for a single-atom prior and O(m^{−1/2}) otherwise; reshuffling by the labelled leak | proved and checked; the C(iv) instance satisfies every hypothesis | novel as a control construction; C(i) and the obstruction are known [71], [73] |
 | C′ | The OT leak toward a prior with any number of atoms, through the barycentric projection of the optimal plan: dissipation of W(μ, ν) up to the within-cell variance of the plan, fixed points of the pure leak = equal-mass centroidal configurations of the prior (Lloyd's algorithm in continuous time, the G-gradient flow of the quantisation energy), induced-coupling bound √C_bar ≤ b + 2η, Lyapunov inequality and local exponential estimate with the bias b_bar := distance of the ideal from the centroids of its prior cells (≤ b) | proved for vertex-selection solutions (existence assumed) and for generalised solutions (which exist); checked (dissipation at every step, convergence to a Lloyd fixed point, the coupling bound and plan stability, the Lyapunov inequality along the closed loop) | the law is the continuous-time Lloyd descent of coverage control [S18] with equal-mass (capacity-constrained) OT plans [S19], used as a σ-modification leak; new here are the induced-coupling bound, the Lyapunov inequality with the bias b_bar and the transfer reading; the quantisation side is Lloyd/CVT theory [S20]; it reduces to Theorem C for m₀ = m |
 | D | Local well-posedness of the mean-field loop; a Dobrushin estimate; a tube bound and global existence under a self-consistent growth condition; the mean-field limit on the existence interval | proved; consistency in m checked numerically (the constant is not checked) | technique anticipated [77]–[79] |
-| E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions. In the slow-adaptation regime a second strict Lyapunov function (Lemma E.0′: second-order slaving and a second-order averaging correction, with the peak factors of the regressor as data) has the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ | proved, self-contained; linearisation checked; the strict Lyapunov inequalities checked pointwise (E.0′ by a certificate over all states) and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The rate of E.0 is conservative in a quantified way (Remark E.0a); the rate of E.0′ is within 12% of the exact rate above its threshold | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
+| E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions. In the slow-adaptation regime a second strict Lyapunov function (Lemma E.0′: second-order slaving and a second-order averaging correction, with the peak factors of the regressor as data) has the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, and under parameter dither bounds the stationary parameter spread by (1 + O(ε))k‖Σ‖_F²/(2(1 − δ)λ_min) (Corollary E.0′.3) | proved, self-contained; linearisation checked; the strict Lyapunov inequalities checked pointwise (E.0′ by a certificate over all states) and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The rate of E.0 is conservative in a quantified way (Remark E.0a); the rate of E.0′ is within 12% of the exact rate above its threshold | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
 | F | Along (L), the Wasserstein length of learning is ≤ λ_G^{1/2}L₁∫‖e‖; leak versions | proved and checked, including the leak clause, a tight leak instance with e ≡ 0 and a tight velocity instance | elementary |
 | G | Averaged joint descent on the occupation loss. The slow geometry follows the gradient flow of the profile loss in the metric induced on the slow manifold, which is plain variable projection only when that manifold is flat (S ≪ 1). | formal; checked directly, including a counterexample to plain VarPro at S = O(1) | a fixed-m, closed-loop analogue of the two-timescale/VarPro training of [S1], [S2] |
 | H | The averaged mean-field loop with saturated features, σ-modification and dither is mean-field Langevin dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in control quantities. | proved for (𝔄); the reduction to (𝔄) is formal (Remark H.0); real loop: Conjecture H.6 | a bridge to [S3], [S4]; new in adaptive control |
@@ -1618,6 +1618,72 @@ the radius comparison was not computed there.
 the implemented closed loop satisfies ‖w(t)‖ ≤ C′e^{−λ′t}‖w(0)‖ at every sample over 1.5 e-folds of the explicit envelope (dt = 0.005: the fixed-step loop has a discretisation floor ≈ 6·10⁻⁶ at dt = 0.02, above the explicit ball),
 with λ′ more than ten times Theorem E's rate from Lemma E.0 and within a factor 4 of the exact linear rate
 (`test_corollary_E0prime_2_envelope_on_the_implemented_loop`).
+
+**Corollary E.0′.3 (the stationary parameter spread of the dithered linearised loop).** Under the hypotheses of Lemma E.0′
+(conditions (A)–(D) at (k, δ)), consider (LTV) with parameter dither,
+
+    ė = −k e − Ψ(t)ζ,    dζ = Ψ(t)ᵀe dt + Σ dB_t,                                                        (LTV_τ)
+
+with Σ ∈ ℝ^{q×q′} constant and B a standard Brownian motion. Let V be the strict Lyapunov function of Lemma E.0′ and
+𝐇(t) its quadratic form (V = ½xᵀ𝐇(t)x, x = (e, ζ)), L(t) := −εΨ + ε²Ψ̇ − ε³ΨM the slaving map (e₂ = L(t)ζ), L_M := εΨ_M +
+ε²Ψ_D + ε³Ψ_M³ ≥ sup‖L‖, and
+
+    ν(t) := ½ tr(Σᵀ𝐇_ζζ(t)Σ) = ½ tr(Σᵀ(I + εP₁ + ε²P₂ + βLᵀL)Σ),    ν̄ := sup_t ν(t) ≤ ½‖Σ‖_F²(1 + εp₁ + ε²p₂ + βL_M²).
+
+Then, for every initial law with finite second moment,
+
+    limsup_{t→∞} E V(t, x_t) ≤ ν̄/γ,    limsup_{t→∞} E‖ζ_t‖² ≤ 2ν̄/(γ(1 − εp₁ − ε²p₂)),    limsup_{t→∞} E‖w_t‖² ≤ 2ν̄/(γβ),
+
+with γ the rate of Lemma E.0′; in the slow regime γ = 2c_ζλ_min(M̄)/(k(1 + εp₁ + ε²p₂)), so that
+
+    limsup E‖ζ_t‖² ≤ k ‖Σ‖_F² (1 + εp₁ + ε²p₂)(1 + εp₁ + ε²p₂ + βL_M²) / (2c_ζ(1 − εp₁ − ε²p₂)λ_min(M̄)) = (1 + O(ε)) k‖Σ‖_F²/(2(1 − δ)λ_min(M̄)).
+
+For comparison, the averaged Langevin dynamics ζ̇ = −(1/k)M̄ζ + ΣḂ has the exact stationary covariance C̄ = kX with
+M̄X + XM̄ = ΣΣᵀ, so E‖ζ‖² = k tr X, equal to (k/2)tr(M̄⁻¹ΣΣᵀ) when ΣΣᵀ commutes with M̄: the bound is within (1 + O(ε))/(1 − δ)
+of it when M̄ is isotropic, and pays the condition number of M̄ in the trace otherwise (it replaces every 1/λ_i by 1/λ_min),
+as a scalar Lyapunov function must.
+
+*Status.* Proved (Itô's formula and the pointwise inequality of Lemma E.0′). Checked (`exp_explicit_rate.py`, table 6;
+`tests/test_excitation.py`) against the exact periodic stationary covariance of (LTV_τ), computed from the periodic Lyapunov
+equation.
+
+*Proof.* V(t, x) = ½xᵀ𝐇(t)x is C¹ in t and quadratic in x, so by Itô's formula along (LTV_τ), with Σ̃ := [0; Σ] ∈ ℝ^{(n+q)×q′},
+
+    dV = [∂_tV + ∇_xV·A(t)x] dt + ∇_xV·Σ̃ dB_t + ½ tr(Σ̃ᵀ𝐇(t)Σ̃) dt ≤ [−γV + ν(t)] dt + ∇_xV·Σ̃ dB_t,
+
+the inequality being Lemma E.0′'s V̇ ≤ −γV pointwise in (t, x), and Σ̃ᵀ𝐇Σ̃ = Σᵀ𝐇_ζζΣ with 𝐇_ζζ = I + εP₁ + ε²P₂ + βLᵀL from the
+block form of 𝐇 (Corollary E.0′.2). The stochastic integral is a martingale because V has quadratic growth and the linear
+SDE has finite moments of every order, so d/dt E V ≤ −γ E V + ν̄ and E V(t) ≤ e^{−γt}E V(0) + ν̄/γ. The bounds on E‖ζ‖² and
+E‖w‖² follow from V ≥ ½(1 − εp₁ − ε²p₂)‖ζ‖² and V ≥ (β/2)‖w‖²; the estimate of ν̄ uses ‖P₁‖ ≤ p₁, ‖P₂‖ ≤ p₂, ‖L‖ ≤ L_M. The
+averaged covariance is the stationary solution of the Lyapunov equation of the time-invariant averaged system. ∎
+
+*Numerics* (`exp_explicit_rate.py` → `results/explicit_rate/table.md`, table 6). Σ = (2·10⁻³)^{1/2}I; the exact stationary
+covariance from the periodic Lyapunov equation (RK4 with k·dt ≤ ¼; the period mean and the maximum of E‖ζ‖² coincide to four
+digits), the averaged value k·tr X, and the bound:
+
+| regressor (κ(M̄)) | k | δ | exact E‖ζ‖² | averaged k·tr X | bound | bound/exact | 1/(1 − δ) |
+|---|---|---|---|---|---|---|---|
+| Theorem E ideal of table 4 (7.8·10³) | 300 | 0.2 | 1.509·10⁶ | 1.509·10⁶ | 2.64·10⁷ | 17.5 | 1.25 |
+| | 400 | 0.2 / 0.1 | 2.012·10⁶ | 2.012·10⁶ | 3.51·10⁷ / 3.11·10⁷ | 17.4 / 15.5 | 1.25 / 1.11 |
+| | 600 | 0.2 / 0.1 | 3.018·10⁶ | 3.018·10⁶ | 5.23·10⁷ / 4.65·10⁷ | 17.3 / 15.4 | 1.25 / 1.11 |
+| Ψ = (sin t, cos t) (1) | 20 | 0.2 / 0.1 | 8.025·10⁻² | 8.000·10⁻² | 0.216 / 0.202 | 2.69 / 2.52 | 1.25 / 1.11 |
+| | 50 | 0.2 / 0.1 | 2.001·10⁻¹ | 2.000·10⁻¹ | 0.315 / 0.282 | 1.58 / 1.41 | 1.25 / 1.11 |
+| | 200 | 0.2 / 0.1 | 8.000·10⁻¹ | 8.000·10⁻¹ | 1.051 / 0.935 | 1.31 / 1.17 | 1.25 / 1.11 |
+
+The exact stationary spread is the averaged Langevin value up to 3·10⁻⁴ (ideal) and 1.25/k² (sinusoid): the averaging
+prediction of the dithered loop's stationary covariance is essentially exact in the slow regime. On the isotropic sinusoid
+the bound exceeds the exact value by a factor that falls toward 1/(1 − δ) (2.7, 1.6, 1.3 at k = 20, 50, 200 for δ = 0.2;
+the excess is the O(1/k) of the factors (1 ± εp₁)… and βL_M²). On the ideal, where one direction is excited 7.8·10³ times
+less than the others, the bound is 15–18 times the exact value: it charges every one of the q = 15 directions the price of
+the worst, (q/λ_min)/Σ_i(1/λ_i) ≈ q = 15 (up to 1/(1 − δ)), the trace-level price of a scalar Lyapunov function. The exact
+E‖e‖² is ‖Σ‖_F²/k² to four digits on both instances (the error rides on its slow manifold), while the bound on E‖w‖² is
+coarse (factor 1/β).
+
+
+*Checked* (`tests/test_excitation.py`): on Ψ = (sin t, cos t) with Σ = (2·10⁻³)^{1/2}I, the explicit bound dominates the exact
+period mean and the exact maximum of E‖ζ‖² at k = 20, 50, 200 for δ = 0.1 and 0.2, its ratio to the exact value decreases
+toward 1/(1 − δ) (within 6% at k = 200), the grid value of ν̄ lies below its explicit bound, and the exact value agrees with
+the averaged k·tr X within 2/k² (`test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution`).
 
 **Theorem E (with explicit constants).** Let Ψ_G := m^{−1/2}Ψ(I_m ⊗ G^{1/2}) ∈ ℝ^{n×mp}, and let (α_G, T, Ψ_{G,M}, Ψ_{G,D})
 be PE data for it: ∫_t^{t+T}Ψ_GᵀΨ_G ⪰ α_G I, ‖Ψ_G‖ ≤ Ψ_{G,M}, ‖Ψ̇_G‖ ≤ Ψ_{G,D}. One may take α_G := αλ_min(G)/m,
@@ -3414,6 +3480,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | Lemma E.0(iii), Remark E.0a | the ω⁻² law of the explicit rate and of the exact rate; the saturation of exact/explicit in the slow-adaptation limit; the tables | `Ex::test_remark_E1_omega_scaling_of_the_explicit_rate`, `Ex::test_slow_adaptation_limit_ratio_is_bounded`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` |
 | E, explicit constants | on the implemented loop, from a start inside the explicit ball, ‖w(t)‖ ≤ (p_hi/p_lo)^{1/2}e^{−λt}‖w(0)‖ at every sample (L_J estimated from samples) | `Ex::test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop` |
 | Corollary E.0′.2 | the explicit envelope of Theorem E with Lemma E.0′'s constants on the implemented single-kernel loop at k_e = 40: 1.5 e-folds inside the envelope from a start in the explicit ball (dt = 0.005, below the discretisation floor); λ′ > 10 × Theorem E's rate from Lemma E.0 and < 4 × the exact linear rate; the constants table | `Ex::test_corollary_E0prime_2_envelope_on_the_implemented_loop`, `exp_explicit_rate.py` (table 5) |
+| Corollary E.0′.3 | the explicit bound on the stationary parameter spread of the dithered (LTV) dominates the exact periodic covariance (sinusoid: ratios 2.7 → 1.3 (δ = 0.2) and 2.5 → 1.2 (δ = 0.1) at k = 20 → 200, falling toward 1/(1 − δ); the Theorem E ideal: 15–18, the price of q = 15 directions at the worst excitation); the exact value equals the averaged k·tr X within 2/k² | `Ex::test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` (table 6) |
 | Lemma E.0′ | the certificate sup_{t,x}V̇/V ≤ −γ (a generalised eigenvalue problem on a time grid) on Ψ = (sin t, cos t) at k = 20, 50, 200 and on the slow-adaptation ideal at g = 0.01, k = 400; N₂ = 0 numerically; the guaranteed rate below the exact Floquet rate and within a factor 2 (sinusoid) and 1.5 (ideal) of it, above Lemma E.0's by more than 10⁴ on the ideal; the table of k and δ | `Ex::test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness`, `Ex::test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` (table 4) |
 | G(a), two scales | direct check (cosine ≥ 0.998 in the G⁻¹ metric, `violating`; the weight block fails in `satisfying`, as explained in §6b); L̄ at period-mean parameters non-increasing | `exp_variable_projection.py` → `table_violating.md`, `table_satisfying.md` |
 | G(b), (b′), (H2c) | VarPro holds when (H2b) and S ≪ 1 hold; it fails when S = O(1) although (H2b) holds; the induced-metric flow tracks the closed loop at every S (started on the slow manifold; gains ÷ 4 isolates the averaging error) | `exp_variable_projection.py` → `table_satisfying.md`; `exp_slow_manifold_slope.py` → `table_slope.md` |
@@ -3559,6 +3626,10 @@ Each branch states what is proved, what is open, and the first concrete step.
      for k above a threshold set by the peak factors of Ψ, Ψ̇, Ψ̈ (second-order slaving of the error to its slow manifold
      and a second-order averaging correction, whose mean part vanishes identically); the ill-conditioning of the averaged
      Gramian is paid once, as in the exact rate.
+   - *Done (Corollary E.0′.3):* the same Lyapunov function bounds the stationary parameter spread of the dithered
+     linearised loop, limsup E‖ζ‖² ≤ (1 + O(ε))k‖Σ‖_F²/(2(1 − δ)λ_min), within 1/(1 − δ) of the exact (averaged Langevin)
+     value on isotropic regressors and paying the condition number in the trace otherwise: an explicit design formula for
+     how much dither a given tracking budget tolerates.
    - *Open:* the continuum form of (PE); the trajectory kernel K_T(ϑ,ϑ') = ∫Φ(x(s);ϑ)Φ(x(s);ϑ')ds; identifiability of
      measures up to symmetry; the relation to [16]. Remark E.1 shows that the PE level alone does not predict the rate.
      For Lemma E.0′: lowering the threshold k₀ (a third-order slaving trades ρ_DD for the peak factor of Ψ⃛ one order
