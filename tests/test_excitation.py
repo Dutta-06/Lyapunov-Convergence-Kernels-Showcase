@@ -187,3 +187,60 @@ def test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop():
         assert np.linalg.norm(w) <= env * (1 + 1e-6), (t, np.linalg.norm(w), env)
         norms.append(np.linalg.norm(w))
     assert norms[-1] < 0.5 * norms[0]                       # it does converge (the exact rate is far larger)
+
+
+# ---------------------------------------------------------------- Lemma E.0′ (the slow-adaptation regime)
+def test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness():
+    """
+    Ψ(t) = (sin t, cos t), n = 1, q = 2, T = 2π: M̄ = I/2, so λ_min = 1/2 and the peak factors are ρ = ρ_D = ρ_DD = 2.
+    The second-order averaged matrix N₂ vanishes (identically, Lemma E.0′); the conditions (A)–(D) hold from k ≈ 10 on;
+    the certificate sup_{t,x} V̇/V ≤ −γ holds at k = 20, 50 and 200; the guaranteed rate γ/2 is below the exact Floquet
+    rate and within a factor 2 of it, approaching 1/(1 − δ) as k grows.
+    """
+    Psi = lambda t: np.array([[np.sin(t), np.cos(t)]])
+    Psid = lambda t: np.array([[np.cos(t), -np.sin(t)]])
+    S = X.SlowRegimeLyapunov(Psi, Psid, 2 * np.pi, N=512)
+    assert abs(S.lam_min - 0.5) < 1e-12 and abs(S.rho - 2) < 1e-9 and abs(S.rho_D - 2) < 1e-9 and abs(S.rho_DD - 2) < 1e-6
+    assert np.linalg.norm(S.N2) < 1e-12 and S.p1_meas <= 0.5 * 2 * np.pi * S.Psi_M ** 2 + 1e-12
+    assert S.threshold(0.2) < 12
+    ratios = []
+    for k in (20.0, 50.0, 200.0):
+        c = S.constants(k, 0.2)
+        assert c['ok'], c['conds']
+        sup, minus_gamma = S.certificate(k, 0.2, n_t=128)
+        assert sup <= minus_gamma * (1 - 1e-9)
+        exact = X.floquet_rate(Psi, k, 2 * np.pi)
+        assert c['rate'] <= exact
+        ratios.append(exact / c['rate'])
+    assert ratios[0] < 2.0 and ratios[-1] < 1.3 and ratios[0] > ratios[1] > ratios[2]        # → 1/(1 − δ) = 1.25
+
+
+def test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal():
+    """
+    The slow-adaptation ideal of the Theorem E tests (m = 3, n = 2, two-tone reference of period 20π, G = 0.01·diag(2,2,1);
+    κ(M̄) ≈ 8·10³, peak factors ρ ≈ 70, ρ_D ≈ 4·10³, ρ_DD ≈ 4·10⁵).  At k = 400 and δ = 0.2 the conditions of Lemma E.0′
+    hold, the certificate holds on a 128-point grid, the guaranteed rate is within a factor 1.5 of the exact Floquet
+    rate, and it exceeds the optimised rate of Lemma E.0 by more than four orders of magnitude.
+    """
+    rng = np.random.default_rng(12)
+    m, n = 3, 2
+    ctrl = T.TransportController(m, n, ke=6.0, g_a=30.0, g_c=30.0, g_s=15.0, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = T.sample_lifted_ideal(m, n, ctrl, rng, min_sep=0.9)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=2.5)
+    per = 20 * np.pi
+    g = 0.01
+    G_diag = np.concatenate([np.full(n, 2 * g), np.full(n, 2 * g), [g]])
+    reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
+    S = X.SlowRegimeLyapunov(reg.Psi, reg.Psidot, per, N=2048)
+    assert S.lam_max / S.lam_min > 1e3 and S.rho > 10 and np.linalg.norm(S.N2) < 1e-15 * S.lam_max
+    k, delta = 400.0, 0.2
+    c = S.constants(k, delta)
+    assert c['ok'], c['conds']
+    sup, minus_gamma = S.certificate(k, delta, n_t=128)
+    assert sup <= minus_gamma * (1 - 1e-9)
+    exact = X.floquet_rate(reg.Psi, k, per)
+    assert c['rate'] <= exact <= 1.5 * c['rate']
+    tg = np.linspace(0, per, 60)
+    _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, k, [per], tg, n_nodes=800)
+    e0 = X.optimise_eps(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=80)
+    assert c['rate'] > 1e4 * e0['rate']

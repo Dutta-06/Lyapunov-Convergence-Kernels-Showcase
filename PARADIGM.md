@@ -23,7 +23,7 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py` and `exp_barycentric_leak.py`. Their numbers are collected in
   `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
-  point to `review/LITERATURE_refs.md`, and [S1]–[S20] point to the audit file.
+  point to `review/LITERATURE_refs.md`, and [S1]–[S22] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md` and, for round 5, the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency).
@@ -87,7 +87,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | C | OT σ-modification: exact dissipation for selection solutions; a gap-protected strict inequality with √C ≤ b + 2η; a local exponential estimate, m-uniform for a single-atom prior and O(m^{−1/2}) otherwise; reshuffling by the labelled leak | proved and checked; the C(iv) instance satisfies every hypothesis | novel as a control construction; C(i) and the obstruction are known [71], [73] |
 | C′ | The OT leak toward a prior with any number of atoms, through the barycentric projection of the optimal plan: dissipation of W(μ, ν) up to the within-cell variance of the plan, fixed points of the pure leak = equal-mass centroidal configurations of the prior (Lloyd's algorithm in continuous time, the G-gradient flow of the quantisation energy), induced-coupling bound √C_bar ≤ b + 2η, Lyapunov inequality and local exponential estimate with the bias b_bar := distance of the ideal from the centroids of its prior cells (≤ b) | proved for vertex-selection solutions (existence assumed) and for generalised solutions (which exist); checked (dissipation at every step, convergence to a Lloyd fixed point, the coupling bound and plan stability, the Lyapunov inequality along the closed loop) | the law is the continuous-time Lloyd descent of coverage control [S18] with equal-mass (capacity-constrained) OT plans [S19], used as a σ-modification leak; new here are the induced-coupling bound, the Lyapunov inequality with the bias b_bar and the transfer reading; the quantisation side is Lloyd/CVT theory [S20]; it reduces to Theorem C for m₀ = m |
 | D | Local well-posedness of the mean-field loop; a Dobrushin estimate; a tube bound and global existence under a self-consistent growth condition; the mean-field limit on the existence interval | proved; consistency in m checked numerically (the constant is not checked) | technique anticipated [77]–[79] |
-| E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions | proved, self-contained; linearisation checked; the strict Lyapunov inequality checked pointwise and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The explicit rate is a valid but conservative lower bound of the exact rate (Remark E.0a) | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
+| E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions. In the slow-adaptation regime a second strict Lyapunov function (Lemma E.0′: second-order slaving and a second-order averaging correction, with the peak factors of the regressor as data) has the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ | proved, self-contained; linearisation checked; the strict Lyapunov inequalities checked pointwise (E.0′ by a certificate over all states) and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The rate of E.0 is conservative in a quantified way (Remark E.0a); the rate of E.0′ is within 12% of the exact rate above its threshold | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
 | F | Along (L), the Wasserstein length of learning is ≤ λ_G^{1/2}L₁∫‖e‖; leak versions | proved and checked, including the leak clause, a tight leak instance with e ≡ 0 and a tight velocity instance | elementary |
 | G | Averaged joint descent on the occupation loss. The slow geometry follows the gradient flow of the profile loss in the metric induced on the slow manifold, which is plain variable projection only when that manifold is flat (S ≪ 1). | formal; checked directly, including a counterexample to plain VarPro at S = O(1) | a fixed-m, closed-loop analogue of the two-timescale/VarPro training of [S1], [S2] |
 | H | The averaged mean-field loop with saturated features, σ-modification and dither is mean-field Langevin dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in control quantities. | proved for (𝔄); the reduction to (𝔄) is formal (Remark H.0); real loop: Conjecture H.6 | a bridge to [S3], [S4]; new in adaptive control |
@@ -1308,7 +1308,7 @@ here is the explicit, self-contained statement for the mixed class (LTV), which 
 
   with κ_Ψ := Ψ_M²/λ_min⟨ΨᵀΨ⟩ the condition number of the averaged Gramian. The exact rate pays for ill-conditioning
   once, through λ_min; the bound pays twice, because the Young step that absorbs the cross term εc₁‖e‖‖ζ‖ compares
-  c₁ ∝ Ψ_M with α ∝ λ_min. On the ideal of the Theorem E tests (m = 3, n = 2, k_e = 6), driven by a two-tone reference
+  c₁ ∝ Ψ_M with α ∝ λ_min (Lemma E.0′ below removes this by slaving the error to the slow manifold before the Young step). On the ideal of the Theorem E tests (m = 3, n = 2, k_e = 6), driven by a two-tone reference
   of period 20π, with G = g·diag(2,2,1): κ_Ψ = 1.27·10⁵, (1 + Ψ_D/(k_eΨ_M))² = 3.84, so the two formula values are
   1.47·10⁶ and 4.9·10⁵. The measured ratio with the optimised ε falls from 6.56·10¹⁰ at g = 30 to 4.22·10⁵ at g = 0.01
   (5.63·10⁵ with the closed-form ε, which the table evaluates with the exact 2 × 2 form and the exact p_hi rather than
@@ -1323,8 +1323,132 @@ here is the explicit, self-contained statement for the mixed class (LTV), which 
   ω = 1 to 17.6 at ω = 64. Over ω ≥ 4 the log-log slopes are −1.97 (exact) and −1.56 (explicit); over the last octave,
   ω = 32 → 64, the explicit slope is −1.92, approaching the asymptotic ω⁻² of (iii).
 - *The window.* Any window length T is admissible with its own α(T). On the test ideal the best window is half a period.
-- *Open.* A strict Lyapunov function whose rate is linear in λ_min⟨ΨᵀΨ⟩/k, matching the averaging value, is the
-  quantitative target of §8, branch 7.
+- *Answered below.* Lemma E.0′ is a strict Lyapunov function whose rate is λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, above a
+  threshold in k set by the peak factors of the regressor: in the slow regime it pays for the ill-conditioning once.
+
+**Lemma E.0′ (the slow-adaptation regime: a strict Lyapunov function whose rate is the averaged rate).** Let Ψ be
+T-periodic and C², M := ΨᵀΨ, M̄ := (1/T)∫₀^T M dt ≻ 0, ‖v‖_{M̄} := (vᵀM̄v)^{1/2}, λ_min := λ_min(M̄), and
+
+    Ψ_M := sup‖Ψ‖,  Ψ_D := sup‖Ψ̇‖,  Ψ_DD := sup‖Ψ̈‖,
+    ρ := sup_{t, v≠0} ‖Ψ(t)v‖²/‖v‖²_{M̄},   ρ_D := sup ‖Ψ̇(t)v‖²/‖v‖²_{M̄},   ρ_DD := sup ‖Ψ̈(t)v‖²/‖v‖²_{M̄},
+
+the *peak factors*: the largest ratio, over directions, between the instantaneous excitation of a direction (by Ψ, Ψ̇, Ψ̈)
+and its average excitation; ρ ≥ 1, and all three are finite because M̄ ≻ 0. Write ε := 1/k and let
+
+    P₁(t) := −(2/T)∫_t^{t+T}(t+T−r)(M(r) − M̄)dr          (the zero-mean antiderivative of 2(M − M̄)),
+    F := P₁M + MP₁,   S := the zero-mean antiderivative of F,   P₂ := −(M − M̄) + S,
+    e₂(ζ,t) := −εΨζ + ε²Ψ̇ζ − ε³ΨMζ   (the slow manifold of the error to second order),   w := e − e₂(ζ,t),
+    V(e,ζ,t) := ½ζᵀ(I + εP₁(t) + ε²P₂(t))ζ + (β/2)‖w‖².
+
+F has zero mean: ⟨P₁M + MP₁⟩ = ⟨P₁⟩M̄ + M̄⟨P₁⟩ + ½⟨d/dt(P₁²)⟩ = 0, so S exists and the second-order averaged
+correction N₂ := ½⟨F⟩ vanishes identically. Put
+
+    π₁ := (T/2)Ψ_M(√ρ + 1),   π₂ := Ψ_M(√ρ + 1) + (T²/4)Ψ_M³(2√ρ + 1),   p₁ := TΨ_M²/2,   p₂ := Ψ_M² + (T²/2)Ψ_M⁴,
+    c₁ := √ρ + εΨ_Mπ₁ + ε²Ψ_Mπ₂,
+    c₂ := ε²√ρ_DD + ε³(3Ψ_DΨ_M√ρ + 2Ψ_M²√ρ_D) + ε⁴(2Ψ_M⁴√ρ + Ψ_DΨ_M√ρ_D) + ε⁵(Ψ_M⁴√ρ_D + Ψ_DΨ_M³√ρ) + ε⁶Ψ_M⁵√ρ,
+    d_w := εΨ_M² + ε²Ψ_DΨ_M + ε³Ψ_M⁴,
+    r_ζ := ε³(π₂Ψ_M√ρ + π₁Ψ_M√ρ_D + Ψ_M²ρ) + ε⁴(π₂Ψ_M√ρ_D + π₁Ψ_M³√ρ) + ε⁵π₂Ψ_M³√ρ,
+    β := 2c₁²/δ,   c_ζ := 1 − δ − r_ζ/ε.
+
+Fix δ ∈ (0, 1). If
+
+    (A) c₁c₂ ≤ δ/2,   (B) d_w ≤ k/4,   (C) c_ζ > 0,   (D) εp₁ + ε²p₂ < 1,
+
+then along (LTV), for all (e, ζ, t),
+
+    V̇ ≤ −ε c_ζ ζᵀM̄ζ − (βk/4)‖w‖² ≤ −γV,    γ := min{ 2c_ζλ_min/(k(1 + εp₁ + ε²p₂)), k/2 },
+
+and ‖(e,ζ)(t)‖ ≤ C e^{−(γ/2)(t−t₀)}‖(e,ζ)(t₀)‖ with C := (1 + εΨ_M + ε²Ψ_D + ε³Ψ_M³)²·(max{1 + εp₁ + ε²p₂, β}/min{1 − εp₁ − ε²p₂, β})^{1/2}.
+
+In the slow-adaptation limit (k → ∞ at fixed Ψ) the conditions hold for every δ ∈ (0, 1) once k ≥ k₀(δ), with
+k₀ ≈ (4ρρ_DD/δ²)^{1/4} from (A), and the rate is γ/2 = (1 − δ − O(k⁻²))λ_min/k: the averaged rate λ_min⟨ΨᵀΨ⟩/k of
+Remark E.1 up to the factor 1 − δ. The bound pays for the ill-conditioning of M̄ once, through λ_min, as the exact rate
+does; the peak factors enter only the threshold k₀ and the overshoot C = O((ρ/δ)^{1/2}), not the rate.
+
+*Status.* Proved (below); checked pointwise by a certificate — the supremum of V̇/V over all states and over a time
+grid is a generalised eigenvalue problem — on the sinusoidal regressor and on the slow-adaptation ideal of the Theorem E
+tests, where the guaranteed rate is within 12% of the exact rate at k = 400 while Lemma E.0's is five orders of
+magnitude below it (`tests/test_excitation.py`, `exp_explicit_rate.py`, table 4).
+
+*Proof.* Write M, Ψ, … for their values at t. Two facts about zero-mean antiderivatives are used throughout: if f is
+T-periodic with zero mean and g is its zero-mean antiderivative, then ‖g‖_∞ ≤ (T/4)‖f‖_∞ — for the maximiser t* of g,
+g(t*) = (1/T)∫₀^T(g(t*) − g(s))ds ≤ (1/T)∫₀^T dist(t*, s)‖f‖_∞ ds = (T/4)‖f‖_∞ with dist the distance on the circle, and
+the same for −g — and the same bound holds for every bilinear coordinate uᵀg v, hence ‖g(t)v‖ ≤ (T/4)sup_r‖f(r)v‖. As
+‖M − M̄‖ ≤ Ψ_M² (two positive semidefinite matrices of norm ≤ Ψ_M²), this gives ‖P₁‖ ≤ TΨ_M²/2 = p₁ and
+‖P₁v‖ ≤ (T/2)sup‖(M − M̄)v‖, and ‖S‖ ≤ (T/4)‖F‖_∞, ‖Sv‖ ≤ (T/4)sup‖Fv‖.
+
+(a) *The fast variable.* From ė = −ke − Ψζ and ke₂ = −Ψζ + εΨ̇ζ − ε²ΨMζ, ė = −kw − εΨ̇ζ + ε²ΨMζ. Differentiating e₂ along
+the flow, with ζ̇ = Ψᵀe = Ψᵀw − εMζ + ε²ΨᵀΨ̇ζ − ε³M²ζ and Ṁ = Ψ̇ᵀΨ + ΨᵀΨ̇, the terms of order ε and ε² in ζ cancel and
+
+    ẇ = −kw + εΨΨᵀw − ε²Ψ̇Ψᵀw + ε³ΨMΨᵀw − ε²Ψ̈ζ + ε³(2Ψ̇M + ΨΨ̇ᵀΨ + 2ΨΨᵀΨ̇)ζ − ε⁴(2ΨM² + Ψ̇ΨᵀΨ̇)ζ + ε⁵(ΨMΨᵀΨ̇ + Ψ̇M²)ζ − ε⁶ΨM³ζ.
+
+(b) *The slow part of V̇.* With H := I + εP₁ + ε²P₂ (symmetric), d/dt[½ζᵀHζ] = ζᵀHζ̇ + ½ζᵀḢζ and Ḣ = 2ε(M − M̄) +
+ε²(F − Ṁ). Insert ζ̇ and collect by powers of ε. At order ε: −ζᵀMζ + ζᵀ(M − M̄)ζ = −ζᵀM̄ζ. At order ε²:
+−ζᵀP₁Mζ + ζᵀΨᵀΨ̇ζ + ½ζᵀ(F − Ṁ)ζ = −½ζᵀ(P₁M + MP₁)ζ + ½ζᵀṀζ + ½ζᵀ(P₁M + MP₁ − Ṁ)ζ = 0, using ζᵀΨᵀΨ̇ζ = ½ζᵀṀζ: the
+choice of P₂ removes the whole second-order term, and this is where N₂ = 0 enters (otherwise −ζᵀN₂ζ would remain).
+The remaining terms are R_ζ := ε³(−ζᵀP₂Mζ + ζᵀP₁ΨᵀΨ̇ζ − ζᵀM²ζ) + ε⁴(ζᵀP₂ΨᵀΨ̇ζ − ζᵀP₁M²ζ) − ε⁵ζᵀP₂M²ζ, plus the coupling
+ζᵀHΨᵀw, so d/dt[½ζᵀHζ] = −εζᵀM̄ζ + R_ζ + ζᵀHΨᵀw.
+
+(c) *Per-direction bounds.* For every v and t: ‖Ψv‖ ≤ √ρ‖v‖_{M̄}, ‖Ψ̇v‖ ≤ √ρ_D‖v‖_{M̄}, ‖Ψ̈v‖ ≤ √ρ_DD‖v‖_{M̄};
+‖Mv‖ ≤ Ψ_M‖Ψv‖ ≤ Ψ_M√ρ‖v‖_{M̄}; ‖M̄v‖ ≤ λ_max(M̄)^{1/2}‖v‖_{M̄} ≤ Ψ_M‖v‖_{M̄}; ‖ΨᵀΨ̇v‖ ≤ Ψ_M√ρ_D‖v‖_{M̄};
+‖P₁v‖ ≤ (T/2)sup_r‖(M(r) − M̄)v‖ ≤ π₁‖v‖_{M̄}; ‖Fv‖ ≤ ‖P₁Mv‖ + ‖MP₁v‖ ≤ (T/2)Ψ_M³√ρ‖v‖_{M̄} + Ψ_M²π₁‖v‖_{M̄} =
+TΨ_M³(√ρ + ½)‖v‖_{M̄}, so ‖Sv‖ ≤ (T/4)sup‖Fv‖ and ‖P₂v‖ ≤ ‖(M − M̄)v‖ + ‖Sv‖ ≤ π₂‖v‖_{M̄}; also ‖P₂‖ ≤ Ψ_M² + (T/4)‖F‖_∞ ≤
+Ψ_M² + (T/4)·2·(TΨ_M²/2)Ψ_M² ≤ p₂. Hence |R_ζ| ≤ r_ζ‖ζ‖²_{M̄}, |ζᵀHΨᵀw| = |⟨ΨHζ, w⟩| ≤ c₁‖ζ‖_{M̄}‖w‖, and from (a),
+βwᵀẇ ≤ β[−(k − d_w)‖w‖² + c₂‖ζ‖_{M̄}‖w‖]: each ζ-term of ẇ is bounded through ‖Ψζ‖, ‖Ψ̇ζ‖, ‖Ψ̈ζ‖, ‖Mζ‖ or ‖M²ζ‖ (the terms
+of c₂, in the order of (a)), the w-terms through operator norms (d_w).
+
+(d) *Assembly.* V̇ ≤ −ε‖ζ‖²_{M̄} + r_ζ‖ζ‖²_{M̄} + (c₁ + βc₂)‖ζ‖_{M̄}‖w‖ − β(k − d_w)‖w‖². By Young,
+(c₁ + βc₂)‖ζ‖_{M̄}‖w‖ ≤ δε‖ζ‖²_{M̄} + (c₁ + βc₂)²‖w‖²/(4δε), and (c₁ + βc₂)² ≤ 2c₁² + 2β²c₂². With β = 2c₁²/δ the term
+2c₁²/(4δε) equals βk/4, and (A) gives 2β²c₂²/(4δε) ≤ βk/4, so with (B) the coefficient of ‖w‖² is at most
+−β(k − d_w − k/2) ≤ −βk/4; the coefficient of ‖ζ‖²_{M̄} is −ε(1 − δ − r_ζ/ε) = −εc_ζ. This is the first inequality. Since
+½(1 − εp₁ − ε²p₂)‖ζ‖² + (β/2)‖w‖² ≤ V ≤ ½(1 + εp₁ + ε²p₂)‖ζ‖² + (β/2)‖w‖² by (D), and ζᵀM̄ζ ≥ λ_min‖ζ‖², V̇ ≤ −γV follows,
+and the envelope with C from ‖e‖ ≤ ‖w‖ + (εΨ_M + ε²Ψ_D + ε³Ψ_M³)‖ζ‖ and its converse. ∎
+
+*Remark E.0′.1 (reading).*
+
+- *What is sharp and what is not.* The exact rate of (LTV) is λ_min/k·(1 + O(k⁻²)): the first-order averaging of
+  ζ̇ = −(1/k)Mζ after the slaving gives λ_min/k, and the second-order correction to the symmetric part of the averaged
+  generator is N₂ = 0 (table 4 measures 1 − exact/(λ_min/k) ∝ k⁻²). Lemma E.0′ recovers this rate up to the factor
+  c_ζ/(1 + εp₁ + ε²p₂) → 1 − δ, and δ can be taken → 0 as k → ∞ (condition (A) allows δ ≳ 2√(ρρ_DD)/k²). The overshoot
+  constant C = O((ρ/δ)^{1/2}) is an artefact of the quadratic form, not of the dynamics.
+- *Two regimes, two lemmas.* Lemma E.0 needs only (α, T, Ψ_M, Ψ_D) and gives the ω⁻² law of the fast regime; its rate
+  is quadratic in λ_min. Lemma E.0′ needs k above the threshold k₀ ≈ (4ρρ_DD/δ²)^{1/4}, set by the peak factors of Ψ
+  and its two derivatives, and gives the sharp rate. On the regressors of Theorem E the derivative peak factors are
+  large — the directions that are poorly excited on average are excited in short bursts, so ρ_DD/ρ is of the order of
+  the fourth power of the effective bandwidth — and k₀ is in the hundreds there, while on a single-tone regressor
+  (ρ = ρ_D = ρ_DD = 2) it is about 10. A third-order slaving would replace ρ_DD by the peak factor of Ψ⃛ at one order
+  higher in ε and lower k₀ further; this is not pursued.
+- *Hypotheses.* Only the periodicity of Ψ is used (through the zero-mean antiderivatives; a non-periodic PE regressor
+  would need a windowed M̄(t) and its derivative). Theorem E's x_m is periodic, so Ψ_G is. Theorem E's steps 4–5 go
+  through with this V in place of Lemma E.0's: the explicit ball radius r_w ∝ γ p_lo/(g_V L_J) improves by the same
+  factor as the rate.
+
+*Numerics* (`exp_explicit_rate.py` → `results/explicit_rate/table.md`, table 4). The ideal of table 2 at g = 0.01
+(T = 20π): λ_min(M̄) = 2.16·10⁻⁷, κ(M̄) = 7.8·10³, Ψ_M = 0.168, Ψ_D = 0.957, Ψ_DD = 8.39, TΨ_M² = 1.78; peak factors
+ρ = 69.9, ρ_D = 3.7·10³, ρ_DD = 3.7·10⁵ (the poorly excited directions are excited in bursts: ρ_D/ρ ≈ 53 and ρ_DD/ρ_D ≈ 99
+are effective squared bandwidths); ‖N₂‖ = 3·10⁻²¹. The threshold of (A)–(D) is k₀ = 226 for δ = 0.2 and 321 for δ = 0.1,
+set by (A): c₁c₂ = 2.07, 0.51, 0.13, 0.056, 0.032, 0.014 at k = 50, 100, 200, 300, 400, 600, the k⁻² law of ε²√(ρρ_DD).
+
+| k | exact Floquet rate | exact / (λ_min/k) | guaranteed rate γ/2, δ = 0.2 (δ = 0.1) | exact / guaranteed | exact / Lemma E.0 (optimised ε) | sup V̇/V on the grid, −γ (δ = 0.1) |
+|---|---|---|---|---|---|---|
+| 300 | 7.21·10⁻¹⁰ | 0.9997 | 5.70·10⁻¹⁰ (below threshold) | 1.26 (—) | 1.33·10⁵ | — |
+| 400 | 5.41·10⁻¹⁰ | 0.9998 | 4.30·10⁻¹⁰ (4.84·10⁻¹⁰) | 1.26 (1.12) | 1.32·10⁵ | −1.079·10⁻⁹, −9.67·10⁻¹⁰ |
+| 600 | 3.61·10⁻¹⁰ | 0.9999 | 2.88·10⁻¹⁰ (3.24·10⁻¹⁰) | 1.25 (1.12) | 1.30·10⁵ | −7.20·10⁻¹⁰, −6.47·10⁻¹⁰ |
+
+Above the threshold the guaranteed rate is within 26% (δ = 0.2) and 12% (δ = 0.1) of the exact rate — the factor
+1/(1 − δ) of the lemma, with c_ζ = 0.80 and 0.90 — while Lemma E.0's optimised rate is 1.3·10⁵ times smaller; the
+certificate sup V̇/V ≤ −γ holds on the 128-point grid in every row where the conditions hold, with sup V̇/V = −1.078·10⁻⁹
+≈ −2λ_min/k at k = 400 (attained in the slow direction at w = 0). The exact rate deviates from λ_min/k by 1.15%, 0.29%,
+0.07% at k = 50, 100, 200: the k⁻² law that N₂ = 0 predicts. The overshoot constant is C = √β·(1 + O(1/k)) = 27 (δ = 0.2)
+and 38 (δ = 0.1). Below k₀ the lemma makes no claim; Lemma E.0 does (table 2).
+
+*Checked* (`tests/test_excitation.py`): on Ψ = (sin t, cos t) the computed λ_min, ρ, ρ_D, ρ_DD equal 1/2, 2, 2, 2, N₂ = 0 to
+10⁻¹², the threshold of (A)–(D) is below 12 for δ = 0.2, the certificate sup V̇/V ≤ −γ holds at k = 20, 50, 200, and the
+guaranteed rate is below the exact Floquet rate and within a factor 2 of it, the ratio decreasing towards 1/(1 − δ)
+(`test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness`); on the slow-adaptation ideal of the Theorem E tests
+at g = 0.01 and k = 400, δ = 0.2: κ(M̄) > 10³, the conditions hold, the certificate holds on a 128-point grid, the
+guaranteed rate is within a factor 1.5 of the exact rate and exceeds Lemma E.0's optimised rate by more than 10⁴
+(`test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal`).
 
 **Theorem E (with explicit constants).** Let Ψ_G := m^{−1/2}Ψ(I_m ⊗ G^{1/2}) ∈ ℝ^{n×mp}, and let (α_G, T, Ψ_{G,M}, Ψ_{G,D})
 be PE data for it: ∫_t^{t+T}Ψ_GᵀΨ_G ⪰ α_G I, ‖Ψ_G‖ ≤ Ψ_{G,M}, ‖Ψ̇_G‖ ≤ Ψ_{G,D}. One may take α_G := αλ_min(G)/m,
@@ -2686,6 +2810,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | Lemma E.0 | p_lo‖w‖² ≤ V ≤ p_hi‖w‖² and V̇ ≤ −γ‖w‖² at random (t, w) for four regressors, closed-form and optimised ε; the envelope along trajectories; explicit rate ≤ exact Floquet rate | `Ex::test_lemma_E0_pointwise_inequalities_hold_on_random_states`, `Ex::test_lemma_E0_envelope_and_floquet_ordering` |
 | Lemma E.0(iii), Remark E.0a | the ω⁻² law of the explicit rate and of the exact rate; the saturation of exact/explicit in the slow-adaptation limit; the tables | `Ex::test_remark_E1_omega_scaling_of_the_explicit_rate`, `Ex::test_slow_adaptation_limit_ratio_is_bounded`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` |
 | E, explicit constants | on the implemented loop, from a start inside the explicit ball, ‖w(t)‖ ≤ (p_hi/p_lo)^{1/2}e^{−λt}‖w(0)‖ at every sample (L_J estimated from samples) | `Ex::test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop` |
+| Lemma E.0′ | the certificate sup_{t,x}V̇/V ≤ −γ (a generalised eigenvalue problem on a time grid) on Ψ = (sin t, cos t) at k = 20, 50, 200 and on the slow-adaptation ideal at g = 0.01, k = 400; N₂ = 0 numerically; the guaranteed rate below the exact Floquet rate and within a factor 2 (sinusoid) and 1.5 (ideal) of it, above Lemma E.0's by more than 10⁴ on the ideal; the table of k and δ | `Ex::test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness`, `Ex::test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` (table 4) |
 | G(a), two scales | direct check (cosine ≥ 0.998 in the G⁻¹ metric, `violating`; the weight block fails in `satisfying`, as explained in §6b); L̄ at period-mean parameters non-increasing | `exp_variable_projection.py` → `table_violating.md`, `table_satisfying.md` |
 | G(b), (b′), (H2c) | VarPro holds when (H2b) and S ≪ 1 hold; it fails when S = O(1) although (H2b) holds; the induced-metric flow tracks the closed loop at every S (started on the slow manifold; gains ÷ 4 isolates the averaging error) | `exp_variable_projection.py` → `table_satisfying.md`; `exp_slow_manifold_slope.py` → `table_slope.md` |
 | H(i), algebraic identity | with e := r/k_e and x := x_m, the averaged drift equals −G∇V (code gradients against finite differences, 1e-7); does not test averaging | `Lg::test_averaged_drift_is_the_mean_field_langevin_drift` |
@@ -2712,7 +2837,7 @@ Not checked in the repository:
 - B.5 along (L), and B.6 and B.7;
 - the Filippov form of C(i), the inequality of C(v), and Proposition C.5's D⁺V_OT = σ_m(δ − δ²);
 - D(b), D's constant, and the one-sided constant of Remark D.1;
-- the sharpness of the explicit rate of E beyond the tables of Remark E.0a; Corollary E.2 and Remark E.3;
+- the sharpness of the explicit rates of E beyond the tables of Remark E.0a and Lemma E.0′; Lemma E.0′ below its threshold k₀ (where it makes no claim) and for non-periodic PE; Corollary E.2 and Remark E.3;
 - Theorem I(v) beyond the two instances (the analytic dichotomy is a proof only);
 - Theorem J(c) (the basin; a single basin run is reported in `review/REVIEW_round5_J.md`);
 - Proposition K(iii)–(iv) beyond the instance of `exp_orientation_stability.py`, and the second-order normal form it rests on;
@@ -2798,10 +2923,15 @@ Each branch states what is proved, what is open, and the first concrete step.
 7. **Excitation theory in measure space.**
    - *Done (Lemma E.0):* a quantitative, uniform UES estimate for the skew-symmetric class, explicit in
      (k, α, T, Ψ_M, Ψ_D), which reproduces the ω⁻² law of Remark E.1.
+   - *Done (Lemma E.0′):* a strict Lyapunov function whose rate is the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ,
+     for k above a threshold set by the peak factors of Ψ, Ψ̇, Ψ̈ (second-order slaving of the error to its slow manifold
+     and a second-order averaging correction, whose mean part vanishes identically); the ill-conditioning of the averaged
+     Gramian is paid once, as in the exact rate.
    - *Open:* the continuum form of (PE); the trajectory kernel K_T(ϑ,ϑ') = ∫Φ(x(s);ϑ)Φ(x(s);ϑ')ds; identifiability of
      measures up to symmetry; the relation to [16]. Remark E.1 shows that the PE level alone does not predict the rate.
-     The explicit rate of Lemma E.0 is quadratic in λ_min⟨ΨᵀΨ⟩ where the exact rate is linear (Remark E.0a); a strict
-     Lyapunov function with the linear dependence is the next quantitative target.
+     For Lemma E.0′: lowering the threshold k₀ (a third-order slaving trades ρ_DD for the peak factor of Ψ⃛ one order
+     higher), the non-periodic case (a windowed M̄(t)), and the nonlinear Theorem E with the constants of E.0′ (its
+     steps 4–5 carry over; the explicit ball radius improves by the same factor as the rate).
 
 8. **Transport-regularised adaptive laws.**
    - Wasserstein proximal (JKO) discrete-time adaptive laws.
@@ -2828,7 +2958,7 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 ## 9. References
 
-See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S20] are in the audit file.
+See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S22] are in the audit file.
 
 Key mathematical references used in proofs and remarks:
 

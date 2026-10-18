@@ -40,4 +40,25 @@ As g → 0 (slow adaptation) the ratio exact/explicit decreases towards a consta
 | 1 | 0.00204 | 2.094e-14 | 2.056e-11 |
 | 2 | 0.00408 | 5.468e-15 | 2.654e-12 |
 
+## 4. Lemma E.0′ in the slow regime (the ideal of table 2 at g = 0.01, T = 20π)
+
+λ_min(M̄) = 2.164e-07, κ(M̄) = 7.78e+03, Ψ_M = 0.168, Ψ_D = 0.957, Ψ_DD = 8.39, TΨ_M² = 1.78; peak factors ρ = 69.9, ρ_D = 3721, ρ_DD = 3.67e+05; ‖N₂‖ = 2.9e-21 (the lemma: N₂ = 0); threshold k₀ of conditions (A)–(D): 226 (δ = 0.2), 321 (δ = 0.1).
+
+| k | δ | conditions (A) c₁c₂ ≤ δ/2, (B), (C), (D) | β | c_ζ | guaranteed rate γ/2 | exact Floquet rate | exact / guaranteed | averaged rate λ_min/k | exact / averaged | Lemma E.0 optimised rate | exact / E.0 | sup V̇/V on the grid, −γ | overshoot C |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 50 | 0.2 | 2.067: no, yes, yes, yes | 728 | +0.542 | nan | 4.278e-09 | nan | 4.328e-09 | 0.9885 | 2.577e-14 | 1.66e+05 | +nan, +nan | nan |
+| 50 | 0.1 | 2.067: no, yes, yes, yes | 1456 | +0.642 | nan | 4.278e-09 | nan | 4.328e-09 | 0.9885 | 2.577e-14 | 1.66e+05 | +nan, +nan | nan |
+| 100 | 0.2 | 0.511: no, yes, yes, yes | 713 | +0.736 | nan | 2.157e-09 | nan | 2.164e-09 | 0.9971 | 1.475e-14 | 1.46e+05 | +nan, +nan | nan |
+| 100 | 0.1 | 0.511: no, yes, yes, yes | 1426 | +0.836 | nan | 2.157e-09 | nan | 2.164e-09 | 0.9971 | 1.475e-14 | 1.46e+05 | +nan, +nan | nan |
+| 200 | 0.2 | 0.127: no, yes, yes, yes | 706 | +0.784 | nan | 1.081e-09 | nan | 1.082e-09 | 0.9993 | 7.917e-15 | 1.37e+05 | +nan, +nan | nan |
+| 200 | 0.1 | 0.127: no, yes, yes, yes | 1412 | +0.884 | nan | 1.081e-09 | nan | 1.082e-09 | 0.9993 | 7.917e-15 | 1.37e+05 | +nan, +nan | nan |
+| 300 | 0.2 | 0.056: yes, yes, yes, yes | 704 | +0.793 | 5.703e-10 | 7.210e-10 | 1.264 | 7.213e-10 | 0.9997 | 5.402e-15 | 1.33e+05 | -1.436e-09, -1.141e-09 | 26.6 |
+| 300 | 0.1 | 0.056: no, yes, yes, yes | 1407 | +0.893 | nan | 7.210e-10 | nan | 7.213e-10 | 0.9997 | 5.402e-15 | 1.33e+05 | +nan, +nan | nan |
+| 400 | 0.2 | 0.032: yes, yes, yes, yes | 702 | +0.796 | 4.297e-10 | 5.409e-10 | 1.259 | 5.410e-10 | 0.9998 | 4.099e-15 | 1.32e+05 | -1.078e-09, -8.594e-10 | 26.6 |
+| 400 | 0.1 | 0.032: yes, yes, yes, yes | 1405 | +0.896 | 4.837e-10 | 5.409e-10 | 1.118 | 5.410e-10 | 0.9998 | 4.099e-15 | 1.32e+05 | -1.079e-09, -9.673e-10 | 37.6 |
+| 600 | 0.2 | 0.014: yes, yes, yes, yes | 701 | +0.798 | 2.875e-10 | 3.606e-10 | 1.254 | 3.606e-10 | 0.9999 | 2.771e-15 | 1.3e+05 | -7.187e-10, -5.749e-10 | 26.5 |
+| 600 | 0.1 | 0.014: yes, yes, yes, yes | 1403 | +0.898 | 3.235e-10 | 3.606e-10 | 1.115 | 3.606e-10 | 0.9999 | 2.771e-15 | 1.3e+05 | -7.199e-10, -6.469e-10 | 37.5 |
+
+Reading: above the threshold the guaranteed rate of Lemma E.0′ is the averaged rate λ_min(M̄)/k up to the factor c_ζ/(1 + εp₁ + ε²p₂) ≈ 1 − δ, within a factor 1.3 of the exact rate, where Lemma E.0's optimised rate is five orders of magnitude below it; the certificate sup V̇/V ≤ −γ is verified on the grid wherever the conditions hold. Below the threshold the conditions fail through (A): the derivative peak factor ρ_DD of this regressor is large (the directions that are poorly excited on average are excited in short bursts).
+
 Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand.

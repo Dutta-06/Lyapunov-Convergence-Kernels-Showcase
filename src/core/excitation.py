@@ -44,6 +44,11 @@ like ω⁻² under the time rescaling Ψ(ωt), which is the scaling of the exact
 
 The construction is of the Mazenc–Malisoff type (strict Lyapunov functions with a backward–forward integral of the
 PE Gramian); the contribution here is the explicit, self-contained version for the mixed class (LTV).
+
+Lemma E.0′ (SlowRegimeLyapunov, at the end of this module) is the sharp companion for the slow-adaptation regime of a
+T-periodic Ψ: a second-order slaving of e to its slow manifold and a second-order averaging correction give a strict
+Lyapunov function whose rate is the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, for k above a threshold set by the
+peak factors of Ψ, Ψ̇, Ψ̈; the inequality V̇ ≤ −γV is certified pointwise by a generalised eigenvalue problem.
 """
 import numpy as np
 
@@ -202,10 +207,12 @@ def ltv_matrix(Psi, k):
 
 def floquet_rate(Psi_fun, k, period, n_steps=4000):
     """Exact exponential rate of (LTV) for a `period`-periodic Ψ: −max_i log|λ_i(Φ(period))| / period, Φ the monodromy
-    matrix (RK4 on the matrix equation).  This is the sharp rate the lemma's bound must stay below."""
+    matrix (RK4 on the matrix equation).  This is the sharp rate the lemma's bound must stay below.  The step count is
+    raised if needed so that k·dt ≤ 1/4 (RK4 is unstable on the fast channel beyond k·dt ≈ 2.8)."""
     P0 = Psi_fun(0.0)
     d = P0.shape[0] + P0.shape[1]
     Phi = np.eye(d)
+    n_steps = max(int(n_steps), int(np.ceil(4.0 * k * period)))
     dt = period / n_steps
     for j in range(n_steps):
         t = j * dt
@@ -343,3 +350,130 @@ def jacobian_lipschitz_estimate(field, z_dim, r, t_grid, rng, n_samples=200, h=1
         zp = rng.normal(size=z_dim); zp *= rng.uniform(0, r) / np.linalg.norm(zp)
         worst = max(worst, np.linalg.norm(DF(t, z) - DF(t, zp), 2) / np.linalg.norm(z - zp))
     return float(worst)
+
+
+# ---------------------------------------------------------------- Lemma E.0′: the slow-adaptation regime
+def zero_mean_antiderivative(F, T):
+    """
+    F: (N, …) samples of a smooth T-periodic function on the uniform grid t_j = jT/N.  Returns the samples of the
+    zero-mean antiderivative of F − ⟨F⟩ on the same grid (division by iω in Fourier space: spectral accuracy for smooth
+    periodic data).  A zero-mean antiderivative g of a zero-mean f obeys ‖g‖_∞ ≤ (T/4)‖f‖_∞.
+    """
+    F = np.asarray(F, float)
+    Fh = np.fft.fft(F - F.mean(axis=0), axis=0)
+    om = 2 * np.pi * np.fft.fftfreq(F.shape[0], d=T / F.shape[0])
+    shape = (-1,) + (1,) * (F.ndim - 1)
+    om = om.reshape(shape)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        Gh = np.where(om != 0, Fh / (1j * om), 0.0)
+    return np.real(np.fft.ifft(Gh, axis=0))
+
+
+class SlowRegimeLyapunov:
+    """
+    Lemma E.0′ (PARADIGM.md §6): for a T-periodic regressor Ψ with M := ΨᵀΨ and M̄ := ⟨M⟩ ≻ 0, the strict Lyapunov
+    function
+
+        V := ½ ζᵀ(I + εP₁(t) + ε²P₂(t))ζ + (β/2)‖w‖²,   w := e − e₂(ζ,t),   e₂ := −εΨζ + ε²Ψ̇ζ − ε³ΨMζ,   ε := 1/k,
+
+    with P₁ the zero-mean antiderivative of 2(M − M̄) and P₂ := −(M − M̄) + S, S the zero-mean antiderivative of
+    F := P₁M + MP₁ (whose mean N₂ = ½⟨P₁M + MP₁⟩ vanishes identically), satisfies along (LTV)
+
+        V̇ ≤ −(1/k)(1 − δ − r_ζ k) ζᵀM̄ζ − (βk/4)‖w‖² ≤ −γ V,    γ = min{2c_ζλ_min(M̄)/(k(1 + εp₁ + ε²p₂)), k/2},
+
+    for k above a threshold fixed by the *peak factors* ρ, ρ_D, ρ_DD of Ψ, Ψ̇, Ψ̈ against M̄ (conditions (A)–(D) of the
+    lemma).  The rate γ/2 ≈ (1 − δ)λ_min(M̄)/k is the averaged rate of Remark E.1: the bound pays for the ill-conditioning
+    of M̄ once, where Lemma E.0 pays twice.  Everything is computed from samples of Ψ, Ψ̇ on a uniform grid over one
+    period (Ψ̈ by central differences of Ψ̇).
+    """
+
+    def __init__(self, Psi_fun, Psidot_fun, T, N=2048, h=1e-4):
+        self.T, self.N = float(T), int(N)
+        self.ts = np.arange(self.N) * self.T / self.N
+        self.Ps = np.array([Psi_fun(t) for t in self.ts])
+        self.Pd = np.array([Psidot_fun(t) for t in self.ts])
+        self.Pdd = np.array([(Psidot_fun(t + h) - Psidot_fun(t - h)) / (2 * h) for t in self.ts])
+        self.n, self.q = self.Ps.shape[1:]
+        self.Ms = np.einsum('ikj,ikl->ijl', self.Ps, self.Ps)
+        self.Mdot = np.einsum('ikj,ikl->ijl', self.Pd, self.Ps) + np.einsum('ikj,ikl->ijl', self.Ps, self.Pd)
+        self.Mbar = self.Ms.mean(0)
+        lam, U = np.linalg.eigh(self.Mbar)
+        if lam[0] <= 0:
+            raise ValueError("M̄ is not positive definite: the regressor is not persistently exciting over the period")
+        self.lam_min, self.lam_max = float(lam[0]), float(lam[-1])
+        Mh = U @ np.diag(lam ** -0.5) @ U.T
+        peak = lambda Xs: float(max(np.linalg.eigvalsh(Mh @ x.T @ x @ Mh)[-1] for x in Xs))
+        self.rho, self.rho_D, self.rho_DD = peak(self.Ps), peak(self.Pd), peak(self.Pdd)
+        self.Psi_M = float(max(np.linalg.norm(p, 2) for p in self.Ps))
+        self.Psi_D = float(max(np.linalg.norm(p, 2) for p in self.Pd))
+        self.Psi_DD = float(max(np.linalg.norm(p, 2) for p in self.Pdd))
+        self.P1 = zero_mean_antiderivative(2 * (self.Ms - self.Mbar), self.T)
+        PM = np.einsum('ijk,ikl->ijl', self.P1, self.Ms)
+        self.F = PM + np.swapaxes(PM, 1, 2)
+        self.N2 = 0.5 * self.F.mean(0)                     # = 0 exactly; kept as a numerical check
+        self.S = zero_mean_antiderivative(self.F, self.T)
+        self.P2 = -(self.Ms - self.Mbar) + self.S
+        self.P2dot = self.F - self.Mdot
+        self.p1_meas = float(max(np.linalg.norm(p, 2) for p in self.P1))
+        self.p2_meas = float(max(np.linalg.norm(p, 2) for p in self.P2))
+
+    # ---- the constants of the lemma
+    def constants(self, k, delta=0.1):
+        k = float(k); e = 1.0 / k; T = self.T
+        PM, PD = self.Psi_M, self.Psi_D
+        sr, srD, srDD = np.sqrt(self.rho), np.sqrt(self.rho_D), np.sqrt(self.rho_DD)
+        pi1 = 0.5 * T * PM * (sr + 1)                                   # ‖P₁v‖ ≤ π₁‖v‖_M̄
+        pi2 = PM * (sr + 1) + 0.25 * T ** 2 * PM ** 3 * (2 * sr + 1)   # ‖P₂v‖ ≤ π₂‖v‖_M̄
+        p1 = 0.5 * T * PM ** 2                                          # ‖P₁‖ ≤ p₁
+        p2 = PM ** 2 + 0.5 * T ** 2 * PM ** 4                           # ‖P₂‖ ≤ p₂
+        r_z = (e ** 3 * (pi2 * PM * sr + pi1 * PM * srD + PM ** 2 * self.rho)
+               + e ** 4 * (pi2 * PM * srD + pi1 * PM ** 3 * sr) + e ** 5 * pi2 * PM ** 3 * sr)
+        c1 = sr + e * PM * pi1 + e ** 2 * PM * pi2
+        c2 = (e ** 2 * srDD + e ** 3 * (3 * PD * PM * sr + 2 * PM ** 2 * srD) + e ** 4 * (2 * PM ** 4 * sr + PD * PM * srD)
+              + e ** 5 * (PM ** 4 * srD + PD * PM ** 3 * sr) + e ** 6 * PM ** 5 * sr)
+        d_w = e * PM ** 2 + e ** 2 * PD * PM + e ** 3 * PM ** 4
+        beta = 2 * c1 ** 2 / delta
+        c_z = (1 - delta) - r_z / e
+        hi, lo = 1 + e * p1 + e ** 2 * p2, 1 - e * p1 - e ** 2 * p2
+        conds = dict(A=bool(c1 * c2 <= delta / 2), B=bool(d_w <= k / 4), C=bool(c_z > 0), D=bool(lo > 0))
+        ok = all(conds.values())
+        gamma = min(2 * e * c_z * self.lam_min / hi, k / 2) if ok else float('nan')
+        L_M = e * PM + e ** 2 * PD + e ** 3 * PM ** 3                     # ‖e₂‖ ≤ L_M ‖ζ‖
+        over = (1 + L_M) ** 2 * np.sqrt(max(hi, beta) / min(lo, beta)) if ok else float('nan')
+        return dict(k=k, delta=delta, beta=beta, c1=c1, c2=c2, c1c2=c1 * c2, d_w=d_w, r_z=r_z, c_z=c_z, p1=p1, p2=p2,
+                    pi1=pi1, pi2=pi2, hi=hi, lo=lo, conds=conds, ok=ok, gamma=gamma, rate=gamma / 2 if ok else float('nan'),
+                    overshoot=over, averaged_rate=self.lam_min / k)
+
+    def threshold(self, delta=0.1, k_max=1e6):
+        """The smallest k on a fine log grid at which conditions (A)–(D) hold (nan if none below k_max)."""
+        for k in np.geomspace(1.0, k_max, 2000):
+            if self.constants(k, delta)['ok']:
+                return float(k)
+        return float('nan')
+
+    # ---- the certificate: sup over states of V̇/V on the time grid
+    def quadratic_forms(self, i, k, beta):
+        """(H, N_sym) at grid index i: V = ½xᵀHx and V̇ = xᵀN_sym x along (LTV) for x = (e, ζ)."""
+        e = 1.0 / k; n, q = self.n, self.q
+        Ps, Pd, Pdd, M, Md = self.Ps[i], self.Pd[i], self.Pdd[i], self.Ms[i], self.Mdot[i]
+        L = -e * Ps + e ** 2 * Pd - e ** 3 * Ps @ M
+        Ldot = -e * Pd + e ** 2 * Pdd - e ** 3 * (Pd @ M + Ps @ Md)
+        Hz = np.eye(q) + e * self.P1[i] + e ** 2 * self.P2[i]
+        Hzdot = 2 * e * (M - self.Mbar) + e ** 2 * self.P2dot[i]
+        H = np.block([[beta * np.eye(n), -beta * L], [-beta * L.T, Hz + beta * L.T @ L]])
+        Hdot = np.block([[np.zeros((n, n)), -beta * Ldot], [-beta * Ldot.T, Hzdot + beta * (Ldot.T @ L + L.T @ Ldot)]])
+        A = ltv_matrix(Ps, k)
+        return H, 0.5 * (H @ A + A.T @ H + Hdot)
+
+    def certificate(self, k, delta=0.1, n_t=256):
+        """sup over the grid of t and over all states of V̇/V (a generalised eigenvalue problem at each t); the lemma
+        asserts that it is ≤ −γ.  Returns (sup V̇/V, −γ)."""
+        c = self.constants(k, delta)
+        worst = -np.inf
+        for i in np.linspace(0, self.N - 1, n_t).astype(int):
+            H, Nsym = self.quadratic_forms(i, k, c['beta'])
+            lamH, UH = np.linalg.eigh(H)
+            Hm = UH @ np.diag(lamH ** -0.5) @ UH.T
+            worst = max(worst, 2 * float(np.linalg.eigvalsh(Hm @ Nsym @ Hm)[-1]))
+        return worst, -c['gamma']
+

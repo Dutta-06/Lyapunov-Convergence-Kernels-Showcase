@@ -12,6 +12,10 @@ Three tables (PARADIGM.md §6, Lemma E.0 and Remark E.1):
    in this regime) and grows in the fast regime.
 3. The window length: the bound depends on the PE window T through α(T) and c₁(T); the table shows the optimum.
 
+4. Lemma E.0′ in the slow regime (the same ideal at g = 0.01, k = 50 … 600): the peak factors of the regressor, the
+   conditions of the lemma, its guaranteed rate against the exact Floquet rate and against the averaged rate λ_min(M̄)/k,
+   the certificate sup V̇/V ≤ −γ, and the optimised rate of Lemma E.0 for comparison.
+
 Output: results/explicit_rate/table.md
 """
 import os
@@ -99,9 +103,36 @@ def window_table():
     return rows
 
 
+def slow_regime_table():
+    rng = np.random.default_rng(12)
+    m, n = 3, 2
+    ctrl = T.TransportController(m, n, ke=6.0, g_a=30.0, g_c=30.0, g_s=15.0, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = T.sample_lifted_ideal(m, n, ctrl, rng, min_sep=0.9)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=2.5)
+    per = 20 * np.pi
+    g = 0.01
+    G_diag = np.concatenate([np.full(n, 2 * g), np.full(n, 2 * g), [g]])
+    reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
+    S = X.SlowRegimeLyapunov(reg.Psi, reg.Psidot, per, N=2048)
+    head = dict(lam_min=S.lam_min, kappa=S.lam_max / S.lam_min, rho=S.rho, rho_D=S.rho_D, rho_DD=S.rho_DD, Psi_M=S.Psi_M, Psi_D=S.Psi_D,
+                Psi_DD=S.Psi_DD, TPsiM2=per * S.Psi_M ** 2, N2=float(np.linalg.norm(S.N2, 2)), k0_02=S.threshold(0.2), k0_01=S.threshold(0.1))
+    rows = []
+    tg = np.linspace(0, per, 80)
+    for k in (50.0, 100.0, 200.0, 300.0, 400.0, 600.0):
+        fl = X.floquet_rate(reg.Psi, k, per)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, k, [per], tg, n_nodes=800)
+        e0 = X.optimise_eps(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=300)
+        for delta in (0.2, 0.1):
+            c = S.constants(k, delta)
+            sup, mg = S.certificate(k, delta, n_t=128) if c['ok'] else (float('nan'), float('nan'))
+            rows.append(dict(k=k, delta=delta, c=c, floquet=fl, e0=e0['rate'], sup=sup, mg=mg, avg=S.lam_min / k))
+    return head, rows
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     r1, r2, r3 = remark_E1_table(), slow_limit_table(), window_table()
+    head4, r4 = slow_regime_table()
     L = ["# Lemma E.0: the explicit rate against the exact Floquet rate (`exp_explicit_rate.py`)", "",
          "The explicit rate lies below the exact rate in every row. The ordering is numerical: Ψ_M, Ψ_D are grid maxima "
          "(80–100 samples per period), α a converged quadrature (checked by refinement), ε a finite grid; the margins are at "
@@ -134,7 +165,23 @@ def main():
     per = 20 * np.pi
     for r in r3:
         L.append(f"| {r['T'] / per:g} | {r['alpha']:.3g} | {r['rate']:.3e} | {r.get('eps', float('nan')):.3e} |")
-    L += ["", "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
+    L += ["", "## 4. Lemma E.0′ in the slow regime (the ideal of table 2 at g = 0.01, T = 20π)", "",
+          f"λ_min(M̄) = {head4['lam_min']:.3e}, κ(M̄) = {head4['kappa']:.2e}, Ψ_M = {head4['Psi_M']:.3f}, Ψ_D = {head4['Psi_D']:.3f}, Ψ_DD = {head4['Psi_DD']:.2f}, "
+          f"TΨ_M² = {head4['TPsiM2']:.2f}; peak factors ρ = {head4['rho']:.1f}, ρ_D = {head4['rho_D']:.0f}, ρ_DD = {head4['rho_DD']:.3g}; ‖N₂‖ = {head4['N2']:.1e} "
+          f"(the lemma: N₂ = 0); threshold k₀ of conditions (A)–(D): {head4['k0_02']:.0f} (δ = 0.2), {head4['k0_01']:.0f} (δ = 0.1).", "",
+          "| k | δ | conditions (A) c₁c₂ ≤ δ/2, (B), (C), (D) | β | c_ζ | guaranteed rate γ/2 | exact Floquet rate | exact / guaranteed | averaged rate λ_min/k | exact / averaged | Lemma E.0 optimised rate | exact / E.0 | sup V̇/V on the grid, −γ | overshoot C |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in r4:
+        c = r['c']; cd = c['conds']
+        L.append(f"| {r['k']:g} | {r['delta']:g} | {c['c1c2']:.3f}: {'yes' if cd['A'] else 'no'}, {'yes' if cd['B'] else 'no'}, {'yes' if cd['C'] else 'no'}, {'yes' if cd['D'] else 'no'} | "
+                 f"{c['beta']:.0f} | {c['c_z']:+.3f} | {c['rate']:.3e} | {r['floquet']:.3e} | {r['floquet'] / c['rate'] if c['ok'] else float('nan'):.3f} | {r['avg']:.3e} | "
+                 f"{r['floquet'] / r['avg']:.4f} | {r['e0']:.3e} | {r['floquet'] / r['e0']:.3g} | {r['sup']:+.3e}, {r['mg']:+.3e} | {c['overshoot']:.1f} |")
+    L += ["", "Reading: above the threshold the guaranteed rate of Lemma E.0′ is the averaged rate λ_min(M̄)/k up to the factor "
+          "c_ζ/(1 + εp₁ + ε²p₂) ≈ 1 − δ, within a factor 1.3 of the exact rate, where Lemma E.0's optimised rate is five orders of "
+          "magnitude below it; the certificate sup V̇/V ≤ −γ is verified on the grid wherever the conditions hold. Below the threshold "
+          "the conditions fail through (A): the derivative peak factor ρ_DD of this regressor is large (the directions that are poorly "
+          "excited on average are excited in short bursts).", "",
+          "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'table.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(L) + "\n")
     print("\n".join(L))

@@ -36,6 +36,8 @@ found the construction.
 - [S18] J. Cortés, S. Martínez, T. Karatas, F. Bullo. *Coverage control for mobile sensing networks*. IEEE Trans. Robotics and Automation 20(2):243–255, 2004. Continuous-time Lloyd descent ṗ_i = −k(p_i − C_{V_i}) toward the centroids of Voronoi cells, with its LaSalle convergence proof. (Details from memory; not re-verified here.)
 - [S19] M. Balzer, T. Schlömer, O. Deussen. *Capacity-constrained point distributions*. ACM SIGGRAPH 2009; Q. Mérigot, *A multiscale approach to optimal transport*, Computer Graphics Forum 30(5), 2011; F. de Goes, K. Breeden, V. Ostromoukhov, M. Desbrun, *Blue noise through optimal transport*, ACM Trans. Graphics 31(6), 2012. Equal-mass (capacity-constrained) quantisation through optimal transport plans and their barycentres. (Details from memory; not re-verified here.)
 - [S20] S. P. Lloyd. *Least squares quantization in PCM*. IEEE Trans. Inform. Theory 28(2):129–137, 1982; Q. Du, V. Faber, M. Gunzburger, *Centroidal Voronoi tessellations: applications and algorithms*, SIAM Review 41(4):637–676, 1999. Lloyd's algorithm and centroidal Voronoi tessellations. (Details from memory; not re-verified here.)
+- [S21] A. Saberi, H. Khalil. *Quadratic-type Lyapunov functions for singularly perturbed systems*. IEEE Trans. Automat. Control 29(6):542–550, 1984; and H. K. Khalil, *Nonlinear Systems*, 3rd ed., Prentice Hall, 2002, Ch. 11 (composite Lyapunov functions for two-time-scale systems). (Details from memory; not re-verified here.)
+- [S22] D. Aeyels, J. Peuteman. *A new asymptotic stability criterion for nonlinear time-variant differential equations*. IEEE Trans. Automat. Control 43(7):968–971, 1998; J. Peuteman, D. Aeyels, *Exponential stability of slowly time-varying nonlinear systems*, Math. Control Signals Systems 15:202–228, 2002. Stability of slowly varying and averaged systems through the averaged vector field. (Details from memory; not re-verified here.)
 - [S13] J. Chevallier. *Uniform decomposition of probability measures: quantization, clustering and rate of convergence*. J. Appl. Probab. 55(4):1037–1045 (2018). Equal-weight approximation rates in W₂ (used in PARADIGM.md Corollary B.6), with Fournier–Guillin, Probab. Theory Relat. Fields 162 (2015), for i.i.d. atoms.
 
 ---
@@ -160,6 +162,24 @@ found the construction.
 - **Verdict: a known construction made explicit for this class.** Its role is rigour, not novelty: Theorem E no longer
   depends on an unverified citation. The ω⁻² law of Remark E.1 now has a proof.
 
+### E.0′ Sharp explicit rate in the slow-adaptation regime
+
+- **Closest prior.** Composite (quadratic-type) Lyapunov functions for singularly perturbed systems [S21], where a fast
+  variable is slaved to a slow manifold and the interconnection terms are absorbed with sup-norm constants; averaging
+  Lyapunov functions for slowly time-varying systems [S22], where a zero-mean antiderivative of the fluctuation of the
+  vector field is added as a correction term. Lemma E.0′ combines the two for the mixed class (LTV): a second-order
+  slaving of the error (e₂ = −εΨζ + ε²Ψ̇ζ − ε³ΨMζ) and two averaging corrections (P₁, P₂) of the slow quadratic form.
+- **Distinction.** The interconnection and remainder terms are bounded not in sup norm but per direction against the
+  average excitation ‖v‖_{M̄} — the *peak factors* ρ, ρ_D, ρ_DD — which is what makes the rate λ_min⟨ΨᵀΨ⟩/k (the exact
+  averaged rate) rather than quadratic in λ_min; the identity N₂ = ½⟨P₁M + MP₁⟩ = 0 shows that the second-order averaged
+  correction to the symmetric part vanishes for this class, which explains the measured k⁻² relative deviation of the
+  exact rate from λ_min/k. No source stating an explicit rate for the mixed PE class that is sharp in the slow limit, or
+  using peak factors of the regressor's derivatives as the threshold data, was found (the averaging and PE literatures
+  were not swept exhaustively).
+- **Verdict: a combination of two classical constructions with a new choice of norms; the sharp explicit rate for the
+  mixed class appears new.** Its scope is the slow regime above an explicit threshold; the fast regime stays with
+  Lemma E.0.
+
 ### I. Reciprocity criterion for the exactly averaged loop
 
 - **Closest prior.** The coboundary (cyclic-sum) criterion for reciprocal pairwise interactions is standard in the
@@ -246,6 +266,8 @@ theory. Within it, the constructions that appear new are:
 - the frozen-measure structure of the exactly averaged loop (H.7), and the characterisation of its non-reciprocity (I);
 - the finite-m averaging theorem for the real closed loop (J) and the orientation as a design input for the collapsed
   configuration (K);
+- the explicit strict Lyapunov functions for the mixed PE class (E.0, and E.0′ with the sharp slow-regime rate through
+  peak factors);
 - the closed-loop propagation-of-chaos statement (D′) and the barycentric leak's Lyapunov analysis (C′), both built on
   standard constructions (Sznitman's coupling; the Lloyd descent of coverage control).
 
