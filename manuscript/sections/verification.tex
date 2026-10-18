@@ -110,6 +110,24 @@ E, explicit constants & on the implemented loop, from a start inside the explici
   $\norm{w(t)}\le(p_{\mathrm{hi}}/p_{\mathrm{lo}})^{1/2}e^{-\lambda t}\norm{w(0)}$ at every sample ($L_J$ estimated
   from samples)
   & \code{Ex::test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop}\\
+Corollary E.0$'$.2 & the explicit envelope of Theorem E with Lemma E.0$'$'s constants on the implemented single-kernel
+  loop at $k_e=40$: 1.5 e-folds inside the envelope from a start in the explicit ball ($\mathrm{d}t=0.005$, below the
+  discretisation floor); $\lambda'>10\times{}$Theorem E's rate from Lemma E.0 and $<4\times{}$the exact linear rate;
+  the constants table
+  & \code{Ex::test_corollary_E0prime_2_envelope_on_the_implemented_loop}, \code{exp_explicit_rate.py} (table 5)\\
+Corollary E.0$'$.3 & the explicit bound on the stationary parameter spread of the dithered (LTV) dominates the exact
+  periodic covariance (sinusoid: ratios $2.7\to1.3$ ($\delta=0.2$) and $2.5\to1.2$ ($\delta=0.1$) at $k=20\to200$,
+  falling toward $1/(1-\delta)$; the Theorem E ideal: 15--18, the price of $q=15$ directions at the worst
+  excitation); the exact value equals the averaged $k\cdot\tr X$ within $2/k^2$
+  & \code{Ex::test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution},
+    \code{exp_explicit_rate.py} $\to$ \code{results/explicit_rate/table.md} (table 6)\\
+Lemma E.0$'$ & the certificate $\sup_{t,x}\dot V/V\le-\gamma$ (a generalised eigenvalue problem on a time grid) on
+  $\Psi=(\sin t,\cos t)$ at $k=20$, $50$, $200$ and on the slow-adaptation ideal at $g=0.01$, $k=400$; $N_2=0$
+  numerically; the guaranteed rate below the exact Floquet rate and within a factor 2 (sinusoid) and 1.5 (ideal) of
+  it, above Lemma E.0's by more than $10^4$ on the ideal; the table of $k$ and $\delta$
+  & \code{Ex::test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness},
+    \code{Ex::test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal},
+    \code{exp_explicit_rate.py} $\to$ \code{results/explicit_rate/table.md} (table 4)\\
 G(a), two scales & direct check (cosine $\ge0.998$ in the $\Ginv$ metric, \code{violating}; the weight block fails
   in \code{satisfying}, as explained in Section~\ref{sec:propG}); $\bar L$ at period-mean parameters
   non-increasing
@@ -186,6 +204,31 @@ K(iii), (iv) & the orientation difference of the softest separation exponent at 
   at $\Theta^*$ converges to a value 30\% off; at $\sigma_{\mathrm{crit}}$ both orientations are unstable,
   predictions within 14\% at $k_e=40$; at the designed $\sigma_0$ the signs differ for $k_e=10$ and $20$
   & \code{exp_orientation_stability.py} $\to$ \code{results/orientation_stability/table.md}\\
+J$'$ averaged data, solver & the single-kernel $J$, $\nabla J$, $b_{\mathrm{fr}}$, $b_{\mathrm{osc}}$ against the
+  general H.7/H.7a code ($2\cdot10^{-5}$); the weighted Poisson solver against the Ornstein--Uhlenbeck closed forms
+  ($g$, the mean shift $(G\lambda)^{-1}b$, the Green identity, zero current for a gradient drift); the stationary
+  Fokker--Planck solver of the first-order SDE: current ratio $\to1$ linearly in $\varepsilon$,
+  $\norm{m-\pi(1+\varepsilon g)}_1\propto\varepsilon^2$
+  & \code{tests/test_dither.py} (3 tests)\\
+J$'$(b), (c), (d) & real loop, $2\cdot10^4$ replicas, $k_e=10$--$80$, both orientations: the stationary means differ
+  from the Gibbs values by $k_e^{-0.87}$ ($\alpha$), $k_e^{-0.83}$ ($\gamma$), $k_e^{-1.09}$ ($\alpha\gamma$); the
+  first-order prediction removes 93--97\% of the discrepancy at $k_e=10$ and 70--85\% at $k_e=20$--$40$, the residual
+  at the Monte Carlo floor at $k_e=80$ (second order not resolved); the orientation-odd shift matches its prediction
+  to 7--8\% at $k_e=10$ and within the 10--30\% resolution at $k_e=20$--$80$;
+  $k_e^2\E e^2/(2\pi(\bar L))-1=0.5$--$0.7/k_e$
+  & \code{tests/test_dither.py::test_real_loop_means_are_closer_to_the_first_order_prediction_than_to_gibbs}
+    ($k_e=20$), \code{exp_dither_stationary.py} $\to$ \code{results/dither/table.md}\\
+J$'$(e), J$'$.2 & the circulation of the real loop is below the Monte Carlo resolution at first order ($k_e\ge20$)
+  and dominated by higher orders at $k_e=10$; the current and density expansion of the first-order averaged SDE
+  checked on the grid (ratios $1.47\to1.03$, $\varepsilon^2$ remainder 0.31); the antisymmetric part of $D(\Ginv b)$
+  against the formula of J$'$.2(iii) to six digits (referee round 6)
+  & \code{exp_dither_stationary.py} $\to$ \code{results/dither/table.md}; \code{review/REVIEW_round6_Jprime.md}\\
+Corollary J$'$.3 & the Gibbs measures $\pi_m$ (MALA, 4000 replicas, $m=1$--$32$) converge to the mean-field
+  minimiser $\mu^*_\tau$ (fixed point to $10^{-11}$) with a $1/m$ law: slopes $-1.01$ ($\E[\gamma_1]$) and $-0.99$
+  ($\E[\bar L(\mu_\Theta)]$, rescaled deviation $0.058\pm0.002$ at every $m$), $\E[\alpha_1^2]$ from 0.54 to 0.92
+  against 0.935 with rescaled deviation $-0.41\pm0.01$; the $m=1$ row agrees with the quadrature of $\pi_1$
+  & \code{exp_gibbs_m.py} $\to$ \code{results/dither/gibbs_m.md};
+    \code{tests/test_dither.py::test_corollary_J3_mean_field_minimiser_and_gibbs_sampler_consistency}\\
 H.7 + H.7a in the real closed loop & the orientation dependence of the learned kernels (same $\rho$) is predicted to
   within 3\% in size and 11\% as a vector, cosine 0.994 at $k_e=40$; the measured difference scales like
   $k_e^{-1.01}$
@@ -198,7 +241,8 @@ H.7 + H.7a in the real closed loop & the orientation dependence of the learned k
   \item B.5 along (L), and B.6 and B.7;
   \item the Filippov form of C(i), the inequality of C(v), and Proposition C.5's $D^+\VOT=\sigma_m(\delta-\delta^2)$;
   \item D(b), D's constant, and the one-sided constant of Remark D.1;
-  \item the sharpness of the explicit rate of E beyond the tables of Remark E.0a; Corollary E.2 and Remark E.3;
+  \item the sharpness of the explicit rates of E beyond the tables of Remark E.0a and Lemma E.0$'$; Lemma E.0$'$
+    below its threshold $k_0$ (where it makes no claim) and for non-periodic PE; Corollary E.2 and Remark E.3;
   \item Theorem I(v) beyond the two instances (the analytic dichotomy is a proof only);
   \item Theorem J(c) (the basin; a single basin run is reported in \code{review/REVIEW_round5_J.md});
   \item Proposition K(iii)--(iv) beyond the instance of \code{exp_orientation_stability.py}, and the second-order

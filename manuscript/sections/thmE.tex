@@ -518,6 +518,115 @@ floor $\approx6\cdot10^{-6}$ at $\mathrm{d}t=0.02$, above the explicit ball), wi
 Theorem E's rate from Lemma E.0 and within a factor $4$ of the exact linear rate\newline
 (\code{test_corollary_E0prime_2_envelope_on_the_implemented_loop}).}
 
+\begin{thm}{Corollary}{E.0$'$.3}[the stationary parameter spread of the dithered linearised loop]
+Under the hypotheses of Lemma E.0$'$ (conditions (A)--(D) at $(k,\delta)$), consider \textup{(LTV)} with parameter
+dither,
+\begin{equation}
+  \dot e=-ke-\Psi(t)\zeta,\qquad \dd\zeta=\Psi(t)^\T e\dd t+\Sigma\dd B_t,
+  \tag{LTV$_\tau$}
+\end{equation}
+with $\Sigma\in\R^{q\times q'}$ constant and $B$ a standard Brownian motion. Let $V$ be the strict Lyapunov function of
+Lemma E.0$'$ and $\mathbf{H}(t)$ its quadratic form ($V=\frac12x^\T\mathbf{H}(t)x$, $x=(e,\zeta)$),
+$L(t):=-\varepsilon\Psi+\varepsilon^2\dot\Psi-\varepsilon^3\Psi M$ the slaving map ($e_2=L(t)\zeta$),
+$L_M:=\varepsilon\Psi_M+\varepsilon^2\Psi_D+\varepsilon^3\Psi_M^3\ge\sup\norm{L}$, and
+\begin{gather*}
+  \nu(t):=\tfrac12\tr\bigl(\Sigma^\T\mathbf{H}_{\zeta\zeta}(t)\Sigma\bigr)
+  =\tfrac12\tr\bigl(\Sigma^\T(I+\varepsilon P_1+\varepsilon^2P_2+\beta L^\T L)\Sigma\bigr),\\
+  \bar\nu:=\sup_t\nu(t)\le\tfrac12\norm{\Sigma}_F^2\bigl(1+\varepsilon p_1+\varepsilon^2p_2+\beta L_M^2\bigr).
+\end{gather*}
+Then, for every initial law with finite second moment,
+\[
+  \limsup_{t\to\infty}\E V(t,x_t)\le\frac{\bar\nu}{\gamma},\qquad
+  \limsup_{t\to\infty}\E\norm{\zeta_t}^2\le\frac{2\bar\nu}{\gamma(1-\varepsilon p_1-\varepsilon^2p_2)},\qquad
+  \limsup_{t\to\infty}\E\norm{w_t}^2\le\frac{2\bar\nu}{\gamma\beta},
+\]
+with $\gamma$ the rate of Lemma E.0$'$; in the slow regime
+$\gamma=2c_\zeta\lambda_{\min}(\bar M)/(k(1+\varepsilon p_1+\varepsilon^2p_2))$, so that
+\[
+  \limsup\E\norm{\zeta_t}^2\le
+  \frac{k\norm{\Sigma}_F^2\,(1+\varepsilon p_1+\varepsilon^2p_2)(1+\varepsilon p_1+\varepsilon^2p_2+\beta L_M^2)}
+  {2c_\zeta(1-\varepsilon p_1-\varepsilon^2p_2)\lambda_{\min}(\bar M)}
+  =(1+O(\varepsilon))\,\frac{k\norm{\Sigma}_F^2}{2(1-\delta)\lambda_{\min}(\bar M)}.
+\]
+For comparison, the averaged Langevin dynamics $\dot\zeta=-\frac1k\bar M\zeta+\Sigma\dot B$ has the exact stationary
+covariance $\bar C=kX$ with $\bar MX+X\bar M=\Sigma\Sigma^\T$, so $\E\norm{\zeta}^2=k\tr X$, equal to
+$\frac k2\tr(\bar M^{-1}\Sigma\Sigma^\T)$ when $\Sigma\Sigma^\T$ commutes with $\bar M$: the bound is within
+$(1+O(\varepsilon))/(1-\delta)$ of it when $\bar M$ is isotropic, and pays the condition number of $\bar M$ in the
+trace otherwise (it replaces every $1/\lambda_i$ by $1/\lambda_{\min}$), as a scalar Lyapunov function must.
+\end{thm}
+\status{Proved (It\^o's formula and the pointwise inequality of Lemma E.0$'$). Checked (\code{exp_explicit_rate.py},
+table~6; \code{tests/test_excitation.py}) against the exact periodic stationary covariance of \textup{(LTV$_\tau$)},
+computed from the periodic Lyapunov equation.}
+
+\begin{proof}
+$V(t,x)=\frac12x^\T\mathbf{H}(t)x$ is $C^1$ in $t$ and quadratic in $x$, so by It\^o's formula along
+\textup{(LTV$_\tau$)}, with $\tilde\Sigma:=[0;\Sigma]\in\R^{(n+q)\times q'}$,
+\begin{multline*}
+  \dd V=\bigl[\partial_tV+\nabla_xV\cdot A(t)x\bigr]\dd t+\nabla_xV\cdot\tilde\Sigma\dd B_t
+  +\tfrac12\tr\bigl(\tilde\Sigma^\T\mathbf{H}(t)\tilde\Sigma\bigr)\dd t\\
+  \le\bigl[-\gamma V+\nu(t)\bigr]\dd t+\nabla_xV\cdot\tilde\Sigma\dd B_t,
+\end{multline*}
+the inequality being Lemma E.0$'$'s $\dot V\le-\gamma V$ pointwise in $(t,x)$, and
+$\tilde\Sigma^\T\mathbf{H}\tilde\Sigma=\Sigma^\T\mathbf{H}_{\zeta\zeta}\Sigma$ with
+$\mathbf{H}_{\zeta\zeta}=I+\varepsilon P_1+\varepsilon^2P_2+\beta L^\T L$ from the block form of $\mathbf{H}$
+(Corollary E.0$'$.2). The stochastic integral is a martingale because $V$ has quadratic growth and the linear SDE has
+finite moments of every order, so $\frac{\mathrm{d}}{\mathrm{d}t}\E V\le-\gamma\E V+\bar\nu$ and
+$\E V(t)\le e^{-\gamma t}\E V(0)+\bar\nu/\gamma$. The bounds on $\E\norm{\zeta}^2$ and $\E\norm{w}^2$ follow from
+$V\ge\frac12(1-\varepsilon p_1-\varepsilon^2p_2)\norm{\zeta}^2$ and $V\ge\frac\beta2\norm{w}^2$; the estimate of
+$\bar\nu$ uses $\norm{P_1}\le p_1$, $\norm{P_2}\le p_2$, $\norm{L}\le L_M$. The averaged covariance is the stationary
+solution of the Lyapunov equation of the time-invariant averaged system.
+\end{proof}
+
+\paragraph{Numerics} (\code{exp_explicit_rate.py} $\to$ \code{results/explicit_rate/table.md}, table~6; reproduced
+in Table~\ref{tab:thmE:dither}). $\Sigma=(2\cdot10^{-3})^{1/2}I$; the exact stationary covariance from the periodic
+Lyapunov equation (RK4 with $k\cdot\mathrm{d}t\le1/4$; the period mean and the maximum of $\E\norm{\zeta}^2$ coincide
+to four digits), the averaged value $k\cdot\tr X$, and the bound:
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Corollary E.0$'$.3: the stationary parameter spread of the dithered (LTV)]{Corollary E.0$'$.3: the
+explicit bound on the stationary parameter spread of the dithered (LTV) against the exact periodic stationary
+covariance and the averaged value (\code{results/explicit_rate/table.md}, table~6).}
+\label{tab:thmE:dither}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}>{\hsize=1.1\hsize}Yc>{\hsize=0.75\hsize\centering\arraybackslash}X>{\hsize=1.0\hsize\centering\arraybackslash}X>{\hsize=1.0\hsize\centering\arraybackslash}X>{\hsize=1.45\hsize\centering\arraybackslash}X>{\hsize=0.9\hsize\centering\arraybackslash}X>{\hsize=0.8\hsize\centering\arraybackslash}X@{}}
+\toprule
+regressor ($\kappa(\bar M)$) & $k$ & $\delta$ & exact $\E\norm{\zeta}^2$ & averaged $k\cdot\tr X$ & bound
+  & bound / exact & $1/(1-\delta)$\\
+\midrule
+Theorem E ideal of table~4 ($7.8\cdot10^3$) & 300 & 0.2 & $1.509\cdot10^6$ & $1.509\cdot10^6$ & $2.64\cdot10^7$
+  & 17.5 & 1.25\\
+ & 400 & 0.2 / 0.1 & $2.012\cdot10^6$ & $2.012\cdot10^6$ & $3.51\cdot10^7$ / $3.11\cdot10^7$ & 17.4 / 15.5
+  & 1.25 / 1.11\\
+ & 600 & 0.2 / 0.1 & $3.018\cdot10^6$ & $3.018\cdot10^6$ & $5.23\cdot10^7$ / $4.65\cdot10^7$ & 17.3 / 15.4
+  & 1.25 / 1.11\\
+$\Psi=(\sin t,\cos t)$ (1) & 20 & 0.2 / 0.1 & $8.025\cdot10^{-2}$ & $8.000\cdot10^{-2}$ & 0.216 / 0.202
+  & 2.69 / 2.52 & 1.25 / 1.11\\
+ & 50 & 0.2 / 0.1 & $2.001\cdot10^{-1}$ & $2.000\cdot10^{-1}$ & 0.315 / 0.282 & 1.58 / 1.41 & 1.25 / 1.11\\
+ & 200 & 0.2 / 0.1 & $8.000\cdot10^{-1}$ & $8.000\cdot10^{-1}$ & 1.051 / 0.935 & 1.31 / 1.17 & 1.25 / 1.11\\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+The exact stationary spread is the averaged Langevin value up to $3\cdot10^{-4}$ (ideal) and $1.25/k^2$ (sinusoid):
+the averaging prediction of the dithered loop's stationary covariance is essentially exact in the slow regime. On
+the isotropic sinusoid the bound exceeds the exact value by a factor that falls toward $1/(1-\delta)$ ($2.7$, $1.6$,
+$1.3$ at $k=20$, $50$, $200$ for $\delta=0.2$; the excess is the $O(1/k)$ of the factors $(1\pm\varepsilon p_1)\dots$
+and $\beta L_M^2$). On the ideal, where one direction is excited $7.8\cdot10^3$ times less than the others, the
+bound is 15--18 times the exact value: it charges every one of the $q=15$ directions the price of the worst,
+$(q/\lambda_{\min})/\sum_i(1/\lambda_i)\approx q=15$ (up to $1/(1-\delta)$), the trace-level price of a scalar
+Lyapunov function. The exact $\E\norm{e}^2$ is $\norm{\Sigma}_F^2/k^2$ to four digits on both instances (the error
+rides on its slow manifold), while the bound on $\E\norm{w}^2$ is coarse (factor $1/\beta$).
+
+\checkedby{\code{tests/test_excitation.py}: on $\Psi=(\sin t,\cos t)$ with $\Sigma=(2\cdot10^{-3})^{1/2}I$, the
+explicit bound dominates the exact period mean and the exact maximum of $\E\norm{\zeta}^2$ at $k=20$, $50$, $200$
+for $\delta=0.1$ and $0.2$, its ratio to the exact value decreases toward $1/(1-\delta)$ (within 6\% at $k=200$), the
+grid value of $\bar\nu$ lies below its explicit bound, and the exact value agrees with the averaged $k\cdot\tr X$
+within $2/k^2$\newline
+{\footnotesize(\code{test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution}).}}
+
 \begin{thm}{Theorem}{E}[with explicit constants]
 Let $\Psi_G:=m^{-1/2}\Psi(I_m\otimes G^{1/2})\in\R^{n\times mp}$, and let $(\alpha_G,T,\Psi_{G,M},\Psi_{G,D})$ be PE
 data for it: $\int_t^{t+T}\Psi_G^\T\Psi_G\dd r\succeq\alpha_GI$, $\norm{\Psi_G}\le\Psi_{G,M}$,

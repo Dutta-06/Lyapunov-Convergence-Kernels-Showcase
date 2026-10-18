@@ -1,0 +1,694 @@
+% Theorem J': the stationary law of the dithered finite-m closed loop (PARADIGM.md, section 6f).
+\section{Theorem J\texorpdfstring{$'$}{'}: the stationary law of the dithered finite-\texorpdfstring{$m$}{m} closed
+loop}\label{sec:thmJprime}
+
+This section proves the second step of Section~\ref{sec:program}, branch 1 --- the finite-$m$ closed loop \emph{with
+dither} --- and answers the first ``next step'' of branch 2 (the orientation effect when the stationary state is a
+measure). It also opens a new angle: the stationary state of the dithered loop is a non-equilibrium steady state, with
+a stationary probability current of order $1/k_e$ that vanishes exactly when the first-order averaged drift is
+reciprocal (Theorem I), and the stationary parameter process is not reversible in time.
+
+\paragraph{Setting.} The closed loop of Theorem H's design at finite $m$, in the scaling $\sigma = \sigma_0/k_e$,
+$\tau = \tau_0/k_e$ (the formal limit of Remark H.0: $k_e\to\infty$ with $G$, $k_e\sigma$, $k_e\tau$ fixed),
+$\varepsilon := 1/k_e$:
+\begin{gather}
+  \dot x = f(x) + \dot x_m - k_ee - \fhat_\Theta(x),\qquad e := x - x_m(t),\notag\\
+  \dd\vartheta_i = \bigl[G\nabla_\vartheta\bigl(e^\T\tilde\Phi(x;\vartheta_i)\bigr)
+  - (\sigma_0/k_e)(\vartheta_i - \vartheta^0)\bigr]\dd t + \sqrt{2\tau_0/k_e}\,G^{1/2}\dd B_i,\qquad i = 1..m,
+  \tag{CL$_\tau$}
+\end{gather}
+with the notation of Section~\ref{sec:thmJ}: saturated features, $\Theta\in\R^{mp}$, $G_m := I_m\otimes G$,
+$x_m\in C^\infty$ $T_0$-periodic with occupation measure $\rho$, $f\in C^\infty$ on a neighbourhood of the tube
+$\mathcal T_R$, $F_R := \sup_{\mathcal T_R}\norm{f}$, and $r_\Theta$, $J_m$, $H$, $u$,
+$\langle H\rangle = -G_m\nabla J_m$ as there. Assume $k_e\ge k_T := (F_R + K_\Phi)/R$, so that the ball
+$\{\norm{e}\le R\}$ is forward invariant for every parameter path ($\norm{\dot e}\le F_R + K_\Phi - k_e\norm{e}$ on
+it): the plant never sees $f$ outside the tube, and $f$ may be modified outside a neighbourhood of $\mathcal T_R$ to
+be smooth with bounded derivatives on $\R^n$ without changing the law of the loop.
+
+\smallskip
+\noindent\emph{Slow time and the three scales.} Put $s := \varepsilon t$, $\theta := t \bmod T_0\in\mathbb{T} :=
+\R/T_0\mathbb{Z}$, and $\eta := e/\varepsilon = k_ee$. Then $\dd W_s := \sqrt\varepsilon\,\dd B_t$ is a Brownian
+motion in slow time and (CL$_\tau$) reads
+\begin{gather*}
+  \frac{\dd\eta}{\dd s} = \varepsilon^{-2}\bigl[r_\Theta(x_m(\theta) + \varepsilon\eta) - \eta\bigr],\\
+  \dd\vartheta_i = \bigl[G\nabla_\vartheta\bigl(\eta^\T\tilde\Phi(x_m(\theta) + \varepsilon\eta;\vartheta_i)\bigr)
+  - \sigma_0(\vartheta_i - \vartheta^0)\bigr]\dd s + \sqrt{2\tau_0}\,G^{1/2}\dd W_i,\qquad
+  \frac{\dd\theta}{\dd s} = \varepsilon^{-1}:
+\end{gather*}
+the error relaxes at rate $\varepsilon^{-2}$ to the slaved value $\eta^*(\Theta,\theta) := r_\Theta(x_m(\theta))$,
+the phase turns at rate $\varepsilon^{-1}$, and the parameters move at rate one. The generator of the Markov process
+$Z := (\Theta,\eta,\theta)$ on $\mathcal{S} := \R^{mp}\times\{\norm{\eta}\le F_R + K_\Phi\}\times\mathbb{T}$ is
+\begin{gather*}
+  L_\varepsilon = \varepsilon^{-2}A_\varepsilon + \varepsilon^{-1}\partial_\theta + B_\varepsilon,\qquad
+  A_\varepsilon := \bigl(r_\Theta(x_m(\theta) + \varepsilon\eta) - \eta\bigr)\cdot\nabla_\eta,\\
+  B_\varepsilon := \sum_i\bigl[G\nabla_\vartheta\bigl(\eta^\T\tilde\Phi(x_m(\theta) + \varepsilon\eta;\vartheta_i)\bigr)
+  - \sigma_0(\vartheta_i - \vartheta^0)\bigr]\cdot\nabla_{\vartheta_i} + \tau_0\sum_i\tr\bigl(G\nabla^2_{\vartheta_i}\bigr),
+\end{gather*}
+with $A_\varepsilon = A_0 + \varepsilon A_1 + \dots$, $A_0 = (\eta^* - \eta)\cdot\nabla_\eta$,
+$A_1 = (D_xr_\Theta(x_m)\eta)\cdot\nabla_\eta$, and $B_\varepsilon = B_0 + \varepsilon B_1 + \dots$, where $B_0$ has
+the drift $\sum_i[G\nabla_\vartheta(\eta^\T\tilde\Phi(x_m;\vartheta_i)) - \sigma_0(\vartheta_i - \vartheta^0)]$
+(equal to $H(\Theta,\theta)$ at $\eta = \eta^*$) and
+$B_1 = \sum_iG\nabla_\vartheta\bigl(\eta^\T D_x\tilde\Phi(x_m;\vartheta_i)\eta\bigr)\cdot\nabla_{\vartheta_i}$.
+
+\smallskip
+\noindent\emph{The averaged objects.} $\bar L_0 := -G_m\nabla J_m\cdot\nabla + \tau_0\tr(G_m\nabla^2)$ is the
+Langevin generator in the $\Ginv$ metric with invariant measure the Gibbs measure $\pi := Z^{-1}\exp(-J_m/\tau_0)$
+(Theorem H(ii) at finite $m$; $\pi$ has Gaussian tails because
+$J_m\ge(\sigma_0/2)\sum\norm{\vartheta_i - \vartheta^0}^2_{\Ginv} - C$). The first-order drift is the vector field
+on $\R^{mp}$
+\begin{gather*}
+  b(\Theta) := b_{\mathrm{fr}}(\Theta) + b_{\mathrm{osc}}(\Theta),\qquad
+  b_{\mathrm{fr},i} := G\nabla_\vartheta(U_{\mathrm{even}} + U_{\mathrm{odd}})[\mu_\Theta](\vartheta)\big|_{\vartheta=\vartheta_i},\\
+  b_{\mathrm{osc}} := \bigl\langle(D_\Theta H)(\Theta,\theta)\cdot u(\Theta,\theta)\bigr\rangle_\theta,
+\end{gather*}
+with $\mu_\Theta := \frac1m\sum_j\delta_{\vartheta_j}$ and $U_{\mathrm{even}}$, $U_{\mathrm{odd}}$ the functionals of
+Proposition H.7 (so $b = k_e^2(b_{\mathrm{frozen}} + b_{\mathrm{osc}})$ of Theorem J, now at every $\Theta$ and not
+only at critical points; \code{periodic.second_order_drift} and \code{dither.SingleKernelInstance.averaged} compute
+it). The \emph{first-order correction} $g\colon\R^{mp}\to\R$ is the solution with $\pi(g) = 0$ of the weighted
+Poisson equation
+\begin{gather*}
+  \tau_0\nabla\cdot(\pi G_m\nabla g) = \nabla\cdot(\pi b)\\
+  \text{(equivalently $\bar L_0g = -\tau_0\pi^{-1}\nabla\cdot(\pi b) = \nabla J_m\cdot b - \tau_0\nabla\cdot b$, which has zero $\pi$-mean),}
+\end{gather*}
+the \emph{first-order current} is $j_1 := \pi(b - \tau_0G_m\nabla g) = \pi b_\perp$ with
+$b_\perp := b - \tau_0G_m\nabla g$, so that $\nabla\cdot j_1 = 0$ and $b = G_m\nabla(\tau_0g) + b_\perp$ is the Hodge
+decomposition of $b$ in $L^2(\pi;G_m^{-1})$ into a $G_m$-gradient and a $\pi$-divergence-free field. For an
+observable $\varphi\in C^{3,\alpha}(\R^{mp})$ with polynomially bounded derivatives, $\psi_\varphi$ denotes the
+solution of $\bar L_0\psi_\varphi = \varphi - \pi(\varphi)$, $\pi(\psi_\varphi) = 0$.
+
+\begin{thm}{Theorem}{J$'$}[the stationary law of the dithered finite-$m$ closed loop]
+Assume the setting above, with $G$ diagonal (as in every instance of this document; for a general symmetric $G$
+replace $G_l\partial_{\vartheta_l}$ by the contraction with $G$ below). There are $\varepsilon_0 > 0$ and, for every
+observable $\varphi\in C^{3,\alpha}(\R^{mp})$ (three derivatives, the third H\"older continuous) with polynomially
+bounded derivatives up to order three, a constant $C_\varphi$ (depending on $\varphi$, $f$, $x_m$, $G$, $\sigma_0$,
+$\tau_0$, $R$, $m$, the feature bounds, and not on $\varepsilon$) such that for every
+$\varepsilon = 1/k_e\in(0,\varepsilon_0]$:
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item \emph{Invariant law.} The process $Z$ has an invariant probability measure $m_\varepsilon$ on $\mathcal{S}$,
+    every invariant measure is supported in $\{\norm{\eta}\le F_R + K_\Phi\}$ and has moments of all orders in
+    $\Theta$ bounded uniformly in $\varepsilon$, and its $\theta$-marginal is uniform. If moreover $a_{\max} > F_R$
+    componentwise and the tube lies in the box of the saturated centres, the invariant measure is unique, so the law
+    of $Z_t$ converges to $m_\varepsilon$ and time averages along a single trajectory converge to
+    $m_\varepsilon$-expectations.
+  \item \emph{The Gibbs measure at leading order.} For every invariant measure $m_\varepsilon$,
+    $\abs{m_\varepsilon(\varphi) - \pi(\varphi)}\le C_\varphi\varepsilon$.
+  \item \emph{First-order correction.}
+    $m_\varepsilon(\varphi) = \pi(\varphi) - \varepsilon\,\pi(b\cdot\nabla\psi_\varphi) + O(\varepsilon^2)
+    = \pi(\varphi) + \varepsilon\int\varphi g\dd\pi + O(\varepsilon^2)$, with
+    $\abs{O(\varepsilon^2)}\le C_\varphi\varepsilon^2$. In particular the stationary parameter means are
+    $\pi(\Theta) + \varepsilon\int\Theta g\dd\pi + O(\varepsilon^2)$.
+  \item \emph{Observables of the full state.} For $\varphi(\Theta,\eta,\theta)$ smooth, $T_0$-periodic in $\theta$,
+    with polynomially bounded derivatives in $\Theta$ ($\bar\varphi$ below in the class of \textup{(b)}),
+    $m_\varepsilon(\varphi) = \pi(\bar\varphi) + O(\varepsilon)$, where
+    $\bar\varphi(\Theta) := \langle\varphi(\Theta,r_\Theta(x_m(\theta)),\theta)\rangle_\theta$. In particular the
+    stationary mean-square tracking error is
+    \[
+      \E_{m_\varepsilon}\norm{e}^2 = \frac{2}{k_e^2}\,\pi(\bar L_m) + O(k_e^{-3}),\qquad
+      \bar L_m(\Theta) = \tfrac12\int\norm{r_\Theta}^2\dd\rho:
+    \]
+    the Gibbs average of the occupation loss, divided by $k_e^2/2$.
+  \item \emph{Circulation and irreversibility.} Let
+    \begin{multline*}
+      V(\Theta,\eta,\theta) := k_e\cdot(\text{drift of $\Theta$ in physical time})\\
+      = \sum_i\bigl[G\nabla_\vartheta\bigl(\eta^\T\tilde\Phi(x_m(\theta) + \varepsilon\eta;\vartheta_i)\bigr)
+      - \sigma_0(\vartheta_i - \vartheta^0)\bigr]
+    \end{multline*}
+    (so $\dot\Theta = \varepsilon V + \text{noise}$). For every pair of coordinates $(k,l)$ of $\R^{mp}$,
+    \[
+      \Lambda_\varepsilon^{kl} := \E_{m_\varepsilon}[\Theta_kV_l - \Theta_lV_k]
+      = \varepsilon\Bigl[\int(\Theta_kj_{1,l} - \Theta_lj_{1,k})\dd\Theta
+      + \pi\bigl(\langle u_k\dot u_l - u_l\dot u_k\rangle_\theta\bigr)\Bigr] + O(\varepsilon^2),
+    \]
+    where $\dot u := \partial_\theta u = H - \langle H\rangle$. If the bracket is non-zero for some $(k,l)$, then
+    for $\varepsilon$ small the stationary parameter process $(\Theta_t)_{t\ge0}$ under $m_\varepsilon$ is not
+    reversible in time: $\E[\Theta_{k,t}\Theta_{l,t+h}]\ne\E[\Theta_{l,t}\Theta_{k,t+h}]$ for small $h > 0$.
+\end{enumerate}
+\end{thm}
+\status{Proved. The proof imports three standard theorems, named where they are used: the existence, growth and
+regularity theory of the Poisson equation for the Langevin generator with a confining potential
+(Pardoux--Veretennikov~\cite{S23}, with interior Schauder estimates~\cite{S24} for the higher derivatives), and, for
+the uniqueness in (a) only, H\"ormander's theorem for the smoothness of the transition densities of a hypoelliptic
+time-periodic diffusion~\cite{S25}, \cite{S26}, the Stroock--Varadhan support theorem~\cite{S27} and the
+Doob--Khasminskii and Harris theorems~\cite{S28}, \cite{S32}, \cite{S33}. Parts (b)--(e) hold for every invariant
+measure and do not use the uniqueness. The first-order drift $b$ is the one of Theorem J, so (c) is the thermal
+version of Theorem J(d): at low temperature it reduces to the $O(1/k_e)$ offset of the periodic orbit (Remark
+J$'$.1). The orientation effect of Remark H.7a and Proposition K appears in (c) as the orientation-odd part of
+$\int\Theta g\dd\pi$, and in the numerics it is measured to within 7--8\% at $k_e = 10$ and within the Monte Carlo
+resolution (10--30\%) at $k_e = 20$--$80$. Checked numerically on the single-kernel instance below
+(\code{exp_dither_stationary.py}, \code{tests/test_dither.py}), where the first-order prediction removes the
+$O(1/k_e)$ discrepancy between the real loop and the Gibbs measure; the circulation of (e) is below the Monte Carlo
+resolution of the real loop at the affordable cost, and the current machinery behind it is checked on the first-order
+averaged SDE instead (Proposition J$'$.2).}
+
+\begin{proof}
+Throughout, $C$ denotes a constant independent of $\varepsilon$, and ``polynomially bounded'' means bounded by
+$C(1 + \norm{\Theta}^q)$ on $\mathcal{S}$ for some $q$.
+
+\smallskip
+\emph{Step 0 (invariance, moments, existence).} By the choice $k_e\ge k_T$, $\{\norm{e}\le R\}$ is forward invariant
+and $\norm{e(t)}\le e^{-k_et}\norm{e(0)} + (F_R + K_\Phi)/k_e$, so the set $\{\norm{\eta} > F_R + K_\Phi + \delta\}$
+is left in finite time and never re-entered: every invariant measure is supported in $\{\norm{\eta}\le F_R + K_\Phi\}$,
+and on this set the $\Theta$-drift of (CL$_\tau$) is bounded by $\lambda_G(F_R + K_\Phi)L_\vartheta
++ \sigma\norm{\Theta - \Theta^0}$. For $W := \norm{\Theta - \Theta^0}^2$ (slow time)
+$L_\varepsilon W\le-2\sigma_0W + 2\lambda_G(F_R + K_\Phi)L_\vartheta\sqrt{mW} + 2\tau_0\tr G_m\le-\sigma_0W + C$, and
+likewise $L_\varepsilon W^q\le-c_qW^q + C_q$ for every $q\ge1$ (It\^o's formula and Young's inequality). Hence
+$\E_zW^q(Z_s)\le e^{-c_qs}W^q(z) + C_q/c_q$: the Ces\`aro averages of the laws of $Z_s$ are tight ($W^q$ is coercive
+in $\Theta$, $\eta$ and $\theta$ live in compact sets), the semigroup is Feller (the coefficients are smooth with
+bounded derivatives in $\eta$ and $\theta$ and of linear growth in $\Theta$), and Krylov--Bogoliubov gives an
+invariant probability measure $m_\varepsilon$. For any invariant measure,
+$0 = m_\varepsilon(L_\varepsilon W^q)\le-c_q\,m_\varepsilon(W^q) + C_q$ gives the uniform moment bounds; the
+$\theta$-marginal is uniform because $\theta$ moves at constant speed. Dynkin's formula with these moment bounds shows
+$m_\varepsilon(L_\varepsilon\psi) = 0$ for every $\psi\in C^2(\mathcal{S})$, $T_0$-periodic in $\theta$, with
+polynomially bounded derivatives up to order two: the local martingale in It\^o's formula is a martingale, and the
+stationary expectation of $\psi(Z_s) - \psi(Z_0)$ vanishes.
+
+\smallskip
+\emph{Step 1 (uniqueness).} The noise acts on all of $\Theta$; the $x$-equation carries no noise. Write the SDE for
+$(x,\Theta)$ in physical time with the vector fields $X_0$ (drift, time-periodic) and
+$X_{i,k} := \sqrt{2\tau_0/k_e}\,(G^{1/2})_{\cdot k}\cdot\partial_{\vartheta_i}$. The bracket $[X_{i,\alpha_k},X_0]$
+contains, in the $x$-direction, $-\frac1m(\partial_{\alpha_k}\tilde\Phi)(x;\vartheta_i)\cdot\partial_{x_k}
+= -\frac1m(\dd a_k/\dd\alpha_k)\varphi(x;c_i,s_i)\partial_{x_k}$ with $\dd a_k/\dd\alpha_k > 0$ and $\varphi > 0$:
+together with the $X_{i,k}$ these brackets span $\R^n\times\R^{mp}$ at every point and every time, so the parabolic
+H\"ormander condition holds everywhere. By H\"ormander's theorem for time-dependent hypoelliptic diffusions with smooth
+coefficients of bounded derivatives (\cite{S25}; the non-homogeneous case is~\cite{S26}), the transition
+probabilities $P_{s,t}(z,\cdot)$ have densities that are smooth in $z$, so the period map $P := P_{0,T_0}$ is strong
+Feller. Accessibility: fix $\Theta_1$ and let $z^* := (e^*,\Theta_1)$ be the state at time $T_0$ of the deterministic
+skeleton that follows, on $[0,T_0/2]$, a $C^1$ parameter path along which $\fhat_{\Theta(t)}(x(t)) = f(x(t)) - w(t)$
+with $w(t) := \lambda\cdot\beta(t)$ for a fixed bump $\beta$ supported in $(0,T_0/2)$ and $\lambda\in\R$ chosen so
+that $e(T_0/2) = 0$ (possible since $\dot e = -k_ee + w$ is controllable and the required $\lambda$ is
+$O(e^{-k_eT_0/2})$; such parameter paths exist because $a_{\max} > F_R$: $m$ kernels centred at $x(t)$ with amplitude
+$f(x(t)) - w(t)$ realise $\fhat = f - w$, and the saturated centre box contains the tube), and on $[T_0/2,T_0]$ any
+$C^1$ path from that configuration to $\Theta_1$. From every initial $(e_0,\Theta_0)$ in the invariant set the same
+construction (with $\lambda$ depending on $e_0$) reaches $e(T_0/2) = 0$ at the same parameter configuration, hence
+$z^*$ at time $T_0$. By the Stroock--Varadhan support theorem~\cite{S27} (the skeleton paths are realised by controls
+$h\in L^2$: the $\Theta$-noise is non-degenerate and the skeleton's $\Theta$-path is $C^1$), $z^*\in\supp P(z,\cdot)$
+for every $z$. The supports of two distinct ergodic invariant measures of a strong Feller kernel are disjoint, and
+both contain $z^*$ (\cite[Prop.~4.1.1 and Thm~4.2.1]{S28}; \cite[Cor.~1.14--Thm~1.16]{S32}), so $P$ has at most one
+invariant measure. The periodic family $P_{0,t}^*m_\varepsilon$ is then the unique invariant law of the augmented
+process; the strong Feller property with the accessible point gives a minorisation of $P^2$ on the sublevel sets of
+the Lyapunov function $W$ (\cite[Lemma~1.13]{S32}), and Harris' theorem (\cite{S33}) gives the convergence of the law
+of $Z_{nT_0}$ to $m_\varepsilon$ in a $W$-weighted total variation norm, hence the convergence of time averages along
+a single trajectory.
+
+\smallskip
+\emph{Step 2 (the fast operator).} At frozen $(\Theta,\theta)$, $A_0$ is the generator of the flow
+$\dot\eta = \eta^* - \eta$, which contracts to $\eta^*$ at rate one. For $g$ smooth with $g(\Theta,\eta^*,\theta) = 0$
+the function
+\[
+  (A_0^{-1}g)(\Theta,\eta,\theta) := -\int_0^\infty g\bigl(\Theta,\eta^* + e^{-s}(\eta - \eta^*),\theta\bigr)\dd s
+\]
+is smooth, satisfies $A_0(A_0^{-1}g) = g$, and its derivatives in $(\Theta,\theta)$ of any order are bounded by those
+of $g$; if $g$ is linear in $\eta - \eta^*$, $g = (\eta - \eta^*)^\T w(\Theta,\theta)$, then
+$A_0^{-1}g = -(\eta - \eta^*)^\T w$. Conversely $A_0\psi = 0$ with $\psi$ bounded in $\eta$ forces
+$\psi = \psi(\Theta,\theta)$.
+
+\smallskip
+\emph{Step 3 (the expansion).} Let $\varphi\in C^5(\R^{mp})$ with polynomially bounded derivatives up to order five.
+Define
+\begin{gather*}
+  \psi_1 := -u\cdot\nabla\varphi,\qquad
+  w_\varphi := \sum_{i,l}G_l\,\partial_{\vartheta_l}\tilde\Phi(x_m(\theta);\vartheta_i)\,\partial_{(i,l)}\varphi\in\R^n\\
+  \text{(for a symmetric $G$: $(w_\varphi)_k = \sum_i\bigl(\nabla_\vartheta\tilde\Phi_k(x_m;\vartheta_i)\bigr)^\T G\nabla_{\vartheta_i}\varphi$),}\\
+  \psi_2 := (\eta - \eta^*)^\T w_\varphi + \psi_2'(\Theta,\theta),
+\end{gather*}
+where $\psi_2'$ is the zero-mean antiderivative in $\theta$ of
+$b\cdot\nabla\varphi - [-\dot r^\T w_\varphi + (D_xr_\Theta\,r)^\T w_\varphi + (B_0\psi_1)|_{\eta^*} + (B_1\varphi)|_{\eta^*}]$
+with $\dot r := \partial_\theta[r_\Theta(x_m(\theta))]$ and $r := r_\Theta(x_m(\theta))$, and $\psi_3 := A_0^{-1}$ of
+the $\eta$-dependent remainder defined below. Then
+$\psi_\varepsilon := \varphi + \varepsilon\psi_1 + \varepsilon^2\psi_2 + \varepsilon^3\psi_3$ satisfies, order by
+order:
+\begin{itemize}
+  \item $\varepsilon^{-2}$: $A_0\varphi = 0$.
+  \item $\varepsilon^{-1}$: $A_0\psi_1 + \partial_\theta\varphi + A_1\varphi = 0$, since $\psi_1$ does not depend on
+    $\eta$.
+  \item $\varepsilon^0$: $A_0\psi_2 + \partial_\theta\psi_1 + A_1\psi_1 + (B_0 + A_2)\varphi$. Here
+    $A_1\psi_1 = A_2\varphi = 0$ and $A_0\psi_2 = -(\eta - \eta^*)^\T w_\varphi = (B_0\varphi)|_{\eta^*} - B_0\varphi$,
+    so the sum equals $\partial_\theta\psi_1 + (B_0\varphi)|_{\eta^*}
+    = -\dot u\cdot\nabla\varphi + H\cdot\nabla\varphi + \tau_0\tr(G_m\nabla^2\varphi)
+    = \langle H\rangle\cdot\nabla\varphi + \tau_0\tr(G_m\nabla^2\varphi) = \bar L_0\varphi$, because
+    $\dot u = H - \langle H\rangle$. This is Remark H.0's algebraic identity: the slaved drift averages to the Langevin
+    drift.
+  \item $\varepsilon^1$: $A_0\psi_3 + \partial_\theta\psi_2 + A_1\psi_2 + (B_0 + A_2)\psi_1 + (B_1 + A_3)\varphi$. At
+    $\eta = \eta^*$: $\partial_\theta\psi_2 = -\dot r^\T w_\varphi + \partial_\theta\psi_2'$ (the lag of the error
+    behind its slaved value), $A_1\psi_2 = (D_xr_\Theta(x_m)r)^\T w_\varphi$ (the state shift in the error equation),
+    $B_0\psi_1 = -H\cdot\nabla(u\cdot\nabla\varphi) - \tau_0\tr(G_m\nabla^2(u\cdot\nabla\varphi))$,
+    $A_2\psi_1 = A_3\varphi = 0$, and
+    $B_1\varphi = \sum_iG\nabla_\vartheta\bigl(r^\T D_x\tilde\Phi(x_m;\vartheta_i)r\bigr)\cdot\nabla_{\vartheta_i}\varphi$
+    (the state shift in the feature). By the choice of $\psi_2'$ the sum at $\eta = \eta^*$ equals $b\cdot\nabla\varphi$
+    pointwise in $\theta$, once the $\theta$-averages are identified:
+    $\langle-\dot r^\T w_\varphi\rangle = G\nabla_\vartheta\langle-\dot r^\T\tilde\Phi(x_m;\vartheta)\rangle\cdot\nabla\varphi
+    = (G_m\nabla U_{\mathrm{odd}})\cdot\nabla\varphi$ at the particles,
+    $\langle(D_xr\,r)^\T w_\varphi + (B_1\varphi)|_{\eta^*}\rangle
+    = \langle(r\cdot\nabla_x)(r^\T\tilde\Phi)\rangle\text{-gradient}\cdot\nabla\varphi
+    = (G_m\nabla U_{\mathrm{even}})\cdot\nabla\varphi$ (the two state shifts combine into $U_{\mathrm{even}}$), so
+    these three give $b_{\mathrm{fr}}\cdot\nabla\varphi$; and
+    $\langle B_0\psi_1|_{\eta^*}\rangle = -\langle(D_\Theta u)H\rangle\cdot\nabla\varphi
+    - \langle H\otimes u\rangle : \nabla^2\varphi - \tau_0\tr(G_m\nabla^2(\langle u\rangle\cdot\nabla\varphi))
+    = \langle(D_\Theta H)u\rangle\cdot\nabla\varphi = b_{\mathrm{osc}}\cdot\nabla\varphi$, because
+    $\langle u\rangle = 0$, $\langle(D_\Theta u)\dot u\rangle = -\langle(D_\Theta\dot u)u\rangle
+    = -\langle(D_\Theta H)u\rangle$ (integration by parts in $\theta$, $\langle D_\Theta u\rangle\langle H\rangle = 0$),
+    and $\langle H_ju_k\rangle + \langle H_ku_j\rangle = \langle\partial_\theta(u_ju_k)\rangle = 0$ so the symmetric
+    contraction with $\nabla^2\varphi$ vanishes (the same cancellation as $N_2 = 0$ in Lemma E.0$'$). Writing
+    $T_1(\Theta,\eta,\theta)$ for the sum of the order-$\varepsilon$ terms other than $A_0\psi_3$, one has
+    $T_1(\Theta,\eta^*,\theta) = b\cdot\nabla\varphi$, so $\psi_3 := A_0^{-1}(b\cdot\nabla\varphi - T_1)$ is well
+    defined (Step 2) and $A_0\psi_3 + T_1 = b\cdot\nabla\varphi$: the order-$\varepsilon$ term is exactly
+    $\bar L_1\varphi := b\cdot\nabla\varphi$.
+  \item $\varepsilon^2$: $R_\varepsilon := \varepsilon^{-2}[L_\varepsilon\psi_\varepsilon - \bar L_0\varphi
+    - \varepsilon\bar L_1\varphi]$ is a finite sum of products of derivatives of $f$ on the tube (orders $\le3$), of
+    $\tilde\Phi$ in $(x,\vartheta)$ (bounded), of $x_m$, of $u$, $w_\varphi$, $\psi_2'$, $\psi_3$ and of derivatives
+    of $\varphi$: $\psi_2'$ contains $\nabla^3\varphi$ (through $\tau_0\tr(G_m\nabla^2(u\cdot\nabla\varphi))$ in
+    $(B_0\psi_1)|_{\eta^*}$) and $\psi_3$ contains $\nabla^2\varphi$, so $B_0\psi_2\ni\tau_0\tr(G_m\nabla^2\psi_2')$
+    carries $\nabla^5\varphi$ and $B_0\psi_3$ carries $\nabla^4\varphi$; using the exact operators $A_\varepsilon$,
+    $B_\varepsilon$ and Taylor's theorem in $\varepsilon$ rather than their formal series,
+    $\abs{R_\varepsilon}\le C(1 + \norm{\Theta}^q)$ on $\mathcal{S}$ uniformly in $\varepsilon\in(0,\varepsilon_0]$
+    for $\varphi\in C^5$ with polynomially bounded derivatives up to order five. (For the zeroth-order statement (b)
+    alone $\psi_2'$ can be dropped --- it only serves to make the order-$\varepsilon$ term exactly
+    $b\cdot\nabla\varphi$ --- and $C^3$ suffices.)
+\end{itemize}
+
+\smallskip
+\emph{Step 4 (the Poisson equation).} $\bar L_0$ is uniformly elliptic with smooth coefficients, $\nabla J_m$ has
+linear growth with bounded derivatives of all orders, and
+$\ip{-G_m\nabla J_m(\Theta)}{\Theta - \Theta^0}\le-\sigma_0\norm{\Theta - \Theta^0}^2 + C\norm{\Theta - \Theta^0}$:
+the recurrence condition of Pardoux--Veretennikov~\cite[Thm~1]{S23} holds with every polynomial Lyapunov function.
+For $\varphi\in C^{3,\alpha}(\R^{mp})$ with polynomially bounded derivatives up to order three there is a unique
+$\psi_\varphi\in C^2(\R^{mp})$ with $\bar L_0\psi_\varphi = \varphi - \pi(\varphi)$, $\pi(\psi_\varphi) = 0$, and
+$\psi_\varphi$, $\nabla\psi_\varphi$ are polynomially bounded (\cite[Thm~1 and 2]{S23}); interior Schauder estimates
+on unit balls~\cite[Thm~6.2 and 6.17]{S24}, which gain two derivatives and whose constants depend polynomially on
+$\norm{\Theta}$ through the local H\"older norms of the coefficients, give $\psi_\varphi\in C^{5,\alpha}$ with
+polynomially bounded derivatives up to order five.
+
+\smallskip
+\emph{Step 5 ((b) and (c)).} Apply Step 3 to $\psi := \psi_\varphi$ and Step 0's identity to $\psi_\varepsilon$:
+$0 = m_\varepsilon(L_\varepsilon\psi_\varepsilon) = m_\varepsilon(\bar L_0\psi) + \varepsilon m_\varepsilon(b\cdot\nabla\psi)
++ \varepsilon^2m_\varepsilon(R_\varepsilon) = m_\varepsilon(\varphi) - \pi(\varphi) + \varepsilon m_\varepsilon(b\cdot\nabla\psi)
++ O(\varepsilon^2)$, the $O(\varepsilon^2)$ by the moment bounds of Step 0. Since $b\cdot\nabla\psi$ is polynomially
+bounded, $\abs{m_\varepsilon(\varphi) - \pi(\varphi)}\le C\varepsilon$, which is (b). Now
+$b\cdot\nabla\psi\in C^4(\R^{mp})$ with polynomially bounded derivatives ($b$ is smooth with bounded derivatives in
+$\Theta$, $\psi\in C^{5,\alpha}$), so (b) applies to it (its Poisson solution is in $C^3$, which the zeroth-order
+expansion needs): $m_\varepsilon(b\cdot\nabla\psi) = \pi(b\cdot\nabla\psi) + O(\varepsilon)$, and
+$m_\varepsilon(\varphi) = \pi(\varphi) - \varepsilon\pi(b\cdot\nabla\psi_\varphi) + O(\varepsilon^2)$. The second
+form of (c) is Green's identity for the weighted Poisson equation:
+\begin{multline*}
+  \pi(b\cdot\nabla\psi) = \int b\cdot\nabla\psi\,\pi = -\int\psi\nabla\cdot(\pi b)
+  = -\tau_0\int\psi\nabla\cdot(\pi G_m\nabla g) = -\tau_0\int g\nabla\cdot(\pi G_m\nabla\psi)\\
+  = -\int g\pi\bar L_0\psi = -\int g(\varphi - \pi(\varphi))\pi = -\int\varphi g\dd\pi,
+\end{multline*}
+using $\tau_0\pi^{-1}\nabla\cdot(\pi G_m\nabla\psi) = \bar L_0\psi$ and $\pi(g) = 0$; the boundary terms vanish by the
+Gaussian tails of $\pi$ and the polynomial growth of $g$, $\psi$ and their gradients (the same regularity for $g$ as
+for $\psi_\varphi$, with $\varphi$ replaced by the polynomially bounded $\nabla J_m\cdot b - \tau_0\nabla\cdot b$).
+
+\smallskip
+\emph{Step 6 ((d)).} Write $\varphi = \bar\varphi + \varphi_\theta + \varphi_\eta$ with
+$\varphi_\theta(\Theta,\theta) := \varphi(\Theta,\eta^*,\theta) - \bar\varphi(\Theta)$ (zero $\theta$-mean) and
+$\varphi_\eta := \varphi(\Theta,\eta,\theta) - \varphi(\Theta,\eta^*,\theta)$ (zero at $\eta^*$). With
+$\chi_1 := -(\text{zero-mean antiderivative in $\theta$ of }\varphi_\theta)$ and $\chi_2 := -A_0^{-1}\varphi_\eta$
+(Step 2), $L_\varepsilon(\varepsilon\chi_1 + \varepsilon^2\chi_2) = \partial_\theta\chi_1 + A_0\chi_2
++ \varepsilon[B_0\chi_1 + (\partial_\theta + A_1)\chi_2] + O(\varepsilon^2)
+= -(\varphi_\theta + \varphi_\eta) + \varepsilon[\dots] + O(\varepsilon^2)$, all terms polynomially bounded. Step 0's
+identity gives $m_\varepsilon(\varphi) = m_\varepsilon(\bar\varphi)
++ \varepsilon m_\varepsilon(B_0\chi_1 + (\partial_\theta + A_1)\chi_2) + O(\varepsilon^2) = \pi(\bar\varphi) + O(\varepsilon)$
+by (b). For $\varphi = \norm{\eta}^2$, $\bar\varphi = \langle\norm{r_\Theta(x_m(\theta))}^2\rangle_\theta
+= 2\bar L_m(\Theta)$, and $\E\norm{e}^2 = \varepsilon^2\E\norm{\eta}^2$.
+
+\smallskip
+\emph{Step 7 ((e)).} Expand $V = V^0 + \varepsilon V^1 + O(\varepsilon^2)$ with $V^0$ the $B_0$-drift and $V^1$ the
+$B_1$-drift, and apply Step 6 to $\varphi := \Theta_kV_l - \Theta_lV_k$ keeping the order-$\varepsilon$ terms. For
+$\varphi^0 := \Theta\wedge V^0$ ($\wedge$ on the pair $(k,l)$):
+$\bar\varphi^0 = \Theta\wedge\langle H\rangle = \Theta\wedge(-G_m\nabla J_m)$, and $\pi(\bar\varphi^0) = 0$ because
+$-\pi G_m\nabla J_m = \tau_0G_m\nabla\pi$ and $\int\Theta\wedge(G_m\nabla\pi) = 0$ for a symmetric $G_m$ (integration
+by parts: the integrand is a divergence plus $\pi\cdot(G_{lk} - G_{kl})$). Next,
+$\varphi^0_\theta = \Theta\wedge(H - \langle H\rangle) = \Theta\wedge\dot u$, so $\chi_1 = -\Theta\wedge u$ and
+$\langle(B_0\chi_1)|_{\eta^*}\rangle = -\langle H\cdot\nabla_\Theta(\Theta\wedge u)\rangle
+- \tau_0\langle\tr G_m\nabla^2(\Theta\wedge u)\rangle = -\langle H\wedge u\rangle - \langle\Theta\wedge(D_\Theta u\cdot H)\rangle
+= -\langle\dot u\wedge u\rangle + \Theta\wedge\langle(D_\Theta H)u\rangle = \langle u\wedge\dot u\rangle + \Theta\wedge b_{\mathrm{osc}}$
+(the $\tau_0$ term and $\langle H\rangle\wedge\langle u\rangle$ vanish since $\langle u\rangle = 0$, and
+$\langle(D_\Theta u)H\rangle = -\langle(D_\Theta H)u\rangle$ as in Step 3). Further,
+$\varphi^0_\eta = \Theta\wedge(V^0(\eta) - V^0(\eta^*))$ is linear in $\eta - \eta^*$, so $\chi_2 = \varphi^0_\eta$
+and $\langle((\partial_\theta + A_1)\chi_2)|_{\eta^*}\rangle
+= \Theta\wedge\bigl\langle\sum_iG\nabla_\vartheta\bigl((-\dot r + D_xr\,r)^\T\tilde\Phi(x_m;\vartheta_i)\bigr)\bigr\rangle
+= \Theta\wedge(\text{lag and error-shift parts of }b_{\mathrm{fr}})$; with
+$\bar\varphi^1 = \Theta\wedge\langle V^1|_{\eta^*}\rangle = \Theta\wedge(\text{feature-shift part of }b_{\mathrm{fr}})$
+these complete $\Theta\wedge b_{\mathrm{fr}}$. Collecting, and using (c) for $\bar\varphi^0$
+($m_\varepsilon(\bar\varphi^0) = \varepsilon\int\Theta\wedge(-G_m\nabla J_m)g\dd\pi + O(\varepsilon^2)$) and (b) for
+the order-$\varepsilon$ observables,
+\[
+  \Lambda_\varepsilon = \varepsilon\Bigl[\int\Theta\wedge(b - gG_m\nabla J_m)\dd\pi + \pi\bigl(\langle u\wedge\dot u\rangle\bigr)\Bigr]
+  + O(\varepsilon^2),
+\]
+and $b - gG_m\nabla J_m = (b - \tau_0G_m\nabla g) + (\tau_0G_m\nabla g - gG_m\nabla J_m) = b_\perp + \tau_0\pi^{-1}G_m\nabla(g\pi)$,
+whose second term integrates to zero against $\Theta\wedge$ as above. This is the formula of (e). For the
+irreversibility: under $m_\varepsilon$ the $\Theta$-process is stationary; reversibility would give
+$\E[\Theta_{k,t}\Theta_{l,t+h}] = \E[\Theta_{l,t}\Theta_{k,t+h}]$ for all $h$, i.e.\ $\E[\Theta_t\wedge\Theta_{t+h}] = 0$,
+whereas $\E[\Theta_t\wedge(\Theta_{t+h} - \Theta_t)] = \E[\Theta_t\wedge\int_t^{t+h}\varepsilon V\dd s] + 0$ (the
+martingale term has mean zero) $= h\varepsilon\Lambda_\varepsilon + o(h)$ by stationarity and the continuity of the
+integrand; so $\Lambda_\varepsilon\ne0$ excludes reversibility.
+\end{proof}
+
+\begin{rmk}{Remark}{J$'$.1}[reading]\mbox{}
+\begin{itemize}
+  \item \emph{From the periodic orbit to the thermal state.} As $\tau_0\to0$ with $\Theta^*$ the non-degenerate
+    global minimiser of $J_m$, $\pi\to\delta_{\Theta^*}$, $\psi_{\Theta_k}\to{}$the linear function
+    $v_k^\T(\Theta - \Theta^*)$ with $-(G_m\nabla^2J_m)^\T v_k = e_k$, and (c) gives
+    $m_\varepsilon(\Theta)\to\Theta^* + \varepsilon(G_m\nabla^2J_m(\Theta^*))^{-1}b(\Theta^*)$: Theorem J(d)'s period
+    mean of the periodic orbit. Theorem J$'$(c) is the finite-temperature version: the correction is a Gibbs average
+    of the same first-order drift, weighted by the Poisson solution instead of the inverse Hessian.
+  \item \emph{The orientation effect with dither (branch 2).} Reversing the direction of traversal of the reference
+    flips $U_{\mathrm{odd}}$ and $b_{\mathrm{osc}}$ and leaves $U_{\mathrm{even}}$, $J_m$ and $\pi$ unchanged, so the
+    stationary means of the two traversals differ at order $\varepsilon$ by
+    $2\varepsilon\int\Theta g_{\mathrm{odd}}\dd\pi$ with $g_{\mathrm{odd}}$ the correction driven by the odd part of
+    $b$: the quantity measured in Remark H.7a for the periodic orbit is now a statement about stationary measures, and
+    it is checked below (to within 7--8\% at $k_e = 10$, and within the resolution of the runs at larger $k_e$) in the
+    single-kernel instance (where, in one state dimension, $U_{\mathrm{odd}}\equiv0$ --- a $1$-form integrated over a
+    path that retraces itself --- and the whole odd effect comes from $b_{\mathrm{osc}}$; a reference with the
+    time-reversal symmetry $x_m(\theta_0 + \theta) = x_m(\theta_0 - \theta)$, such as a sinusoid, has no odd effect
+    at all, since its reversal is a time shift). As a design rule: a time-symmetric reference (one whose Fourier series
+    carries only cosines after a time shift, such as $x_m = X[\cos\theta + r_2\cos2\theta]$) removes
+    $b_{\mathrm{osc}}$ and $U_{\mathrm{odd}}$ identically, so its first-order correction is the performative term
+    $G_m\nabla U_{\mathrm{even}}$ alone, which is reciprocal exactly when Theorem I's $A_{\mathrm{even}}\equiv0$; a
+    reference traversed one way carries both, and the odd part can be used (Proposition K) or cancelled by reversing
+    the traversal. Checked: for the cosine reference the code's $b_{\mathrm{osc}}$ and $\langle u\wedge\dot u\rangle$
+    are $10^{-17}$ at every point tested.
+  \item \emph{Non-equilibrium.} (e) says that the dithered learning loop, at stationarity, is not in detailed balance
+    even to first order: the periodic forcing alone (the term $\pi\langle u\wedge\dot u\rangle$, the signed area swept
+    by the fast parameter loop) breaks the time-reversal symmetry, and the slow dynamics carries in addition the
+    current $j_1$ of Proposition J$'$.2, nonzero exactly when the first-order drift is not reciprocal. The first is a
+    property of any periodically forced system; the second is the signature of closed-loop learning (Theorem I).
+  \item \emph{Hypotheses.} Smoothness of $f$ on the tube and of the features is used through the expansion (three
+    $x$-derivatives of $f$, five $\Theta$-derivatives of the Poisson solution, i.e.\ three H\"older derivatives of the
+    observable) and, for the uniqueness only, through H\"ormander's theorem; $k_e\ge k_T$ keeps the plant in the tube
+    for every parameter path. The constants are not explicit: the result is an asymptotic expansion of the invariant
+    measure, not a quantitative bound at a given $k_e$, and the numerics show where it applies.
+\end{itemize}
+\end{rmk}
+
+\begin{thm}{Proposition}{J$'$.2}[the first-order current, entropy production, and reciprocity]
+Consider the first-order averaged dynamics
+$\dd\Theta = (-G_m\nabla J_m + \varepsilon b)\dd s + \sqrt{2\tau_0}\,G_m^{1/2}\dd W$ on $\R^{mp}$, with $b$ as above.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item Its stationary law $m^{(1)}_\varepsilon$ satisfies
+    $m^{(1)}_\varepsilon(\varphi) = \pi(\varphi) + \varepsilon\int\varphi g\dd\pi + O(\varepsilon^2)$ for every
+    $\varphi$ as in Theorem J$'$ (the expansion $m^{(1)}_\varepsilon = \pi(1 + \varepsilon g) + O(\varepsilon^2)$ in
+    the weak sense; on the grid it holds in $L^1$ with an $\varepsilon^2$ remainder, Numerics below), and its
+    stationary current $j := m^{(1)}_\varepsilon(-G_m\nabla J_m + \varepsilon b) - \tau_0G_m\nabla m^{(1)}_\varepsilon$
+    equals $\varepsilon j_1 + O(\varepsilon^2)$ in the same sense, with $j_1 = \pi b_\perp$; its entropy production
+    rate (in slow time) is
+    \[
+      \mathrm{EPR}_\varepsilon := \int\frac{\norm{j}^2_{G_m^{-1}}}{\tau_0m^{(1)}_\varepsilon}\dd\Theta
+      = \varepsilon^2\tau_0^{-1}\pi\bigl(\norm{b_\perp}^2_{G_m^{-1}}\bigr) + O(\varepsilon^3)
+    \]
+    (formal in the remainder: the $\varepsilon^2$ term uses only the first-order current, the $O(\varepsilon^3)$
+    presumes the expansion of $j$ in $L^2(1/\pi)$).
+  \item The following are equivalent: $j_1\equiv0$; $b_\perp\equiv0$; $b$ is a $G_m$-gradient field,
+    $b = -G_m\nabla J_1$; $D_\Theta(G_m^{-1}b)$ is a symmetric matrix at every $\Theta$. In that case the first-order
+    averaged dynamics \emph{is} the Langevin dynamics of $J_m + \varepsilon J_1$, with stationary density exactly
+    $\propto\exp(-(J_m + \varepsilon J_1)/\tau_0)$, in detailed balance.
+  \item The antisymmetric part of $D_\Theta(G_m^{-1}b)$ is, block by block ($(i,j)$ blocks of size $p\times p$),
+    \[
+      \tfrac12\bigl[D(G_m^{-1}b) - D(G_m^{-1}b)^\T\bigr]_{ij}
+      = \frac1{2m}\nabla_\vartheta\nabla_{\vartheta'}A_{\mu_\Theta}(\vartheta_i,\vartheta_j)
+      + \tfrac12\bigl\langle[\nabla^2_\Theta\mathcal{J},\nabla^2_\Theta\mathcal{U}]_{G_m}\bigr\rangle_{\theta,ij},
+    \]
+    where $A_\mu = S - S^\T$ is the antisymmetric kernel of Theorem I at the atomic measure $\mu_\Theta$
+    (derivatives in the kernel arguments, $\mu_\Theta$ frozen),
+    $\mathcal{J}(\Theta,\theta) := \frac m2\norm{r_\Theta(x_m(\theta))}^2
+    + \frac{\sigma_0}2\sum_i\norm{\vartheta_i - \vartheta^0}^2_{\Ginv}$ is the instantaneous loss (so
+    $H = -G_m\nabla\mathcal{J}$, $\langle\mathcal{J}\rangle = J_m$), $\mathcal{U}$ its zero-mean antiderivative in
+    $\theta$, and $[X,Y]_G := XGY - YGX$. The first term is the finite-$m$ form of the reciprocity defect of
+    Theorem I; the second is the failure of the instantaneous Hessians at different phases to commute, the
+    non-gradient part of second-order averaging of a time-periodic gradient flow.
+  \item In the setting of Theorem I (saturated Gaussian features, $f\in C^2$, $x_m\in C^2$ periodic), for $m\ge3$,
+    $b_{\mathrm{fr}}$ is never a $G_m$-gradient on $\R^{mp}$ ($b_{\mathrm{fr}}$ does not depend on $\sigma_0$ and
+    depends on $G$ through the factor $G$ only); consequently, along the gain scale $t\mapsto tG$, the full drift
+    $b = b_{\mathrm{fr}} + b_{\mathrm{osc}}$ is a $(tG)_m$-gradient for at most one value of $t > 0$. For $m = 1$, $2$
+    the condition of \textup{(ii)} is the explicit vanishing of \textup{(iii)}, checked to fail in the single-kernel
+    instance below (non-gradient fraction $\pi(\norm{b_\perp}^2)/\pi(\norm{b}^2)\approx0.3$--$0.5$).
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+\textit{(i)} Stationary Fokker--Planck: $\nabla\cdot(mG_m\nabla J_m) - \varepsilon\nabla\cdot(mb)
++ \tau_0\nabla\cdot(G_m\nabla m) = 0$; at order $\varepsilon^0$ the Gibbs measure, at order $\varepsilon^1$ with
+$\pi_1 = g\pi$: $\nabla\cdot(g\pi G_m\nabla J_m) + \tau_0\nabla\cdot(G_m\nabla(g\pi)) = \tau_0\nabla\cdot(\pi G_m\nabla g)$
+(using $\tau_0\nabla\pi = -\pi\nabla J_m$), so the equation is $\tau_0\nabla\cdot(\pi G_m\nabla g) = \nabla\cdot(\pi b)$,
+the defining equation of $g$; the expansion is justified by the same Poisson-equation argument as in Theorem J$'$
+(the generator of this SDE is $\bar L_0 + \varepsilon b\cdot\nabla$, and Steps 4--5 apply verbatim without the fast
+variables). The current: $j = \pi(-G_m\nabla J_m) - \tau_0G_m\nabla\pi
++ \varepsilon[\pi b - g\pi G_m\nabla J_m - \tau_0G_m\nabla(g\pi)] + O(\varepsilon^2)
+= \varepsilon\,\pi(b - \tau_0G_m\nabla g) + O(\varepsilon^2)$. The entropy production rate of a diffusion with
+mobility $G_m$ and temperature $\tau_0$ in a stationary state $m$ with current $j$ is
+$\int j^\T(\tau_0G_m)^{-1}j/m$~\cite{S29}, which gives the formula.
+
+\smallskip
+\textit{(ii)} $j_1\equiv0$ iff $b = \tau_0G_m\nabla g$ iff $b$ is a $G_m$-gradient (then $\tau_0g = -J_1 + \mathrm{const}$
+and the equation for $g$ is satisfied); on the simply connected $\R^{mp}$ a smooth field $G_m^{-1}b$ is a gradient iff
+its Jacobian is symmetric (Poincar\'e lemma). When $b = -G_m\nabla J_1$ the drift $-G_m\nabla(J_m + \varepsilon J_1)$
+is a gradient drift, so the SDE is the Langevin dynamics of $J_m + \varepsilon J_1$ with the exact Gibbs law
+$\propto\exp(-(J_m + \varepsilon J_1)/\tau_0)$ and $j\equiv0$; consistently, $g = -J_1/\tau_0 + \mathrm{const}$ solves
+the defining equation.
+
+\smallskip
+\textit{(iii)} $\Ginv b_{\mathrm{fr},i} = \nabla_\vartheta P_2[\mu_\Theta](\vartheta)|_{\vartheta_i}$ with
+$P_2 := U_{\mathrm{even}} + U_{\mathrm{odd}}$, a functional of $\mu$ (quadratic in $\mu$ through $r_\mu$) and of the
+evaluation point. Differentiating with respect to $\vartheta_j$ moves the atom $\vartheta_j$ of $\mu_\Theta$, which
+gives $\frac1m\nabla_\vartheta\nabla_{\vartheta'}S(\vartheta_i,\vartheta_j)$ with
+$S(\vartheta,\vartheta') := \delta P_2[\mu](\vartheta)/\delta\mu(\vartheta')$ (Theorem I's $k_e^{-2}$
+second-variation kernel), and, for $j = i$, additionally the symmetric $\nabla^2_\vartheta P_2(\vartheta_i)$. The
+antisymmetric part of the $(i,j)$ block is therefore
+$\frac1{2m}\nabla\nabla'[S(\vartheta_i,\vartheta_j) - S(\vartheta_j,\vartheta_i)] = \frac1{2m}\nabla\nabla'A_\mu(\vartheta_i,\vartheta_j)$.
+For $b_{\mathrm{osc}}$: $H = -G_m\nabla\mathcal{J}$ and $u = -G_m\nabla\mathcal{U}$, so
+$G_m^{-1}b_{\mathrm{osc}} = \langle\nabla^2\mathcal{J}G_m\nabla\mathcal{U}\rangle$ and
+$\partial_j(G_m^{-1}b_{\mathrm{osc}})_k = \langle\partial_j\partial_k\partial_l\mathcal{J}\,G_l\partial_l\mathcal{U}\rangle
++ \langle(\nabla^2\mathcal{J}G_m\nabla^2\mathcal{U})_{kj}\rangle$; the first is symmetric in $(j,k)$, the
+antisymmetric part of the second is
+$\tfrac12\langle\nabla^2\mathcal{J}G_m\nabla^2\mathcal{U} - \nabla^2\mathcal{U}G_m\nabla^2\mathcal{J}\rangle$.
+
+\smallskip
+\textit{(iv)} Suppose $b_{\mathrm{fr}}$ is a $G_m$-gradient for some $m\ge3$. By (iii),
+$\nabla_\vartheta\nabla_{\vartheta'}A_{\mu_\Theta}(\vartheta_i,\vartheta_j) = 0$ for all $\Theta$ and all $i$, $j$.
+$A_\mu$ is affine in $\mu$ (Theorem I): $A_\mu = A_f + B(\int\tilde\Phi\dd\mu)$ with $B$ linear in the function
+$\int\tilde\Phi(\cdot\,;\vartheta)\dd\mu(\vartheta)$, so for $\Theta = (\vartheta,\vartheta',\vartheta_3,\dots)$,
+$\nabla_\vartheta\nabla_{\vartheta'}[A_f + \frac1m\sum_jB(\tilde\Phi(\cdot\,;\vartheta_j))](\vartheta,\vartheta') = 0$
+with the atom positions inside $B$ frozen. Varying $\vartheta_3$ alone shows that
+$\nabla_\vartheta\nabla_{\vartheta'}B(\tilde\Phi(\cdot\,;\vartheta_3))(\vartheta,\vartheta')$ does not depend on
+$\vartheta_3$; at the zero feature $\vartheta_3 = \vartheta_z$ it vanishes ($B(0) = 0$), so it vanishes for all
+$\vartheta_3$, and then $\nabla\nabla'A_f(\vartheta,\vartheta') = 0$ as well:
+$\nabla_\vartheta\nabla_{\vartheta'}A_\mu(\vartheta,\vartheta') = 0$ for every $\mu$ and all $(\vartheta,\vartheta')$.
+A smooth antisymmetric kernel with vanishing mixed derivative on the connected $\R^p\times\R^p$ has the form
+$a(\vartheta) - a(\vartheta')$, a coboundary, hence $A_\mu\equiv0$ by Theorem I(i) --- for every $\mu$, contradicting
+Theorem I(vi). For the gain scale: under $G\to tG$, $b_{\mathrm{fr}}\to t\,b_{\mathrm{fr}}$ and
+$b_{\mathrm{osc}}\to t^2b_{\mathrm{osc}}$, so the antisymmetric part of $D((tG)^{-1}b)$ is
+$a_{\mathrm{fr}} + t\,a_{\mathrm{osc}}$ with $a_{\mathrm{fr}}\not\equiv0$; it vanishes identically in $\Theta$ for at
+most one $t$.
+\end{proof}
+
+\begin{thm}{Corollary}{J$'$.3}[the stationary law in the iterated limit $k_e\to\infty$, $m\to\infty$]
+Let $\pi_m$ be the Gibbs measure of Theorem J$'$ on $\R^{mp}$, and $\mu^*_\tau$ the unique minimiser of Theorem H's
+free energy $F_\tau$ at $\sigma = \sigma_0/k_e$, $\tau = \tau_0/k_e$; since
+$k_eF_\tau = \bar L + \frac{\sigma_0}2\int\norm{\vartheta - \vartheta^0}^2_{\Ginv}\dd\mu + \tau_0H(\mu)
+= \bar L + \tau_0H(\cdot\,|\,\gamma_\tau) + \mathrm{const}$ with $\gamma_\tau = \mathcal{N}(\vartheta^0,(\tau_0/\sigma_0)G)$,
+$\mu^*_\tau$ does not depend on $k_e$. Then:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{Chaoticity of the Gibbs measures.} Under $\pi_m$ the empirical measure
+    $\mu_\Theta = \frac1m\sum_i\delta_{\vartheta_i}$ converges in probability to $\mu^*_\tau$ as $m\to\infty$, and
+    for every $k$ the $k$-particle marginal of $\pi_m$ converges weakly to $(\mu^*_\tau)^{\otimes k}$.
+  \item \emph{The iterated limit of the real loop.} For every $\varphi\in C^2(\R^p)$ bounded with bounded
+    derivatives up to order two,
+    \[
+      \lim_{m\to\infty}\lim_{k_e\to\infty}\E_{m_\varepsilon}\Bigl[\frac1m\sum_i\varphi(\vartheta_i)\Bigr] = \int\varphi\dd\mu^*_\tau,
+    \]
+    and the inner limit is attained at the rate $O(1/k_e)$ of Theorem J$'$(b), with a constant that depends on $m$.
+\end{enumerate}
+\end{thm}
+\status{Proved (Sanov's theorem and Varadhan's lemma, \cite[Thms~6.2.10 and 4.3.1]{S34}; Theorem H(i)--(ii); Theorem
+J$'$(b)). The joint limit, with $k_e$ and $m$ related, is Conjecture H.6 and remains open; the corollary places the
+stationary law of the finite loop between Theorem J$'$ and Theorem H. Numerics: \code{exp_gibbs_m.py} $\to$
+\code{results/dither/gibbs_m.md} (below).}
+
+\begin{proof}
+$J_m(\Theta) = m[\bar L(\mu_\Theta) + \frac{\sigma_0}2\int\norm{\vartheta - \vartheta^0}^2_{\Ginv}\dd\mu_\Theta]$, so
+$\pi_m(\dd\Theta)\propto\exp(-m\bar L(\mu_\Theta)/\tau_0)\,\gamma_\tau^{\otimes m}(\dd\Theta)$. The map
+$\mu\mapsto\bar L(\mu) = \frac12\int\norm{f - \int\tilde\Phi(\cdot\,;\vartheta)\dd\mu(\vartheta)}^2\dd\rho$ is
+bounded and continuous for the weak topology of $\Prob(\R^p)$ (the features are bounded and continuous in
+$\vartheta$, and $\rho$ is a probability measure). Under $\gamma_\tau^{\otimes m}$ the empirical measure satisfies
+Sanov's large-deviation principle with rate function $H(\cdot\,|\,\gamma_\tau)$; by Varadhan's lemma (tilting by the
+bounded continuous $-m\bar L/\tau_0$), under $\pi_m$ it satisfies a large-deviation principle with rate function
+$I(\mu) = \bar L(\mu)/\tau_0 + H(\mu\,|\,\gamma_\tau) - \inf = (k_e/\tau_0)(F_\tau(\mu) - F_\tau(\mu^*_\tau))$, by
+Theorem H(i). $F_\tau$ is strictly convex ($\bar L$ is convex, the entropy strictly convex) with the unique minimiser
+$\mu^*_\tau$ (Theorem H(ii)), so $I$ has the unique zero $\mu^*_\tau$ and $\mu_\Theta\to\mu^*_\tau$ in probability.
+Exchangeability of $\pi_m$ then gives the convergence of the $k$-marginals to $(\mu^*_\tau)^{\otimes k}$ (Sznitman's
+equivalence of chaoticity and the convergence of the empirical measure). For (ii), Theorem J$'$(b) applied to the
+observable $\frac1m\sum_i\varphi(\vartheta_i)\in C^2(\R^{mp})$ gives
+$\lim_{k_e\to\infty}\E_{m_\varepsilon}[\frac1m\sum\varphi(\vartheta_i)] = \pi_m(\frac1m\sum\varphi(\vartheta_i)) = \pi_m^{(1)}(\varphi)$,
+the one-particle marginal, which converges to $\int\varphi\dd\mu^*_\tau$ by (i).
+\end{proof}
+
+\begin{rmk}{Remark}{J$'$.4}[what the corollary says about Conjecture H.6]
+The conjecture asks for the limit of the real loop's law when $k_e\to\infty$ with $m$ fixed or growing, uniformly in
+time. Theorem J$'$ settles the stationary part at fixed $m$, and the corollary shows that the resulting Gibbs measures
+are chaotic with limit $\mu^*_\tau$, the stationary state of $\Aavg$: the stationary law of the real dithered loop is
+the minimiser of Theorem H's free energy in the iterated limit. What is missing for the conjecture is the uniformity
+in $m$ of Theorem J$'$'s $O(1/k_e)$ (its constant grows with $m$ through the Poisson equation on $\R^{mp}$) and the
+time-dependent statement.
+\end{rmk}
+
+\paragraph{Numerics} (\code{exp_dither_stationary.py} $\to$ \code{results/dither/table.md}). The single-kernel
+instance: $n = 1$, $m = 1$, plant $f(x) = e^{-(x-0.5)^2/0.5} + 0.4x$, reference
+$x_m(t) = 1.5[\sin t' + \tfrac{1}{3}\sin2t']$ with $t' = \pm t$ (the two orientations), saturated amplitude and
+centre $\vartheta = (\alpha,\gamma)$ ($a_{\max} = 3$, $c_{\max} = 2.5$), frozen width $s = 0.6$,
+$G = \operatorname{diag}(2,2)$, $\sigma_0 = 0.4$, $\vartheta^0 = 0$, $\tau_0 = 0.1$, $k_e\in\{10,20,40,80\}$. The
+averaged data on a $201^2$ grid: $\pi$, $g$, $j_1$ (rms $b_{\mathrm{fr}} = 0.143$, rms $b_{\mathrm{osc}} = 0.225$;
+non-gradient fraction $\pi(\norm{b_\perp}^2)/\pi(\norm{b}^2) = 0.32$ and $0.46$ for the two orientations; EPR
+coefficient $\tau_0^{-1}\pi(\norm{b_\perp}^2_{\Ginv}) = 0.144$ and $0.118$; circulation coefficient
+$\int\Theta\wedge j_1 + \pi\langle u\wedge\dot u\rangle = +0.0117 - 0.0167 = -0.0051$ and
+$-0.0103 + 0.0167 = +0.0065$). The real loop: $2\cdot10^4$ independent replicas per ($k_e$, orientation), started
+from the first-order law $\pi(1 + \varepsilon g)$, Strang splitting with $k_eh = 1/2$, burn-in $\ge10$ and averaging
+$\ge40$ slow-time units (whole numbers of reference periods), standard errors from the spread of the per-replica time
+averages (the slowest mode of $\bar L_0$ relaxes in $3.5$ slow-time units on this instance, so batch means in time
+would be correlated; referee round 6).
+
+\smallskip
+\noindent\emph{The first-order law (b), (c).} The stationary means against the Gibbs value and the first-order
+prediction, orientation $+1$ ($\varepsilon$-coefficients $\int\varphi g\dd\pi$: $-0.255$ for $\alpha$, $-0.426$ for
+$\gamma$); Table~\ref{tab:thmJp:firstorder}.
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Theorem J$'$(b), (c): the first-order law on the single-kernel instance]{Theorem J$'$(b), (c) on
+the single-kernel instance: the stationary means of the real loop against the Gibbs value and the first-order
+prediction (\code{results/dither/table.md}).}
+\label{tab:thmJp:firstorder}
+\begin{tabularx}{\textwidth}{@{}c>{\hsize=1.25\hsize\centering\arraybackslash}X>{\hsize=0.6\hsize\centering\arraybackslash}X>{\hsize=1.15\hsize\centering\arraybackslash}X>{\hsize=1.25\hsize\centering\arraybackslash}X>{\hsize=0.6\hsize\centering\arraybackslash}X>{\hsize=1.15\hsize\centering\arraybackslash}X@{}}
+\toprule
+$k_e$ & $m_\varepsilon(\alpha) - \pi(\alpha)$ (s.e.\ 0.0013) & $\times k_e$ & $m_\varepsilon(\alpha) - {}$first order
+  & $m_\varepsilon(\gamma) - \pi(\gamma)$ (s.e.\ 0.0018) & $\times k_e$ & $m_\varepsilon(\gamma) - {}$first order\\
+\midrule
+10 & $-0.0276$ & $-0.28$ & $-0.0021$ & $-0.0441$ & $-0.44$ & $-0.0015$\\
+20 & $-0.0179$ & $-0.36$ & $-0.0051$ & $-0.0269$ & $-0.54$ & $-0.0056$\\
+40 & $-0.0089$ & $-0.36$ & $-0.0025$ & $-0.0127$ & $-0.51$ & $-0.0020$\\
+80 & $-0.0046$ & $-0.37$ & $-0.0015$ & $-0.0083$ & $-0.67$ & $-0.0030$\\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+The discrepancy between the real loop and the Gibbs measure falls like $k_e^{-0.87}$ ($\alpha$), $k_e^{-0.83}$
+($\gamma$), $k_e^{-0.72}$ ($\alpha^2$) and $k_e^{-1.09}$ ($\alpha\gamma$) ($\gamma^2$ has a first-order coefficient
+$0.03$, below resolution), and the first-order prediction removes most of it: 93\% and 97\% of the $\alpha$ and
+$\gamma$ discrepancies at $k_e = 10$, 70--85\% at $k_e = 20$--$40$; at $k_e = 80$ the residuals ($-0.0015\pm0.0013$
+and $-0.0030\pm0.0018$) are at the Monte Carlo floor. The second-order decay of the residual is \emph{not} resolved:
+the residuals at $k_e = 20$--$80$ are 1--3 standard errors with a common sign, compatible with an $O(\varepsilon^2)$
+coefficient of order $-1$ to $-2$ and with noise; at $k_e = 10$ the even part of the $\alpha^2$ and $\gamma^2$ shifts
+exceeds its prediction by a factor 1.5--1.8 (an $O(\varepsilon^2)$ term of the size seen in Theorem J's instance A,
+where $c_2/c_1\approx1.4$).
+
+\smallskip
+\noindent\emph{The orientation-odd part (Remark J$'$.1).} Measured $(m_+ - m_-)/2$ over predicted
+$(p_{1+} - p_{1-})/(2k_e)$; Table~\ref{tab:thmJp:odd}.
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Theorem J$'$: the orientation-odd part of the stationary means]{Theorem J$'$ on the single-kernel
+instance: the orientation-odd part of the stationary means, measured over predicted
+(\code{results/dither/table.md}).}
+\label{tab:thmJp:odd}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+$k_e$ & $\alpha$ & $\gamma$ & $\alpha\gamma$\\
+\midrule
+10 & $0.92\pm0.04$ & $0.93\pm0.04$ & $0.89\pm0.06$\\
+20 & $1.23\pm0.09$ & $1.10\pm0.07$ & $1.28\pm0.13$\\
+40 & $1.28\pm0.17$ & $1.15\pm0.15$ & $1.03\pm0.26$\\
+80 & $1.25\pm0.34$ & $1.38\pm0.29$ & $1.11\pm0.51$\\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\medskip
+
+The dither version of Remark H.7a's test: the direction in which the reference is traversed shifts the stationary
+kernel by $2\varepsilon\int\Theta g_{\mathrm{odd}}\dd\pi$ (here entirely from $b_{\mathrm{osc}}$), measured to within
+7--8\% at $k_e = 10$ (where the odd shift is $0.02$--$0.03$ against standard errors of $0.001$) and consistent with
+the prediction within the 10--30\% resolution of the runs at $k_e = 20$--$80$ (the ratios sit 10--30\% above one
+with error bars of the same size: a second-order odd term of relative size $O(\varepsilon)$ is not excluded).
+
+\smallskip
+\noindent\emph{The tracking error (d).} $k_e^2\E\norm{e}^2/(2\pi(\bar L)) = 1.054$, $1.033$, $1.017$, $1.009$
+(orientation $+1$) and $1.023$, $1.014$, $1.008$, $1.004$ ($-1$) at $k_e = 10$, $20$, $40$, $80$, with standard
+errors $0.001$: the deviation from one is $0.54$--$0.74/k_e$ and $0.23$--$0.35/k_e$, the $O(1/k_e)$ of (d).
+
+\smallskip
+\noindent\emph{The circulation (e) and Proposition J$'$.2.} The predicted first-order circulation
+$\varepsilon[\int\Theta\wedge j_1 + \pi\langle u\wedge\dot u\rangle]$ is $-5\cdot10^{-4}$ ($+1$) and
+$+6.5\cdot10^{-4}$ ($-1$) at $k_e = 10$ and scales like $1/k_e$, against a Monte Carlo standard error of
+$5\cdot10^{-4}$ at every $k_e$: the real loop's circulation is not resolved at first order for $k_e\ge20$ (measured
+$-4\cdot10^{-4}\dots+1.2\cdot10^{-3}$, all within 1.7 standard errors of the prediction), and at $k_e = 10$ the
+measurement ($+3.7\cdot10^{-3}\pm0.5\cdot10^{-3}$ for $+1$, $-0.6\cdot10^{-3}\pm0.5\cdot10^{-3}$ for $-1$) is
+dominated by higher orders (an even $O(\varepsilon^2)$ term of coefficient $\approx+0.2$ and an odd one of the
+opposite sign to the first-order odd part). The current machinery is therefore checked where the signal is clean, on
+the first-order averaged SDE itself: its stationary density $m_\varepsilon$ and current $j_\varepsilon$, computed on
+the grid (the discrete current at $\varepsilon = 0$, $-6.6\cdot10^{-5}$, a residual of the central scheme,
+subtracted), give $\int\Theta\wedge(j_\varepsilon - j_0)/(\varepsilon\int\Theta\wedge j_1) = 1.47$, $1.21$, $1.09$,
+$1.03$ at $\varepsilon = 0.2$, $0.1$, $0.05$, $0.025$ --- one plus a term linear in $\varepsilon$ --- and
+$\norm{m_\varepsilon - m_0(1 + \varepsilon g)}_1/\varepsilon^2 = 0.307$, $0.308$, $0.307$, $0.305$: the first-order
+expansion of Proposition J$'$.2(i) with a clean $\varepsilon^2$ remainder.
+
+\smallskip
+\noindent\emph{Corollary J$'$.3} (\code{exp_gibbs_m.py} $\to$ \code{results/dither/gibbs_m.md}). On the same
+instance, $\mu^*_\tau$ is computed on the $201^2$ grid as the fixed point of the first-variation condition (59 damped
+iterations, residual $10^{-11}$): $\int\alpha\dd\mu^* = 0.4963$, $\int\gamma\dd\mu^* = 0.1873$,
+$\int\alpha^2\dd\mu^* = 0.9353$, $\bar L(\mu^*_\tau) = 0.1394$. The Gibbs measures $\pi_m$ for
+$m = 1$, $2$, $4$, $8$, $16$, $32$ are sampled by MALA (4000 replicas, acceptance 0.98--0.996, standard errors from
+the independent replicas; the $m = 1$ row agrees with the quadrature of $\pi_1$ within one standard error);
+Table~\ref{tab:thmJp:gibbsm}.
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Corollary J$'$.3: the Gibbs measures $\pi_m$ against the mean-field minimiser]{Corollary J$'$.3 on
+the single-kernel instance: the one-particle marginals of the Gibbs measures $\pi_m$ against the mean-field
+minimiser $\mu^*_\tau$, with the rescaled deviations (\code{results/dither/gibbs_m.md}).}
+\label{tab:thmJp:gibbsm}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}c>{\hsize=0.75\hsize\centering\arraybackslash}X>{\hsize=0.6\hsize\centering\arraybackslash}X>{\hsize=0.85\hsize\centering\arraybackslash}X>{\hsize=1.25\hsize\centering\arraybackslash}X>{\hsize=1.3\hsize\centering\arraybackslash}X>{\hsize=1.25\hsize\centering\arraybackslash}X@{}}
+\toprule
+$m$ & $\E_{\pi_m}[\alpha_1^2]$ & $\E_{\pi_m}[\gamma_1]$ & $\E_{\pi_m}[\bar L(\mu_\Theta)]$
+  & $(\E[\alpha_1^2] - \int\alpha^2\dd\mu^*)\cdot m$ & $(\E[\gamma_1] - \int\gamma\dd\mu^*)\cdot m$
+  & $(\E[\bar L] - \bar L(\mu^*))\cdot m$\\
+\midrule
+1 & 0.536 & 0.251 & 0.1960 & $-0.40$ & $+0.064$ & $+0.057$\\
+2 & 0.729 & 0.225 & 0.1681 & $-0.41$ & $+0.075$ & $+0.057$\\
+4 & 0.832 & 0.204 & 0.1540 & $-0.41$ & $+0.067$ & $+0.058$\\
+8 & 0.881 & 0.194 & 0.1470 & $-0.43$ & $+0.050$ & $+0.061$\\
+16 & 0.909 & 0.191 & 0.1432 & $-0.42$ & $+0.051$ & $+0.060$\\
+32 & 0.922 & 0.190 & 0.1413 & $-0.42$ & $+0.084$ & $+0.059$\\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+The one-particle marginals converge to $\mu^*_\tau$ with a clean $1/m$ law (slopes $-1.01$ for $\gamma$ and $-0.99$
+for the Gibbs-averaged occupation loss, whose rescaled deviation is $0.058\pm0.002$ at every $m$; the second moment
+of $\alpha$ moves from $0.54$ at $m = 1$ to $0.92$ at $m = 32$ against $0.935$, with rescaled deviation
+$-0.41\pm0.01$ throughout: the single kernel sits in a narrow well, while in the mean field each particle sees the
+wide one-body potential $V[\mu^*_\tau]$); the mean of $\alpha$ is within $0.01$ of its limit already at $m = 1$ (a
+small $1/m$ coefficient, its slope not resolved). The stationary law of the finite dithered loop thus approaches the
+minimiser of Theorem H's free energy in the iterated limit at the rate $1/m$, as the corollary states.
+
+\checkedby{\code{tests/test_dither.py}: the single-kernel averaged data ($J$, $\nabla J$, $b_{\mathrm{fr}}$,
+$b_{\mathrm{osc}}$) against the general implementation of Proposition H.7 and Remark H.7a
+(\code{averaging.expansion_terms}, \code{averaging.oscillation_correction}, \code{periodic.ClosedLoop}) at three
+parameter points ($2\cdot10^{-5}$ relative); the weighted Poisson solver against the Ornstein--Uhlenbeck closed forms
+($g = \Ginv b\cdot\Theta/\tau_0$, mean shift $(G\lambda)^{-1}b$, the Green identity
+$\int\varphi g\dd\pi = -\pi(b\cdot\nabla\psi_\varphi)$, zero current and entropy production for a gradient drift);
+the stationary Fokker--Planck solver of the first-order SDE (OU exact; on the instance the current ratio $\to1$ and
+$\norm{m - \pi(1 + \varepsilon g)}_1\propto\varepsilon^2$); the real loop at $k_e = 20$ (8000 replicas: the
+stationary means of $\alpha$ and $\gamma$ closer to the first-order prediction than to $\pi$, the $\gamma$ shift
+resolved at $\ge3$ standard errors, the tracking error within 10\% of $2\pi(\bar L)$); and the Corollary J$'$.3
+numerics (the mean-field fixed point to $10^{-9}$, the Gibbs sampler against the quadrature of $\pi_1$)\newline
+(\code{test_single_kernel_averaged_data_matches_the_general_H7_implementation},\newline
+\code{test_poisson_solver_reproduces_the_ornstein_uhlenbeck_closed_forms},\newline
+\code{test_first_order_stationary_density_and_current_of_the_averaged_sde},\newline
+\code{test_real_loop_means_are_closer_to_the_first_order_prediction_than_to_gibbs},\newline
+\code{test_corollary_J3_mean_field_minimiser_and_gibbs_sampler_consistency}).}

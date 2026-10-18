@@ -14,8 +14,14 @@ Each branch states what is proved, what is open, and the first concrete step.
     \item \emph{Done (Theorem J, Section~\ref{sec:thmJ}):} the deterministic case ($\tau=0$, $\sigma=\sigma_0/k_e$)
       at fixed $m$: near every hyperbolic critical point of $J_m$ the real loop has a unique periodic orbit with the
       same stability type, a $k_e$-uniform basin, and the first-order location of Proposition H.7 and Remark H.7a.
-    \item \emph{Next steps:} the same with dither at fixed $m$ (the stationary state is a measure; the averaging
-      transform must act on the Fokker--Planck equation), and uniformity in $m$.
+    \item \emph{Done (Theorem J$'$, Section~\ref{sec:thmJprime}):} the dithered case at fixed $m$. The invariant law
+      of the loop has the Gibbs measure $\exp(-J_m/\tau_0)$ as its parameter marginal up to $O(1/k_e)$, with the
+      first-order correction driven by the same drift $b$ as Theorem J; the fast error and the phase are eliminated by
+      a Poisson-equation expansion of the generator rather than a transformation of the Fokker--Planck equation.
+    \item \emph{Next steps:} uniformity in $m$ --- the mean-field limit of the stationary law (the Gibbs measures of
+      $J_m$ converge to the minimiser of the mean-field free energy $F_\tau$ of Theorem H, a propagation-of-chaos
+      question for Gibbs measures which is where Conjecture H.6 now lives), the second-order correction, and
+      quantitative constants in place of the $O(\varepsilon^2)$.
   \end{itemize}
 
 \item \textbf{Non-reciprocal mean-field dynamics from closed-loop learning (new; Proposition H.7).}
@@ -50,9 +56,21 @@ Each branch states what is proved, what is open, and the first concrete step.
       $k_e^{-2}$ terms shift the separation Floquet exponents of the real loop by $O(k_e^{-2})$, with a closed-form
       prediction from the averaged data; at the critical leak $\sigma_{\mathrm{crit}}$ the direction of traversal
       decides whether the kernels separate, and the $\sigma_0$ at which it does can be computed in advance.
-    \item \emph{Next steps:} the same test with dither, where the stationary state is a measure; the design of the
-      orbit's area (not only its orientation) as a control input; and the orientation effect at non-collapsed
-      configurations, where it moves the stationary kernels (Remark H.7a) rather than their stability.
+    \item \emph{Done (Theorem J$'$):} the test with dither. The orientation-odd part of the stationary parameter
+      means is $2\varepsilon\int\Theta g_{\mathrm{odd}}\dd\pi$, with $g_{\mathrm{odd}}$ driven by the odd part of
+      $b$; measured on the single-kernel instance of Section~\ref{sec:thmJprime} (where, in one state dimension, the
+      whole odd effect is $b_{\mathrm{osc}}$).
+    \item \emph{New (Proposition J$'$.2): the stationary state is a non-equilibrium steady state.} The first-order
+      averaged dynamics carries a stationary current $j_1 = \pi(b - \tau_0G\nabla g)$ exactly when $b$ is not a
+      $G$-gradient, which for $m\ge3$ is always the case; its entropy production rate is
+      $\varepsilon^2\tau_0^{-1}\pi(\norm{b_\perp}^2_{\Ginv})$; and the real loop's stationary parameter process is
+      not reversible. The Lyapunov-functional question for the non-reciprocal flow is therefore a question about a
+      non-equilibrium steady state (its free energy is not a Lyapunov functional of the real loop at order
+      $\varepsilon$).
+    \item \emph{Next steps:} the design of the orbit's area (not only its orientation) as a control input; the
+      orientation effect at non-collapsed configurations with several kernels; measuring the current of the real loop
+      (below the Monte Carlo resolution in Section~\ref{sec:thmJprime}'s instance; a variance-reduced estimator or a
+      stronger instance is needed); the mean-field limit of the current.
   \end{itemize}
 
 \item \textbf{Uniform-in-time propagation of chaos with a plant in the loop.}
@@ -109,12 +127,23 @@ Each branch states what is proved, what is open, and the first concrete step.
   \begin{itemize}
     \item \emph{Done (Lemma E.0):} a quantitative, uniform UES estimate for the skew-symmetric class, explicit in
       $(k,\alpha,T,\Psi_M,\Psi_D)$, which reproduces the $\omega^{-2}$ law of Remark E.1.
+    \item \emph{Done (Lemma E.0$'$):} a strict Lyapunov function whose rate is the averaged rate
+      $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$ up to a factor $1-\delta$, for $k$ above a threshold set by the
+      peak factors of $\Psi$, $\dot\Psi$, $\ddot\Psi$ (second-order slaving of the error to its slow manifold and a
+      second-order averaging correction, whose mean part vanishes identically); the ill-conditioning of the averaged
+      Gramian is paid once, as in the exact rate.
+    \item \emph{Done (Corollary E.0$'$.3):} the same Lyapunov function bounds the stationary parameter spread of the
+      dithered linearised loop,
+      $\limsup\E\norm{\zeta}^2\le(1+O(\varepsilon))k\norm{\Sigma}_F^2/(2(1-\delta)\lambda_{\min})$, within
+      $1/(1-\delta)$ of the exact (averaged Langevin) value on isotropic regressors and paying the condition number
+      in the trace otherwise: an explicit design formula for how much dither a given tracking budget tolerates.
     \item \emph{Open:} the continuum form of (PE); the trajectory kernel
       \[K_T(\vartheta,\vartheta')=\int\Phi(x(s);\vartheta)\Phi(x(s);\vartheta')\dd s;\]
       identifiability of measures up to symmetry; the relation to~\cite{R16}. Remark E.1 shows that the PE level
-      alone does not predict the rate. The explicit rate of Lemma E.0 is quadratic in
-      $\lambda_{\min}\langle\Psi^\T\Psi\rangle$ where the exact rate is linear (Remark E.0a); a strict Lyapunov
-      function with the linear dependence is the next quantitative target.
+      alone does not predict the rate. For Lemma E.0$'$: lowering the threshold $k_0$ (a third-order slaving trades
+      $\rho_{DD}$ for the peak factor of $\dddot\Psi$ one order higher), the non-periodic case (a windowed
+      $\bar M(t)$), and the nonlinear Theorem E with the constants of E.0$'$ (its steps 4--5 carry over; the explicit
+      ball radius improves by the same factor as the rate).
   \end{itemize}
 
 \item \textbf{Transport-regularised adaptive laws.}

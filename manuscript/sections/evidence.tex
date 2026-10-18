@@ -392,12 +392,34 @@ $\omega$ & $T$ & $\alpha(T)$ & $\Psi_D$ & exact rate & explicit, closed-form $\v
     $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k_e$, because $k_e=6$ is not large against the reference's bandwidth and
     the $T^2\Psi_M^3$ term is still 13\% of $c_1$; the PE level is evaluated with 800 Gauss--Legendre nodes, converged
     over the $20\pi$ window. The exact rate pays for ill-conditioning once, the bound twice (Remark E.0a).
+  \item Lemma E.0$'$ (the slow regime; table~4 of the same file): on the $g=0.01$ ideal ($\kappa(\bar M)=7.8\cdot10^3$;
+    peak factors $\rho=69.9$, $\rho_D=3.7\cdot10^3$, $\rho_{DD}=3.7\cdot10^5$; threshold $k_0=226$ for $\delta=0.2$,
+    $321$ for $\delta=0.1$) the guaranteed rate is within a factor $1.26$ ($\delta=0.2$) and $1.12$ ($\delta=0.1$) of
+    the exact Floquet rate at $k=400$ and $600$, where Lemma E.0's optimised rate is $1.3\cdot10^5$ times smaller; the
+    certificate $\sup\dot V/V\le-\gamma$ holds on the grid wherever the conditions hold;
+    exact$/(\lambda_{\min}/k)=0.9885$, $0.9971$, $0.9993$, $0.9997$, $0.9998$, $0.9999$ at $k=50,\dots,600$ (the
+    $k^{-2}$ law of $N_2=0$).
+  \item Corollary E.0$'$.2 (Theorem E in the slow regime; table~5): on the single-kernel instance at $k_e=40$ the
+    nonlinear rate from Lemma E.0$'$'s $V$ is $4.53\cdot10^{-4}$ ($\delta=0.2$) against $2.63\cdot10^{-5}$ from
+    Lemma E.0 and an exact linear rate of $1.35\cdot10^{-3}$; the explicit ball radius is $1.53\cdot10^{-6}$ against
+    $6.15\cdot10^{-6}$ (the anisotropy of the quadratic form), the overshoot $11.8$ against $1.43$.
   \item Tests (\code{tests/test_excitation.py}): the pointwise inequalities of Lemma E.0 on random states for four
     regressors, the envelope along trajectories, the ordering explicit $\le$ exact, the $\omega^{-2}$ law, the
     no-growth of the ratio as the gains shrink, and the explicit nonlinear envelope of Theorem E on the implemented
     closed loop (single-kernel instance with $G=0.3\,I$, where $r_0\approx10^{-5}$ in the $w$-coordinates and the
     explicit nonlinear rate is $3.7\cdot10^{-5}$: the inequality holds at every sample over 8000\,s, about 0.3
-    e-folds of the explicit envelope, while the state itself decays by far more).
+    e-folds of the explicit envelope, while the state itself decays by far more). Lemma E.0$'$: the certificate and
+    the sharpness on $\Psi=(\sin t,\cos t)$ ($k=20$, $50$, $200$; ratio $\to1/(1-\delta)$) and on the slow-adaptation
+    ideal at $k=400$ (ratio $\le1.5$; more than $10^4$ above Lemma E.0's rate). Corollary E.0$'$.2: the explicit
+    envelope on the implemented single-kernel loop at $k_e=40$ over 1.5 e-folds ($\mathrm{d}t=0.005$, below the
+    fixed-step discretisation floor).
+  \item Corollary E.0$'$.3 (table~6): the explicit bound on the stationary parameter spread of the dithered (LTV),
+    with $\Sigma=(2\cdot10^{-3})^{1/2}I$, against the exact periodic stationary covariance: on $\Psi=(\sin t,\cos t)$
+    the ratio bound/exact is $2.69$, $1.58$, $1.31$ ($\delta=0.2$) and $2.52$, $1.41$, $1.17$ ($\delta=0.1$) at
+    $k=20$, $50$, $200$, falling toward $1/(1-\delta)$; on the Theorem E ideal ($\kappa=7.8\cdot10^3$) it is
+    $15.4$--$17.5$, the price of $q=15$ directions charged at the worst excitation; the exact value equals the
+    averaged Langevin covariance $k\cdot\tr X$ within $3\cdot10^{-4}$ (ideal) and $1.25/k^2$ (sinusoid), and
+    $\E\norm{e}^2=\norm{\Sigma}_F^2/k^2$ to four digits.
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ F
@@ -830,4 +852,60 @@ $k_e$ & $(+)$ & $(-)$ & measured & pred.\ at $\bar\Theta_2$ & pred.\ at $\Theta^
     \code{tests/test_periodic.py}: the Hessian splitting at the collapsed point ($10^{-5}$), the gap equation of
     $\sigma_{\mathrm{crit}}$ ($10^{-8}$), the two-fold zero separation mode at
     $\sigma_{\mathrm{crit}}$.\end{sloppypar}
+\end{itemize}
+
+% ------------------------------------------------------------------------------------------------ J'
+\subsection{Theorem J\texorpdfstring{$'$}{'}: the stationary law of the dithered single-kernel loop}
+
+Script: \code{exp_dither_stationary.py} $\to$ \code{dither/}. Single-kernel instance ($n=1$, $m=1$,
+$\vartheta=(\alpha,\gamma)$, frozen width, $G=\operatorname{diag}(2,2)$, $\sigma_0=0.4$, $\tau_0=0.1$), reference
+traversed both ways; $2\cdot10^4$ independent replicas per ($k_e$, orientation) started from the first-order law,
+$k_e=10$, $20$, $40$, $80$; the Gibbs measure, the first-order correction $g$, the current $j_1$ and the circulation
+coefficient on a $201^2$ grid. Full tables in \code{results/dither/table.md} (raw in \code{raw.npz});
+Table~\ref{tab:evidence:dither}.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Theorem J$'$: the stationary law of the dithered single-kernel loop against the Gibbs measure and the
+first-order prediction (\texttt{dither/table.md}).}
+\label{tab:evidence:dither}
+\begin{tabularx}{\textwidth}{@{}>{\hsize=1.8\hsize}Y>{\hsize=0.8\hsize\centering\arraybackslash}X>{\hsize=0.8\hsize\centering\arraybackslash}X>{\hsize=0.8\hsize\centering\arraybackslash}X>{\hsize=0.8\hsize\centering\arraybackslash}X@{}}
+\toprule
+ & $k_e=10$ & 20 & 40 & 80\\
+\midrule
+$(m_\varepsilon(\alpha)-\pi(\alpha))\cdot k_e$, prediction $-0.255$ & $-0.28$ & $-0.36$ & $-0.36$ & $-0.37$\\
+$(m_\varepsilon(\gamma)-\pi(\gamma))\cdot k_e$, prediction $-0.426$ & $-0.44$ & $-0.54$ & $-0.51$ & $-0.67$\\
+residual $m_\varepsilon(\alpha)-{}$first order (s.e.\ 0.0013) & $-0.0021$ & $-0.0051$ & $-0.0025$ & $-0.0015$\\
+residual $m_\varepsilon(\gamma)-{}$first order (s.e.\ 0.0018) & $-0.0015$ & $-0.0056$ & $-0.0020$ & $-0.0030$\\
+orientation-odd shift of $\gamma$, measured/predicted & $0.93\pm0.04$ & $1.10\pm0.07$ & $1.15\pm0.15$ & $1.38\pm0.29$\\
+$k_e^2\E e^2/(2\pi(\bar L))$, orientation $+1$ & 1.054 & 1.033 & 1.017 & 1.009\\
+circulation $\Lambda_\varepsilon$ ($+1$), measured $\pm0.0005$ / predicted
+  & $+0.0037$ / $-0.0005$ & $+0.0006$ / $-0.0003$ & $-0.0004$ / $-0.0001$ & $+0.0003$ / $-0.0001$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{itemize}
+  \item The Gibbs discrepancy decays like $k_e^{-0.87}$ ($\alpha$), $k_e^{-0.83}$ ($\gamma$), $k_e^{-1.09}$
+    ($\alpha\gamma$), and the first-order prediction removes 93--97\% of it at $k_e=10$ and 70--85\% at
+    $k_e=20$--$40$; the residual is at the Monte Carlo floor at $k_e=80$ and its second-order decay is not resolved.
+  \item The orientation-odd shift (the dither version of Remark H.7a) is predicted to 7--8\% at $k_e=10$ and within
+    the 10--30\% resolution at larger $k_e$.
+  \item The tracking error is the Gibbs-averaged occupation loss over $k_e^2/2$ with an $O(1/k_e)$ correction of
+    $0.5$--$0.7/k_e$.
+  \item The first-order circulation is below the Monte Carlo resolution for $k_e\ge20$ and dominated by higher orders
+    at $k_e=10$; the current machinery of Proposition J$'$.2 is checked on the first-order averaged SDE on the grid:
+    $\int\Theta\wedge(j_\varepsilon-j_0)/(\varepsilon\int\Theta\wedge j_1)=1.47$, $1.21$, $1.09$, $1.03$ at
+    $\varepsilon=0.2$, $0.1$, $0.05$, $0.025$ and $\norm{m_\varepsilon-m_0(1+\varepsilon g)}_1/\varepsilon^2=0.31$
+    constant.
+  \item Referee round 6 (\code{review/REVIEW_round6_Jprime.md}): the first run's batch standard errors were biased
+    low by 1.4--1.9 and its burn-in too short (JP-4--JP-6); the run reported here is the corrected one.
+  \item Corollary J$'$.3 (\code{exp_gibbs_m.py} $\to$ \code{dither/gibbs_m.md}): $\mu^*_\tau$ on the grid
+    ($\int\alpha\dd\mu^*=0.4963$, $\int\gamma\dd\mu^*=0.1873$, $\int\alpha^2\dd\mu^*=0.9353$,
+    $\bar L(\mu^*)=0.1394$); the Gibbs measures $\pi_m$ for $m=1$--$32$ by MALA (4000 replicas):
+    $\E[\bar L(\mu_\Theta)]=0.1960$, $0.1681$, $0.1540$, $0.1470$, $0.1432$, $0.1413$ with
+    $(\E[\bar L]-\bar L(\mu^*))\cdot m=0.057$--$0.061$ (slope $-0.99$), $\E[\gamma_1]$ slope $-1.01$,
+    $\E[\alpha_1^2]$ from $0.536$ to $0.922$ with rescaled deviation $-0.41\pm0.01$; the $m=1$ row matches the
+    quadrature of $\pi_1$ within one standard error.
 \end{itemize}
