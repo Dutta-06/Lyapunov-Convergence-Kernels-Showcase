@@ -324,3 +324,75 @@ numerics up to one rounding, and found two proof-level problems. The report is `
 | C7 | cosmetic | (v): Var_{γ*} = 0 also when m₀ divides m or atoms coincide; b_bar, T̄* and "centroidal" are plan-dependent at ties; degenerate coincident-particle critical points are fixed points | stated |
 | C8 | cosmetic (code) | `optimal_plan` used HiGHS without a vertex guarantee, entries could be −10⁻⁹ | `method='highs-ds'` (dual simplex) and clipping; tests pass unchanged |
 | C9 | cosmetic | "AGS Thm 10.4.12" cited for the superdifferential of ½W²(·, ν) with an unchecked sign convention | replaced by a pointer to [AGS, §10.4] with the generalised velocities described directly |
+
+## Round 6 (research continuation and adversarial review, 2026-10-18)
+
+**Design.** The second research increment adds Lemma E.0′ (the sharp explicit rate of the slow-adaptation regime),
+Corollary E.0′.2 (Theorem E with its constants) and Theorem D″ (uniform-in-time propagation of chaos under a dominant
+leak) to PARADIGM.md §§5c and 6, with code, tests and experiments. Two referees were run: one on Lemma E.0′ (proof,
+constants, code and certificate; `review/REVIEW_round6_E0prime.md`) and one on Theorem D″ (proof, constants, experiment and
+reading; `review/REVIEW_round6_Dpp.md`). The confirmed issues and their fixes follow.
+
+**Verdicts.** Lemma E.0′ holds: the referee re-derived the fast-variable equation, the order-ε and order-ε² cancellations
+(including N₂ = 0), the list of remainder terms and every per-direction bound, and certified the inequality V̇ ≤ −γV
+independently (its own quadratic forms, Gauss–Legendre antiderivatives instead of the FFT) on five regressor families —
+the sinusoid, two random multitones (n = 2, q = 4), a hand-made bursty regressor with κ(M̄) = 3.3·10³ and the Theorem E
+ideal — over 416 admissible (k, δ) pairs, on full grids, at off-grid times and states and along trajectories, without a
+failure; no counterexample. One coefficient had the wrong dimension, two constants carried a factor-2 slack, and the
+stated asymptotics missed a first-order term (all fixed). Corollary E.0′.2's proof is right; its first test measured the
+integrator's discretisation floor and was repaired (E0P-4 = E0P-f). Theorem D″ holds as a theorem; its reading did not: the
+run presented as the learning regime was a slow collapse (DPP-3), the constants carried a factor 2 (DPP-1), and the
+synchronisation claim holds only without dither (DPP-2); the instance, the constants and every text were redone, and the
+new learning-regime run shows the coupled distance growing in time.
+
+**Lemma E.0′ (refuter).** Selected confirmations: the stated ẇ equals the chain-rule derivative to 5·10⁻¹⁴ on four
+regressors with εΨ_M up to 3 (all orders through ε⁶ exercised) and the fourth-order finite difference of w along DOP853
+trajectories to 10⁻¹⁰; Ṗ₁ = 2(M − M̄), Ṡ = F, ⟨F⟩ = 0 to 4·10⁻¹⁵; the ε² coefficient vanishes to 10⁻¹³; the remainder
+R_ζ is exactly the listed one (10⁻¹²); the (T/4) antiderivative bound is sharp (ratio 0.9991 on tanh(500 sin t)); on the
+ideal at k = 400, sup V̇/V = −1.0755·10⁻⁹ against −γ = −8.594·10⁻¹⁰ (δ = 0.2) and −1.0775·10⁻⁹ against −9.673·10⁻¹⁰
+(δ = 0.1); exact/(λ_min/k) = 0.9885 … 0.99995 at k = 50 … 800; E.0′/E.0 = 1.07·10⁵; the sinusoid's exact/guaranteed →
+1.2512 at k = 3200 (the predicted 1/(1 − δ) = 1.25). The report is `review/REVIEW_round6_E0prime.md`.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| E0P-1 | minor (statement, code) | the ε⁶ coefficient of c₂ was Ψ_M⁵√ρ; the bound of ‖ΨM³ζ‖ is Ψ_M·Ψ_M⁴‖Mζ‖ ≤ Ψ_M⁶√ρ‖ζ‖_{M̄} (wrong dimension; violated by the factor Ψ_M on 3(sin t, cos t); numerically irrelevant) | Ψ_M⁶√ρ in the statement, the proof and `constants()` |
+| E0P-2 | minor (text) | "γ/2 = (1 − δ − O(k⁻²))λ_min/k" (and the corollary's λ′) missed the first-order deficit of the denominator 1 + εp₁ + ε²p₂: the ratio is (1 − δ)(1 − εp₁ + O(k⁻²)) (sinusoid: 0.638, 0.900, 0.982, 0.9968 at k = 20, 50, 200, 1000 against 1 − εp₁ = 0.843, 0.937, 0.984, 0.9969) | asymptotics rewritten in the lemma and the corollary |
+| E0P-3 | minor (text) | "k₀ ≈ (4ρρ_DD/δ²)^{1/4} from (A)" holds only when (A) binds (ideal: 226 against 225; bursty: 63 against 61); on the sinusoid (C) binds (9.85 against 4.5) and on a multitone with TΨ_M² = 134 the threshold is 269 against 17.7 and not monotone in δ | qualified ("when (A) binds …; otherwise (C) sets k₀") |
+| E0P-4 | major (test) | the corollary's first envelope test failed (worst 2.81 against ≤ 1): the fixed-step RK4 loop drifts to ‖w‖ ≈ 5.8·10⁻⁶ from an exact start at the ideal (3.0·10⁻⁷ at dt = 0.01, 1.7·10⁻⁸ at dt = 0.005), four times the explicit ball r′₀ = 1.42·10⁻⁶; the linearised and the step-2 fields obey the envelope (ratio 0.084) | = E0P-f: dt = 0.005 in the test (passes, 1.5 e-folds) |
+| E0P-5 | cosmetic (constants) | π₂ and p₂ carried a factor 2 of slack inherited from the draft's F − 2N₂: the proof's chain gives (T²/8)Ψ_M³(2√ρ + 1) and Ψ_M² + (T²/4)Ψ_M⁴ | tightened in the statement, the proof and the code; tables 4 and 5 regenerated |
+| E0P-6 | cosmetic | "single-tone regressor (ρ = ρ_D = ρ_DD = 2)" holds at unit frequency only (ρ_D = 2ω², ρ_DD = 2ω⁴) | "Ψ = (sin t, cos t)" |
+| E0P-7 | cosmetic | "within 12% of the exact rate above its threshold" is the δ = 0.1 figure; δ = 0.2 gives 26% | qualified |
+| E0P-8 | cosmetic | "1 − exact/(λ_min/k) ∝ k⁻²" is regressor-dependent (≈ 29/k² on the ideal, slope −1.98; ∝ k⁻⁴ on the sinusoid); "slow manifold to second order" for an expansion through ε³ | "O(k⁻²), attained on the ideal"; "expanded through order ε³" |
+| E0P-9 | cosmetic (table) | table 4's "exact/E.0 = 1.3·10⁵" rests on the 80-point grid maxima of Ψ_M, Ψ_D (Ψ_D = 0.94–0.96 for 60–200 points); the converged value is 1.19–1.36·10⁵ | the table's header already declares grid maxima; the text says "five orders of magnitude" |
+
+**Found by the author during the derivation (logged for the record).**
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| E0P-a | major (first draft) | the first construction (one-step slaving w = e + εΨζ, V = ½ζᵀ(I + εP₁)ζ + β‖w‖²/2) needs k ≥ √(ρρ_D)/δ, which is ≈ 2400 on the Theorem E regressor (ρ_D = 3.7·10³): vacuous | second-order slaving e₂ = −εΨζ + ε²Ψ̇ζ − ε³ΨMζ and a second averaging correction P₂; the threshold becomes (4ρρ_DD/δ²)^{1/4} ≈ 320 |
+| E0P-b | major (first draft) | the first version kept a second-order averaged matrix N₂ = ½⟨P₁M + MP₁⟩ in the rate and bounded it crudely; it vanishes identically (⟨P₁⟩ = 0 and P₁M + MP₁ = P₁M̄ + M̄P₁ + ½d/dt P₁²) | N₂ = 0 proved in the statement; the rate is λ_min(M̄)/k exactly at second order, which the measured k⁻² deviation of the exact rate confirms |
+| E0P-c | minor (code) | the first certificate compared λ_max(H^{-1/2}N H^{-1/2}) with −γ, missing the factor 2 of V̇/V = 2xᵀNx/xᵀHx, and reported spurious violations | fixed before the code entered the repository |
+| E0P-d | minor (constants) | the zero-mean antiderivative was bounded by (T/2)‖f‖_∞; the sharp bound is (T/4)‖f‖_∞ (circle-distance argument) | adopted in the proof and the code (p₁, π₁, π₂, p₂) |
+| E0P-e | minor (text) | Remark E.0′.1 claimed that Theorem E's explicit ball radius improves by the same factor as the rate; the radius carries the anisotropy p′_lo/p′_hi ≈ 1/β of the quadratic form and shrinks on well-conditioned regressors (table 5: 1.5·10⁻⁶ against 6.1·10⁻⁶ at k_e = 40) | Corollary E.0′.2 stated with its own radius; the remark corrected |
+| E0P-f | minor (test) | the fixed-step RK4 closed loop (`rk4_closed_loop`, dt = 0.02) has a discretisation floor ‖w‖ ≈ 6·10⁻⁶ from an exact start at the ideal (∝ dt⁴: 4·10⁻¹⁰ at dt = 0.002), above the corollary's explicit ball r′₀ ≈ 1.4·10⁻⁶; the first envelope test failed for this reason (the state hovered at the floor instead of decaying) | the corollary test integrates with dt = 0.005 (floor ≈ 2·10⁻⁸); the Lemma E.0 envelope test (r₀ ≈ 10⁻⁵ at dt = 0.02) sits above the floor and is unchanged, with the caveat recorded here |
+
+**Theorem D″ (refuter).** Verdict: the theorem holds as stated and the proof is correct (bracket decomposition, the
+contraction of the second bracket with the G-free leak and ‖ē‖ ≤ E_X, the Metzler comparison with Dini derivatives, the
+Hurwitz criterion, the −A⁻¹ formula, Eζ_s ≤ K_Φm^{−1/2}, exchangeability at fixed t, the W₁ triangle inequality); the referee
+also verified the comparison inequality pathwise on six m-against-M couplings with τ > 0 (ratio ≤ 0.71 on the state channel,
+≤ 0.056 on the particle channel). The *reading* did not hold in one major and several minor places. The report is
+`review/REVIEW_round6_Dpp.md`.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| DPP-1 | minor (sharpness) | the first bracket was bounded by 2L_b′‖δ‖, double-counting ‖e − ē‖ = ‖δ‖; the sharp bound is L_b′‖δ‖, so A = [[−κ_e, L_ϑ],[L_b′, −κ_ϑ]], det A = κ_eκ_ϑ − L_b′L_ϑ and the bounds carry L_b′, not 2L_b′ (confirmed pathwise with factor 1) | statement, proof, §0 row, experiment, README |
+| DPP-2 | minor (overstatement) | "the certified regime is the collapsed one, in which the statement is true and trivial": the synchronisation D⁺‖ϑ_i − ϑ_j‖ ≤ −κ_ϑ‖ϑ_i − ϑ_j‖ holds only at τ = 0; at τ > 0 the particles form the dither cloud N(ϑ⁰, (τ/σ)G) (rms spread within 3% of (τ tr G/σ)^{1/2}) and the coupled distance is of order m^{−1/2}, not zero — the theorem has content there, though the network is switched off (sup‖f̂‖ a few percent of sup‖f‖) | Status, Remark D″.1, §0 row, §8, README rewritten: "leak-dominated regime, in which the network does not learn"; the certified run now also made with dither |
+| DPP-3 | **major** (reading of numerics) | the σ = 0.02 run was labelled "spread / learning regime": Proposition K applies to the instance, whose unique collapsed critical point is the dead kernel a = 0 (f odd, ρ symmetric, ϑ⁰ = 0) with σ_K = σ₀_crit/k_e = 0.00117, seventeen times below 0.02; the spread decays exponentially at every σ ∈ [0.02, 0.4] with rate σ − 0.0012 (half-life 37 s at σ = 0.02), the network's output stays below 0.15 against sup‖f‖ = 1.25, and the reported spread 2.57 at T = 80 was the leak-decay of saturated initial outliers measured in the unconstrained coordinates: a transient of a slow collapse, not a learning regime | the instance changed to a two-bump plant that is not odd; σ_K computed in the script by `periodic.sigma_crit`; the learning-regime run at σ = σ_K/3 over 1000 s with the particle spread in physical coordinates and the fit of the plant reported; all texts rewritten from the new table |
+| DPP-4 | minor | the high-gain bullet "σ > 2λ_GL_ϑ²/k_e + O(k_e⁻²)" dropped the term λ_GE_XL₂ = λ_G(F + K_Φ)L₂/k_e of the same order (and larger here) | bullet rewritten with both terms |
+| DPP-5 | minor | "every fixed σ > 0 certifies for k_e large" needs e(0) = 0 or ‖e(0)‖ = O(1/k_e), since E_X ≥ ‖e(0)‖ | hypothesis stated |
+| DPP-6 | minor | "the regime in which J_m is strongly convex" follows only for the a-priori tube with e(0) = 0 (k_eE_X = F + K_Φ ≥ sup‖r_Θ‖), not for the measured E_X | stated for the a-priori tube, with the Hessian bound |
+| DPP-7 | minor (experiment) | "certified" rested on an a-posteriori sample E_X = 0.052 (every 20th step, 8 seeds); with the a-priori tube radius (F + K_Φ)/k_e = 0.2236 the old constants did not certify the run (det A < 0), the sharp ones do | the script computes the a-priori E_X and certifies from it (σ_cert = 4.0, run at 1.2σ_cert); the measured E_X reported alongside |
+| DPP-8 | minor (experiment) | `lipschitz_constants` under-estimated the suprema (L_x = 7.98, L_ϑ = 7.70, L₂ = 31.6, L_{xϑ} = 41.1 against the exact 8.087, 8.087, 44.4, 44.4) | closed forms for n = 1 (a_max e^{−1/2}/s_min, a_max/s_min²), confirmed in the script by a 1.2·10⁵-sample search with Nelder–Mead polish to 10⁻⁸ |
+| DPP-9 | cosmetic (positive) | the second-moment hypothesis for the W₁ statement is redundant: Itô gives sup_t E‖ϑ̄ − ϑ⁰‖² ≤ max{z(0), ((λ_GE_XL_ϑ)²/σ + 2τ tr G)/σ} | hypothesis removed, the bound proved in the statement |
+| DPP-10 | cosmetic | "u̇" for a Dini derivative; the Hurwitz condition listed κ_ϑ > 0 redundantly; for n > 1 the norms L₂, L_{xϑ} must be contracted with unit vectors as in §1 (1) | D⁺u; "κ_e > 0 and det A > 0 (then κ_ϑ > 0)"; the norm convention stated |
+| DPP-11 | cosmetic | the slope −0.41 had no standard error; the bound column compares sup_t E D with E max_t D (right direction, unsaid) | per-seed slopes with s.e.; the comparison stated in the table |

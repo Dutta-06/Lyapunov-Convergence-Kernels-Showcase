@@ -220,6 +220,12 @@ found the construction.
   features, k_e enters only through the tube). The per-particle sup bound is the pathwise Grönwall estimate (round 5, D1).
 - **Verdict: the technique and the dimension-free exponent are standard; the closed-loop statement with its constants
   is new in this setting.** Uniformity in time is open (PARADIGM.md §8, branch 3).
+- **Theorem D″ (uniform in time in the leak-dominated regime).** The contraction argument with a confining potential is the
+  standard route to uniform-in-time propagation of chaos for McKean–Vlasov systems (e.g. the small-interaction regime of
+  Malrieu 2001/2003, and [S5] for mean-field Langevin dynamics); the closed-loop version adds the plant as a second
+  contracting channel and a small-gain condition. Its certified regime is the one in which the leak stops the learning
+  (round 6, DPP-2, DPP-3): the result is a statement about where the method stops. Verdict: standard technique, new
+  object; the learning regime, where the long-horizon numerics show the coupled distance growing, is open.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 

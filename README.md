@@ -26,7 +26,7 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   the documents is produced by a script in [experiments/](experiments).
 - The theory went through three rounds of automated multi-agent adversarial review, and the manuscript through a
   fourth that compared it line by line with the theory. Every confirmed issue and its fix is logged in
-  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of rounds 1–3 and 5 are kept beside it.
+  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of rounds 1–3, 5 and 6 are kept beside it.
 - The claim-by-claim novelty audit is in [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md).
 - Version 4 of the theory adds a self-contained strict Lyapunov function for Theorem E (Lemma E.0, with the sharp slow-regime
   version Lemma E.0′), a theorem that
@@ -55,7 +55,7 @@ particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive l
 | H.7 | At finite feedback gain, the averaged loop is *not* a gradient flow: a semi-gradient (performative) correction, and an antisymmetric kernel interaction given by the area the reference orbit encloses | frozen-measure part proved; non-reciprocity checked and characterised by Theorem I |
 | H.8 | The averaged system is input-to-state stable, which reduces the global conjecture for the real loop to an averaging estimate | proved under a stated regularity assumption |
 | J | At finite m without dither, every hyperbolic critical point of the regularised occupation loss has a unique nearby periodic orbit of the real closed loop with the same stability type, O(1/k_e) away, whose first-order location is the one Proposition H.7 and Remark H.7a predict | proved and checked |
-| D′ | Finite-horizon propagation of chaos for the dithered loop with the plant in the loop, at the rate m^{−1/2} — whose exponent is dimension-free — for the state and the learned function; uniform in time when the leak dominates the adaptive law's loop gain (Theorem D″; that regime collapses the network to one kernel, so the learning regime stays open) | proved; the rate checked over 24 seeds, the uniformity on a long-horizon run |
+| D′ | Finite-horizon propagation of chaos for the dithered loop with the plant in the loop, at the rate m^{−1/2} — whose exponent is dimension-free — for the state and the learned function; uniform in time when the leak dominates the adaptive law's loop gain (Theorem D″; in that leak-dominated regime the network does not learn, and in the learning regime a 1000 s run shows the coupled distance growing, so uniformity there stays open) | proved; the rate checked over 24 seeds, the uniform bound on certified runs with and without dither |
 | C′ | The OT leak toward a prior with a different number of kernels (barycentric projection of the optimal plan) is the continuous-time Lloyd descent of coverage control used as a leak: it dissipates to the equal-mass centroidal configurations of the prior, and its Lyapunov bias is the ideal's distance from the centroids of its prior cells | proved (for generalised solutions) and checked |
 | K | At a collapsed kernel configuration the stability splits into a separation block, independent of the network size, and a collective block; the collapse is a strict minimum iff the leak exceeds a critical gain σ_crit, and near σ_crit the direction in which the reference orbit is traversed decides whether the kernels separate — a design rule computable from the averaged data | proved (the orientation part given the second-order normal form) and checked |
 | I | Reciprocity of the exactly averaged loop at order 1/k_e² is a pairwise property; for n = 1 it holds exactly when the residual vanishes on the orbit, at perfect fit in n ≥ 2 exactly when the orbit carries no circulation and the residual's Jacobian is symmetric along it; no open set of measures is reciprocal, so the averaged loop is nowhere a gradient flow at this order | proved and checked |
@@ -137,7 +137,7 @@ n = 3 and NTK results contradict them.
 | [PARADIGM.md](PARADIGM.md) | the transport theory: results, proofs, verification map (§7), research program (§8) |
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
-| [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5, archived version 2 of the theory |
+| [review/](review) | review log, raw adversarial-review reports for rounds 1–3, 5 and 6, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
 | [tests/](tests) | 72 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |

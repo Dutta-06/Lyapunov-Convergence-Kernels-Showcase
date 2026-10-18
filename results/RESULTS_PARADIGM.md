@@ -297,11 +297,16 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
 - Single seeds differ by more than an order of magnitude at fixed m; a three-seed version of the experiment gave slopes
   −0.25 and −0.21 and was withdrawn (review round 5, D2). The constant of the theorem (T K_Φ e^{ΛT}) is not checked.
 - No test: the experiment is the check.
-- Theorem D″ (`exp_chaos_uniform.py` → `chaos/uniform_table.md`; n = 1, k_e = 25, G = 0.05·diag(4,1,1), M = 2048, T = 80 s,
-  8 seeds): certified leak σ_cert = 2.39 from the sampled Lipschitz constants (L_x = 7.98, L_ϑ = 7.70, L₂ = 31.6,
-  L_{xϑ} = 41.1, E_X = 0.052). At σ = 4.66 the reference collapses to one kernel (spread 4·10⁻¹⁷) and the coupled
-  distance is zero; at σ = 0.31 the particles synchronise (spread 2·10⁻¹⁰) and the distance decays to 10⁻⁸; at σ = 0.02
-  the network stays spread (2.57) and the distance is bounded over 80 s at the m^{−0.41} level (window ratios 0.99–1.17).
+- Theorem D″ (`exp_chaos_uniform.py` → `chaos/uniform_table.md`; n = 1, k_e = 25, G = 0.05·diag(4,1,1), a two-bump plant that
+  is not odd, M = 2048): exact Lipschitz constants L_x = L_ϑ = 8.087, L₂ = L_{xϑ} = 44.4 and the a-priori tube E_X = 0.228 give
+  σ_cert = 4.04, against Proposition K's critical leak σ_K = 0.00144 of the collapsed critical point (ratio 2800). At 1.2σ_cert
+  with dither τ = 0.02 (80 s, 8 seeds) the coupled distance is 6.7·10⁻⁴ → 7.9·10⁻⁴ (m = 16) and 1.6·10⁻⁴ → 1.9·10⁻⁴ (m = 256)
+  between the first and the last window, slope −0.51 ± 0.02, bound 0.55 and 0.14; the network stays at its prior (fit error
+  1.000, rms spread 0.033 = the dither cloud). Without dither the reference collapses (spread 10⁻¹⁴) and the distance is zero;
+  at σ_cert/8 it decays to 10⁻¹¹. In the learning regime (σ_K/3, 1000 s, 6 seeds) the network stays spread (rms 1.53) and fits
+  the plant (fit error 0.632), and the distance follows m^{−1/2} (slope −0.62 ± 0.16) but grows threefold between the windows
+  (100, 200] and (500, 1000]: no empirical uniformity there (the first draft's "spread regime" run was a slow collapse; review
+  round 6).
 
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 

@@ -20,13 +20,14 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
 - **Experiments.** The scripts are `experiments/exp_transport_*.py`, `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py`, `exp_mean_field_m.py`,
   `exp_pe_convergence.py`, `exp_variable_projection.py`, `exp_slow_manifold_slope.py`, `exp_langevin_global.py`,
   `exp_langevin_tradeoff.py`, `exp_gibbs_reference.py`, `exp_orbit_orientation.py`, `exp_explicit_rate.py` and
-  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py` and `exp_barycentric_leak.py`. Their numbers are collected in
-  `results/RESULTS_PARADIGM.md`.
+  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_barycentric_leak.py` and
+  `exp_dither_stationary.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
   point to `review/LITERATURE_refs.md`, and [S1]–[S22] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
-  `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md` and, for round 5, the five files
-  `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency).
+  `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
+  `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency) and for round 6 `review/REVIEW_round6_E0prime.md` and
+  `review/REVIEW_round6_Dpp.md`.
 
 ---
 
@@ -93,7 +94,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | H | The averaged mean-field loop with saturated features, σ-modification and dither is mean-field Langevin dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in control quantities. | proved for (𝔄); the reduction to (𝔄) is formal (Remark H.0); real loop: Conjecture H.6 | a bridge to [S3], [S4]; new in adaptive control |
 | H.7 | At a frozen measure, the exactly averaged loop is (𝔄) plus an explicit O(1/k_e) correction: a semi-gradient term, whose performative defect is present for every n, and an orbit-area circulation kernel (n ≥ 2). Along the real loop, a second-order averaging term is added (Remark H.7a). | Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through its O(1/k_e) convergence. Non-reciprocity of the exact second variation is checked to 3% (asserted; 1–1.5% measured) and characterised by Theorem I. The full first-order theory predicts the orientation dependence of the learned kernels in the real closed loop to 3% in size and 11% as a vector (cosine 0.994, k_e = 40). | no precedent found (targeted search, round 3); ingredients known (higher-order averaging; performative prediction [S14]; semi-gradient TD [S10], [S11]) |
 | I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A_μ ≡ 0 iff the residual vanishes on the orbit, and the performative non-reciprocity is bounded by the residual. For n ≥ 2 at perfect fit, A_μ ≡ 0 iff the oriented orbit carries no circulation (n = 2: zero winding function) and the residual's Jacobian is symmetric along the orbit; A_μ = 2K when the residual vanishes near the orbit. A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. No open set of measures is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻². | proved; every formula checked against the generic second-variation code and, by the round-5 referee, against the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
-| D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > 2L_b′L_ϑ) the bound is uniform in time (Theorem D″), a regime in which the contraction also collapses the network to one kernel | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
+| D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > L_b′L_ϑ) the bound is uniform in time (Theorem D″), a leak-dominated regime in which the network does not learn (at τ = 0 it collapses to one kernel; at τ > 0 it stays in the dither cloud of the prior) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | H.8 | (𝔄) is input-to-state stable under drift perturbations, with gain 1/(τρ_τ) | proved, assuming the chain rule for the perturbed flow | elementary given [S3] |
@@ -1189,82 +1190,115 @@ this horizon the theorem is a rate statement, not a quantitative bound.
 *Checked* (`exp_chaos.py`): the experiment only; there is no test for Theorem D′ (its hypotheses are structural and the
 coupling is the experiment itself).
 
-**Theorem D″ (uniform-in-time propagation of chaos in the contracting regime).** In the setting and with the constants of
-Theorem D′, assume the standing bound for all t ≥ 0 and let L₂ := sup‖∇²_ϑΦ̃‖, L_{xϑ} := sup‖∂_x∇_ϑΦ̃‖ (over all x and ϑ),
+**Theorem D″ (uniform-in-time propagation of chaos in the leak-dominated regime).** In the setting and with the constants of
+Theorem D′, assume the standing bound for all t ≥ 0 and let L₂ := sup‖∇²_ϑΦ̃‖, L_{xϑ} := sup‖∂_x∇_ϑΦ̃‖ (over all x and ϑ; for
+n > 1 the operator norms are contracted with unit vectors as in §1 (1)), and
 
-    κ_e := k_e − L_f − L_x,    κ_ϑ := σ − λ_G E_X L₂,    L_b′ := λ_G(L_ϑ + E_X L_{xϑ}),    det A := κ_eκ_ϑ − 2L_b′L_ϑ.
+    κ_e := k_e − L_f − L_x,    κ_ϑ := σ − λ_G E_X L₂,    L_b′ := λ_G(L_ϑ + E_X L_{xϑ}),    det A := κ_eκ_ϑ − L_b′L_ϑ.
 
-If κ_e > 0, κ_ϑ > 0 and det A > 0 — the leak dominates the loop gain of the adaptive law — then, under the synchronous
-coupling of Theorem D′(b), for every t ≥ 0 and every τ ≥ 0,
+If κ_e > 0 and det A > 0 (then κ_ϑ > 0 as well) — the leak dominates the loop gain of the adaptive law — then, under the
+synchronous coupling of Theorem D′(b), for every t ≥ 0 and every τ ≥ 0,
 
-    E‖x_t − x̄_t‖ ≤ K_Φ κ_ϑ m^{−1/2}/det A,    E(1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖ = E‖ϑ_1(t) − ϑ̄_1(t)‖ ≤ 2K_Φ L_b′ m^{−1/2}/det A,
+    E‖x_t − x̄_t‖ ≤ K_Φ κ_ϑ m^{−1/2}/det A,    E(1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖ = E‖ϑ_1(t) − ϑ̄_1(t)‖ ≤ K_Φ L_b′ m^{−1/2}/det A,
 
-with constants independent of t: propagation of chaos is uniform in time, at the rate m^{−1/2}. If moreover
-sup_t∫‖ϑ‖²dμ̄_t < ∞, then sup_t E W₁(μ^m_t, μ̄_t) ≤ 2K_Φ L_b′ m^{−1/2}/det A + sup_t E W₁(μ̄^{emp,m}_t, μ̄_t).
+with constants independent of t: propagation of chaos is uniform in time, at the rate m^{−1/2}. Moreover
+sup_t E W₁(μ^m_t, μ̄_t) ≤ K_Φ L_b′ m^{−1/2}/det A + sup_t E W₁(μ̄^{emp,m}_t, μ̄_t), and the second term is finite: sup_t∫‖ϑ − ϑ⁰‖²dμ̄_t ≤
+max{∫‖ϑ − ϑ⁰‖²dμ̄_0, ((λ_G E_X L_ϑ)²/σ + 2τ tr G)/σ}.
 
 *Status.* Proved; checked numerically on one slow-adaptation instance (`exp_chaos_uniform.py`), where it also shows its
-limit: the contraction condition κ_ϑ > 0 synchronises the particles of a single system, so the certified regime is the
-collapsed one (Remark D″.1), in which the statement is true and trivial. What the theorem adds to Theorem D′ is the
-removal of the horizon from the bound in that regime, and a precise statement of why the contraction method stops there.
+limit. The contraction condition κ_ϑ > 0 makes the particle map a contraction uniformly in t, so in the certified regime the
+particles of a single system stay together: at τ = 0 they synchronise exponentially and the network collapses to one kernel;
+at τ > 0 they form the dither cloud of the prior, N(ϑ⁰, (τ/σ)G) to leading order, and the network's output stays at the
+level of its prior (Remark D″.1). In both cases the leak dominates the learning: the certified regime is the one in which
+the network does not learn. What the theorem adds to Theorem D′ is the removal of the horizon from the bound in that regime,
+with explicit constants (non-trivially at τ > 0, where the coupled distance is of order m^{−1/2} and not zero), and a precise
+statement of where the contraction method stops. Referee round 6 (`review/REVIEW_round6_Dpp.md`) confirmed the proof,
+corrected a double-counted factor 2 in the interconnection gain L_b′ (sharp constants below), and found that the run first
+reported as "learning regime" was a slow collapse to the dead kernel of an odd plant; the instance was changed, and the new
+long-horizon run in the learning regime shows the coupled distance growing in time — the uniform statement is supported only
+where the theorem proves it.
 
 *Proof.* Keep the contracting terms that Theorem D′'s proof dropped. For δ := x − x̄, the term −k_eδ gives
 D⁺‖δ‖ ≤ −(k_e − L_f − L_x)‖δ‖ + L_ϑΔ̄ + ζ_t with the same decomposition of the bracket as in D′(b). For Δ_i := ϑ_i − ϑ̄_i,
-split b(x,e,ϑ_i) − b(x̄,ē,ϑ̄_i) = [b(x,e,ϑ_i) − b(x̄,ē,ϑ_i)] + [b(x̄,ē,ϑ_i) − b(x̄,ē,ϑ̄_i)]. The first bracket is at most
-L_b′(‖δ‖ + ‖e − ē‖) = 2L_b′‖δ‖, because ∂_e b = G∇_ϑΦ̃ᵀ has norm ≤ λ_G L_ϑ and ∂_x b = G∂_x[∇_ϑΦ̃ᵀe] has norm ≤ λ_G L_{xϑ}E_X
-on the tube. The second bracket is G[∇_ϑΦ̃(x̄;ϑ_i) − ∇_ϑΦ̃(x̄;ϑ̄_i)]ᵀē − σΔ_i, and ⟨Δ_i, ·⟩ ≤ λ_G‖ē‖L₂‖Δ_i‖² − σ‖Δ_i‖² ≤
-−κ_ϑ‖Δ_i‖², so D⁺‖Δ_i‖ ≤ −κ_ϑ‖Δ_i‖ + 2L_b′‖δ‖, and the same for the average Δ̄. The pair u := (‖δ‖, Δ̄) thus satisfies
-u̇ ≤ Au + (ζ_t, 0)ᵀ componentwise, u(0) = 0, with the Metzler matrix A := [[−κ_e, L_ϑ], [2L_b′, −κ_ϑ]] (non-negative
+split b(x,e,ϑ_i) − b(x̄,ē,ϑ̄_i) = [b(x,e,ϑ_i) − b(x̄,ē,ϑ_i)] + [b(x̄,ē,ϑ_i) − b(x̄,ē,ϑ̄_i)]. Since e − ē = δ, the first bracket is
+G∇_ϑΦ̃(x;ϑ_i)ᵀ(e − ē) + G[∇_ϑΦ̃(x;ϑ_i) − ∇_ϑΦ̃(x̄;ϑ_i)]ᵀē, of norm at most λ_G L_ϑ‖δ‖ + λ_G L_{xϑ}‖δ‖E_X = L_b′‖δ‖ on the tube.
+The second bracket is G[∇_ϑΦ̃(x̄;ϑ_i) − ∇_ϑΦ̃(x̄;ϑ̄_i)]ᵀē − σΔ_i, and ⟨Δ_i, ·⟩ ≤ λ_G‖ē‖L₂‖Δ_i‖² − σ‖Δ_i‖² ≤ −κ_ϑ‖Δ_i‖², so
+D⁺‖Δ_i‖ ≤ −κ_ϑ‖Δ_i‖ + L_b′‖δ‖, and the same for the average Δ̄. The pair u := (‖δ‖, Δ̄) thus satisfies
+D⁺u ≤ Au + (ζ_t, 0)ᵀ componentwise, u(0) = 0, with the Metzler matrix A := [[−κ_e, L_ϑ], [L_b′, −κ_ϑ]] (non-negative
 off-diagonal entries), whose flow e^{As} is entrywise non-negative. The comparison principle for cooperative systems gives
-u(t) ≤ ∫₀^t e^{A(t−s)}(ζ_s, 0)ᵀds entrywise. A is Hurwitz exactly when κ_e, κ_ϑ > 0 and det A > 0, and then
-∫₀^∞e^{As}ds = −A⁻¹ = (det A)⁻¹[[κ_ϑ, L_ϑ], [2L_b′, κ_e]], entrywise non-negative. Taking expectations, with Eζ_s ≤
+u(t) ≤ ∫₀^t e^{A(t−s)}(ζ_s, 0)ᵀds entrywise. A is Hurwitz exactly when its trace is negative and its determinant positive;
+with κ_e > 0 and det A = κ_eκ_ϑ − L_b′L_ϑ > 0 one has κ_ϑ > L_b′L_ϑ/κ_e ≥ 0, so both hold, and then
+∫₀^∞e^{As}ds = −A⁻¹ = (det A)⁻¹[[κ_ϑ, L_ϑ], [L_b′, κ_e]], entrywise non-negative. Taking expectations, with Eζ_s ≤
 (Eζ_s²)^{1/2} ≤ K_Φ m^{−1/2} for every s (the ϑ̄_j(s) are i.i.d. with law μ̄_s and x̄_s is deterministic, as in D′(b)),
-E u(t) ≤ K_Φ m^{−1/2}(−A⁻¹)e₁ = K_Φ m^{−1/2}(κ_ϑ, 2L_b′)ᵀ/det A for every t. The per-particle statement is exchangeability
-at fixed t (valid here, unlike for sup_t: Theorem D′(c)); the W₁ statement is the triangle inequality as in D′(c), the
-second-moment condition making the i.i.d. term finite uniformly in t. The noise cancels in Δ_i, so nothing depends on τ. ∎
+E u(t) ≤ K_Φ m^{−1/2}(−A⁻¹)e₁ = K_Φ m^{−1/2}(κ_ϑ, L_b′)ᵀ/det A for every t. The per-particle statement is exchangeability
+at fixed t (valid here, unlike for sup_t: Theorem D′(c)); the W₁ statement is the triangle inequality as in D′(c). For the
+second moment of μ̄_t: z(t) := E‖ϑ̄_t − ϑ⁰‖² satisfies, by Itô's formula with ‖G∇_ϑ(ēᵀΦ̃)‖ ≤ λ_G E_X L_ϑ =: β,
+ż ≤ −2σz + 2β√z + 2τ tr G ≤ −σz + β²/σ + 2τ tr G, whence z(t) ≤ max{z(0), (β²/σ + 2τ tr G)/σ}. The noise cancels in Δ_i, so
+the coupling estimate does not depend on τ. ∎
 
 *Remark D″.1 (reading).*
 
-- *The certified regime is the collapsed one.* The condition κ_ϑ = σ − λ_G E_X L₂ > 0 says that ϑ ↦ b(x̄, ē, ϑ) is a
-  contraction uniformly in t. The same estimate applied to two particles of the *same* system, ϑ_i and ϑ_j, gives
+- *The certified regime is the leak-dominated one.* The condition κ_ϑ = σ − λ_G E_X L₂ > 0 says that ϑ ↦ b(x̄, ē, ϑ) is a
+  contraction uniformly in t. At τ = 0 the same estimate applied to two particles of the *same* system gives
   D⁺‖ϑ_i − ϑ_j‖ ≤ −κ_ϑ‖ϑ_i − ϑ_j‖: all particles synchronise exponentially, the network collapses to a single kernel, and
   the m-system and the M-system — which share their first m particles — become identical, so the coupled distance is
-  not just bounded but zero (the numerics: particle spread and coupled distance at the rounding level). Propagation of
-  chaos is then uniform in time because there is nothing to propagate. This is the price of the contraction method, not
-  of the closed loop: the learning regime, in which kernels separate (σ₀ below the critical leak of Proposition K at a
-  collapsed point, the leak below the separating force of the residual), is where Theorems H, I and K live, where the
-  averaged interaction is non-reciprocal, and where uniformity in time remains the open part of §8, branch 3.
-- *What the conditions say in the scalings of the program.* In the high-gain limit E_X = O(1/k_e), so κ_ϑ → σ and the
-  condition becomes σ > 2λ_G L_ϑ²/k_e + O(k_e⁻²): every fixed leak gain σ > 0 certifies uniform-in-time propagation of
-  chaos for k_e large — and collapses the network. In the scaling σ = σ₀/k_e of Theorem J the condition reads
-  σ₀ > λ_G(k_eE_X)L₂ + 2λ_G L_ϑ², the regime in which the regularised loss J_m is strongly convex with a unique
-  (collapsed) minimiser.
+  not just bounded but zero (the numerics: particle spread and coupled distance at the rounding level). At τ > 0 the two
+  Brownian increments do not cancel in ϑ_i − ϑ_j; the particles form a cloud around the common mean motion whose
+  second moment is bounded as in the proof, N(ϑ⁰, (τ/σ)G) to leading order when the leak dominates (measured: rms spread
+  within 3% of (τ tr G/σ)^{1/2} in the referee's runs), the coupled distance is of order m^{−1/2} and the bound is not
+  trivial — but the network's output stays at the level of its prior: sup|f̂| is a few percent of sup|f| in the certified
+  runs. Either way, propagation of chaos is uniform in time because the leak has stopped the learning. This is the price
+  of the contraction method, not of the closed loop: the learning regime, in which kernels separate and the network fits
+  the plant (σ below the critical leak of Proposition K at the collapsed critical point, the leak below the separating
+  force of the residual), is where Theorems H, I and K live, where the averaged interaction is non-reciprocal, and where
+  uniformity in time remains the open part of §8, branch 3.
+- *What the conditions say in the scalings of the program.* On the a-priori tube of Theorem D(b) with e(0) = 0,
+  k_eE_X = F + K_Φ, so the certified leak is σ_cert := λ_G E_X L₂ + L_b′L_ϑ/κ_e = [λ_G(F + K_Φ)L₂ + λ_G L_ϑ²]/k_e + O(k_e⁻²):
+  every fixed leak gain σ > 0 certifies uniform-in-time propagation of chaos for k_e large, provided the tracking error
+  starts at zero (or ‖e(0)‖ = O(1/k_e); otherwise E_X ≥ ‖e(0)‖ and the condition does not improve with k_e) — and stops
+  the learning. In the scaling σ = σ₀/k_e of Theorem J the condition reads σ₀ > λ_G(F + K_Φ)L₂ + λ_G L_ϑ², which implies
+  that J_m is strongly convex in the G⁻¹ metric (its Hessian is bounded below by σ₀ − λ_G sup_Θ‖r_Θ‖L₂ ≥ σ₀ − λ_G(F + K_Φ)L₂
+  there) with a unique, collapsed minimiser.
 - *Why the constants are conservative.* L_ϑ, L₂, L_{xϑ} are suprema over the parameter box and the tube; for sharp
-  kernels (small s_min) they are large, so σ_cert := λ_G E_X L₂ + 2L_b′L_ϑ/κ_e can exceed the adaptation gains by an order
-  of magnitude. The numerics show the coupled distance bounded uniformly in time also at a leak a hundred times smaller
-  than σ_cert, where the network stays spread: the conclusion appears to hold in the learning regime, and the theorem
-  does not reach it.
+  kernels (small s_min) they are large, so σ_cert can exceed the adaptation gains by an order of magnitude; the a-priori
+  E_X is itself several times the measured sup‖ē‖ (0.23 against 0.07 in the numerics below). The gap to the learning regime
+  is not a matter of constants, however: in the numerics the coupled distance grows over the horizon once the kernels
+  separate.
 - *Technique.* The comparison system is the standard contraction argument for McKean–Vlasov systems with a confining
   potential, with the plant as a second contracting channel (rate κ_e) and the two interconnection gains L_ϑ (particles →
-  plant) and 2L_b′ (plant → particles); det A > 0 is the small-gain condition of that interconnection.
+  plant) and L_b′ (plant → particles); det A > 0 is the small-gain condition of that interconnection.
 
 *Numerics* (`exp_chaos_uniform.py` → `results/chaos/uniform_table.md`). A slow-adaptation instance (n = 1, k_e = 25,
-G = 0.05·diag(4,1,1), saturated features with s ≥ 0.3, prior ϑ⁰ = 0, τ = 0), m = 16, 64, 256 coupled to an M = 2048
-reference over 80 s, 8 seeds. The Lipschitz constants are numerical suprema over a sampled parameter box and the tube
-|x| ≤ 2.5 (the runs stay within |x| ≤ 1.75): L_f = 2.3, L_x = 7.98, L_ϑ = 7.70, L₂ = 31.6, L_{xϑ} = 41.1; the measured
-E_X = 0.052; hence κ_e = 14.7, L_b′ = 1.97 and σ_cert = 2.39. Three leaks:
+G = 0.05·diag(4,1,1), saturated features with a_max = 4, s ≥ 0.3, prior ϑ⁰ = 0), a two-bump plant that is not odd,
+f(x) = 1.6e^{−(x−1)²/0.4} − 1.2e^{−(x+1)²/0.4} + 0.1x, on x_m = 1.5 sin t + 0.5 sin 2t (so that the dead kernel is not a
+critical point; referee round 6), m = 16, 64, 256 coupled to an M = 2048 reference. The constants are exact: the Lipschitz
+constants of the saturated features in closed form, L_x = L_ϑ = a_max e^{−1/2}/s_min = 8.087 and L₂ = L_{xϑ} = a_max/s_min² =
+44.4 (a numerical search over 1.2·10⁵ parameter samples with Nelder–Mead polish reproduces them to 10⁻⁸), L_f = 2.29, and the
+a-priori tube radius of Theorem D(b) with e(0) = 0, E_X = (F + K_Φ)/k_e = 0.228 (F = 1.70; the measured sup‖ē‖ is 0.070):
+κ_e = 14.6, L_b′ = 3.64, σ_cert = 4.04. Proposition K gives the critical leak of the collapsed critical point (the best single
+kernel, a = 0.136, c = 0.068, s = 1.15): σ_K = σ₀_crit/k_e = 0.00144 — the certified leak is 2800 times the leak below which
+the kernels separate. Four runs:
 
-| σ | regime | particle spread of the reference at T | max D_m on (10, 20] → on (40, 80], m = 16 and m = 256 | slope of the last window against m |
-|---|---|---|---|---|
-| 4.66 (certified, det A = 33.3) | collapsed | 4·10⁻¹⁷ | 8·10⁻²⁶ → 0 and 7·10⁻²⁶ → 0 | — |
-| 0.31 (σ_cert/8) | synchronising | 2·10⁻¹⁰ | 5.0·10⁻⁴ → 1.0·10⁻⁷ and 2.1·10⁻⁴ → 4.3·10⁻⁸ | −0.32 |
-| 0.020 | spread | 2.57 | 9.9·10⁻³ → 9.9·10⁻³ and 2.8·10⁻³ → 3.2·10⁻³ | −0.41 |
+| σ, τ | regime | T, seeds | reference network at T: rms spread in (a, c, s) (from 1.53), fit error ‖f − f̂‖/‖f‖ (from 1.00) | max D_m, first → last window, m = 16 and 256 | slope against m (per-seed, ± s.e.) | bound sup_t E D_m, m = 16 / 256 |
+|---|---|---|---|---|---|---|
+| 4.85 (1.2σ_cert), 0.02 | certified, with dither | 80 s, 8 | 0.033 (the dither cloud: (τ tr G/σ)^{1/2} = 0.035), 1.000 | 6.7·10⁻⁴ → 7.9·10⁻⁴ and 1.6·10⁻⁴ → 1.9·10⁻⁴ | −0.51 ± 0.02 | 0.55 / 0.14 |
+| 4.85, 0 | certified, no dither | 80 s, 8 | 1.7·10⁻¹⁴, 1.000 | 2.5·10⁻²⁵ → 0 and 1.2·10⁻²⁶ → 0 | — | 0.55 / 0.14 |
+| 0.505 (σ_cert/8), 0 | leak-dominated, below the threshold | 80 s, 8 | 3.2·10⁻¹⁴, 1.000 | 7.2·10⁻⁵ → 4.3·10⁻¹¹ and 3.1·10⁻⁵ → 1.8·10⁻¹¹ | −0.33 ± 0.20 | — |
+| 0.00048 (σ_K/3), 0 | learning regime | 1000 s, 6 | 1.53, 0.632 | 6.1·10⁻² → 2.0·10⁻¹ and 1.3·10⁻² → 3.9·10⁻² | −0.62 ± 0.16 | — |
 
-At the certified leak the reference collapses to one kernel and the coupled distance is zero to rounding (the theorem's
-bound there is 0.25 m^{−1/2}): the conclusion holds in its trivial form. At one eighth of σ_cert the particles still
-synchronise, more slowly, and the coupled distance decays with the spread. At σ = 0.02 the network stays spread, the
-coupled distance settles at the m^{−1/2} level (slope −0.41 across m = 16–256) and does not grow between the windows
-(10, 20] and (40, 80] (ratios 0.99, 1.17, 1.15): uniform in time empirically, in the learning regime that the theorem does
-not reach.
+(Windows (10, 20], (20, 40], (40, 80] for the 80 s runs and (100, 200], (200, 500], (500, 1000] for the long run; the table
+reports E max_t D_m over a window, which exceeds the theorem's sup_t E D_m.) At the certified leak with dither the
+particles stay in the cloud of the prior, the network's output stays at the level of the empty network (fit error 1.000),
+and the coupled distance is of order m^{−1/2} (slope −0.51 ± 0.02), bounded in time (the last window, twice as long, has
+maxima 15–18% above the first) and seven hundred times below the bound: the theorem's content at τ > 0. Without dither
+the reference collapses (spread 10⁻¹⁴) and the coupled distance is zero to rounding; at σ_cert/8 the particles still
+synchronise and the distance decays with them. In the learning regime (σ_K/3, the collapsed configuration unstable) the
+network stays spread, fits the plant (fit error 1.00 → 0.63 at T = 1000 s with these slow gains) and the coupled distance
+follows the m^{−1/2} law at each time but *grows* over the horizon — by a factor 3 between the windows (100, 200] and
+(500, 1000] for every m: on this horizon propagation of chaos in the learning regime is the finite-horizon statement of
+Theorem D′, not a uniform one. Whether the growth saturates on longer horizons (the leak's own time scale is 1/σ = 2000 s)
+is open; the earlier claim that the distance stays bounded in a "spread" regime (version 4, first draft) rested on a run
+that was in fact a slow collapse, and is withdrawn (referee round 6, DPP-3).
 
 *Checked* (`exp_chaos_uniform.py`): the experiment only.
 
@@ -2934,7 +2968,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | C′(iii) | the Lyapunov inequality at every recorded state of a closed loop with the barycentric leak toward a 24-atom prior | `Ba::test_lyapunov_inequality_along_the_barycentric_leak_closed_loop` |
 | D | consistency in m (nearly constant amplification 1.64–1.69; not the constant e^{ΛT}) | `exp_mean_field_m.py` |
 | D′(b), (d) | the m^{−1/2} rate of the synchronous coupling to a 4096-particle reference: slopes −0.47 ± 0.06 (τ = 0) and −0.46 ± 0.05 (τ = 2·10⁻³) over 24 seeds, 0.94 ± 0.08 and 0.92 ± 0.08 against (1/m − 1/M)^{1/2}; not the constant | `exp_chaos.py` → `results/chaos/table.md` |
-| D″ | the certified leak collapses the reference (particle spread 4·10⁻¹⁷) and the coupled distance is zero; at σ_cert/8 the particles synchronise (spread 2·10⁻¹⁰) and the distance decays to 10⁻⁸; at σ = 0.02 the network stays spread and the distance is bounded over 80 s at the m^{−0.41} level, without growth between windows | `exp_chaos_uniform.py` → `results/chaos/uniform_table.md` |
+| D″ | with exact Lipschitz constants and the a-priori tube, σ_cert = 4.04 against Proposition K's σ_K = 0.00144; at 1.2σ_cert with dither the coupled distance is of order m^{−1/2} (slope −0.51 ± 0.02), bounded in time and 700× below the bound, with the network at its prior (fit error 1.000); without dither the reference collapses (spread 10⁻¹⁴) and the distance is zero; at σ_cert/8 it decays to 10⁻¹¹; in the learning regime (σ_K/3, 1000 s) the network stays spread and fits the plant (fit error 0.63) and the distance follows m^{−1/2} (−0.62 ± 0.16) but grows threefold between the windows (100, 200] and (500, 1000] | `exp_chaos_uniform.py` → `results/chaos/uniform_table.md` |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -3032,12 +3066,17 @@ Each branch states what is proved, what is open, and the first concrete step.
      function.
      Uniform-in-time results exist for mean-field Langevin dynamics [S5] and for shallow networks [36].
    - *Done (Theorem D″):* uniform in time when the leak dominates the loop gain of the adaptive law (a small-gain
-     condition between the plant channel and the particle channel, explicit in Lipschitz constants). The same
-     contraction synchronises the particles, so the certified regime is the collapsed network: the result marks where
-     the contraction method stops rather than settling the question.
-   - *Open:* the learning regime (kernels separated, leak below the critical value of Proposition K), where the plant
-     couples all particles through e, (by H.7) the averaged interaction is not reciprocal, and the numerics of
-     `exp_chaos_uniform.py` show the coupled distance bounded in time without a proof.
+     condition between the plant channel and the particle channel, explicit in Lipschitz constants). The certified regime
+     is leak-dominated: the network does not learn (without dither it collapses to one kernel; with dither it stays in the
+     cloud of the prior, where the bound has content: the coupled distance is of order m^{−1/2} and bounded in time). The
+     result marks where the contraction method stops rather than settling the question.
+   - *Open, and now with a negative indication:* the learning regime (kernels separated, leak below the critical value of
+     Proposition K), where the plant couples all particles through e and (by H.7) the averaged interaction is not
+     reciprocal. The long-horizon run of `exp_chaos_uniform.py` (σ = σ_K/3, 1000 s) shows the coupled distance growing
+     threefold between the windows (100, 200] and (500, 1000] while keeping the m^{−1/2} law at each time: on that horizon
+     only the finite-horizon Theorem D′ is supported. Whether the growth saturates (the leak's time scale is 1/σ = 2000 s),
+     and whether a uniform statement holds at all in the learning regime, is the open question; the first draft's claim of
+     empirical uniformity was based on a run that was in fact a slow collapse and is withdrawn (review round 6).
 
 4. **Geometry of two-time-scale adaptation (Proposition G(b′)).**
    - *Proved formally, and checked:* the slow geometry follows the gradient flow of the profile loss in the metric
