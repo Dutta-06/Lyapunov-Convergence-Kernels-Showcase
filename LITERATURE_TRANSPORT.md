@@ -53,6 +53,11 @@ found the construction.
 - [S32] M. Hairer. *Ergodic properties of Markov processes*. Lecture notes, University of Warwick, 2006 (Lemma 1.13, Corollary 1.14, Theorem 1.16: strong Feller + a point in the support of every transition probability ⇒ uniqueness of the invariant measure; minorisation on compacts). (Details from memory; not re-verified here.)
 - [S33] M. Hairer, J. C. Mattingly. *Yet another look at Harris' ergodic theorem for Markov chains*. In: Seminar on Stochastic Analysis, Random Fields and Applications VI, Progr. Probab. 63:109–117, Birkhäuser, 2011. Geometric ergodicity in a weighted total variation norm from a Lyapunov function and a minorisation on its sublevel sets. (Details from memory; not re-verified here.)
 - [S34] A. Dembo, O. Zeitouni. *Large Deviations Techniques and Applications*. Springer, 2nd ed., 1998, Theorem 6.2.10 (Sanov's theorem) and Theorem 4.3.1 (Varadhan's lemma). The large-deviation principle for the empirical measure under a mean-field Gibbs measure with a bounded continuous energy, used in Corollary J′.3. (Details from memory; not re-verified here.)
+- [S35] R. L. Dobrushin. *Vlasov equations*. Functional Analysis and Its Applications 13:115–123, 1979. Existence, uniqueness and the representation by characteristics of the Vlasov equation with a bounded Lipschitz vector field depending Lipschitz-continuously (bounded-Lipschitz / W₁ metric) on the measure; stability in the measure. Used for the mean-field equation (𝔄₀) of Theorem D‴. (Details from memory; not re-verified here.)
+- [S36] C. McDiarmid. *On the method of bounded differences*. In: Surveys in Combinatorics 1989, London Math. Soc. Lecture Note Ser. 141:148–188, Cambridge Univ. Press, 1989. The bounded-differences (McDiarmid) inequality: a function of m independent variables that changes by at most c_j when the j-th is changed satisfies P(f − Ef ≥ t) ≤ exp(−2t²/Σc_j²). Used for the reference's sampling fluctuation in Theorem D‴, Step 8. (Details from memory; not re-verified here.)
+- [S37] F. Malrieu. *Logarithmic Sobolev inequalities for some nonlinear PDE's*. Stochastic Processes and their Applications 95(1):109–132, 2001. Uniform-in-time propagation of chaos for McKean–Vlasov diffusions with a uniformly convex confinement and a convex interaction, by synchronous coupling and functional inequalities. The convexity there is global; Theorem D‴ needs it on a neighbourhood of the support of the mean-field flow and gets the interaction's sign from flat convexity. (Details from memory; not re-verified here.)
+- [S38] A. Durmus, A. Eberle, A. Guillin, R. Zimmer. *An elementary approach to uniform in time propagation of chaos*. Proceedings of the AMS 148:5387–5398, 2020. Uniform-in-time propagation of chaos by reflection coupling for McKean–Vlasov diffusions whose confinement is convex outside a ball and whose interaction is Lipschitz with a small constant. The interaction of the fitted network is not small in the learning regime; its sign (Theorem D‴, Step 3) replaces the smallness. (Details from memory; not re-verified here.)
+- [S39] C. Liu, L. Zhu, M. Belkin. *Loss landscapes and optimization in over-parameterized non-linear systems and neural networks*. Applied and Computational Harmonic Analysis 59:85–116, 2022. The decomposition of the Hessian of a least-squares loss into the Gram (tangent-kernel) term and the residual-weighted second-derivative term, the latter vanishing at interpolation; the PL condition near interpolation. The same decomposition, per particle, is the self term of Theorem D‴'s coupling identity. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
 
@@ -250,7 +255,33 @@ found the construction.
   Malrieu 2001/2003, and [S5] for mean-field Langevin dynamics); the closed-loop version adds the plant as a second
   contracting channel and a small-gain condition. Its certified regime is the one in which the leak stops the learning
   (round 6, DPP-2, DPP-3): the result is a statement about where the method stops. Verdict: standard technique, new
-  object; the learning regime, where the long-horizon numerics show the coupled distance growing, is open.
+    object; the learning regime, where the long-horizon numerics show the coupled distance growing, is open.
+
+### D‴. Uniform-in-time propagation of chaos in the learning regime (the averaged slow loop)
+
+- **Claim.** For the G-preconditioned gradient flow of J_m = mL̄(μ_Θ) + leak (the averaged slow loop at τ = 0), synchronously
+  coupled to the characteristic flow of its mean-field equation, the mean-square coupling distance D obeys ½Ḋ ≤ −(σ₀ − κ_R)D +
+  (L₂^G)²D²/16 + L_ϑ^G√D·Y (+ L₂^GYD), the interaction term being −‖f̂_Θ − f̂_Θ̄‖² at linear order; under the strict second-order
+  optimality condition along the mean-field flow (a neighbourhood of the support, margin κ, from time s₁), sup_s E D ≤
+  4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) + an exponentially small tail (PARADIGM.md §5d).
+- **Prior.** Uniform-in-time propagation of chaos by synchronous coupling under *global* convexity of the confinement and
+  convexity of the interaction is Malrieu's [S37]; non-convex confinements with *small* Lipschitz interactions are handled by
+  reflection coupling [S38]; flat-convex energies with dither by the entropy method [S5]. The Hessian decomposition
+  "Gram + residual-weighted feature curvature" is the standard tool of the interpolation / PL-condition literature [S39] and
+  of lazy-training analyses, where the second term vanishes at interpolation.
+- **Distinction.** (i) The interaction of the fitted network is neither small nor convex in the particle coordinates; its
+  sign comes from the flat convexity of L̄ (f̂ linear in the measure), which makes −‖f̂_Θ − f̂_Θ̄‖² the leading interaction
+  term under the coupling — the finite-m, two-measure version of [S39]'s decomposition. (ii) The convexity needed is local:
+  σ₀I − G^{1/2}R[μ_s]G^{1/2} ⪰ κI on a neighbourhood of the support of the mean-field flow, i.e. the strict second-order
+  optimality condition of the fitted configuration, evaluated at the actual residual — not a global convexity (which would
+  force the collapsed configuration to be stable and the network not to learn, Theorem D″). (iii) The window κ_R[μ_∞] <
+  σ₀ < σ_crit between the collapsed instability (Proposition K) and the fitted stability is a design statement about
+  the leak that has no counterpart in the cited work. (iv) The limits are stated with the result: a connected initial
+  support that splits between basins violates the hypothesis for all times (the characteristic flow is a homeomorphism),
+  and the coupling then has a floor of pairs in different basins; the real loop at finite k_e is not covered.
+- **Verdict: the technique (synchronous coupling + bootstrap + bounded differences) is standard; the sign structure of the
+  interaction and the local, residual-weighted hypothesis — and with them a uniform-in-time statement in a regime where the
+  network learns — are new in propagation of chaos for adaptive control.** Numerics: `exp_chaos_learning.py`.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 

@@ -321,6 +321,10 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
   (100, 200] and (500, 1000]: no empirical uniformity there (the first draft's "spread regime" run was a slow collapse; review
   round 6).
 
+## Theorem D‴ — uniform-in-time propagation of chaos in the learning regime (`exp_chaos_learning.py` → `chaos/learning_table.md`)
+
+- [D3 NUMERICS PENDING]
+
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 
 | experiment | result |

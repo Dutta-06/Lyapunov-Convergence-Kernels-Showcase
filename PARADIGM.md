@@ -17,16 +17,18 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   - `src/core/transport.py` also implements the optimal plan, the barycentric projection and the leak (L_σ,bar) of Theorem C′.
   - `src/core/dither.py` implements the single-kernel instance, the averaged data (J, ∇J, b, ⟨u∧u̇⟩), the Gibbs grid with its Poisson,
     current and stationary Fokker–Planck solvers, and the vectorised dithered loop of Theorem J′.
+  - `src/core/chaos_learning.py` implements the averaged slow loop (𝔄_m), the three terms of its coupling identity, the
+    residual-weighted curvature κ_R and the constants of Theorem D‴.
 - **Tests.** `tests/test_transport.py`, `tests/test_langevin.py`, `tests/test_averaging.py`, `tests/test_excitation.py`,
-  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py` and `tests/test_dither.py`. Run them with
+  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py`, `tests/test_dither.py` and `tests/test_chaos_learning.py`. Run them with
   `venv\Scripts\python -m pytest tests`.
 - **Experiments.** The scripts are `experiments/exp_transport_*.py`, `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py`, `exp_mean_field_m.py`,
   `exp_pe_convergence.py`, `exp_variable_projection.py`, `exp_slow_manifold_slope.py`, `exp_langevin_global.py`,
   `exp_langevin_tradeoff.py`, `exp_gibbs_reference.py`, `exp_orbit_orientation.py`, `exp_explicit_rate.py` and
-  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_barycentric_leak.py` and
-  `exp_dither_stationary.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
+  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_chaos_learning.py`, `exp_barycentric_leak.py`,
+  `exp_dither_stationary.py` and `exp_pe_general.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
-  point to `review/LITERATURE_refs.md`, and [S1]–[S34] point to the audit file.
+  point to `review/LITERATURE_refs.md`, and [S1]–[S39] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
@@ -98,6 +100,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | H.7 | At a frozen measure, the exactly averaged loop is (𝔄) plus an explicit O(1/k_e) correction: a semi-gradient term, whose performative defect is present for every n, and an orbit-area circulation kernel (n ≥ 2). Along the real loop, a second-order averaging term is added (Remark H.7a). | Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through its O(1/k_e) convergence. Non-reciprocity of the exact second variation is checked to 3% (asserted; 1–1.5% measured) and characterised by Theorem I. The full first-order theory predicts the orientation dependence of the learned kernels in the real closed loop to 3% in size and 11% as a vector (cosine 0.994, k_e = 40). | no precedent found (targeted search, round 3); ingredients known (higher-order averaging; performative prediction [S14]; semi-gradient TD [S10], [S11]) |
 | I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A_μ ≡ 0 iff the residual vanishes on the orbit, and the performative non-reciprocity is bounded by the residual. For n ≥ 2 at perfect fit, A_μ ≡ 0 iff the oriented orbit carries no circulation (n = 2: zero winding function) and the residual's Jacobian is symmetric along the orbit; A_μ = 2K when the residual vanishes near the orbit. A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. No open set of measures is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻². | proved; every formula checked against the generic second-variation code and, by the round-5 referee, against the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
 | D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > L_b′L_ϑ) the bound is uniform in time (Theorem D″), a leak-dominated regime in which the network does not learn (at τ = 0 it collapses to one kernel; at τ > 0 it stays in the dither cloud of the prior) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
+| D‴ | Uniform-in-time propagation of chaos *in the learning regime* for the averaged slow loop (𝔄_m) at τ = 0 (Theorem J′'s leading order): under the synchronous coupling with the mean-field characteristic flow, the interaction term of the coupling identity is −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} + O(D²) — flat convexity of the loss makes it contract whatever the gains — and only the residual-weighted feature curvature R[μ](ϑ) = ⟨r_μ∇²_ϑΦ̃⟩_ρ (Proposition K's R₂) can expand; if along the mean-field flow σ₀I − G^{1/2}RG^{1/2} ⪰ κI on a neighbourhood of the support from a time s₁ on — the strict second-order optimality condition of the fitted configuration, compatible with σ₀ < σ_crit — then sup_s E(1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} ≤ 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) plus a tail exponentially small in m (uniformly in time under exponential convergence of the flow, over horizons e^{cm} without it), no particle changes basin, and the learned function converges at m^{−1/2} uniformly in time while the network learns; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and uniformity coexist | proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow; it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the coupling carries a floor; the real loop at finite k_e: open (Remark D‴.4); dither: the entropy method of [S5] (imported); numerics: [D3 NUMERICS PENDING] | the two ingredients — the sign of the interaction from flat convexity, and the curvature at the actual rather than the worst-case residual — are new in propagation of chaos for adaptive control; the decomposition Gram + residual×curvature is the one of the interpolation literature ([S39]); the window between Proposition K's collapsed instability and the fitted configuration's stability is new |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | J′ | At finite m with dither τ = τ₀/k_e and leak σ = σ₀/k_e: the closed loop has an invariant law (unique under a smoothness hypothesis) whose parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with the explicit first-order correction ε∫φ g dπ driven by the first-order drift b of Theorem J as a vector field on parameter space (g solves τ₀∇·(πG∇g) = ∇·(πb)); the stationary tracking error is (2/k_e²)π(L̄_m) + O(k_e⁻³); the stationary parameter process is not reversible, with a circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] + O(ε²), where j₁ = π(b − τ₀G∇g) is the first-order stationary current, nonzero exactly when b is not a G-gradient (Proposition J′.2: the finite-m form of Theorem I's reciprocity defect plus a Hessian commutator from second-order averaging; never a gradient for m ≥ 3) | proved (the Poisson-equation expansion of the invariant measure with the fast error and phase eliminated; three standard theorems imported and named); checked on a single-kernel instance: the first-order prediction removes the O(1/k_e) discrepancy between the real loop's stationary means and the Gibbs measure, the orientation-odd part of the means (the dither version of Remark H.7a) matches its prediction, and the current machinery is checked on the first-order averaged SDE | the technique is the Pavliotis–Stuart / Mattingly–Stuart–Tretyakov expansion; new in its object (a hypoelliptic learning loop with a plant) and in the identification of the first-order non-equilibrium current with the reciprocity defect of Theorem I |
@@ -1305,6 +1308,255 @@ is open; the earlier claim that the distance stays bounded in a "spread" regime 
 that was in fact a slow collapse, and is withdrawn (referee round 6, DPP-3).
 
 *Checked* (`exp_chaos_uniform.py`): the experiment only.
+
+---
+
+## 5d. Theorem D‴ — uniform-in-time propagation of chaos in the learning regime (the averaged slow loop)
+
+Theorem D″ ends where the leak stops dominating the loop gain: in the learning regime its small-gain argument has nothing
+to say, and the long-horizon run of `exp_chaos_uniform.py` showed the coupled distance growing over the horizon. This
+section isolates the structure that the small-gain argument throws away. Under the synchronous coupling the interaction
+between the particles enters through the fitted function f̂_Θ, which is linear in the empirical measure; the loss L̄ is a
+convex quadratic of it (flat convexity, Theorem H(i)); and the interaction term of the coupling identity is therefore the
+negative of a squared L²(ρ)-norm at linear order — it contracts, whatever the gains. What remains and can expand is the
+self term, whose curvature is the Hessian of the first-variation potential, σ₀G⁻¹ − R[μ](ϑ) with R the *residual-weighted*
+curvature of the features — the same object as Proposition K's R₂ at a collapsed configuration. Proposition K says that
+the collapsed configuration is unstable when this curvature exceeds the leak *with the collapsed residual*; at a fitted
+configuration the residual is the approximation error, and the second-order optimality condition of the limit measure
+says that the curvature is *below* the leak at every atom. The theorem below turns this into a uniform-in-time statement
+for the averaged slow loop at τ = 0, with explicit constants, in the regime in which the network learns.
+
+**Setting.** The averaged slow dynamics of §6f at τ₀ = 0 (Theorem J′'s leading order L̄₀ without dither; slow time s = t/k_e,
+leak σ₀ = k_eσ, f = f(x) continuous, ρ the occupation measure of the T₀-periodic reference, F_ρ := sup_{supp ρ}‖f‖,
+saturated features, K_Φ := sup‖Φ̃‖), written as the G-preconditioned gradient flow of J_m(Θ) = mL̄(μ_Θ) + (σ₀/2)Σ_i‖ϑ_i − ϑ⁰‖²_{G⁻¹}:
+
+    dϑ_i/ds = −G∇_{ϑ_i}J_m(Θ) = −G∇_ϑ𝒱[μ_Θ](ϑ_i),    𝒱[μ](ϑ) := V_L[μ](ϑ) + (σ₀/2)‖ϑ − ϑ⁰‖²_{G⁻¹},    i = 1..m,          (𝔄_m)
+
+with V_L[μ](ϑ) = −⟨r_μᵀΦ̃(·;ϑ)⟩_ρ and r_μ = f − f̂[μ], f̂[μ] := ∫Φ̃(·;ϑ′)dμ(ϑ′), as in §6c. Its mean-field equation is the
+Wasserstein gradient flow (𝔄) of §6c at τ = 0 in slow time, ∂_sμ_s = ∇·(μ_sG∇𝒱[μ_s]), solved by the characteristic flow
+
+    dX_s(ϑ)/ds = −G∇𝒱[μ_s](X_s(ϑ)),    X_0 = id,    μ_s = (X_s)_#μ₀                                                     (𝔄₀)
+
+(a Vlasov equation with a bounded vector field that is Lipschitz in ϑ and, through r_μ, Lipschitz in μ for W₁; existence,
+uniqueness and the representation by characteristics are Dobrushin's theorem [S35]). The constants are taken in the G⁻¹
+metric on parameters ("whitened"):
+
+    L_ϑ^G := sup_{x,ϑ}‖∇_ϑΦ̃(x;ϑ)G^{1/2}‖,    L₂^G := sup_{x,ϑ,‖u‖=1}‖G^{1/2}∇²_ϑ(uᵀΦ̃(x;ϑ))G^{1/2}‖,
+
+so that ‖Φ̃(x;ϑ) − Φ̃(x;ϑ′)‖ ≤ L_ϑ^G‖ϑ − ϑ′‖_{G⁻¹}, ‖∇_ϑΦ̃(x;ϑ)v‖ ≤ L_ϑ^G‖v‖_{G⁻¹} and ‖(∇_ϑΦ̃(x;ϑ) − ∇_ϑΦ̃(x;ϑ′))v‖ ≤
+L₂^G‖ϑ − ϑ′‖_{G⁻¹}‖v‖_{G⁻¹} (L_ϑ^G ≤ λ_G^{1/2}L_ϑ and L₂^G ≤ λ_GL₂ in the constants of §5c; `chaos_learning.whitened_lipschitz_constants`
+computes the suprema by search, with closed-form bounds). The *residual-weighted curvature* of μ at ϑ is the symmetric matrix
+
+    R[μ](ϑ) := ⟨Σ_k r_μ^k(x)∇²_ϑΦ̃^k(x;ϑ)⟩_ρ = −∇²_ϑV_L[μ](ϑ),    R^G := G^{1/2}RG^{1/2},    κ_R[μ](A) := sup_{ϑ∈A}λ_max(R^G[μ](ϑ)),
+
+so that ∇²_ϑ𝒱[μ](ϑ) = G⁻¹ − ... precisely G^{1/2}∇²𝒱[μ](ϑ)G^{1/2} = σ₀I − R^G[μ](ϑ); for μ = δ_ϑ̄ and ϑ = ϑ̄ it is Proposition K's
+R₂ and σ_crit(ϑ̄) = κ_R[δ_ϑ̄]({ϑ̄}). It satisfies ‖R^G[μ](ϑ)‖ ≤ L₂^G⟨‖r_μ‖⟩_ρ ≤ L₂^G(F_ρ + K_Φ) and ‖R^G[μ](ϑ) − R^G[ν](ϑ)‖ ≤
+L₂^G‖f̂[μ] − f̂[ν]‖_{L¹(ρ)}. N_ϱ(A) := {ϑ : dist_{G⁻¹}(ϑ, A) ≤ ϱ}.
+
+*The coupling.* ϑ_i(0), i = 1..m, i.i.d. with law μ₀ of compact support, R₀ := sup_{supp μ₀}‖ϑ − ϑ⁰‖_{G⁻¹}; Θ(s) solves (𝔄_m) and
+the reference particles are ϑ̄_i(s) := X_s(ϑ_i(0)), i.i.d. with law μ_s and ϑ̄_i(s) ∈ supp μ_s. Let δ_i := ϑ_i − ϑ̄_i,
+
+    D(s) := (1/m)Σ_i‖δ_i(s)‖²_{G⁻¹},    Y(s) := ‖f̂_{Θ̄(s)} − f̂[μ_s]‖_{L²(ρ)},
+
+Y being the sampling fluctuation of the reference's fitted function (E Y(s)² = (1/m)⟨Var_{μ_s}Φ̃(x;·)⟩_ρ ≤ K_Φ²/m). A priori
+(Step 0 below) every particle of either system stays in the ball ‖ϑ − ϑ⁰‖_{G⁻¹} ≤ R_Θ := max{R₀, L_ϑ^G(F_ρ + K_Φ)/σ₀}, so D ≤
+D_max := 4R_Θ², and the characteristics move at speed at most V_max := L_ϑ^G(F_ρ + K_Φ) + σ₀R_Θ.
+
+**Theorem D‴ (uniform-in-time propagation of chaos in the learning regime, τ = 0).** Assume
+
+(H) *(non-degenerate stability along the mean-field flow)* there are s₁ ≥ 0, κ > 0 and ϱ′ > 0 such that
+
+        κ_R[μ_s](N_{ϱ′}(supp μ_s)) ≤ σ₀ − κ    for every s ≥ s₁,
+
+and put a(s) := σ₀ − κ_R[μ_s](N_{ϱ′}(supp μ_s)) (so a ≥ κ on [s₁, ∞) and a ≥ σ₀ − L₂^G(F_ρ + K_Φ) everywhere) and
+Λ₁ := ∫₀^{s₁}(κ − a(s))₊ds < ∞. Define
+
+    ϱ := min{(2κ)^{1/2}/L₂^G, ϱ′κe^{−Λ₁}/(4(L_ϑ^G)²)},    θ := min{κ/(8L₂^G), ϱκe^{−Λ₁}/(4L_ϑ^G), ϱ′κe^{−Λ₁}/(4L_ϑ^G)},
+    Δ := θ/(4L_ϑ^GV_max),    C₁ := 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/κ²,    m₀ := 16K_Φ²/θ².
+
+Then for every m ≥ m₀:
+
+(a) *(exponentially long horizons)* for every S > 0 and every s ∈ [0, S],
+
+        E D(s) ≤ C₁/m + 4R_Θ²(S/Δ + 2)exp(−mθ²/(32K_Φ²));
+
+    in particular sup_{s ≤ S}E D(s) ≤ (C₁ + 12R_Θ²)/m for all S ≤ Δe^{mθ²/(64K_Φ²)} and m ≥ m₀ with e^{mθ²/(64K_Φ²)} ≥ m.
+
+(b) *(uniform in time)* if moreover (H′) the characteristic flow converges exponentially on the support of μ₀,
+    sup_{ϑ∈supp μ₀}‖X_s(ϑ) − X_∞(ϑ)‖_{G⁻¹} ≤ C₂e^{−κ₂s} for all s ≥ 0, then for every s ≥ 0
+
+        E D(s) ≤ C₁/m + 4R_Θ²(R_eff/Δ + 3)exp(−mθ²/(32K_Φ²)),    R_eff := κ₂⁻¹log(8L_ϑ^GC₂/θ).
+
+(c) *(the learned function and the particles)* in either case, with the same right-hand side B(s) for E D(s),
+
+        E‖f̂_{Θ(s)} − f̂[μ_s]‖²_{L²(ρ)} ≤ 2(L_ϑ^G)²B(s) + 2K_Φ²/m,    E W₂(μ_{Θ(s)}, μ_s) ≤ B(s)^{1/2} + E W₂(μ_{Θ̄(s)}, μ_s),
+
+    and on the event 𝒢 := {sup_s Y(s) ≤ θ} (whose complement is the tail above) every particle stays within 3ϱ′/4 of its
+    reference for all time: max_i sup_s‖δ_i(s)‖_{G⁻¹} ≤ 3ϱ′/4 — no particle changes basin.
+
+The constants depend on (κ, ϱ′, Λ₁, L_ϑ^G, L₂^G, K_Φ, F_ρ, σ₀, R₀) and not on m, s or S.
+
+*Status.* Proved (synchronous coupling with the three-term identity of Step 1, a bootstrap on the mean square and the
+per-particle distance, and McDiarmid's inequality [S36] for the reference's sampling fluctuation; the finite-horizon part of
+the transient is Theorem D′'s mechanism and appears in Λ₁). Hypothesis (H) is a property of the deterministic mean-field
+flow and can be computed; it is the strict second-order optimality condition of the limit configuration with a margin and
+a neighbourhood (Remark D‴.1), and it is compatible with the learning regime σ₀ < σ_crit of Proposition K. It requires the
+support of μ_s to stay away from the ridges of 𝒱[μ_s] for s ≥ s₁: for an initial cloud whose support is a union of pieces
+each flowing into one basin (a warm start, or a cluster per bump) this holds; for a connected cold start whose mass splits
+between several basins it fails for every s (Remark D‴.2), and the numerics below show what the coupling does there.
+Numerics: `exp_chaos_learning.py` → `results/chaos/learning_table.md` (below). The theorem is about the averaged slow
+dynamics; its transfer to the real loop at finite k_e is open (Remark D‴.4).
+
+*Proof.* Step 0 (a priori bounds). For either system, d/ds‖ϑ − ϑ⁰‖²_{G⁻¹} = 2⟨ϑ − ϑ⁰, ⟨∇_ϑ(rᵀΦ̃(·;ϑ))⟩_ρ⟩ − 2σ₀‖ϑ − ϑ⁰‖²_{G⁻¹} with
+|⟨ϑ − ϑ⁰, ⟨∇_ϑ(rᵀΦ̃)⟩_ρ⟩| = |⟨rᵀ∇_ϑΦ̃(ϑ − ϑ⁰)⟩_ρ| ≤ ⟨‖r‖⟩_ρL_ϑ^G‖ϑ − ϑ⁰‖_{G⁻¹} ≤ (F_ρ + K_Φ)L_ϑ^G‖ϑ − ϑ⁰‖_{G⁻¹}, so
+D⁺‖ϑ − ϑ⁰‖_{G⁻¹} ≤ L_ϑ^G(F_ρ + K_Φ) − σ₀‖ϑ − ϑ⁰‖_{G⁻¹} and ‖ϑ(s) − ϑ⁰‖_{G⁻¹} ≤ R_Θ; hence ‖δ_i‖_{G⁻¹} ≤ 2R_Θ, D ≤ D_max, and
+‖dϑ/ds‖_{G⁻¹} = ‖G^{1/2}⟨∇_ϑ(rᵀΦ̃)⟩_ρ − σ₀G^{−1/2}(ϑ − ϑ⁰)‖ ≤ V_max. Two Lipschitz facts: for Θ, Θ̄ with rows ϑ_j, ϑ̄_j and
+A_j(x) := ∫₀¹∇_ϑΦ̃(x;ϑ̄_j + tδ_j)dt,
+
+    f̂_Θ − f̂_Θ̄ = (1/m)Σ_jA_jδ_j =: h,    ‖h‖_{L²(ρ)} ≤ L_ϑ^G(1/m)Σ_j‖δ_j‖_{G⁻¹} ≤ L_ϑ^GD^{1/2},                        (0.1)
+    ‖R^G[μ_Θ̄](ϑ) − R^G[μ_s](ϑ)‖ ≤ L₂^G‖r_Θ̄ − r_{μ_s}‖_{L¹(ρ)} ≤ L₂^GY,    ‖(∇_ϑΦ̃(x;ϑ_i) − A_i(x))v‖ ≤ (L₂^G/2)‖δ_i‖_{G⁻¹}‖v‖_{G⁻¹}.   (0.2)
+
+Step 1 (the identity). Since dδ_i/ds = −G[∇𝒱[μ_Θ](ϑ_i) − ∇𝒱[μ_s](ϑ̄_i)] and ⟨δ, Gv⟩_{G⁻¹} = ⟨δ, v⟩,
+
+    ½dD/ds = −(1/m)Σ_i⟨δ_i, ∇𝒱[μ_Θ](ϑ_i) − ∇𝒱[μ_s](ϑ̄_i)⟩ = T_A + T_B + T_C,
+    T_A := −(1/m)Σ_i⟨δ_i, ∇𝒱[μ_Θ̄](ϑ_i) − ∇𝒱[μ_Θ̄](ϑ̄_i)⟩,
+    T_B := −(1/m)Σ_i⟨δ_i, ∇V_L[μ_Θ](ϑ_i) − ∇V_L[μ_Θ̄](ϑ_i)⟩,
+    T_C := −(1/m)Σ_i⟨δ_i, ∇V_L[μ_Θ̄](ϑ̄_i) − ∇V_L[μ_s](ϑ̄_i)⟩
+
+(the leak is linear and sits in T_A; the three brackets telescope to ∇𝒱[μ_Θ](ϑ_i) − ∇𝒱[μ_s](ϑ̄_i)). The self term T_A compares
+the *reference's* potential at the two points; the interaction term T_B compares the two empirical measures at the m-system's
+point; T_C is the reference's sampling error. `chaos_learning.AveragedSlowLoop.decomposition` evaluates the three terms and
+checks the identity to rounding.
+
+Step 2 (the self term is local convexity). ∇𝒱[μ_Θ̄](ϑ_i) − ∇𝒱[μ_Θ̄](ϑ̄_i) = ∫₀¹∇²𝒱[μ_Θ̄](ϑ̄_i + tδ_i)dt·δ_i = σ₀G⁻¹δ_i − R̄_iδ_i with
+R̄_i := ∫₀¹R[μ_Θ̄](ϑ̄_i + tδ_i)dt, so T_A = −σ₀D + (1/m)Σ_i⟨δ_i, R̄_iδ_i⟩ and ⟨δ, Rδ⟩ ≤ λ_max(R^G)‖δ‖²_{G⁻¹}. If ‖δ_i‖_{G⁻¹} ≤ ϱ′ the
+segment lies in N_{ϱ′}(supp μ_s) (ϑ̄_i ∈ supp μ_s), and by (0.2) λ_max(R^G[μ_Θ̄]) ≤ κ_R[μ_s](N_{ϱ′}(supp μ_s)) + L₂^GY there. Hence,
+as long as max_i‖δ_i‖_{G⁻¹} ≤ ϱ′,
+
+    T_A ≤ −(a(s) − L₂^GY(s))D.                                                                                           (2.1)
+
+Step 3 (the interaction term is a negative square at linear order). ∇V_L[μ_Θ](ϑ_i) − ∇V_L[μ_Θ̄](ϑ_i) = ⟨∇_ϑΦ̃(·;ϑ_i)ᵀ(f̂_Θ − f̂_Θ̄)⟩_ρ =
+⟨∇_ϑΦ̃(·;ϑ_i)ᵀh⟩_ρ, so, with the L²(ρ;ℝⁿ) inner product ⟨⟨·,·⟩⟩,
+
+    T_B = −⟨⟨(1/m)Σ_i∇_ϑΦ̃(·;ϑ_i)δ_i, h⟩⟩ = −‖h‖² − ⟨⟨(1/m)Σ_i(∇_ϑΦ̃(·;ϑ_i) − A_i)δ_i, h⟩⟩ ≤ −‖h‖² + ‖h‖(L₂^G/2)D ≤ (L₂^G)²D²/16     (3.1)
+
+by (0.2) and max_x(−x² + cx) = c²/4. The leading part −‖h‖² = −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} is the flat convexity of L̄: the
+interaction contracts, and only the Taylor remainder of the features, quadratic in D, is charged. This is the step that
+Theorem D″'s small-gain bound replaces by +L_ϑ²D-type terms.
+
+Step 4 (the sampling term). ∇V_L[μ_Θ̄](ϑ̄_i) − ∇V_L[μ_s](ϑ̄_i) = ⟨∇_ϑΦ̃(·;ϑ̄_i)ᵀ(f̂_Θ̄ − f̂[μ_s])⟩_ρ, so |⟨δ_i, ·⟩| ≤ L_ϑ^G‖δ_i‖_{G⁻¹}Y and
+
+    T_C ≤ L_ϑ^GD^{1/2}Y.                                                                                                 (4.1)
+
+Step 5 (the differential inequalities). While max_i‖δ_i‖_{G⁻¹} ≤ ϱ′,
+
+    ½dD/ds ≤ −(a − L₂^GY)D + (L₂^G)²D²/16 + L_ϑ^GD^{1/2}Y,                                                              (5.1)
+
+and per particle, from the same three brackets with |T_B,i| ≤ ‖δ_i‖L_ϑ^G‖h‖ ≤ ‖δ_i‖(L_ϑ^G)²D^{1/2} by (0.1) and |T_C,i| ≤ ‖δ_i‖L_ϑ^GY,
+
+    D⁺‖δ_i‖_{G⁻¹} ≤ −(a − L₂^GY)‖δ_i‖_{G⁻¹} + (L_ϑ^G)²D^{1/2} + L_ϑ^GY.                                                    (5.2)
+
+Step 6 (the bootstrap on the good event). Let 𝒢 := {sup_{s≥0}Y(s) ≤ θ} and T* := inf{s : D(s) ≥ ϱ² or max_i‖δ_i(s)‖_{G⁻¹} ≥ ϱ′}
+(T* > 0 since δ(0) = 0). On 𝒢 and [0, T*): L₂^GY ≤ κ/8, (L₂^G)²D/16 ≤ (L₂^G)²ϱ²/16 ≤ κ/8, and L_ϑ^GD^{1/2}Y ≤ (κ/8)D + (2(L_ϑ^G)²/κ)Y²
+(Young), so (5.1) gives dD/ds ≤ −2(a − 3κ/8)D + (4(L_ϑ^G)²/κ)Y². Since a − 3κ/8 ≥ κ/2 − (κ − a)₊, ∫_r^s(a − 3κ/8) ≥ (κ/2)(s − r) − Λ₁
+for r ≤ s, and Grönwall gives
+
+    D(s) ≤ Z(s) := 4e^{2Λ₁}(L_ϑ^G)²κ⁻¹∫₀^s e^{−κ(s−r)}Y(r)²dr ≤ 4e^{2Λ₁}(L_ϑ^G)²κ⁻²θ² ≤ ϱ²/4    on 𝒢 ∩ [0, T*)              (6.1)
+
+by the second constraint on θ. Per particle, (5.2) with D^{1/2} ≤ ϱ/2 and Y ≤ θ, and ∫_r^s(a − κ/8) ≥ (κ/2)(s − r) − Λ₁, gives
+‖δ_i(s)‖_{G⁻¹} ≤ 2e^{Λ₁}κ⁻¹[(L_ϑ^G)²ϱ/2 + L_ϑ^Gθ] ≤ ϱ′/4 + ϱ′/2 = 3ϱ′/4 by the second constraint on ϱ and the third on θ. Both
+thresholds are therefore strict on [0, T*), so T* = ∞ on 𝒢 by continuity: D ≤ Z and max_i‖δ_i‖ ≤ 3ϱ′/4 for all s on 𝒢. Z does not
+involve the m-system.
+
+Step 7 (expectation). E D(s) ≤ E[Z(s)] + D_maxP(𝒢^c) ≤ 4e^{2Λ₁}(L_ϑ^G)²κ⁻¹∫₀^s e^{−κ(s−r)}E Y(r)²dr + D_maxP(𝒢^c) ≤ C₁/m + 4R_Θ²P(𝒢^c),
+using E Y(r)² ≤ K_Φ²/m.
+
+Step 8 (the good event). Y(s) is a function of the i.i.d. sample (ϑ_j(0))_{j≤m}: Y(s) = ‖(1/m)Σ_j[Φ̃(·;X_s(ϑ_j(0))) − ∫Φ̃(·;X_s(ϑ))dμ₀]‖_{L²(ρ)}.
+Changing one ϑ_j(0) changes it by at most 2K_Φ/m (bounded differences), and E Y(s) ≤ (E Y²)^{1/2} ≤ K_Φ/m^{1/2}; McDiarmid's
+inequality [S36] gives P(Y(s) ≥ K_Φ/m^{1/2} + t) ≤ exp(−mt²/(2K_Φ²)), so for m ≥ m₀ = 16K_Φ²/θ² (K_Φ/m^{1/2} ≤ θ/4, t = θ/4)
+
+    P(Y(s) ≥ θ/2) ≤ exp(−mθ²/(32K_Φ²))    for every fixed s.                                                                (8.1)
+
+In time, |Y(s) − Y(s′)| ≤ 2L_ϑ^GV_max|s − s′| (each X_s(ϑ) moves at speed ≤ V_max and Φ̃ is L_ϑ^G-Lipschitz, for the sample and for
+the mean), so on a grid of step Δ = θ/(4L_ϑ^GV_max), Y ≤ θ on [s_k, s_k + Δ] whenever Y(s_k) ≤ θ/2. (a) The grid {kΔ : kΔ ≤ S} ∪ {S}
+has at most S/Δ + 2 points, and a union bound with (8.1) gives P(sup_{s≤S}Y > θ) ≤ (S/Δ + 2)exp(−mθ²/(32K_Φ²)); with Step 7 this
+is (a). For S ≤ Δe^{mθ²/(64K_Φ²)}, (S/Δ + 2)e^{−mθ²/(32K_Φ²)} ≤ 3e^{−mθ²/(64K_Φ²)} ≤ 3/m when e^{mθ²/(64K_Φ²)} ≥ m. (b) Under (H′),
+for s ≥ R_eff every X_s(ϑ) is within θ/(8L_ϑ^G) of X_∞(ϑ) on supp μ₀, so Y(s) ≤ Y(∞) + θ/4 with Y(∞) := ‖(1/m)Σ_j[Φ̃(·;X_∞(ϑ_j(0))) −
+∫Φ̃(·;X_∞)dμ₀]‖, another bounded-differences statistic with E Y(∞) ≤ K_Φ/m^{1/2}; the grid on [0, R_eff] plus the point at infinity
+has at most R_eff/Δ + 3 points, and P(sup_{s≥0}Y > θ) ≤ (R_eff/Δ + 3)exp(−mθ²/(32K_Φ²)).
+
+Step 9 (the learned function and the measures). ‖f̂_Θ − f̂[μ_s]‖ ≤ ‖h‖ + Y ≤ L_ϑ^GD^{1/2} + Y by (0.1), so E‖·‖² ≤ 2(L_ϑ^G)²E D + 2K_Φ²/m.
+The coupling (ϑ_i, ϑ̄_i) is a coupling of μ_Θ and μ_Θ̄, so W₂²(μ_Θ, μ_Θ̄) ≤ D (G⁻¹ metric), and the triangle inequality gives (c).
+The per-particle statement is Step 6. ∎
+
+*Remark D‴.1 (what the hypothesis says, and the window).* (H) at s = ∞ reads: on a neighbourhood of every atom of the limit
+measure, G^{1/2}∇²𝒱[μ_∞]G^{1/2} = σ₀I − R^G[μ_∞] ⪰ κI — each atom is a non-degenerate local minimiser of the first-variation
+potential 𝒱[μ_∞], with margin κ: the strict form of the second-order optimality condition for measures (the local Chizat–Bach
+condition, as in Proposition K(ii)), which every Wasserstein-stable stationary measure satisfies in its non-strict form
+(an atom at a point where 𝒱[μ_∞] is not locally minimal is unstable under (𝔄₀)). Along the flow, (H) asks for this with the
+*current* residual r_{μ_s} from the time s₁ on. It does not mention the collapsed configuration: σ_crit = κ_R[δ_ϑ̄]({ϑ̄}) is
+the same curvature *with the collapsed residual*, which is the residual of the best single kernel and is large when the
+plant needs several. The learning regime σ₀ < σ_crit (the kernels separate) and the uniform regime (H) (κ_R[μ_∞] ≤ σ₀ − κ at
+the fitted configuration) therefore coexist exactly when the fitted configuration is non-degenerately stable while the
+collapsed one is not — the window
+
+    κ_R[μ_∞](N_{ϱ′}(supp μ_∞)) < σ₀ < σ_crit(ϑ̄)
+
+of leaks in which the network learns *and* propagation of chaos is uniform in time. Theorem D″'s condition, by contrast,
+asks the leak to dominate the worst-case residual curvature λ_GL₂(F_ρ + K_Φ) *and* the interaction's Lipschitz constant
+L_ϑ²-type terms, which forces σ₀ ≥ σ_crit. The two ingredients that remove the horizon here are (i) the sign of the
+interaction, which is the flat convexity of L̄ (Step 3), and (ii) the residual-weighted curvature evaluated at the actual
+residual rather than at the worst case (Step 2). Both are properties of the lifted linear parametrisation f̂ = ∫Φ̃dμ, not of
+the particular features.
+
+*Remark D‴.2 (the transient, the support, and the floor of the coupling).* Two things limit the theorem, and both are visible in
+the numerics. (i) The constant carries e^{2Λ₁}, the finite-horizon amplification of Theorem D′ over the time the flow needs
+to enter the non-degenerate regime: for a warm start Λ₁ = 0 and C₁ = 4(L_ϑ^G)²K_Φ²/κ²; for a cold start the expanding
+phase (a(s) < κ while the residual is large) lasts a time of order 1/σ₀ and Λ₁ is of order σ₀⁻¹·sup(κ_R − σ₀) — the bound is
+uniform but quantitatively void, as D′'s e^{ΛT} is. (ii) (H) is a statement about the ϱ′-neighbourhood of the *support* of
+μ_s. The characteristic flow is a homeomorphism, so a connected support stays connected: if the mass of a connected cold
+start splits between several basins of 𝒱[μ_∞], the support of μ_s threads through the ridges between them for every s,
+and on a ridge 𝒱 has a direction of negative curvature, κ_R > σ₀ — (H) fails for every s₁, however little mass the filament
+carries. The theorem then says nothing, and the coupling can indeed carry a floor: a particle whose reference lies near a
+separatrix can be pushed to the other side by the O(m^{−1/2}) difference between the two drifts, after which the pair sits
+in different basins for ever, at a distance of the order of the basin separation. A fraction p_m of such pairs contributes
+p_m·O(R_Θ²) to D, so D follows the law of p_m (the μ₀-mass of a boundary layer of width O(m^{−1/2}) around the separatrices'
+preimage, hence p_m = O(m^{−1/2}) when μ₀ has a bounded density there), not 1/m; the learned function is less sensitive,
+‖f̂_Θ − f̂_Θ̄‖ ≤ L_ϑ^G(1/m)Σ‖δ_i‖_{G⁻¹} ≤ L_ϑ^G(p_m·2R_Θ + D_good^{1/2}), which is still O(m^{−1/2}). The measure-weighted form of
+(H) — a bad set of small μ_s-mass, with the per-particle bootstrap run on the good particles only and the interaction
+split as in Step 3 — is the natural extension and is listed in §8; what the present theorem shows is where the clean
+statement holds (supports inside basins) and why the cold start of Theorem D″'s experiment was outside it on two counts
+(the transient and the connected support).
+
+*Remark D‴.3 (dither).* At τ₀ > 0 the synchronous coupling cancels the noise and the identity of Step 1 holds pathwise with
+the same three terms, but the reference law has full support and the particles visit the ridges of 𝒱 with the Gibbs weight
+of the ridge, so (H) fails in the sense of (ii) above and the coupling carries a floor of that order. Uniform-in-time
+propagation of chaos at τ₀ > 0 is the province of the entropy method: with dither, (𝔄_m) is the m-particle mean-field
+Langevin dynamics of the free energy F_τ of Theorem H in the G⁻¹ metric (Corollary J′.3 is its stationary statement), and
+[S5] proves uniform-in-time propagation of chaos for mean-field Langevin dynamics under flat convexity, regularity of the
+first variation and a uniform log-Sobolev inequality for the proximal Gibbs measures — the three hypotheses that Theorem
+H(i)–(ii) verifies for F_τ, with the constant ρ_τ of H(ii). That result is imported here, not re-derived; its constants are
+those of Theorem H and are exponentially small in 1/τ₀, where the constants of Theorem D‴ are those of the leak and the
+residual curvature. The leak-dominated regime is covered for the real loop and every τ ≥ 0 by Theorem D″.
+
+*Remark D‴.4 (the real loop).* Theorem D‴ is a statement about the averaged slow dynamics (𝔄_m). Theorems J and J′ identify
+(𝔄_m) as the leading order of the real loop's slow dynamics, with the corrections ε·b (Theorem J′'s b, not a gradient:
+Proposition J′.2) and the fast error eliminated at O(ε²); the transfer of a uniform-in-time statement through these
+corrections — a near-identity change of variables that is uniform in time — is the open item of §8, branch 1. What the
+theorem settles is the mechanism: in the learning regime the uniformity rests on the fitted configuration's non-degenerate
+stability and on the flat convexity of the loss, not on a dominant leak; the real-loop run on a warm start (numerics,
+table [X]) shows the coupled distance saturating at the same k_e, G and horizon at which Theorem D″'s cold start grew.
+
+*Numerics* (`exp_chaos_learning.py` → `results/chaos/learning_table.md`). [D3 NUMERICS PENDING]
+
+*Checked* (`tests/test_chaos_learning.py`): (𝔄_m)'s drift equals −G∇J_m of `periodic.ClosedLoop` to machine precision; the
+three-term identity of Step 1 holds to rounding on random configurations with a mean-field stand-in; the interaction term is
+negative and equals −‖f̂_Θ − f̂_Θ̄‖² up to a relative O(D^{1/2}) correction (ratio 0.98 → 0.9999 as δ is scaled by 1 → 0.01) and
+obeys (3.1) at every scale; κ_R at the atoms of a collapsed configuration with the collapsed residual equals Proposition K's
+λ_max(G^{1/2}R₂G^{1/2}), which equals σ₀ at σ₀ = σ_crit, and the collapsed critical point has zero drift; the searched whitened
+constants lie below their closed forms and `theorem_constants` reproduces C₁; on a short warm-start run (m = 16, 64 against
+M = 512) κ_R at the reference stays below σ₀ along the run, D_m stays below C₁/m with Λ₁ = 0, the function-level distance
+‖f̂_Θ − f̂_Θ̄‖ stays below L_ϑ^G·mean‖δ_i‖, and D₆₄ < D₁₆.
 
 ---
 
@@ -3612,6 +3864,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | D | consistency in m (nearly constant amplification 1.64–1.69; not the constant e^{ΛT}) | `exp_mean_field_m.py` |
 | D′(b), (d) | the m^{−1/2} rate of the synchronous coupling to a 4096-particle reference: slopes −0.47 ± 0.06 (τ = 0) and −0.46 ± 0.05 (τ = 2·10⁻³) over 24 seeds, 0.94 ± 0.08 and 0.92 ± 0.08 against (1/m − 1/M)^{1/2}; not the constant | `exp_chaos.py` → `results/chaos/table.md` |
 | D″ | with exact Lipschitz constants and the a-priori tube, σ_cert = 4.04 against Proposition K's σ_K = 0.00144; at 1.2σ_cert with dither the coupled distance is of order m^{−1/2} (slope −0.51 ± 0.02), bounded in time and 700× below the bound, with the network at its prior (fit error 1.000); without dither the reference collapses (spread 10⁻¹⁴) and the distance is zero; at σ_cert/8 it decays to 10⁻¹¹; in the learning regime (σ_K/3, 1000 s) the network stays spread and fits the plant (fit error 0.63) and the distance follows m^{−1/2} (−0.62 ± 0.16) but grows threefold between the windows (100, 200] and (500, 1000] | `exp_chaos_uniform.py` → `results/chaos/uniform_table.md` |
+| D‴ | [D3 NUMERICS PENDING] | `exp_chaos_learning.py` → `results/chaos/learning_table.md` |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -3740,6 +3993,16 @@ Each branch states what is proved, what is open, and the first concrete step.
      only the finite-horizon Theorem D′ is supported. Whether the growth saturates (the leak's time scale is 1/σ = 2000 s),
      and whether a uniform statement holds at all in the learning regime, is the open question; the first draft's claim of
      empirical uniformity was based on a run that was in fact a slow collapse and is withdrawn (review round 6).
+   - *Done (Theorem D‴, §5d):* for the averaged slow loop at τ = 0 the question is settled where the fitted configuration is
+     non-degenerately stable: the interaction term of the synchronous coupling is a negative square at linear order (flat
+     convexity), the self term carries the residual-weighted curvature at the actual residual, and uniform-in-time propagation
+     of chaos at the rate 1/m (mean square) holds under the strict second-order optimality condition along the mean-field flow,
+     with explicit constants carrying the transient's e^{2Λ₁}; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and
+     uniformity coexist. The cold start of Theorem D″'s experiment was outside it on two counts (the expanding transient, and
+     a connected support threading the ridges, where the coupling has a floor of pairs in different basins).
+   - *Open:* the measure-weighted form of hypothesis (H) (a bad set of small μ_s-mass, the bootstrap on the good particles, the
+     flip fraction p_m and its m-law); the transfer to the real loop at finite k_e through Theorem J′'s O(ε) corrections,
+     uniformly in time; dither (the entropy method of [S5], whose hypotheses Theorem H verifies, against the coupling's floor).
 
 4. **Geometry of two-time-scale adaptation (Proposition G(b′)).**
    - *Proved formally, and checked:* the slow geometry follows the gradient flow of the profile loss in the metric
@@ -3807,7 +4070,7 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 ## 9. References
 
-See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S34] are in the audit file.
+See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S39] are in the audit file.
 
 Key mathematical references used in proofs and remarks:
 
