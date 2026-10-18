@@ -29,8 +29,8 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   point to `review/LITERATURE_refs.md`, and [S1]–[S34] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
-  `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency) and for round 6 `review/REVIEW_round6_E0prime.md` and
-  `review/REVIEW_round6_Dpp.md`.
+  `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
+  `review/REVIEW_round6_Dpp.md` and `review/REVIEW_round6_Jprime.md`, and for round 7 `review/REVIEW_round7_E0p3_E0dp.md`.
 
 ---
 
@@ -91,7 +91,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | C | OT σ-modification: exact dissipation for selection solutions; a gap-protected strict inequality with √C ≤ b + 2η; a local exponential estimate, m-uniform for a single-atom prior and O(m^{−1/2}) otherwise; reshuffling by the labelled leak | proved and checked; the C(iv) instance satisfies every hypothesis | novel as a control construction; C(i) and the obstruction are known [71], [73] |
 | C′ | The OT leak toward a prior with any number of atoms, through the barycentric projection of the optimal plan: dissipation of W(μ, ν) up to the within-cell variance of the plan, fixed points of the pure leak = equal-mass centroidal configurations of the prior (Lloyd's algorithm in continuous time, the G-gradient flow of the quantisation energy), induced-coupling bound √C_bar ≤ b + 2η, Lyapunov inequality and local exponential estimate with the bias b_bar := distance of the ideal from the centroids of its prior cells (≤ b) | proved for vertex-selection solutions (existence assumed) and for generalised solutions (which exist); checked (dissipation at every step, convergence to a Lloyd fixed point, the coupling bound and plan stability, the Lyapunov inequality along the closed loop) | the law is the continuous-time Lloyd descent of coverage control [S18] with equal-mass (capacity-constrained) OT plans [S19], used as a σ-modification leak; new here are the induced-coupling bound, the Lyapunov inequality with the bias b_bar and the transfer reading; the quantisation side is Lloyd/CVT theory [S20]; it reduces to Theorem C for m₀ = m |
 | D | Local well-posedness of the mean-field loop; a Dobrushin estimate; a tube bound and global existence under a self-consistent growth condition; the mean-field limit on the existence interval | proved; consistency in m checked numerically (the constant is not checked) | technique anticipated [77]–[79] |
-| E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions. In the slow-adaptation regime a second strict Lyapunov function (Lemma E.0′: second-order slaving and a second-order averaging correction, with the peak factors of the regressor as data) has the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, and under parameter dither bounds the stationary parameter spread by (1 + O(ε))k‖Σ‖_F²/(2(1 − δ)λ_min) (Corollary E.0′.3) | proved, self-contained; linearisation checked; the strict Lyapunov inequalities checked pointwise (E.0′ by a certificate over all states) and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The rate of E.0 is conservative in a quantified way (Remark E.0a); the rate of E.0′ is within 12% of the exact rate above its threshold | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
+| E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions. In the slow-adaptation regime a second strict Lyapunov function (Lemma E.0′: second-order slaving and a second-order averaging correction, with the peak factors of the regressor as data) has the averaged rate λ_min⟨ΨᵀΨ⟩/k up to a factor 1 − δ, and under parameter dither bounds the stationary parameter spread by (1 + O(ε))k‖Σ‖_F²/(2(1 − δ)λ_min) (Corollary E.0′.3); for non-periodic PE regressors the same construction with an exponential average over a window gives the rate (1 − δ − δ₂)λ_T/k, λ_T the weighted PE level of the window (Lemma E.0″) | proved, self-contained; linearisation checked; the strict Lyapunov inequalities checked pointwise (E.0′ by a certificate over all states) and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The rate of E.0 is conservative in a quantified way (Remark E.0a); the rate of E.0′ is within 12% of the exact rate above its threshold | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
 | F | Along (L), the Wasserstein length of learning is ≤ λ_G^{1/2}L₁∫‖e‖; leak versions | proved and checked, including the leak clause, a tight leak instance with e ≡ 0 and a tight velocity instance | elementary |
 | G | Averaged joint descent on the occupation loss. The slow geometry follows the gradient flow of the profile loss in the metric induced on the slow manifold, which is plain variable projection only when that manifold is flat (S ≪ 1). | formal; checked directly, including a counterexample to plain VarPro at S = O(1) | a fixed-m, closed-loop analogue of the two-timescale/VarPro training of [S1], [S2] |
 | H | The averaged mean-field loop with saturated features, σ-modification and dither is mean-field Langevin dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in control quantities. | proved for (𝔄); the reduction to (𝔄) is formal (Remark H.0); real loop: Conjecture H.6 | a bridge to [S3], [S4]; new in adaptive control |
@@ -1652,8 +1652,8 @@ equation.
     dV = [∂_tV + ∇_xV·A(t)x] dt + ∇_xV·Σ̃ dB_t + ½ tr(Σ̃ᵀ𝐇(t)Σ̃) dt ≤ [−γV + ν(t)] dt + ∇_xV·Σ̃ dB_t,
 
 the inequality being Lemma E.0′'s V̇ ≤ −γV pointwise in (t, x), and Σ̃ᵀ𝐇Σ̃ = Σᵀ𝐇_ζζΣ with 𝐇_ζζ = I + εP₁ + ε²P₂ + βLᵀL from the
-block form of 𝐇 (Corollary E.0′.2). The stochastic integral is a martingale because V has quadratic growth and the linear
-SDE has finite moments of every order, so d/dt E V ≤ −γ E V + ν̄ and E V(t) ≤ e^{−γt}E V(0) + ν̄/γ. The bounds on E‖ζ‖² and
+block form of 𝐇 (Corollary E.0′.2). The stochastic integral is a martingale because its integrand is linear in x and the linear
+SDE has bounded second moments (Gaussian with a bounded covariance), so d/dt E V ≤ −γ E V + ν̄ and E V(t) ≤ e^{−γt}E V(0) + ν̄/γ. The bounds on E‖ζ‖² and
 E‖w‖² follow from V ≥ ½(1 − εp₁ − ε²p₂)‖ζ‖² and V ≥ (β/2)‖w‖²; the estimate of ν̄ uses ‖P₁‖ ≤ p₁, ‖P₂‖ ≤ p₂, ‖L‖ ≤ L_M. The
 averaged covariance is the stationary solution of the Lyapunov equation of the time-invariant averaged system. ∎
 
@@ -1670,20 +1670,160 @@ digits), the averaged value k·tr X, and the bound:
 | | 50 | 0.2 / 0.1 | 2.001·10⁻¹ | 2.000·10⁻¹ | 0.315 / 0.282 | 1.58 / 1.41 | 1.25 / 1.11 |
 | | 200 | 0.2 / 0.1 | 8.000·10⁻¹ | 8.000·10⁻¹ | 1.051 / 0.935 | 1.31 / 1.17 | 1.25 / 1.11 |
 
-The exact stationary spread is the averaged Langevin value up to 3·10⁻⁴ (ideal) and 1.25/k² (sinusoid): the averaging
-prediction of the dithered loop's stationary covariance is essentially exact in the slow regime. On the isotropic sinusoid
+The exact stationary spread is the averaged Langevin value up to 3·10⁻⁴ (ideal) and 1.25/k² (sinusoid): on these instances,
+where Σ is isotropic so that ΣΣᵀ commutes with M̄, the averaging prediction of the dithered loop's stationary covariance is
+exact to O(k⁻²). When ΣΣᵀ does not commute with M̄ the deviation is O(1/k) (referee round 7 measured ±0.25/k on
+two-dimensional sinusoids with anisotropic Σ, the bound still holding with ratios 2.7–5.1). On the isotropic sinusoid
 the bound exceeds the exact value by a factor that falls toward 1/(1 − δ) (2.7, 1.6, 1.3 at k = 20, 50, 200 for δ = 0.2;
 the excess is the O(1/k) of the factors (1 ± εp₁)… and βL_M²). On the ideal, where one direction is excited 7.8·10³ times
 less than the others, the bound is 15–18 times the exact value: it charges every one of the q = 15 directions the price of
 the worst, (q/λ_min)/Σ_i(1/λ_i) ≈ q = 15 (up to 1/(1 − δ)), the trace-level price of a scalar Lyapunov function. The exact
-E‖e‖² is ‖Σ‖_F²/k² to four digits on both instances (the error rides on its slow manifold), while the bound on E‖w‖² is
-coarse (factor 1/β).
+E‖e‖² is ‖Σ‖_F²/(2k) = tr(M̄X)/k to five digits on both instances (the error rides on its slow manifold e ≈ Ψζ/k, and
+tr(M̄X) = ½‖Σ‖_F² by the trace of the Lyapunov equation), while the bound on E‖w‖² is coarse (factor 1/β): on the sinusoid the
+exact stationary E‖w‖² = E‖e − Lζ‖², computed from the periodic covariance and the slaving map L = −εΨ + ε²Ψ̇ − ε³ΨM, is
+more than three orders of magnitude below the bound (asserted in the test below).
 
 
 *Checked* (`tests/test_excitation.py`): on Ψ = (sin t, cos t) with Σ = (2·10⁻³)^{1/2}I, the explicit bound dominates the exact
 period mean and the exact maximum of E‖ζ‖² at k = 20, 50, 200 for δ = 0.1 and 0.2, its ratio to the exact value decreases
 toward 1/(1 − δ) (within 6% at k = 200), the grid value of ν̄ lies below its explicit bound, and the exact value agrees with
 the averaged k·tr X within 2/k² (`test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution`).
+
+**Lemma E.0″ (the slow regime for non-periodic persistently exciting regressors).** Let Ψ: [0, ∞) → ℝ^{n×q} be C² with
+‖Ψ‖ ≤ Ψ_M, ‖Ψ̇‖ ≤ Ψ_D, ‖Ψ̈‖ ≤ Ψ_DD, M := ΨᵀΨ, and fix a window T > 0. For a bounded continuous X let
+
+    ⟨X⟩_T(t) := (1/T)∫₀^∞ e^{−s/T} X(t + s) ds    (the forward exponential average; T d/dt⟨X⟩_T = ⟨X⟩_T − X),
+
+and M̄ := ⟨M⟩_T. Assume the exponentially weighted PE condition
+
+    M̄(t) ⪰ λ I_q for all t ≥ 0, with λ > 0,                                                                   (PE_T)
+
+which is equivalent to classical PE (∫_t^{t+T}M ⪰ αI for all t gives (PE_T) with λ ≥ e^{−1}α/T, and (PE_T) gives PE over
+windows T′ > T log(Λ/λ) with level T(λ − e^{−T′/T}Λ); proof below). Let Λ := sup_t λ_max(M̄(t)) ≤ Ψ_M². Fix symmetric matrices
+M̂, F̂ (any; the long-time means of M̄ and F̄ minimise the time-averaged squares of ‖M̄ − M̂‖, ‖F̄ − F̂‖, not necessarily the
+suprema below) and define
+
+    P₁ := −2T(M̄ − M̂)   (so Ṗ₁ = 2(M − M̄)),    F := P₁M + MP₁,    F̄ := ⟨F⟩_T,    S := −T(F̄ − F̂)   (Ṡ = F − F̄),
+    P₂ := −(M − M̄) + S,    N̄₂ := ½(F̄ − Ṁ̄) = ½(F̄ − (M̄ − M)/T),
+
+and e₂, w, V exactly as in Lemma E.0′ (V = ½ζᵀ(I + εP₁ + ε²P₂)ζ + (β/2)‖w‖², ε = 1/k). The constants are those of Lemma E.0′ with
+the period mean replaced by the exponential average, all of them computable from the regressor: the time-local peak factors
+
+    ρ := sup_{t,v} ‖Ψ(t)v‖²/vᵀM̄(t)v,   ρ_D := sup ‖Ψ̇(t)v‖²/vᵀM̄(t)v,   ρ_DD := sup ‖Ψ̈(t)v‖²/vᵀM̄(t)v   (all ≤ Ψ_·²/λ),
+
+the operator and per-direction norms
+
+    p₁ := sup_t‖P₁(t)‖ = 2T sup‖M̄ − M̂‖,   p₂ := sup_t‖P₂(t)‖ ≤ Ψ_M² + T sup‖F̄ − F̂‖,
+    π₁ := sup_{t,v} ‖P₁(t)v‖/‖v‖_{M̄(t)} ≤ 2T(√Λ + ‖M̂‖/√λ),   π₂ := sup_{t,v} ‖P₂(t)v‖/‖v‖_{M̄(t)} ≤ Ψ_M√ρ + √Λ + T(2p₁Ψ_M² + ‖F̂‖)/√λ,
+    n₂ := sup_t‖N̄₂(t)‖ ≤ ½(sup‖F‖ + 2Ψ_M²/T) ≤ p₁Ψ_M² + Ψ_M²/T,
+
+and, with these π₁, π₂, p₁, p₂, the quantities c₁, c₂, d_w, r_ζ and β := 2c₁²/δ of Lemma E.0′ (same formulas), together with
+
+    δ₂ := ε n₂/λ,    c_ζ := 1 − δ − δ₂ − r_ζ/ε.
+
+Fix δ ∈ (0, 1). If (A) c₁c₂ ≤ δ/2, (B) d_w ≤ k/4, (C) c_ζ > 0 and (D) εp₁ + ε²p₂ < 1, then along (LTV), for all (e, ζ, t),
+
+    V̇ ≤ −ε c_ζ ζᵀM̄(t)ζ − (βk/4)‖w‖² ≤ −γV,    γ := min{2c_ζλ/(k(1 + εp₁ + ε²p₂)), k/2},
+
+and ‖(e(t), ζ(t))‖ ≤ C e^{−γ(t−t₀)/2}‖(e(t₀), ζ(t₀))‖ with the C of Lemma E.0′. In the slow regime the guaranteed rate is
+
+    γ/2 = (1 − δ − δ₂)(1 − εp₁ + O(k⁻²)) λ/k,    λ = inf_t λ_min(⟨M⟩_T(t)):
+
+the exponentially weighted PE level of the window divided by k, up to the factor 1 − δ − δ₂, where δ₂ = O(1/k) is the price of
+the residual second-order term (zero for a periodic Ψ with M̂ = ⟨M⟩ in the limit T → ∞, where Lemma E.0′ applies directly).
+
+*Status.* Proved (the proof of Lemma E.0′ with the changes listed below). Checked (`exp_pe_general.py`,
+`tests/test_excitation.py`) on a quasi-periodic regressor and on a regressor driven by a Lorenz orbit, where no periodic
+construction applies: the conditions hold from k = 20 on for the quasi-periodic regressor and from k = 100 on for the
+chaotic one (the derivative peak factors of a chaotic orbit are large), the certificate sup V̇/V ≤ −γ holds on the time grid
+wherever they hold, and the guaranteed rate is within a factor 1.3–2.5 of the exact decay rate on the quasi-periodic
+regressor (k = 50–200) and, with the window T = 20, within a factor 3.5–5 on the chaotic one (shorter windows pay more:
+7.5–11 at T = 10 and 14–138 at T = 5), where the worst exponential window is three times less exciting than the long-time
+average. Referee round 7 (`review/REVIEW_round7_E0p3_E0dp.md`) confirmed the proof and the code and found no counterexample
+on an attack set of barely exciting, bursty, near-resonant and chaotic regressors.
+
+*Proof.* Follow the proof of Lemma E.0′ with M̄, P₁, S, P₂ as defined here. (a) is unchanged (it does not involve the
+averages). In (b), Ḣ = 2ε(M − M̄) + ε²(F − F̄ − Ṁ + Ṁ̄) exactly, by Ṗ₁ = 2(M − M̄) and Ṗ₂ = −Ṁ + Ṃ̄ + Ṡ = −Ṁ + Ṁ̄ + F − F̄;
+the order-ε terms give −ζᵀM̄ζ as before, and the order-ε² terms give −ζᵀP₁Mζ + ½ζᵀṀζ + ½ζᵀ(F − F̄ − Ṁ + Ṁ̄)ζ = ½ζᵀ(Ṁ̄ − F̄)ζ =
+−ζᵀN̄₂ζ, since ζᵀP₁Mζ = ½ζᵀFζ: the periodic cancellation N₂ = 0 is replaced by the residual −ε²ζᵀN̄₂ζ, and R_ζ has the same
+form, so d/dt[½ζᵀHζ] = −εζᵀ(M̄ + εN̄₂)ζ + R_ζ + ζᵀHΨᵀw. In (c), every per-direction bound is taken in the time-local norm
+‖v‖_{M̄(t)}: ‖Ψ(t)v‖ ≤ √ρ‖v‖_{M̄(t)} and likewise for Ψ̇, Ψ̈ by the definition of the peak factors; ‖M(t)v‖ ≤ Ψ_M√ρ‖v‖_{M̄(t)};
+‖M̄(t)v‖ ≤ √Λ‖v‖_{M̄(t)}; ‖P₁(t)v‖ = 2T‖(M̄(t) − M̂)v‖ ≤ 2T(√Λ + ‖M̂‖/√λ)‖v‖_{M̄(t)}, using √λ‖v‖ ≤ ‖v‖_{M̄(t)} (this is where the
+exponential average pays off: P₁(t) is a function of M̄(t) alone, with no integral over other times); for F̄(t)v and S(t)v,
+which do involve other times r ≥ t, ‖F(r)v‖ ≤ ‖P₁(r)‖‖M(r)v‖ + ‖M(r)‖‖P₁(r)v‖ ≤ 2p₁Ψ_M²‖v‖ ≤ (2p₁Ψ_M²/√λ)‖v‖_{M̄(t)}, an average
+of such bounds bounds ‖F̄(t)v‖, and ‖S(t)v‖ ≤ T(‖F̄(t)v‖ + ‖F̂v‖), whence the bound on π₂; the stated bounds on p₂ and n₂ are
+‖P₂‖ ≤ ‖M − M̄‖ + ‖S‖ and ‖N̄₂‖ ≤ ½(‖F̄‖ + ‖Ṁ̄‖) with ‖Ṁ̄‖ = ‖M̄ − M‖/T ≤ 2Ψ_M²/T and ‖F̄‖ ≤ sup‖F‖ ≤ 2p₁Ψ_M². The bounds |R_ζ| ≤
+r_ζ‖ζ‖²_{M̄}, |ζᵀHΨᵀw| ≤ c₁‖ζ‖_{M̄}‖w‖ and βwᵀẇ ≤ β[−(k − d_w)‖w‖² + c₂‖ζ‖_{M̄}‖w‖] follow with the same formulas (the suprema
+over v at the current time t of the norms that appear). In (d), the extra term is bounded by ε²|ζᵀN̄₂ζ| ≤ ε²n₂‖ζ‖² ≤
+(ε²n₂/λ)ζᵀM̄ζ = εδ₂ζᵀM̄ζ, which turns 1 − δ − r_ζ/ε into c_ζ = 1 − δ − δ₂ − r_ζ/ε; the rest of the assembly, the sandwich
+½(1 − εp₁ − ε²p₂)‖ζ‖² + (β/2)‖w‖² ≤ V ≤ ½(1 + εp₁ + ε²p₂)‖ζ‖² + (β/2)‖w‖² and ζᵀM̄(t)ζ ≥ λ‖ζ‖² give V̇ ≤ −γV. The equivalence
+of (PE_T) with classical PE: if ∫_t^{t+T}M ⪰ αI then M̄(t) ⪰ (1/T)∫₀^T e^{−s/T}M(t+s)ds ⪰ (e^{−1}/T)∫_t^{t+T}M ⪰ (e^{−1}α/T)I;
+conversely (PE_T) gives, for every T′ > 0, ∫_t^{t+T′}M ⪰ ∫_t^{t+T′}M e^{−(r−t)/T}dr ⪰ T(M̄(t) − e^{−T′/T}M̄(t + T′)) ⪰ T(λ − e^{−T′/T}Λ)I,
+positive for T′ > T log(Λ/λ) (the identity ∫_t^{t+T′}e^{−(r−t)/T}M(r)dr = T[M̄(t) − e^{−T′/T}M̄(t+T′)] follows from the
+definition of the exponential average). ∎
+
+*Remark E.0″.1 (reading).*
+
+- *What changes and what does not.* The construction, the conditions and the rate formula are those of Lemma E.0′; the
+  period mean becomes the exponential average over a window, the peak factors become time-local, and one new term appears:
+  the residual N̄₂, whose price δ₂ = εn₂/λ vanishes like 1/k. For a periodic regressor the exponential average with a finite
+  window keeps residual oscillations of relative size O(period/T), so Lemma E.0′ is sharper there; Lemma E.0″ is the version
+  for references that are not periodic — quasi-periodic (several incommensurate frequencies) or chaotic (a reference along a
+  strange attractor, as in the Lorenz-tracking experiments of Part 1), where only PE is available.
+- *The window is a design parameter.* The lemma holds for every T > 0; the guaranteed rate is (1 − δ − δ₂)λ_T/k with
+  λ_T = inf λ_min(⟨M⟩_T), which increases toward the long-time excitation level as T grows, against p₁ ∝ T, n₂ ∝ T and the
+  threshold in k, which grow with T. The numerics show the optimum at a window of a few characteristic times of the regressor.
+- *Exact rate.* For a non-periodic regressor the exact rate is the top Lyapunov exponent of (LTV), which the certificate
+  does not need: the lemma is a pointwise inequality in (t, e, ζ), checked on a grid in t by the same generalised eigenvalue
+  problem as Lemma E.0′.
+
+*Numerics* (`exp_pe_general.py` → `results/explicit_rate/general_pe.md`). Two regressors that are not periodic, on [0, 300]
+(grid step 0.005; the exponential averages formed from an extended grid; the certificate sup V̇/V over 400 times and all
+states; the exact rate the top Lyapunov exponent of (LTV) over 200 time units), with the measured constants (the grid
+suprema of ‖P₁‖, ‖P₂‖, the per-direction norms and ‖N̄₂‖, computable constants of the regressor like the peak factors).
+
+*Quasi-periodic Ψ = (sin t, cos √2 t)* (q = 2; the long-time mean of M is ½I, and the exact decay rate is λ_∞/k = 0.5/k to
+within 1%, 0.6% at k = 20 and 0.8% at k = 400): the window average has λ_T = 0.297, 0.391, 0.444 for T = 2π, 4π, 8π (ρ = 4.0, ρ_D ≈ 6.1–6.4, ρ_DD ≈ 10.0, p₁ ≈ 2.9,
+p₂ = 8.0–9.2, π₁ = 4.3–4.7, π₂ = 11.6–13.0, ‖N̄₂‖ = 0.71, 0.35, 0.17); the conditions hold from k = 20 on for both δ, the
+certificate holds at every row, and
+
+| T | k | δ₂ | guaranteed γ/2 (δ = 0.2 / 0.1) | exact | exact/guaranteed | λ_T/k |
+|---|---|---|---|---|---|---|
+| 4π | 20 | 0.045 | 0.0100 / 0.0117 | 0.0249 | 2.49 / 2.13 | 0.0195 |
+| 4π | 50 | 0.018 | 0.00557 / 0.00631 | 0.00995 | 1.78 / 1.58 | 0.00781 |
+| 4π | 200 | 0.004 | 0.00153 / 0.00172 | 0.00249 | 1.63 / 1.45 | 0.00195 |
+| 8π | 20 | 0.020 | 0.0118 / 0.0137 | 0.0249 | 2.10 / 1.81 | 0.0222 |
+| 8π | 200 | 0.002 | 0.00174 / 0.00196 | 0.00249 | 1.43 / 1.27 | 0.00222 |
+
+(T = 2π: 3.69 → 2.16 for δ = 0.2 and 3.10 → 1.92 for δ = 0.1 from k = 20 to 200.) The ratio exact/guaranteed is the product of the window loss
+λ_∞/λ_T (1.69, 1.28, 1.13 for the three windows), the factor 1/(1 − δ − δ₂) and the O(1/k) factors; the explicit closed-form
+constants satisfy the conditions from k = 50 on and give rates below the measured-constant ones by 22–79% at k = 50 (the
+longer the window, the larger the deficit), 5–19% at k = 100, at most 5% at k = 200 and about 1% at k = 400. All constants
+are suprema over [0, 300] (the exponential averages are formed on an extended grid): on the quasi-periodic regressor they are
+identical to four digits on [0, 10⁴] (closed form); on the Lorenz regressor below, the suprema over [0, 1500] are larger by
+up to 14% (p₁ 5.31 → 5.67, p₂ 19.4 → 20.7, π₂ 49.4 → 51.9, ‖N̄₂‖ 0.42 → 0.48 at T = 20), which lowers the guaranteed rate
+at k = 100 by 3% and keeps the certificate (referee round 7): the constants of a chaotic regressor are those of the stretch
+of the attractor that the run visits.
+
+*Chaotic Ψ = (x₁/20, (x₃ − 25)/20) along a Lorenz orbit* (σ = 10, r = 28, b = 8/3, traversed five times slower than standard
+Lorenz time, Ψ̇ by the chain rule through the vector field; q = 2): the exact decay rates are 0.00759, 0.00304, 0.00152,
+0.00076, 0.00038 at k = 20, 50, 100, 200, 400 (an effective excitation level 0.15), while the worst exponential window has
+λ_T = 0.015, 0.024, 0.051 for T = 5, 10, 20 (Λ = 0.55, 0.36, 0.24; ρ ≈ 20–26, ρ_D ≈ 110–160, ρ_DD ≈ 2000–3100; ‖N̄₂‖ = 1.05,
+0.34, 0.42: the residual does not follow a monotone rule in T). The conditions hold from k = 100 on (condition (A) fails below: the derivative peak factors of a chaotic orbit
+are large), the certificate holds at every admissible row, and at T = 20 the guaranteed rate is 0.00030 / 0.00035 (k = 100),
+0.00018 / 0.00021 (k = 200) against the exact 0.00152 and 0.00076: exact/guaranteed = 5.0 / 4.3 and 4.2 / 3.7, of which the
+window loss λ_∞/λ_T ≈ 3 is the dominant factor. For a chaotic reference the uniform-in-time construction pays the least
+exciting stretch of the attractor; a longer window (T = 20 against the slowed Lorenz loop time ≈ 3.75) recovers part of it
+(λ_T = 0.015 → 0.051 from T = 5 to 20) at the price of a larger p₂ and π₂ (9.9 → 19.4 and 13.7 → 49.4). An exploratory
+regressor with components tanh(x_i/8) traversed at standard Lorenz speed (not in the table) had ρ_DD of order 10⁶–10⁷ and a
+threshold beyond k = 400: the slow regime requires the
+reference to be slow relative to the loop, and the time scale of a chaotic reference is the designer's choice.
+
+
+*Checked* (`tests/test_excitation.py`): on Ψ = (sin t, cos √2 t) with T = 4π, the differential identities TṀ̄ = M̄ − M and Ṗ₁ =
+2(M − M̄) on the grid (10⁻⁴), the conditions at k = 20, 50, 200 for δ = 0.1, 0.2 with δ₂ ≤ 5%, the certificate sup V̇/V ≤ −γ on
+400 times, and the guaranteed rate below the exact decay rate (top Lyapunov exponent over 200 time units) within a factor 2.6,
+the ratio improving with k (`test_lemma_E0dprime_quasi_periodic_regressor_certificate_and_rate`).
 
 **Theorem E (with explicit constants).** Let Ψ_G := m^{−1/2}Ψ(I_m ⊗ G^{1/2}) ∈ ℝ^{n×mp}, and let (α_G, T, Ψ_{G,M}, Ψ_{G,D})
 be PE data for it: ∫_t^{t+T}Ψ_GᵀΨ_G ⪰ α_G I, ‖Ψ_G‖ ≤ Ψ_{G,M}, ‖Ψ̇_G‖ ≤ Ψ_{G,D}. One may take α_G := αλ_min(G)/m,
@@ -3481,6 +3621,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | E, explicit constants | on the implemented loop, from a start inside the explicit ball, ‖w(t)‖ ≤ (p_hi/p_lo)^{1/2}e^{−λt}‖w(0)‖ at every sample (L_J estimated from samples) | `Ex::test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop` |
 | Corollary E.0′.2 | the explicit envelope of Theorem E with Lemma E.0′'s constants on the implemented single-kernel loop at k_e = 40: 1.5 e-folds inside the envelope from a start in the explicit ball (dt = 0.005, below the discretisation floor); λ′ > 10 × Theorem E's rate from Lemma E.0 and < 4 × the exact linear rate; the constants table | `Ex::test_corollary_E0prime_2_envelope_on_the_implemented_loop`, `exp_explicit_rate.py` (table 5) |
 | Corollary E.0′.3 | the explicit bound on the stationary parameter spread of the dithered (LTV) dominates the exact periodic covariance (sinusoid: ratios 2.7 → 1.3 (δ = 0.2) and 2.5 → 1.2 (δ = 0.1) at k = 20 → 200, falling toward 1/(1 − δ); the Theorem E ideal: 15–18, the price of q = 15 directions at the worst excitation); the exact value equals the averaged k·tr X within 2/k² | `Ex::test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` (table 6) |
+| Lemma E.0″ | on Ψ = (sin t, cos √2 t) (not periodic) with window 4π: the exponential-average identities on the grid (10⁻⁴), the conditions at k = 20, 50, 200 with δ₂ ≤ 5%, the certificate on 400 times, the guaranteed rate below the exact decay rate (top Lyapunov exponent) within a factor 2.6 and improving with k; the experiment: exact/guaranteed 2.5 → 1.3 on the quasi-periodic regressor and 5.0 → 3.7 on a slowed Lorenz-driven regressor (k = 100–400), the certificate holding at every admissible row | `Ex::test_lemma_E0dprime_quasi_periodic_regressor_certificate_and_rate`, `exp_pe_general.py` → `results/explicit_rate/general_pe.md` |
 | Lemma E.0′ | the certificate sup_{t,x}V̇/V ≤ −γ (a generalised eigenvalue problem on a time grid) on Ψ = (sin t, cos t) at k = 20, 50, 200 and on the slow-adaptation ideal at g = 0.01, k = 400; N₂ = 0 numerically; the guaranteed rate below the exact Floquet rate and within a factor 2 (sinusoid) and 1.5 (ideal) of it, above Lemma E.0's by more than 10⁴ on the ideal; the table of k and δ | `Ex::test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness`, `Ex::test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` (table 4) |
 | G(a), two scales | direct check (cosine ≥ 0.998 in the G⁻¹ metric, `violating`; the weight block fails in `satisfying`, as explained in §6b); L̄ at period-mean parameters non-increasing | `exp_variable_projection.py` → `table_violating.md`, `table_satisfying.md` |
 | G(b), (b′), (H2c) | VarPro holds when (H2b) and S ≪ 1 hold; it fails when S = O(1) although (H2b) holds; the induced-metric flow tracks the closed loop at every S (started on the slow manifold; gains ÷ 4 isolates the averaging error) | `exp_variable_projection.py` → `table_satisfying.md`; `exp_slow_manifold_slope.py` → `table_slope.md` |
@@ -3630,11 +3771,16 @@ Each branch states what is proved, what is open, and the first concrete step.
      linearised loop, limsup E‖ζ‖² ≤ (1 + O(ε))k‖Σ‖_F²/(2(1 − δ)λ_min), within 1/(1 − δ) of the exact (averaged Langevin)
      value on isotropic regressors and paying the condition number in the trace otherwise: an explicit design formula for
      how much dither a given tracking budget tolerates.
+   - *Done (Lemma E.0″):* the non-periodic case. The period mean is replaced by a forward exponential average over a
+     window T (whose derivative identity TṀ̄ = M̄ − M gives the antiderivatives in closed form), the peak factors become
+     time-local, and one residual second-order term N̄₂ appears, costing δ₂ = O(1/k) in the rate; the guaranteed rate is
+     (1 − δ − δ₂)λ_T/k with λ_T the exponentially weighted PE level of the window. Checked on a quasi-periodic regressor
+     and on a regressor driven by a Lorenz orbit, where no periodic construction applies.
    - *Open:* the continuum form of (PE); the trajectory kernel K_T(ϑ,ϑ') = ∫Φ(x(s);ϑ)Φ(x(s);ϑ')ds; identifiability of
      measures up to symmetry; the relation to [16]. Remark E.1 shows that the PE level alone does not predict the rate.
-     For Lemma E.0′: lowering the threshold k₀ (a third-order slaving trades ρ_DD for the peak factor of Ψ⃛ one order
-     higher), the non-periodic case (a windowed M̄(t)), and the nonlinear Theorem E with the constants of E.0′ (its
-     steps 4–5 carry over; the explicit ball radius improves by the same factor as the rate).
+     For Lemmas E.0′ and E.0″: lowering the threshold k₀ (a third-order slaving trades ρ_DD for the peak factor of Ψ⃛ one
+     order higher); the choice of the window T as an optimisation; the nonlinear Theorem E with the constants of E.0″
+     (Corollary E.0′.2's steps carry over verbatim, with λ_T in place of λ_min(M̄)).
 
 8. **Transport-regularised adaptive laws.**
    - Wasserstein proximal (JKO) discrete-time adaptive laws.

@@ -559,12 +559,14 @@ def dither_covariance_bound(slow, k, delta, Sigma):
                 bound_w=2 * nu_explicit / (c['gamma'] * c['beta']), averaged_zeta=averaged)
 
 
-def exact_stationary_covariance(Psi_fun, k, Sigma, period, n_steps=4000):
+def exact_stationary_covariance(Psi_fun, k, Sigma, period, n_steps=4000, L_fun=None):
     """
     The periodic stationary covariance of (LTV_τ): with A(t) := ltv_matrix(Ψ(t), k) and Σ̃ := [0; Σ], integrate Φ̇ = AΦ and
-    Ẅ := Ẇ = AW + WAᵀ + Σ̃Σ̃ᵀ over one period (RK4, k·dt ≤ 1/4), solve C₀ = ΦC₀Φᵀ + W (the discrete Lyapunov equation for
+    Ẇ = AW + WAᵀ + Σ̃Σ̃ᵀ (W(0) = 0) over one period (RK4, k·dt ≤ 1/4), solve C₀ = ΦC₀Φᵀ + W (the discrete Lyapunov equation for
     the covariance at the period's start), then integrate Ċ = AC + CAᵀ + Σ̃Σ̃ᵀ from C₀ over the period and return the
-    period averages of E‖ζ‖² = tr C_ζζ and E‖e‖² = tr C_ee together with their maxima over the period.
+    period averages of E‖ζ‖² = tr C_ζζ and E‖e‖² = tr C_ee together with their maxima over the period; C_end is the
+    covariance at the end of the period (equal to C₀ up to the integration error).  With L_fun(t) (the n×q slaving map of
+    Corollary E.0′.2, w := e − L(t)ζ) the period mean and maximum of E‖w‖² = tr C_ee − 2tr(L C_ζe) + tr(L C_ζζ Lᵀ) are returned too.
     """
     from scipy.linalg import solve_discrete_lyapunov
     P0 = Psi_fun(0.0)
@@ -591,12 +593,181 @@ def exact_stationary_covariance(Psi_fun, k, Sigma, period, n_steps=4000):
         W = W + dt / 6 * (k1w + 2 * k2w + 2 * k3w + k4w)
     C = solve_discrete_lyapunov(Phi, W)                                   # C = Φ C Φᵀ + W
     C = 0.5 * (C + C.T)
-    tz, te, mz, me = 0.0, 0.0, 0.0, 0.0
+    tz, te, mz, me, tw, mw = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     for j in range(n_steps):
         t = j * dt
         trz, tre = float(np.trace(C[n:, n:])), float(np.trace(C[:n, :n]))
         tz += trz; te += tre; mz = max(mz, trz); me = max(me, tre)
+        if L_fun is not None:
+            Lt = np.asarray(L_fun(t), float)
+            trw = tre - 2.0 * float(np.trace(Lt @ C[n:, :n])) + float(np.trace(Lt @ C[n:, n:] @ Lt.T))
+            tw += trw; mw = max(mw, trw)
         f = lambda tt, CC: (lambda A: A @ CC + CC @ A.T + Q)(ltv_matrix(Psi_fun(tt), k))
         k1 = f(t, C); k2 = f(t + 0.5 * dt, C + 0.5 * dt * k1); k3 = f(t + 0.5 * dt, C + 0.5 * dt * k2); k4 = f(t + dt, C + dt * k3)
         C = C + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-    return dict(zeta_mean=tz / n_steps, e_mean=te / n_steps, zeta_max=mz, e_max=me, C0=C)
+    out = dict(zeta_mean=tz / n_steps, e_mean=te / n_steps, zeta_max=mz, e_max=me, C_end=C, C0=C)
+    if L_fun is not None:
+        out.update(w_mean=tw / n_steps, w_max=mw)
+    return out
+
+
+# ---------------------------------------------------------------------------- Lemma E.0″: non-periodic PE regressors
+def exp_average(X, dt, T):
+    """Forward exponential average ⟨X⟩_T(t) := (1/T)∫₀^∞ e^{−s/T}X(t+s)ds of a sampled signal X (first axis = time, step dt),
+    by the backward recursion of the exact integrator for a piecewise-linear signal (second order in dt); the last ≈ 10T
+    of the grid are unreliable (no future data) and should be excluded from suprema."""
+    a = np.exp(-dt / T)
+    c1 = T * (1 - a) / dt - a                       # weight of (X_{i+1} − X_i) for a piecewise-linear signal (exact integrator)
+    Y = np.empty_like(X)
+    Y[-1] = X[-1]
+    for i in range(len(X) - 2, -1, -1):
+        Y[i] = a * Y[i + 1] + (1 - a) * X[i] + c1 * (X[i + 1] - X[i])
+    return Y
+
+
+class ExpAverageLyapunov:
+    """
+    Lemma E.0″ (PARADIGM.md §6): Lemma E.0′'s construction for a general (not necessarily periodic) persistently exciting
+    regressor, with the period mean replaced by the forward exponential average over a window T,
+
+        M̄ := ⟨M⟩_T ⪰ λI,   TṀ̄ = M̄ − M,   P₁ := −2T(M̄ − M̂)  (Ṗ₁ = 2(M − M̄)),
+        F := P₁M + MP₁,   F̄ := ⟨F⟩_T,   S := −T(F̄ − F̂)  (Ṡ = F − F̄),   P₂ := −(M − M̄) + S,
+
+    with M̂, F̂ fixed symmetric matrices (the long-time means of M̄ and F̄, which minimise the norms).  The same V as in
+    Lemma E.0′ then satisfies d/dt[½ζᵀHζ] = −εζᵀ(M̄ + εN̄₂)ζ + R_ζ + ζᵀHΨᵀw with the residual second-order term
+    N̄₂ := ½(F̄ − Ṁ̄) (zero for periodic Ψ and T → ∞; a computable constant of the regressor otherwise), so the rate is
+    γ/2 = (1 − δ − δ₂)λ/(k(1 + εp₁ + ε²p₂)) with δ₂ := ε sup‖N̄₂‖/λ.  The regressor is sampled on [0, T_end + T_pad] with step
+    dt; the exponential averages are formed by backward recursion and the suprema are taken over [0, T_end].
+    """
+
+    def __init__(self, Psi_fun, Psidot_fun, T, T_end, dt=0.005, T_pad=None, h=1e-4):
+        self.T, self.dt = float(T), float(dt)
+        T_pad = 12 * self.T if T_pad is None else float(T_pad)
+        self.ts = np.arange(0.0, T_end + T_pad, self.dt)
+        self.N_valid = int(np.ceil(T_end / self.dt))
+        self.Ps = np.array([Psi_fun(t) for t in self.ts])
+        self.Pd = np.array([Psidot_fun(t) for t in self.ts])
+        self.Pdd = np.array([(Psidot_fun(t + h) - Psidot_fun(t - h)) / (2 * h) for t in self.ts])
+        self.n, self.q = self.Ps.shape[1:]
+        self.Ms = np.einsum('ikj,ikl->ijl', self.Ps, self.Ps)
+        self.Mdot = np.einsum('ikj,ikl->ijl', self.Pd, self.Ps) + np.einsum('ikj,ikl->ijl', self.Ps, self.Pd)
+        self.Mbar = exp_average(self.Ms, self.dt, self.T)
+        V = slice(0, self.N_valid)
+        self.Mbar_dot = (self.Mbar - self.Ms) / self.T
+        lam = np.array([np.linalg.eigvalsh(m) for m in self.Mbar[V]])
+        self.lam_min, self.lam_max = float(lam[:, 0].min()), float(lam[:, -1].max())
+        if self.lam_min <= 0:
+            raise ValueError("the exponential average of M is not uniformly positive definite on the grid: not PE at this window")
+        self.M_hat = self.Mbar[V].mean(0)
+        self.P1 = -2 * self.T * (self.Mbar - self.M_hat)
+        PM = np.einsum('ijk,ikl->ijl', self.P1, self.Ms)
+        self.F = PM + np.swapaxes(PM, 1, 2)
+        self.Fbar = exp_average(self.F, self.dt, self.T)
+        self.F_hat = self.Fbar[V].mean(0)
+        self.S = -self.T * (self.Fbar - self.F_hat)
+        self.P2 = -(self.Ms - self.Mbar) + self.S
+        self.P2dot = -self.Mdot + self.Mbar_dot + self.F - self.Fbar
+        self.N2bar = 0.5 * (self.Fbar - self.Mbar_dot)
+        # norms over the valid range
+        nrm = lambda Xs: float(max(np.linalg.norm(x, 2) for x in Xs[V]))
+        self.Psi_M, self.Psi_D, self.Psi_DD = nrm(self.Ps), nrm(self.Pd), nrm(self.Pdd)
+        self.p1_meas, self.p2_meas, self.N2_norm = nrm(self.P1), nrm(self.P2), nrm(self.N2bar)
+        self.F_norm, self.Fbar_norm = nrm(self.F), nrm(self.Fbar)
+        self.M_hat_norm, self.F_hat_norm = float(np.linalg.norm(self.M_hat, 2)), float(np.linalg.norm(self.F_hat, 2))
+        # time-local peak factors relative to M̄(t)
+        def peak(Xs):
+            out = 0.0
+            for x, m in zip(Xs[V], self.Mbar[V]):
+                lam_, U = np.linalg.eigh(m)
+                Mh = U @ np.diag(lam_ ** -0.5) @ U.T
+                out = max(out, float(np.linalg.eigvalsh(Mh @ x.T @ x @ Mh)[-1]))
+            return out
+        self.rho, self.rho_D, self.rho_DD = peak(self.Ps), peak(self.Pd), peak(self.Pdd)
+        # per-direction constants of P₁, P₂ relative to ‖·‖_{M̄(t)}: ‖P₁(t)v‖ ≤ 2T(√Λ + ‖M̂‖/√λ)‖v‖_{M̄(t)} (explicit) and the measured sup
+        def perdir(Xs):
+            out = 0.0
+            for x, m in zip(Xs[V], self.Mbar[V]):
+                lam_, U = np.linalg.eigh(m)
+                Mh = U @ np.diag(lam_ ** -0.5) @ U.T
+                out = max(out, float(np.sqrt(np.linalg.eigvalsh(Mh @ x.T @ x @ Mh)[-1])))
+            return out
+        self.pi1_meas, self.pi2_meas = perdir(self.P1), perdir(self.P2)
+
+    def constants(self, k, delta=0.1, explicit=False):
+        """The constants of Lemma E.0″ at (k, δ).  With explicit=False the measured suprema of ‖P₁‖, ‖P₂‖, ‖P₁v‖/‖v‖_{M̄},
+        ‖P₂v‖/‖v‖_{M̄} and ‖N̄₂‖ over the grid are used (computable constants of the regressor, like the peak factors);
+        with explicit=True the closed-form bounds π₁ = 2T(√Λ + ‖M̂‖/√λ), p₁ = 2T sup‖M̄ − M̂‖ (the measured supremum, which is
+        the closed form), p₂ = Ψ_M² + T(sup‖F̄‖ + ‖F̂‖) (looser than sup‖M − M̄‖ + T sup‖F̄ − F̂‖) and π₂."""
+        k = float(k); e = 1.0 / k; T = self.T
+        PM, PD = self.Psi_M, self.Psi_D
+        sr, srD, srDD = np.sqrt(self.rho), np.sqrt(self.rho_D), np.sqrt(self.rho_DD)
+        lam, Lam = self.lam_min, self.lam_max
+        if explicit:
+            p1 = self.p1_meas                                                # = 2T sup‖M̄ − M̂‖ exactly (measured on the grid)
+            pi1 = 2 * T * (np.sqrt(Lam) + self.M_hat_norm / np.sqrt(lam))
+            p2 = PM ** 2 + T * (self.Fbar_norm + self.F_hat_norm)
+            pi2 = PM * sr + np.sqrt(Lam) + T * (2 * p1 * PM ** 2 + self.F_hat_norm) / np.sqrt(lam)
+        else:
+            p1, pi1, p2, pi2 = self.p1_meas, self.pi1_meas, self.p2_meas, self.pi2_meas
+        r_z = (e ** 3 * (pi2 * PM * sr + pi1 * PM * srD + PM ** 2 * self.rho)
+               + e ** 4 * (pi2 * PM * srD + pi1 * PM ** 3 * sr) + e ** 5 * pi2 * PM ** 3 * sr)
+        c1 = sr + e * PM * pi1 + e ** 2 * PM * pi2
+        c2 = (e ** 2 * srDD + e ** 3 * (3 * PD * PM * sr + 2 * PM ** 2 * srD) + e ** 4 * (2 * PM ** 4 * sr + PD * PM * srD)
+              + e ** 5 * (PM ** 4 * srD + PD * PM ** 3 * sr) + e ** 6 * PM ** 6 * sr)
+        d_w = e * PM ** 2 + e ** 2 * PD * PM + e ** 3 * PM ** 4
+        beta = 2 * c1 ** 2 / delta
+        delta2 = e * self.N2_norm / lam
+        c_z = (1 - delta - delta2) - r_z / e
+        hi, lo = 1 + e * p1 + e ** 2 * p2, 1 - e * p1 - e ** 2 * p2
+        conds = dict(A=bool(c1 * c2 <= delta / 2), B=bool(d_w <= k / 4), C=bool(c_z > 0), D=bool(lo > 0))
+        ok = all(conds.values())
+        gamma = min(2 * e * c_z * lam / hi, k / 2) if ok else float('nan')
+        return dict(k=k, delta=delta, delta2=delta2, beta=beta, c1=c1, c2=c2, c1c2=c1 * c2, d_w=d_w, r_z=r_z, c_z=c_z, p1=p1, p2=p2,
+                    pi1=pi1, pi2=pi2, hi=hi, lo=lo, conds=conds, ok=ok, gamma=gamma, rate=gamma / 2 if ok else float('nan'),
+                    averaged_rate=lam / k)
+
+    def quadratic_forms(self, i, k, beta):
+        """(H, N_sym) at grid index i, as in SlowRegimeLyapunov.quadratic_forms, with Ḣ_ζ = 2ε(M − M̄) + ε²Ṗ₂."""
+        e = 1.0 / k; n, q = self.n, self.q
+        Ps, Pd, Pdd, M, Md = self.Ps[i], self.Pd[i], self.Pdd[i], self.Ms[i], self.Mdot[i]
+        L = -e * Ps + e ** 2 * Pd - e ** 3 * Ps @ M
+        Ldot = -e * Pd + e ** 2 * Pdd - e ** 3 * (Pd @ M + Ps @ Md)
+        Hz = np.eye(q) + e * self.P1[i] + e ** 2 * self.P2[i]
+        Hzdot = 2 * e * (M - self.Mbar[i]) + e ** 2 * self.P2dot[i]
+        H = np.block([[beta * np.eye(n), -beta * L], [-beta * L.T, Hz + beta * L.T @ L]])
+        Hdot = np.block([[np.zeros((n, n)), -beta * Ldot], [-beta * Ldot.T, Hzdot + beta * (Ldot.T @ L + L.T @ Ldot)]])
+        A = ltv_matrix(Ps, k)
+        return H, 0.5 * (H @ A + A.T @ H + Hdot)
+
+    def certificate(self, k, delta=0.1, n_t=512, explicit=False):
+        """sup over a grid of t ∈ [0, T_end] and over all states of V̇/V; the lemma asserts ≤ −γ.  Returns (sup V̇/V, −γ)."""
+        c = self.constants(k, delta, explicit)
+        worst = -np.inf
+        for i in np.linspace(0, self.N_valid - 1, n_t).astype(int):
+            H, Nsym = self.quadratic_forms(i, k, c['beta'])
+            lamH, UH = np.linalg.eigh(H)
+            Hm = UH @ np.diag(lamH ** -0.5) @ UH.T
+            worst = max(worst, 2 * float(np.linalg.eigvalsh(Hm @ Nsym @ Hm)[-1]))
+        return worst, -c['gamma']
+
+
+def lyapunov_exponent_rate(Psi_fun, k, T_end, n_steps=None):
+    """The decay rate of (LTV) over [0, T_end] for a general regressor: −(1/T_end) log‖Φ(T_end, 0)‖₂ with Φ the state
+    transition matrix (RK4, k·dt ≤ 1/4, renormalised every 1000 steps so that long horizons do not underflow); for
+    T_end → ∞ this is the top Lyapunov exponent (the sharp rate the lemma's bound must stay below)."""
+    P0 = Psi_fun(0.0)
+    d = P0.shape[0] + P0.shape[1]
+    Phi = np.eye(d)
+    n_steps = max(int(n_steps or 0), int(np.ceil(4.0 * k * T_end)))
+    dt = T_end / n_steps
+    log_acc = 0.0
+    for j in range(n_steps):
+        t = j * dt
+        A1 = ltv_matrix(Psi_fun(t), k); A2 = ltv_matrix(Psi_fun(t + 0.5 * dt), k); A4 = ltv_matrix(Psi_fun(t + dt), k)
+        k1 = A1 @ Phi; k2 = A2 @ (Phi + 0.5 * dt * k1); k3 = A2 @ (Phi + 0.5 * dt * k2); k4 = A4 @ (Phi + dt * k3)
+        Phi = Phi + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
+        if (j + 1) % 1000 == 0:
+            s = np.linalg.norm(Phi, 2)
+            Phi = Phi / s
+            log_acc += np.log(s)
+    return float(-(np.log(np.linalg.norm(Phi, 2)) + log_acc) / T_end)

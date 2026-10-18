@@ -311,11 +311,48 @@ def test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapun
         ratios = []
         for k in (20.0, 50.0, 200.0):
             b = X.dither_covariance_bound(S, k, delta, Sig)
-            ex = X.exact_stationary_covariance(Psi, k, Sig, 2 * np.pi)
+            eps = 1.0 / k
+            L_fun = lambda t, eps=eps: -eps * Psi(t) + eps ** 2 * Psid(t) - eps ** 3 * Psi(t) @ (Psi(t).T @ Psi(t))   # the slaving map of E.0′.2
+            ex = X.exact_stationary_covariance(Psi, k, Sig, 2 * np.pi, L_fun=L_fun)
             assert b['bound_zeta'] >= ex['zeta_mean'] and b['bound_zeta'] >= ex['zeta_max']
-            assert b['bound_w'] >= ex['e_mean'] * 0.5                              # E‖w‖² ≥ ½E‖e‖² − ‖e₂‖² terms; loose sanity check
+            assert b['bound_w'] >= ex['w_max'] > 0                                   # the exact stationary E‖w‖² = E‖e − Lζ‖² is below its bound
+            assert b['bound_w'] > 1e3 * ex['w_max']                                  # ... by more than three orders of magnitude (the bound is coarse, factor 1/β)
+            assert abs(ex['e_mean'] / (b['Sigma_F2'] / (2 * k)) - 1) < 1e-4            # exact E‖e‖² = ‖Σ‖_F²/(2k) = tr(M̄X)/k (round-7 review)
             assert abs(ex['zeta_mean'] / b['averaged_zeta'] - 1) < 2.0 / k ** 2                 # the deviation is ≈ 1.25/k²
             assert b['nu_grid'] <= b['nu_explicit'] * (1 + 1e-9)
             ratios.append(b['bound_zeta'] / ex['zeta_mean'])
         assert ratios[0] > ratios[1] > ratios[2] > 1 / (1 - delta)
         assert ratios[2] < 1.06 / (1 - delta)
+
+
+def test_lemma_E0dprime_quasi_periodic_regressor_certificate_and_rate():
+    """Lemma E.0″ on the quasi-periodic regressor Ψ = (sin t, cos √2 t) (not periodic; PE), window T = 4π: the conditions hold
+    at k = 20, 50, 200 for δ = 0.1 and 0.2; the certificate sup V̇/V ≤ −γ holds on a grid of 400 times in [0, 300]; the
+    guaranteed rate γ/2 is below the measured decay rate of (LTV) (the top Lyapunov exponent over 200 time units) and within
+    a factor 2.6 of it, the ratio improving with k; the exponential averages obey TṀ̄ = M̄ − M and Ṗ₁ = 2(M − M̄) on the grid;
+    and the residual second-order term N̄₂ costs δ₂ = ε‖N̄₂‖/λ ≤ 5% at k ≥ 20."""
+    r2 = np.sqrt(2.0)
+    Psi = lambda t: np.array([[np.sin(t), np.cos(r2 * t)]])
+    Psid = lambda t: np.array([[np.cos(t), -r2 * np.sin(r2 * t)]])
+    E = X.ExpAverageLyapunov(Psi, Psid, 4 * np.pi, T_end=300.0, dt=0.005)
+    assert 0.3 < E.lam_min < 0.5 and E.lam_max < 1.0                           # the long-time mean of M is ½I; the window average is below it
+    # the differential identities of the exponential averages on the grid (central differences)
+    i = slice(2000, 20000)
+    dMbar = (E.Mbar[2001:20001] - E.Mbar[1999:19999]) / (2 * E.dt)
+    assert np.max(np.abs(E.T * dMbar - (E.Mbar[i] - E.Ms[i]))) < 1e-4
+    dP1 = (E.P1[2001:20001] - E.P1[1999:19999]) / (2 * E.dt)
+    assert np.max(np.abs(dP1 - 2 * (E.Ms[i] - E.Mbar[i]))) < 2e-4
+    prev = None
+    for k in (20.0, 50.0, 200.0):
+        exact = X.lyapunov_exponent_rate(Psi, k, 200.0)
+        for delta in (0.2, 0.1):
+            c = E.constants(k, delta)
+            assert c['ok'], (k, delta, c['conds'])
+            assert c['delta2'] <= 0.05
+            sup, mg = E.certificate(k, delta, n_t=400)
+            assert sup <= mg, (k, delta, sup, mg)
+            assert c['rate'] < exact < 2.6 * c['rate'], (k, delta, c['rate'], exact)
+        ratio = exact / E.constants(k, 0.1)['rate']
+        if prev is not None:
+            assert ratio < prev
+        prev = ratio

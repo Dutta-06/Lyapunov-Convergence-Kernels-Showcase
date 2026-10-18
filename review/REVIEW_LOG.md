@@ -419,3 +419,42 @@ confirmed independently; the Monte-Carlo error bars and the burn-in had quantifi
 | JP-7 | cosmetic (table) | the "resolved" criterion for the second-order slope used the biased standard errors | criterion kept with the corrected errors; the table says where the residual is not resolved |
 | JP-8 | cosmetic | (iv) quantified over σ₀ and G idly and did not recall Theorem I's setting | reworded |
 | JP-9 | minor (reading) | the first run's text claimed the orientation-odd part "to within a few percent"; the data give 7–8% at k_e = 10 and agreement within a 10–30% resolution at k_e = 20–80; the k_e⁻² residual of (c) is at the noise floor for k_e ≥ 20 and the even part exceeds its first-order prediction by 1.5–1.8× at k_e = 10 (an O(ε²) coefficient of order −0.4, the ratio c₂/c₁ ≈ 1.4 of Theorem J's instance A); Table 4 (circulation) is dominated by the O(ε²) term and, in the first run, by the phase bias of JP-5 | the numerics paragraph written from the corrected run with these qualifications; the second-order residual reported as not resolved; Table 4's caption says what it does and does not test |
+
+## Round 7 (research continuation and adversarial review, 2026-10-18)
+
+**Design.** The third research increment adds Corollary E.0′.3 (the explicit stationary parameter spread of the dithered
+linearised loop, by Itô's formula on Lemma E.0′'s Lyapunov function, against the exact periodic Lyapunov solution) and
+Lemma E.0″ (the slow-regime strict Lyapunov function for non-periodic persistently exciting regressors, with the period mean
+replaced by a forward exponential average over a window T) to PARADIGM.md §6, with `excitation.dither_covariance_bound`,
+`excitation.exact_stationary_covariance`, `excitation.ExpAverageLyapunov`, `excitation.lyapunov_exponent_rate`, two tests,
+table 6 of `exp_explicit_rate.py` and the new `exp_pe_general.py`. One referee was run on both results (proof, constants,
+code, numerics and reading; `review/REVIEW_round7_E0p3_E0dp.md`).
+
+**Verdicts.** Corollary E.0′.3 holds: the Itô correction ½tr(Σ̃ᵀ𝐇Σ̃) with 𝐇_ζζ = I + εP₁ + ε²P₂ + βLᵀL was re-derived from the
+block form of V, the martingale step, Grönwall, the three bounds and the averaged covariance kX were confirmed, and the exact
+covariance routine was checked against an independent integrator (10⁻¹¹) and against Euler–Maruyama Monte Carlo (0.1–0.3%);
+the Itô correction was pinned by stationarity (mean E V̇_det = −mean ν to seven digits in 24 cases) and the bounds dominate
+the exact values for isotropic, diagonal, rank-one and random Σ and for anisotropic M̄. Lemma E.0″ holds: the derivative
+identities, the signs of the residual N̄₂ = ½(F̄ − Ṁ̄), the per-direction bounds in the time-local norm and both directions
+of the PE equivalence were confirmed, the referee's own Lyapunov function reproduced the certificate at off-grid states, and
+an attack set (barely exciting, bursty, near-resonant, constant-component, n = 2, q = 3 and chaotic regressors; ≈250
+admissible rows) produced no violation — in every row the slack between the certified and the true rate is exactly the Young
+step. No major issue; fifteen minor and cosmetic ones, all fixed.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| R7-1 | minor | "the exact E‖e‖² is ‖Σ‖_F²/k²" (PARADIGM, `exp_explicit_rate.py`) — the numbers are ‖Σ‖_F²/(2k) = tr(M̄X)/k (the error rides on its slow manifold; tr(M̄X) = ½‖Σ‖_F² by the trace of the Lyapunov equation), ratio 1.00000 in 14 cases | formula corrected in both; asserted to 10⁻⁴ in the test |
+| R7-2 | minor | "averaging exact to O(k⁻²)" holds when ΣΣᵀ commutes with M̄ (isotropic Σ in both instances); for anisotropic Σ the deviation is ±0.25/k on two sinusoids, the bound still dominating | sentence qualified in PARADIGM and in the table's reading |
+| R7-3 | cosmetic | "finite moments of every order" in the martingale step; second moments are what is used | reworded |
+| R7-4 | minor (test) | the check bound_w ≥ ½E‖e‖² was vacuous (E‖w‖² = 1.3·10⁻⁷ ≪ E‖e‖² = 10⁻⁴ at k = 20) | `exact_stationary_covariance` returns E‖w‖² = E‖e − Lζ‖² from the covariance trajectory and the slaving map L; the test asserts bound_w ≥ max_t E‖w‖² and records the looseness (> 10³) |
+| R7-5 | minor | the Status said "conditions hold from k = 20 on" (true for the quasi-periodic regressor only; from k = 100 on the Lorenz one) and "within a factor 4–5 on the chaotic one" (only at T = 20; 7.5–11 at T = 10, 14–138 at T = 5) | Status rewritten |
+| R7-6 | minor | "explicit constants give rates 10–25% below the measured ones": the deficits are 22–79% at k = 50, 5–19% at k = 100, ≤ 5% at k = 200, ≈ 1% at k = 400 | numbers corrected |
+| R7-7 | minor | Lorenz ‖N̄₂‖ quoted as 1.05, 0.30, 0.17; the table has 1.054, 0.341, 0.422 (not monotone in T), and the generated reading said p₁, p₂, ‖N̄₂‖ "grow with T" (‖N̄₂‖ decreases with T on the quasi-periodic regressor) | values corrected; the reading in `exp_pe_general.py` and its table rewritten |
+| R7-8 | minor | T = 2π ratios quoted as 3.7 → 1.9 and 3.1 → 1.9; the table has 3.69 → 2.16 (δ = 0.2) and 3.10 → 1.92 (δ = 0.1) | corrected |
+| R7-9 | cosmetic | "0.5/k to 0.5%": 0.6% at k = 20, 0.8% at k = 400 | "within 1%" with both values |
+| R7-10 | cosmetic | "the long-time means minimise the norms below": they minimise time-averaged squares, not suprema | reworded |
+| R7-11 | minor | constants are suprema over [0, 300]; on the Lorenz regressor the suprema over [0, 1500] are larger by up to 14% (p₁ 5.31 → 5.67, p₂ 19.4 → 20.7, π₂ 49.4 → 51.9, ‖N̄₂‖ 0.42 → 0.48 at T = 20), the rate at k = 100 lower by 3%, the certificate intact; unchanged to four digits on the quasi-periodic regressor | stated in the numerics paragraph |
+| R7-12 | cosmetic | "the regressor traversed at standard Lorenz speed has ρ_DD ~ 10⁶–10⁷" referred to an exploratory instance with other components (tanh(x_i/8)) | attributed as such |
+| R7-13 | minor (code) | `ExpAverageLyapunov.constants` docstring stated p₂ = ‖M − M̄‖ + T‖F̄ − F̂‖ for explicit=True; the code uses the looser Ψ_M² + T(sup‖F̄‖ + ‖F̂‖) (valid) | docstring corrected |
+| R7-14 | cosmetic (code) | `exact_stationary_covariance`: stray "Ẅ := Ẇ" in the docstring; the returned C0 is the end-of-period covariance | docstring fixed; the key C_end added (C0 kept) |
+| R7-15 | minor (experiment; fixed during the review) | `exp_pe_general.py` as first read integrated the Lorenz orbit only to Lorenz time 101 while the padded grid for T = 20 reaches 108, so the spline extrapolated and the T = 20 constants were garbage (Λ = 2233, p₂ = 9·10¹⁴, all conditions failing); fixed before the published table was produced (its T = 20 row reproduces exactly) | `CubicSpline(..., extrapolate=False)` and a range assertion in `Psi`, `Psid` |

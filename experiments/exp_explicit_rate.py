@@ -277,11 +277,11 @@ def main():
         else:
             L.append(f"| {r['inst']} ({r['kappa']:.3g}) | {r['k']:g} | {r['delta']} | {ex['zeta_mean']:.4e} | {ex['zeta_max']:.4e} | {b['averaged_zeta']:.4e} | {b['bound_zeta']:.4e} | "
                      f"{b['bound_zeta'] / ex['zeta_mean']:.3f} | {1 / (1 - r['delta']):.3f} | {b['nu_grid'] / b['nu_explicit']:.3f} | {ex['e_mean']:.3e} | {b['bound_w']:.3e} |")
-    L += ["", "Reading: the exact stationary spread is the averaged Langevin value k·tr X (M̄X + XM̄ = ΣΣᵀ) up to O(k⁻²) on both instances. "
+    L += ["", "Reading: the exact stationary spread is the averaged Langevin value k·tr X (M̄X + XM̄ = ΣΣᵀ) up to O(k⁻²) on both instances (Σ is isotropic, so ΣΣᵀ commutes with M̄; for a non-commuting ΣΣᵀ the deviation is O(1/k)). "
           "On the isotropic sinusoid (κ = 1) the explicit bound exceeds the exact value by a factor that decreases toward 1/(1 − δ) as k grows "
           "(the Itô term's hi/lo factors and βL_M² are O(1/k)); on the ill-conditioned ideal the bound pays the condition number of M̄ in the "
           "trace (it replaces every 1/λ_i by 1/λ_min), as a scalar Lyapunov function must. The bound on E‖w‖² (the error off its slow manifold) "
-          "is coarse: the exact E‖e‖² is of order ‖Σ‖²_F/k² while the bound carries the factor 1/β.", "",
+          "is coarse: the exact E‖e‖² is ‖Σ‖²_F/(2k) = tr(M̄X)/k (the error rides on its slow manifold e ≈ Ψζ/k) while the bound carries the factor 1/β.", "",
           "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'table.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(L) + "\n")

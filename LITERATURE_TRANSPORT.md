@@ -192,6 +192,19 @@ found the construction.
   mixed class appears new.** Its scope is the slow regime above an explicit threshold; the fast regime stays with
   Lemma E.0.
 
+### E.0″ The slow regime for non-periodic PE regressors
+
+- **Claim.** Lemma E.0′'s construction with the period mean replaced by a forward exponential average over a window T,
+  whose derivative identity TṀ̄ = M̄ − M gives the antiderivatives P₁ = −2T(M̄ − M̂) and S = −T(F̄ − F̂) in closed form; the
+  periodic cancellation N₂ = 0 is replaced by a residual N̄₂ whose price δ₂ = εn₂/λ is O(1/k); the rate is (1 − δ − δ₂)λ_T/k with
+  λ_T the exponentially weighted PE level of the window.
+- **Prior.** Strict Lyapunov functions for PE systems from windowed or exponentially weighted integrals of the regressor are
+  the Mazenc–Malisoff construction [S15], [S16]; averaged (auxiliary) systems with sliding or weighted windows appear in the
+  stability theory of slowly varying systems [S22]; the exponentially weighted PE condition is equivalent to classical PE
+  (elementary). Verdict: the ingredients are standard; what is new is the same as for Lemma E.0′ — the rate is the averaged
+  rate λ_T/k up to 1 − δ − δ₂, with all constants computable from the regressor — now without periodicity, which is what the
+  Lorenz-tracking experiments of Part 1 need.
+
 ### I. Reciprocity criterion for the exactly averaged loop
 
 - **Closest prior.** The coboundary (cyclic-sum) criterion for reciprocal pairwise interactions is standard in the
