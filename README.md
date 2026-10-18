@@ -1,94 +1,153 @@
-# Adaptive Control via Self-Organizing RBF Networks
+# Transport Adaptive Control: Adaptive Kernel Approximators as Evolving Measures
 
-**Copyright (c) 2026 Odwitiyo Dutta. All Rights Reserved.**
+**Copyright (c) 2026 Odwitiyo Dutta. All Rights Reserved.** See [LICENSE](LICENSE).
 
-This repository contains the experimental evaluation, baseline comparisons, and simulation results for a **Continuous-Time Adaptive Control Architecture**. 
+This repository holds a research program on continuous-time adaptive control with Gaussian RBF networks, whose
+weights, centres and widths are all adapted online. It has two parts.
 
-The proposed architecture leverages a dynamically self-organizing network of Radial Basis Functions (RBFs) bounded by a mathematically rigorous **Smooth Convex Projection Operator**. This combination addresses the curse of dimensionality in the adaptive control of non-stationary, chaotic systems.
+1. **The controller and its audit.** A Lyapunov-based adaptive RBF controller with a boundary-layer projection
+   operator, together with an honest re-evaluation of its claims ([ASSESSMENT.md](ASSESSMENT.md),
+   [THEORY_REVISED.md](THEORY_REVISED.md)).
+2. **Transport adaptive control.** A new theory that treats the network as a probability measure on a lifted
+   parameter space and the adaptive law as transport of that measure ([PARADIGM.md](PARADIGM.md)). Stability,
+   robustness modifications, excitation, the many-kernel limit, the slow evolution of kernel geometry and the global
+   placement of kernels all become statements on Wasserstein space, independent of how the kernels are labelled.
 
-*(Note: The evaluation infrastructure, classical baseline algorithms, mathematical plant models, and raw result plots are provided here for peer verification. The core control algorithms are withheld.)*
+**Status.** This is research in progress and has not been peer reviewed.
 
----
-
-## Theory Summary
-
-In continuous-time online learning, maintaining bounded network parameters is critical to prevent gradient explosion and system instability. Classical approaches in Deep Learning often rely on ad-hoc gradient clipping or weight decay. In Control Theory, standard projection operators enforce hard boundaries, but these introduce discontinuous vector fields, causing severe chattering at the boundary.
-
-This work introduces a continuous-time gradient flow for a self-organizing network where the basis centers ($c$), bandwidths ($\sigma$), and weights ($W$) dynamically migrate to minimize the approximation error of a non-stationary manifold. 
-
-The core theoretical contribution is the derivation of a **Smooth Convex Projection Operator**. By constructing a $C^1$ boundary layer around the admissible parameter set, the projection operator guarantees that the parameters remain strictly bounded while preserving the continuity of the gradient flow. This allows the derivation of a strict Lyapunov function proving Uniform Ultimate Boundedness (UUB) for the tracking error. Unlike prior work, this projection-based infimal convergence argument provides hard safety guarantees for online adaptation without relying on unprincipled regularization hacks.
-
----
-
-## Applications & Theoretical Properties
-
-1. **Dimensionality Reduction in State-Space Covering:** The architecture replaces static grid requirements with dynamic allocation. By governing RBF centers and bandwidths via Lyapunov-derived gradient flows, a highly sparse network (m=27) is able to represent complex topologies that would classically require $O(k^n)$ parameters.
-2. **Strict Parameter Boundedness in Continuous-Time:** The proposed *Smooth Projection Boundary Layer* mathematically guarantees that network weights and basis parameters remain strictly bounded during continuous-time integration, preventing gradient explosion and parameter chattering at the projection boundary without the need for unprincipled gradient clipping.
-3. **Sim-to-Real Gap Mitigation:** The continuous-time adaptive learning capability makes this architecture highly suitable for mitigating unmodeled physics, wind disturbances, and joint-friction variances in physical robotics deployment.
-4. **Autonomous Non-Stationary Tracking:** Demonstrated robustness to significant time-varying parameter drift (e.g., Duffing oscillator mass/stiffness variation), making it viable for high-speed UAV trajectory tracking and autonomous vehicle control under shifting environmental conditions.
-5. **Real-Time Vectorized Inference:** Leveraging block-diagonal sparsity in RBF Jacobians, the continuous parameter adaptation evaluates in $O(mn)$ time rather than $O(m^2n^2)$, ensuring the computational latency is low enough for high-frequency embedded control systems.
+- Every result in [PARADIGM.md](PARADIGM.md) is labelled *proved*, *formal* (a derivation without error control)
+  or *conjectural*.
+- Every inequality the tests can evaluate is checked numerically along simulated trajectories, and every number in
+  the documents is produced by a script in [experiments/](experiments).
+- The theory went through three rounds of automated multi-agent adversarial review. Every confirmed issue and its fix
+  is logged in [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports are kept beside it.
+- The claim-by-claim novelty audit is in [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md).
 
 ---
 
-## Experimental Results
+## Part 2 (new): transport adaptive control
 
-### 1. Chaotic Reference Tracking (Lorenz System)
-To evaluate the architecture's representational capacity, the controller was tasked with tracking a highly chaotic Lorenz reference trajectory using only 27 kernels. 
+The network f̂ = (1/m)Σ a_i φ(x; c_i, s_i) is read as the empirical measure μ = (1/m)Σ δ_{ϑ_i} of its lifted
+particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive law moves μ.
 
-Classical fixed-grid baselines (σ-mod and e-mod) encounter representational limits due to the sparsity of a $3 \times 3 \times 3$ grid over a large state space. The proposed dynamic architecture autonomously migrates the 27 kernels to the necessary regions, significantly reducing steady-state bias and achieving lower tracking error margins.
+| result | statement | status |
+|---|---|---|
+| A | The adaptive law is the particle form of a Wasserstein gradient flow of a μ-linear potential | proved; interpretive |
+| B | A label-free Lyapunov function ½‖e‖² + ½W(μ, μ*)², with a two-regime matched remainder | proved and checked |
+| C | Optimal-transport σ-modification: exact dissipation, a gap-protected strict inequality, a local exponential estimate; the labelled leak reshuffles kernels | proved and checked |
+| D | The mean-field closed loop: well-posedness, a Dobrushin estimate, the many-kernel limit | proved |
+| E | Label-free local exponential convergence under tangential persistent excitation | proved, conditional on one cited theorem |
+| F | The Wasserstein length of learning is bounded by the integrated tracking error | proved and checked |
+| G | The slow kernel geometry follows variable projection in the metric induced on the slow manifold; plain variable projection needs a flatness condition | formal; checked, with a counterexample |
+| H | With saturated features, σ-modification and parameter dither, the averaged loop is mean-field Langevin dynamics and converges globally to the regularised optimum | proved for the averaged system |
+| H.7 | At finite feedback gain, the averaged loop is *not* a gradient flow: a semi-gradient (performative) correction, and an antisymmetric kernel interaction given by the area the reference orbit encloses | frozen-measure part proved; non-reciprocity checked |
+| H.8 | The averaged system is input-to-state stable, which reduces the global conjecture for the real loop to an averaging estimate | proved under a stated regularity assumption |
 
-![Lorenz Tracking Results](results/tier1_lorenz_tracking.png)
+**A new closed-loop effect.** Traversing the same reference orbit in the opposite direction leaves the visited
+states unchanged, yet the learned kernels shift by an amount of order 1/k_e. The first-order theory, H.7 plus the
+second-order averaging term of Remark H.7a, predicts that shift
+([results/orbit_orientation/](results/orbit_orientation)):
 
-### 2. State-of-the-Art Kernel Baselines Comparison
-To demonstrate comprehensive superiority, the proposed architecture was benchmarked against three modern kernel-based control methods on the same chaotic reference trajectory. The baselines include an Exact Gaussian Process (GP), a Sparse GP with fixed inducing points, and a 2-layer Deep GP.
+| k_e | measured shift, size relative to prediction | cosine with prediction | vector error |
+|---|---|---|---|
+| 10 | 0.94 | 0.93 | 36% |
+| 20 | 0.97 | 0.98 | 20% |
+| 40 | 0.97 | 0.994 | 11% |
 
-The results mathematically prove the necessity of bounded, continuous-time kernel adaptation:
-- **Beating Deep/Implicit Methods:** The Deep GP completely fails to bound the error consistently. Lacking explicit projection bounds, its parameters drift continuously, leading to catastrophic tracking failures (peaks exceeding $10^0$).
-- **Matching the $O(n^3)$ Oracle:** The proposed architecture achieves a steady-state mean error that is statistically indistinguishable (Wilcoxon signed-rank $p > 0.3$) from both the Exact GP and the Sparse GP. However, while the Exact GP collapses under $O(n^3)$ computational cost and the Sparse GP requires *a priori* knowledge of the state-space bounds to lay its fixed grid, the proposed method achieves the same tracking quality online, autonomously, and in only $O(mn)$ time.
+**Dither and global placement.** Without dither, a collapsed kernel configuration never separates. With dither,
+collapsed and spread initialisations reach the same regularised loss, at the price of an entropic bias.
 
-![Kernel Methods Comparison](results/comparison_all_baselines.png)
+![Speed–bias trade-off of parameter dither](results/langevin_tradeoff/figure.png)
 
-### 3. Theoretical Bound Validation (Monte Carlo Analysis)
-To validate the mathematical derivation of the Uniform Ultimate Boundedness (UUB) radius, a Monte Carlo sweep was conducted across randomized, adversarial initial conditions on the chaotic Lorenz attractor. 
-
-The empirical results perfectly validate the theoretical proof: 100% of the independent simulation trials converged strictly below the calculated $R_{UUB}$ threshold, confirming that the smooth projection boundaries and adaptive laws guarantee stability regardless of initialization.
-
-![Monte Carlo Validation](results/tier1_monte_carlo.png)
-
-### 4. Autonomous Kernel Migration (Manifold Discovery)
-The adaptation of RBF centers ($c$) and bandwidths ($\sigma$) allows the network to self-organize. As the system navigates the state space, the kernels autonomously discover and track the underlying minimal topology of the chaotic attractor.
-
-![Parameter Evolution](results/tier2_parameter_evolution.png)
-
-### 5. Robustness to Non-Stationary Environments (Duffing Drift)
-To evaluate robustness, the plant physics were forced to change dynamically over time (time-varying stiffness in a Duffing oscillator). The dynamic network reshapes itself to counter the physical drift, demonstrating stability under unmodeled, time-varying dynamics.
-
-![Duffing Drift](results/tier2_duffing.png)
-
-### 6. Algorithmic Efficiency Scaling
-The vectorized Jacobian-Vector Product (JVP) updates allow the architecture to scale efficiently. The computational overhead of the fully-adaptive projection system remains marginal compared to the classical fixed-grid baselines, confirming real-time viability.
-
-![Computational Overhead](results/tier3_computational.png)
+All numbers behind Part 2 are collected in [results/RESULTS_PARADIGM.md](results/RESULTS_PARADIGM.md).
 
 ---
 
-## Repository Structure
+## Part 1: the controller and what its experiments show
 
-The following evaluation components are provided:
+**What is claimed.**
 
-- `results/`: Raw plots and visualizations generated by the test suites.
-- `experiments/`: The evaluation scripts containing the initial conditions, learning rates, and integration loops used to benchmark the algorithms.
-- `src/baselines/`: Implementations of classical adaptive control baselines (σ-modification and e-modification) used as comparison targets. Leakage gains are set to literature standards ($\sigma_{mod} = 0.05$).
-- `src/core/plant_models.py`: Mathematical models of the dynamical systems (Lorenz, Duffing, Van der Pol).
+- **Stability.** With the parameters confined to convex sets by a boundary-layer projection operator (Pomet and
+  Praly 1992; Lavretsky and Wise 2013), the tracking error is uniformly ultimately bounded. Its long-run RMS is bounded
+  by a radius that does not contain the leakage bias of σ- or e-modification. The argument combines known ingredients,
+  so it is not a new theorem, and nothing is claimed about parameter convergence.
+- **Implementation equals theory.** The implemented update laws are exactly the analysed ones. The Lyapunov identity
+  and the projection inequality are checked along trajectories in the tests.
+
+**Mechanism against geometry** (Lorenz tracking, m = 27, 5 seeds, same covering grid). Mean steady-state ‖e‖:
+
+| geometry | projection | σ-mod | e-mod |
+|---|---|---|---|
+| fixed grid (W) | 0.158 | 0.733 | 0.562 |
+| adaptive (W, c) | 0.147 | 0.400 | 0.233 |
+| adaptive (W, c, σ) | 0.112 | 0.386 | 0.239 |
+
+Projection beats both leaky modifications in every cell and every seed. Adaptive centres and widths add smaller,
+consistent gains.
+
+![Factorial](results/factorial_figure.png)
+
+**Kernel-regression baselines** (exact GP, sparse GP, deep GP, NTK; n = 1, 2, 3, 6).
+
+- The proposed method is never the most accurate. NTK is more accurate at n = 2 and n = 6, and a sparse GP at n = 3.
+- Its advantage is cost: 0.1–0.6 ms per step, against 13–1900 ms per update for the baselines.
+- In a fair re-run at n = 1, where every baseline predicts at every step, the exact GP is 3–4 times more accurate at
+  100 times the per-step cost.
+
+![All benchmarks](results/comparison_higher_dims_complete.png)
+
+Earlier versions of this README stated that the method was "statistically indistinguishable from the Exact GP", that
+all Monte Carlo trials satisfied "the calculated R_UUB", and that it "solved the curse of dimensionality". Those
+statements are withdrawn: the significance test was invalid, the threshold was an arbitrary constant, and the omitted
+n = 3 and NTK results contradict them.
 
 ---
 
-## Higher-Dimensional State Spaces
+## Repository layout
 
-We successfully scaled the architecture across $n=1, 2,$ and $n=6$ state-space dimensions, proving the curse-of-dimensionality resilience of the self-adaptive projection method against exact, sparse, and deep Gaussian Processes.
+| path | content |
+|---|---|
+| [PARADIGM.md](PARADIGM.md) | the transport theory: results, proofs, verification map (§7), research program (§8) |
+| [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
+| [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
+| [review/](review) | review log, raw adversarial-review reports for rounds 1–3, archived version 2 of the theory |
+| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), and the original controller, projection, kernel and plant code |
+| `src/baselines/` | σ- and e-modification baselines |
+| [tests/](tests) | 50 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
+| [results/](results) | tables, figures and saved raw runs |
 
-![Higher-Dimensional Performance Comparison](results/comparison_higher_dims.png)
+## Running
 
-### Key Findings
-1. **Curse of Dimensionality Solved:** At $n=6$ (Coupled Duffing Oscillators), Exact and Deep GPs become prohibitively slow and lose tracking performance. The Proposed method tracks with near-zero error ($\sim 0.0044$) while evaluating in less than $1$ ms per step.
-2. **Computational Superiority:** The Proposed method exhibits an $O(mn)$ flat-line scaling, maintaining sub-millisecond evaluation times across all dimensions, whereas GP computational complexity grows exponentially or cubically.
+```
+python -m venv venv
+venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
+python -m pytest tests                          # 50 tests, about 5–7 minutes
+python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
+```
+
+Set `OPENBLAS_NUM_THREADS=1` for the experiments that use a multiprocessing pool. Several long experiments save their
+raw runs and can regenerate tables without re-simulating: `VP_REUSE=1` for `exp_variable_projection.py`,
+`OO_REUSE=1` for `exp_orbit_orientation.py`, and `TR_REFIT=1` for `exp_langevin_tradeoff.py`.
+
+## Continuing the research
+
+The working conventions are part of the method:
+
+- **Status labels.** Every claim is labelled proved, formal or conjectural, and the label changes only with a proof
+  or a disproof.
+- **Numbers come from scripts.** No table is edited by hand.
+- **Test before changing.** A change to a theorem, a constant or an algorithm goes in only after a test or experiment
+  supports it.
+- **Review and log.** New results go through an adversarial review, and every confirmed issue goes into
+  [review/REVIEW_LOG.md](review/REVIEW_LOG.md).
+
+The open problems are listed in [PARADIGM.md](PARADIGM.md) §8. The most important are:
+
+1. Infinite-horizon averaging for the McKean–Vlasov closed loop, which would settle Conjecture H.6, the real-loop
+   counterpart of Theorem H.
+2. The mean-field limit of the dithered law, and uniform-in-time propagation of chaos with a plant in the loop.
+3. A general non-reciprocity theorem for H.7, beyond the checked instances, and the orientation experiment with
+   dither.
+4. Points the third review left uncertain: the exact hypotheses of the cited Morgan–Narendra theorem behind
+   Theorem E, and the citations of Remark H.3.
