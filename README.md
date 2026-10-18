@@ -149,7 +149,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 72 tests, about 25 minutes
+python -m pytest tests                          # 72 tests, about 16 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 

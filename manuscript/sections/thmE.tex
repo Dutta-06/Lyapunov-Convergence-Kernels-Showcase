@@ -174,7 +174,8 @@ Theorem E on~\cite{S8}. The price is conservativeness, which the table of \code{
     with $\kappa_\Psi:=\Psi_M^2/\lambda_{\min}\langle\Psi^\T\Psi\rangle$ the condition number of the averaged
     Gramian. The exact rate pays for ill-conditioning once, through $\lambda_{\min}$; the bound pays twice, because
     the Young step that absorbs the cross term $\varepsilon c_1\norm{e}\norm{\zeta}$ compares $c_1\propto\Psi_M$ with
-    $\alpha\propto\lambda_{\min}$. On the ideal of the Theorem E tests ($m=3$, $n=2$, $k_e=6$), driven by a two-tone
+    $\alpha\propto\lambda_{\min}$ (Lemma E.0$'$ below removes this by slaving the error to the slow manifold before
+    the Young step). On the ideal of the Theorem E tests ($m=3$, $n=2$, $k_e=6$), driven by a two-tone
     reference of period $20\pi$, with $G=g\cdot\operatorname{diag}(2,2,1)$: $\kappa_\Psi=1.27\cdot10^5$,
     $(1+\Psi_D/(k_e\Psi_M))^2=3.84$, so the two formula values are $1.47\cdot10^6$ and $4.9\cdot10^5$. The measured
     ratio with the optimised $\varepsilon$ falls from $6.56\cdot10^{10}$ at $g=30$ to $4.22\cdot10^5$ at $g=0.01$
@@ -194,10 +195,328 @@ Theorem E on~\cite{S8}. The price is conservativeness, which the table of \code{
     the asymptotic $\omega^{-2}$ of (iii).
   \item \emph{The window.} Any window length $T$ is admissible with its own $\alpha(T)$. On the test ideal the best
     window is half a period.
-  \item \emph{Open.} A strict Lyapunov function whose rate is linear in $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$,
-    matching the averaging value, is the quantitative target of Section~\ref{sec:program}, branch~7.
+  \item \emph{Answered below.} Lemma E.0$'$ is a strict Lyapunov function whose rate is
+    $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$ up to a factor $1-\delta$, above a threshold in $k$ set by the peak
+    factors of the regressor: in the slow regime it pays for the ill-conditioning once.
 \end{itemize}
 \end{rmk}
+
+\begin{thm}{Lemma}{E.0$'$}[the slow-adaptation regime: a strict Lyapunov function whose rate is the averaged rate]
+Let $\Psi$ be $T$-periodic and $C^2$, $M:=\Psi^\T\Psi$, $\bar M:=\frac1T\int_0^TM\dd t\succ0$,
+$\norm{v}_{\bar M}:=(v^\T\bar Mv)^{1/2}$, $\lambda_{\min}:=\lambda_{\min}(\bar M)$, and
+\begin{gather*}
+  \Psi_M:=\sup\norm{\Psi},\qquad \Psi_D:=\sup\norm{\dot\Psi},\qquad \Psi_{DD}:=\sup\norm{\ddot\Psi},\\
+  \rho:=\sup_{t,\,v\neq0}\frac{\norm{\Psi(t)v}^2}{\norm{v}^2_{\bar M}},\qquad
+  \rho_D:=\sup\frac{\norm{\dot\Psi(t)v}^2}{\norm{v}^2_{\bar M}},\qquad
+  \rho_{DD}:=\sup\frac{\norm{\ddot\Psi(t)v}^2}{\norm{v}^2_{\bar M}},
+\end{gather*}
+the \emph{peak factors}: the largest ratio, over directions, between the instantaneous excitation of a direction (by
+$\Psi$, $\dot\Psi$, $\ddot\Psi$) and its average excitation; $\rho\ge1$, and all three are finite because
+$\bar M\succ0$. Write $\varepsilon:=1/k$ and let
+\begin{align*}
+  P_1(t)&:=-\frac2T\int_t^{t+T}(t+T-r)\bigl(M(r)-\bar M\bigr)\dd r,\qquad F:=P_1M+MP_1,\\
+  S&:=\text{the zero-mean antiderivative of }F,\qquad P_2:=-(M-\bar M)+S,\\
+  e_2(\zeta,t)&:=-\varepsilon\Psi\zeta+\varepsilon^2\dot\Psi\zeta-\varepsilon^3\Psi M\zeta,\qquad w:=e-e_2(\zeta,t),\\
+  V(e,\zeta,t)&:=\tfrac12\zeta^\T\bigl(I+\varepsilon P_1(t)+\varepsilon^2P_2(t)\bigr)\zeta+\frac\beta2\norm{w}^2,
+\end{align*}
+where $P_1$ is the zero-mean antiderivative of $2(M-\bar M)$ and $e_2$ is the slow manifold of the error, expanded
+through order $\varepsilon^3$. $F$ has zero mean: $\langle P_1M+MP_1\rangle=\langle P_1\rangle\bar M+\bar M\langle P_1\rangle
++\frac12\bigl\langle\frac{\mathrm{d}}{\mathrm{d}t}(P_1^2)\bigr\rangle=0$, so $S$ exists and the second-order averaged
+correction $N_2:=\frac12\langle F\rangle$ vanishes identically. Put
+\begin{align*}
+  \pi_1&:=\tfrac T2\Psi_M(\sqrt\rho+1),\qquad
+  \pi_2:=\Psi_M(\sqrt\rho+1)+\tfrac{T^2}8\Psi_M^3(2\sqrt\rho+1),\\
+  p_1&:=\tfrac T2\Psi_M^2,\qquad p_2:=\Psi_M^2+\tfrac{T^2}4\Psi_M^4,\\
+  c_1&:=\sqrt\rho+\varepsilon\Psi_M\pi_1+\varepsilon^2\Psi_M\pi_2,\\
+  c_2&:=\varepsilon^2\sqrt{\rho_{DD}}+\varepsilon^3\bigl(3\Psi_D\Psi_M\sqrt\rho+2\Psi_M^2\sqrt{\rho_D}\bigr)
+    +\varepsilon^4\bigl(2\Psi_M^4\sqrt\rho+\Psi_D\Psi_M\sqrt{\rho_D}\bigr)\\
+  &\qquad+\varepsilon^5\bigl(\Psi_M^4\sqrt{\rho_D}+\Psi_D\Psi_M^3\sqrt\rho\bigr)+\varepsilon^6\Psi_M^6\sqrt\rho,\\
+  d_w&:=\varepsilon\Psi_M^2+\varepsilon^2\Psi_D\Psi_M+\varepsilon^3\Psi_M^4,\\
+  r_\zeta&:=\varepsilon^3\bigl(\pi_2\Psi_M\sqrt\rho+\pi_1\Psi_M\sqrt{\rho_D}+\Psi_M^2\rho\bigr)
+    +\varepsilon^4\bigl(\pi_2\Psi_M\sqrt{\rho_D}+\pi_1\Psi_M^3\sqrt\rho\bigr)+\varepsilon^5\pi_2\Psi_M^3\sqrt\rho,\\
+  \beta&:=2c_1^2/\delta,\qquad c_\zeta:=1-\delta-r_\zeta/\varepsilon.
+\end{align*}
+Fix $\delta\in(0,1)$. If
+\[
+  \text{(A)}\ c_1c_2\le\delta/2,\qquad \text{(B)}\ d_w\le k/4,\qquad \text{(C)}\ c_\zeta>0,\qquad
+  \text{(D)}\ \varepsilon p_1+\varepsilon^2p_2<1,
+\]
+then along \textup{(LTV)}, for all $(e,\zeta,t)$,
+\[
+  \dot V\le-\varepsilon c_\zeta\,\zeta^\T\bar M\zeta-\frac{\beta k}4\norm{w}^2\le-\gamma V,\qquad
+  \gamma:=\min\Bigl\{\frac{2c_\zeta\lambda_{\min}}{k(1+\varepsilon p_1+\varepsilon^2p_2)},\ \frac k2\Bigr\},
+\]
+and $\norm{(e,\zeta)(t)}\le Ce^{-(\gamma/2)(t-t_0)}\norm{(e,\zeta)(t_0)}$ with
+\[
+  C:=\bigl(1+\varepsilon\Psi_M+\varepsilon^2\Psi_D+\varepsilon^3\Psi_M^3\bigr)^2\cdot
+  \Bigl(\frac{\max\{1+\varepsilon p_1+\varepsilon^2p_2,\ \beta\}}{\min\{1-\varepsilon p_1-\varepsilon^2p_2,\ \beta\}}\Bigr)^{1/2}.
+\]
+
+In the slow-adaptation limit ($k\to\infty$ at fixed $\Psi$) the conditions hold for every $\delta\in(0,1)$ once
+$k\ge k_0(\delta)$, with $k_0\approx(4\rho\rho_{DD}/\delta^2)^{1/4}$ when (A) binds (small $\delta$, or
+$T\Psi_M^2\lesssim1$; otherwise (C) sets $k_0$ through $r_\zeta$, as on the sinusoidal regressor below), and the rate
+is $\gamma/2=(1-\delta)(1-\varepsilon p_1+O(k^{-2}))\lambda_{\min}/k$: the averaged rate
+$\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$ of Remark E.1 up to the factor $1-\delta$ and the first-order deficit
+$\varepsilon p_1=T\Psi_M^2/(2k)$ of the quadratic form. The bound pays for the ill-conditioning of $\bar M$ once,
+through $\lambda_{\min}$, as the exact rate does; the peak factors enter only the threshold $k_0$ and the overshoot
+$C=O((\rho/\delta)^{1/2})$, not the rate.
+\end{thm}
+\status{Proved (below); checked pointwise by a certificate---the supremum of $\dot V/V$ over all states and over a
+time grid is a generalised eigenvalue problem---on the sinusoidal regressor and on the slow-adaptation ideal of the
+Theorem E tests, where the guaranteed rate is within 12\% ($\delta=0.1$) and 26\% ($\delta=0.2$) of the exact rate at
+$k=400$ while Lemma E.0's is five orders of magnitude below it (\code{tests/test_excitation.py},
+\code{exp_explicit_rate.py}, Table~\ref{tab:thmE:slowregime}). The round-6 referee re-derived every step and
+certified the inequality independently on five regressor families without a failure
+(\code{review/REVIEW_round6_E0prime.md}).}
+
+\begin{proof}
+Write $M$, $\Psi$, \dots\ for their values at $t$. Two facts about zero-mean antiderivatives are used throughout: if
+$f$ is $T$-periodic with zero mean and $g$ is its zero-mean antiderivative, then
+$\norm{g}_\infty\le(T/4)\norm{f}_\infty$---for the maximiser $t^*$ of $g$,
+$g(t^*)=\frac1T\int_0^T(g(t^*)-g(s))\dd s\le\frac1T\int_0^T\operatorname{dist}(t^*,s)\norm{f}_\infty\dd s
+=(T/4)\norm{f}_\infty$ with $\operatorname{dist}$ the distance on the circle, and the same for $-g$---and the same
+bound holds for every bilinear coordinate $u^\T gv$, hence $\norm{g(t)v}\le(T/4)\sup_r\norm{f(r)v}$. As
+$\norm{M-\bar M}\le\Psi_M^2$ (two positive semidefinite matrices of norm $\le\Psi_M^2$), this gives
+$\norm{P_1}\le T\Psi_M^2/2=p_1$ and $\norm{P_1v}\le(T/2)\sup\norm{(M-\bar M)v}$, and $\norm{S}\le(T/4)\norm{F}_\infty$,
+$\norm{Sv}\le(T/4)\sup\norm{Fv}$.
+
+\noindent\emph{(a) The fast variable.} From $\dot e=-ke-\Psi\zeta$ and
+$ke_2=-\Psi\zeta+\varepsilon\dot\Psi\zeta-\varepsilon^2\Psi M\zeta$,
+\[
+  \dot e=-kw-\varepsilon\dot\Psi\zeta+\varepsilon^2\Psi M\zeta.
+\]
+Differentiating $e_2$ along the flow, with
+$\dot\zeta=\Psi^\T e=\Psi^\T w-\varepsilon M\zeta+\varepsilon^2\Psi^\T\dot\Psi\zeta-\varepsilon^3M^2\zeta$ and
+$\dot M=\dot\Psi^\T\Psi+\Psi^\T\dot\Psi$, the terms of order $\varepsilon$ and $\varepsilon^2$ in $\zeta$ cancel and
+\begin{align*}
+  \dot w&=-kw+\varepsilon\Psi\Psi^\T w-\varepsilon^2\dot\Psi\Psi^\T w+\varepsilon^3\Psi M\Psi^\T w
+    -\varepsilon^2\ddot\Psi\zeta+\varepsilon^3\bigl(2\dot\Psi M+\Psi\dot\Psi^\T\Psi+2\Psi\Psi^\T\dot\Psi\bigr)\zeta\\
+  &\qquad-\varepsilon^4\bigl(2\Psi M^2+\dot\Psi\Psi^\T\dot\Psi\bigr)\zeta
+    +\varepsilon^5\bigl(\Psi M\Psi^\T\dot\Psi+\dot\Psi M^2\bigr)\zeta-\varepsilon^6\Psi M^3\zeta.
+\end{align*}
+
+\noindent\emph{(b) The slow part of $\dot V$.} With $H:=I+\varepsilon P_1+\varepsilon^2P_2$ (symmetric),
+$\frac{\mathrm{d}}{\mathrm{d}t}[\frac12\zeta^\T H\zeta]=\zeta^\T H\dot\zeta+\frac12\zeta^\T\dot H\zeta$ and
+$\dot H=2\varepsilon(M-\bar M)+\varepsilon^2(F-\dot M)$. Insert $\dot\zeta$ and collect by powers of $\varepsilon$.
+At order $\varepsilon$: $-\zeta^\T M\zeta+\zeta^\T(M-\bar M)\zeta=-\zeta^\T\bar M\zeta$. At order $\varepsilon^2$:
+\begin{align*}
+  -\zeta^\T P_1M\zeta+\zeta^\T\Psi^\T\dot\Psi\zeta+\tfrac12\zeta^\T(F-\dot M)\zeta
+  &=-\tfrac12\zeta^\T(P_1M+MP_1)\zeta+\tfrac12\zeta^\T\dot M\zeta\\
+  &\qquad+\tfrac12\zeta^\T(P_1M+MP_1-\dot M)\zeta=0,
+\end{align*}
+using $\zeta^\T\Psi^\T\dot\Psi\zeta=\frac12\zeta^\T\dot M\zeta$: the choice of $P_2$ removes the whole second-order
+term, and this is where $N_2=0$ enters (otherwise $-\zeta^\T N_2\zeta$ would remain). The remaining terms are
+\[
+  R_\zeta:=\varepsilon^3\bigl(-\zeta^\T P_2M\zeta+\zeta^\T P_1\Psi^\T\dot\Psi\zeta-\zeta^\T M^2\zeta\bigr)
+  +\varepsilon^4\bigl(\zeta^\T P_2\Psi^\T\dot\Psi\zeta-\zeta^\T P_1M^2\zeta\bigr)-\varepsilon^5\zeta^\T P_2M^2\zeta,
+\]
+plus the coupling $\zeta^\T H\Psi^\T w$, so
+$\frac{\mathrm{d}}{\mathrm{d}t}[\frac12\zeta^\T H\zeta]=-\varepsilon\zeta^\T\bar M\zeta+R_\zeta+\zeta^\T H\Psi^\T w$.
+
+\noindent\emph{(c) Per-direction bounds.} For every $v$ and $t$:
+\begin{gather*}
+  \norm{\Psi v}\le\sqrt\rho\norm{v}_{\bar M},\qquad \norm{\dot\Psi v}\le\sqrt{\rho_D}\norm{v}_{\bar M},\qquad
+  \norm{\ddot\Psi v}\le\sqrt{\rho_{DD}}\norm{v}_{\bar M};\\
+  \norm{Mv}\le\Psi_M\norm{\Psi v}\le\Psi_M\sqrt\rho\norm{v}_{\bar M};\qquad
+  \norm{\bar Mv}\le\lambda_{\max}(\bar M)^{1/2}\norm{v}_{\bar M}\le\Psi_M\norm{v}_{\bar M};\\
+  \norm{\Psi^\T\dot\Psi v}\le\Psi_M\sqrt{\rho_D}\norm{v}_{\bar M};\qquad
+  \norm{P_1v}\le\tfrac T2\sup_r\norm{(M(r)-\bar M)v}\le\pi_1\norm{v}_{\bar M};\\
+  \norm{Fv}\le\norm{P_1Mv}+\norm{MP_1v}\le\tfrac T2\Psi_M^3\sqrt\rho\norm{v}_{\bar M}+\Psi_M^2\pi_1\norm{v}_{\bar M}
+  =T\Psi_M^3(\sqrt\rho+\tfrac12)\norm{v}_{\bar M},
+\end{gather*}
+so $\norm{Sv}\le(T/4)\sup\norm{Fv}=(T^2/8)\Psi_M^3(2\sqrt\rho+1)\norm{v}_{\bar M}$ and
+$\norm{P_2v}\le\norm{(M-\bar M)v}+\norm{Sv}\le\pi_2\norm{v}_{\bar M}$; also
+\[
+  \norm{P_2}\le\Psi_M^2+\tfrac T4\norm{F}_\infty\le\Psi_M^2+\tfrac T4\cdot2\cdot\tfrac{T\Psi_M^2}2\Psi_M^2=p_2.
+\]
+Hence
+$\abs{R_\zeta}\le r_\zeta\norm{\zeta}^2_{\bar M}$,
+$\abs{\zeta^\T H\Psi^\T w}=\abs{\ip{\Psi H\zeta}{w}}\le c_1\norm{\zeta}_{\bar M}\norm{w}$, and from (a),
+$\beta w^\T\dot w\le\beta\bigl[-(k-d_w)\norm{w}^2+c_2\norm{\zeta}_{\bar M}\norm{w}\bigr]$: each $\zeta$-term of
+$\dot w$ is bounded through $\norm{\Psi\zeta}$, $\norm{\dot\Psi\zeta}$, $\norm{\ddot\Psi\zeta}$, $\norm{M\zeta}$ or
+$\norm{M^2\zeta}$ (the terms of $c_2$, in the order of (a); the last one is
+$\norm{\Psi M^3\zeta}\le\Psi_M\cdot\Psi_M^4\norm{M\zeta}\le\Psi_M^6\sqrt\rho\norm{\zeta}_{\bar M}$), the $w$-terms
+through operator norms ($d_w$).
+
+\noindent\emph{(d) Assembly.}
+$\dot V\le-\varepsilon\norm{\zeta}^2_{\bar M}+r_\zeta\norm{\zeta}^2_{\bar M}
++(c_1+\beta c_2)\norm{\zeta}_{\bar M}\norm{w}-\beta(k-d_w)\norm{w}^2$. By Young,
+$(c_1+\beta c_2)\norm{\zeta}_{\bar M}\norm{w}\le\delta\varepsilon\norm{\zeta}^2_{\bar M}
++(c_1+\beta c_2)^2\norm{w}^2/(4\delta\varepsilon)$, and $(c_1+\beta c_2)^2\le2c_1^2+2\beta^2c_2^2$. With
+$\beta=2c_1^2/\delta$ the term $2c_1^2/(4\delta\varepsilon)$ equals $\beta k/4$, and (A) gives
+$2\beta^2c_2^2/(4\delta\varepsilon)\le\beta k/4$, so with (B) the coefficient of $\norm{w}^2$ is at most
+$-\beta(k-d_w-k/2)\le-\beta k/4$; the coefficient of $\norm{\zeta}^2_{\bar M}$ is
+$-\varepsilon(1-\delta-r_\zeta/\varepsilon)=-\varepsilon c_\zeta$. This is the first inequality. Since
+$\frac12(1-\varepsilon p_1-\varepsilon^2p_2)\norm{\zeta}^2+\frac\beta2\norm{w}^2\le V
+\le\frac12(1+\varepsilon p_1+\varepsilon^2p_2)\norm{\zeta}^2+\frac\beta2\norm{w}^2$ by (D), and
+$\zeta^\T\bar M\zeta\ge\lambda_{\min}\norm{\zeta}^2$, $\dot V\le-\gamma V$ follows, and the envelope with $C$ from
+$\norm{e}\le\norm{w}+(\varepsilon\Psi_M+\varepsilon^2\Psi_D+\varepsilon^3\Psi_M^3)\norm{\zeta}$ and its converse.
+\end{proof}
+
+\begin{rmk}{Remark}{E.0$'$.1}[reading]\mbox{}
+\begin{itemize}
+  \item \emph{What is sharp and what is not.} The exact rate of (LTV) is $\lambda_{\min}/k\cdot(1+O(k^{-2}))$: the
+    first-order averaging of $\dot\zeta=-(1/k)M\zeta$ after the slaving gives $\lambda_{\min}/k$, and the second-order
+    correction to the symmetric part of the averaged generator is $N_2=0$ (Table~\ref{tab:thmE:slowregime} measures
+    $1-\text{exact}/(\lambda_{\min}/k)\approx29/k^2$ on the ideal; on $\Psi=(\sin t,\cos t)$ the deviation is of
+    order $k^{-4}$). Lemma E.0$'$ recovers this rate up to the factor
+    $c_\zeta/(1+\varepsilon p_1+\varepsilon^2p_2)\to1-\delta$, and $\delta$ can be taken $\to0$ as $k\to\infty$
+    (condition (A) allows $\delta\gtrsim2\sqrt{\rho\rho_{DD}}/k^2$). The overshoot constant $C=O((\rho/\delta)^{1/2})$
+    is an artefact of the quadratic form, not of the dynamics.
+  \item \emph{Two regimes, two lemmas.} Lemma E.0 needs only $(\alpha,T,\Psi_M,\Psi_D)$ and gives the $\omega^{-2}$ law
+    of the fast regime; its rate is quadratic in $\lambda_{\min}$. Lemma E.0$'$ needs $k$ above the threshold
+    $k_0\approx(4\rho\rho_{DD}/\delta^2)^{1/4}$, set by the peak factors of $\Psi$ and its two derivatives, and gives
+    the sharp rate. On the regressors of Theorem E the derivative peak factors are large---the directions that are
+    poorly excited on average are excited in short bursts, so $\rho_{DD}/\rho$ is of the order of the fourth power of
+    the effective bandwidth---and $k_0$ is in the hundreds there, while on $\Psi=(\sin t,\cos t)$
+    ($\rho=\rho_D=\rho_{DD}=2$) it is about $10$, set by (C) rather than (A). A third-order slaving would replace
+    $\rho_{DD}$ by the peak factor of $\dddot\Psi$ at one order higher in $\varepsilon$ and lower $k_0$ further; this is
+    not pursued.
+  \item \emph{Hypotheses.} Only the periodicity of $\Psi$ is used (through the zero-mean antiderivatives; a
+    non-periodic PE regressor would need a windowed $\bar M(t)$ and its derivative). Theorem E's $x_m$ is periodic, so
+    $\Psi_G$ is. Theorem E's steps 4--5 go through with this $V$ in place of Lemma E.0's (Corollary E.0$'$.2 below):
+    the nonlinear rate becomes $\gamma/4\approx(1-\delta)\lambda_{\min}/(2k)$, while the explicit ball radius carries
+    the anisotropy $p'_{\mathrm{lo}}/p'_{\mathrm{hi}}\approx1/\beta$ of the quadratic form and can be smaller than
+    Lemma E.0's.
+\end{itemize}
+\end{rmk}
+
+\paragraph{Numerics} (\code{exp_explicit_rate.py} $\to$ \code{results/explicit_rate/table.md}, table~4; reproduced
+in Table~\ref{tab:thmE:slowregime}). The slow-adaptation ideal of Remark E.0a (table~2 of that file) at $g=0.01$
+($T=20\pi$): $\lambda_{\min}(\bar M)=2.16\cdot10^{-7}$, $\kappa(\bar M)=7.8\cdot10^3$, $\Psi_M=0.168$,
+$\Psi_D=0.957$, $\Psi_{DD}=8.39$, $T\Psi_M^2=1.78$; peak factors $\rho=69.9$, $\rho_D=3.7\cdot10^3$,
+$\rho_{DD}=3.7\cdot10^5$ (the poorly excited directions are excited in bursts: $\rho_D/\rho\approx53$ and
+$\rho_{DD}/\rho_D\approx99$ are effective squared bandwidths); $\norm{N_2}=3\cdot10^{-21}$. The threshold of (A)--(D)
+is $k_0=226$ for $\delta=0.2$ and $321$ for $\delta=0.1$, set by (A): $c_1c_2=2.07$, $0.51$, $0.13$, $0.056$,
+$0.032$, $0.014$ at $k=50$, $100$, $200$, $300$, $400$, $600$, the $k^{-2}$ law of $\varepsilon^2\sqrt{\rho\rho_{DD}}$.
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Lemma E.0$'$ in the slow regime]{Lemma E.0$'$ in the slow regime on the slow-adaptation ideal of
+Remark E.0a at $g=0.01$ (\code{results/explicit_rate/table.md}, table~4).}
+\label{tab:thmE:slowregime}
+\begin{tabularx}{\textwidth}{@{}c>{\hsize=0.9\hsize\centering\arraybackslash}X>{\hsize=0.8\hsize\centering\arraybackslash}X>{\hsize=1.1\hsize\centering\arraybackslash}X>{\hsize=0.8\hsize\centering\arraybackslash}X>{\hsize=0.9\hsize\centering\arraybackslash}X>{\hsize=1.5\hsize\centering\arraybackslash}X@{}}
+\toprule
+$k$ & exact Floquet rate & exact / $(\lambda_{\min}/k)$ & guaranteed rate $\gamma/2$, $\delta=0.2$ ($\delta=0.1$)
+  & exact / guaranteed & exact / Lemma E.0 (optimised $\varepsilon$)
+  & $\sup\dot V/V$ on the grid, $-\gamma$ ($\delta=0.1$)\\
+\midrule
+300 & $7.21\cdot10^{-10}$ & 0.9997 & $5.70\cdot10^{-10}$ (below threshold) & 1.26 (---) & $1.33\cdot10^5$ & --- \\
+400 & $5.41\cdot10^{-10}$ & 0.9998 & $4.30\cdot10^{-10}$ ($4.84\cdot10^{-10}$) & 1.26 (1.12) & $1.32\cdot10^5$
+  & $-1.079\cdot10^{-9}$, $-9.68\cdot10^{-10}$ \\
+600 & $3.61\cdot10^{-10}$ & 0.9999 & $2.88\cdot10^{-10}$ ($3.24\cdot10^{-10}$) & 1.25 (1.12) & $1.30\cdot10^5$
+  & $-7.20\cdot10^{-10}$, $-6.47\cdot10^{-10}$ \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+Above the threshold the guaranteed rate is within 26\% ($\delta=0.2$) and 12\% ($\delta=0.1$) of the exact rate---the
+factor $1/(1-\delta)$ of the lemma, with $c_\zeta=0.80$ and $0.90$---while Lemma E.0's optimised rate is
+$1.3\cdot10^5$ times smaller; the certificate $\sup\dot V/V\le-\gamma$ holds on the $128$-point grid in every row
+where the conditions hold, with $\sup\dot V/V=-1.078\cdot10^{-9}\approx-2\lambda_{\min}/k$ at $k=400$ (attained in
+the slow direction at $w=0$). The exact rate deviates from $\lambda_{\min}/k$ by $1.15\%$, $0.29\%$, $0.07\%$ at
+$k=50$, $100$, $200$: the $k^{-2}$ law that $N_2=0$ predicts. The overshoot constant is
+$C=\sqrt\beta\cdot(1+O(1/k))=27$ ($\delta=0.2$) and $38$ ($\delta=0.1$). Below $k_0$ the lemma makes no claim;
+Lemma E.0 does (Remark E.0a; table~2 of that file).
+
+\checkedby{\code{tests/test_excitation.py}: on $\Psi=(\sin t,\cos t)$ the computed $\lambda_{\min}$, $\rho$,
+$\rho_D$, $\rho_{DD}$ equal $1/2$, $2$, $2$, $2$, $N_2=0$ to $10^{-12}$, the threshold of (A)--(D) is below $12$ for
+$\delta=0.2$, the certificate $\sup\dot V/V\le-\gamma$ holds at $k=20$, $50$, $200$, and the guaranteed rate is below
+the exact Floquet rate and within a factor $2$ of it, the ratio decreasing towards $1/(1-\delta)$\newline
+(\code{test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness}); on the slow-adaptation ideal of the
+Theorem E tests at $g=0.01$ and $k=400$, $\delta=0.2$: $\kappa(\bar M)>10^3$, the conditions hold, the certificate
+holds on a $128$-point grid, the guaranteed rate is within a factor $1.5$ of the exact rate and exceeds Lemma E.0's
+optimised rate by more than $10^4$\newline
+(\code{test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal}).}
+
+\begin{thm}{Corollary}{E.0$'$.2}[Theorem E in the slow regime]
+Under the hypotheses of Theorem E, suppose the regressor $\Psi_G$ of its step~3 satisfies the conditions (A)--(D) of
+Lemma E.0$'$ at $k=k_e$ for some $\delta$, with constants $(\beta,\gamma,p_1,p_2)$ and
+$L_M:=\varepsilon\Psi_{G,M}+\varepsilon^2\Psi_{G,D}+\varepsilon^3\Psi_{G,M}^3$ ($\varepsilon=1/k_e$), and that
+$\beta L_M^2<1-\varepsilon p_1-\varepsilon^2p_2$. Put
+\begin{gather*}
+  p'_{\mathrm{lo}}:=\tfrac12\min\{\beta/2,\ 1-\varepsilon p_1-\varepsilon^2p_2-\beta L_M^2\},\\
+  p'_{\mathrm{hi}}:=\tfrac12\max\{\beta(1+L_M),\ 1+\varepsilon p_1+\varepsilon^2p_2+\beta L_M(1+L_M)\},\\
+  c'_0:=\min\Bigl\{\Bigl[\frac{\gamma p'_{\mathrm{lo}}}{4(p'_{\mathrm{hi}})^{1/2}\tilde C_R}\Bigr]^2,\
+  \frac{p'_{\mathrm{lo}}r^2}{\norm{S^{-1}}^2}\Bigr\},\qquad
+  r'_0:=\Bigl(\frac{c'_0}{p'_{\mathrm{hi}}}\Bigr)^{1/2},\qquad \lambda':=\frac\gamma4,\qquad
+  C':=\Bigl(\frac{2p'_{\mathrm{hi}}}{p'_{\mathrm{lo}}}\Bigr)^{1/2},
+\end{gather*}
+with $r$, $\tilde C_R$, $S$ as in Theorem E. Then the conclusions of Theorem E hold with $(c_0,\lambda,C)$ replaced by
+$((r'_0)^2/2,\lambda',C')$. In the slow regime
+$\lambda'=(1-\delta)(1-\varepsilon p_1+O(k_e^{-2}))\lambda_{\min}(\bar M_G)/(2k_e)$,
+$\bar M_G:=\langle\Psi_G^\T\Psi_G\rangle$: half the exact rate of the linearised loop, up to the factor $1-\delta$ and
+the first-order deficit $\varepsilon p_1$.
+\end{thm}
+
+\begin{proof}
+Write $V:=\frac12w^\T\mathbf{H}(t)w$ for Lemma E.0$'$'s $V$ in the coordinates $w=(e,\zeta)$ of step~3:
+\[
+  \mathbf{H}=\begin{bmatrix}\beta I&-\beta L\\-\beta L^\T&H_\zeta+\beta L^\T L\end{bmatrix}
+\]
+with $e_2=L(t)\zeta$, $\norm{L}\le L_M$ and $H_\zeta:=I+\varepsilon P_1+\varepsilon^2P_2$. Then
+$w^\T\mathbf{H}w=\beta\norm{e-L\zeta}^2+\zeta^\T H_\zeta\zeta$, and
+$\norm{e-L\zeta}^2\le(1+L_M)(\norm{e}^2+L_M\norm{\zeta}^2)$,
+$\norm{e-L\zeta}^2\ge\frac12\norm{e}^2-L_M^2\norm{\zeta}^2$ give
+$2p'_{\mathrm{lo}}\norm{w}^2\le w^\T\mathbf{H}w\le2p'_{\mathrm{hi}}\norm{w}^2$. Along the nonlinear loop
+$\dot w=[A_0+B(t)]w+\tilde R(t,w)$ with $\norm{\tilde R}\le\tilde C_R\norm{w}^2$ on $\{\norm{w}<r/\norm{S^{-1}}\}$
+(step~4), so with Lemma E.0$'$,
+\[
+  \dot V\le-\gamma V+\ip{\mathbf{H}w}{\tilde R}
+  \le-\gamma V+\norm{\mathbf{H}^{1/2}w}\,\norm{\mathbf{H}^{1/2}}\,\tilde C_R\norm{w}^2
+  \le-\gamma V+\frac{2(p'_{\mathrm{hi}})^{1/2}\tilde C_R}{p'_{\mathrm{lo}}}V^{3/2},
+\]
+using $\norm{\mathbf{H}^{1/2}w}=(2V)^{1/2}$, $\norm{\mathbf{H}^{1/2}}=(2p'_{\mathrm{hi}})^{1/2}$ and
+$\norm{w}^2\le V/p'_{\mathrm{lo}}$. Hence $\dot V\le-(\gamma/2)V$ wherever
+$V^{1/2}\le\gamma p'_{\mathrm{lo}}/(4(p'_{\mathrm{hi}})^{1/2}\tilde C_R)$, and the sublevel set $\{V\le c'_0\}$---inside
+the ball where $\tilde R$ is bounded, by the second term of $c'_0$---is forward invariant with
+$V(t)\le e^{-(\gamma/2)(t-t_0)}V(t_0)$ on it. It contains $\{\norm{w}\le r'_0\}$ because $V\le p'_{\mathrm{hi}}\norm{w}^2$,
+and $\norm{w(t)}\le(p'_{\mathrm{hi}}/p'_{\mathrm{lo}})^{1/2}e^{-(\gamma/4)(t-t_0)}\norm{w(t_0)}$ follows. Step~5 of
+Theorem E is unchanged: $\norm{w}^2=2V_\pi$, so $\VOT(t_0)\le(r'_0)^2/2$ puts the state in the ball,
+$\norm{e}+W\le\sqrt2\norm{w}$ gives $C'$, and uniqueness and the limits follow as there. The asymptotics of
+$\lambda'$ are those of $\gamma$ in Lemma E.0$'$.
+\end{proof}
+
+\paragraph{Numerics} (\code{exp_explicit_rate.py} $\to$ \code{results/explicit_rate/table.md}, table~5; reproduced
+in Table~\ref{tab:thmE:slowcorollary}). Remark E.1's single-kernel instance ($m=n=1$, $\vartheta^*=(1.5,0.3,0.8)$,
+$G=0.3\cdot I$, $x_m=1.5\sin t$) at $k_e=40$: $\lambda_{\min}(\bar M_G)=5.41\cdot10^{-2}$, $\kappa(\bar M_G)=6.7$,
+peak factors $\rho=4.8$, $\rho_D=30.3$, $\rho_{DD}=461$, threshold $k_0=24.4$ ($\delta=0.2$) and $33.5$
+($\delta=0.1$); $L_J=4.62$ estimated from samples; exact linear rate $1.35\cdot10^{-3}$.
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\small
+\captionof{table}[Corollary E.0$'$.2 on the single-kernel instance]{Theorem E in the slow regime on Remark E.1's
+single-kernel instance at $k_e=40$ (\code{results/explicit_rate/table.md}, table~5).}
+\label{tab:thmE:slowcorollary}
+\begin{tabularx}{\textwidth}{@{}l>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X>{\centering\arraybackslash}X@{}}
+\toprule
+Lyapunov function & explicit ball radius $r_0$ ($w$-coordinates) & nonlinear rate $\lambda$ & overshoot $C$
+  & exact linear rate\,/\,$\lambda$\\
+\midrule
+Lemma E.0, optimised $\varepsilon$ (Theorem E) & $6.15\cdot10^{-6}$ & $2.63\cdot10^{-5}$ & 1.43 & 51 \\
+Lemma E.0$'$, $\delta=0.2$ (this corollary)    & $1.53\cdot10^{-6}$ & $4.53\cdot10^{-4}$ & 11.8 & 3.0 \\
+Lemma E.0$'$, $\delta=0.1$ (this corollary)    & $8.32\cdot10^{-7}$ & $5.16\cdot10^{-4}$ & 17.1 & 2.6 \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+On this well-conditioned regressor ($\kappa\approx7$) Lemma E.0 is only an order of magnitude conservative, and the
+corollary trades the certified ball for the rate: $\lambda'$ is within a factor $3$ of the exact linear rate (the
+factor $2$ of the Lyapunov argument times $1/(1-\delta)$), while $r'_0$ is four times smaller than Theorem E's $r_0$,
+carrying the anisotropy $p'_{\mathrm{lo}}/p'_{\mathrm{hi}}\approx1/\beta$ of the quadratic form. On ill-conditioned
+regressors the rate improves by the factor of Remark E.0a (Table~\ref{tab:thmE:slowregime}); the radius comparison
+was not computed there.
+
+\checkedby{\code{tests/test_excitation.py}: on the single-kernel instance at $k_e=40$, $\delta=0.2$, from a start
+with $\norm{w(0)}\le r'_0$, the implemented closed loop satisfies $\norm{w(t)}\le C'e^{-\lambda't}\norm{w(0)}$ at every
+sample over $1.5$ e-folds of the explicit envelope ($\mathrm{d}t=0.005$: the fixed-step loop has a discretisation
+floor $\approx6\cdot10^{-6}$ at $\mathrm{d}t=0.02$, above the explicit ball), with $\lambda'$ more than ten times
+Theorem E's rate from Lemma E.0 and within a factor $4$ of the exact linear rate\newline
+(\code{test_corollary_E0prime_2_envelope_on_the_implemented_loop}).}
 
 \begin{thm}{Theorem}{E}[with explicit constants]
 Let $\Psi_G:=m^{-1/2}\Psi(I_m\otimes G^{1/2})\in\R^{n\times mp}$, and let $(\alpha_G,T,\Psi_{G,M},\Psi_{G,D})$ be PE
@@ -242,10 +561,11 @@ this theorem with existence constants, conditional on Morgan--Narendra~\cite[Thm
 citation.
 \end{thm}
 \status{Proved, self-contained (Lemma E.0 replaces the citation of Morgan--Narendra~\cite{S8}); linearisation
-checked; the strict Lyapunov inequality checked pointwise and the explicit envelope checked on the linearised and on
-the implemented loop; convergence observed. The explicit rate is a valid but conservative lower bound of the exact rate
-(Remark E.0a). Novelty (literature audit): partially anticipated~\cite{R49}, \cite{R54}; the strict Lyapunov function
-is of the Mazenc--Malisoff type.}
+checked; the strict Lyapunov inequalities checked pointwise (E.0$'$ by a certificate over all states) and the explicit
+envelope checked on the linearised and on the implemented loop; convergence observed. The rate of E.0 is conservative
+in a quantified way (Remark E.0a); the rate of E.0$'$ is within 12\% of the exact rate above its threshold. Novelty
+(literature audit): partially anticipated~\cite{R49}, \cite{R54}; the strict Lyapunov function is of the
+Mazenc--Malisoff type.}
 
 \begin{proof}\mbox{}
 \begin{enumerate}[label=\arabic*.]

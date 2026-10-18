@@ -1561,8 +1561,8 @@ V_OT(t₀) ≤ r′₀²/2 puts the state in the ball, ‖e‖ + W ≤ √2‖w�
 asymptotics of λ′ are those of γ in Lemma E.0′. ∎
 
 *Numerics* (`exp_explicit_rate.py` → `results/explicit_rate/table.md`, table 5). Remark E.1's single-kernel instance (m = n = 1, ϑ* = (1.5, 0.3, 0.8), G = 0.3·I, x_m = 1.5 sin t) at
-k_e = 40: λ_min(M̄_G) = 5.41·10⁻², κ(M̄_G) = 6.7, peak factors ρ = 4.8, ρ_D = 30, ρ_DD = 461, threshold k₀ = 24.5 (δ = 0.2)
-and 33.7 (δ = 0.1); L_J = 4.62 estimated from samples; exact linear rate 1.35·10⁻³.
+k_e = 40: λ_min(M̄_G) = 5.41·10⁻², κ(M̄_G) = 6.7, peak factors ρ = 4.8, ρ_D = 30.3, ρ_DD = 461, threshold k₀ = 24.4 (δ = 0.2)
+and 33.5 (δ = 0.1); L_J = 4.62 estimated from samples; exact linear rate 1.35·10⁻³.
 
 | Lyapunov function | explicit ball radius r₀ (w-coordinates) | nonlinear rate λ | overshoot C | exact linear rate / λ |
 |---|---|---|---|---|
