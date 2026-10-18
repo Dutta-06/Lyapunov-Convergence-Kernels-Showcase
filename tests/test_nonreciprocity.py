@@ -128,8 +128,8 @@ def test_circulation_kernel_closed_form_and_vanishing_for_a_zero_current_orbit()
 
 
 def test_perfect_fit_n2_leaves_only_the_circulation_kernel():
-    """n = 2 at perfect fit (f := f̂_μ): B(ξ, ξ') = 2κ(ξ, ξ') I, so A(ϑ, ϑ') = 2(aᵀa')κ(ξ, ξ') ≠ 0 on the ellipse, and
-    A ≡ 0 on the segment orbit although the fit is the same."""
+    """n = 2 with f := f̂_μ on all of ℝ² (so the residual AND its Jacobian vanish on the orbit): B(ξ, ξ') = 2κ(ξ, ξ') I, so
+    A(ϑ, ϑ') = 2(aᵀa')κ(ξ, ξ') ≠ 0 on the ellipse, and A ≡ 0 on the segment orbit although the fit is the same."""
     net, Th, rng = _setup(2)
     f, J, xr, xd = _plant_2d()
     orb = A.Orbit(xr, xd, PER, N=1500, sub=1)
@@ -148,6 +148,45 @@ def test_perfect_fit_n2_leaves_only_the_circulation_kernel():
     fm_s = A.FrozenMeasure(net, Th)
     worst = max(abs(NR.A_kernel(fm_s.f_hat, fm_s.jac, fm_s, seg, rng.normal(0, 1.0, 5), rng.normal(0, 1.0, 5))) for _ in range(10))
     assert worst < 1e-13, worst
+
+
+def test_perfect_fit_on_the_orbit_alone_keeps_the_curl_term():
+    """
+    Theorem I(iv), corrected after the round-5 review: r_μ = 0 on the orbit constrains only the tangential derivative of
+    the residual.  With f := f̂_μ + h e₁ and h = (x₁/1.2)² + (x₂/0.8)² − 1 (zero on the ellipse, normal derivative ≠ 0),
+    B_μ − 2κI = −∫φ_ξφ_ξ'∂₂h dρ·(e₁e₂ᵀ − e₂e₁ᵀ) ≠ 0, so A_μ ≠ 2K although sup_𝒪|r_μ| = 0; the generic second-variation
+    code agrees with the bilinear form.
+    """
+    net, Th, rng = _setup(2)
+    _, _, xr, xd = _plant_2d()
+    orb = A.Orbit(xr, xd, PER, N=2000, sub=1)
+    fm = A.FrozenMeasure(net, Th)
+    h = lambda X: (X[:, 0] / 1.2) ** 2 + (X[:, 1] / 0.8) ** 2 - 1.0
+    f = lambda X: fm.f_hat(X) + np.stack([h(X), np.zeros(len(X))], 1)
+
+    def J(X):
+        out = fm.jac(X).copy()
+        out[:, 0, 0] += 2 * X[:, 0] / 1.2 ** 2
+        out[:, 0, 1] += 2 * X[:, 1] / 0.8 ** 2
+        return out
+    assert np.max(np.abs(f(orb.xm) - fm.f_hat(orb.xm))) < 1e-12                        # perfect fit on the orbit
+    phi_fn = lambda c, s: np.exp(-np.sum((orb.xm - c[None, :]) ** 2, axis=1) / (2 * s ** 2))
+    worst_gap, found = 0.0, 0.0
+    for _ in range(10):
+        c, cp = rng.uniform(-1.5, 1.5, 2), rng.uniform(-1.5, 1.5, 2); s, sp = rng.uniform(0.4, 1.2, 2)
+        B = NR.B_matrix(f, J, fm, orb, c, s, cp, sp)
+        k = NR.kappa(orb, c, s, cp, sp)
+        d2h = 2 * orb.xm[:, 1] / 0.8 ** 2
+        coef = -float(np.mean(phi_fn(c, s) * phi_fn(cp, sp) * d2h))
+        pred = coef * np.array([[0.0, 1.0], [-1.0, 0.0]])
+        worst_gap = max(worst_gap, np.abs(B - 2 * k * np.eye(2) - pred).max())
+        found = max(found, abs(coef))
+    assert worst_gap < 1e-12 and found > 1e-3, (worst_gap, found)
+    TE = rng.normal(0, 1.0, (3, 5))
+    Aref = NR.A_from_second_variation(f, J, fm, orb, TE)
+    for i in range(3):
+        for j in range(3):
+            assert abs(NR.A_kernel(f, J, fm, orb, TE[i], TE[j]) - Aref[i, j]) < 1e-10 * (1 + np.abs(Aref).max())
 
 
 def test_positivity_witness_n1():

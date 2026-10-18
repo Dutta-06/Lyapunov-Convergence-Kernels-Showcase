@@ -120,6 +120,62 @@ def assignment_gap(P_star, P0, Ginv_diag):
     return (float(above[0] - b2) if len(above) else np.inf), float(b2)
 
 
+# ------------------------------------------------------------------ optimal plans and barycentric projection (Theorem C′)
+def optimal_plan(P, Q, Ginv_diag):
+    """
+    Optimal transport plan γ (m × m₀) between μ = (1/m)Σδ_{P_i} and ν = (1/m₀)Σδ_{Q_j} for the cost ‖P_i − Q_j‖²_{G⁻¹}:
+    a linear program on the transportation polytope (row sums 1/m, column sums 1/m₀), solved with the HiGHS dual simplex
+    (so the plan is a vertex, as the law of Theorem C′ requires).  Returns
+    (γ, W²).  For m = m₀ a vertex is a permutation matrix divided by m (Birkhoff), so this reduces to optimal_assignment.
+    """
+    from scipy.optimize import linprog
+    m, m0 = P.shape[0], Q.shape[0]
+    C = assignment_cost_matrix(P, Q, Ginv_diag)
+    A_eq = np.zeros((m + m0, m * m0))
+    for i in range(m):
+        A_eq[i, i * m0:(i + 1) * m0] = 1.0
+    for j in range(m0):
+        A_eq[m + j, j::m0] = 1.0
+    b_eq = np.concatenate([np.full(m, 1.0 / m), np.full(m0, 1.0 / m0)])
+    res = linprog(C.ravel(), A_eq=A_eq[:-1], b_eq=b_eq[:-1], bounds=(0, None), method='highs-ds')   # one constraint is redundant;
+    if not res.success:                                                                                 # dual simplex returns a vertex
+        raise RuntimeError(res.message)
+    gamma = np.clip(res.x, 0.0, None).reshape(m, m0)                                                   # round-off can give −1e-9
+    return gamma, float(np.sum(gamma * C))
+
+
+def barycentric_projection(P, Q, Ginv_diag):
+    """
+    T̄_i := m Σ_j γ_{ij} Q_j, the barycentre of the prior mass that the optimal plan assigns to particle i.
+    Returns (T̄ (m, p), γ, W², Var_γ) with Var_γ := Σ_{ij} γ_{ij} ‖Q_j − T̄_i‖²_{G⁻¹}, the within-cell variance, so that
+    W² = (1/m)Σ_i‖P_i − T̄_i‖²_{G⁻¹} + Var_γ   (the Pythagorean decomposition of the plan cost).
+    """
+    gamma, W2 = optimal_plan(P, Q, Ginv_diag)
+    Tbar = P.shape[0] * (gamma @ Q)
+    d = Q[None, :, :] - Tbar[:, None, :]
+    Var = float(np.einsum('ij,ijk,k,ijk->', gamma, d, Ginv_diag, d))
+    return Tbar, gamma, W2, Var
+
+
+def centroid_defect(P, Q, Ginv_diag):
+    """V_bar² := (1/m)Σ_i‖P_i − T̄_i‖²_{G⁻¹} = W² − Var_γ: zero exactly at the equal-mass centroidal configurations of ν."""
+    Tbar, gamma, W2, Var = barycentric_projection(P, Q, Ginv_diag)
+    d = P - Tbar
+    return float(np.einsum('ik,k,ik->', d, Ginv_diag, d) / P.shape[0]), Tbar, gamma, W2, Var
+
+
+def lloyd_equal_mass(P0, Q, Ginv_diag, n_iter=200, tol=1e-12):
+    """Equal-mass Lloyd iteration P ← T̄(P) (the time-discrete form of the pure barycentric leak); returns (P, W²)."""
+    P = np.array(P0, float)
+    for _ in range(n_iter):
+        Tbar, _, W2, _ = barycentric_projection(P, Q, Ginv_diag)
+        if np.max(np.abs(Tbar - P)) < tol:
+            P = Tbar
+            break
+        P = Tbar
+    return P, barycentric_projection(P, Q, Ginv_diag)[2]
+
+
 # ------------------------------------------------------------------ controller
 class TransportController:
     """
@@ -130,7 +186,8 @@ class TransportController:
     m, n, ke : as usual.
     g_a, g_c, g_s : lifted gains (metric G = diag(g_a I, g_c I, g_s)).
     a_max, c_max, s_min, s_max, eps : per-particle box Θ_K and boundary layer.
-    leak : None | 'ot' | 'labelled' ; sigma_m : leak gain ; prior : (m, p) prior particles.
+    leak : None | 'ot' | 'labelled' | 'ot_bary' ; sigma_m : leak gain ; prior : (m, p) prior particles, or (m₀, p) with
+           m₀ ≠ m for 'ot_bary' (the leak toward the barycentric projection of the optimal plan, Theorem C′).
     """
 
     def __init__(self, m, n, ke=5.0, g_a=1.0, g_c=1.0, g_s=1.0,
@@ -196,9 +253,14 @@ class TransportController:
                 raise ValueError("leak requires a prior configuration")
             if self.leak == 'ot':
                 tau, _ = optimal_assignment(P, self.prior, self.Ginv_diag)
+                v = v - self.sigma_m * (P - self.prior[tau])
+            elif self.leak == 'ot_bary':
+                Tbar, gamma, _, _ = barycentric_projection(P, self.prior, self.Ginv_diag)
+                tau = gamma
+                v = v - self.sigma_m * (P - Tbar)
             else:
                 tau = np.arange(self.m)
-            v = v - self.sigma_m * (P - self.prior[tau])
+                v = v - self.sigma_m * (P - self.prior[tau])
         return v, tau
 
     def project(self, P, v):

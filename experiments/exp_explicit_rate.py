@@ -60,7 +60,8 @@ def slow_limit_table():
         G_diag = np.concatenate([np.full(n, 2 * g), np.full(n, 2 * g), [g]])
         reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
         tg = np.linspace(0, per, 80)
-        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=200)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=800)       # 800 nodes: converged over the 20π window
+        c_cf = X.strict_lyapunov_constants(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'])
         c_op = X.optimise_eps(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=300)
         fl = X.floquet_rate(reg.Psi, ctrl.ke, per, n_steps=4000)
         # the averaging prediction of Remark E.1 for slow adaptation: λ_min⟨Ψ_GᵀΨ_G⟩/k_e
@@ -72,7 +73,8 @@ def slow_limit_table():
         # so exact/explicit ≈ 3κ(1 + Ψ_D/(kΨ_M))² (Remark E.0a)
         sat = 3 * kappa * (1 + best['Psi_D'] / (ctrl.ke * best['Psi_M'])) ** 2
         rows.append(dict(g=g, Psi_M=best['Psi_M'], Psi_D=best['Psi_D'], alpha=best['alpha'], floquet=fl, explicit=c_op['rate'],
-                         ratio=fl / c_op['rate'], averaging=pred, excitation=best['Psi_M'] ** 2 / ctrl.ke, kappa=kappa, sat=sat))
+                         closed_form=c_cf['rate'], ratio=fl / c_op['rate'], ratio_cf=fl / c_cf['rate'], averaging=pred,
+                         excitation=best['Psi_M'] ** 2 / ctrl.ke, kappa=kappa, sat=sat))
     return rows
 
 
@@ -88,7 +90,7 @@ def window_table():
     rows = []
     for frac in (0.25, 0.5, 1.0, 2.0):
         Tw = frac * per
-        alpha = X.pe_level(reg.Psi, Tw, tg, n_nodes=200)
+        alpha = X.pe_level(reg.Psi, Tw, tg, n_nodes=int(800 * max(1.0, 2 * frac)))     # nodes proportional to the window (converged; checked by pe_level)
         Psi_M, Psi_D = X.sup_norms(reg.Psi, reg.Psidot, tg)
         if alpha <= 0:
             rows.append(dict(T=Tw, alpha=alpha, rate=0.0)); continue
@@ -101,7 +103,9 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     r1, r2, r3 = remark_E1_table(), slow_limit_table(), window_table()
     L = ["# Lemma E.0: the explicit rate against the exact Floquet rate (`exp_explicit_rate.py`)", "",
-         "The explicit rate is a rigorous lower bound of the exact rate in every row.", "",
+         "The explicit rate lies below the exact rate in every row. The ordering is numerical: Ψ_M, Ψ_D are grid maxima "
+         "(80–100 samples per period), α a converged quadrature (checked by refinement), ε a finite grid; the margins are at "
+         "least 17×.", "",
          "## 1. Remark E.1's instance, x_m = 1.5 sin ωt (m = n = 1, G = I, k_e = 3)", "",
          "| ω | window T | α(T) | Ψ_M | Ψ_D | exact Floquet rate | explicit rate, closed-form ε | explicit rate, optimised ε | exact / explicit |",
          "|---|---|---|---|---|---|---|---|---|"]
@@ -110,16 +114,21 @@ def main():
                  f"{r['closed_form']:.3e} | {r['optimised']:.3e} | {r['ratio']:.3g} |")
     om = np.array([r['omega'] for r in r1]); fl = np.array([r['floquet'] for r in r1]); ex = np.array([r['optimised'] for r in r1])
     sl_f = np.polyfit(np.log(om[2:]), np.log(fl[2:]), 1)[0]; sl_e = np.polyfit(np.log(om[2:]), np.log(ex[2:]), 1)[0]
-    L += ["", f"Log-log slopes over ω ≥ 4: exact {sl_f:.2f}, explicit {sl_e:.2f} (Remark E.1 reports the exact ω⁻² law).", "",
-          "## 2. Slow-adaptation limit: the Theorem E ideal (m = 3, n = 2, k_e = 6) with G = g·diag(2, 2, 1)", "",
-          "| g | Ψ_M | Ψ_D | α | Ψ_M²/k_e | κ = Ψ_M²/λ_min⟨Ψ_GᵀΨ_G⟩ | exact Floquet rate | explicit rate (optimised ε) | exact / explicit | 3κ(1 + Ψ_D/(k_eΨ_M))² | averaging value λ_min⟨Ψ_GᵀΨ_G⟩/k_e |",
-          "|---|---|---|---|---|---|---|---|---|---|---|"]
+    sl_last = np.log(ex[-1] / ex[-2]) / np.log(om[-1] / om[-2])
+    L += ["", f"Log-log slopes over ω ≥ 4: exact {sl_f:.2f}, explicit {sl_e:.2f} (Remark E.1 reports the exact ω⁻² law); "
+          f"explicit slope over the last octave (ω = {om[-2]:g} → {om[-1]:g}): {sl_last:.2f}.", "",
+          "## 2. Slow-adaptation limit: the ideal of the Theorem E tests (m = 3, n = 2, k_e = 6), two-tone reference of period 20π, G = g·diag(2, 2, 1)", "",
+          "| g | Ψ_M | Ψ_D | α(T = 20π) | Ψ_M²/k_e | κ_Ψ = Ψ_M²/λ_min⟨Ψ_GᵀΨ_G⟩ | exact Floquet rate | explicit rate, closed-form ε | explicit rate, optimised ε | exact / explicit (closed form) | exact / explicit (optimised) | 3κ_Ψ(1 + Ψ_D/(k_eΨ_M))² | averaging value λ_min⟨Ψ_GᵀΨ_G⟩/k_e |",
+          "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in r2:
         L.append(f"| {r['g']:g} | {r['Psi_M']:.3g} | {r['Psi_D']:.3g} | {r['alpha']:.3g} | {r['excitation']:.3g} | {r['kappa']:.3g} | "
-                 f"{r['floquet']:.3e} | {r['explicit']:.3e} | {r['ratio']:.3g} | {r['sat']:.3g} | {r['averaging']:.3e} |")
-    L += ["", "As g → 0 (slow adaptation) the ratio exact/explicit saturates near 3κ(1 + Ψ_D/(k_eΨ_M))², where κ is the "
-          "condition number of the averaged Gramian (Remark E.0a): the exact rate pays for ill-conditioning once, through "
-          "λ_min, and the bound pays twice.  The ratio grows further with the excitation strength Ψ_M²/k_e (fast adaptation).", "",
+                 f"{r['floquet']:.3e} | {r['closed_form']:.3e} | {r['explicit']:.3e} | {r['ratio_cf']:.3g} | {r['ratio']:.3g} | {r['sat']:.3g} | {r['averaging']:.3e} |")
+    L += ["", "As g → 0 (slow adaptation) the ratio exact/explicit decreases towards a constant of order 3κ_Ψ(1 + Ψ_D/(k_eΨ_M))², where "
+          "κ_Ψ is the condition number of the averaged Gramian (Remark E.0a): the exact rate pays for ill-conditioning once, through "
+          "λ_min, and the bound pays twice.  The formula is the leading-order value of the closed-form rate kα²/(3c₁²); the measured "
+          "ratio is smaller because the Young step and the bound p_hi ≤ 3/4 have slack and because ε is optimised.  The ratio grows "
+          "further with the excitation strength Ψ_M²/k_e (fast adaptation).  α is the PE level over one period (t-independent; "
+          "800 Gauss–Legendre nodes, converged).", "",
           "## 3. The PE window (same ideal, G = diag(3, 3, 1.5))", "",
           "| T / period | α(T) | explicit rate | ε |", "|---|---|---|---|"]
     per = 20 * np.pi

@@ -28,13 +28,15 @@ so the ‖Ψζ‖² terms cancel in V̇ and
 
     V̇ ≤ −(k − εTΨ_M²)‖e‖² − εα‖ζ‖² + ε c₁ ‖e‖‖ζ‖,      c₁ := T²Ψ_M³ + T k Ψ_M + T Ψ_D.
 
-Young's inequality and the choice
+Young's inequality and the closed-form choice
 
-    ε := min{ 1 / (4(Q_M + TΨ_M/2)),   k / (2(TΨ_M² + c₁²/(2α))) }
+    ε := min{ 1 / (4(Q_M + TΨ_M/2)),   k / (4TΨ_M²),   kα / c₁² }
 
-give  ¼‖w‖² ≤ V ≤ ¾‖w‖²  and  V̇ ≤ −γ‖w‖²  with  γ := min{k/2, εα/2},  w := (e, ζ).  Hence
+give  ¼‖w‖² ≤ V ≤ ¾‖w‖²  and  V̇ ≤ −γ‖w‖²  with  γ := min{k/4, εα/2},  w := (e, ζ).  Hence
 
     ‖w(t)‖ ≤ √3 · exp(−(2γ/3)(t − t₀)) · ‖w(t₀)‖.
+
+Every ε with ε(Q_M + TΨ_M/2) < ½ gives a valid Lyapunov function (see strict_lyapunov_constants / optimise_eps).
 
 Every constant is a closed-form function of (k, α, T, Ψ_M, Ψ_D).  The rate vanishes as Ψ_D → ∞, as it must
 (Ψ = sin t² is bounded and PE but not uniformly exponentially stabilising; PARADIGM.md §6 step 3), and it scales
@@ -77,7 +79,8 @@ def strict_lyapunov_constants(k, alpha, T, Psi_M, Psi_D, eps=None):
     if not (0 < eps * (Q_M + T * Psi_M / 2.0) < 0.5):
         raise ValueError("ε must satisfy 0 < ε(Q_M + TΨ_M/2) < 1/2 for V to be positive definite")
     a, b, c = k - eps * T * Psi_M ** 2, eps * alpha, eps * c1
-    gamma = 0.5 * (a + b) - np.sqrt(0.25 * (a - b) ** 2 + 0.25 * c ** 2)       # λ_min of the 2×2 form
+    lam_max = 0.5 * (a + b) + np.sqrt(0.25 * (a - b) ** 2 + 0.25 * c ** 2)
+    gamma = (a * b - 0.25 * c ** 2) / lam_max            # λ_min of the 2×2 form as det/λ_max: no cancellation when b, c ≪ a (round-5 review, E0-1)
     p_lo = 0.5 - eps * (Q_M + T * Psi_M / 2.0)
     p_hi = 0.5 + eps * (Q_M + T * Psi_M / 2.0)
     gamma_cf = min(k / 4.0, eps * alpha / 2.0) if closed_form else np.nan
@@ -85,18 +88,21 @@ def strict_lyapunov_constants(k, alpha, T, Psi_M, Psi_D, eps=None):
                 p_lo=p_lo, p_hi=p_hi,
                 rate=float(gamma / (2.0 * p_hi)),                 # ‖w(t)‖ ≤ overshoot·e^{−rate (t−t₀)}‖w(t₀)‖
                 overshoot=float(np.sqrt(p_hi / p_lo)),
-                grad_V=1.0 + 2.0 * eps * (Q_M + T * Psi_M))        # ‖∂V/∂w‖ ≤ grad_V · ‖w‖
+                grad_V=1.0 + eps * (2.0 * Q_M + T * Psi_M))        # ‖∂V/∂w‖ ≤ grad_V · ‖w‖  (‖H − I‖ ≤ 2εQ_M + εTΨ_M)
 
 
 def optimise_eps(k, alpha, T, Psi_M, Psi_D, n_grid=400):
-    """The admissible ε maximising the guaranteed rate γ/(2p_hi) (log-grid search; every grid point is a valid
-    Lyapunov function, so the maximum is a rigorous bound)."""
+    """The admissible ε maximising the guaranteed rate γ/(2p_hi) over a log grid that always contains the closed-form ε
+    (every admissible ε gives a valid Lyapunov function, so the maximum over the grid is a valid bound for the given
+    data; the data (α, Ψ_M, Ψ_D) themselves are what the caller supplies).  Never returns None: the closed-form constants
+    are returned when no grid point beats them."""
     Q_M = T ** 2 * Psi_M ** 2 / 2.0
     eps_V = 0.5 / (Q_M + T * Psi_M / 2.0)
-    best = None
-    for eps in np.geomspace(eps_V * 1e-9, eps_V * (1 - 1e-6), n_grid):
+    best = strict_lyapunov_constants(k, alpha, T, Psi_M, Psi_D)                  # closed form: γ ≥ γ_cf > 0
+    lo = min(eps_V * 1e-9, 1e-3 * best['eps'])
+    for eps in np.geomspace(lo, eps_V * (1 - 1e-6), n_grid):
         c = strict_lyapunov_constants(k, alpha, T, Psi_M, Psi_D, eps=eps)
-        if c['gamma'] > 0 and (best is None or c['rate'] > best['rate']):
+        if c['gamma'] > 0 and c['rate'] > best['rate']:
             best = c
     return best
 
@@ -129,9 +135,17 @@ def Q_matrix(Psi_fun, t, T, n_nodes=200):
     return out
 
 
-def pe_level(Psi_fun, T, t_grid, n_nodes=200):
-    """α(T) := min over t in t_grid of λ_min(∫_t^{t+T} ΨᵀΨ)  (a lower bound of the PE level on the grid)."""
-    return float(min(np.linalg.eigvalsh(gramian(Psi_fun, t, T, n_nodes))[0] for t in t_grid))
+def pe_level(Psi_fun, T, t_grid, n_nodes=200, check=True, rtol=1e-6):
+    """α(T) := min over t in t_grid of λ_min(∫_t^{t+T} ΨᵀΨ)  (the PE level on the grid).  With check=True the quadrature
+    is repeated with 2·n_nodes at the minimising t and a ValueError is raised if the two values differ by more than
+    rtol: the Gauss–Legendre rule must resolve every oscillation of Ψ in the window (round-5 review, E0-3)."""
+    vals = [(np.linalg.eigvalsh(gramian(Psi_fun, t, T, n_nodes))[0], t) for t in t_grid]
+    a, t_min = min(vals, key=lambda v: v[0])
+    if check:
+        a2 = np.linalg.eigvalsh(gramian(Psi_fun, t_min, T, 2 * n_nodes))[0]
+        if abs(a2 - a) > rtol * max(abs(a), abs(a2), 1e-300):
+            raise ValueError(f"pe_level: quadrature not converged ({a:.6e} with {n_nodes} nodes, {a2:.6e} with {2 * n_nodes}); increase n_nodes")
+    return float(a)
 
 
 def sup_norms(Psi_fun, Psidot_fun, t_grid):

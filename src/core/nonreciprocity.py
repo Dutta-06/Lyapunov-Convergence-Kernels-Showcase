@@ -33,10 +33,14 @@ Two characterisations (proofs in PARADIGM.md):
   * n = 1: A ≡ 0 ⟺ r_μ = 0 ρ-a.e. on the orbit.  (B(ξ, ξ') = −((c − c')/s²) ∫ r_μ φ_c φ_c' dρ for equal widths; the
     product of two equal-width Gaussians is a Gaussian centred at (c + c')/2, and the Gaussian convolution of the finite
     signed measure r_μ ρ is entire and injective.)
-  * n ≥ 2 at perfect fit (r_μ = 0 on the orbit): A = 2K, and K ≡ 0 ⟺ the 1-current of the oriented orbit vanishes,
+  * n ≥ 2 at perfect fit (r_μ = 0 on the orbit): B = −∫(Dr_μ − Dr_μᵀ)φφ' dρ + 2κ I (the Lie-bracket terms vanish, the
+    curl term survives because r_μ = 0 on the orbit constrains only its tangential derivative), so A ≡ 0 ⟺ K ≡ 0 and
+    Dr_μ = Dr_μᵀ ρ-a.e.; A = 2K when r_μ vanishes near the orbit.  K ≡ 0 ⟺ the 1-current of the oriented orbit vanishes,
     T_𝒪 := ∫₀^{T₀} δ_{x_m(t)} ẋ_m(t) dt = 0.  (For equal widths κ(ξ, ξ') = −(1/(2s²)) e^{−|c−c'|²/(4s²)} (c − c')·F_s(m),
     m := (c + c')/2, F_s(m) := ⟨ e^{−|x_m − m|²/s²} ẋ_m ⟩_t = (G_s ∗ T_𝒪)(m) up to a constant, and F_s ≡ 0 on an open
     set forces T_𝒪 = 0.)  For n = 2, T_𝒪 = 0 ⟺ the winding-number function of the orbit vanishes a.e.
+  * Nowhere a gradient flow: A_ν is affine in ν, and along (1 − δ)μ + δ δ_{ϑ'} (ϑ' the zero feature, or a feature with
+    a' ≠ 0) A_ν ≢ 0 for all small δ > 0, so no open set of measures is reciprocal, for any n.
 """
 import numpy as np
 from .averaging import features, circulation_kernel, second_variation_formula

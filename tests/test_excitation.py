@@ -111,8 +111,9 @@ def test_remark_E1_omega_scaling_of_the_explicit_rate():
 
 def test_slow_adaptation_limit_ratio_is_bounded():
     """In the mean-field normalisation Ψ_G = m^{−1/2}Ψ(I⊗G^{1/2}) is small for large m.  Scaling G → 0 at fixed
-    ideal, the ratio (Floquet rate)/(explicit rate) tends to a constant (the bound is sharp up to a factor), while
-    in the fast regime it is large.  Checked on the m = 3, n = 2 ideal of the Theorem E tests with G = g·diag(2,2,1)."""
+    ideal, the ratio (Floquet rate)/(explicit rate) decreases towards a constant of order 3κ_Ψ(1 + Ψ_D/(kΨ_M))² (Remark
+    E.0a), while in the fast regime it is large.  Checked on the m = 3, n = 2 ideal of the Theorem E tests, driven by a
+    two-tone reference of period 20π, with G = g·diag(2,2,1); this is a no-growth check of the ratio."""
     rng = np.random.default_rng(12)
     m, n = 3, 2
     ctrl = T.TransportController(m, n, ke=6.0, g_a=30.0, g_c=30.0, g_s=15.0, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
@@ -125,14 +126,14 @@ def test_slow_adaptation_limit_ratio_is_bounded():
         G_diag = np.concatenate([np.full(n, G[0]), np.full(n, G[1]), [G[2]]])
         reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
         tg = np.linspace(0, per, 60)
-        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=160)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=800)     # converged PE level over 20π
         c = X.optimise_eps(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=80)
         f = X.floquet_rate(reg.Psi, ctrl.ke, per, n_steps=3000)
         assert c['rate'] <= f
         ratios.append(f / c['rate'])
     ratios = np.array(ratios)
     assert ratios[0] > ratios[-1]                           # fast regime is more conservative than slow
-    assert ratios[-1] < 1.5 * ratios[-2]                    # the ratio saturates as the gains shrink
+    assert ratios[-1] < 1.5 * ratios[-2]                    # no growth of the ratio as the gains shrink (a no-growth check, not a saturation check)
 
 
 def test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop():
@@ -140,7 +141,8 @@ def test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop():
     Theorem E (revised) with explicit constants on the implemented closed loop (Remark E.1's single-kernel instance
     with G = 0.3·I, where the Gramian is well conditioned and the constants are representable): for a start with
     ‖w(t₀)‖ ≤ r₀ in the w-coordinates, with L_J estimated numerically on D, the trajectory satisfies
-    ‖w(t)‖ ≤ overshoot·e^{−rate_nl t}‖w(0)‖ at every sample over a horizon of min(1/rate_nl, 8000).  The explicit constants are
+    ‖w(t)‖ ≤ overshoot·e^{−rate_nl t}‖w(0)‖ at every sample over a horizon of min(1/rate_nl, 8000) s, which is about
+    0.3 e-folds of the explicit envelope here (the exact rate is far larger, so the state itself decays by more).  The explicit constants are
     conservative (r₀ is of order 1e-5 here), so the check is on the inequality, not on sharpness.
     """
     rng = np.random.default_rng(7)
@@ -175,7 +177,7 @@ def test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop():
     w0 = S * z0
     assert np.linalg.norm(w0) <= cst['r0_w'] * (1 + 1e-9)
     P0 = P_star + z0[n:].reshape(m, p); x0 = plant.x_ref(0.0) + z0[:n]
-    T_end = min(1.0 / cst['rate_nonlinear'], 8.0e3)          # the explicit rate is slow; one e-fold of the envelope
+    T_end = min(1.0 / cst['rate_nonlinear'], 8.0e3)          # the explicit rate is slow (≈ 3.7e-5): 8000 s is ≈ 0.3 e-folds of the envelope
     res = T.rk4_closed_loop(plant, ctrl, x0, P0, T=T_end, dt=0.02, record_every=50)
     norms = []
     for t, x, P in zip(res['t'], res['x'], res['P']):

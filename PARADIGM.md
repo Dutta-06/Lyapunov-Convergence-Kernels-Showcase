@@ -1,7 +1,7 @@
 # Transport adaptive control: adaptive approximators as evolving measures
 
-**Version 4** (version 3 after adversarial review rounds 1–4, plus the results of the research continuation
-listed in `review/REVIEW_LOG.md` round 5: Lemma E.0, Theorem E with explicit constants, Theorem I). Version 2 is
+**Version 4**: version 3 after review rounds 1–4, plus the results of the research continuation reviewed in
+`review/REVIEW_LOG.md` round 5 (Lemma E.0, Theorem E with explicit constants, Theorems C′, D′, I and J, Proposition K). Version 2 is
 archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its line numbers.
 
 **Companion files.**
@@ -12,16 +12,21 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   - `src/core/averaging.py` implements the frozen-measure averaging of Proposition H.7.
   - `src/core/excitation.py` implements the strict Lyapunov function of Lemma E.0 and the explicit constants of Theorem E.
   - `src/core/nonreciprocity.py` implements the reciprocity criterion of Theorem I.
-- **Tests.** `tests/test_transport.py`, `tests/test_langevin.py`, `tests/test_averaging.py`, `tests/test_excitation.py`
-  and `tests/test_nonreciprocity.py`. Run them with `venv\Scripts\python -m pytest tests`.
+  - `src/core/periodic.py` implements the periodic orbits of the finite-m closed loop and the averaged objective J_m of Theorem J, and the collapsed-configuration analysis of Proposition K.
+  - `src/core/transport.py` also implements the optimal plan, the barycentric projection and the leak (L_σ,bar) of Theorem C′.
+- **Tests.** `tests/test_transport.py`, `tests/test_langevin.py`, `tests/test_averaging.py`, `tests/test_excitation.py`,
+  `tests/test_nonreciprocity.py`, `tests/test_periodic.py` and `tests/test_barycentric.py`. Run them with
+  `venv\Scripts\python -m pytest tests`.
 - **Experiments.** The scripts are `experiments/exp_transport_*.py`, `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py`, `exp_mean_field_m.py`,
   `exp_pe_convergence.py`, `exp_variable_projection.py`, `exp_slow_manifold_slope.py`, `exp_langevin_global.py`,
-  `exp_langevin_tradeoff.py`, `exp_gibbs_reference.py`, `exp_orbit_orientation.py` and `exp_explicit_rate.py`. Their numbers are
-  collected in `results/RESULTS_PARADIGM.md`.
+  `exp_langevin_tradeoff.py`, `exp_gibbs_reference.py`, `exp_orbit_orientation.py`, `exp_explicit_rate.py` and
+  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py` and `exp_barycentric_leak.py`. Their numbers are collected in
+  `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
-  point to `review/LITERATURE_refs.md`, and [S1]–[S14] point to the audit file.
+  point to `review/LITERATURE_refs.md`, and [S1]–[S20] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
-  `review/REVIEW_round1.md`, `review/REVIEW_round2.md` and `review/REVIEW_round3.md`.
+  `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md` and, for round 5, the five files
+  `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency).
 
 ---
 
@@ -56,7 +61,8 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
   - The first part is a *semi-gradient* term. The adaptive law differentiates the loss on the closed-loop state
     distribution while ignoring that this distribution depends on the parameters, as in performative prediction. Like
     semi-gradient TD, the resulting update is not the gradient of any objective. Its performative defect is
-    present for every n, and it is non-reciprocal in the checked instances (n = 1 and n = 2).
+    present for every n; for n = 1 it is non-reciprocal exactly when the residual is non-zero on the orbit
+    (Theorem I(iii)), and it is non-reciprocal in the checked n = 2 instance.
   - The second part is an antisymmetric interaction between kernels (n ≥ 2). Its kernel is an integral of
     Σ_k det[∇Φ̃_k(ϑ), ∇Φ̃_k(ϑ')] over the region that the reference orbit encloses (Stokes).
   - Along the real loop, a third part comes from the parameters' oscillation within each period. It is a second-order
@@ -79,22 +85,29 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | A | The adaptive law is the particle form of the Wasserstein gradient flow of a μ-linear potential. Projected rates coincide only for a per-kernel projection (m ≥ 2). | proved and checked | interpretive; ingredients known [29], [41], [46], [25] |
 | B | V_OT = ½‖e‖² + ½W² satisfies a Dini inequality with a two-regime matched remainder. It gives conditional RMS bounds along (L), and along (L_σ) with a leak term. | proved and checked, including a moving ideal, ε ≠ 0, switches, an active projection, and the failure of the plain bound along (L_σ) | packaging new; ingredients known [62], [64], [20], [49] |
 | C | OT σ-modification: exact dissipation for selection solutions; a gap-protected strict inequality with √C ≤ b + 2η; a local exponential estimate, m-uniform for a single-atom prior and O(m^{−1/2}) otherwise; reshuffling by the labelled leak | proved and checked; the C(iv) instance satisfies every hypothesis | novel as a control construction; C(i) and the obstruction are known [71], [73] |
+| C′ | The OT leak toward a prior with any number of atoms, through the barycentric projection of the optimal plan: dissipation of W(μ, ν) up to the within-cell variance of the plan, fixed points of the pure leak = equal-mass centroidal configurations of the prior (Lloyd's algorithm in continuous time, the G-gradient flow of the quantisation energy), induced-coupling bound √C_bar ≤ b + 2η, Lyapunov inequality and local exponential estimate with the bias b_bar := distance of the ideal from the centroids of its prior cells (≤ b) | proved for vertex-selection solutions (existence assumed) and for generalised solutions (which exist); checked (dissipation at every step, convergence to a Lloyd fixed point, the coupling bound and plan stability, the Lyapunov inequality along the closed loop) | the law is the continuous-time Lloyd descent of coverage control [S18] with equal-mass (capacity-constrained) OT plans [S19], used as a σ-modification leak; new here are the induced-coupling bound, the Lyapunov inequality with the bias b_bar and the transfer reading; the quantisation side is Lloyd/CVT theory [S20]; it reduces to Theorem C for m₀ = m |
 | D | Local well-posedness of the mean-field loop; a Dobrushin estimate; a tube bound and global existence under a self-consistent growth condition; the mean-field limit on the existence interval | proved; consistency in m checked numerically (the constant is not checked) | technique anticipated [77]–[79] |
 | E | Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed m, with explicit radius, overshoot and rate (Lemma E.0); exponential merging of solutions | proved, self-contained; linearisation checked; the strict Lyapunov inequality checked pointwise and the explicit envelope checked on the linearised and on the implemented loop; convergence observed. The explicit rate is a valid but conservative lower bound of the exact rate (Remark E.0a) | partially anticipated [49], [54]; the strict Lyapunov function is of the Mazenc–Malisoff type |
 | F | Along (L), the Wasserstein length of learning is ≤ λ_G^{1/2}L₁∫‖e‖; leak versions | proved and checked, including the leak clause, a tight leak instance with e ≡ 0 and a tight velocity instance | elementary |
 | G | Averaged joint descent on the occupation loss. The slow geometry follows the gradient flow of the profile loss in the metric induced on the slow manifold, which is plain variable projection only when that manifold is flat (S ≪ 1). | formal; checked directly, including a counterexample to plain VarPro at S = O(1) | a fixed-m, closed-loop analogue of the two-timescale/VarPro training of [S1], [S2] |
 | H | The averaged mean-field loop with saturated features, σ-modification and dither is mean-field Langevin dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in control quantities. | proved for (𝔄); the reduction to (𝔄) is formal (Remark H.0); real loop: Conjecture H.6 | a bridge to [S3], [S4]; new in adaptive control |
 | H.7 | At a frozen measure, the exactly averaged loop is (𝔄) plus an explicit O(1/k_e) correction: a semi-gradient term, whose performative defect is present for every n, and an orbit-area circulation kernel (n ≥ 2). Along the real loop, a second-order averaging term is added (Remark H.7a). | Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through its O(1/k_e) convergence. Non-reciprocity of the exact second variation is checked to 3% (asserted; 1–1.5% measured) and characterised by Theorem I. The full first-order theory predicts the orientation dependence of the learned kernels in the real closed loop to 3% in size and 11% as a vector (cosine 0.994, k_e = 40). | no precedent found (targeted search, round 3); ingredients known (higher-order averaging; performative prediction [S14]; semi-gradient TD [S10], [S11]) |
-| I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A ≡ 0 iff the residual vanishes on the orbit, so the performative non-reciprocity is proportional to the residual. For n ≥ 2 at perfect fit, A = 2K, which vanishes iff the oriented orbit carries no circulation (n = 2: zero winding function). A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. | proved; every formula checked against the generic second-variation code; the two characterisations checked on perfect-fit and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
+| I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A_μ ≡ 0 iff the residual vanishes on the orbit, and the performative non-reciprocity is bounded by the residual. For n ≥ 2 at perfect fit, A_μ ≡ 0 iff the oriented orbit carries no circulation (n = 2: zero winding function) and the residual's Jacobian is symmetric along the orbit; A_μ = 2K when the residual vanishes near the orbit. A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. No open set of measures is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻². | proved; every formula checked against the generic second-variation code and, by the round-5 referee, against the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
+| D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p} | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
+| J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
+| K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | H.8 | (𝔄) is input-to-state stable under drift perturbations, with gain 1/(τρ_τ) | proved, assuming the chain rule for the perturbed flow | elementary given [S3] |
 
 **Where the new mathematics lies.** The new mathematics this viewpoint requires lies in the open problems of §8.
 
 1. Infinite-horizon averaging for McKean–Vlasov closed loops. Propositions H.7 and H.8 reduce it to controlling a
-   near-identity averaging transformation along the moving measure.
+   near-identity averaging transformation along the moving measure. Theorem J settles the deterministic finite-m case.
 2. Uniform-in-time propagation of chaos with a plant in the loop.
 3. The theory of the non-reciprocal, semi-gradient mean-field dynamics that the closed loop actually produces.
-   Theorem I settles when it is non-reciprocal; its long-time behaviour is open.
+   Theorem I characterises its non-reciprocity (completely for n = 1 and at perfect fit; by an explicit bilinear form
+   otherwise, and nowhere reciprocal on an open set); its long-time behaviour is open.
+   Proposition K turns one of its effects into a design rule: near the critical leak, the orientation of the reference
+   orbit decides whether a collapsed network separates.
 4. Global convergence without dither.
 
 ---
@@ -651,6 +664,185 @@ So the trade-off reflects this geometry. On one side is a global inequality for 
 relabelled starts (hence the reshuffling of Proposition C.5). On the other is a local, gap-protected inequality for
 the label-free V_OT.
 
+### 4b. Theorem C′ — the OT leak toward a prior with a different number of atoms: continuous-time equal-mass Lloyd
+
+Theorem C needs a prior with as many atoms as the network. Here the prior is any ν ∈ P₂(Θ_K^{ε}), for example the
+empirical measure of a network of a different size (the transfer problem of §8, branch 8), and the leak points at the
+barycentre of the prior mass that the optimal plan assigns to each particle. The dissipation toward the prior survives
+up to the quantisation error, the fixed points of the pure leak are the equal-mass centroidal configurations of ν (the
+leak is Lloyd's algorithm in continuous time), and the Lyapunov bias is measured by the distance of the ideal from the
+*centroids* of its prior cells, not by W(μ*, ν).
+
+**The law.** Let ν ∈ P₂(Θ_K^{ε}), for instance ν = (1/m₀)Σ_{j=1}^{m₀}δ_{ϑ⁰_j} with any m₀ ≥ 1. For
+μ = (1/m)Σδ_{ϑ_i}, let γ be a vertex optimal plan from μ to ν for the cost ‖·‖²_{G⁻¹} (for atomic ν a vertex of the
+transportation polytope; for general ν any optimal plan), and let
+
+    T̄_i := m∫ϑ' dγ(ϑ_i, ϑ')    (the barycentric projection of γ at ϑ_i; for atomic ν, T̄_i = mΣ_jγ_{ij}ϑ⁰_j),
+    V_bar² := (1/m)Σ_i‖ϑ_i − T̄_i‖²_{G⁻¹},    Var_γ := ∫‖ϑ' − T̄(ϑ)‖²_{G⁻¹}dγ(ϑ,ϑ'),    so that    W(μ,ν)² = V_bar² + Var_γ.
+
+The **barycentric OT leak** is
+
+    ϑ̇_i = Proj_K( ϑ_i, G∇g_t(ϑ_i) − σ_m(ϑ_i − T̄_i) ).                                                        (L_σ,bar)
+
+For atomic ν the plan is a vertex of the transportation polytope (row sums 1/m, column sums 1/m₀), computed by linear
+programming (`transport.optimal_plan`, `transport.barycentric_projection`); for m₀ = m it is a permutation and (L_σ,bar)
+is (L_σ). The right-hand side is discontinuous where the optimal plan is not unique, and here, unlike §4 (Lemma C.3),
+the plan does switch along solutions (numerics below), so two solution concepts are used. *Vertex-selection solutions*
+are absolutely continuous ϑ(t) with ϑ̇_i = Proj_K(ϑ_i, G∇g_t − σ_m(ϑ_i − T̄_i^{γ(t)})) for a.e. t and γ(t) a vertex optimal
+plan at ϑ(t); the time-stepped implementation produces these (switches at step times), and their existence for all time
+is assumed. *Generalised solutions* allow γ(t) to be any measurable selection of optimal plans. The optimal face F(ϑ) of
+the transportation LP is a compact convex polytope, upper semicontinuous in ϑ (finitely many vertices, continuous costs),
+and γ ↦ T̄^γ is linear, so the set of generalised velocities is compact, convex and upper semicontinuous in ϑ: it contains
+the Filippov regularisation of the vertex law, and generalised solutions exist on [0, ∞) by the standard theorem for such
+differential inclusions (the projection is handled as in §4). Every statement below holds for both concepts, with T̄ and
+V_bar computed from the plan the solution uses. Since Θ_K^{ε} is convex, T̄_i ∈ Θ_K^{ε}, so property (P) applies with
+ϑ' = T̄_i.
+
+**Notation.** η := W(μ_t, μ*_t), b := sup_t W(μ*_t, ν), and
+
+    b_bar(t)² := (1/m)Σ_j‖ϑ*_j(t) − T̄*_j(t)‖²_{G⁻¹} = W(μ*_t, ν)² − Var_{γ*(t)},    b_bar := sup_t b_bar(t),
+
+the *centroid defect of the ideal*, computed with an optimal plan γ*(t) from μ*_t to ν. Δ_gap(t) is the gap between the
+optimal and the next vertex cost of the transportation polytope at μ*_t (min ∅ := +∞), and Δ_gap := inf_t Δ_gap(t).
+
+**Theorem C′.** Under (S), along every vertex-selection or generalised solution of (L_σ,bar):
+
+(i) *Dissipation toward the centroidal configurations.* With Z := ½W(μ_t, ν)² and Γ as in Theorem C(i),
+
+    D⁺Z ≤ −σ_m V_bar² + V_bar·Γ ≤ −2σ_m(Z − ½Var_γ) + (2Z)^{1/2}Γ    for a.e. t.
+
+For the pure leak (Γ ≡ 0), W(μ_t, ν) is non-increasing, strictly decreasing wherever the plan in use is not centroidal
+(V_bar > 0), and at every ω-limit point ϑ_∞ of a solution on the compact Θ_K some optimal plan γ_∞ at ϑ_∞ is centroidal:
+ϑ_{∞,i} = T̄_i^{γ_∞} for all i — a vertex plan for a vertex-selection solution. Such configurations are the fixed points of
+the equal-mass Lloyd iteration ϑ ← T̄^γ(ϑ) with an optimal (vertex) plan; where the optimal plan is unique they are the
+critical points of the quantisation energy ϑ ↦ ½W²((1/m)Σδ_{ϑ_i}, ν), which is differentiable there, and the pure leak
+is its G-gradient flow with the factor m: ϑ̇_i = −σ_m m G∂_{ϑ_i}[½W²]. They include degenerate configurations with
+coincident particles. For m₀ = m, Var_γ = 0 and (i) is Theorem C(i).
+
+(ii) *Induced coupling.* Let π* be optimal from μ to μ*, and let γ be the plan the law uses at t. Put
+C_bar := (1/m)Σ_i‖ϑ*_{π*(i)} − T̄_i‖²_{G⁻¹}. Then
+
+    √C_bar ≤ b(t) + 2η    always,    and, for atomic ν,    C_bar = b_bar(t)² whenever 4η(b(t) + η) < Δ_gap(t) and γ*(t) is unique.
+
+(iii) *Lyapunov inequality.* With C_bar as in (ii),
+
+    D⁺V_OT ≤ −k_e‖e‖² + ‖e‖(ε_max + Kλ_Gη²) + V_*η − σ_mη² + σ_mη√C_bar,
+
+and under the gap condition of (ii) the leak terms are at most −(σ_m/2)η² + (σ_m/2)b_bar².
+
+(iv) *Local exponential estimate.* For atomic ν, Theorem C(iv) holds verbatim with b replaced by b_bar: under 4η̄(b + η̄) < Δ_gap,
+uniqueness of γ*(t), and 8K²λ_G²η̄² ≤ k_eσ_m, with α := min(k_e, σ_m/2) and β := ε_max²/k_e + (σ_m/2)b_bar² + 2V_*²/σ_m,
+if max{V_OT(0), β/α} < η̄²/2 then V_OT(t) ≤ e^{−αt}V_OT(0) + β/α and {V_OT ≤ c} is forward invariant for
+c ∈ [max{V_OT(0), β/α}, η̄²/2).
+
+(v) *What the bias measures.* b_bar ≤ b, with b_bar = 0 exactly when the ideal is itself an equal-mass centroidal
+configuration of ν. So a prior with many atoms whose centroidal m-quantisation coincides with the ideal anchors the
+network without bias, although W(μ*, ν) > 0; a prior with the right number of atoms but the wrong positions has
+b_bar = b.
+
+*Scope of (ii)–(iv).* The gap condition 4η(b + η) < Δ_gap(t) asks the network to be closer to the ideal than the optimal
+vertex of the LP is to the next one. For a prior with many atoms, Δ_gap is at most the cost of exchanging two atoms
+between two cells, which is O(1/m₀), so the condition holds only in a small neighbourhood of the ideal; in the
+closed-loop experiment below 4η(0)(b + η(0)) exceeds that bound by factors 83–175, and (iv) applies to no tested
+instance (the table reports the exchange bound on Δ_gap, η(0) and 4η(0)(b + η(0)) for each run). What the experiment
+confirms is the fixed-point structure, (i) and (v): the loop settles at the centroidal configuration of its prior, whose
+distance from the ideal is b_bar.
+
+*Proof.* (i) At a.e. t the law uses an optimal plan γ, and for h > 0 the same plan couples μ_{t+h} and ν, so
+W(μ_{t+h}, ν)² ≤ Σ_{ij}γ_{ij}‖ϑ_i(t+h) − ϑ⁰_j‖²_{G⁻¹} (for general ν, ∫‖ϑ_i(t+h) − ϑ'‖²dγ). Differentiating the
+right-hand side at h = 0,
+
+    D⁺Z ≤ Σ_{ij}γ_{ij}⟨ϑ_i − ϑ⁰_j, G⁻¹ϑ̇_i⟩ = (1/m)Σ_i⟨ϑ_i − T̄_i, G⁻¹ϑ̇_i⟩,
+
+because Σ_jγ_{ij}(ϑ_i − ϑ⁰_j) = (1/m)(ϑ_i − T̄_i). Apply (P) with ϑ' = T̄_i ∈ Θ_K^{ε} and y = ∇g_t − σ_mG⁻¹(ϑ_i − T̄_i):
+⟨ϑ_i − T̄_i, G⁻¹ϑ̇_i⟩ ≤ ⟨ϑ_i − T̄_i, ∇g_t(ϑ_i)⟩ − σ_m‖ϑ_i − T̄_i‖²_{G⁻¹}. Average and use Cauchy–Schwarz for the first term:
+(1/m)Σ⟨ϑ_i − T̄_i, ∇g_t⟩ ≤ V_bar·Γ ≤ (2Z)^{1/2}Γ. The Pythagorean identity W² = V_bar² + Var_γ follows from
+Σ_jγ_{ij}(ϑ⁰_j − T̄_i) = 0: for each i, Σ_jγ_{ij}‖ϑ_i − ϑ⁰_j‖² = Σ_jγ_{ij}(‖ϑ_i − T̄_i‖² + ‖T̄_i − ϑ⁰_j‖²). For the pure
+leak, Z is non-increasing and D⁺Z ≤ −σ_mV_bar(t)², with V_bar computed from the plan in use (the coupling inequality
+above holds for every optimal plan, vertex or not), so Z converges and ∫₀^∞V_bar²dt ≤ Z(0)/σ_m < ∞. V_bar itself is
+neither monotone nor continuous — it jumps at plan switches, upward as well as downward (numerics below) — so the
+ω-limit statement rests on the stability of the LP instead. Let ϑ_∞ be an ω-limit point and F_∞ the set of optimal
+plans at ϑ_∞ (for a vertex-selection solution, its finitely many vertices). For a fixed plan γ the barycentres T̄^γ_i do
+not depend on ϑ, so V_bar^γ(ϑ) := ((1/m)Σ‖ϑ_i − T̄^γ_i‖²_{G⁻¹})^{1/2} is 1-Lipschitz in ϑ for the norm
+((1/m)Σ‖·‖²_{G⁻¹})^{1/2}; and the optimal face is upper semicontinuous — the plan costs are continuous in ϑ and the
+polytope has finitely many vertices — so every plan optimal at a ϑ close enough to ϑ_∞ lies in F_∞. Suppose no plan of
+F_∞ is centroidal; then δ := min_{γ∈F_∞}V_bar^γ(ϑ_∞) > 0 (a minimum over a compact set), and for ‖ϑ − ϑ_∞‖ < δ/2,
+V_bar(ϑ) ≥ δ/2 whatever optimal plan is in use. The speed is bounded by σ_m·diam_{G⁻¹}(Θ_K) (Lemma P.1), so the solution,
+which enters the ball of radius δ/4 around ϑ_∞ at arbitrarily large times, either stays in the ball of radius δ/2 from
+some time on or spends a time ≥ δ/(4σ_m diam) in it on each of infinitely many visits; either way ∫V_bar²dt = ∞, a
+contradiction. Hence some plan of F_∞ — a vertex for vertex-selection solutions — is centroidal at ϑ_∞. (A two-way tie
+between vertex plans γ and ρ is not a sliding mode of the vertex law unless T̄^γ = T̄^ρ: the rate of change of c_ρ − c_γ
+when following γ, plus that of c_γ − c_ρ when following ρ, equals (2σ_m/m)Σ_i‖T̄^γ_i − T̄^ρ_i‖²_{G⁻¹} ≥ 0, so at least one of
+the two plans stays optimal when followed. Ties between three or more plans are not analysed.) The gradient identity is the envelope theorem for the
+transportation LP at a configuration with a unique optimal plan: ∂_{ϑ_i}[½Σγ_{ij}‖ϑ_i − ϑ⁰_j‖²_{G⁻¹}] = Σ_jγ_{ij}G⁻¹(ϑ_i − ϑ⁰_j)
+= (1/m)G⁻¹(ϑ_i − T̄_i), so −σ_m(ϑ_i − T̄_i) = −σ_m m G∂_{ϑ_i}[½W²]. (Where the plan is not unique, ½W²(·, ν) is not differentiable; the generalised velocities are then −σ_m m G ξ with ξ
+ranging over the barycentric projections of the optimal plans — the elements of the (sub)differential of ½W²(·, ν) at
+an atomic μ, cf. [AGS, §10.4].)
+
+(ii) Relabel so that (1/m)Σ‖ϑ_i − ϑ*_i‖²_{G⁻¹} = η². For any plan ρ with row sums 1/m, the plan cost
+c_ρ(ϑ) := Σρ_{ij}‖ϑ_i − ϑ⁰_j‖²_{G⁻¹} is the squared norm of (ϑ_i − ϑ⁰_j) in L²(ρ), so |√c_ρ(ϑ) − √c_ρ(ϑ*)| ≤ η by the
+triangle inequality (the labels of ϑ and ϑ* are matched). The barycentric part is dominated by the plan cost:
+C_bar = (1/m)Σ‖ϑ*_i − T̄_i‖² ≤ c_γ(ϑ*) because Σ_jγ_{ij}‖ϑ*_i − ϑ⁰_j‖² = (1/m)‖ϑ*_i − T̄_i‖² + Σ_jγ_{ij}‖T̄_i − ϑ⁰_j‖². Let
+γ* be optimal for (ϑ*, ν). Then √C_bar ≤ √c_γ(ϑ*) ≤ √c_γ(ϑ) + η ≤ √c_{γ*}(ϑ) + η ≤ √c_{γ*}(ϑ*) + 2η = b(t) + 2η. For the
+equality case: c_γ(ϑ*) − b(t)² ≤ (b + 2η)² − b² = 4η(b + η) < Δ_gap(t); the vertex γ (a vertex by the choice of the law) has cost at ϑ* strictly below the next vertex cost, so it is optimal at
+ϑ*; if γ*(t) is unique, γ = γ*(t) and C_bar = (1/m)Σ‖ϑ*_i − T̄*_i‖² = b_bar(t)². [For a generalised solution whose plan
+at t is not a vertex, the same chain applies to each vertex of the optimal face at ϑ, so every such vertex is optimal at
+ϑ*, and uniqueness of γ*(t) again gives γ = γ*(t).]
+
+(iii) Apply Theorem B with y = ∇g_t − σ_mG⁻¹(ϑ_i − T̄_i) in (P). The extra term is
+−σ_m(1/m)Σ⟨ϑ̃_i, ϑ̃_i + ϑ*_{π*(i)} − T̄_i⟩_{G⁻¹} ≤ −σ_mη² + σ_mη√C_bar. Under the gap condition √C_bar = b_bar(t) ≤ b_bar and
+σ_mηb_bar ≤ (σ_m/2)(η² + b_bar²).
+
+(iv) is the proof of Theorem C(iv) with b_bar in place of b.
+
+(v) b_bar(t)² = W(μ*_t, ν)² − Var_{γ*(t)} ≤ W(μ*_t, ν)², with equality iff Var_{γ*} = 0, that is, iff every cell of γ*
+consists of a single atom of ν (coincident atoms counted once) — the case m₀ = m, but also m₀ | m and priors with repeated
+atoms — and b_bar = 0 iff ϑ*_j = T̄*_j for all j (at a tie, with the plan γ*(t) fixed by the selection). ∎
+
+*Remark C′.1 (reading).* The barycentric leak replaces "pull each kernel to its prior kernel" by "pull each kernel to
+the centre of mass of the prior it is responsible for". Three consequences.
+
+- *Transfer across sizes.* A network of m kernels can be anchored to a learned measure of m₀ ≠ m kernels. The bias in
+  the Lyapunov inequality is b_bar, the distance of the ideal from the centroids of its cells, not the quantisation error
+  W(μ*, ν) itself.
+- *Quantisation on the fly.* With e ≡ 0 the law is Lloyd's algorithm for the equal-mass quantisation of ν in the G⁻¹
+  metric, in continuous time — the continuous-time Lloyd descent of coverage control [S18], with the equal-mass
+  constraint of capacity-constrained quantisation [S19]; so the controller's leak and the quantisation theory of
+  Corollary B.6 (§8, branch 9) are the same object. Like Lloyd's algorithm it converges to a critical point of the
+  quantisation energy, not necessarily the global minimiser.
+- *Theorem F.* The leak clauses (i′)–(iii′) of Theorem F hold with W(μ_r, ν) replaced by V_bar(r) ≤ W(μ_r, ν), since
+  ‖ϑ̇_i‖_{G⁻¹} ≤ ‖∇g_t‖_G + σ_m‖ϑ_i − T̄_i‖_{G⁻¹} by Lemma P.1 and Minkowski.
+
+*Checked* (`tests/test_barycentric.py`): the plan reduces to the assignment for m₀ = m (1e-10) and the Pythagorean
+split W² = V_bar² + Var_γ holds (1e-10); along the pure leak W² is non-increasing at every step, the Dini bound
+D⁺Z ≤ −σ_mV_bar² holds at every state (within 5% of the first-order Euler quotient), the flow reaches V_bar² < 1e-8, and
+the end point is a fixed point of the equal-mass Lloyd iteration with the same W²; √C_bar ≤ b + 2η on 90 random
+configurations, with C_bar = b_bar² at small η; the Lyapunov inequality (iii) holds at every recorded state of a closed
+loop with the barycentric leak toward a 24-atom prior. The numbers are in `results/barycentric_leak/table.md`
+(`exp_barycentric_leak.py`).
+
+*Numerics* (`results/barycentric_leak/table.md`).
+
+- *Pure leak toward a 48-atom prior* (m = 6, lifted dimension 3, G = diag(2, 1, 0.5), σ_m = 1, three random starts). W²(μ_t, ν)
+  is non-increasing at every one of the 3000 steps; the flow stops where the centroid defect is at the rounding level
+  (V_bar² ≤ 2.2·10⁻²⁵) and W² = Var_γ (1.164, 1.213, 1.203 from 2.55, 2.30, 2.58), after 2–6 plan switches, at which
+  V_bar jumps (upward as well as downward). The end points are fixed points of the equal-mass Lloyd iteration; the best
+  of 20 Lloyd runs from random starts reaches 1.171, below two of the three end points and above the third: like Lloyd's
+  algorithm, the leak finds a local minimiser of the quantisation energy, not always the global one. With m₀ = m the same code reproduces the exact decay of Theorem C(i) to 5·10⁻¹⁶.
+- *Closed loop* (representable plant with an m* = 4 ideal, m = 4, k_e = 4, σ_m = 0.5, three seeds). Three leaks of
+  the same gain: (A) the OT leak toward the ideal itself, (B) the barycentric leak toward a 32-atom cloud of jittered
+  copies of the ideal atoms, (C) the labelled leak toward a random 4-subset of the cloud. The network converges, in
+  each case, to the configuration its leak anchors: (A) to the ideal (W(μ_T, μ*) and RMS‖e‖ below the printed
+  precision); (B) to the
+  equal-mass centroids of the cloud, at W(μ_T, μ*) = 0.167, 0.097, 0.157, which equal the centroid defects b_bar of the
+  ideal (0.168, 0.097, 0.159) although W(μ*, ν) = 0.45, 0.33, 0.40; (C) to the subset, at W(μ_T, μ*) = 0.61, 1.02, 0.35
+  against W(μ*, subset) = 0.65, 1.03, 0.40. The steady tracking RMS is 0.002–0.007 for (B) and 0.03–0.04 for (C). So
+  the loop settles at the centroidal configuration of its prior, at distance b_bar from the ideal, as the fixed-point
+  statements (i) and (v) describe; the Lyapunov bound (iv) does not apply to these runs (scope paragraph: the exchange
+  bound on Δ_gap and 4η(0)(b + η(0)) are in the table). The comparison with (C) shows the cost of a prior of the right
+  size at the wrong positions, not an advantage of barycentric over labelled leaks as such: a labelled leak toward the
+  cloud's own equal-mass m-quantiser would have the same bias b_bar by (v).
+
 ---
 
 ## 5. Theorem D — the mean-field closed loop
@@ -847,6 +1039,156 @@ Checked at every sample (with the particle path length ≥ the Wasserstein lengt
 - (ii′) along (L_σ), on a grid of pairs, including an instance with e ≡ 0 where it is tight (ratio ≥ 0.99) and the
   (L) reading fails.
 
+## 5c. Theorem D′ — propagation of chaos for the dithered closed loop on finite horizons
+
+Theorem D covers the deterministic projected law (L). The route to Conjecture H.6 (§6c) lists the mean-field limit of
+the dithered law (L_τ) as one of its three missing pieces. This section proves it on finite horizons, with an explicit
+m^{−1/2} rate that does not depend on the temperature, by a synchronous coupling. The uniform-in-time statement is
+§8, branch 3.
+
+**Setting.** The design of Theorem H: saturated features Φ̃, ‖Φ̃‖ ≤ K_Φ, with all ϑ-derivatives bounded uniformly in x,
+and the m-particle closed loop
+
+    ẋ = f(x) + ẋ_m − k_e e − (1/m)Σ_jΦ̃(x;ϑ_j),    e = x − x_m(t),
+    dϑ_i = b(x, e, ϑ_i)dt + √(2τ)G^{1/2}dB_i,    b(x, e, ϑ) := G∇_ϑ[eᵀΦ̃(x;ϑ)] − σ(ϑ − ϑ⁰),    i = 1..m,          (L_τ)
+
+with independent Brownian motions B_i, i.i.d. initial particles ϑ_i(0) ∼ μ̄_0 ∈ P₂(ℝ^p) independent of the B_i, and a
+deterministic x(0) = x̄_0. f is C¹ and x_m ∈ C¹ with ẋ_m bounded; no autonomy or periodicity is needed. The
+**McKean–Vlasov closed loop** is
+
+    ẋ̄ = f(x̄) + ẋ_m − k_e ē − ∫Φ̃(x̄;ϑ)dμ̄_t(ϑ),    ē = x̄ − x_m(t),
+    dϑ̄ = b(x̄_t, ē_t, ϑ̄)dt + √(2τ)G^{1/2}dB,    μ̄_t := Law(ϑ̄_t),                                                 (MV)
+
+from the same x̄_0 and ϑ̄(0) ∼ μ̄_0. Here x̄_t is deterministic, and the particle ϑ̄ interacts with its own law only
+through x̄_t.
+
+**Standing bound.** Fix T > 0 and suppose both x^m (for every m and every realisation) and x̄ remain in a compact set
+X on [0,T]. Since ‖(1/m)ΣΦ̃‖ ≤ K_Φ and ‖∫Φ̃dμ̄‖ ≤ K_Φ whatever the parameters, the tube bound of Theorem D(b) (with
+a_max replaced by K_Φ) gives such an X for every T when its self-consistent growth condition holds, for example for
+bounded f; otherwise the statement is local in time, as in Theorem D(d). Put E_X := sup_{t≤T, x∈X}‖x − x_m(t)‖ and let
+
+    L_f := Lip_X f,    L_x := sup‖∂_xΦ̃‖,    L_ϑ := sup‖∇_ϑΦ̃‖,
+    L_b := λ_G( L_ϑ + E_X sup‖∂_x∇_ϑΦ̃‖ + E_X sup‖∇²_ϑΦ̃‖ ) + σ    (a Lipschitz constant of (x, e, ϑ) ↦ b on X × {‖e‖ ≤ E_X} × ℝ^p
+                                                                      for the norm ‖x‖ + ‖e‖ + ‖ϑ‖),
+    Λ := max{ L_f + L_x + 2L_b, L_ϑ + L_b }.
+
+All of these are finite by saturation and independent of m and τ; the suprema of the Φ̃-derivatives are over all x ∈ ℝⁿ
+(the saturated features and their derivatives are globally bounded), so the segments between x and x̄ used below may
+leave X. The constants grow with the output dimension n (K_Φ = a_max√n), not with the lifted dimension p beyond that.
+
+**Theorem D′.** Under the standing bound:
+
+(a) *Well-posedness.* (MV) has a unique solution (x̄, Law(ϑ̄)) on [0,T], and x̄ is deterministic.
+
+(b) *Synchronous coupling.* Let ϑ̄_i, i = 1..m, be the solutions of (MV)'s particle equation driven by the same B_i and
+started at the same ϑ_i(0) as the m-particle system. Then, pathwise,
+
+    ‖x_t − x̄_t‖ + (1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖ ≤ e^{Λt}∫₀^t ζ_s ds,    ζ_s := ‖(1/m)Σ_jΦ̃(x̄_s;ϑ̄_j(s)) − ∫Φ̃(x̄_s;·)dμ̄_s‖,
+
+and since the ϑ̄_j(s) are i.i.d. with law μ̄_s and x̄_s is deterministic, E ζ_s² ≤ K_Φ²/m. Hence
+
+    E sup_{t≤T}( ‖x_t − x̄_t‖ + (1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖ ) ≤ T K_Φ e^{ΛT} m^{−1/2},
+    E sup_{t≤T}( ‖x_t − x̄_t‖ + (1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖ )² ≤ T² K_Φ² e^{2ΛT} m^{−1},
+
+with constants independent of τ ≥ 0 and of μ̄_0. The exponent −1/2 does not depend on the dimension; the constants do,
+through K_Φ and the Lipschitz bounds of Φ̃ (standing bound).
+
+(c) *Consequences.*
+- Propagation of chaos: for each fixed k, the law of (ϑ_1, …, ϑ_k) on [0,T] converges to the k-fold product of the
+  path law of ϑ̄, with the per-particle bound E sup_{t≤T}‖ϑ_i(t) − ϑ̄_i(t)‖ ≤ 2(e^{L_bT} − 1)T K_Φ e^{ΛT}m^{−1/2} for
+  every i. (Exchangeability alone gives only the fixed-t bound E‖ϑ_i(t) − ϑ̄_i(t)‖ = EΔ̄(t) ≤ T K_Φ e^{ΛT}m^{−1/2}, since
+  sup_t of a mean is not the mean of the sup_t; the per-particle sup bound is the pathwise Grönwall estimate of the proof.)
+- The learned function converges at the rate m^{−1/2}: at each fixed t,
+  E‖f̂^m(x_t) − ∫Φ̃(x̄_t;·)dμ̄_t‖ ≤ (L_x + L_ϑ)T K_Φ e^{ΛT}m^{−1/2} + E ζ_t ≤ ((L_x + L_ϑ)T e^{ΛT} + 1)K_Φ m^{−1/2}
+  (the supremum over t would need a chaining argument for ζ and is not pursued).
+- The parameter measure converges in W₁ (Euclidean cost on ℝ^p; the G⁻¹ metric used elsewhere changes it by a factor
+  λ_G^{±1/2}) at the i.i.d. rate: E W₁(μ^m_t, μ̄_t) ≤ T K_Φ e^{ΛT}m^{−1/2} + E W₁(μ̄^{emp,m}_t, μ̄_t), where μ̄^{emp,m}_t is
+  the empirical measure of m i.i.d. samples of the time-t marginal μ̄_t; the last term is O(m^{−1/p}) for p > 2
+  (Fournier–Guillin; applicable because μ̄_t has a bounded second moment on [0,T], the drift being linearly bounded). Only
+  this term carries the dimension.
+
+(d) *τ = 0.* The statement holds for the deterministic saturated law with i.i.d. initial particles, where it gives, for
+this law (not the projected law of Theorem D(d)), the explicit m^{−1/2} rate in place of a rate δ_m → 0 for the state and
+the paired particles.
+
+*Proof.* (a) Let X′ be a compact neighbourhood of X on which f is Lipschitz. For a given curve x̄ ∈ C([0,T₁]; X′), the
+particle equation of (MV) is an SDE with drift Lipschitz in ϑ (bounded ∇²_ϑΦ̃ and the linear leak; the derivative bounds
+of Φ̃ are global in x) and constant diffusion; it has a unique strong solution, whose law μ̄_t[x̄] depends
+Lipschitz-continuously on x̄: by synchronous coupling of two solutions driven by x̄ and x̄′,
+d‖ϑ̄ − ϑ̄′‖/dt ≤ L_b(2‖x̄ − x̄′‖ + ‖ϑ̄ − ϑ̄′‖), so W₁(μ̄_t[x̄], μ̄_t[x̄′]) ≤ 2L_b∫₀^t e^{L_b(t−s)}‖x̄_s − x̄′_s‖ds. The plant
+input ẋ_m − k_eē − ∫Φ̃dμ̄ is bounded by sup‖ẋ_m‖ + k_eE_{X′} + K_Φ whatever the measure, so for T₁ small the plant solutions
+from x̄_0 stay in X′, and the map x̄ ↦ (solution of the plant ODE with input ∫Φ̃(·;ϑ)dμ̄_t[x̄]) sends C([0,T₁]; X′) into
+itself and is a contraction there, since μ ↦ ∫Φ̃(x;·)dμ is W₁-Lipschitz with constant L_ϑ and f is Lipschitz on X′. This
+gives a unique solution on [0,T₁] in the class of curves with values in X′; the standing bound keeps it in X, so the
+local solutions concatenate to [0,T], and uniqueness holds among solutions with x̄ ∈ C([0,T]; X). This is the Picard
+argument of Theorem D(a) with the Dobrushin estimate replaced by the coupling estimate. (Theorem D(b)'s tube bound, used
+in the standing bound for a law it does not formally cover, rests only on ‖f̂‖ ≤ a_max — here K_Φ — and on the pathwise
+error ODE, so it applies.)
+
+(b) Set Δ_i := ϑ_i − ϑ̄_i and δ := x − x̄. The noise cancels in dΔ_i, so Δ_i is absolutely continuous with
+d‖Δ_i‖/dt ≤ ‖b(x,e,ϑ_i) − b(x̄,ē,ϑ̄_i)‖ ≤ L_b(‖x − x̄‖ + ‖e − ē‖ + ‖Δ_i‖) = L_b(2‖δ‖ + ‖Δ_i‖), using e − ē = δ (same
+x_m). For δ,
+
+    δ̇ = f(x) − f(x̄) − k_eδ − [(1/m)Σ_jΦ̃(x;ϑ_j) − ∫Φ̃(x̄;·)dμ̄_t],
+
+and the bracket splits as (1/m)Σ_j[Φ̃(x;ϑ_j) − Φ̃(x̄;ϑ_j)] + (1/m)Σ_j[Φ̃(x̄;ϑ_j) − Φ̃(x̄;ϑ̄_j)] + [(1/m)Σ_jΦ̃(x̄;ϑ̄_j) − ∫Φ̃(x̄;·)dμ̄_t],
+of norms at most L_x‖δ‖, L_ϑ(1/m)Σ‖Δ_j‖ and ζ_t. Dropping the dissipative −k_eδ,
+d‖δ‖/dt ≤ (L_f + L_x)‖δ‖ + L_ϑΔ̄ + ζ_t with Δ̄ := (1/m)Σ‖Δ_j‖, and dΔ̄/dt ≤ L_b(2‖δ‖ + Δ̄). For D := ‖δ‖ + Δ̄ this gives
+Ḋ ≤ ΛD + ζ_t with D(0) = 0, and Grönwall gives the pathwise bound, whose right-hand side is non-decreasing in t. For
+the expectation, x̄_s is deterministic and the Φ̃(x̄_s;ϑ̄_j(s)) are i.i.d. bounded by K_Φ, so
+E ζ_s² = (1/m)E‖Φ̃(x̄_s;ϑ̄_1(s)) − EΦ̃(x̄_s;ϑ̄_1(s))‖² ≤ K_Φ²/m, and E∫₀^Tζ_s ds ≤ T K_Φ m^{−1/2}; for the second moment,
+E(∫₀^Tζ)² ≤ T∫₀^T Eζ² ≤ T²K_Φ²/m.
+
+(c) For the first item, d‖Δ_i‖/dt ≤ L_b(2‖δ‖ + ‖Δ_i‖) with ‖δ(s)‖ ≤ D(s) ≤ e^{Λs}∫₀^sζ and Δ_i(0) = 0 give, by Grönwall
+and Λ ≥ L_b, ‖Δ_i(t)‖ ≤ 2L_b∫₀^t e^{L_b(t−s)}e^{Λs}(∫₀^sζ)ds ≤ 2(e^{L_bt} − 1)e^{Λt}∫₀^tζ, a pathwise bound whose
+right-hand side is non-decreasing in t; take sup_t and expectations. Convergence of the k-particle law follows from the
+pathwise coupling bound. For the second, ‖f̂^m(x_t) − ∫Φ̃(x̄_t;·)dμ̄_t‖ is bounded by the same three
+terms as the bracket in (b), the first two by (L_x + L_ϑ)D(t) and the third by ζ_t. For the third, couple μ^m_t with
+the empirical measure of the ϑ̄_j(t) through the identity pairing (cost (1/m)Σ‖Δ_j‖) and use the triangle inequality.
+
+(d) Nothing in the argument uses τ > 0: the noise cancels in the coupling and only the i.i.d. sampling of the initial
+particles enters through ζ. ∎
+
+*Remark D′.1 (what carries the dimension).* The plant and the learned function see the particle measure only through
+∫Φ̃dμ, the mean of a bounded function. Their fluctuation is K_Φ/√m: the exponent does not see the dimension p of the
+lifted parameter, and the constant K_Φ = a_max√n grows with the output dimension only.
+The curse of dimensionality of Corollary B.6 (rates m^{−1/p}) concerns the Wasserstein distance between the parameter
+measures, which the closed loop never evaluates. Theorem F, by contrast, bounds the transport of μ by the tracking error
+and is dimension-free as well.
+
+*Remark D′.2 (what is still missing for Conjecture H.6).* The constant e^{ΛT} grows with the horizon; uniformity in
+time would follow from a contraction of the coupled system, which the plant coupling and the non-reciprocal averaged
+interaction (Proposition H.7) obstruct for the general law. For the averaged system, Remark H.5 points to the
+uniform-in-time result of [S5]; with the plant in the loop the question is §8, branch 3.
+
+*Numerics* (`exp_chaos.py` → `results/chaos/table.md`). An M = 4096 particle system stands in for (MV); for
+m = 16, 32, …, 1024 the m-particle system is driven by the first m initial particles and Brownian motions of the
+reference — the coupling of (b) — with n = 1, k_e = 10, σ = 0.02, T = 20, at τ = 0 and τ = 2·10⁻³, and
+sup_t D_m, D_m := ‖x^m − x^M‖ + (1/m)Σ_{i≤m}‖ϑ^m_i − ϑ^M_i‖, is averaged over 24 seeds. Because the m-system shares its
+particles with the reference, the sampling fluctuation that drives D_m has variance proportional to 1/m − 1/M (the shared
+particles contribute (1/m − 1/M)Σ_{i≤m}, the others (1/M)Σ_{i>m}), so the predicted law for the mean is a constant times
+(1/m − 1/M)^{1/2}, and m^{−1/2} for m ≪ M.
+
+| | τ = 0 | τ = 2·10⁻³ |
+|---|---|---|
+| mean sup_t D_m, m = 16 → 1024 | 1.49·10⁻¹ → 2.17·10⁻² | 1.52·10⁻¹ → 2.32·10⁻² |
+| log-log slope of the mean against m over m ≤ 256 (bootstrap s.e. over seeds) | −0.47 ± 0.06 | −0.46 ± 0.05 |
+| slope of the median | −0.46 | −0.45 |
+| slope of the mean against (1/m − 1/M)^{1/2}, all m (predicted 1) | 0.94 ± 0.08 | 0.92 ± 0.08 |
+| mean / (1/m − 1/M)^{1/2}, m = 32 … 1024 | 0.70–0.80 | 0.67–0.86 |
+
+The rate is the m^{−1/2} of (b) within one standard error, the same at both temperatures (the noise cancels in the
+coupling, (d)), and the two-scale law in (1/m − 1/M)^{1/2} holds up to m = M/4. Two features of the data are worth
+recording. First, single seeds differ by more than an order of magnitude at fixed m (the table lists the minimum and
+maximum over seeds): sup_t D_m is governed by the projection of the initial sampling fluctuation on a few slowly
+amplified directions of the closed loop, so the expectation in (b) needs tens of seeds — a first version of this
+experiment with three seeds gave slopes −0.25 and −0.21 and was withdrawn (`review/REVIEW_LOG.md`, round 5, D2). Second,
+the measured ratio sup_t D_m/(1/m − 1/M)^{1/2} ≈ 0.7 is astronomically smaller than the constant T K_Φ e^{ΛT} of (b): on
+this horizon the theorem is a rate statement, not a quantitative bound.
+
+*Checked* (`exp_chaos.py`): the experiment only; there is no test for Theorem D′ (its hypotheses are structural and the
+coupling is the experiment itself).
+
 ---
 
 ## 6. Theorem E — label-free local convergence under tangential excitation
@@ -898,9 +1240,10 @@ V̇ ≤ −γ‖w‖² with γ := min{k/4, εα/2}. Hence
     ‖w(t)‖ ≤ √3 · e^{−(2γ/3)(t − t₀)} · ‖w(t₀)‖    for all t ≥ t₀ ≥ 0.
 
 (iii) *Dependence on Ψ_D and on time rescaling.* The rate tends to 0 as Ψ_D → ∞, and it must: Ψ = sin t² is bounded
-and PE, and (LTV) is then not uniformly exponentially stable (step 3 of the proof of Theorem E). Under the time
-rescaling Ψ_ω(t) := Ψ(ωt), the data transform as (α, T, Ψ_M, Ψ_D) ↦ (α/ω, T/ω, Ψ_M, ωΨ_D), so c₁ → TΨ_D·(1 + o(1))
-and the closed-form rate is kα²/(3ω²T²Ψ_D²)·(1 + o(1)) as ω → ∞. This is the ω⁻² law of Remark E.1.
+and PE with Ψ_D = ∞, and (LTV) is then not uniformly exponentially stable (proof below). Under the time rescaling
+Ψ_ω(t) := Ψ(ωt), with Ψ_D > 0, the data transform as (α, T, Ψ_M, Ψ_D) ↦ (α/ω, T/ω, Ψ_M, ωΨ_D), so
+c₁ = TΨ_D·(1 + O(1/ω)) and the closed-form rate is kα²/(3ω²T²Ψ_D²)·(1 + O(1/ω)) as ω → ∞. This is the ω⁻² law of
+Remark E.1.
 
 *Proof.* (a) *The Gramian weight.* 0 ⪯ Q(t) ⪯ ∫_t^{t+T}(t + T − r)Ψ_M²dr·I = Q_M I. Since M is continuous, Q is C¹
 with Q̇(t) = ∫_t^{t+T}M(r)dr − TM(t): the upper limit contributes (t + T − (t + T))M(t + T) = 0, the lower limit
@@ -928,35 +1271,57 @@ V̇ ≤ −(k/4)‖e‖² − (εα/2)‖ζ‖² ≤ −γ‖w‖². Since V ≤
 ‖w(t)‖² ≤ 4V(t) ≤ 4e^{−(4γ/3)(t−t₀)}V(t₀) ≤ 3e^{−(4γ/3)(t−t₀)}‖w(t₀)‖².
 
 (e) *Rescaling.* Ψ_ω has sup norm Ψ_M, derivative bound ωΨ_D, and ∫_t^{t+T/ω}Ψ_ωᵀΨ_ω dr = (1/ω)∫_{ωt}^{ωt+T}ΨᵀΨ ⪰ (α/ω)I.
-Substitute into c₁ and the closed form. ∎
+Substitute into c₁ and the closed form.
+
+(f) *Ψ = sin t² is not uniformly exponentially stabilising* (n = q = 1, k > 0). Let F(s) := ∫_s^∞ sin r² dr, so that
+sin s² = −F'(s) and |F(s)| ≤ C/s (Fresnel). From w(t₀) = (0, ζ₀), e(t) = −∫_{t₀}^t e^{−k(t−s)}sin(s²)ζ(s)ds; integrating
+by parts and using |ζ| ≤ ‖w(t₀)‖ (the energy ½‖w‖² is non-increasing) and |ζ̇| = |Ψe| ≤ |e|,
+
+    |e(t)| ≤ (C/t₀)(2 + 1)‖w(t₀)‖ + (C/t₀)∫_{t₀}^t e^{−k(t−s)}|e(s)|ds,
+
+so sup_{t≥t₀}|e| ≤ 3C‖w(t₀)‖/(t₀(1 − C/(kt₀))) for t₀ > C/k. Hence ½‖w(t₀ + Δ)‖² ≥ ½‖w(t₀)‖² − kΔ(3C/t₀)²‖w(t₀)‖²(1 + o(1)):
+the decay over any fixed Δ tends to 0 as t₀ → ∞, which excludes a uniform exponential rate. The three ratios quoted in
+step 3 of the proof of Theorem E (0.9715, 0.9942, 0.9980 for t₀ = 5, 20, 50 and Δ = 200) match 1 − (1/8)(1/t₀ − 1/(t₀ + 200))
+to three digits. ∎
 
 *Checked* (`tests/test_excitation.py`): the two bounds on V and V̇ ≤ −γ‖w‖² at random (t, w) for four regressors of
 different shapes and gains, with the closed-form ε and with the ε maximising the rate (`excitation.optimise_eps`; every
-admissible ε gives a valid Lyapunov function, so the maximum is a rigorous bound); the envelope along trajectories; the
-ordering explicit rate ≤ exact Floquet rate; the ω⁻² law; the slow-adaptation limit; and the explicit nonlinear envelope
-of Theorem E on the implemented closed loop.
+admissible ε gives a valid Lyapunov function, so the maximum over the grid is a valid bound for the given PE data; the
+data Ψ_M, Ψ_D, α are themselves grid maxima and a refinement-checked quadrature, so the ordering against the exact rate
+is numerical); the envelope along trajectories; the ordering explicit rate ≤ exact Floquet rate; the ω⁻² law; the
+slow-adaptation limit; and the explicit nonlinear envelope of Theorem E on the implemented closed loop. The round-5
+referee verified the pointwise form λ_max(N(t)) ≤ −γ of V̇ ≤ −γ‖w‖² over all w, with an independent quadrature, for
+ten regressor families (q > n, q < n, k from 10⁻³ to 10⁴, Ψ_D/Ψ_M up to 100, non-periodic PE, near-degenerate PE) and
+eight choices of ε, without finding a violation.
 
 *Remark E.0a (how conservative the explicit rate is; `exp_explicit_rate.py` → `results/explicit_rate/table.md`).* The
 construction is of the Mazenc–Malisoff type, a backward–forward integral of the PE Gramian as a cross term; its content
 here is the explicit, self-contained statement for the mixed class (LTV), which removes the dependence of Theorem E on
 [S8]. The price is conservativeness, which the table quantifies against the exact Floquet rate of the linearised loop.
 
-- *Slow adaptation* (Ψ_M² ≪ k). Here the exact rate is λ_min⟨ΨᵀΨ⟩/k (Remark E.1), and c₁ ≈ T(kΨ_M + Ψ_D), α = Tλ_min⟨ΨᵀΨ⟩
-  for a window equal to the period. The closed-form rate is then kα²/(3c₁²), so
+- *Slow adaptation* (TΨ_M² ≪ k). To leading order in the gains, c₁ ≈ T(kΨ_M + Ψ_D) and α = Tλ_min⟨ΨᵀΨ⟩ for a window
+  equal to the period, so the closed-form bound (2/3)γ_cf of (ii) is kα²/(3c₁²), and the rate with the optimal ε of
+  the same quadratic form is kα²/c₁² (maximise εα − ε²c₁²/(4k) over ε). The exact rate is λ_min⟨ΨᵀΨ⟩/k when k is also
+  large compared with the bandwidth of the reference (Remark E.1). Hence, in that doubly asymptotic regime,
 
-      exact / explicit ≈ 3κ(1 + Ψ_D/(kΨ_M))²,    κ := Ψ_M²/λ_min⟨ΨᵀΨ⟩ the condition number of the averaged Gramian.
+      exact / explicit ≈ 3κ_Ψ(1 + Ψ_D/(kΨ_M))²  for (ii),    ≈ κ_Ψ(1 + Ψ_D/(kΨ_M))²  for the optimised ε,
 
-  The exact rate pays for ill-conditioning once, through λ_min; the bound pays twice, because the Young step that
-  absorbs the cross term εc₁‖e‖‖ζ‖ compares c₁ ∝ Ψ_M with α ∝ λ_min. On the Theorem E ideal of the tests (m = 3, n = 2,
-  k_e = 6) with G = g·diag(2,2,1), κ = 1.27·10⁵, and the measured ratio falls from 8.4·10¹⁰ at g = 30 to 6.8·10⁵ at
-  g = 0.01, against the predicted saturation 1.47·10⁶ for the closed-form ε (the optimised ε accounts for the remaining
-  factor of about 2). In the mean-field normalisation Ψ_G ∝ m^{−1/2}, so large networks sit in this regime at fixed
-  geometry.
-- *Fast adaptation* (Ψ_M² ≳ k). The ratio grows further with the excitation strength Ψ_M²/k, through the T²Ψ_M³ term
-  of c₁ and the Q_M term of ε.
+  with κ_Ψ := Ψ_M²/λ_min⟨ΨᵀΨ⟩ the condition number of the averaged Gramian. The exact rate pays for ill-conditioning
+  once, through λ_min; the bound pays twice, because the Young step that absorbs the cross term εc₁‖e‖‖ζ‖ compares
+  c₁ ∝ Ψ_M with α ∝ λ_min. On the ideal of the Theorem E tests (m = 3, n = 2, k_e = 6), driven by a two-tone reference
+  of period 20π, with G = g·diag(2,2,1): κ_Ψ = 1.27·10⁵, (1 + Ψ_D/(k_eΨ_M))² = 3.84, so the two formula values are
+  1.47·10⁶ and 4.9·10⁵. The measured ratio with the optimised ε falls from 6.56·10¹⁰ at g = 30 to 4.22·10⁵ at g = 0.01
+  (5.63·10⁵ with the closed-form ε, which the table evaluates with the exact 2 × 2 form and the exact p_hi rather than
+  the bound (ii)). Two corrections account for the difference from 4.9·10⁵: on this instance the exact rate is 0.66
+  of λ_min⟨ΨᵀΨ⟩/k at every g (k_e = 6 is not large against the reference's bandwidth; the two last columns of the table),
+  and the T²Ψ_M³ term is still 13% of c₁ at g = 0.01 ((c₁/c₁^∞)² = 1.31); their product, 0.66 × 1.31 = 0.86, brings
+  4.9·10⁵ to 4.2·10⁵. The ratio is still decreasing at g = 0.01 and tends to about 0.66·κ_Ψ(1 + Ψ_D/(k_eΨ_M))² ≈ 3.2·10⁵
+  as g → 0. In the mean-field normalisation Ψ_G ∝ m^{−1/2}, so large networks sit in this regime at fixed geometry.
+- *Fast adaptation* (TΨ_M² ≳ k). The ratio grows further with the excitation strength, through the T²Ψ_M³ term of c₁
+  and the Q_M term of ε.
 - *Remark E.1's instance* (m = n = 1, G = I, k_e = 3, x_m = 1.5 sin ωt). The ratio exact/explicit decreases from 954 at
-  ω = 1 to 17.6 at ω = 64. Over ω ≥ 4 the log-log slopes are −1.97 (exact) and −1.56 (explicit); between ω = 32 and 64
-  the explicit slope is −1.92, approaching the asymptotic ω⁻² of (iii).
+  ω = 1 to 17.6 at ω = 64. Over ω ≥ 4 the log-log slopes are −1.97 (exact) and −1.56 (explicit); over the last octave,
+  ω = 32 → 64, the explicit slope is −1.92, approaching the asymptotic ω⁻² of (iii).
 - *The window.* Any window length T is admissible with its own α(T). On the test ideal the best window is half a period.
 - *Open.* A strict Lyapunov function whose rate is linear in λ_min⟨ΨᵀΨ⟩/k, matching the averaging value, is the
   quantitative target of §8, branch 7.
@@ -966,7 +1331,8 @@ be PE data for it: ∫_t^{t+T}Ψ_GᵀΨ_G ⪰ α_G I, ‖Ψ_G‖ ≤ Ψ_{G,M}, �
 Ψ_{G,M} := m^{−1/2}λ_G^{1/2}sup‖Ψ‖ and Ψ_{G,D} := m^{−1/2}λ_G^{1/2}sup‖Ψ̇‖; Ψ̇ is bounded because x_m ∈ C¹ with bounded
 derivative and the Gaussian's mixed derivatives are bounded for s ≥ s_min. Let (ε, γ, p_lo, p_hi, g_V) be the constants of
 Lemma E.0 for the data (k_e, α_G, T, Ψ_{G,M}, Ψ_{G,D}), with any admissible ε (for example the closed form of E.0(ii)), where
-g_V := 1 + 2ε(Q_M + TΨ_M) bounds ‖∂V/∂w‖/‖w‖. Let r := min(ρ, δ), let L_J be a Lipschitz constant, uniform in t, of the
+g_V := 1 + ε(2Q_{G,M} + TΨ_{G,M}) bounds ‖∂V/∂w‖/‖w‖ (the Hessian of V is I plus a matrix of norm at most
+εTΨ_{G,M} + 2εQ_{G,M}) and Q_{G,M} := T²Ψ_{G,M}²/2. Let r := min(ρ, δ), let L_J be a Lipschitz constant, uniform in t, of the
 Jacobian of the closed-loop field F of step 2 on the ball D, and let S := diag(I_n, m^{−1/2}(I_m ⊗ G^{−1/2})) be the
 similarity to the coordinates w := (e, ζ) of step 3. Put
 
@@ -1019,11 +1385,12 @@ theorem with existence constants, conditional on Morgan–Narendra [S8, Thm 1]; 
    - The w-coordinates are the coordinates of the matched Lyapunov function: ‖ζ‖² = (1/m)Σ‖ϑ̃_i‖²_{G⁻¹} = W_π², so
      ‖w‖² = ‖e‖² + W_π² = 2V_π.
    - The bound on Ψ̇ cannot be dropped. Ψ = sin t² is bounded and PE, but for ė = −e − Ψζ, ζ̇ = Ψe, from w(t₀) = (e, ζ) = (0, 1), the ratio
-     ‖w(t₀+200)‖/‖w(t₀)‖ is 0.9715, 0.9942 and 0.9980 for t₀ = 5, 20 and 50 (review round 2). So that system is not
-     UES. Consistently, the rate of Lemma E.0 tends to 0 as Ψ_D → ∞.
+     ‖w(t₀+200)‖/‖w(t₀)‖ is 0.9715, 0.9942 and 0.9980 for t₀ = 5, 20 and 50 (review round 2), and Lemma E.0's proof
+     step (f) shows that the decay over a fixed horizon tends to 0 as t₀ → ∞. So that system is not UES. Consistently,
+     the rate of Lemma E.0 tends to 0 as Ψ_D → ∞.
 
-4. *Nonlinear system, with an explicit ball.* On D the field is F(t,z) = A(t)z + R(t,z) with ‖R(t,z)‖ ≤ (L_J/2)‖z‖²
-   (Taylor with the Lipschitz Jacobian). In w-coordinates, ẇ = [A₀ + B(t)]w + R̃(t,w) with R̃(t,w) := S R(t, S⁻¹w), so
+4. *Nonlinear system, with an explicit ball.* On the closure of D (to which the Lipschitz bound extends) the field is
+   F(t,z) = A(t)z + R(t,z) with ‖R(t,z)‖ ≤ (L_J/2)‖z‖² (Taylor with the Lipschitz Jacobian). In w-coordinates, ẇ = [A₀ + B(t)]w + R̃(t,w) with R̃(t,w) := S R(t, S⁻¹w), so
    ‖R̃(t,w)‖ ≤ C̃_R‖w‖² on {‖w‖ < r/‖S⁻¹‖} ⊂ S(D). Along the nonlinear system, since ‖∂V/∂w‖ ≤ g_V‖w‖,
 
        V̇ ≤ −γ‖w‖² + g_V C̃_R ‖w‖³ ≤ −(γ/2)‖w‖²    whenever ‖w‖ ≤ r_w.
@@ -1526,7 +1893,9 @@ periodic error e_μ and x = x_m + e_μ.
 - In the scaling of H.6, the L²(ρ) distance between the two learned functions is 6.8·10⁻³, 1.4·10⁻³ and 9.7·10⁻⁴ at
   k_e = 10, 20 and 40. It is small and decreasing, but a clean 1/k_e law is not resolved in this range.
 - By Proposition H.7(e) it is not the W_{G⁻¹}-gradient flow of any free energy. The cyclic sums of its antisymmetric
-  second variation are non-zero in the checked instances, including the network of the experiments (review round 3).
+  second variation are non-zero in the checked instances, including the network of the experiments (review round 3);
+  by Theorem I(iii) they are non-zero at every n = 1 measure whose residual is non-zero on the orbit, and by Theorem
+  I(vi) on no open set of measures do they all vanish.
 
 **Proposition H.7 (frozen-measure structure of the exactly averaged closed loop).** Assume the following:
 
@@ -1601,10 +1970,12 @@ P_μ changes the antisymmetric part by a coboundary, which the criterion below a
   a(ϑ) − a(ϑ'), that is, only if all its cyclic sums vanish.
 - They do not vanish in the checked instances, for n = 1 (from A_even alone) and for n = 2. Theorem I shows that the
   cyclic condition is equivalent to A_even + 2K ≡ 0, and characterises when that happens: for n = 1 exactly when the
-  residual vanishes on the orbit; for n ≥ 2 at perfect fit exactly when the orbit carries no circulation.
-- So at finite k_e, the exactly averaged loop is a non-reciprocal McKean–Vlasov dynamics whenever these conditions fail,
-  in particular at every μ that does not interpolate f along the orbit when n = 1. It is not the W_{G⁻¹}-gradient flow
-  of any free energy. A different, μ-dependent metric is not excluded by this argument.
+  residual vanishes on the orbit; for n ≥ 2 at perfect fit exactly when the orbit carries no circulation and the
+  residual's Jacobian is symmetric along the orbit. It also shows (Theorem I(vi)) that no open set of measures satisfies
+  the condition, for any n.
+- So at finite k_e, the exactly averaged loop is a non-reciprocal McKean–Vlasov dynamics: it is not the
+  W_{G⁻¹}-gradient flow of any free energy on any open set of measures. A different, μ-dependent metric is not excluded
+  by this argument.
 
 *Proof.*
 
@@ -1650,7 +2021,8 @@ measures.
 4. The O(k_e⁻³) remainder of (b) contributes at most 6ε·sup|R| = O(εk_e⁻³).
 5. Suppose that, for all large k_e, P_μ were a first variation up to O(k_e⁻³), with constants uniform in k_e. Then
    (ε²/(2k_e²))|cyc| ≤ Cεk_e⁻³, that is, |cyc| ≤ 2C/(εk_e). The cyclic sum does not depend on k_e, so letting
-   k_e → ∞ at fixed ε gives cyc = 0.
+   k_e → ∞ at fixed ε gives cyc = 0 at the centroid measure of the triangle; letting ε → 0, since A_even + 2K is affine
+   in the measure, gives cyc = 0 at μ.
 
 This is checked: for ε = 0.05 and n = 2 the circulation equals the centroid formula to all printed digits (review
 round 3). ∎
@@ -1729,64 +2101,86 @@ kernels retain, at order 1/k_e. The first-order theory predicts its effect.
 **Theorem I (reciprocity at order k_e⁻²: a pairwise criterion and its characterisation).** Assume the setting of
 Proposition H.7: saturated Gaussian features Φ̃(x;ϑ) = aφ_ξ(x) with ξ := (c, s), f ∈ C²(ℝⁿ) autonomous, x_m ∈ C²
 T₀-periodic with oriented orbit 𝒪 and occupation measure ρ, and a frozen μ ∈ P(ℝ^p). Let S be the k_e⁻² coefficient of
-the second variation of P_μ, and A := S − Sᵀ = A_even + 2K its antisymmetric part, as in H.7(e).
+the second variation of P_μ, and A_μ := S − Sᵀ = A_even + 2K its antisymmetric part, as in H.7(e). Call μ *reciprocal
+at order k_e⁻²* if A_μ ≡ 0 (the 1-form that the k_e⁻² drift defines is closed at μ). Note that A_μ is affine in μ, because
+r_μ is and K does not depend on μ.
 
-(i) *Pairwise criterion.* A is a coboundary a(ϑ) − a(ϑ') if and only if A ≡ 0. Hence P_μ can be a first variation up
-to O(k_e⁻³), in the sense of H.7(e), only if A_even + 2K ≡ 0.
+(i) *Pairwise criterion.* A_μ is a coboundary a(ϑ) − a(ϑ') if and only if A_μ ≡ 0. Consequently, by Proposition H.7(e),
+whose hypothesis concerns a neighbourhood of μ (its triangle of measures), P_ν can be a first variation of a functional
+of ν up to O(k_e⁻³), with constants uniform in k_e and in ν near μ, only if A_ν ≡ 0 for every ν in a neighbourhood of μ.
 
 (ii) *Structure.* With Dr the Jacobian of r_μ, (Dr)_{kl} = ∂_l r_k, and [X, Y] := (X·∇)Y − (Y·∇)X the Lie bracket of
 vector fields on ℝⁿ,
 
     A_even(ϑ,ϑ') = −∫ { Φ̃_ϑᵀ(Dr_μ − Dr_μᵀ)Φ̃_ϑ' + r_μᵀ[Φ̃_ϑ', Φ̃_ϑ] } dρ.
 
-For the Gaussian features A is a bilinear form in the weights: A(ϑ,ϑ') = aᵀB(ξ,ξ')a' with
+For the Gaussian features A_μ is a bilinear form in the weights: A_μ(ϑ,ϑ') = aᵀB_μ(ξ,ξ')a' with
 
-    B(ξ,ξ') := −∫(Dr_μ − Dr_μᵀ)φ_ξφ_ξ' dρ − ∫ r_μ(∇φ_ξ)ᵀφ_ξ' dρ + ∫(∇φ_ξ')r_μᵀφ_ξ dρ + 2κ(ξ,ξ')I_n,
+    B_μ(ξ,ξ') := −∫(Dr_μ − Dr_μᵀ)φ_ξφ_ξ' dρ − ∫ r_μ(∇φ_ξ)ᵀφ_ξ' dρ + ∫(∇φ_ξ')r_μᵀφ_ξ dρ + 2κ(ξ,ξ')I_n,
     κ(ξ,ξ') := ⟨φ_ξ(x_m(t))·(d/dt)φ_ξ'(x_m(t))⟩_t,
 
-so A ≡ 0 if and only if B(ξ,ξ') = 0 for all admissible ξ, ξ'. The first term is the curl of the residual paired with
-the features, the next two are the residual paired with the Lie bracket of the feature fields, and the last is the
-circulation kernel K(ϑ,ϑ') = (aᵀa')κ(ξ,ξ').
+so A_μ ≡ 0 if and only if B_μ(ξ,ξ') = 0 for all admissible ξ, ξ'. The first term is the curl of the residual paired
+with the features, the next two are the residual paired with the Lie bracket of the feature fields, and the last is the
+circulation kernel K(ϑ,ϑ') = (aᵀa')κ(ξ,ξ'). The performative part is bounded by the residual and by the antisymmetric
+part of its Jacobian along the orbit:
 
-(iii) *n = 1.* A ≡ 0 if and only if r_μ = 0 ρ-a.e. on the orbit. So the exactly averaged one-dimensional loop is
-reciprocal at order k_e⁻², at a frozen μ, exactly when μ interpolates f along the orbit, and its non-reciprocity is
-proportional to the residual: |A(ϑ,ϑ')| ≤ (2e^{−1/2}/s_min)|a||a'|∫|r_μ|dρ.
+    |A_even(ϑ,ϑ')| ≤ |a||a'| [ ∫‖Dr_μ − Dr_μᵀ‖dρ + (2e^{−1/2}/s_min)∫|r_μ|dρ ].
 
-(iv) *n ≥ 2 at perfect fit.* If r_μ = 0 ρ-a.e., then A = 2K, and K ≡ 0 if and only if the 1-current of the oriented
-orbit vanishes,
+(iii) *n = 1.* A_μ ≡ 0 if and only if r_μ = 0 ρ-a.e. on the orbit. So the one-dimensional loop is reciprocal at
+order k_e⁻², at a frozen μ, exactly when μ interpolates f along the orbit, and its non-reciprocity is bounded by the
+residual: |A_μ(ϑ,ϑ')| ≤ (2e^{−1/2}/s_min)|a||a'|∫|r_μ|dρ.
 
-    T_𝒪 := ∫₀^{T₀} δ_{x_m(t)} ẋ_m(t) dt = 0    (an ℝⁿ-valued measure; ∫v·dT_𝒪 = ∮_𝒪 v·dx).
+(iv) *n ≥ 2 at perfect fit.* Suppose r_μ = 0 ρ-a.e. Then the Lie-bracket terms vanish and
 
-For n = 2, T_𝒪 = 0 if and only if the winding-number function w_𝒪 of the orbit vanishes a.e. So at perfect fit the
-semi-gradient defect has vanished, and the loop is non-reciprocal exactly when the orbit carries circulation, through
-the orbit-area kernel alone.
+    B_μ(ξ,ξ') = −∫(Dr_μ − Dr_μᵀ)φ_ξφ_ξ' dρ + 2κ(ξ,ξ')I_n,
 
-(v) *General n ≥ 2.* B = B^{even}_μ + 2κI_n, where B^{even}_μ is affine in μ and κ does not depend on μ. In any
-finite-dimensional real-analytic family of measures, for example atomic measures with J atoms parametrised by their
-weights and lifted positions, the set of reciprocal measures is either the whole family or a closed real-analytic
-subvariety of measure zero. The instances of `tests/test_averaging.py` (n = 1 and the n = 2 ellipse) have A ≢ 0, with
-cyclic sums −0.0704 and −0.0464 of the predicted kernel.
+an antisymmetric matrix plus a multiple of the identity. Hence A_μ ≡ 0 if and only if both
 
-*Proof.* (i) Let ϑ_z := (α, γ, κ) with α = 0, so a = 0 and Φ̃(·;ϑ_z) ≡ 0 as a function of x; its x-derivatives vanish
-too. Every term of A_even(ϑ,ϑ_z) contains Φ̃_{ϑ_z} or (Φ̃_{ϑ_z}·∇), and K(ϑ,ϑ_z) = ⟨Φ̃_ϑᵀ(d/dt)Φ̃_{ϑ_z}⟩ = 0; so
-A(ϑ,ϑ_z) = 0 for every ϑ. If A(ϑ,ϑ') = a(ϑ) − a(ϑ'), then a(ϑ) = a(ϑ_z) for every ϑ, so A ≡ 0. The converse is
-trivial. The second sentence is H.7(e) with ϑ₂ := ϑ_z in its triangle of measures: the cyclic sum over (ϑ₀, ϑ₁, ϑ_z)
-is A(ϑ₀,ϑ₁).
+    (a) K ≡ 0, which holds if and only if the 1-current of the oriented orbit vanishes,
+        T_𝒪 := ∫₀^{T₀} δ_{x_m(t)} ẋ_m(t) dt = 0  (an ℝⁿ-valued measure; ∫v·dT_𝒪 = ∮_𝒪 v·dx); for n = 2, iff the
+        winding-number function w_𝒪 of the orbit vanishes a.e.; and
+    (b) Dr_μ = Dr_μᵀ ρ-a.e.: the Jacobian of the residual has no antisymmetric part along the orbit.
+
+Vanishing of r_μ on the orbit constrains only its tangential derivative, so (b) is a genuine extra condition: for
+f := f̂_μ + h e₁ with h = 0 on the orbit and ∂_⊥h ≠ 0, A_μ − 2K = −∫φ_ξφ_ξ'∂_⊥h dρ·(e₁e_⊥ᵀ − e_⊥e₁ᵀ) ≠ 0. When r_μ
+vanishes on a neighbourhood of the orbit, Dr_μ = 0 there and A_μ = 2K: the semi-gradient defect has vanished and the
+loop is non-reciprocal exactly when the orbit carries circulation, through the orbit-area kernel alone.
+
+(v) *General n ≥ 2.* In any connected finite-dimensional real-analytic family of measures, for example atomic measures
+with J atoms parametrised by their weights and lifted positions, the set of reciprocal measures is either the whole
+family or a closed real-analytic subvariety of measure zero. The instances of `tests/test_averaging.py` (n = 1 and the
+n = 2 ellipse) have A_μ ≢ 0, with cyclic sums −0.0704 and −0.0464 of the predicted kernel.
+
+(vi) *Nowhere a gradient flow.* For every n, every (f, x_m) and every μ, every neighbourhood of μ contains measures ν
+with A_ν ≢ 0: along the segments ν_δ := (1 − δ)μ + δδ_{ϑ'} either the zero feature ϑ' = ϑ_z or a feature with a' ≠ 0
+gives A_{ν_δ} ≢ 0 for all small δ > 0. Hence, by (i), there is no open set of measures on which P_ν is a first
+variation up to O(k_e⁻³) with uniform constants: the exactly averaged closed loop is nowhere the W_{G⁻¹}-gradient flow
+of a free energy at order k_e⁻². The reciprocal measures of (iii) and (iv) are coincidences without interior.
+
+*Proof.* (i) Let ϑ_z := (a = 0, ξ) be a zero-feature particle (the unconstrained weight coordinate equal to 0, any geometry),
+an admissible point of ℝ^p, so Φ̃(·;ϑ_z) ≡ 0 as a function of x; its x-derivatives vanish too. Every term of A_even(ϑ,ϑ_z) contains Φ̃_{ϑ_z} or (Φ̃_{ϑ_z}·∇), and
+K(ϑ,ϑ_z) = ⟨Φ̃_ϑᵀ(d/dt)Φ̃_{ϑ_z}⟩ = 0; so A_μ(ϑ,ϑ_z) = 0 for every ϑ. If A_μ(ϑ,ϑ') = a(ϑ) − a(ϑ'), then a(ϑ) = a(ϑ_z) for
+every ϑ, so A_μ ≡ 0. The converse is trivial. For the consequence, apply H.7(e) at any ν near μ with ϑ₂ := ϑ_z in its
+triangle of measures: the cyclic sum over (ϑ₀, ϑ₁, ϑ_z) is A(ϑ₀,ϑ₁), evaluated at the centroid measure of the triangle,
+which tends to ν as the triangle's size ε → 0; A is affine in the measure, so A_ν(ϑ₀,ϑ₁) = 0.
 
 (ii) Expand (Φ̃'·∇)(rᵀΦ̃) = Σ_{k,l}Φ̃'_l(∂_l r_k)Φ̃_k + Σ_{k,l}Φ̃'_l r_k∂_lΦ̃_k = Φ̃ᵀ(Dr)Φ̃' + rᵀ(Φ̃'·∇)Φ̃, and subtract the
 expression with ϑ and ϑ' exchanged. For Φ̃ = aφ, (Φ̃'·∇)Φ̃ = a(a'ᵀ∇φ)φ', so rᵀ[Φ̃',Φ̃] = (rᵀa)(a'ᵀ∇φ)φ' − (rᵀa')(aᵀ∇φ')φ,
 and K(ϑ,ϑ') = (aᵀa')κ(ξ,ξ'). Collect the bilinear form in (a, a'). Since a ranges over the open cube (−a_max, a_max)ⁿ,
-A ≡ 0 iff B ≡ 0.
+A_μ ≡ 0 iff B_μ ≡ 0. The bound uses φ ≤ 1 and |∇φ| ≤ e^{−1/2}/s_min.
 
 (iii) For n = 1, Dr − Drᵀ = 0, and for equal widths s, φ_c'Dφ_c − φ_cDφ_c' = φ_cφ_c'(c − c')/s², so
-B(ξ,ξ') = −((c − c')/s²)∫r_μφ_cφ_c'dρ. Now φ_cφ_c' = e^{−(c−c')²/(4s²)}·e^{−(x−m)²/s²} with m := (c + c')/2. Put
+B_μ(ξ,ξ') = −((c − c')/s²)∫r_μφ_cφ_c'dρ. Now φ_cφ_c' = e^{−(c−c')²/(4s²)}·e^{−(x−m)²/s²} with m := (c + c')/2. Put
 ν := r_μρ, a finite signed measure with compact support. The function m ↦ ∫e^{−(x−m)²/s²}dν(x) extends to an entire
-function. If B ≡ 0 on admissible pairs, it vanishes for all m ∈ (−c_max, c_max) (take c = m − δ, c' = m + δ with
+function. If B_μ ≡ 0 on admissible pairs, it vanishes for all m ∈ (−c_max, c_max) (take c = m − δ, c' = m + δ with
 0 < δ small), hence everywhere; its Fourier transform is the product of the Gaussian's, which has no zeros, with ν̂, so
-ν = 0, that is r_μ = 0 ρ-a.e. Conversely, if ν = 0 then A_even(ϑ,ϑ') = −∫(φ'Dφ − φDφ')aa' dν = 0 for all widths. The
-bound uses |φ'Dφ − φDφ'| ≤ 2 sup|Dφ| ≤ 2e^{−1/2}/s_min.
+ν = 0, that is r_μ = 0 ρ-a.e. Conversely, if ν = 0 then A_even(ϑ,ϑ') = −∫(φ'Dφ − φDφ')aa' dν = 0 for all widths.
 
-(iv) If r_μ = 0 ρ-a.e. then A_even ≡ 0 and A = 2K. For equal widths, φ_ξφ_ξ' = e^{−|c−c'|²/(4s²)}e^{−|x−m|²/s²} and
+(iv) If r_μ = 0 ρ-a.e. the two Lie-bracket integrals vanish, which gives the displayed B_μ; the first term is an
+antisymmetric matrix and the second a multiple of I_n, so B_μ ≡ 0 iff both vanish (take the trace, which is 2nκ, and
+the antisymmetric part). The first vanishes identically iff the matrix-valued measure (Dr_μ − Dr_μᵀ)ρ is zero, by the
+argument of (iii) applied entrywise with equal widths (the entries of ∫(Dr − Drᵀ)φ_cφ_c'dρ are Gaussian convolutions of
+the entries of that measure). For (a): with equal widths, φ_ξφ_ξ' = e^{−|c−c'|²/(4s²)}e^{−|x−m|²/s²} and
 ∇φ_ξ' = −((x − c')/s²)φ_ξ', so
 
     κ(ξ,ξ') = −(1/s²)e^{−|c−c'|²/(4s²)}⟨e^{−|x_m−m|²/s²}(x_m − c')·ẋ_m⟩_t.
@@ -1800,117 +2194,470 @@ the Gaussian convolution of the vector measure T_𝒪. If κ ≡ 0 on admissible
 ‖m‖ < c_max and every direction v (take c = m − δv, c' = m + δv), so F_s ≡ 0 on that ball; F_s is entire, so F_s ≡ 0 on
 ℝⁿ, and the Fourier argument gives T_𝒪 = 0. Conversely, κ(ξ,ξ') = (1/T₀)∫φ_ξ∇φ_ξ'·dT_𝒪 = 0 for all widths when
 T_𝒪 = 0. For n = 2, ∮_𝒪 v·dx = ∫w_𝒪 curl v dA for every smooth v (Stokes with winding numbers), and every smooth
-compactly supported g is curl v for some smooth v, so T_𝒪 = 0 iff w_𝒪 = 0 a.e.
+compactly supported g is curl v for some smooth v, so T_𝒪 = 0 iff w_𝒪 = 0 a.e. (T_𝒪 is compactly supported, so v need
+not be). For the example, r = he₁ with h = 0 on 𝒪 gives (Dr − Drᵀ)_{1l} = ∂_l h and the only non-zero entries are the
+normal derivative; the Lie-bracket terms vanish because r = 0 on 𝒪.
 
-(v) r_μ is affine in μ, and κ does not depend on μ. The saturated features are real-analytic in the lifted coordinates
-and extend holomorphically to a complex neighbourhood of ℝ^p, uniformly for x on the compact orbit; integrals over the
-orbit of such integrands are real-analytic in the parameters. The zero set of a real-analytic function on a connected
-real-analytic manifold is either the whole manifold or a closed set of Lebesgue measure zero. The instances are those of
-`test_exactly_averaged_dynamics_is_non_reciprocal_for_n1_and_n2`. ∎
+(v) The saturated features are real-analytic in the lifted coordinates and extend holomorphically to a complex
+neighbourhood of ℝ^p (tanh and the logistic function are holomorphic on the strips |Im| < πa_max/2, πc_max/2, π, where
+s stays away from 0), uniformly for x on the compact orbit; integrals over the orbit of such integrands are real-analytic
+in the parameters, and r_μ is affine in the weights. The zero set of a real-analytic function on a connected real-analytic
+manifold is either the whole manifold or a closed set of Lebesgue measure zero. The instances are those of
+`test_exactly_averaged_dynamics_is_non_reciprocal_for_n1_and_n2`.
+
+(vi) Since r_ν is affine in ν, B_{ν_δ} = B_μ + δB^{even}[g] with g := f̂_μ − Φ̃_ϑ', where B^{even}[g] denotes the three
+residual terms of B with g in place of r_μ. The trace of B^{even}[g] at equal widths is −(1/s²)(c − c')·∫gφ_cφ_c'dρ (the
+curl term is traceless). If A_{ν_δ} ≡ 0 for all small δ, then B^{even}[g] ≡ 0, so (c − c')·F[gρ]((c + c')/2) = 0 for all
+admissible c, c', where F[gρ] is the Gaussian convolution of the vector measure gρ; as in (iv), gρ = 0, that is g = 0
+ρ-a.e. For ϑ' = ϑ_z this says f̂_μ = 0 on the orbit; for ϑ' with a' ≠ 0 it then says Φ̃_ϑ' = 0 on the orbit, which is
+false since a Gaussian has no zeros. So one of the two segments has A_{ν_δ} ≢ 0 for all small δ > 0. ∎
 
 *Checked* (`tests/test_nonreciprocity.py`, using `src/core/nonreciprocity.py` against `src/core/averaging.py`): the bilinear
-form aᵀBa' reproduces the antisymmetric part of the generic second-variation coefficient (1e-10, n = 1 and 2);
-A(ϑ,ϑ_z) = 0 (1e-14) and the cyclic sum over (ϑ₀,ϑ₁,ϑ_z) equals A(ϑ₀,ϑ₁); for n = 1 with f := f̂_μ (perfect fit) A ≡ 0
-(below 1e-13) while a non-zero residual gives A ≠ 0, equal to the closed form; the closed form of κ (1e-10), F₂((0.5,0)) > 0
-on the ellipse, and κ ≡ 0 on a segment traversed back and forth (below 1e-12); at perfect fit for n = 2, B = 2κI (1e-13),
-with A ≠ 0 on the ellipse and A ≡ 0 on the segment; the positivity witness f ≡ 0, μ = δ_ϑ̄, for which
-A(ϑ₀,ϑ₁) = a₀a₁ā((c₀ − c₁)/s²)∫φ_c̄φ_c₀φ_c₁dρ has a strictly positive integral.
+form aᵀB_μa' reproduces the antisymmetric part of the generic second-variation coefficient (1e-10, n = 1 and 2);
+A_μ(ϑ,ϑ_z) = 0 (1e-14) and the cyclic sum over (ϑ₀,ϑ₁,ϑ_z) equals A_μ(ϑ₀,ϑ₁); for n = 1 with f := f̂_μ (perfect fit) A_μ ≡ 0
+(below 1e-13) while a non-zero residual gives A_μ ≠ 0, equal to the closed form; the closed form of κ (1e-10), the second
+component of F_s(m) at m = (0.5, 0), s = 0.7 is positive on the ellipse, and κ ≡ 0 on a segment traversed back and forth
+(below 1e-12); with f ≡ f̂_μ on ℝ² (so Dr_μ ≡ 0), B_μ = 2κI (1e-13), A_μ ≠ 0 on the ellipse and A_μ ≡ 0 on the segment;
+with f := f̂_μ + he₁, h = (x₁/1.2)² + (x₂/0.8)² − 1 (zero on the ellipse, non-zero normal derivative), B_μ − 2κI equals
+−∫φφ'∂₂h dρ·(e₁e₂ᵀ − e₂e₁ᵀ) (1e-12) and is not small; the positivity witness f ≡ 0, μ = δ_ϑ̄, for which
+A_μ(ϑ₀,ϑ₁) = a₀a₁ā((c₀ − c₁)/s²)∫φ_c̄φ_c₀φ_c₁dρ has a strictly positive integral. The round-5 referee re-derived every
+formula and checked aᵀB_μa' against the exact second variation of the averaged potential (Richardson in k_e) to 2e-4–9e-4
+relative, including parameters at the saturation limits.
 
 *Remark I.1 (what Theorem I changes in the reading of Proposition H.7).*
 
-- The non-reciprocity of H.7(e) is no longer an instance-by-instance check. For n = 1 it holds at every frozen μ that
-  does not interpolate f along the orbit; for n ≥ 2 at perfect fit it holds exactly when the orbit carries circulation;
-  in general it fails only on a null set of any analytic family of measures that contains one non-reciprocal member.
-- The two defects scale differently. The performative (semi-gradient) defect is proportional to the residual, so it is
-  small at a well-fitting equilibrium; the circulation defect does not depend on the fit at all.
+- The non-reciprocity of H.7(e) is no longer an instance-by-instance check. Pointwise, for n = 1 it holds at every
+  frozen μ that does not interpolate f along the orbit; for n ≥ 2 at perfect fit it holds unless the orbit carries no
+  circulation and the residual's Jacobian is symmetric along the orbit; in general it fails only on a null set of any
+  connected analytic family that contains one non-reciprocal member. Globally, (vi) shows that no open set of measures
+  is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻².
+- The two defects scale differently. The performative (semi-gradient) defect is bounded by the residual and the
+  antisymmetric part of its Jacobian along the orbit, so it is small at a well-fitting equilibrium whose residual is
+  smooth across the orbit; the circulation defect does not depend on the fit at all.
 - For the n = 1 Langevin experiments and Conjecture H.6: the non-gradient correction that falsifies H.6 at fixed k_e
-  is, by (iii), proportional to the residual, which at the regularised optimum μ*_τ is the regularisation bias. In the
-  scaling σ = σ₀/k_e, τ = τ₀/k_e the bias is fixed, and the correction is O(k_e⁻²) relative to the leading drift.
-- The pairwise criterion also simplifies the test of reciprocity: a single pair (ϑ, ϑ') with B(ξ,ξ') ≠ 0 suffices.
+  is, by (iii), bounded by the residual, which at the regularised optimum μ*_τ is the regularisation bias. Both the
+  leading drift and the correction are proportional to the residual there, so the correction is O(1/k_e) relative to
+  the leading drift and O(k_e⁻²) absolute, as in Remark H.0.
+- The pairwise criterion also simplifies the test of reciprocity: a single pair (ϑ, ϑ') with B_μ(ξ,ξ') ≠ 0 suffices.
 
+## 6d. Theorem J — the finite-m closed loop as a perturbed gradient flow
 
-**Proposition H.8 (input-to-state stability of (𝔄)).** Assume σ, τ > 0 and the setting of Theorem H. Let μ_t solve
-the perturbed equation
+This section proves the first step of §8, branch 1: at finite m, without dither, in the scaling σ = σ₀/k_e, the real
+closed loop has, near every hyperbolic critical point of the m-particle regularised occupation loss, a unique periodic
+orbit with the same stability type, at distance O(1/k_e), whose first-order location is the one Proposition H.7 and
+Remark H.7a predict. It turns Remark H.7a's "formal" second-order averaging into a theorem for this system.
 
-    ∂_tμ = ∇·(μ(G∇V[μ] − b_t)) + τ∇·(G∇μ)
+**Setting.** The closed loop of Theorem H's design with τ = 0, at finite m, in the scaling σ = σ₀/k_e:
 
-from μ_0 ∈ P₂ with F_τ(μ_0) < ∞. Here b_t is a velocity perturbation with β(t)² := ∫‖b_t‖²_{G⁻¹}dμ_t ≤ β̄². Assume the
-chain rule of [S3] Lemma 2.2 holds along this solution: d/dt F_τ(μ_t) = ∫⟨∇(δF_τ/δμ)(μ_t), v_t⟩dμ_t, in whitened
-coordinates, with v_t the velocity. It is expected for smooth bounded perturbations (parabolic regularity and the
-entropy-dissipation estimate), but it is not verified here. Then
+    ẋ = f(x) + ẋ_m − k_e e − f̂_Θ(x),    e := x − x_m(t),    f̂_Θ := (1/m)Σ_j Φ̃(·;ϑ_j),
+    ϑ̇_i = G∇_ϑ[eᵀΦ̃(x;ϑ_i)] − (σ₀/k_e)(ϑ_i − ϑ⁰),    i = 1..m,                                           (CL)
 
-    d/dt (F_τ(μ_t) − F*) ≤ −τρ_τ (F_τ(μ_t) − F*) + ½β(t)²,
-    F_τ(μ_t) − F* ≤ e^{−τρ_τ t}(F_τ(μ_0) − F*) + β̄²/(2τρ_τ),
-    limsup_t W_{G⁻¹}(μ_t, μ*_τ) ≤ β̄/(τρ_τ).
+with Θ := (ϑ_1, …, ϑ_m) ∈ ℝ^{mp}, G_m := I_m ⊗ G, saturated features, x_m ∈ C² T₀-periodic with occupation measure ρ,
+and f ∈ C² on a neighbourhood of the tube 𝒯_R := {x : dist(x, x_m([0,T₀])) ≤ R} for some R > 0. Put
 
-*Proof.* Work in ζ = G^{−1/2}ϑ, and let ξ_t := ∇(δF_τ/δμ)(μ_t) = ∇Ṽ[μ_t] + τ∇log μ_t. The velocity is −ξ_t + b̃_t,
-with ‖b̃_t‖ = ‖b_t‖_{G⁻¹}.
+    r_Θ(x) := f(x) − f̂_Θ(x),    J_m(Θ) := mL̄_m(Θ) + (σ₀/2)Σ_i‖ϑ_i − ϑ⁰‖²_{G⁻¹},    L̄_m(Θ) := ½∫‖r_Θ‖²dρ,
+    H_i(Θ,t) := G∇_ϑ[r_Θ(x_m(t))ᵀΦ̃(x_m(t);ϑ)]|_{ϑ=ϑ_i} − σ₀(ϑ_i − ϑ⁰),    ⟨H⟩(Θ) = −G_m∇J_m(Θ).
 
-1. By the chain rule and Young's inequality,
-   d/dt F_τ(μ_t) = −∫‖ξ_t‖²dμ_t + ∫⟨ξ_t, b̃_t⟩dμ_t ≤ −½∫‖ξ_t‖²dμ_t + ½β².
-2. With μ̂_t ∝ e^{−Ṽ[μ_t]/τ},
-   ∫‖ξ_t‖²dμ_t = τ²I(μ_t|μ̂_t) ≥ 2ρ_ττ²H(μ_t|μ̂_t) ≥ 2ρ_ττ(F_τ(μ_t) − F*),
-   by the LSI of Theorem H(ii) and the entropy sandwich ([S3] Lemma 3.4).
-3. Grönwall gives the first two lines.
-4. For the third, F_τ(μ) − F* ≥ τH(μ|μ*_τ) ([S3] Lemma 3.4). μ*_τ satisfies LSI(ρ_τ), hence Talagrand's inequality
-   W² ≤ (2/ρ_τ)H(·|μ*_τ) (Otto–Villani). So W² ≤ (2/(τρ_τ))(F_τ − F*), and the limsup follows from the second line.
-   ∎
+The averaged system of (CL) is Θ̇ = (1/k_e)⟨H⟩(Θ) = −(1/k_e)G_m∇J_m(Θ): the gradient flow of J_m in the G⁻¹ metric,
+which is (𝔄) at τ = 0 for the m-atom measure (Remark H.0); in slow time s := t/k_e it does not depend on k_e. Its
+equilibria are the critical points of J_m. A critical point Θ* is *hyperbolic* if ∇²J_m(Θ*) is non-singular; its
+index is the number of negative eigenvalues; it is a *non-degenerate minimum* if ∇²J_m(Θ*) ≻ 0. Write ν_1 ≤ … ≤ ν_{mp}
+for the eigenvalues of G_m^{1/2}∇²J_m(Θ*)G_m^{1/2} (those of G_m∇²J_m(Θ*)), and λ_* := ν_1 when Θ* is a minimum.
 
-The gain 1/(τρ_τ) ≤ e^{α*/τ}/σ is exponentially large in 1/τ, like the inverse of the rate.
+Let u(Θ,t) be the zero-mean antiderivative in t of H(Θ,t) − ⟨H⟩(Θ) (T₀-periodic), and define, as in Proposition H.7 and
+Remark H.7a, at the atomic measure μ* := (1/m)Σ_jδ_{ϑ*_j}:
 
-*Route to Conjecture H.6.* In the scaling of H.6:
+    J := D_Θ[(1/k_e)⟨H⟩](Θ*) = −(1/k_e)G_m∇²J_m(Θ*),
+    b_frozen,i := (1/k_e²)G∇_ϑ(U_even + U_odd)[μ*](ϑ)|_{ϑ=ϑ*_i},    b_osc := (1/k_e²)⟨D_ΘH(Θ*,t)·u(Θ*,t)⟩_t.
 
-- τρ_τ ≥ (σ₀/k_e)·e^{−2K_Φ(F_ρ+K_Φ)/τ₀}, so 1/(τρ_τ) = O(k_e).
-  - In this scaling the whitened proximal Gibbs measures do not depend on k_e, so τρ_τ = Θ(1/k_e).
-  - At the experiment's τ₀ = 0.04 the constant is e^{1049}.
-- Define b := (1/k_e²)[G∇(U_even + U_odd) + b_osc] + O(k_e⁻³). The first part is the frozen-measure correction of
-  Proposition H.7; the second is the oscillation term of Remark H.7a. Both are bounded uniformly in μ and ϑ, so
-  β̄ = O(k_e⁻²).
-- Proposition H.8 then confines every solution of (𝔄) + b to an asymptotic W-ball around μ*_τ of radius
-  O(1/k_e)·e^{2K_Φ(F_ρ+K_Φ)/τ₀}/σ₀. This needs F_τ(μ_0) < ∞, or a P₂ start, after the Girsanov regularisation of
-  H(ii), which applies because b is bounded.
+**Theorem J.** Let Θ* be a hyperbolic critical point of J_m. There are k₀, ρ₀, C > 0, depending on (f, x_m, G, σ₀, R,
+the feature bounds, Θ*) but not on k_e, such that for every k_e ≥ k₀:
 
-Three things are still missing for H.6:
+(a) *Existence, uniqueness, location.* (CL) has a T₀-periodic solution (x_p, Θ_p), unique among the T₀-periodic
+solutions with sup_t‖Θ_p(t) − Θ*‖_{G⁻¹} ≤ ρ₀ and sup_t‖x_p(t) − x_m(t)‖ ≤ R. It satisfies
 
-1. control of the frozen-measure approximation along the moving μ_t, that is, a near-identity averaging transformation
-   for the stochastic McKean–Vlasov loop, uniformly in time;
-2. the mean-field limit of (L_τ), since Theorem D covers only (L);
-3. the chain rule that H.8 assumes for the perturbed flow.
+    sup_t‖x_p(t) − x_m(t)‖ ≤ C/k_e,    sup_t‖Θ_p(t) − Θ*‖_{G⁻¹} ≤ C/k_e,    Θ_p(t) − Θ̄_p = (1/k_e)u(Θ*,t) + O(k_e⁻²),
 
-**Evidence** (the real closed loop with m = 32 and n = 1, not the averaged system):
+with Θ̄_p the period mean of Θ_p.
 
-- **Dither is necessary.** Without dither the collapsed start is trapped forever. Its loss stays at 0.166, against
-  0.007 from the spread start (`results/langevin_tradeoff`, 1500 s).
-- **Equalisation at moderate temperature.** At σ = 0.02 and τ = 0.004 (3 seeds,
-  `results/langevin_global/table_sigma0.02_tau0.004.md`):
-  - collapsed and spread starts reach the same loss (ratio 1.03) and tracking RMS (0.0465 against 0.0452);
-  - their final 32-particle configurations, driven by the same noise realisation, are 4.2× closer in W₂ over the
-    physical coordinates (a, c, s) than without dither (0.40 against 1.69);
-  - two independent 32-point samples of μ*_τ are typically about 0.6 apart, so 0.40 is at the sampling floor
-    (review round 3);
-  - the common loss of about 0.11 matches the grid value L̄(μ*_τ) = 0.11118. It is dominated by the regularisation
-    bias.
-- **Metastability at low temperature.** At σ = 0.002 and τ = 5·10⁻⁴ (`table_sigma0.002_tau0.0005.md`), dither frees
-  the collapsed start (0.166 → 0.048). But the starts have not equalised within 900 s (loss ratio 5.2). The spread
-  start's 9.2·10⁻³ is close to the regularised optimum L̄(μ*_τ) = 8.5·10⁻³.
-- **Limits of the evidence.**
-  - The Langevin runs have n = 1. By Proposition H.7, the averaged dynamics is already non-reciprocal for n = 1,
-    through the state shift.
-  - The only n ≥ 2 closed-loop runs are the deterministic orientation runs of Remark H.7a. They confirm the first-order
-    theory quantitatively. No n ≥ 2 run with dither has been made.
-  - The runs use fixed k_e, not the scaling of H.6.
-  - All Langevin runs use k_e = 10, below the Tikhonov scale of Remark H.0 for this network
-    ((F_ρ + K_Φ)/s_min ≈ 35). The measured frozen-μ drift error at k_e = 10 is 4.2% (n = 1), so the condition is
-    conservative, but the agreement with (𝔄) is empirical.
-  - So the evidence supports Conjecture H.6 qualitatively, but the equalisation time can exceed practical horizons at
-    low τ.
+(b) *Stability type.* The monodromy matrix of (x_p, Θ_p) has n eigenvalues of modulus at most e^{−(k_e − L)T₀}, with
+L independent of k_e (the error channel), and mp eigenvalues
+
+    λ_j = exp(−(T₀/k_e)ν_j + O(k_e⁻²)),    j = 1..mp.
+
+Hence the orbit is hyperbolic with the index of Θ*: exponentially stable if ∇²J_m(Θ*) ≻ 0, with parameter Floquet
+exponents (1/k_e)ν_j + O(k_e⁻²), and unstable otherwise.
+
+(c) *Basin (non-degenerate minimum).* If ∇²J_m(Θ*) ≻ 0, every solution of (CL) with ‖Θ(0) − Θ*‖_{G⁻¹} ≤ ρ₀ and
+‖x(0) − x_m(0)‖ ≤ R converges to the periodic orbit, and
+
+    ‖Θ(t) − Θ_p(t)‖_{G⁻¹} + ‖x(t) − x_p(t)‖ ≤ C e^{−μt}(‖Θ(0) − Θ_p(0)‖_{G⁻¹} + ‖x(0) − x_p(0)‖),    μ := (λ_*/k_e)(1 − κ),
+
+with κ = κ(ρ₀, 1/k_e) → 0 as (ρ₀, 1/k_e) → 0. The basin radius ρ₀ does not depend on k_e; the rate is λ_*/k_e to
+leading order, that is, λ_* in slow time.
+
+(d) *First-order location.* The period mean satisfies
+
+    Θ̄_p = Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) = Θ* + (1/k_e)(G_m∇²J_m(Θ*))⁻¹·k_e²(b_frozen + b_osc) + O(k_e⁻²).
+
+The offset is O(1/k_e). Its orientation-odd part is the quantity measured in Remark H.7a, so the prediction
+Θ₊ − Θ₋ = −2J⁻¹(b_odd + b_osc) + O(k_e⁻²) of that remark is now a statement with error control.
+
+*Proof.* Write ε := 1/k_e. All constants below are uniform in ε ≤ 1/k₀ and in Θ in the ball 𝒦 := {‖Θ − Θ*‖ ≤ 2ρ₀},
+because the saturated features and their derivatives are bounded uniformly in Θ and f ∈ C² on the compact tube 𝒯_R.
+
+*Step 1 (the tube and the slaved error).* Let M_r := sup{‖r_Θ(x)‖ : x ∈ 𝒯_R, Θ ∈ 𝒦} and L_r := sup‖∂_x r_Θ‖ on the
+same set. For k_e > M_r/R the tube {‖e‖ ≤ R} is forward invariant: on ‖e‖ = R, d/dt ½‖e‖² = eᵀr_Θ(x) − k_e‖e‖² < 0.
+Put w := e − εr_Θ(x) with x the actual state. Since r_Θ(x) − k_e e = −k_e w and ẋ = ẋ_m − k_e w,
+
+    ẇ = −(k_e I − ∂_x r_Θ(x))w − ε∂_x r_Θ(x)ẋ_m − ε∂_Θ r_Θ(x)·Θ̇,
+
+and Θ̇ = F(e,Θ,t) := (G∇_ϑ[eᵀΦ̃(x;ϑ_i)] − εσ₀(ϑ_i − ϑ⁰))_i is O(‖e‖ + ε) = O(‖w‖ + ε). So for k_e ≥ 2L_r + C,
+d/dt‖w‖ ≤ −(k_e/2)‖w‖ + C₁ε on {‖w‖ ≤ 1} ∩ {‖e‖ ≤ R}, whence ‖w(t)‖ ≤ e^{−k_e t/2}‖w(0)‖ + 2C₁ε². The set
+W_ε := {‖w‖ ≤ 3C₁ε²} is forward invariant and absorbs every solution of the tube within t₁ = O(ε log(1/ε)), during
+which Θ moves by O(ε‖e(0)‖ + ε² log(1/ε)) (Θ̇ = O(‖e‖ + ε) and ‖e‖ decays at rate k_e/2). On W_ε, e = εr_Θ(x_m(t)) + ε[r_Θ(x_m + e) − r_Θ(x_m)] + w = εr_Θ(x_m(t)) + O(ε²).
+
+*Step 2 (the slow equation and the fast variable).* Let e_Θ(t) be the frozen-Θ periodic error of Proposition H.7(a):
+the unique T₀-periodic solution of ė = r_Θ(x_m(t) + e) − k_e e, exponentially stable with rate at least k_e/2, with
+e_Θ = εr_Θ(x_m) + ε²(∂_x r_Θ r_Θ − ṙ_Θ)(x_m) + O(ε³) in sup norm (Taylor expansion of r_Θ in x to second order; f ∈ C²).
+Because Θ enters r_Θ = f − f̂_Θ only through the smooth f̂_Θ, e_Θ(t) is C² in Θ as soon as f ∈ C¹, and differentiating
+the frozen equation (gain 1/k_e) gives ∂_Θ e_Θ = ε∂_Θ r_Θ(x_m) + O(ε²) and ∂²_Θ e_Θ = O(ε), uniformly on 𝒦. Let
+ζ := e − e_{Θ(t)}(t) be the fast variable. Then
+
+    ζ̇ = [r_Θ(x_m + e) − r_Θ(x_m + e_Θ)] − k_eζ − ∂_Θ e_Θ(t)·Θ̇,
+
+where the bracket is Lipschitz in ζ with constant L_r and the last term is O(ε)·O(ε) = O(ε²) (Θ̇ = F = O(‖e‖ + ε)). So
+for k_e ≥ 2L_r + C the set Z_ε := {‖ζ‖ ≤ C₂ε³} is forward invariant and absorbs every solution of the tube within
+O(ε log(1/ε)); on W_ε of Step 1 one has ‖ζ‖ = O(ε²) at once and O(ε³) after this further transient. On Z_ε, since F is
+C¹ in e with ∂_eF = O(1),
+
+    Θ̇ = F(e_Θ(t), Θ, t) + R(Θ, ζ, t) = εH(Θ,t) + ε²H₂(Θ,t) + O(ε³),    ‖R‖ ≤ C‖ζ‖ = O(ε³),                      (S)
+
+where εH + ε²H₂ is the expansion of the frozen-Θ drift along the frozen periodic error, and by Proposition H.7(b),
+⟨H₂⟩(Θ)_i = G∇_ϑ(U_even + U_odd)[μ_Θ](ϑ_i), that is, ε²⟨H₂⟩(Θ*) = b_frozen. H and H₂ are T₀-periodic and C² in Θ on 𝒦,
+with bounds uniform in ε.
+
+*Regularity of the remainders (used in Steps 4 and 6).* The second-order terms of (S), and of (N) below, are used in sup
+norm only, for the location (d). The implicit-function and contraction arguments of Steps 4 and 6 need first-order C¹
+closeness, which holds: F(e_Θ(t), Θ, t) is C² in Θ with ∂_Θ[F(e_Θ(t), Θ, t)] = ε∂_ΘH(Θ, t) + O(ε²) (from
+∂_Θ e_Θ = ε∂_Θ r_Θ(x_m) + O(ε²) and the smooth dependence of F on (e, Θ) through Φ̃); the remainder R is Lipschitz in ζ with
+constant sup‖∂_eF‖ = O(1) and Lipschitz in Θ with constant O(‖ζ‖) = O(ε³); and the forcing −∂_Θ e_Θ·Θ̇ of the ζ-equation
+is Lipschitz in Θ with constant O(ε²) (from ∂²_Θ e_Θ = O(ε) and ∂_ΘF = O(ε)). None of this uses more than f ∈ C².
+
+*Step 3 (second-order averaging normal form).* Let u be the zero-mean antiderivative of H − ⟨H⟩ and Θ = Y + εu(Y,t).
+Then Ẏ = ε⟨H⟩(Y) + ε²[H₂(Y,t) + D_ΘH(Y,t)u(Y,t) − D_Yu(Y,t)⟨H⟩(Y)] + O(ε³). Let u₂ be the zero-mean antiderivative of the
+fluctuating part of the bracket and Y = Y₂ + ε²u₂(Y₂,t). Since ⟨D_Yu⟩ = D_Y⟨u⟩ = 0,
+
+    Ẏ₂ = ε⟨H⟩(Y₂) + ε²Φ₂(Y₂) + O(ε³),    Φ₂ := ⟨H₂⟩ + ⟨D_ΘH·u⟩,                                              (N)
+
+the second-order averaged equation of Remark H.7a (Sanders–Verhulst–Murdock §2.9), now with a remainder that is
+uniformly O(ε³) on Z_ε × 𝒦 because (S) holds there. The transformation Θ ↦ Y₂ is a T₀-periodic near-identity
+diffeomorphism from 𝒦 onto its image, O(ε)-close to the identity with O(ε) derivative, and the period mean of Θ along any curve
+Y₂(t) = Y₂⁰ + O(ε²) equals the period mean of Y₂ up to O(ε³), because u and u₂ have zero mean.
+
+*Step 4 (the Poincaré map in the slow coordinates).* Let P = (P_Y, P_ζ) be the time-T₀ map of (CL) from t = 0, written
+in the coordinates (Y₂, ζ) on 𝒦 × Z_ε. By (N) and Step 2,
+
+    P_Y(Y₂, ζ) = Y₂ + εT₀ Ã(Y₂) + O(ε³),    Ã := ⟨H⟩ + ε[Φ₂ + (T₀/2)D⟨H⟩·⟨H⟩],    ‖P_ζ(Y₂, ζ)‖ ≤ e^{−k_eT₀/2}‖ζ‖ + O(ε³),
+
+the ε²(T₀²/2)D⟨H⟩⟨H⟩ term being the second-order term of the time-T₀ flow of (N). The Lipschitz constants of the coupling
+are Lip_ζ P_Y = O(ε) (a perturbation of ζ acts on Θ̇ through ∂_eF = O(1) while it decays at rate k_e/2, so its integrated
+effect over a period is O(ε)‖ζ‖) and Lip_Y P_ζ = O(ε³) (the forcing of the ζ-equation is O(ε²)-Lipschitz in Θ and is
+integrated against the fast decay). Hence ζ ↦ P_ζ(Y₂, ζ) has a unique fixed point ζ*(Y₂) = O(ε³), Lipschitz in Y₂ with
+constant O(ε³), and the fixed points of P are the zeros of
+
+    Ã_ε(Y) := (P_Y(Y, ζ*(Y)) − Y)/(εT₀) = Ã(Y) + O(ε²).
+
+By the regularity paragraph, D_Y P_Y = I + εT₀D⟨H⟩(Y) + O(ε²) (the variational equation of the slow flow over one period,
+whose coefficient is ε∂_ΘH + O(ε²)), and the ζ*-dependence contributes Lip_ζ P_Y·Lip_Y ζ* = O(ε⁴), so Ã_ε is Lipschitz with
+Lip(Ã_ε − ⟨H⟩) = O(ε) on 𝒦. Since D⟨H⟩(Θ*) = −G_m∇²J_m(Θ*) is invertible, Y ↦ Y − D⟨H⟩(Θ*)⁻¹Ã_ε(Y) maps a ball of
+ε-independent radius ρ₀ around Θ* into itself and is a contraction there for ε small (the Lipschitz form of the implicit
+function theorem), which gives a unique zero Y₂* = Θ* + O(ε), hence a unique fixed point of P with Θ-component within
+O(ε) of Θ*, that is, a unique T₀-periodic solution in the stated set; the bound on x_p − x_m is Step 1. Expanding Ã_ε(Y₂*) = 0 to first order,
+D⟨H⟩(Θ*)(Y₂* − Θ*) + εΦ₂(Θ*) = O(ε²) (the term (T₀/2)D⟨H⟩⟨H⟩(Y₂*) is O(ε) because ⟨H⟩(Y₂*) = O(ε)), so
+
+    Y₂* = Θ* − εD⟨H⟩(Θ*)⁻¹Φ₂(Θ*) + O(ε²) = Θ* − J⁻¹(b_frozen + b_osc) + O(ε²),
+
+using J = εD⟨H⟩(Θ*) and ε²Φ₂(Θ*) = b_frozen + b_osc. Along the periodic orbit Y₂(t) = Y₂* + O(ε²) (since
+⟨H⟩(Y₂*) = O(ε)), so by Step 3 the period mean of Θ_p is Y₂* + O(ε²): this is (d), and Θ_p(t) − Θ̄_p = εu(Θ*,t) + O(ε²)
+is (a).
+
+*Step 5 (the monodromy matrix).* Linearise (CL) along the periodic orbit: with δe and δΘ,
+
+    δė = (∂_x r − k_e I)δe + ∂_Θ r·δΘ,    δΘ̇ = ∂_eF·δe + ∂_ΘF·δΘ,
+
+all coefficients T₀-periodic and evaluated along the orbit; ∂_x r, ∂_Θ r, ∂_eF are O(1) and ∂_ΘF = O(ε) (F is linear
+in e with coefficients smooth in Θ, plus the leak −εσ₀(ϑ_i − ϑ⁰), so ∂_ΘF = O(‖e‖ + ε), and e = O(ε) on the orbit). Let S(t) be a T₀-periodic solution of the Riccati equation
+
+    Ṡ = (∂_x r − k_e I)S + ∂_Θ r − S∂_eF S − S∂_ΘF.
+
+For k_e large it exists, is unique with ‖S‖ ≤ C/k_e, and depends smoothly on the data (contraction of the periodic
+solution operator of the dominant part Ṡ = −k_eS + g; cf. Proposition H.7(a)). In the coordinates η := δe − SδΘ the
+linearisation is block triangular:
+
+    η̇ = [(∂_x r − k_e I) − S∂_eF]η,    δΘ̇ = ∂_eF·η + [∂_eF S + ∂_ΘF]δΘ,
+
+so the monodromy matrix is similar to a block-triangular matrix whose diagonal blocks are the monodromies of the two
+diagonal equations. The η-block has norm at most e^{−(k_e − L)T₀} with L := L_r + sup‖S∂_eF‖ = O(1) (Grönwall): these
+are the n error-channel multipliers. The δΘ-block is the linearisation along the orbit of the slow equation (S) in
+Θ-coordinates, εD_ΘH(Θ_p(t),t) + O(ε²) = εD_ΘH(Θ*,t) + O(ε²), whose monodromy is I + εT₀D⟨H⟩(Θ*) + O(ε²) =
+I − εT₀G_m∇²J_m(Θ*) + O(ε²). Its eigenvalues are 1 − εT₀ν_j + O(ε²) = exp(−εT₀ν_j + O(ε²)), those of G_m∇²J_m(Θ*)
+being the ν_j by similarity with G_m^{1/2}∇²J_m(Θ*)G_m^{1/2}; the O(ε²) perturbation moves them by O(ε²) because
+I − εT₀G_m∇²J_m(Θ*) is diagonalisable (similar to a symmetric matrix through G_m^{1/2}), so the Bauer–Fike theorem applies
+with a condition number independent of ε — this covers the repeated eigenvalues of a collapsed configuration. This is (b).
+
+*Step 6 (the basin).* Let ∇²J_m(Θ*) ≻ 0. In the norm ‖v‖_{G⁻¹} := ‖G_m^{−1/2}v‖, the matrix I − εT₀G_m∇²J_m(Θ*) is
+similar to a symmetric contraction with norm exactly 1 − εT₀λ_* once εT₀ν_{mp} < 1. By Step 4,
+D_Y P_Y = I − εT₀G_m∇²J_m(Y) + O(ε²) on 𝒦, and ∇²J_m is Lipschitz, so on the ball {‖Y₂ − Y₂*‖_{G⁻¹} ≤ ρ₀} the Lipschitz
+constant of P_Y in Y₂ is at most 1 − εT₀λ_*(1 − κ) with κ = O(ρ₀ + ε); the coupling constants are Lip_ζ P_Y = O(ε) and
+Lip_Y P_ζ = O(ε³), and P_ζ contracts ζ by e^{−k_eT₀/2} (Step 4). The 2 × 2 matrix of Lipschitz constants
+[[1 − εT₀λ_*(1 − κ), Cε], [Cε³, e^{−k_eT₀/2}]] has spectral radius 1 − εT₀λ_*(1 − κ′) with κ′ = O(ρ₀ + ε), so on
+{‖Y₂ − Y₂*‖_{G⁻¹} ≤ ρ₀} × Z_ε, with ρ₀ small but independent of ε, P is a contraction in an adapted product norm with
+that factor: its iterates converge to the fixed point geometrically, uniformly in ε. Solutions started in the tube with
+‖e(0) − e_p(0)‖ ≤ 1 enter Z_ε within O(ε log(1/ε)), during which Θ moves by O(ε)‖e(0) − e_p(0)‖ (Step 1), which is absorbed
+by halving ρ₀. Between the sampling times the solutions stay within a factor C of each other
+(Grönwall on one period, with the fast variable absorbing ‖e(0) − e_p(0)‖ into an O(ε)‖e(0) − e_p(0)‖ displacement of
+Θ, Step 1). Transporting back through the near-identity transformations gives (c). ∎
+
+*Numerics* (`exp_periodic_orbit.py` → `results/periodic_orbit/table.md`; `tests/test_periodic.py`). Two instances, k_e = 10, 20,
+40, 80, 160. For each k_e the periodic orbit of (CL) is found by Newton shooting on the Poincaré map (DOP853 at relative
+tolerance 1e-11; residual below 10⁻¹¹ in every case), its monodromy matrix is the finite-difference Jacobian of the map, and
+its period mean is compared with Θ* and with the first-order prediction Θ* − J⁻¹(b_frozen + b_osc) of (d). Distances and
+cosines are in the labelled G⁻¹ metric.
+
+- **Instance A** (n = 2, m = 3, the plant and elliptic reference of Remark H.7a, σ₀ = 0.5, G = diag(4,4,1,1,1)). The
+  minimiser of J_m is a collapsed configuration (kernel spread 4·10⁻¹⁴) with λ_min(∇²J_m) = 0.0148: a non-degenerate
+  minimum with permutation symmetry.
+
+  | k_e | ‖Θ̄_p − Θ*‖ | full prediction: size ratio, cosine, vector error | frozen-measure part only: vector error | parameter Floquet exponents against (1/k_e)ν_j: max, median relative error |
+  |---|---|---|---|---|
+  | 10 | 4.09e-2 | 1.149, 0.9972, 0.169 | 0.398 | 8.3e-2, 1.2e-2 |
+  | 20 | 1.91e-2 | 1.074, 0.9993, 0.083 | 0.360 | 7.3e-2, 7.3e-3 |
+  | 40 | 9.22e-3 | 1.036, 0.9998, 0.041 | 0.348 | 4.5e-2, 4.0e-3 |
+  | 80 | 4.53e-3 | 1.018, 1.0000, 0.020 | 0.343 | 2.5e-2, 2.1e-3 |
+  | 160 | 2.24e-3 | 1.009, 1.0000, 0.010 | 0.342 | 1.3e-2, 1.1e-3 |
+
+  The offset scales like k_e^{−1.05} (fitted exponent; (a) predicts −1), the vector error of the full prediction
+  halves with every doubling of k_e (the O(k_e⁻²) remainder of (d) against an O(1/k_e) offset), and the frozen-measure
+  part alone has a 35% vector error at every k_e: the oscillation term b_osc of Remark H.7a is an O(1) fraction of the
+  first-order location. The median relative error of the Floquet exponents is O(1/k_e), as (b) states; the largest
+  relative error sits on the (m − 1)-fold degenerate separation pair with the smallest exponent (0.0018 at k_e = 20),
+  where an O(k_e⁻²) absolute error is a large fraction of a small exponent. The two error-channel multipliers are
+  below the resolution of the finite-difference monodromy (exponents of order k_e); their product is recovered from
+  Liouville's identity Σ log|λ| = ∫₀^{T₀}tr ∂F/∂z dt along the orbit, which gives a mean error-channel exponent of
+  k_e − 0.16, k_e − 0.11, k_e − 0.086, k_e − 0.074, k_e − 0.068 at k_e = 10 … 160 (instance B: k_e + 0.05 … k_e + 0.09):
+  the multipliers are e^{−(k_e − L)T₀} with |L| < 0.2, as (b) states.
+
+- **Instance B** (n = 1, m = 2, a two-bump plant f(x) = 1.6e^{−(x−1)²/0.4} − 1.2e^{−(x+1)²/0.4} + 0.1x on x_m = 2 sin t,
+  σ₀ = 0.05, G = diag(2,1,1)). The minimiser has two distinct kernels of opposite sign (spread 2.1, λ_min(∇²J_m) = 0.066).
+  Here b_osc = 0 exactly: for a one-dimensional sinusoidal sweep the reflection t ↦ π − t maps x_m to itself and u to
+  −u, so ⟨D_ΘH·u⟩ = 0, and the full and frozen predictions coincide. The reference is fast on the kernel scale
+  (sup‖ẋ_m‖/s is 2/s: between 1.3 and 10 over the admissible widths, about 2.6 at the minimiser's width; the residual bandwidth is of the same order), so k_e = 10–20 is outside the averaging regime:
+
+  | k_e | ‖Θ̄_p − Θ*‖ | prediction: size ratio, cosine, vector error | Floquet: max, median relative error |
+  |---|---|---|---|
+  | 10 | 6.44e-2 | 2.818, 0.880, 1.995 | 9.5e-2, 4.0e-2 |
+  | 20 | 2.22e-2 | 1.942, 0.929, 1.078 | 3.2e-2, 1.4e-2 |
+  | 40 | 8.37e-3 | 1.464, 0.970, 0.551 | 1.2e-2, 5.4e-3 |
+  | 80 | 3.51e-3 | 1.227, 0.990, 0.277 | 4.6e-3, 2.2e-3 |
+  | 160 | 1.59e-3 | 1.111, 0.9969, 0.139 | 2.0e-3, 9.5e-4 |
+
+  The vector error and the Floquet error halve with each doubling of k_e, as the theorem's O(k_e⁻²) remainders
+  predict, but the constants are large: the asymptotic regime starts around k_e ≈ 80 here. This instance shows what
+  the theorem does not claim: the O(1/k_e) location is sharp only once k_e exceeds the effective bandwidth ω_eff of
+  Proposition G's (H2a′).
+
+*Checked* (`tests/test_periodic.py`): ∇J_m against finite differences (1e-7) and the non-degenerate two-kernel minimum of
+instance B; at k_e = 20 and 40 the shooting residual is below 1e-10, ‖Θ̄_p − Θ*‖ and max‖e‖ fall by more than 35% from 20
+to 40, the vector error of the first-order location falls by more than 40% and is below 0.6 at k_e = 40, and the maximal
+relative Floquet error falls by more than 40% and is below 2% at k_e = 40.
+
+*Remark J.1 (what Theorem J says about the program of §8).*
+
+- It is the deterministic, finite-m first step of branch 1: near every hyperbolic critical point of the m-particle
+  regularised loss k_e·𝒢 at τ = 0 the real closed loop has exactly one stationary state (a periodic orbit), an
+  O(1/k_e)-perturbation of it with the same stability type, and the convergence rate is the one of the averaged gradient
+  flow in slow time. (The theorem does not say that every periodic orbit of (CL) arises this way.) The two missing
+  pieces of Conjecture H.6 remain: dither (τ > 0, where the stationary state is a measure) and uniformity in m.
+- It makes the stationary (period-mean) prediction of Remark H.7a a theorem for this system: the first-order location
+  of the orbit, hence the orientation difference of the period-mean kernels, is Θ* − J⁻¹(b_frozen + b_osc) with an
+  O(k_e⁻²) error. When the leading offset is itself small, the O(k_e⁻²) remainder can dominate its *direction* at
+  moderate k_e: a collapsed saddle instance examined in the round-5 review (`review/REVIEW_round5_J.md`) has a
+  first-order location nearly orthogonal to the true offset at k_e = 20 and aligned with it at k_e = 80, while the sizes
+  obey the theorem's orders throughout.
+- The leak is not needed for the structure, only for the hyperbolicity of Θ*. At a collapsed critical point the
+  separation Hessian is σ₀G⁻¹ − R₂ (Proposition K); for n = 1 and σ₀ = 0 the amplitude row of R₂ vanishes at a leak-free
+  critical point (⟨rφ⟩ = ∂_c⟨rφ⟩ = ∂_s⟨rφ⟩ = 0 there), so the m − 1 amplitude-redistribution directions are exactly
+  flat and the theorem does not apply, while for n ≥ 2 only the amplitude block of R₂ vanishes and a collapsed critical
+  point is generically non-degenerate even without a leak. Where ∇²J_m is singular the theorem does not apply.
+- At a collapsed critical point (all ϑ*_i equal) the permutation symmetry makes the separation modes (m − 1)-fold
+  degenerate; the Floquet exponents come in such multiplets (`results/periodic_orbit/table.md`); Proposition K (§6e) works out this case.
+
+---
+
+## 6e. Proposition K — collapsed configurations, the critical leak, and the orientation of the orbit as a design input
+
+Branch 2 of §8 asks whether the circulation of the reference orbit can be designed. Theorem J makes the question
+precise for the collapsed configuration, the trap that Theorem H's dither was introduced to escape: its stability is
+decided by the eigenvalues of a Hessian that the orientation shifts at order k_e⁻².
+
+**Setting.** As in Theorem J. A configuration is *collapsed* if ϑ_i = ϑ̄ for all i. Then f̂_Θ = Φ̃(·;ϑ̄), so Θ is a critical
+point of J_m if and only if ϑ̄ is a critical point of the single-kernel objective J_1(ϑ) := ½∫‖f − Φ̃(·;ϑ)‖²dρ +
+(σ₀/2)‖ϑ − ϑ⁰‖²_{G⁻¹}. Write r̄ := f − Φ̃(·;ϑ̄) and
+
+    M₂ := ∫∇_ϑΦ̃(·;ϑ̄)ᵀ∇_ϑΦ̃(·;ϑ̄)dρ ⪰ 0,    R₂ := ∫Σ_k r̄_k∇²_ϑΦ̃_k(·;ϑ̄)dρ = ∇²_ϑ⟨r̄ᵀΦ̃(·;ϑ)⟩_ρ|_{ϑ̄}  (residual frozen).
+
+R₂ is the Hessian of −V_L[μ̄](ϑ) at the atom: the second-order cost of moving a small amount of mass off the atom at
+frozen residual.
+
+**Proposition K.** Let Θ* be a collapsed critical point of J_m with atom ϑ̄.
+
+(i) *Symmetry splitting.* ∇²J_m(Θ*) = I_m ⊗ (σ₀G⁻¹ − R₂) + (1/m)(1 1ᵀ) ⊗ M₂. On the separation subspace
+{(u_1..u_m) : Σ_i u_i = 0}, of dimension (m − 1)p, it acts as σ₀G⁻¹ − R₂; on the collective subspace {u_i all equal} as
+∇²J_1(ϑ̄) = σ₀G⁻¹ − R₂ + M₂. The same splitting holds for the Jacobian of any permutation-equivariant particle drift
+at a collapsed configuration, in particular for the second-order averaged drift of Remark H.7a: it has the form
+I_m ⊗ D + (1/m)(1 1ᵀ) ⊗ E.
+
+(ii) *Separation stability at leading order.* Θ* is a non-degenerate local minimum of J_m iff ∇²J_1(ϑ̄) ≻ 0 and
+σ₀G⁻¹ ≻ R₂, that is, iff ϑ̄ is a non-degenerate minimiser of J_1 and σ₀ > σ_crit(ϑ̄) := λ_max(G^{1/2}R₂G^{1/2}). The
+separation Floquet exponents of the collapsed periodic orbit of (CL) are then, by Theorem J(b),
+(1/k_e)λ_j(σ₀I − G^{1/2}R₂G^{1/2}) + O(k_e⁻²), each with multiplicity m − 1, and they do not depend on m. The condition
+σ₀G⁻¹ ≻ R₂ is the statement that the atom is a strict local minimiser of the first-variation potential V_L[μ̄] + (σ₀/2)‖·‖²_{G⁻¹}
+on its support, the local form of the Chizat–Bach optimality condition for measures.
+
+(iii) *The orientation-odd shift.* Let 𝒪 be traversed in either direction (the same ρ, hence the same Θ* and the
+same leading exponents). Write the second-order normal form of Theorem J's proof as
+
+    (N)    Θ̇ = −(1/k_e)G_m∇J_m(Θ) + b(Θ) + O(k_e⁻³),    b := b_frozen + b_osc = O(k_e⁻²),
+
+with b_frozen = (1/k_e²)G_m∇(U_even + U_odd) (Proposition H.7) and b_osc of Remark H.7a. (N) has a unique equilibrium Θ̄₂
+near Θ*, which is collapsed, with Θ̄₂ − Θ* = −J₁⁻¹b(Θ*) + O(k_e⁻²) for J₁ := −(1/k_e)G_m∇²J_m(Θ*) (the first-order location
+of Theorem J(d)); let J₂ be the Jacobian of (N) at Θ̄₂. The parameter Floquet exponents of the collapsed orbit are the
+eigenvalues of −J₂ up to O(k_e⁻³), and
+
+    J₂ = J₁ + ∂b(Θ*) + ∂J₁(Θ*)[Θ̄₂ − Θ*] + O(k_e⁻³),
+
+where the third term — the third derivative of J_m contracted with the first-order offset — is O(k_e⁻²), of the same order
+as ∂b, and must be kept: the Jacobian of (N) at Θ* is not the right linearisation. Under orbit reversal ρ, Θ*, J₁ and
+U_even are unchanged while U_odd and b_osc change sign (Proposition H.7(d), Remark H.7a), so with b_even := (1/k_e²)G_m∇U_even
+and b_odd := (1/k_e²)G_m∇U_odd + b_osc,
+
+    J₂ = J₁ + E ± O,    E := ∂b_even(Θ*) − ∂J₁(Θ*)[J₁⁻¹b_even(Θ*)],    O := ∂b_odd(Θ*) − ∂J₁(Θ*)[J₁⁻¹b_odd(Θ*)],
+
+for the two orientations. J₁, E and O are permutation-equivariant and preserve the separation subspace; by (i) their
+restrictions to one separation block are p × p matrices, written J₁|_{sep} = −(1/k_e)(σ₀I − GR₂), D_even, D_odd. The
+separation Floquet exponents of the two orientations differ by
+
+    λ_j^{(+)} − λ_j^{(−)} = −2 wⱼᵀD_odd vⱼ / (wⱼᵀvⱼ) + O(k_e⁻³)    (simple eigenvalue λ_j of −J₁|_{sep}, right and left eigenvectors vⱼ, wⱼ),
+
+an O(k_e⁻²) quantity that scales like k_e⁻² at fixed (G, σ₀), while the exponents themselves are O(1/k_e). The
+difference is a property of the excitation's orientation alone: the occupation measure, the averaged system (𝔄) and
+all of Theorems B–H are blind to it.
+
+(iv) *The critical leak as a design point.* At σ₀ = σ_crit(ϑ̄) the softest separation exponent vanishes at leading order
+and equals the k_e⁻² value −(wᵀD_even v)/(wᵀv) ∓ (wᵀD_odd v)/(wᵀv) + O(k_e⁻³). If |wᵀD_odd v| > |wᵀD_even v|, the
+collapsed configuration is stable for one orientation and unstable for the other: the direction in which the reference
+is traversed decides whether the kernels separate. More generally, for σ₀ in a window of width O(1/k_e) around σ_crit —
+the window where the leading exponent (σ₀ − σ_crit)(1 + o(1))/k_e lies between the two k_e⁻² values — the orientation
+decides the sign, and the centre of the window, σ₀ = σ_crit + k_e(wᵀD_even v)/(wᵀv) + O(k_e⁻¹), can be computed from the
+averaged data alone.
+
+*Status.* (i) and (ii) are proved (linear algebra at the collapsed point and Theorem J(b)). (iii) and (iv) are proved
+given the second-order normal form (N) with an O(k_e⁻³) remainder, which is Theorem J's proof carried one order further
+(periodic averaging to second order [Sanders–Verhulst–Murdock Ch. 2–3]; the first-order step is written out in the proof
+of Theorem J, the second-order step is Remark H.7a's derivation and is not written out here). The orientation-odd shift,
+its k_e⁻² scaling, the prediction and the design window are checked numerically in one instance
+(`exp_orientation_stability.py`).
+
+*Proof.* (i) ∂²J_m/∂ϑ_i∂ϑ_j = (1/m)∫∇Φ̃_iᵀ∇Φ̃_j dρ − δ_ij∫Σ_k r_k∇²Φ̃_{i,k} dρ + δ_ijσ₀G⁻¹ (the first term from the
+quadratic dependence of ½∫‖r‖²dρ on the m features with weights 1/m, the second from the ϑ_i-curvature of
+−(1/m)·m∫rᵀΦ̃_i dρ... with r = f − (1/m)ΣΦ̃_j, ∂_{ϑ_i}(mL̄_m) = −∫rᵀ∇Φ̃_i dρ and ∂_{ϑ_j}∂_{ϑ_i}(mL̄_m) = (1/m)∫∇Φ̃_jᵀ∇Φ̃_i dρ − δ_ij∫Σ_k r_k∇²Φ̃_{i,k} dρ).
+At a collapsed point all blocks coincide, giving the Kronecker form; the two subspaces are the isotypic components of
+the permutation action, on which (1/m)(1 1ᵀ) acts as 0 and 1 respectively. The second-order averaged drift is
+permutation-equivariant (each particle moves by a function of its own position and of the measure), so its Jacobian at
+a collapsed point has the same form with D the self-derivative and E the derivative through the measure.
+
+(ii) Positive definiteness of a block-diagonal form; the exponents are Theorem J(b) applied to the separation block,
+whose eigenvalues of G_m^{1/2}∇²J_mG_m^{1/2} restricted to the separation subspace are those of σ₀I − G^{1/2}R₂G^{1/2}, each
+repeated m − 1 times. For the last sentence, the first variation of 𝒢 := L̄ + (σ₀/2)∫‖·−ϑ⁰‖²_{G⁻¹}dμ at μ̄ = δ_ϑ̄ is
+V_L[μ̄](ϑ) + (σ₀/2)‖ϑ − ϑ⁰‖²_{G⁻¹} = −⟨r̄ᵀΦ̃(·;ϑ)⟩_ρ + (σ₀/2)‖ϑ − ϑ⁰‖²_{G⁻¹}, whose Hessian at ϑ̄ is −R₂ + σ₀G⁻¹.
+
+(iii) The proof of Theorem J carries one order further: the near-identity change of variables of its step 2 removes the
+oscillating terms through order k_e⁻², which turns (CL) into (N) with an O(k_e⁻³) remainder (this is the normal form of
+Remark H.7a's derivation, with b_osc the term that the frozen-measure expansion misses). (N) is a regular perturbation
+of the averaged system near the hyperbolic point Θ*, so it has a unique equilibrium Θ̄₂ within O(1/k_e) of Θ*, obtained
+by the implicit function theorem; by the first-order expansion, Θ̄₂ − Θ* = −J₁⁻¹b(Θ*) + O(k_e⁻²) (J₁⁻¹ = O(k_e), b = O(k_e⁻²)).
+(N) is permutation-equivariant and Θ* is collapsed, so the equivariant Newton iterates stay collapsed and Θ̄₂ is
+collapsed. Theorem J(b) applied to (N) (same proof, remainder O(k_e⁻³)) gives the Floquet exponents as the eigenvalues
+of −J₂ + O(k_e⁻³). Expanding the Jacobian of (N) about Θ*: J₂ = J₁ + ∂b(Θ*) + ∂J₁(Θ*)[Θ̄₂ − Θ*] + O(‖Θ̄₂ − Θ*‖²/k_e) +
+O(k_e⁻²‖Θ̄₂ − Θ*‖), and both error terms are O(k_e⁻³); substituting the offset gives E and O, which are the even and odd
+parts under reversal because ∂J₁ is even and b_even, b_odd have the parities named. All three operators are
+permutation-equivariant, hence preserve the separation subspace, and by the Kronecker structure of (i) each acts on it
+as I_{m−1} ⊗ (a p × p block). First-order eigenvalue perturbation of the simple eigenvalue λ_j of −J₁|_{sep} gives
+λ_j^{(±)} = λ_j − wⱼᵀD_even vⱼ/(wⱼᵀvⱼ) ∓ wⱼᵀD_odd vⱼ/(wⱼᵀvⱼ) + O(k_e⁻³), and the difference as stated. (For the
+(m − 1)-fold degenerate separation modes the degeneracy is the trivial one of the Kronecker structure, which the
+restriction to one p-dimensional block removes; a further degeneracy within the block would call for degenerate
+perturbation theory.)
+
+(iv) is (iii) at a vanishing leading eigenvalue; the window follows because the leading exponent is
+(σ₀ − σ_crit)/k_e·(1 + o(1)) near σ_crit (ϑ̄, R₂ and the eigenvectors depend smoothly on σ₀) while the shifts are
+O(k_e⁻²); its centre is where the leading exponent cancels the even shift. ∎
+
+*Remark K.1 (reading).* Three things.
+
+- The collapsed configuration's stability is a single-kernel question at leading order (the Hessian σ₀G⁻¹ − R₂ does
+  not depend on m), which explains why the m = 6 and m = 32 experiments of §6c collapsed alike: a leak above σ_crit
+  traps every network size.
+- Dither (Theorem H) and the orientation (this proposition) are two different ways to leave the trap: the first adds
+  entropy, the second tilts the Hessian by O(k_e⁻²). The second is free but small; it matters only near σ_crit, that is,
+  when the leak is tuned to the edge of trapping, or for nearly flat separation modes such as the weak saddle of
+  Remark H.2.
+- The sign of the shift depends on the data (f, 𝒪, ϑ̄) through D_odd and has no general sign: the design rule is to
+  compute D_odd (from the averaged data: U_odd, b_osc and the third derivative of J_m) and choose the orientation with the
+  smaller softest separation exponent (or the negative one); the window of (iv) is where the choice matters.
+
+*Numerics* (`exp_orientation_stability.py` → `results/orientation_stability/table.md`). Instance A of Theorem J's
+numerics (n = 2, m = 3, the elliptic reference traversed in both directions, G = diag(4,4,1,1,1)). For each orientation
+the collapsed periodic orbit is found by Newton shooting (residual ≤ 4·10⁻¹³), the parameter block of its monodromy
+matrix is restricted to the separation and collective subspaces, and the exponents are compared with the leading order
+(σ₀I − G^{1/2}R₂G^{1/2})/k_e and with the second-order prediction, the eigenvalues of −J₂ at the equilibrium Θ̄₂ of (N)
+(Newton from Θ*; every Θ̄₂ found is collapsed to 10⁻⁸). The second-order equilibrium is ‖Θ̄₂ − Θ*‖_{G⁻¹} = 3.7·10⁻²,
+1.8·10⁻², 9.0·10⁻³, 4.5·10⁻³ away from Θ* at k_e = 10, 20, 40, 80: the O(1/k_e) offset of Theorem J(d).
+
+- *The shift and its prediction* (σ₀ = 0.5, a stable collapse). The softest separation exponents of the two orientations
+  differ by 9.0·10⁻⁴, 1.9·10⁻⁴, 4.1·10⁻⁵, 9.7·10⁻⁶ at k_e = 10, 20, 40, 80: fitted exponent −2.18 against k_e ((iii):
+  −2). Scaled by k_e², the measured corrections to the leading order are −0.032, −0.057, −0.070, −0.077 for (+) and
+  −0.123, −0.132, −0.136, −0.139 for (−), approaching the predicted −0.083 and −0.143 with a gap that halves at every
+  doubling of k_e (the O(k_e⁻³) remainder); the predicted difference at Θ̄₂ — 7.8·10⁻⁴, 1.7·10⁻⁴, 3.9·10⁻⁵, 9.4·10⁻⁶ — is
+  within 14%, 9%, 5%, 3% of the measured one. The prediction with the Jacobian taken at Θ* instead of Θ̄₂ (the
+  third-derivative term omitted) reads 9.0·10⁻⁴, 2.1·10⁻⁴, 5.0·10⁻⁵, 1.2·10⁻⁵: it agrees at k_e = 10 by accident and its
+  k_e²-scaled value converges to 0.078 while the measured one converges to 0.060, the 30% error that the numerics
+  exposed (`review/REVIEW_LOG.md`, round 5, K-1). The separation exponents come in exact pairs (multiplicity m − 1 = 2)
+  and the collective exponents differ between the orientations by 2% at k_e = 10 and 0.2% at k_e = 80, as (i)–(iii)
+  describe.
+- *At the critical leak* (σ₀ = σ_crit = 0.4606). The leading exponent vanishes and the k_e⁻² terms decide: the softest
+  separation exponent is −4.1·10⁻⁴ for (+) and −1.27·10⁻³ for (−) at k_e = 10, −4.8·10⁻⁵ and −8.7·10⁻⁵ at k_e = 40 —
+  unstable for both orientations in this instance, the even part dominating the odd one by a factor 2–3; the predictions
+  at Θ̄₂ are within 14% and 6% of the measured values at k_e = 40.
+- *The orientation decides* (σ₀ designed from the averaged data). Solving pred₊(σ₀) + pred₋(σ₀) = 0 for the predicted
+  softest exponents gives σ₀ − σ_crit = 0.0125 at k_e = 10 and 0.0061 at k_e = 20, the centre of the window of (iv); there
+  the measured softest separation exponents are +8.5·10⁻⁴ and −2.5·10⁻⁵ (k_e = 10), +1.4·10⁻⁴ and −3.7·10⁻⁵ (k_e = 20):
+  the same reference orbit, traversed one way, keeps the collapsed kernels together, and traversed the other way makes
+  them separate. The window is narrow — the leading exponent at these σ₀ is 1.2·10⁻³ and 3.0·10⁻⁴ — and the design lands
+  inside it although the k_e⁻³ terms move both measured exponents by about +4.7·10⁻⁴ and +6·10⁻⁵ against the prediction.
+
+*Checked* (`tests/test_periodic.py`): the Hessian splitting (i) against finite differences (10⁻⁵ relative) at the
+collapsed minimiser of instance A, the isotypic eigenvalue structure, the gap equation of σ_crit (10⁻⁸), and the two-fold
+zero of the separation block at σ_crit with a positive definite collective block
+(`test_proposition_K_hessian_splitting_and_critical_leak`); the experiment above for (iii)–(iv).
 
 ---
 
 ## 7. Verification map
 
 Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/test_langevin.py`, `Av` is
-`tests/test_averaging.py`, `Ex` is `tests/test_excitation.py` and `NR` is `tests/test_nonreciprocity.py`.
+`tests/test_averaging.py`, `Ex` is `tests/test_excitation.py`, `NR` is `tests/test_nonreciprocity.py`, `Pe` is
+`tests/test_periodic.py` and `Ba` is `tests/test_barycentric.py`.
 
 | statement | what is checked | where |
 |---|---|---|
@@ -1927,7 +2674,11 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | C(ii) | C ≤ b² + 4ηR; √C ≤ b + 2η; C = b² under both gap conditions (300 configurations) | `T::test_lemma_C_ii_induced_coupling_bound` |
 | C(iv) | an instance satisfying **every** hypothesis, asserted, including version 3's gap condition 4η̄(b + η̄) < Δ_gap; the envelope holds at every sample, with actual contraction | `T::test_theorem_C_iv_exponential_estimate` |
 | C(v), Prop. C.5 | label invariance of the OT leak; the reshuffling transient of the labelled leak | `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py` |
+| C′(i) | the plan reduces to the assignment for m₀ = m (1e-10) and W² = V_bar² + Var_γ (1e-10); along the pure leak W² is non-increasing at every step and D⁺Z ≤ −σ_mV_bar² holds at every state; the flow reaches V_bar² < 1e-8 and ends at a fixed point of the equal-mass Lloyd iteration | `Ba::test_plan_reduces_to_assignment_and_pythagorean_split`, `Ba::test_pure_barycentric_leak_dissipates_to_a_centroidal_configuration`, `exp_barycentric_leak.py` → `results/barycentric_leak/table.md` |
+| C′(ii) | √C_bar ≤ b + 2η on 90 random configurations; C_bar = b_bar² at small η (plan stability) | `Ba::test_induced_coupling_bound_and_plan_stability` |
+| C′(iii) | the Lyapunov inequality at every recorded state of a closed loop with the barycentric leak toward a 24-atom prior | `Ba::test_lyapunov_inequality_along_the_barycentric_leak_closed_loop` |
 | D | consistency in m (nearly constant amplification 1.64–1.69; not the constant e^{ΛT}) | `exp_mean_field_m.py` |
+| D′(b), (d) | the m^{−1/2} rate of the synchronous coupling to a 4096-particle reference: slopes −0.47 ± 0.06 (τ = 0) and −0.46 ± 0.05 (τ = 2·10⁻³) over 24 seeds, 0.94 ± 0.08 and 0.92 ± 0.08 against (1/m − 1/M)^{1/2}; not the constant | `exp_chaos.py` → `results/chaos/table.md` |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -1949,7 +2700,11 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | H.7a, oscillation term | value against an independent one-period near-identity flow (within 3% at k_e = 80); odd under orbit reversal (1e-6) | `Av::test_oscillation_correction_matches_a_one_period_flow`, `Av::test_oscillation_correction_is_odd_under_orbit_reversal` |
 | I(i), (ii) | aᵀB(ξ,ξ')a' equals the antisymmetric part of S_even + K (1e-10); A(ϑ,ϑ_z) = 0 and the cyclic sum over (ϑ₀,ϑ₁,ϑ_z) equals A(ϑ₀,ϑ₁) (1e-14) | `NR::test_bilinear_form_B_reproduces_the_antisymmetric_second_variation`, `NR::test_zero_feature_collapses_the_cyclic_criterion_to_a_pairwise_one` |
 | I(iii) | n = 1: A ≡ 0 at perfect fit (< 1e-13); A ≠ 0 with a residual, equal to the closed form; the positivity witness | `NR::test_n1_reciprocal_iff_residual_vanishes_on_the_orbit`, `NR::test_positivity_witness_n1` |
-| I(iv) | the closed form of κ (1e-10); F₂ > 0 on the ellipse; κ ≡ 0 on a zero-current orbit; at perfect fit B = 2κI, A ≠ 0 on the ellipse and A ≡ 0 on the segment | `NR::test_circulation_kernel_closed_form_and_vanishing_for_a_zero_current_orbit`, `NR::test_perfect_fit_n2_leaves_only_the_circulation_kernel` |
+| I(iv) | the closed form of κ (1e-10); the second component of F_s((0.5, 0)) is positive on the ellipse; κ ≡ 0 on a zero-current orbit; with f ≡ f̂_μ on ℝ² (Dr_μ ≡ 0) B = 2κI, A ≠ 0 on the ellipse and A ≡ 0 on the segment; with f = f̂_μ + he₁, h zero on the ellipse, the curl term survives and equals −∫φφ'∂₂h dρ·(e₁e₂ᵀ − e₂e₁ᵀ) | `NR::test_circulation_kernel_closed_form_and_vanishing_for_a_zero_current_orbit`, `NR::test_perfect_fit_n2_leaves_only_the_circulation_kernel`, `NR::test_perfect_fit_on_the_orbit_alone_keeps_the_curl_term` |
+| J, averaged objective | ∇J_m against finite differences (1e-7); the critical point is a non-degenerate minimum with two distinct kernels | `Pe::test_gradient_of_J_m_matches_finite_differences_and_critical_point_is_nondegenerate` |
+| J(a), (b), (d) | Newton shooting finds the periodic orbit (residual < 1e-10); ‖Θ̄_p − Θ*‖ and max‖e‖ halve from k_e = 20 to 40; the vector error of the first-order prediction of the offset halves as well (it is 0.55 at k_e = 40 in the fast-sweep test instance, and 0.041 at k_e = 40 in instance A of the experiment); the parameter Floquet exponents match (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) with a maximal relative error below 2% at k_e = 40 that halves with k_e; both instances at k_e = 10–160 in the experiment; the error-channel exponent recovered from Liouville's trace identity is k_e − L with |L| < 0.2 | `Pe::test_theorem_J_periodic_orbit_offset_and_floquet_exponents`, `exp_periodic_orbit.py` → `results/periodic_orbit/table.md` |
+| K(i), (ii) | the Hessian of J_m at a collapsed configuration equals I_m ⊗ (σ₀G⁻¹ − R₂) + (1/m)(11ᵀ) ⊗ M₂ (finite differences, 1e-6); σ_crit solves σ = λ_max(G^{1/2}R₂(ϑ̄(σ))G^{1/2}) (1e-9) and the separation block is singular there; the separation Floquet exponents of the collapsed orbit come in (m − 1)-fold multiplets | `Pe::test_proposition_K_hessian_splitting_and_critical_leak`, `exp_orientation_stability.py` |
+| K(iii), (iv) | the orientation difference of the softest separation exponent at σ₀ = 0.5: slope −2.18 against k_e, within 14% → 3% of the prediction at Θ̄₂ for k_e = 10 → 80, while the prediction at Θ* converges to a value 30% off; at σ_crit both orientations are unstable, predictions within 14% at k_e = 40; at the designed σ₀ the signs differ for k_e = 10 and 20 | `exp_orientation_stability.py` → `results/orientation_stability/table.md` |
 | H.7 + H.7a in the real closed loop | the orientation dependence of the learned kernels (same ρ) is predicted to within 3% in size and 11% as a vector, cosine 0.994 at k_e = 40; the measured difference scales like k_e^{−1.01} | `exp_orbit_orientation.py` → `results/orbit_orientation/table_sigma2_slow16.md` |
 
 Not checked in the repository:
@@ -1957,8 +2712,13 @@ Not checked in the repository:
 - B.5 along (L), and B.6 and B.7;
 - the Filippov form of C(i), the inequality of C(v), and Proposition C.5's D⁺V_OT = σ_m(δ − δ²);
 - D(b), D's constant, and the one-sided constant of Remark D.1;
-- the sharpness of the explicit rate of E beyond the tables of Remark E.0a, Corollary E.2 and Remark E.3;
+- the sharpness of the explicit rate of E beyond the tables of Remark E.0a; Corollary E.2 and Remark E.3;
 - Theorem I(v) beyond the two instances (the analytic dichotomy is a proof only);
+- Theorem J(c) (the basin; a single basin run is reported in `review/REVIEW_round5_J.md`);
+- Proposition K(iii)–(iv) beyond the instance of `exp_orientation_stability.py`, and the second-order normal form it rests on;
+- Theorem C′(iv) (its hypotheses are not met on any tested instance) and the convergence of the pure leak to a critical
+  point beyond the tested instances; Theorem D′'s constant, its per-particle bound and its k-particle convergence (only
+  the rate of (b) is checked);
 - H.8, which is a proof only;
 - Conjecture H.6.
 
@@ -1973,8 +2733,11 @@ Each branch states what is proved, what is open, and the first concrete step.
      measure (H.7); input-to-state stability of the averaged system (H.8).
    - *Open:* a near-identity averaging transformation for the stochastic McKean–Vlasov loop that keeps the
      frozen-measure correction valid along the moving measure, uniformly in time.
-   - *First step:* the deterministic case (τ = 0, σ > 0) at fixed m, where the needed averaging theorem is classical
-     (Sanders–Verhulst–Murdock Ch. 5, "averaging under attraction").
+   - *Done (Theorem J):* the deterministic case (τ = 0, σ = σ₀/k_e) at fixed m: near every hyperbolic critical point
+     of J_m the real loop has a unique periodic orbit with the same stability type, k_e-uniform basin, and the
+     first-order location of Proposition H.7 and Remark H.7a.
+   - *Next steps:* the same with dither at fixed m (the stationary state is a measure; the averaging transform must
+     act on the Fokker–Planck equation), and uniformity in m.
 
 2. **Non-reciprocal mean-field dynamics from closed-loop learning (new; Proposition H.7).**
    - *Proved at a frozen measure:* the averaged adaptive dynamics is a semi-gradient flow plus a lag term
@@ -1982,25 +2745,34 @@ Each branch states what is proved, what is open, and the first concrete step.
    - Its interaction has two antisymmetric parts:
      - the performative defect A_even of the state shift, which is present for every n and is the only part for n = 1;
      - the circulation kernel K, an integral over the region that the reference orbit encloses (n ≥ 2).
-   - *Proved (Theorem I):* reciprocity at order k_e⁻² is equivalent to A_even + 2K ≡ 0; for n = 1 it holds exactly at
-     perfect fit on the orbit, and for n ≥ 2 at perfect fit exactly when the orbit carries no circulation. The
-     performative defect is proportional to the residual; the circulation defect is not.
+   - *Proved (Theorem I):* reciprocity at order k_e⁻² is equivalent to A_μ ≡ 0; for n = 1 it holds exactly at perfect
+     fit on the orbit, and for n ≥ 2 at perfect fit exactly when the orbit carries no circulation and the residual's
+     Jacobian is symmetric along the orbit; no open set of measures is reciprocal, for any n. The performative defect
+     is bounded by the residual and the antisymmetric part of its Jacobian; the circulation defect depends on neither.
    - *Open questions:*
      - Are stationary states unique beyond the perturbative regime?
      - Can circulation be *designed*, choosing the orbit's orientation and area, to break symmetric traps or to speed
-       escape from the collapsed configuration?
+       escape from the collapsed configuration? (Partly answered by Proposition K, below: the orientation decides the
+       stability of the collapsed configuration in a window around the critical leak.)
      - Is there a Lyapunov functional other than F_τ for the non-reciprocal flow?
    - *Context:* the closest analogues are performative prediction [S14], semi-gradient TD learning [S10], [S11] and
      non-reciprocal phase transitions [S12].
    - *Done (Remark H.7a):* deterministic n = 2 closed-loop runs with the reference traversed both ways (same ρ). The
      full first-order theory predicts the O(1/k_e) difference of the learned kernels to 3% in size and 11% as a
      vector.
-   - *Next steps:* the same test with dither, where the stationary state is a measure; and the design of the orbit's
-     orientation and area as a control input.
+   - *Done (Proposition K):* at a collapsed configuration the orientation-odd k_e⁻² terms shift the separation Floquet
+     exponents of the real loop by O(k_e⁻²), with a closed-form prediction from the averaged data; at the critical leak
+     σ_crit the direction of traversal decides whether the kernels separate, and the σ₀ at which it does can be computed
+     in advance (§6e).
+   - *Next steps:* the same test with dither, where the stationary state is a measure; the design of the orbit's area
+     (not only its orientation) as a control input; and the orientation effect at non-collapsed configurations, where
+     it moves the stationary kernels (Remark H.7a) rather than their stability.
 
 3. **Uniform-in-time propagation of chaos with a plant in the loop.**
-   - Theorem D is finite-horizon. Uniform-in-time results exist for mean-field Langevin dynamics [S5] and for shallow
-     networks [36].
+   - Theorems D and D′ are finite-horizon; D′ gives the m^{−1/2} rate for the dithered loop by synchronous coupling, with
+     constants independent of the temperature and an exponent independent of the dimension for the state and the learned
+     function.
+     Uniform-in-time results exist for mean-field Langevin dynamics [S5] and for shallow networks [36].
    - *Open:* the closed loop, where the plant couples all particles through e, and where (by H.7) the averaged
      interaction is not reciprocal.
 
@@ -2011,6 +2783,10 @@ Each branch states what is proved, what is open, and the first concrete step.
      shape the induced metric.
 
 5. **Noiseless global convergence.**
+   - *Done (Proposition K):* the local criterion for the collapsed trap: a collapsed configuration is a strict local minimum
+     of the regularised loss iff σ₀ > σ_crit(ϑ̄) = λ_max(G^{1/2}R₂G^{1/2}), where R₂ is the Hessian of the first-variation
+     potential at the atom; below σ_crit the noiseless flow leaves the trap along the softest separation mode, without dither,
+     and the residual at the atom is what drives the separation (R₂ is linear in it).
    - *Open:* a closed-loop separation condition under which the noiseless flow avoids spurious stationary points,
      despite the failure of the Chizat–Bach boundary conditions. Candidates are a compactified width coordinate and
      reflecting boundaries (Remark H.3).
@@ -2029,13 +2805,19 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 8. **Transport-regularised adaptive laws.**
    - Wasserstein proximal (JKO) discrete-time adaptive laws.
-   - The OT leak toward priors with a different number of atoms, using optimal plans with barycentric projection.
+   - *Done (Theorem C′):* the OT leak toward priors with a different number of atoms, using optimal plans with
+     barycentric projection; it is Lloyd's algorithm in continuous time, and its bias is the centroid defect of the ideal.
+   - *Open:* its mean-field form (a general prior ν and a general μ, where the barycentric projection is the
+     superdifferential of ½W²(·, ν); AGS Thm 10.4.12), and adaptive priors (ν itself learned).
    - Transfer: transporting a learned measure to a new plant.
 
 9. **Quantisation and the curse of dimensionality (Corollary B.6).**
+   - *Done (Theorem C′):* an adaptive law whose leak tracks the equal-mass centroidal quantisers of a prior measure
+     (centroidal Voronoi tessellations [S20]; coverage control [S18], [89]), and Theorem D′'s observation that the state and the learned
+     function converge at the rate m^{−1/2}, whose exponent is dimension-free: the curse of dimensionality of Corollary B.6 lives in the
+     W-distance of the parameter measures, which the loop never evaluates.
    - *Open:* second-order (centroid) quantisation rates for the ideal measure on the lifted space; approximation rates
-     that do not go through W (Maurey-type); adaptive laws that track optimal quantisers (the centroidal Voronoi
-     tessellation connection [14]).
+     that do not go through W (Maurey-type).
 
 10. **Symmetric systems beyond kernels.** The OT quotient applies verbatim to swarms of identical agents, mixtures and
     multi-head models ([88] and [89] are the control-side precedents).
@@ -2046,7 +2828,7 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 ## 9. References
 
-See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S14] are in the audit file.
+See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S20] are in the audit file.
 
 Key mathematical references used in proofs and remarks:
 

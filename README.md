@@ -25,11 +25,13 @@ with its proof and status, the numerical evidence and the verification map. It i
   the documents is produced by a script in [experiments/](experiments).
 - The theory went through three rounds of automated multi-agent adversarial review, and the manuscript through a
   fourth that compared it line by line with the theory. Every confirmed issue and its fix is logged in
-  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of the first three rounds are kept beside it.
+  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of rounds 1–3 and 5 are kept beside it.
 - The claim-by-claim novelty audit is in [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md).
-- Version 4 of the theory adds a self-contained strict Lyapunov function for Theorem E (Lemma E.0) and a theorem that
-  characterises the non-reciprocity of the averaged closed loop (Theorem I); see [review/REVIEW_LOG.md](review/REVIEW_LOG.md)
-  round 5 for their review.
+- Version 4 of the theory adds a self-contained strict Lyapunov function for Theorem E (Lemma E.0), a theorem that
+  characterises the non-reciprocity of the averaged closed loop (Theorem I), the finite-m averaging theorem for the real
+  closed loop (Theorem J), propagation of chaos for the dithered loop (Theorem D′), the barycentric OT leak
+  (Theorem C′) and the orientation of the reference orbit as a design input for collapsed configurations
+  (Proposition K); see [review/REVIEW_LOG.md](review/REVIEW_LOG.md) round 5 for their adversarial review.
 
 ---
 
@@ -48,9 +50,13 @@ particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive l
 | F | The Wasserstein length of learning is bounded by the integrated tracking error | proved and checked |
 | G | The slow kernel geometry follows variable projection in the metric induced on the slow manifold; plain variable projection needs a flatness condition | formal; checked, with a counterexample |
 | H | With saturated features, σ-modification and parameter dither, the averaged loop is mean-field Langevin dynamics and converges globally to the regularised optimum | proved for the averaged system |
-| H.7 | At finite feedback gain, the averaged loop is *not* a gradient flow: a semi-gradient (performative) correction, and an antisymmetric kernel interaction given by the area the reference orbit encloses | frozen-measure part proved; non-reciprocity checked |
+| H.7 | At finite feedback gain, the averaged loop is *not* a gradient flow: a semi-gradient (performative) correction, and an antisymmetric kernel interaction given by the area the reference orbit encloses | frozen-measure part proved; non-reciprocity checked and characterised by Theorem I |
 | H.8 | The averaged system is input-to-state stable, which reduces the global conjecture for the real loop to an averaging estimate | proved under a stated regularity assumption |
-| I | Reciprocity of the exactly averaged loop at order 1/k_e² is a pairwise property, and it fails exactly when the residual is non-zero on the orbit (n = 1) or, at perfect fit, when the orbit carries circulation (n ≥ 2) | proved and checked |
+| J | At finite m without dither, every hyperbolic critical point of the regularised occupation loss has a unique nearby periodic orbit of the real closed loop with the same stability type, O(1/k_e) away, whose first-order location is the one Proposition H.7 and Remark H.7a predict | proved and checked |
+| D′ | Finite-horizon propagation of chaos for the dithered loop with the plant in the loop, at the rate m^{−1/2} — whose exponent is dimension-free — for the state and the learned function | proved; the rate checked over 24 seeds |
+| C′ | The OT leak toward a prior with a different number of kernels (barycentric projection of the optimal plan) is the continuous-time Lloyd descent of coverage control used as a leak: it dissipates to the equal-mass centroidal configurations of the prior, and its Lyapunov bias is the ideal's distance from the centroids of its prior cells | proved (for generalised solutions) and checked |
+| K | At a collapsed kernel configuration the stability splits into a separation block, independent of the network size, and a collective block; the collapse is a strict minimum iff the leak exceeds a critical gain σ_crit, and near σ_crit the direction in which the reference orbit is traversed decides whether the kernels separate — a design rule computable from the averaged data | proved (the orientation part given the second-order normal form) and checked |
+| I | Reciprocity of the exactly averaged loop at order 1/k_e² is a pairwise property; for n = 1 it holds exactly when the residual vanishes on the orbit, at perfect fit in n ≥ 2 exactly when the orbit carries no circulation and the residual's Jacobian is symmetric along it; no open set of measures is reciprocal, so the averaged loop is nowhere a gradient flow at this order | proved and checked |
 
 **A new closed-loop effect.** Traversing the same reference orbit in the opposite direction leaves the visited
 states unchanged, yet the learned kernels shift by an amount of order 1/k_e. The first-order theory, H.7 plus the
@@ -129,10 +135,10 @@ n = 3 and NTK results contradict them.
 | [PARADIGM.md](PARADIGM.md) | the transport theory: results, proofs, verification map (§7), research program (§8) |
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
-| [review/](review) | review log, raw adversarial-review reports for rounds 1–3, archived version 2 of the theory |
-| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), and the original controller, projection, kernel and plant code |
+| [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5, archived version 2 of the theory |
+| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 61 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 69 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -141,7 +147,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 61 tests, about 8–10 minutes
+python -m pytest tests                          # 69 tests, about 15 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 
@@ -173,8 +179,8 @@ The open problems are listed in [PARADIGM.md](PARADIGM.md) §8. The most importa
 1. Infinite-horizon averaging for the McKean–Vlasov closed loop, which would settle Conjecture H.6, the real-loop
    counterpart of Theorem H.
 2. The mean-field limit of the dithered law, and uniform-in-time propagation of chaos with a plant in the loop.
-3. A general non-reciprocity theorem for H.7, beyond the checked instances, and the orientation experiment with
-   dither.
+3. Non-reciprocity for n ≥ 2 with a non-zero residual in closed form (Theorem I settles n = 1 and the perfect-fit
+   case, and shows that no open set of measures is reciprocal), and the orientation experiment with dither.
 4. The citations of Remark H.3, which the third review left uncertain. (The other point it left uncertain, the
    hypotheses of the Morgan–Narendra theorem behind Theorem E, is settled: Lemma E.0 replaces that citation by a
    self-contained strict Lyapunov function with explicit constants.)

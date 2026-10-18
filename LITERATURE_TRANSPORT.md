@@ -6,7 +6,8 @@ chaos, and Wasserstein geometry. A synthesis agent deduplicated their sources in
 `review/LITERATURE_refs.md` (89 entries with URLs; 79 unsourced entries dropped). The per-sweep verdicts
 are in `review/LITERATURE_sweeps.md`. The final merge agent hit a session limit, so this document is the
 merge, written from the sweep verdicts. It adds sources I verified directly for Theorems G and H, marked
-[S1]–[S9], and, in round 3, sources for Propositions B.6, H.7 and H.8, marked [S10]–[S14]. Numbers [1]–[89]
+[S1]–[S9], and, in round 3, sources for Propositions B.6, H.7 and H.8, marked [S10]–[S14]; round 5 adds [S15]–[S17] for
+Lemma E.0 (bibliographic details from memory, not re-verified offline). Numbers [1]–[89]
 refer to `review/LITERATURE_refs.md`.
 
 The audit was adversarial toward novelty. A verdict of "novel" means only that none of the searches
@@ -29,6 +30,12 @@ found the construction.
 - [S11] J. N. Tsitsiklis, B. Van Roy. *An analysis of temporal-difference learning with function approximation*. IEEE TAC 42(5):674–690 (1997). TD is a semi-gradient method: it holds the bootstrapped target fixed. The data distribution is that of a fixed policy and does not depend on the parameters.
 - [S12] M. Fruchart, R. Hanai, P. B. Littlewood, V. Vitelli. *Non-reciprocal phase transitions*. Nature 592:363–369 (2021). Non-reciprocal interactions in many-body systems.
 - [S14] J. C. Perdomo, T. Zrnic, C. Mendler-Dünner, M. Hardt. *Performative prediction*. ICML 2020, PMLR 119; arXiv:2002.06673. Here predictions shift the data distribution, and retraining with the distribution held at its current value converges to performatively stable points rather than optimal ones. This is the closest structural analogue of PARADIGM.md H.7(c).
+- [S15] F. Mazenc, M. Malisoff. *Constructions of Strict Lyapunov Functions*. Springer, Communications and Control Engineering, 2009. Strict Lyapunov functions for persistently excited systems built from a backward–forward integral of the PE Gramian. (Bibliographic details from memory; not re-verified against the publisher's record in this session.)
+- [S16] F. Mazenc, M. de Queiroz, M. Malisoff. *Uniform global asymptotic stability of a class of adaptively controlled nonlinear systems*. IEEE Trans. Automat. Control 54(5), 2009. (Details from memory; not re-verified here.)
+- [S17] A. Loría, E. Panteley. *Uniform exponential stability of linear time-varying systems: revisited*. Systems & Control Letters 47(1):13–24, 2002; and B. D. O. Anderson, *Exponential stability of linear equations arising in adaptive identification*, IEEE Trans. Automat. Control 22(1):83–88, 1977. Explicit UES bounds for persistently excited identifiers. (Details from memory; not re-verified here.)
+- [S18] J. Cortés, S. Martínez, T. Karatas, F. Bullo. *Coverage control for mobile sensing networks*. IEEE Trans. Robotics and Automation 20(2):243–255, 2004. Continuous-time Lloyd descent ṗ_i = −k(p_i − C_{V_i}) toward the centroids of Voronoi cells, with its LaSalle convergence proof. (Details from memory; not re-verified here.)
+- [S19] M. Balzer, T. Schlömer, O. Deussen. *Capacity-constrained point distributions*. ACM SIGGRAPH 2009; Q. Mérigot, *A multiscale approach to optimal transport*, Computer Graphics Forum 30(5), 2011; F. de Goes, K. Breeden, V. Ostromoukhov, M. Desbrun, *Blue noise through optimal transport*, ACM Trans. Graphics 31(6), 2012. Equal-mass (capacity-constrained) quantisation through optimal transport plans and their barycentres. (Details from memory; not re-verified here.)
+- [S20] S. P. Lloyd. *Least squares quantization in PCM*. IEEE Trans. Inform. Theory 28(2):129–137, 1982; Q. Du, V. Faber, M. Gunzburger, *Centroidal Voronoi tessellations: applications and algorithms*, SIAM Review 41(4):637–676, 1999. Lloyd's algorithm and centroidal Voronoi tessellations. (Details from memory; not re-verified here.)
 - [S13] J. Chevallier. *Uniform decomposition of probability measures: quantization, clustering and rate of convergence*. J. Appl. Probab. 55(4):1037–1045 (2018). Equal-weight approximation rates in W₂ (used in PARADIGM.md Corollary B.6), with Fournier–Guillin, Probab. Theory Relat. Fields 162 (2015), for i.i.d. atoms.
 
 ---
@@ -144,10 +151,8 @@ found the construction.
 ### E.0 Explicit strict Lyapunov function for the skew-symmetric mixed error model
 
 - **Closest prior.** Strict Lyapunov functions for persistently excited systems built from a backward–forward integral
-  of the PE Gramian: Mazenc–Malisoff, *Constructions of Strict Lyapunov Functions* (Springer 2009), and Mazenc, de Queiroz
-  and Malisoff, IEEE TAC 54 (2009), for adaptively controlled systems. Explicit UES bounds for the identifier
-  ζ̇ = −ΨᵀΨζ: Anderson (1977), Loría–Panteley (2002). The qualitative statement for the mixed class is Morgan–Narendra
-  [S8], cited by version 3.
+  of the PE Gramian: [S15], and [S16] for adaptively controlled systems. Explicit UES bounds for the identifier
+  ζ̇ = −ΨᵀΨζ: [S17]. The qualitative statement for the mixed class is Morgan–Narendra [S8], cited by version 3.
 - **Distinction.** The lemma gives, for the mixed class ė = −ke − Ψζ, ζ̇ = Ψᵀe, a closed-form rate and overshoot in
   (k, α, T, Ψ_M, Ψ_D), with the cancellation of the ‖Ψζ‖² terms between the Gramian cross term and the eᵀΨζ cross term
   as its only idea, and it quantifies its own conservativeness (Remark E.0a: a factor 3κ(1 + Ψ_D/(kΨ_M))² in the
@@ -161,13 +166,65 @@ found the construction.
   non-reciprocal many-body literature [S12]; the injectivity of the Gaussian convolution (Weierstrass transform) and
   Stokes' theorem with winding numbers are classical analysis.
 - **Distinction.** No source found states that for a feature family containing the zero feature the criterion collapses
-  to the vanishing of the antisymmetric kernel, nor the two characterisations: for n = 1 the averaged adaptive loop is
+  to the vanishing of the antisymmetric kernel, nor the characterisations: for n = 1 the averaged adaptive loop is
   reciprocal at order k_e⁻² iff the residual vanishes on the orbit; for n ≥ 2 at perfect fit iff the orbit's 1-current
-  vanishes. The decomposition of the performative defect into the curl of the residual and a Lie bracket of the feature
-  fields was not found either.
+  vanishes and the residual's Jacobian is symmetric along the orbit; and no open set of measures is reciprocal. The
+  decomposition of the performative defect into the curl of the residual and a Lie bracket of the feature fields was
+  not found either.
 - **Verdict: new, with classical tools; the content is specific to the closed-loop learner.** The result settles
   README open problem 3 of version 3 (a general non-reciprocity theorem beyond checked instances) for n = 1 and for the
   perfect-fit case, and reduces the general case to an explicit bilinear form.
+
+### C′. The barycentric OT leak toward a prior with a different number of atoms
+
+- **Closest prior.** The pure law ϑ̇_i = −σ_m(ϑ_i − T̄_i) is the continuous-time Lloyd descent of coverage control
+  [S18] with the Voronoi cell replaced by the cell of an equal-mass optimal plan, that is, capacity-constrained
+  quantisation through optimal transport [S19]; OT-based coverage control is [89]; Lloyd's algorithm and centroidal
+  Voronoi tessellations are [S20]. The repository's earlier pointer [14] is an application of CVT to adaptive
+  estimation, not the quantisation theory itself.
+- **Distinction.** The law is used as a σ-modification leak inside an adaptive controller, and the analysis is the
+  closed-loop one: the dissipation inequality up to the within-cell variance, the induced-coupling bound √C_bar ≤ b + 2η,
+  the Lyapunov inequality with the bias b_bar (the ideal's centroid defect), and the transfer reading (anchoring m kernels
+  to a learned measure of m₀ ≠ m kernels). The ω-limit statement for the pure leak is proved by LP stability for
+  generalised solutions (round 5, C1), not by the LaSalle argument of [S18], whose Voronoi cells vary continuously.
+- **Verdict: the construction is known in coverage control and quantisation; new as a leak in adaptive control, with
+  the induced-coupling and Lyapunov analysis.** The §0 and README rows say so.
+
+### D′. Propagation of chaos for the dithered closed loop
+
+- **Prior.** Sznitman's synchronous coupling for McKean–Vlasov systems with Lipschitz drifts, whose standard output is
+  the m^{−1/2} rate for the particles and for averages of bounded functions — a dimension-free exponent — with the
+  dimension entering only through the empirical-measure term (Fournier–Guillin, [S13]).
+- **Distinction.** The plant is in the loop: the mean field enters through a deterministic state x̄ driven by the
+  empirical mean of the features, and the constants are control quantities (K_Φ, the Lipschitz bounds of the saturated
+  features, k_e enters only through the tube). The per-particle sup bound is the pathwise Grönwall estimate (round 5, D1).
+- **Verdict: the technique and the dimension-free exponent are standard; the closed-loop statement with its constants
+  is new in this setting.** Uniformity in time is open (PARADIGM.md §8, branch 3).
+
+### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
+
+- **Prior.** Two-time-scale averaging under attraction (Khalil Ch. 10–11, Sanders–Verhulst–Murdock Ch. 5,
+  Sastry–Bodson Ch. 4): hyperbolic equilibria of the averaged system correspond to periodic orbits of the original
+  system with the same stability type. The periodic Riccati block-triangularisation of the monodromy matrix is the
+  standard slow-manifold reduction for singularly perturbed linear periodic systems.
+- **Distinction.** The theorem identifies the averaged system with the gradient flow of the m-particle regularised
+  occupation loss J_m (the finite-m form of Theorem H's functional at τ = 0, in the scaling σ = σ₀/k_e), gives the
+  O(1/k_e) location of the orbit including the second-order oscillation term of Remark H.7a, and the k_e-uniform basin.
+  No source applying this to an adaptive controller read as a measure was found.
+- **Verdict: classical tools, applied to a new object; the first rigorous real-loop ↔ averaged-system statement of the
+  program.** The remainder regularity was supplied in round 5 (J-1).
+
+### K. Collapsed configurations and the orientation of the orbit
+
+- **Prior.** The isotypic (symmetry-adapted) splitting of a Hessian at a permutation-symmetric point is standard
+  equivariant linear algebra; the stability condition σ₀G⁻¹ ≻ R₂ is the local form of the Chizat–Bach first-variation
+  optimality condition at a Dirac mass [S3]-type analyses; higher-order averaging corrections to Floquet exponents are
+  classical (Sanders–Verhulst–Murdock).
+- **Distinction.** The reading of the orientation of the reference orbit as a design input — an orientation-odd O(k_e⁻²)
+  shift of the separation exponents that decides the stability of the collapsed configuration in a window around the
+  critical leak, computable from the averaged data — was not found. (The orientation effect itself is Remark H.7a's; the
+  round-3 search found no precedent.)
+- **Verdict: new as a design statement; the mathematics is classical.** Checked in one instance.
 
 ### H.8 Input-to-state stability of the averaged system
 
@@ -186,7 +243,11 @@ theory. Within it, the constructions that appear new are:
 - OT σ-modification with its reshuffling result (C);
 - the induced-metric form of the occupation-measure variable-projection reduction (G);
 - the mean-field Langevin bridge with its global convergence statement (H);
-- the frozen-measure structure of the exactly averaged loop (H.7), and the characterisation of its non-reciprocity (I).
+- the frozen-measure structure of the exactly averaged loop (H.7), and the characterisation of its non-reciprocity (I);
+- the finite-m averaging theorem for the real closed loop (J) and the orientation as a design input for the collapsed
+  configuration (K);
+- the closed-loop propagation-of-chaos statement (D′) and the barycentric leak's Lyapunov analysis (C′), both built on
+  standard constructions (Sznitman's coupling; the Lloyd descent of coverage control).
 
 The tools are known. The open problems in PARADIGM.md §8 are where new mathematics is required.
 
