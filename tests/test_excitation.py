@@ -244,3 +244,54 @@ def test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal():
     _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, k, [per], tg, n_nodes=800)
     e0 = X.optimise_eps(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=80)
     assert c['rate'] > 1e4 * e0['rate']
+
+
+def test_corollary_E0prime_2_envelope_on_the_implemented_loop():
+    """
+    Corollary E.0′.2 (Theorem E in the slow regime) on Remark E.1's single-kernel instance with G = 0.3·I at k_e = 40,
+    δ = 0.2 (above Lemma E.0′'s threshold k₀ ≈ 25 for this regressor): from a start with ‖w(0)‖ ≤ r′₀ the implemented
+    closed loop satisfies ‖w(t)‖ ≤ C′e^{−λ′t}‖w(0)‖ at every sample over two e-folds of the explicit envelope, and the
+    explicit nonlinear rate λ′ exceeds Theorem E's rate with Lemma E.0 by more than a factor 10 (it is within a factor 4
+    of the exact linear rate).
+    """
+    rng = np.random.default_rng(7)
+    m, n = 1, 1
+    g, ke, delta = 0.3, 40.0, 0.2
+    ctrl = T.TransportController(m, n, ke=ke, g_a=g, g_c=g, g_s=g, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = np.array([[1.5, 0.3, 0.8]])
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=1.5, freqs=[1.0], phases=[0.0])
+    per = PER
+    p = 2 * n + 1
+    reg = X.TheoremERegressor(P_star, ctrl.G_diag, plant.x_ref, plant.x_ref_dot)
+    S = X.SlowRegimeLyapunov(reg.Psi, reg.Psidot, per, N=1024)
+    assert S.constants(ke, delta)['ok']
+    r = float(min(ctrl.a_max - ctrl.eps - abs(P_star[0, 0]), ctrl.c_max - ctrl.eps - abs(P_star[0, 1]),
+                  P_star[0, 2] - ctrl.s_min - ctrl.eps, ctrl.s_max - ctrl.eps - P_star[0, 2]))
+    tg = np.linspace(0, per, 80)
+
+    def field(z, t):
+        e = z[:n]; P = P_star + z[n:].reshape(m, p); x = plant.x_ref(t) + e
+        edot = plant.f(x, t) - ctrl.ke * e - T.f_hat(x, P); v, _ = ctrl.velocity(x, e, P)
+        return np.concatenate([edot, v.reshape(-1)])
+    L_J = X.jacobian_lipschitz_estimate(field, n + m * p, r, tg, rng, n_samples=150)
+    cst = X.slow_regime_theorem_E_constants(S, ke, delta, m, ctrl.G_diag, r, L_J)
+    _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ke, [per], tg, n_nodes=160)
+    e0 = X.optimise_eps(ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=120)
+    old = X.theorem_E_constants(ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], m, ctrl.G_diag, r, L_J, eps=e0['eps'])
+    assert cst['rate_nonlinear'] > 10 * old['rate_nonlinear']
+    assert X.floquet_rate(reg.Psi, ke, per) < 4 * cst['rate_nonlinear']
+    Sdiag = np.concatenate([np.ones(n), np.tile(1 / np.sqrt(m * ctrl.G_diag), m)])             # w = S z
+    z0 = rng.normal(size=n + m * p); z0 *= 0.9 * cst['r0_z'] / np.linalg.norm(z0)
+    w0 = Sdiag * z0
+    assert np.linalg.norm(w0) <= cst['r0_w'] * (1 + 1e-9)
+    P0 = P_star + z0[n:].reshape(m, p); x0 = plant.x_ref(0.0) + z0[:n]
+    T_end = 2.0 / cst['rate_nonlinear']                                                        # two e-folds of the envelope
+    res = T.rk4_closed_loop(plant, ctrl, x0, P0, T=T_end, dt=0.02, record_every=50)
+    worst = 0.0
+    for t, x, P in zip(res['t'], res['x'], res['P']):
+        z = np.concatenate([x - plant.x_ref(t), (P - P_star).reshape(-1)])
+        w = Sdiag * z
+        worst = max(worst, np.linalg.norm(w) / (cst['C'] * np.exp(-cst['rate_nonlinear'] * t) * np.linalg.norm(w0)))
+    assert worst <= 1.0, worst
+    assert np.linalg.norm(Sdiag * np.concatenate([res['x'][-1] - plant.x_ref(res['t'][-1]), (res['P'][-1] - P_star).reshape(-1)])) < 0.5 * np.linalg.norm(w0)
+

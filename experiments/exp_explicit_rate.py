@@ -16,6 +16,10 @@ Three tables (PARADIGM.md §6, Lemma E.0 and Remark E.1):
    conditions of the lemma, its guaranteed rate against the exact Floquet rate and against the averaged rate λ_min(M̄)/k,
    the certificate sup V̇/V ≤ −γ, and the optimised rate of Lemma E.0 for comparison.
 
+5. Corollary E.0′.2 (Theorem E in the slow regime) on Remark E.1's single-kernel instance (G = 0.3·I, k_e = 40): the
+   explicit ball radius, nonlinear rate and overshoot from Lemma E.0′'s V against those from Lemma E.0's, and the exact
+   linear rate; the envelope itself is checked on the implemented loop by `tests/test_excitation.py`.
+
 Output: results/explicit_rate/table.md
 """
 import os
@@ -129,10 +133,42 @@ def slow_regime_table():
     return head, rows
 
 
+def corollary_table():
+    rng = np.random.default_rng(7)
+    m, n = 1, 1
+    g, ke = 0.3, 40.0
+    ctrl = T.TransportController(m, n, ke=ke, g_a=g, g_c=g, g_s=g, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = np.array([[1.5, 0.3, 0.8]])
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=1.5, freqs=[1.0], phases=[0.0])
+    per = 2 * np.pi
+    p = 2 * n + 1
+    reg = X.TheoremERegressor(P_star, ctrl.G_diag, plant.x_ref, plant.x_ref_dot)
+    S = X.SlowRegimeLyapunov(reg.Psi, reg.Psidot, per, N=1024)
+    r = float(min(ctrl.a_max - ctrl.eps - abs(P_star[0, 0]), ctrl.c_max - ctrl.eps - abs(P_star[0, 1]),
+                  P_star[0, 2] - ctrl.s_min - ctrl.eps, ctrl.s_max - ctrl.eps - P_star[0, 2]))
+    tg = np.linspace(0, per, 80)
+
+    def field(z, t):
+        e = z[:n]; P = P_star + z[n:].reshape(m, p); x = plant.x_ref(t) + e
+        edot = plant.f(x, t) - ctrl.ke * e - T.f_hat(x, P); v, _ = ctrl.velocity(x, e, P)
+        return np.concatenate([edot, v.reshape(-1)])
+    L_J = X.jacobian_lipschitz_estimate(field, n + m * p, r, tg, rng, n_samples=150)
+    _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ke, [per], tg, n_nodes=160)
+    e0 = X.optimise_eps(ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=120)
+    old = X.theorem_E_constants(ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], m, ctrl.G_diag, r, L_J, eps=e0['eps'])
+    fl = X.floquet_rate(reg.Psi, ke, per)
+    rows = []
+    for delta in (0.2, 0.1):
+        c = S.constants(ke, delta)
+        rows.append(dict(delta=delta, ok=c['ok'], c=c, new=X.slow_regime_theorem_E_constants(S, ke, delta, m, ctrl.G_diag, r, L_J) if c['ok'] else None))
+    return dict(S=S, ke=ke, r=r, L_J=L_J, old=old, fl=fl, rows=rows, thr02=S.threshold(0.2), thr01=S.threshold(0.1))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     r1, r2, r3 = remark_E1_table(), slow_limit_table(), window_table()
     head4, r4 = slow_regime_table()
+    c5 = corollary_table()
     L = ["# Lemma E.0: the explicit rate against the exact Floquet rate (`exp_explicit_rate.py`)", "",
          "The explicit rate lies below the exact rate in every row. The ordering is numerical: Ψ_M, Ψ_D are grid maxima "
          "(80–100 samples per period), α a converged quadrature (checked by refinement), ε a finite grid; the margins are at "
@@ -181,6 +217,20 @@ def main():
           "magnitude below it; the certificate sup V̇/V ≤ −γ is verified on the grid wherever the conditions hold. Below the threshold "
           "the conditions fail through (A): the derivative peak factor ρ_DD of this regressor is large (the directions that are poorly "
           "excited on average are excited in short bursts).", "",
+          "## 5. Corollary E.0′.2: Theorem E in the slow regime on the single-kernel instance (m = n = 1, ϑ* = (1.5, 0.3, 0.8), G = 0.3·I, x_m = 1.5 sin t, k_e = 40)", "",
+          f"λ_min(M̄_G) = {c5['S'].lam_min:.3e}, κ(M̄_G) = {c5['S'].lam_max / c5['S'].lam_min:.1f}, peak factors ρ = {c5['S'].rho:.1f}, ρ_D = {c5['S'].rho_D:.1f}, ρ_DD = {c5['S'].rho_DD:.0f}; "
+          f"threshold k₀ = {c5['thr02']:.1f} (δ = 0.2), {c5['thr01']:.1f} (δ = 0.1); r = min(ρ, δ) = {c5['r']:.3f}, L_J = {c5['L_J']:.2f} (estimated from samples); exact linear rate {c5['fl']:.3e}.", "",
+          "| Lyapunov function | explicit ball radius r₀ (w-coordinates) | nonlinear rate λ | overshoot C | exact linear rate / λ |", "|---|---|---|---|---|",
+          f"| Lemma E.0, optimised ε (Theorem E) | {c5['old']['r0_w']:.3e} | {c5['old']['rate_nonlinear']:.3e} | {c5['old']['C']:.2f} | {c5['fl'] / c5['old']['rate_nonlinear']:.1f} |"]
+    for rr in c5['rows']:
+        if rr['ok']:
+            L.append(f"| Lemma E.0′, δ = {rr['delta']:g} (Corollary E.0′.2) | {rr['new']['r0_w']:.3e} | {rr['new']['rate_nonlinear']:.3e} | {rr['new']['C']:.2f} | {c5['fl'] / rr['new']['rate_nonlinear']:.1f} |")
+        else:
+            L.append(f"| Lemma E.0′, δ = {rr['delta']:g} | conditions fail: {rr['c']['conds']} | | | |")
+    L += ["", "Reading: on this well-conditioned regressor (κ ≈ 7) Lemma E.0 is only an order of magnitude conservative, and the corollary trades the "
+          "certified ball for the rate: its nonlinear rate is within a small factor of the exact linear rate (the factor 2 of the Lyapunov argument "
+          "times 1/(1 − δ)), while its ball radius carries the anisotropy p_lo/p_hi ≈ 1/β of the quadratic form. On ill-conditioned regressors "
+          "(table 4) both improve, the rate by the factor of Remark E.0a.", "",
           "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'table.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(L) + "\n")

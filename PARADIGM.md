@@ -93,7 +93,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | H | The averaged mean-field loop with saturated features, σ-modification and dither is mean-field Langevin dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in control quantities. | proved for (𝔄); the reduction to (𝔄) is formal (Remark H.0); real loop: Conjecture H.6 | a bridge to [S3], [S4]; new in adaptive control |
 | H.7 | At a frozen measure, the exactly averaged loop is (𝔄) plus an explicit O(1/k_e) correction: a semi-gradient term, whose performative defect is present for every n, and an orbit-area circulation kernel (n ≥ 2). Along the real loop, a second-order averaging term is added (Remark H.7a). | Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through its O(1/k_e) convergence. Non-reciprocity of the exact second variation is checked to 3% (asserted; 1–1.5% measured) and characterised by Theorem I. The full first-order theory predicts the orientation dependence of the learned kernels in the real closed loop to 3% in size and 11% as a vector (cosine 0.994, k_e = 40). | no precedent found (targeted search, round 3); ingredients known (higher-order averaging; performative prediction [S14]; semi-gradient TD [S10], [S11]) |
 | I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A_μ ≡ 0 iff the residual vanishes on the orbit, and the performative non-reciprocity is bounded by the residual. For n ≥ 2 at perfect fit, A_μ ≡ 0 iff the oriented orbit carries no circulation (n = 2: zero winding function) and the residual's Jacobian is symmetric along the orbit; A_μ = 2K when the residual vanishes near the orbit. A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. No open set of measures is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻². | proved; every formula checked against the generic second-variation code and, by the round-5 referee, against the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
-| D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p} | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
+| D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > 2L_b′L_ϑ) the bound is uniform in time (Theorem D″) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | H.8 | (𝔄) is input-to-state stable under drift perturbations, with gain 1/(τρ_τ) | proved, assuming the chain rule for the perturbed flow | elementary given [S3] |
@@ -1189,6 +1189,58 @@ this horizon the theorem is a rate statement, not a quantitative bound.
 *Checked* (`exp_chaos.py`): the experiment only; there is no test for Theorem D′ (its hypotheses are structural and the
 coupling is the experiment itself).
 
+**Theorem D″ (uniform-in-time propagation of chaos under a dominant leak).** In the setting and with the constants of
+Theorem D′, assume the standing bound for all t ≥ 0 and let L₂ := sup‖∇²_ϑΦ̃‖, L_{xϑ} := sup‖∂_x∇_ϑΦ̃‖ (over all x and ϑ),
+
+    κ_e := k_e − L_f − L_x,    κ_ϑ := σ − λ_G E_X L₂,    L_b′ := λ_G(L_ϑ + E_X L_{xϑ}),    det A := κ_eκ_ϑ − 2L_b′L_ϑ.
+
+If κ_e > 0, κ_ϑ > 0 and det A > 0 — the leak dominates the loop gain of the adaptive law — then, under the synchronous
+coupling of Theorem D′(b), for every t ≥ 0 and every τ ≥ 0,
+
+    E‖x_t − x̄_t‖ ≤ K_Φ κ_ϑ m^{−1/2}/det A,    E(1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖ = E‖ϑ_1(t) − ϑ̄_1(t)‖ ≤ 2K_Φ L_b′ m^{−1/2}/det A,
+
+with constants independent of t: propagation of chaos is uniform in time, at the rate m^{−1/2}. If moreover
+sup_t∫‖ϑ‖²dμ̄_t < ∞, then sup_t E W₁(μ^m_t, μ̄_t) ≤ 2K_Φ L_b′ m^{−1/2}/det A + sup_t E W₁(μ̄^{emp,m}_t, μ̄_t).
+
+*Status.* Proved; the conclusion checked numerically on one slow-adaptation instance above the certified leak, and its
+conservativeness documented (`exp_chaos_uniform.py`). The constants are worst-case Lipschitz suprema, so the certified
+regime is a strongly leak-dominated one; what the theorem adds to Theorem D′ is the removal of the horizon from the
+bound, not a sharp threshold.
+
+*Proof.* Keep the contracting terms that Theorem D′'s proof dropped. For δ := x − x̄, the term −k_eδ gives
+D⁺‖δ‖ ≤ −(k_e − L_f − L_x)‖δ‖ + L_ϑΔ̄ + ζ_t with the same decomposition of the bracket as in D′(b). For Δ_i := ϑ_i − ϑ̄_i,
+split b(x,e,ϑ_i) − b(x̄,ē,ϑ̄_i) = [b(x,e,ϑ_i) − b(x̄,ē,ϑ_i)] + [b(x̄,ē,ϑ_i) − b(x̄,ē,ϑ̄_i)]. The first bracket is at most
+L_b′(‖δ‖ + ‖e − ē‖) = 2L_b′‖δ‖, because ∂_e b = G∇_ϑΦ̃ᵀ has norm ≤ λ_G L_ϑ and ∂_x b = G∂_x[∇_ϑΦ̃ᵀe] has norm ≤ λ_G L_{xϑ}E_X
+on the tube. The second bracket is G[∇_ϑΦ̃(x̄;ϑ_i) − ∇_ϑΦ̃(x̄;ϑ̄_i)]ᵀē − σΔ_i, and ⟨Δ_i, ·⟩ ≤ λ_G‖ē‖L₂‖Δ_i‖² − σ‖Δ_i‖² ≤
+−κ_ϑ‖Δ_i‖², so D⁺‖Δ_i‖ ≤ −κ_ϑ‖Δ_i‖ + 2L_b′‖δ‖, and the same for the average Δ̄. The pair u := (‖δ‖, Δ̄) thus satisfies
+u̇ ≤ Au + (ζ_t, 0)ᵀ componentwise, u(0) = 0, with the Metzler matrix A := [[−κ_e, L_ϑ], [2L_b′, −κ_ϑ]] (non-negative
+off-diagonal entries), whose flow e^{As} is entrywise non-negative. The comparison principle for cooperative systems gives
+u(t) ≤ ∫₀^t e^{A(t−s)}(ζ_s, 0)ᵀds entrywise. A is Hurwitz exactly when κ_e, κ_ϑ > 0 and det A > 0, and then
+∫₀^∞e^{As}ds = −A⁻¹ = (det A)⁻¹[[κ_ϑ, L_ϑ], [2L_b′, κ_e]], entrywise non-negative. Taking expectations, with Eζ_s ≤
+(Eζ_s²)^{1/2} ≤ K_Φ m^{−1/2} for every s (the ϑ̄_j(s) are i.i.d. with law μ̄_s and x̄_s is deterministic, as in D′(b)),
+E u(t) ≤ K_Φ m^{−1/2}(−A⁻¹)e₁ = K_Φ m^{−1/2}(κ_ϑ, 2L_b′)ᵀ/det A for every t. The per-particle statement is exchangeability
+at fixed t (valid here, unlike for sup_t: Theorem D′(c)); the W₁ statement is the triangle inequality as in D′(c), the
+second-moment condition making the i.i.d. term finite uniformly in t. The noise cancels in Δ_i, so nothing depends on τ. ∎
+
+*Remark D″.1 (reading).*
+
+- *What is certified.* In the high-gain limit E_X = O(1/k_e) (the tube bound), so κ_ϑ → σ and the condition becomes
+  σ > 2λ_G L_ϑ²/k_e + O(k_e⁻²): for k_e large, every fixed leak gain σ > 0 gives uniform-in-time propagation of chaos. In
+  the scaling σ = σ₀/k_e of Theorem J the condition reads σ₀ > λ_G(k_eE_X)L₂ + 2λ_G L_ϑ²: the leak must dominate the loop
+  gain of the adaptive law — the regime in which the regularised loss J_m is convex and the mean-field dynamics have a
+  unique attracting state. The weak-leak regime, where Theorems H, I and K live and the averaged interaction is
+  non-reciprocal, remains the open part of §8, branch 3.
+- *Why the constants are conservative.* L_ϑ, L₂, L_{xϑ} are suprema over the parameter box and the tube; for sharp
+  kernels (small s_min) they are large, so σ_cert := λ_G E_X L₂ + 2L_b′L_ϑ/κ_e can exceed the adaptation gains by an order
+  of magnitude. The numerics show the conclusion holding well below σ_cert on the tested instance.
+- *Technique.* The comparison system is the standard contraction argument for McKean–Vlasov systems with a confining
+  potential, with the plant as a second contracting channel (rate κ_e) and the two interconnection gains L_ϑ (particles →
+  plant) and 2L_b′ (plant → particles); det A > 0 is the small-gain condition of that interconnection.
+
+*Numerics* (`exp_chaos_uniform.py` → `results/chaos/uniform_table.md`). Results pending: the experiment is running at the time of this commit and its numbers follow in the next commit.
+
+*Checked* (`exp_chaos_uniform.py`): the experiment only.
+
 ---
 
 ## 6. Theorem E — label-free local convergence under tangential excitation
@@ -1420,8 +1472,9 @@ and the envelope with C from ‖e‖ ≤ ‖w‖ + (εΨ_M + ε²Ψ_D + ε³Ψ_M
   higher in ε and lower k₀ further; this is not pursued.
 - *Hypotheses.* Only the periodicity of Ψ is used (through the zero-mean antiderivatives; a non-periodic PE regressor
   would need a windowed M̄(t) and its derivative). Theorem E's x_m is periodic, so Ψ_G is. Theorem E's steps 4–5 go
-  through with this V in place of Lemma E.0's: the explicit ball radius r_w ∝ γ p_lo/(g_V L_J) improves by the same
-  factor as the rate.
+  through with this V in place of Lemma E.0's (Corollary E.0′.2 below): the nonlinear rate becomes γ/4 ≈ (1 − δ)λ_min/(2k),
+  while the explicit ball radius carries the anisotropy p′_lo/p′_hi ≈ 1/β of the quadratic form and can be smaller than
+  Lemma E.0's.
 
 *Numerics* (`exp_explicit_rate.py` → `results/explicit_rate/table.md`, table 4). The ideal of table 2 at g = 0.01
 (T = 20π): λ_min(M̄) = 2.16·10⁻⁷, κ(M̄) = 7.8·10³, Ψ_M = 0.168, Ψ_D = 0.957, Ψ_DD = 8.39, TΨ_M² = 1.78; peak factors
@@ -1449,6 +1502,37 @@ guaranteed rate is below the exact Floquet rate and within a factor 2 of it, the
 at g = 0.01 and k = 400, δ = 0.2: κ(M̄) > 10³, the conditions hold, the certificate holds on a 128-point grid, the
 guaranteed rate is within a factor 1.5 of the exact rate and exceeds Lemma E.0's optimised rate by more than 10⁴
 (`test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal`).
+
+**Corollary E.0′.2 (Theorem E in the slow regime).** Under the hypotheses of Theorem E, suppose the regressor Ψ_G of its
+step 3 satisfies the conditions (A)–(D) of Lemma E.0′ at k = k_e for some δ, with constants (β, γ, p₁, p₂) and
+L_M := εΨ_{G,M} + ε²Ψ_{G,D} + ε³Ψ_{G,M}³ (ε = 1/k_e), and that βL_M² < 1 − εp₁ − ε²p₂. Put
+
+    p′_lo := ½min{β/2, 1 − εp₁ − ε²p₂ − βL_M²},    p′_hi := ½max{β(1 + L_M), 1 + εp₁ + ε²p₂ + βL_M(1 + L_M)},
+    c′₀ := min{ [γp′_lo/(4(p′_hi)^{1/2}C̃_R)]², p′_lo r²/‖S⁻¹‖² },    r′₀ := (c′₀/p′_hi)^{1/2},    λ′ := γ/4,    C′ := (2p′_hi/p′_lo)^{1/2},
+
+with r, C̃_R, S as in Theorem E. Then the conclusions of Theorem E hold with (c₀, λ, C) replaced by (r′₀²/2, λ′, C′). In the
+slow regime λ′ = (1 − δ − O(k_e⁻²))λ_min(M̄_G)/(2k_e), M̄_G := ⟨Ψ_GᵀΨ_G⟩: half the exact rate of the linearised loop.
+
+*Proof.* Write V := ½wᵀ𝐇(t)w for Lemma E.0′'s V in the coordinates w = (e, ζ) of step 3: 𝐇 = [[βI, −βL], [−βLᵀ, H_ζ + βLᵀL]]
+with e₂ = L(t)ζ, ‖L‖ ≤ L_M and H_ζ := I + εP₁ + ε²P₂. Then wᵀ𝐇w = β‖e − Lζ‖² + ζᵀH_ζζ, and ‖e − Lζ‖² ≤ (1 + L_M)(‖e‖² +
+L_M‖ζ‖²), ‖e − Lζ‖² ≥ ½‖e‖² − L_M²‖ζ‖² give 2p′_lo‖w‖² ≤ wᵀ𝐇w ≤ 2p′_hi‖w‖². Along the nonlinear loop ẇ = [A₀ + B(t)]w +
+R̃(t, w) with ‖R̃‖ ≤ C̃_R‖w‖² on {‖w‖ < r/‖S⁻¹‖} (step 4), so with Lemma E.0′,
+
+    V̇ ≤ −γV + ⟨𝐇w, R̃⟩ ≤ −γV + ‖𝐇^{1/2}w‖‖𝐇^{1/2}‖C̃_R‖w‖² ≤ −γV + 2(p′_hi)^{1/2}C̃_R V^{3/2}/p′_lo,
+
+using ‖𝐇^{1/2}w‖ = (2V)^{1/2}, ‖𝐇^{1/2}‖ = (2p′_hi)^{1/2} and ‖w‖² ≤ V/p′_lo. Hence V̇ ≤ −(γ/2)V wherever
+V^{1/2} ≤ γp′_lo/(4(p′_hi)^{1/2}C̃_R), and the sublevel set {V ≤ c′₀} — inside the ball where R̃ is bounded, by the second
+term of c′₀ — is forward invariant with V(t) ≤ e^{−(γ/2)(t−t₀)}V(t₀) on it. It contains {‖w‖ ≤ r′₀} because V ≤ p′_hi‖w‖²,
+and ‖w(t)‖ ≤ (p′_hi/p′_lo)^{1/2}e^{−(γ/4)(t−t₀)}‖w(t₀)‖ follows. Step 5 of Theorem E is unchanged: ‖w‖² = 2V_π, so
+V_OT(t₀) ≤ r′₀²/2 puts the state in the ball, ‖e‖ + W ≤ √2‖w‖ gives C′, and uniqueness and the limits follow as there. The
+asymptotics of λ′ are those of γ in Lemma E.0′. ∎
+
+*Numerics* (`exp_explicit_rate.py` → `results/explicit_rate/table.md`, table 5). Results pending: the experiment is running at the time of this commit and its numbers follow in the next commit.
+
+*Checked* (`tests/test_excitation.py`): on the single-kernel instance at k_e = 40, δ = 0.2, from a start with ‖w(0)‖ ≤ r′₀,
+the implemented closed loop satisfies ‖w(t)‖ ≤ C′e^{−λ′t}‖w(0)‖ at every sample over two e-folds of the explicit envelope,
+with λ′ more than ten times Theorem E's rate from Lemma E.0 and within a factor 4 of the exact linear rate
+(`test_corollary_E0prime_2_envelope_on_the_implemented_loop`).
 
 **Theorem E (with explicit constants).** Let Ψ_G := m^{−1/2}Ψ(I_m ⊗ G^{1/2}) ∈ ℝ^{n×mp}, and let (α_G, T, Ψ_{G,M}, Ψ_{G,D})
 be PE data for it: ∫_t^{t+T}Ψ_GᵀΨ_G ⪰ α_G I, ‖Ψ_G‖ ≤ Ψ_{G,M}, ‖Ψ̇_G‖ ≤ Ψ_{G,D}. One may take α_G := αλ_min(G)/m,
@@ -2803,6 +2887,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | C′(iii) | the Lyapunov inequality at every recorded state of a closed loop with the barycentric leak toward a 24-atom prior | `Ba::test_lyapunov_inequality_along_the_barycentric_leak_closed_loop` |
 | D | consistency in m (nearly constant amplification 1.64–1.69; not the constant e^{ΛT}) | `exp_mean_field_m.py` |
 | D′(b), (d) | the m^{−1/2} rate of the synchronous coupling to a 4096-particle reference: slopes −0.47 ± 0.06 (τ = 0) and −0.46 ± 0.05 (τ = 2·10⁻³) over 24 seeds, 0.94 ± 0.08 and 0.92 ± 0.08 against (1/m − 1/M)^{1/2}; not the constant | `exp_chaos.py` → `results/chaos/table.md` |
+| D″ | uniformity in time of the coupled distance over an 80 s horizon above the certified leak, and the m^{−1/2} law in each window (results pending at the time of this commit) | `exp_chaos_uniform.py` → `results/chaos/uniform_table.md` |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -2810,6 +2895,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | Lemma E.0 | p_lo‖w‖² ≤ V ≤ p_hi‖w‖² and V̇ ≤ −γ‖w‖² at random (t, w) for four regressors, closed-form and optimised ε; the envelope along trajectories; explicit rate ≤ exact Floquet rate | `Ex::test_lemma_E0_pointwise_inequalities_hold_on_random_states`, `Ex::test_lemma_E0_envelope_and_floquet_ordering` |
 | Lemma E.0(iii), Remark E.0a | the ω⁻² law of the explicit rate and of the exact rate; the saturation of exact/explicit in the slow-adaptation limit; the tables | `Ex::test_remark_E1_omega_scaling_of_the_explicit_rate`, `Ex::test_slow_adaptation_limit_ratio_is_bounded`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` |
 | E, explicit constants | on the implemented loop, from a start inside the explicit ball, ‖w(t)‖ ≤ (p_hi/p_lo)^{1/2}e^{−λt}‖w(0)‖ at every sample (L_J estimated from samples) | `Ex::test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop` |
+| Corollary E.0′.2 | the explicit envelope of Theorem E with Lemma E.0′'s constants on the implemented single-kernel loop at k_e = 40: two e-folds inside the envelope from a start in the explicit ball; λ′ > 10 × Theorem E's rate from Lemma E.0 and < 4 × the exact linear rate; the constants table | `Ex::test_corollary_E0prime_2_envelope_on_the_implemented_loop`, `exp_explicit_rate.py` (table 5) |
 | Lemma E.0′ | the certificate sup_{t,x}V̇/V ≤ −γ (a generalised eigenvalue problem on a time grid) on Ψ = (sin t, cos t) at k = 20, 50, 200 and on the slow-adaptation ideal at g = 0.01, k = 400; N₂ = 0 numerically; the guaranteed rate below the exact Floquet rate and within a factor 2 (sinusoid) and 1.5 (ideal) of it, above Lemma E.0's by more than 10⁴ on the ideal; the table of k and δ | `Ex::test_lemma_E0prime_sinusoidal_regressor_certificate_and_sharpness`, `Ex::test_lemma_E0prime_pays_for_ill_conditioning_once_on_the_theorem_E_ideal`, `exp_explicit_rate.py` → `results/explicit_rate/table.md` (table 4) |
 | G(a), two scales | direct check (cosine ≥ 0.998 in the G⁻¹ metric, `violating`; the weight block fails in `satisfying`, as explained in §6b); L̄ at period-mean parameters non-increasing | `exp_variable_projection.py` → `table_violating.md`, `table_satisfying.md` |
 | G(b), (b′), (H2c) | VarPro holds when (H2b) and S ≪ 1 hold; it fails when S = O(1) although (H2b) holds; the induced-metric flow tracks the closed loop at every S (started on the slow manifold; gains ÷ 4 isolates the averaging error) | `exp_variable_projection.py` → `table_satisfying.md`; `exp_slow_manifold_slope.py` → `table_slope.md` |
@@ -2898,7 +2984,10 @@ Each branch states what is proved, what is open, and the first concrete step.
      constants independent of the temperature and an exponent independent of the dimension for the state and the learned
      function.
      Uniform-in-time results exist for mean-field Langevin dynamics [S5] and for shallow networks [36].
-   - *Open:* the closed loop, where the plant couples all particles through e, and where (by H.7) the averaged
+   - *Done (Theorem D″):* uniform in time when the leak dominates the loop gain of the adaptive law (a small-gain
+     condition between the plant channel and the particle channel, explicit in Lipschitz constants); in the high-gain
+     limit any fixed leak suffices.
+   - *Open:* the weak-leak closed loop, where the plant couples all particles through e and (by H.7) the averaged
      interaction is not reciprocal.
 
 4. **Geometry of two-time-scale adaptation (Proposition G(b′)).**

@@ -477,3 +477,42 @@ class SlowRegimeLyapunov:
             worst = max(worst, 2 * float(np.linalg.eigvalsh(Hm @ Nsym @ Hm)[-1]))
         return worst, -c['gamma']
 
+
+def slow_regime_theorem_E_constants(slow, k, delta, m, G_diag, r, L_J):
+    """
+    Corollary E.0′.2 (Theorem E in the slow regime): the constants of Theorem E's steps 4–5 with Lemma E.0′'s V in place
+    of Lemma E.0's.  `slow` is a SlowRegimeLyapunov built from Ψ_G, Ψ̇_G; (k, δ) must satisfy its conditions.  With
+    2p_lo ≤ inf_t λ_min(𝐇(t)) and 2p_hi ≥ sup_t λ_max(𝐇(t)) (explicit bounds below; the grid values are also returned),
+    V := ½wᵀ𝐇w obeys V̇ ≤ −γ′V along (LTV), and along the nonlinear loop V̇ ≤ −(γ′/2)V on the forward-invariant set
+    {V ≤ c₀}, c₀ := min{[γ′p_lo/(4√p_hi C̃_R)]², p_lo r²/‖S⁻¹‖²}; hence for ‖w(t₀)‖ ≤ r₀ := (c₀/p_hi)^{1/2}
+
+        ‖w(t)‖ ≤ (p_hi/p_lo)^{1/2} · exp(−(γ′/4)(t − t₀)) · ‖w(t₀)‖,
+
+    and Theorem E's conclusions hold with λ := γ′/4 and C := (2p_hi/p_lo)^{1/2}.
+    """
+    c = slow.constants(k, delta)
+    if not c['ok']:
+        raise ValueError(f"the conditions of Lemma E.0′ fail at k = {k}, δ = {delta}: {c['conds']}")
+    e = 1.0 / k
+    L_M = e * slow.Psi_M + e ** 2 * slow.Psi_D + e ** 3 * slow.Psi_M ** 3
+    beta, lo, hi = c['beta'], c['lo'], c['hi']
+    p_lo = 0.5 * min(beta / 2.0, lo - beta * L_M ** 2)
+    p_hi = 0.5 * max(beta * (1 + L_M), hi + beta * L_M * (1 + L_M))
+    if p_lo <= 0:
+        raise ValueError("the explicit lower bound on the quadratic form is not positive (βL_M² ≥ 1 − εp₁ − ε²p₂)")
+    lam_lo, lam_hi = np.inf, 0.0                                    # grid values of λ_min(𝐇), λ_max(𝐇) for information
+    for i in np.linspace(0, slow.N - 1, 128).astype(int):
+        H, _ = slow.quadratic_forms(i, k, beta)
+        ev = np.linalg.eigvalsh(H); lam_lo, lam_hi = min(lam_lo, ev[0]), max(lam_hi, ev[-1])
+    G = np.asarray(G_diag, float)
+    S_norm = max(1.0, (m * float(G.min())) ** -0.5)
+    Sinv_norm = max(1.0, (m * float(G.max())) ** 0.5)
+    C_R = S_norm * (L_J / 2.0) * Sinv_norm ** 2
+    gamma = c['gamma']
+    v0_sq = (gamma * p_lo / (4.0 * np.sqrt(p_hi) * C_R)) ** 2 if C_R > 0 else np.inf
+    c0 = min(v0_sq, p_lo * r ** 2 / Sinv_norm ** 2)
+    r0_w = np.sqrt(c0 / p_hi)
+    return dict(c, p_lo=p_lo, p_hi=p_hi, p_lo_grid=0.5 * lam_lo, p_hi_grid=0.5 * lam_hi, L_M=L_M, C_R=C_R, S_norm=S_norm,
+                Sinv_norm=Sinv_norm, c0=c0, r0_w=r0_w, r0_z=r0_w / S_norm, c0_VOT=r0_w ** 2 / 2.0,
+                rate_nonlinear=gamma / 4.0, C=np.sqrt(2.0 * p_hi / p_lo))
+
