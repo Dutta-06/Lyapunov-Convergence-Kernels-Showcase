@@ -1,0 +1,135 @@
+"""
+Lemma E.0 against the exact rate: how conservative is the explicit strict Lyapunov function?
+===========================================================================================
+
+Three tables (PARADIGM.md §6, Lemma E.0 and Remark E.1):
+
+1. Remark E.1's instance (m = n = 1, ϑ* = (1.5, 0.3, 0.8), G = I, k_e = 3, x_m = 1.5 sin ωt): the exact Floquet rate
+   of the linearised loop against the explicit bound, for ω = 1 … 64.  Both fall like ω⁻²; the bound explains why
+   (Ψ_D ∝ ω dominates c₁).
+2. The slow-adaptation limit: the m = 3, n = 2 ideal of the Theorem E tests with G = g·diag(2, 2, 1), g from 30 down to
+   0.01.  The ratio exact/explicit saturates as g → 0 (the mean-field normalisation Ψ_G ∝ m^{−1/2} puts large networks
+   in this regime) and grows in the fast regime.
+3. The window length: the bound depends on the PE window T through α(T) and c₁(T); the table shows the optimum.
+
+Output: results/explicit_rate/table.md
+"""
+import os
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+import numpy as np
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.core import excitation as X
+from src.core import transport as T
+
+OUT = os.path.join(os.path.dirname(__file__), '..', 'results', 'explicit_rate')
+PER = 2 * np.pi
+
+
+def remark_E1_table():
+    rows = []
+    k = 3.0
+    P_star = np.array([[1.5, 0.3, 0.8]])
+    for om in (1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0):
+        reg = X.TheoremERegressor(P_star, np.ones(3), lambda t, o=om: np.array([1.5 * np.sin(o * t)]),
+                                  lambda t, o=om: np.array([1.5 * o * np.cos(o * t)]))
+        per = PER / om
+        tg = np.linspace(0, per, 100)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, k, [per / 2, per, 2 * per], tg, n_nodes=100)
+        c_cf = X.strict_lyapunov_constants(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'])
+        c_op = X.optimise_eps(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=300)
+        fl = X.floquet_rate(reg.Psi, k, per, n_steps=2000)
+        rows.append(dict(omega=om, T=best['T'], alpha=best['alpha'], Psi_M=best['Psi_M'], Psi_D=best['Psi_D'],
+                         floquet=fl, closed_form=c_cf['rate'], optimised=c_op['rate'], ratio=fl / c_op['rate']))
+    return rows
+
+
+def slow_limit_table():
+    rng = np.random.default_rng(12)
+    m, n = 3, 2
+    ctrl = T.TransportController(m, n, ke=6.0, g_a=30.0, g_c=30.0, g_s=15.0, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = T.sample_lifted_ideal(m, n, ctrl, rng, min_sep=0.9)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=2.5)
+    per = 20 * np.pi
+    rows = []
+    for g in (30.0, 10.0, 3.0, 1.0, 0.3, 0.1, 0.03, 0.01):
+        G_diag = np.concatenate([np.full(n, 2 * g), np.full(n, 2 * g), [g]])
+        reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
+        tg = np.linspace(0, per, 80)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=200)
+        c_op = X.optimise_eps(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=300)
+        fl = X.floquet_rate(reg.Psi, ctrl.ke, per, n_steps=4000)
+        # the averaging prediction of Remark E.1 for slow adaptation: λ_min⟨Ψ_GᵀΨ_G⟩/k_e
+        avg = X.gramian(reg.Psi, 0.0, per, n_nodes=400) / per
+        lam_min = np.linalg.eigvalsh(avg)[0]
+        pred = lam_min / ctrl.ke
+        kappa = best['Psi_M'] ** 2 / lam_min                                      # condition number of ⟨Ψ_GᵀΨ_G⟩
+        # slow-regime value of the closed-form bound: rate ≈ kα²/(3c₁²) with c₁ ≈ T(kΨ_M + Ψ_D) and α = Tλ_min,
+        # so exact/explicit ≈ 3κ(1 + Ψ_D/(kΨ_M))² (Remark E.0a)
+        sat = 3 * kappa * (1 + best['Psi_D'] / (ctrl.ke * best['Psi_M'])) ** 2
+        rows.append(dict(g=g, Psi_M=best['Psi_M'], Psi_D=best['Psi_D'], alpha=best['alpha'], floquet=fl, explicit=c_op['rate'],
+                         ratio=fl / c_op['rate'], averaging=pred, excitation=best['Psi_M'] ** 2 / ctrl.ke, kappa=kappa, sat=sat))
+    return rows
+
+
+def window_table():
+    rng = np.random.default_rng(12)
+    m, n = 3, 2
+    ctrl = T.TransportController(m, n, ke=6.0, g_a=3.0, g_c=3.0, g_s=1.5, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = T.sample_lifted_ideal(m, n, ctrl, rng, min_sep=0.9)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=2.5)
+    per = 20 * np.pi
+    reg = X.TheoremERegressor(P_star, ctrl.G_diag, plant.x_ref, plant.x_ref_dot)
+    tg = np.linspace(0, per, 80)
+    rows = []
+    for frac in (0.25, 0.5, 1.0, 2.0):
+        Tw = frac * per
+        alpha = X.pe_level(reg.Psi, Tw, tg, n_nodes=200)
+        Psi_M, Psi_D = X.sup_norms(reg.Psi, reg.Psidot, tg)
+        if alpha <= 0:
+            rows.append(dict(T=Tw, alpha=alpha, rate=0.0)); continue
+        c = X.optimise_eps(ctrl.ke, alpha, Tw, Psi_M, Psi_D, n_grid=300)
+        rows.append(dict(T=Tw, alpha=alpha, rate=c['rate'], eps=c['eps']))
+    return rows
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    r1, r2, r3 = remark_E1_table(), slow_limit_table(), window_table()
+    L = ["# Lemma E.0: the explicit rate against the exact Floquet rate (`exp_explicit_rate.py`)", "",
+         "The explicit rate is a rigorous lower bound of the exact rate in every row.", "",
+         "## 1. Remark E.1's instance, x_m = 1.5 sin ωt (m = n = 1, G = I, k_e = 3)", "",
+         "| ω | window T | α(T) | Ψ_M | Ψ_D | exact Floquet rate | explicit rate, closed-form ε | explicit rate, optimised ε | exact / explicit |",
+         "|---|---|---|---|---|---|---|---|---|"]
+    for r in r1:
+        L.append(f"| {r['omega']:g} | {r['T']:.3g} | {r['alpha']:.3g} | {r['Psi_M']:.3g} | {r['Psi_D']:.3g} | {r['floquet']:.3e} | "
+                 f"{r['closed_form']:.3e} | {r['optimised']:.3e} | {r['ratio']:.3g} |")
+    om = np.array([r['omega'] for r in r1]); fl = np.array([r['floquet'] for r in r1]); ex = np.array([r['optimised'] for r in r1])
+    sl_f = np.polyfit(np.log(om[2:]), np.log(fl[2:]), 1)[0]; sl_e = np.polyfit(np.log(om[2:]), np.log(ex[2:]), 1)[0]
+    L += ["", f"Log-log slopes over ω ≥ 4: exact {sl_f:.2f}, explicit {sl_e:.2f} (Remark E.1 reports the exact ω⁻² law).", "",
+          "## 2. Slow-adaptation limit: the Theorem E ideal (m = 3, n = 2, k_e = 6) with G = g·diag(2, 2, 1)", "",
+          "| g | Ψ_M | Ψ_D | α | Ψ_M²/k_e | κ = Ψ_M²/λ_min⟨Ψ_GᵀΨ_G⟩ | exact Floquet rate | explicit rate (optimised ε) | exact / explicit | 3κ(1 + Ψ_D/(k_eΨ_M))² | averaging value λ_min⟨Ψ_GᵀΨ_G⟩/k_e |",
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in r2:
+        L.append(f"| {r['g']:g} | {r['Psi_M']:.3g} | {r['Psi_D']:.3g} | {r['alpha']:.3g} | {r['excitation']:.3g} | {r['kappa']:.3g} | "
+                 f"{r['floquet']:.3e} | {r['explicit']:.3e} | {r['ratio']:.3g} | {r['sat']:.3g} | {r['averaging']:.3e} |")
+    L += ["", "As g → 0 (slow adaptation) the ratio exact/explicit saturates near 3κ(1 + Ψ_D/(k_eΨ_M))², where κ is the "
+          "condition number of the averaged Gramian (Remark E.0a): the exact rate pays for ill-conditioning once, through "
+          "λ_min, and the bound pays twice.  The ratio grows further with the excitation strength Ψ_M²/k_e (fast adaptation).", "",
+          "## 3. The PE window (same ideal, G = diag(3, 3, 1.5))", "",
+          "| T / period | α(T) | explicit rate | ε |", "|---|---|---|---|"]
+    per = 20 * np.pi
+    for r in r3:
+        L.append(f"| {r['T'] / per:g} | {r['alpha']:.3g} | {r['rate']:.3e} | {r.get('eps', float('nan')):.3e} |")
+    L += ["", "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
+    with open(os.path.join(OUT, 'table.md'), 'w', encoding='utf-8') as f:
+        f.write("\n".join(L) + "\n")
+    print("\n".join(L))
+
+
+if __name__ == '__main__':
+    main()

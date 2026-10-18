@@ -1,0 +1,187 @@
+"""
+Checks for PARADIGM.md Lemma E.0 (explicit strict Lyapunov function for the skew-symmetric mixed error model) and
+for the explicit constants of Theorem E (revised), using src/core/excitation.py.
+
+Lemma E.0 is a pointwise statement: at every (t, e, ζ), p_lo‖w‖² ≤ V ≤ p_hi‖w‖² and V̇ ≤ −γ‖w‖² along
+ė = −k e − Ψζ, ζ̇ = Ψᵀe.  The tests evaluate V̇ by the chain rule with the analytic Q̇, on random states and times,
+for several regressors; then they check the envelope along trajectories, the ordering explicit rate ≤ exact Floquet
+rate, the ω⁻² scaling of Remark E.1, the slow-adaptation limit, and the nonlinear envelope of Theorem E on the
+implemented closed loop.
+"""
+import os
+import sys
+import numpy as np
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.core import excitation as X
+from src.core import transport as T
+
+PER = 2 * np.pi
+
+
+def _sinusoid_regressor(rng, n, q, n_tones=3, period=PER):
+    freqs = (2 * np.pi / period) * np.arange(1, n_tones + 1)
+    A = rng.normal(size=(n, q, n_tones)); B = rng.normal(size=(n, q, n_tones))
+
+    def Psi(t):
+        return (A * np.sin(freqs * t)[None, None, :] + B * np.cos(freqs * t)[None, None, :]).sum(-1)
+
+    def Psid(t):
+        return (A * freqs * np.cos(freqs * t)[None, None, :] - B * freqs * np.sin(freqs * t)[None, None, :]).sum(-1)
+    return Psi, Psid
+
+
+def _remark_E1_regressor(omega):
+    """m = n = 1, ϑ* = (1.5, 0.3, 0.8), G = I, x_m = 1.5 sin ωt (PARADIGM.md Remark E.1)."""
+    P_star = np.array([[1.5, 0.3, 0.8]])
+    reg = X.TheoremERegressor(P_star, np.ones(3), lambda t: np.array([1.5 * np.sin(omega * t)]),
+                              lambda t: np.array([1.5 * omega * np.cos(omega * t)]))
+    return reg
+
+
+def test_lemma_E0_pointwise_inequalities_hold_on_random_states():
+    """p_lo‖w‖² ≤ V ≤ p_hi‖w‖² and V̇ ≤ −γ‖w‖² at random (t, w), for the closed-form ε and for the optimised ε,
+    on four random PE regressors of different shapes and gains."""
+    rng = np.random.default_rng(3)
+    for trial, (n, q, scale, k) in enumerate([(2, 3, 1.0, 3.0), (1, 3, 0.1, 2.0), (3, 2, 5.0, 10.0), (2, 5, 0.3, 0.5)]):
+        Psi0, Psid0 = _sinusoid_regressor(rng, n, q)
+        Psi = lambda t, s=scale, f=Psi0: s * f(t)
+        Psid = lambda t, s=scale, f=Psid0: s * f(t)
+        tg = np.linspace(0, PER, 120)
+        Psi_M, Psi_D = X.sup_norms(Psi, Psid, tg)
+        Tw = PER
+        alpha = X.pe_level(Psi, Tw, tg, n_nodes=120)
+        assert alpha > 0
+        for consts in (X.strict_lyapunov_constants(k, alpha, Tw, Psi_M, Psi_D),
+                       X.optimise_eps(k, alpha, Tw, Psi_M, Psi_D, n_grid=60)):
+            SL = X.StrictLyapunov(Psi, Psid, k, Tw, consts, n_nodes=120)
+            assert consts['gamma'] > 0 and consts['p_lo'] > 0
+            if not np.isnan(consts['gamma_cf']):
+                assert consts['gamma'] >= consts['gamma_cf'] * (1 - 1e-12)            # the closed-form lower bound
+                assert consts['p_lo'] >= 0.25 - 1e-12 and consts['p_hi'] <= 0.75 + 1e-12
+            for _ in range(60):
+                t = rng.uniform(0, 3 * PER); e = rng.normal(size=n); z = rng.normal(size=q)
+                V, Vd, g, lo, hi = SL.check_point(t, e, z)
+                assert lo - 1e-12 <= V <= hi + 1e-12, (trial, V, lo, hi)
+                assert Vd <= -g + 1e-10 * (1 + abs(Vd)), (trial, Vd, -g)
+
+
+def test_lemma_E0_envelope_and_floquet_ordering():
+    """Along (LTV): ‖w(t)‖ ≤ overshoot·e^{−rate t}‖w(0)‖ at every sample, and the explicit rate never exceeds the
+    exact Floquet rate (it is a valid lower bound); the ratio is reported in results/explicit_rate/."""
+    rng = np.random.default_rng(5)
+    Psi, Psid = _sinusoid_regressor(rng, 2, 3)
+    k = 3.0
+    tg = np.linspace(0, PER, 120)
+    rate, best, _ = X.explicit_rate(Psi, Psid, k, [PER / 2, PER, 2 * PER], tg, n_nodes=120)
+    c = X.strict_lyapunov_constants(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'])
+    fl = X.floquet_rate(Psi, k, PER, n_steps=2000)
+    assert 0 < c['rate'] <= fl, (c['rate'], fl)
+    for w0 in (np.array([0, 0, 1.0, 0, 0]), np.array([1.0, -1.0, 0.3, 0.2, 0.1])):
+        ts, nrm = X.simulate_ltv(Psi, k, w0, 60.0, 1e-2)
+        env = c['overshoot'] * np.exp(-c['rate'] * ts) * np.linalg.norm(w0)
+        assert np.all(nrm <= env * (1 + 1e-9))
+
+
+def test_remark_E1_omega_scaling_of_the_explicit_rate():
+    """Remark E.1's instance: under x_m = 1.5 sin ωt the exact Floquet rate falls like ω⁻² (review round 3).  The
+    explicit bound stays below the exact rate at every ω, and for large ω it falls like ω⁻² as well, because Ψ_D ∝ ω
+    dominates c₁ there: the bound explains the ω⁻² law.  The ratio exact/explicit decreases with ω and stays bounded."""
+    k = 3.0
+    oms = (16.0, 32.0, 64.0, 128.0)
+    fl, ex = [], []
+    for om in oms:
+        reg = _remark_E1_regressor(om)
+        per = PER / om
+        tg = np.linspace(0, per, 80)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, k, [per, 2 * per], tg, n_nodes=80)
+        c = X.optimise_eps(k, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=80)
+        f = X.floquet_rate(reg.Psi, k, per, n_steps=1000)
+        assert c['rate'] <= f, (om, c['rate'], f)
+        fl.append(f); ex.append(c['rate'])
+    fl, ex = np.array(fl), np.array(ex)
+    slope_fl = np.polyfit(np.log(oms), np.log(fl), 1)[0]
+    slope_ex = np.polyfit(np.log(oms), np.log(ex), 1)[0]
+    assert -2.3 < slope_fl < -1.7, slope_fl
+    assert -2.3 < slope_ex < -1.7, slope_ex
+    ratio = fl / ex
+    assert np.all(np.diff(ratio) <= 0) and ratio[-1] < 30, ratio
+
+
+def test_slow_adaptation_limit_ratio_is_bounded():
+    """In the mean-field normalisation Ψ_G = m^{−1/2}Ψ(I⊗G^{1/2}) is small for large m.  Scaling G → 0 at fixed
+    ideal, the ratio (Floquet rate)/(explicit rate) tends to a constant (the bound is sharp up to a factor), while
+    in the fast regime it is large.  Checked on the m = 3, n = 2 ideal of the Theorem E tests with G = g·diag(2,2,1)."""
+    rng = np.random.default_rng(12)
+    m, n = 3, 2
+    ctrl = T.TransportController(m, n, ke=6.0, g_a=30.0, g_c=30.0, g_s=15.0, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = T.sample_lifted_ideal(m, n, ctrl, rng, min_sep=0.9)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=2.5)                    # period 20π (tones 1 and 1.3)
+    per = 20 * np.pi
+    ratios = []
+    for g in (10.0, 1.0, 0.1, 0.01):
+        G = g * np.array([2.0, 2.0, 1.0])
+        G_diag = np.concatenate([np.full(n, G[0]), np.full(n, G[1]), [G[2]]])
+        reg = X.TheoremERegressor(P_star, G_diag, plant.x_ref, plant.x_ref_dot)
+        tg = np.linspace(0, per, 60)
+        _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=160)
+        c = X.optimise_eps(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=80)
+        f = X.floquet_rate(reg.Psi, ctrl.ke, per, n_steps=3000)
+        assert c['rate'] <= f
+        ratios.append(f / c['rate'])
+    ratios = np.array(ratios)
+    assert ratios[0] > ratios[-1]                           # fast regime is more conservative than slow
+    assert ratios[-1] < 1.5 * ratios[-2]                    # the ratio saturates as the gains shrink
+
+
+def test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop():
+    """
+    Theorem E (revised) with explicit constants on the implemented closed loop (Remark E.1's single-kernel instance
+    with G = 0.3·I, where the Gramian is well conditioned and the constants are representable): for a start with
+    ‖w(t₀)‖ ≤ r₀ in the w-coordinates, with L_J estimated numerically on D, the trajectory satisfies
+    ‖w(t)‖ ≤ overshoot·e^{−rate_nl t}‖w(0)‖ at every sample over a horizon of min(1/rate_nl, 8000).  The explicit constants are
+    conservative (r₀ is of order 1e-5 here), so the check is on the inequality, not on sharpness.
+    """
+    rng = np.random.default_rng(7)
+    m, n = 1, 1
+    g = 0.3
+    ctrl = T.TransportController(m, n, ke=3.0, g_a=g, g_c=g, g_s=g, a_max=8.0, c_max=4.0, s_min=0.3, s_max=3.0, eps=0.15)
+    P_star = np.array([[1.5, 0.3, 0.8]])
+    assert ctrl.admissible_ideal(P_star, strict=True)
+    plant = T.LiftedRepresentablePlant(P_star, amplitude=1.5, freqs=[1.0], phases=[0.0])        # x_m = 1.5 sin t
+    per = PER
+    p = 2 * n + 1
+    reg = X.TheoremERegressor(P_star, ctrl.G_diag, plant.x_ref, plant.x_ref_dot)
+    tg = np.linspace(0, per, 80)
+    _, best, _ = X.explicit_rate(reg.Psi, reg.Psidot, ctrl.ke, [per], tg, n_nodes=160)
+    delta = min(ctrl.a_max - ctrl.eps - abs(P_star[0, 0]), ctrl.c_max - ctrl.eps - abs(P_star[0, 1]),
+                P_star[0, 2] - ctrl.s_min - ctrl.eps, ctrl.s_max - ctrl.eps - P_star[0, 2])
+    r = float(delta)                                                                         # ρ = ∞ (ε ≡ 0)
+
+    def field(z, t):
+        e = z[:n]; P = P_star + z[n:].reshape(m, p)
+        x = plant.x_ref(t) + e
+        edot = plant.f(x, t) - ctrl.ke * e - T.f_hat(x, P)
+        v, _ = ctrl.velocity(x, e, P)
+        return np.concatenate([edot, v.reshape(-1)])
+
+    L_J = X.jacobian_lipschitz_estimate(field, n + m * p, r, tg, rng, n_samples=150)
+    eps = X.optimise_eps(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], n_grid=120)['eps']
+    cst = X.theorem_E_constants(ctrl.ke, best['alpha'], best['T'], best['Psi_M'], best['Psi_D'], m, ctrl.G_diag, r, L_J, eps=eps)
+    assert cst['r0_z'] > 1e-8 and cst['rate_nonlinear'] > 1e-6, cst
+    S = np.concatenate([np.ones(n), np.tile(1 / np.sqrt(m * ctrl.G_diag), m)])                # w = S z (diagonal)
+    z0 = rng.normal(size=n + m * p); z0 *= 0.9 * cst['r0_z'] / np.linalg.norm(z0)
+    w0 = S * z0
+    assert np.linalg.norm(w0) <= cst['r0_w'] * (1 + 1e-9)
+    P0 = P_star + z0[n:].reshape(m, p); x0 = plant.x_ref(0.0) + z0[:n]
+    T_end = min(1.0 / cst['rate_nonlinear'], 8.0e3)          # the explicit rate is slow; one e-fold of the envelope
+    res = T.rk4_closed_loop(plant, ctrl, x0, P0, T=T_end, dt=0.02, record_every=50)
+    norms = []
+    for t, x, P in zip(res['t'], res['x'], res['P']):
+        z = np.concatenate([x - plant.x_ref(t), (P - P_star).reshape(-1)])
+        w = S * z
+        env = cst['overshoot'] * np.exp(-cst['rate_nonlinear'] * t) * np.linalg.norm(w0)
+        assert np.linalg.norm(w) <= env * (1 + 1e-6), (t, np.linalg.norm(w), env)
+        norms.append(np.linalg.norm(w))
+    assert norms[-1] < 0.5 * norms[0]                       # it does converge (the exact rate is far larger)

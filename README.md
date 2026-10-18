@@ -27,6 +27,9 @@ with its proof and status, the numerical evidence and the verification map. It i
   fourth that compared it line by line with the theory. Every confirmed issue and its fix is logged in
   [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of the first three rounds are kept beside it.
 - The claim-by-claim novelty audit is in [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md).
+- Version 4 of the theory adds a self-contained strict Lyapunov function for Theorem E (Lemma E.0) and a theorem that
+  characterises the non-reciprocity of the averaged closed loop (Theorem I); see [review/REVIEW_LOG.md](review/REVIEW_LOG.md)
+  round 5 for their review.
 
 ---
 
@@ -41,12 +44,13 @@ particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive l
 | B | A label-free Lyapunov function ½‖e‖² + ½W(μ, μ*)², with a two-regime matched remainder | proved and checked |
 | C | Optimal-transport σ-modification: exact dissipation, a gap-protected strict inequality, a local exponential estimate; the labelled leak reshuffles kernels | proved and checked |
 | D | The mean-field closed loop: well-posedness, a Dobrushin estimate, the many-kernel limit | proved |
-| E | Label-free local exponential convergence under tangential persistent excitation | proved, conditional on one cited theorem |
+| E | Label-free local exponential convergence under tangential persistent excitation, with explicit radius, overshoot and rate (Lemma E.0: a self-contained strict Lyapunov function) | proved and checked; the explicit rate is conservative in a quantified way |
 | F | The Wasserstein length of learning is bounded by the integrated tracking error | proved and checked |
 | G | The slow kernel geometry follows variable projection in the metric induced on the slow manifold; plain variable projection needs a flatness condition | formal; checked, with a counterexample |
 | H | With saturated features, σ-modification and parameter dither, the averaged loop is mean-field Langevin dynamics and converges globally to the regularised optimum | proved for the averaged system |
 | H.7 | At finite feedback gain, the averaged loop is *not* a gradient flow: a semi-gradient (performative) correction, and an antisymmetric kernel interaction given by the area the reference orbit encloses | frozen-measure part proved; non-reciprocity checked |
 | H.8 | The averaged system is input-to-state stable, which reduces the global conjecture for the real loop to an averaging estimate | proved under a stated regularity assumption |
+| I | Reciprocity of the exactly averaged loop at order 1/k_e² is a pairwise property, and it fails exactly when the residual is non-zero on the orbit (n = 1) or, at perfect fit, when the orbit carries circulation (n ≥ 2) | proved and checked |
 
 **A new closed-loop effect.** Traversing the same reference orbit in the opposite direction leaves the visited
 states unchanged, yet the learned kernels shift by an amount of order 1/k_e. The first-order theory, H.7 plus the
@@ -128,7 +132,7 @@ n = 3 and NTK results contradict them.
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 50 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 61 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -137,7 +141,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 50 tests, about 5–7 minutes
+python -m pytest tests                          # 61 tests, about 8–10 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 
@@ -171,5 +175,8 @@ The open problems are listed in [PARADIGM.md](PARADIGM.md) §8. The most importa
 2. The mean-field limit of the dithered law, and uniform-in-time propagation of chaos with a plant in the loop.
 3. A general non-reciprocity theorem for H.7, beyond the checked instances, and the orientation experiment with
    dither.
-4. Points the third review left uncertain: the exact hypotheses of the cited Morgan–Narendra theorem behind
-   Theorem E, and the citations of Remark H.3.
+4. The citations of Remark H.3, which the third review left uncertain. (The other point it left uncertain, the
+   hypotheses of the Morgan–Narendra theorem behind Theorem E, is settled: Lemma E.0 replaces that citation by a
+   self-contained strict Lyapunov function with explicit constants.)
+5. A strict Lyapunov function for the excited linearisation whose rate is linear in the smallest eigenvalue of the
+   averaged Gramian; the explicit rate of Lemma E.0 is quadratic in it (Remark E.0a).

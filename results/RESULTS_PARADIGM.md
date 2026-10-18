@@ -201,3 +201,39 @@ Predictions are linear responses at the (+) equilibrium.
 - A first attempt with σ = 0.5/k_e and half the horizon had not converged (residual drift about a third of the
   difference). It was discarded and rerun.
 
+
+## Lemma E.0 and Theorem E with explicit constants (`exp_explicit_rate.py` → `explicit_rate/`)
+
+The explicit rate of Lemma E.0 against the exact Floquet rate of the linearised loop. It is a rigorous lower bound in
+every row. Full tables in `results/explicit_rate/table.md`.
+
+| instance | regime | exact / explicit |
+|---|---|---|
+| Remark E.1 (m = n = 1, G = I, k_e = 3), ω = 1 … 64 | Ψ_M²/k_e ≈ 1 | 954 → 17.6 (decreasing in ω) |
+| Theorem E ideal (m = 3, n = 2, k_e = 6), G = g·diag(2,2,1), g = 30 … 0.01 | fast → slow | 8.4·10¹⁰ → 6.8·10⁵ |
+
+- Both rates fall like ω⁻² for large ω in Remark E.1's instance (log-log slopes over ω ≥ 4: −1.97 exact, −1.56
+  explicit; −1.92 between ω = 32 and 64). Lemma E.0(iii) derives the ω⁻² law from Ψ_D ∝ ω.
+- In the slow-adaptation limit the ratio saturates near 3κ(1 + Ψ_D/(k_eΨ_M))² with κ the condition number of the
+  averaged Gramian (1.27·10⁵ for this ideal; predicted saturation 1.47·10⁶ for the closed-form ε, measured 6.8·10⁵ with
+  the optimised ε). The exact rate pays for ill-conditioning once, the bound twice (Remark E.0a).
+- Tests (`tests/test_excitation.py`): the pointwise inequalities of Lemma E.0 on random states for four regressors, the
+  envelope along trajectories, the ordering explicit ≤ exact, the ω⁻² law, the saturation of the ratio, and the explicit
+  nonlinear envelope of Theorem E on the implemented closed loop (single-kernel instance with G = 0.3·I, where
+  r₀ ≈ 10⁻⁵ in the w-coordinates: the inequality holds at every sample over one e-fold of the envelope).
+
+## Theorem I — reciprocity at order k_e⁻² (tests)
+
+No new experiment: every statement is checked in `tests/test_nonreciprocity.py` against the generic second-variation
+code of `src/core/averaging.py`.
+
+| check | result |
+|---|---|
+| A(ϑ,ϑ') = aᵀB(ξ,ξ')a' against the antisymmetric part of S_even + K, n = 1 and 2 | agreement to 1e-10 |
+| A(ϑ, ϑ_z) = 0 for the zero feature; cyclic sum over (ϑ₀, ϑ₁, ϑ_z) equals A(ϑ₀, ϑ₁) | 1e-14 |
+| n = 1, f := f̂_μ (perfect fit on the orbit) | max |A| < 1e-13 over 20 random pairs |
+| n = 1, non-zero residual | |A| > 1e-3 found; equals the closed form −aa'((c−c')/s²)∫rφ_cφ_c'dρ to 1e-12 |
+| κ(ξ,ξ') against −(1/(2s²))e^{−|c−c'|²/(4s²)}(c−c')·F_s(m), n = 2 | 1e-10 |
+| F₂((0.5, 0)) > 0 on the ellipse; κ ≡ 0 on a segment traversed back and forth | F₂ > 1e-3; |κ| < 1e-12 |
+| n = 2 at perfect fit: B = 2κI | 1e-13; A ≠ 0 on the ellipse, A ≡ 0 (< 1e-13) on the segment |
+| positivity witness f ≡ 0, μ = δ_ϑ̄ | integral > 0; generic code equals the closed form to 1e-12 |

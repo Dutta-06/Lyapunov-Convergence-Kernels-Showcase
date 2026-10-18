@@ -141,6 +141,34 @@ found the construction.
   - The first-order theory predicts this effect quantitatively in the real closed loop: to 3% in size, with cosine 0.994, at k_e = 40.
 - **Verdict: no precedent found; the ingredients are known.** Confidence is low to medium, because these were three targeted searches, not a sweep.
 
+### E.0 Explicit strict Lyapunov function for the skew-symmetric mixed error model
+
+- **Closest prior.** Strict Lyapunov functions for persistently excited systems built from a backward–forward integral
+  of the PE Gramian: Mazenc–Malisoff, *Constructions of Strict Lyapunov Functions* (Springer 2009), and Mazenc, de Queiroz
+  and Malisoff, IEEE TAC 54 (2009), for adaptively controlled systems. Explicit UES bounds for the identifier
+  ζ̇ = −ΨᵀΨζ: Anderson (1977), Loría–Panteley (2002). The qualitative statement for the mixed class is Morgan–Narendra
+  [S8], cited by version 3.
+- **Distinction.** The lemma gives, for the mixed class ė = −ke − Ψζ, ζ̇ = Ψᵀe, a closed-form rate and overshoot in
+  (k, α, T, Ψ_M, Ψ_D), with the cancellation of the ‖Ψζ‖² terms between the Gramian cross term and the eᵀΨζ cross term
+  as its only idea, and it quantifies its own conservativeness (Remark E.0a: a factor 3κ(1 + Ψ_D/(kΨ_M))² in the
+  slow-adaptation regime, κ the condition number of the averaged Gramian).
+- **Verdict: a known construction made explicit for this class.** Its role is rigour, not novelty: Theorem E no longer
+  depends on an unverified citation. The ω⁻² law of Remark E.1 now has a proof.
+
+### I. Reciprocity criterion for the exactly averaged loop
+
+- **Closest prior.** The coboundary (cyclic-sum) criterion for reciprocal pairwise interactions is standard in the
+  non-reciprocal many-body literature [S12]; the injectivity of the Gaussian convolution (Weierstrass transform) and
+  Stokes' theorem with winding numbers are classical analysis.
+- **Distinction.** No source found states that for a feature family containing the zero feature the criterion collapses
+  to the vanishing of the antisymmetric kernel, nor the two characterisations: for n = 1 the averaged adaptive loop is
+  reciprocal at order k_e⁻² iff the residual vanishes on the orbit; for n ≥ 2 at perfect fit iff the orbit's 1-current
+  vanishes. The decomposition of the performative defect into the curl of the residual and a Lie bracket of the feature
+  fields was not found either.
+- **Verdict: new, with classical tools; the content is specific to the closed-loop learner.** The result settles
+  README open problem 3 of version 3 (a general non-reciprocity theorem beyond checked instances) for n = 1 and for the
+  perfect-fit case, and reduces the general case to an explicit bilinear form.
+
 ### H.8 Input-to-state stability of the averaged system
 
 - **Prior.** The proof is the energy-dissipation argument of [S3] Thm 3.2, with the perturbation absorbed by Young's inequality and the limit transferred by Talagrand (Otto–Villani).
@@ -158,7 +186,7 @@ theory. Within it, the constructions that appear new are:
 - OT σ-modification with its reshuffling result (C);
 - the induced-metric form of the occupation-measure variable-projection reduction (G);
 - the mean-field Langevin bridge with its global convergence statement (H);
-- the frozen-measure structure of the exactly averaged loop (H.7).
+- the frozen-measure structure of the exactly averaged loop (H.7), and the characterisation of its non-reciprocity (I).
 
 The tools are known. The open problems in PARADIGM.md §8 are where new mathematics is required.
 
