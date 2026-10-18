@@ -329,9 +329,10 @@ numerics up to one rounding, and found two proof-level problems. The report is `
 
 **Design.** The second research increment adds Lemma E.0′ (the sharp explicit rate of the slow-adaptation regime),
 Corollary E.0′.2 (Theorem E with its constants) and Theorem D″ (uniform-in-time propagation of chaos under a dominant
-leak) to PARADIGM.md §§5c and 6, with code, tests and experiments. Two referees were run: one on Lemma E.0′ (proof,
-constants, code and certificate; `review/REVIEW_round6_E0prime.md`) and one on Theorem D″ (proof, constants, experiment and
-reading; `review/REVIEW_round6_Dpp.md`). The confirmed issues and their fixes follow.
+leak) to PARADIGM.md §§5c and 6, with code, tests and experiments. Three referees were run: on Lemma E.0′ (proof,
+constants, code and certificate; `review/REVIEW_round6_E0prime.md`), on Theorem D″ (proof, constants, experiment and
+reading; `review/REVIEW_round6_Dpp.md`) and on Theorem J′ with Proposition J′.2 and `dither.py` (proof, code, numerics;
+`review/REVIEW_round6_Jprime.md`). The confirmed issues and their fixes follow.
 
 **Verdicts.** Lemma E.0′ holds: the referee re-derived the fast-variable equation, the order-ε and order-ε² cancellations
 (including N₂ = 0), the list of remainder terms and every per-direction bound, and certified the inequality V̇ ≤ −γV
@@ -343,7 +344,9 @@ stated asymptotics missed a first-order term (all fixed). Corollary E.0′.2's p
 integrator's discretisation floor and was repaired (E0P-4 = E0P-f). Theorem D″ holds as a theorem; its reading did not: the
 run presented as the learning regime was a slow collapse (DPP-3), the constants carried a factor 2 (DPP-1), and the
 synchronisation claim holds only without dither (DPP-2); the instance, the constants and every text were redone, and the
-new learning-regime run shows the coupled distance growing in time.
+new learning-regime run shows the coupled distance growing in time. Theorem J′ holds with fixes (a derivative count in the
+regularity bookkeeping; the Monte Carlo error bars and burn-in of the first run), Proposition J′.2 holds, and the first-order
+numerics were rerun with the corrected design.
 
 **Lemma E.0′ (refuter).** Selected confirmations: the stated ẇ equals the chain-rule derivative to 5·10⁻¹⁴ on four
 regressors with εΨ_M up to 3 (all orders through ε⁶ exercised) and the fourth-order finite difference of w along DOP853
@@ -396,3 +399,23 @@ also verified the comparison inequality pathwise on six m-against-M couplings wi
 | DPP-9 | cosmetic (positive) | the second-moment hypothesis for the W₁ statement is redundant: Itô gives sup_t E‖ϑ̄ − ϑ⁰‖² ≤ max{z(0), ((λ_GE_XL_ϑ)²/σ + 2τ tr G)/σ} | hypothesis removed, the bound proved in the statement |
 | DPP-10 | cosmetic | "u̇" for a Dini derivative; the Hurwitz condition listed κ_ϑ > 0 redundantly; for n > 1 the norms L₂, L_{xϑ} must be contracted with unit vectors as in §1 (1) | D⁺u; "κ_e > 0 and det A > 0 (then κ_ϑ > 0)"; the norm convention stated |
 | DPP-11 | cosmetic | the slope −0.41 had no standard error; the bound column compares sup_t E D with E max_t D (right direction, unsaid) | per-seed slopes with s.e.; the comparison stated in the table |
+
+**Theorem J′, Proposition J′.2 and `dither.py` (refuter).** Verdict: the theorem holds with fixes (every sign of Steps 3, 5,
+6, 7 re-derived by hand and confirmed on exactly solvable fast–slow toys, including the sign of b_osc, which the referee
+established independently of the text's integration by parts: with the sign flipped the remainder grows like 1/ε), the
+proposition holds ((iii) confirmed to six digits by finite differences on the single-kernel instance; (iv) sound), the
+code holds with fixes (every formula of `averaged`, the solver, the current, the circulation prediction and the splitting
+confirmed independently; the Monte-Carlo error bars and the burn-in had quantifiable biases). The report is
+`review/REVIEW_round6_Jprime.md`.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| JP-1 | minor (regularity) | the expansion needs five Θ-derivatives of the Poisson solution, not four: ψ₂′ contains ∇³φ through τ₀tr(G∇²(u·∇φ)), so B₀ψ₂ carries ∇⁵φ; and interior Schauder theory gives ψ_φ ∈ C^{5,α} only for φ ∈ C^{3,α}, not for φ ∈ C² as stated | the class of observables is C^{3,α} with polynomially bounded derivatives up to order three (statement, Remark J′.1, Step 4); Step 3 counts the derivatives (C⁵), with the remark that (b) alone needs C³ |
+| JP-2 | cosmetic | w_φ written for a diagonal G while Step 7 allows a symmetric G | G diagonal stated in the theorem; the general contraction given in Step 3 |
+| JP-3 | cosmetic | Proposition J′.2(i) stated the density expansion pointwise where the proof gives it weakly; (ii) said "up to O(ε²)" where the Langevin identification is exact | (i) stated weakly, with the L¹ check on the grid; the EPR remainder labelled formal; (ii) stated exactly |
+| JP-4 | minor (numerics) | the batch-mean standard errors of `simulate_stationary` were biased low by 1.4–1.9: the spectral gap of L̄₀ on the instance is 0.286 per slow unit (relaxation 3.5 units), longer than the 2-unit batches | standard errors from the spread of the per-replica time averages (independent replicas); the experiment and the test rerun |
+| JP-5 | minor (numerics) | the averaging window was not a whole number of reference periods (63.66, 127.33, … periods), so the phase was not averaged uniformly; negligible for the means, but of the size of the predicted circulation for Θ∧V | burn-in and window are whole numbers of periods |
+| JP-6 | minor (numerics) | burn-in of 4 slow units ≈ 1.1 relaxation times from a start at π: ≈2.8% of the O(ε) shift survived in the window, biasing the measured shift toward π by the size of the claimed agreement | replicas start from the first-order law π(1 + εg) and burn in for 10 units (transient O(ε²)e^{−2.9}) |
+| JP-7 | cosmetic (table) | the "resolved" criterion for the second-order slope used the biased standard errors | criterion kept with the corrected errors; the table says where the residual is not resolved |
+| JP-8 | cosmetic | (iv) quantified over σ₀ and G idly and did not recall Theorem I's setting | reworded |
+| JP-9 | minor (reading) | the first run's text claimed the orientation-odd part "to within a few percent"; the data give 7–8% at k_e = 10 and agreement within a 10–30% resolution at k_e = 20–80; the k_e⁻² residual of (c) is at the noise floor for k_e ≥ 20 and the even part exceeds its first-order prediction by 1.5–1.8× at k_e = 10 (an O(ε²) coefficient of order −0.4, the ratio c₂/c₁ ≈ 1.4 of Theorem J's instance A); Table 4 (circulation) is dominated by the O(ε²) term and, in the first run, by the phase bias of JP-5 | the numerics paragraph written from the corrected run with these qualifications; the second-order residual reported as not resolved; Table 4's caption says what it does and does not test |

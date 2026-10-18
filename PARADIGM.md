@@ -1,7 +1,8 @@
 # Transport adaptive control: adaptive approximators as evolving measures
 
 **Version 4**: version 3 after review rounds 1–4, plus the results of the research continuation reviewed in
-`review/REVIEW_LOG.md` round 5 (Lemma E.0, Theorem E with explicit constants, Theorems C′, D′, I and J, Proposition K). Version 2 is
+`review/REVIEW_LOG.md` round 5 (Lemma E.0, Theorem E with explicit constants, Theorems C′, D′, I and J, Proposition K) and round 6
+(Lemma E.0′ with Corollary E.0′.2, Theorem D″, Theorem J′ with Proposition J′.2 and Corollary J′.3). Version 2 is
 archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its line numbers.
 
 **Companion files.**
@@ -14,8 +15,10 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   - `src/core/nonreciprocity.py` implements the reciprocity criterion of Theorem I.
   - `src/core/periodic.py` implements the periodic orbits of the finite-m closed loop and the averaged objective J_m of Theorem J, and the collapsed-configuration analysis of Proposition K.
   - `src/core/transport.py` also implements the optimal plan, the barycentric projection and the leak (L_σ,bar) of Theorem C′.
+  - `src/core/dither.py` implements the single-kernel instance, the averaged data (J, ∇J, b, ⟨u∧u̇⟩), the Gibbs grid with its Poisson,
+    current and stationary Fokker–Planck solvers, and the vectorised dithered loop of Theorem J′.
 - **Tests.** `tests/test_transport.py`, `tests/test_langevin.py`, `tests/test_averaging.py`, `tests/test_excitation.py`,
-  `tests/test_nonreciprocity.py`, `tests/test_periodic.py` and `tests/test_barycentric.py`. Run them with
+  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py` and `tests/test_dither.py`. Run them with
   `venv\Scripts\python -m pytest tests`.
 - **Experiments.** The scripts are `experiments/exp_transport_*.py`, `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py`, `exp_mean_field_m.py`,
   `exp_pe_convergence.py`, `exp_variable_projection.py`, `exp_slow_manifold_slope.py`, `exp_langevin_global.py`,
@@ -23,7 +26,7 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_barycentric_leak.py` and
   `exp_dither_stationary.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
-  point to `review/LITERATURE_refs.md`, and [S1]–[S22] point to the audit file.
+  point to `review/LITERATURE_refs.md`, and [S1]–[S34] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency) and for round 6 `review/REVIEW_round6_E0prime.md` and
@@ -97,6 +100,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > L_b′L_ϑ) the bound is uniform in time (Theorem D″), a leak-dominated regime in which the network does not learn (at τ = 0 it collapses to one kernel; at τ > 0 it stays in the dither cloud of the prior) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
+| J′ | At finite m with dither τ = τ₀/k_e and leak σ = σ₀/k_e: the closed loop has an invariant law (unique under a smoothness hypothesis) whose parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with the explicit first-order correction ε∫φ g dπ driven by the first-order drift b of Theorem J as a vector field on parameter space (g solves τ₀∇·(πG∇g) = ∇·(πb)); the stationary tracking error is (2/k_e²)π(L̄_m) + O(k_e⁻³); the stationary parameter process is not reversible, with a circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] + O(ε²), where j₁ = π(b − τ₀G∇g) is the first-order stationary current, nonzero exactly when b is not a G-gradient (Proposition J′.2: the finite-m form of Theorem I's reciprocity defect plus a Hessian commutator from second-order averaging; never a gradient for m ≥ 3) | proved (the Poisson-equation expansion of the invariant measure with the fast error and phase eliminated; three standard theorems imported and named); checked on a single-kernel instance: the first-order prediction removes the O(1/k_e) discrepancy between the real loop's stationary means and the Gibbs measure, the orientation-odd part of the means (the dither version of Remark H.7a) matches its prediction, and the current machinery is checked on the first-order averaged SDE | the technique is the Pavliotis–Stuart / Mattingly–Stuart–Tretyakov expansion; new in its object (a hypoelliptic learning loop with a plant) and in the identification of the first-order non-equilibrium current with the reciprocity defect of Theorem I |
 | H.8 | (𝔄) is input-to-state stable under drift perturbations, with gain 1/(τρ_τ) | proved, assuming the chain rule for the perturbed flow | elementary given [S3] |
 
 **Where the new mathematics lies.** The new mathematics this viewpoint requires lies in the open problems of §8.
@@ -2942,6 +2946,434 @@ zero of the separation block at σ_crit with a positive definite collective bloc
 
 ---
 
+## 6f. Theorem J′ — the stationary law of the dithered finite-m closed loop
+
+This section proves the second step of §8, branch 1 — the finite-m closed loop *with dither* — and answers the first
+"next step" of branch 2 (the orientation effect when the stationary state is a measure). It also opens a new angle: the
+stationary state of the dithered loop is a non-equilibrium steady state, with a stationary probability current of order
+1/k_e that vanishes exactly when the first-order averaged drift is reciprocal (Theorem I), and the stationary parameter
+process is not reversible in time.
+
+**Setting.** The closed loop of Theorem H's design at finite m, in the scaling σ = σ₀/k_e, τ = τ₀/k_e (the formal limit of
+Remark H.0: k_e → ∞ with G, k_eσ, k_eτ fixed), ε := 1/k_e:
+
+    ẋ = f(x) + ẋ_m − k_e e − f̂_Θ(x),    e := x − x_m(t),
+    dϑ_i = [G∇_ϑ(eᵀΦ̃(x;ϑ_i)) − (σ₀/k_e)(ϑ_i − ϑ⁰)]dt + √(2τ₀/k_e) G^{1/2} dB_i,    i = 1..m,                     (CL_τ)
+
+with the notation of §6d: saturated features, Θ ∈ ℝ^{mp}, G_m := I_m ⊗ G, x_m ∈ C^∞ T₀-periodic with occupation measure ρ,
+f ∈ C^∞ on a neighbourhood of the tube 𝒯_R, F_R := sup_{𝒯_R}‖f‖, and r_Θ, J_m, H, u, ⟨H⟩ = −G_m∇J_m as there. Assume
+k_e ≥ k_T := (F_R + K_Φ)/R, so that the ball {‖e‖ ≤ R} is forward invariant for every parameter path (‖ė‖ ≤ F_R + K_Φ −
+k_e‖e‖ on it): the plant never sees f outside the tube, and f may be modified outside a neighbourhood of 𝒯_R to be smooth
+with bounded derivatives on ℝⁿ without changing the law of the loop.
+
+*Slow time and the three scales.* Put s := εt, θ := t mod T₀ ∈ 𝕋 := ℝ/T₀ℤ, and η := e/ε = k_e e. Then dW_s := √ε dB_t is a
+Brownian motion in slow time and (CL_τ) reads
+
+    dη/ds = ε⁻²[r_Θ(x_m(θ) + εη) − η],    dϑ_i = [G∇_ϑ(ηᵀΦ̃(x_m(θ) + εη; ϑ_i)) − σ₀(ϑ_i − ϑ⁰)]ds + √(2τ₀) G^{1/2} dW_i,    dθ/ds = ε⁻¹:
+
+the error relaxes at rate ε⁻² to the slaved value η*(Θ,θ) := r_Θ(x_m(θ)), the phase turns at rate ε⁻¹, and the parameters
+move at rate one. The generator of the Markov process Z := (Θ, η, θ) on 𝒮 := ℝ^{mp} × {‖η‖ ≤ F_R + K_Φ} × 𝕋 is
+
+    L_ε = ε⁻²A_ε + ε⁻¹∂_θ + B_ε,    A_ε := (r_Θ(x_m(θ) + εη) − η)·∇_η,
+    B_ε := Σ_i[G∇_ϑ(ηᵀΦ̃(x_m(θ) + εη; ϑ_i)) − σ₀(ϑ_i − ϑ⁰)]·∇_{ϑ_i} + τ₀Σ_i tr(G∇²_{ϑ_i}),
+
+with A_ε = A₀ + εA₁ + …, A₀ = (η* − η)·∇_η, A₁ = (D_xr_Θ(x_m)η)·∇_η, and B_ε = B₀ + εB₁ + …, where B₀ has the drift
+Σ_i[G∇_ϑ(ηᵀΦ̃(x_m;ϑ_i)) − σ₀(ϑ_i − ϑ⁰)] (equal to H(Θ,θ) at η = η*) and B₁ = Σ_iG∇_ϑ(ηᵀD_xΦ̃(x_m;ϑ_i)η)·∇_{ϑ_i}.
+
+*The averaged objects.* L̄₀ := −G_m∇J_m·∇ + τ₀tr(G_m∇²) is the Langevin generator in the G⁻¹ metric with invariant measure
+the Gibbs measure π := Z⁻¹exp(−J_m/τ₀) (Theorem H(ii) at finite m; π has Gaussian tails because J_m ≥ (σ₀/2)Σ‖ϑ_i − ϑ⁰‖²_{G⁻¹} −
+C). The first-order drift is the vector field on ℝ^{mp}
+
+    b(Θ) := b_fr(Θ) + b_osc(Θ),    b_fr,i := G∇_ϑ(U_even + U_odd)[μ_Θ](ϑ)|_{ϑ=ϑ_i},    b_osc := ⟨(D_ΘH)(Θ,θ)·u(Θ,θ)⟩_θ,
+
+with μ_Θ := (1/m)Σ_jδ_{ϑ_j} and U_even, U_odd the functionals of Proposition H.7 (so b = k_e²(b_frozen + b_osc) of Theorem J,
+now at every Θ and not only at critical points; `periodic.second_order_drift` and `dither.SingleKernelInstance.averaged`
+compute it). The *first-order correction* g: ℝ^{mp} → ℝ is the solution with π(g) = 0 of the weighted Poisson equation
+
+    τ₀∇·(πG_m∇g) = ∇·(πb)    (equivalently L̄₀g = −τ₀π⁻¹∇·(πb) = ∇J_m·b − τ₀∇·b, which has zero π-mean),
+
+the *first-order current* is j₁ := π(b − τ₀G_m∇g) = πb_⊥ with b_⊥ := b − τ₀G_m∇g, so that ∇·j₁ = 0 and b = G_m∇(τ₀g) + b_⊥
+is the Hodge decomposition of b in L²(π; G_m⁻¹) into a G_m-gradient and a π-divergence-free field. For an observable
+φ ∈ C^{3,α}(ℝ^{mp}) with polynomially bounded derivatives, ψ_φ denotes the solution of L̄₀ψ_φ = φ − π(φ), π(ψ_φ) = 0.
+
+**Theorem J′.** Assume the setting above, with G diagonal (as in every instance of this document; for a general symmetric G
+replace G_l∂_{ϑ_l} by the contraction with G below). There are ε₀ > 0 and, for every observable φ ∈ C^{3,α}(ℝ^{mp}) (three
+derivatives, the third Hölder continuous) with polynomially bounded derivatives up to order three, a constant C_φ
+(depending on φ, f, x_m, G, σ₀, τ₀, R, m, the feature bounds, and not on ε) such that for every ε = 1/k_e ∈ (0, ε₀]:
+
+(a) *Invariant law.* The process Z has an invariant probability measure m_ε on 𝒮, every invariant measure is supported in
+{‖η‖ ≤ F_R + K_Φ} and has moments of all orders in Θ bounded uniformly in ε, and its θ-marginal is uniform. If moreover
+a_max > F_R componentwise and the tube lies in the box of the saturated centres, the invariant measure is unique, so the
+law of Z_t converges to m_ε and time averages along a single trajectory converge to m_ε-expectations.
+
+(b) *The Gibbs measure at leading order.* For every invariant measure m_ε, |m_ε(φ) − π(φ)| ≤ C_φ ε.
+
+(c) *First-order correction.* m_ε(φ) = π(φ) − ε π(b·∇ψ_φ) + O(ε²) = π(φ) + ε∫φ g dπ + O(ε²), with |O(ε²)| ≤ C_φ ε².
+In particular the stationary parameter means are π(Θ) + ε∫Θ g dπ + O(ε²).
+
+(d) *Observables of the full state.* For φ(Θ, η, θ) smooth, T₀-periodic in θ, with polynomially bounded derivatives in Θ
+(φ̄ below in the class of (b)), m_ε(φ) = π(φ̄) + O(ε), where φ̄(Θ) := ⟨φ(Θ, r_Θ(x_m(θ)), θ)⟩_θ. In particular the stationary mean-square tracking error is
+
+    E_{m_ε}‖e‖² = (2/k_e²) π(L̄_m) + O(k_e⁻³),    L̄_m(Θ) = ½∫‖r_Θ‖²dρ:
+
+the Gibbs average of the occupation loss, divided by k_e²/2.
+
+(e) *Circulation and irreversibility.* Let V(Θ,η,θ) := k_e·(drift of Θ in physical time) = Σ_i[G∇_ϑ(ηᵀΦ̃(x_m(θ) + εη;ϑ_i))
+− σ₀(ϑ_i − ϑ⁰)] (so Θ̇ = εV + noise). For every pair of coordinates (k, l) of ℝ^{mp},
+
+    Λ_ε^{kl} := E_{m_ε}[Θ_kV_l − Θ_lV_k] = ε[ ∫(Θ_k j₁,l − Θ_l j₁,k) dΘ + π(⟨u_k u̇_l − u_l u̇_k⟩_θ) ] + O(ε²),
+
+where u̇ := ∂_θu = H − ⟨H⟩. If the bracket is non-zero for some (k, l), then for ε small the stationary parameter process
+(Θ_t)_{t≥0} under m_ε is not reversible in time: E[Θ_{k,t}Θ_{l,t+h}] ≠ E[Θ_{l,t}Θ_{k,t+h}] for small h > 0.
+
+*Status.* Proved. The proof imports three standard theorems, named where they are used: the existence, growth and
+regularity theory of the Poisson equation for the Langevin generator with a confining potential (Pardoux–Veretennikov
+[S23], with interior Schauder estimates [S24] for the higher derivatives), and, for the uniqueness in (a) only, Hörmander's
+theorem for the smoothness of the transition densities of a hypoelliptic time-periodic diffusion [S25], [S26], the
+Stroock–Varadhan support theorem [S27] and the Doob–Khasminskii and Harris theorems [S28], [S32], [S33]. Parts (b)–(e) hold for every invariant measure and do not use the uniqueness.
+The first-order drift b is the one of Theorem J, so (c) is the thermal version of Theorem J(d): at low temperature it
+reduces to the O(1/k_e) offset of the periodic orbit (Remark J′.1). The orientation effect of Remark H.7a and Proposition
+K appears in (c) as the orientation-odd part of ∫Θ g dπ, and in the numerics it is measured to within 7–8% at k_e = 10 and
+within the Monte Carlo resolution (10–30%) at k_e = 20–80.
+Checked numerically on the single-kernel instance below (`exp_dither_stationary.py`, `tests/test_dither.py`), where the
+first-order prediction removes the O(1/k_e) discrepancy between the real loop and the Gibbs measure; the circulation of (e)
+is below the Monte Carlo resolution of the real loop at the affordable cost, and the current machinery behind it is
+checked on the first-order averaged SDE instead (Proposition J′.2).
+
+*Proof.* Throughout, C denotes a constant independent of ε, and "polynomially bounded" means bounded by C(1 + ‖Θ‖^q) on
+𝒮 for some q.
+
+*Step 0 (invariance, moments, existence).* By the choice k_e ≥ k_T, {‖e‖ ≤ R} is forward invariant and ‖e(t)‖ ≤ e^{−k_et}‖e(0)‖
++ (F_R + K_Φ)/k_e, so the set {‖η‖ > F_R + K_Φ + δ} is left in finite time and never re-entered: every invariant measure
+is supported in {‖η‖ ≤ F_R + K_Φ}, and on this set the Θ-drift of (CL_τ) is bounded by λ_G(F_R + K_Φ)L_ϑ + σ‖Θ − Θ⁰‖.
+For W := ‖Θ − Θ⁰‖² (slow time) L_εW ≤ −2σ₀W + 2λ_G(F_R + K_Φ)L_ϑ√(mW) + 2τ₀ tr G_m ≤ −σ₀W + C, and likewise L_εW^q ≤ −c_qW^q
++ C_q for every q ≥ 1 (Itô's formula and Young's inequality). Hence E_zW^q(Z_s) ≤ e^{−c_qs}W^q(z) + C_q/c_q: the Cesàro
+averages of the laws of Z_s are tight (W^q is coercive in Θ, η and θ live in compact sets), the semigroup is Feller (the
+coefficients are smooth with bounded derivatives in η and θ and of linear growth in Θ), and Krylov–Bogoliubov gives an
+invariant probability measure m_ε. For any invariant measure, 0 = m_ε(L_εW^q) ≤ −c_q m_ε(W^q) + C_q gives the uniform
+moment bounds; the θ-marginal is uniform because θ moves at constant speed. Dynkin's formula with these moment bounds
+shows m_ε(L_εψ) = 0 for every ψ ∈ C²(𝒮), T₀-periodic in θ, with polynomially bounded derivatives up to order two: the
+local martingale in Itô's formula is a martingale, and the stationary expectation of ψ(Z_s) − ψ(Z_0) vanishes.
+
+*Step 1 (uniqueness).* The noise acts on all of Θ; the x-equation carries no noise. Write the SDE for (x, Θ) in physical
+time with the vector fields X₀ (drift, time-periodic) and X_{i,k} := √(2τ₀/k_e)(G^{1/2})_{·k}·∂_{ϑ_i}. The bracket
+[X_{i,α_k}, X₀] contains, in the x-direction, −(1/m)(∂_{α_k}Φ̃)(x;ϑ_i)·∂_{x_k} = −(1/m)(da_k/dα_k)φ(x;c_i,s_i)∂_{x_k} with
+da_k/dα_k > 0 and φ > 0: together with the X_{i,k} these brackets span ℝⁿ × ℝ^{mp} at every point and every time, so the
+parabolic Hörmander condition holds everywhere. By Hörmander's theorem for time-dependent hypoelliptic diffusions with
+smooth coefficients of bounded derivatives ([S25]; the non-homogeneous case is [S26]), the transition probabilities
+P_{s,t}(z, ·) have densities that are smooth in z, so the period map P := P_{0,T₀} is strong Feller. Accessibility: fix
+Θ₁ and let z* := (e*, Θ₁) be the state at time T₀ of the deterministic skeleton that follows, on [0, T₀/2], a C¹ parameter
+path along which f̂_{Θ(t)}(x(t)) = f(x(t)) − w(t) with w(t) := λ·β(t) for a fixed bump β supported in (0, T₀/2) and λ ∈ ℝ
+chosen so that e(T₀/2) = 0 (possible since ė = −k_ee + w is controllable and the required λ is O(e^{−k_eT₀/2}); such
+parameter paths exist because a_max > F_R: m kernels centred at x(t) with amplitude f(x(t)) − w(t) realise f̂ = f − w, and
+the saturated centre box contains the tube), and on [T₀/2, T₀] any C¹ path from that configuration to Θ₁. From every
+initial (e₀, Θ₀) in the invariant set the same construction (with λ depending on e₀) reaches e(T₀/2) = 0 at the same
+parameter configuration, hence z* at time T₀. By the Stroock–Varadhan support theorem [S27] (the skeleton paths are
+realised by controls h ∈ L²: the Θ-noise is non-degenerate and the skeleton's Θ-path is C¹), z* ∈ supp P(z, ·) for every
+z. The supports of two distinct ergodic invariant measures of a strong Feller kernel are disjoint, and both contain z*
+([S28, Prop. 4.1.1 and Thm 4.2.1]; [S32, Cor. 1.14–Thm 1.16]), so P has at most one invariant measure. The periodic family
+P_{0,t}^*m_ε is then the unique invariant law of the augmented process; the strong Feller property with the accessible
+point gives a minorisation of P² on the sublevel sets of the Lyapunov function W ([S32, Lemma 1.13]), and Harris'
+theorem ([S33]) gives the convergence of the law of Z_{nT₀} to m_ε in a W-weighted total variation norm, hence the
+convergence of time averages along a single trajectory.
+
+*Step 2 (the fast operator).* At frozen (Θ, θ), A₀ is the generator of the flow η̇ = η* − η, which contracts to η* at
+rate one. For g smooth with g(Θ, η*, θ) = 0 the function
+
+    (A₀⁻¹g)(Θ, η, θ) := −∫₀^∞ g(Θ, η* + e^{−s}(η − η*), θ) ds
+
+is smooth, satisfies A₀(A₀⁻¹g) = g, and its derivatives in (Θ, θ) of any order are bounded by those of g; if g is linear in
+η − η*, g = (η − η*)ᵀw(Θ,θ), then A₀⁻¹g = −(η − η*)ᵀw. Conversely A₀ψ = 0 with ψ bounded in η forces ψ = ψ(Θ, θ).
+
+*Step 3 (the expansion).* Let φ ∈ C⁵(ℝ^{mp}) with polynomially bounded derivatives up to order five. Define
+
+    ψ₁ := −u·∇φ,    w_φ := Σ_{i,l}G_l ∂_{ϑ_l}Φ̃(x_m(θ);ϑ_i) ∂_{(i,l)}φ ∈ ℝⁿ    (for a symmetric G: (w_φ)_k = Σ_i(∇_ϑΦ̃_k(x_m;ϑ_i))ᵀG∇_{ϑ_i}φ),
+    ψ₂ := (η − η*)ᵀw_φ + ψ₂′(Θ,θ),
+
+where ψ₂′ is the zero-mean antiderivative in θ of b·∇φ − [−ṙᵀw_φ + (D_xr_Θ r)ᵀw_φ + (B₀ψ₁)|_{η*} + (B₁φ)|_{η*}] with
+ṙ := ∂_θ[r_Θ(x_m(θ))] and r := r_Θ(x_m(θ)), and ψ₃ := A₀⁻¹ of the η-dependent remainder defined below. Then
+ψ_ε := φ + εψ₁ + ε²ψ₂ + ε³ψ₃ satisfies, order by order:
+
+- ε⁻²: A₀φ = 0.
+- ε⁻¹: A₀ψ₁ + ∂_θφ + A₁φ = 0, since ψ₁ does not depend on η.
+- ε⁰: A₀ψ₂ + ∂_θψ₁ + A₁ψ₁ + (B₀ + A₂)φ. Here A₁ψ₁ = A₂φ = 0 and A₀ψ₂ = −(η − η*)ᵀw_φ = (B₀φ)|_{η*} − B₀φ, so the sum
+  equals ∂_θψ₁ + (B₀φ)|_{η*} = −u̇·∇φ + H·∇φ + τ₀tr(G_m∇²φ) = ⟨H⟩·∇φ + τ₀tr(G_m∇²φ) = L̄₀φ, because u̇ = H − ⟨H⟩. This is
+  Remark H.0's algebraic identity: the slaved drift averages to the Langevin drift.
+- ε¹: A₀ψ₃ + ∂_θψ₂ + A₁ψ₂ + (B₀ + A₂)ψ₁ + (B₁ + A₃)φ. At η = η*: ∂_θψ₂ = −ṙᵀw_φ + ∂_θψ₂′ (the lag of the error behind its
+  slaved value), A₁ψ₂ = (D_xr_Θ(x_m)r)ᵀw_φ (the state shift in the error equation), B₀ψ₁ = −H·∇(u·∇φ) − τ₀tr(G_m∇²(u·∇φ)),
+  A₂ψ₁ = A₃φ = 0, and B₁φ = Σ_iG∇_ϑ(rᵀD_xΦ̃(x_m;ϑ_i)r)·∇_{ϑ_i}φ (the state shift in the feature). By the choice of ψ₂′
+  the sum at η = η* equals b·∇φ pointwise in θ, once the θ-averages are identified: ⟨−ṙᵀw_φ⟩ = G∇_ϑ⟨−ṙᵀΦ̃(x_m;ϑ)⟩·∇φ
+  = (G_m∇U_odd)·∇φ at the particles, ⟨(D_xr r)ᵀw_φ + (B₁φ)|_{η*}⟩ = ⟨(r·∇_x)(rᵀΦ̃)⟩-gradient·∇φ = (G_m∇U_even)·∇φ (the two
+  state shifts combine into U_even), so these three give b_fr·∇φ; and ⟨B₀ψ₁|_{η*}⟩ = −⟨(D_Θu)H⟩·∇φ − ⟨H⊗u⟩:∇²φ −
+  τ₀tr(G_m∇²(⟨u⟩·∇φ)) = ⟨(D_ΘH)u⟩·∇φ = b_osc·∇φ, because ⟨u⟩ = 0, ⟨(D_Θu)u̇⟩ = −⟨(D_Θu̇)u⟩ = −⟨(D_ΘH)u⟩ (integration by
+  parts in θ, ⟨D_Θu⟩⟨H⟩ = 0), and ⟨H_ju_k⟩ + ⟨H_ku_j⟩ = ⟨∂_θ(u_ju_k)⟩ = 0 so the symmetric contraction with ∇²φ vanishes
+  (the same cancellation as N₂ = 0 in Lemma E.0′). Writing T₁(Θ,η,θ) for the sum of the order-ε terms other than A₀ψ₃, one
+  has T₁(Θ,η*,θ) = b·∇φ, so ψ₃ := A₀⁻¹(b·∇φ − T₁) is well defined (Step 2) and A₀ψ₃ + T₁ = b·∇φ: the order-ε term is
+  exactly L̄₁φ := b·∇φ.
+- ε²: R_ε := ε⁻²[L_εψ_ε − L̄₀φ − εL̄₁φ] is a finite sum of products of derivatives of f on the tube (orders ≤ 3), of Φ̃ in
+  (x, ϑ) (bounded), of x_m, of u, w_φ, ψ₂′, ψ₃ and of derivatives of φ: ψ₂′ contains ∇³φ (through τ₀tr(G_m∇²(u·∇φ)) in
+  (B₀ψ₁)|_{η*}) and ψ₃ contains ∇²φ, so B₀ψ₂ ∋ τ₀tr(G_m∇²ψ₂′) carries ∇⁵φ and B₀ψ₃ carries ∇⁴φ; using the exact operators
+  A_ε, B_ε and Taylor's theorem in ε rather than their formal series, |R_ε| ≤ C(1 + ‖Θ‖^q) on 𝒮 uniformly in ε ∈ (0, ε₀]
+  for φ ∈ C⁵ with polynomially bounded derivatives up to order five. (For the zeroth-order statement (b) alone ψ₂′ can be
+  dropped — it only serves to make the order-ε term exactly b·∇φ — and C³ suffices.)
+
+*Step 4 (the Poisson equation).* L̄₀ is uniformly elliptic with smooth coefficients, ∇J_m has linear growth with bounded
+derivatives of all orders, and ⟨−G_m∇J_m(Θ), Θ − Θ⁰⟩ ≤ −σ₀‖Θ − Θ⁰‖² + C‖Θ − Θ⁰‖: the recurrence condition of
+Pardoux–Veretennikov [S23, Thm 1] holds with every polynomial Lyapunov function. For φ ∈ C^{3,α}(ℝ^{mp}) with polynomially
+bounded derivatives up to order three there is a unique ψ_φ ∈ C²(ℝ^{mp}) with L̄₀ψ_φ = φ − π(φ), π(ψ_φ) = 0, and ψ_φ, ∇ψ_φ are
+polynomially bounded ([S23, Thm 1 and 2]); interior Schauder estimates on unit balls [S24, Thm 6.2 and 6.17], which gain two
+derivatives and whose constants depend polynomially on ‖Θ‖ through the local Hölder norms of the coefficients, give
+ψ_φ ∈ C^{5,α} with polynomially bounded derivatives up to order five.
+
+*Step 5 (b) and (c).* Apply Step 3 to ψ := ψ_φ and Step 0's identity to ψ_ε: 0 = m_ε(L_εψ_ε) = m_ε(L̄₀ψ) + εm_ε(b·∇ψ) +
+ε²m_ε(R_ε) = m_ε(φ) − π(φ) + εm_ε(b·∇ψ) + O(ε²), the O(ε²) by the moment bounds of Step 0. Since b·∇ψ is polynomially
+bounded, |m_ε(φ) − π(φ)| ≤ Cε, which is (b). Now b·∇ψ ∈ C⁴(ℝ^{mp}) with polynomially bounded derivatives (b is smooth with
+bounded derivatives in Θ, ψ ∈ C^{5,α}), so (b) applies to it (its Poisson solution is in C³, which the zeroth-order
+expansion needs): m_ε(b·∇ψ) = π(b·∇ψ) + O(ε), and
+m_ε(φ) = π(φ) − επ(b·∇ψ_φ) + O(ε²). The second form of (c) is Green's identity for the weighted Poisson equation:
+π(b·∇ψ) = ∫b·∇ψ π = −∫ψ∇·(πb) = −τ₀∫ψ∇·(πG_m∇g) = −τ₀∫g∇·(πG_m∇ψ) = −∫gπL̄₀ψ = −∫g(φ − π(φ))π = −∫φg dπ, using
+τ₀π⁻¹∇·(πG_m∇ψ) = L̄₀ψ and π(g) = 0; the boundary terms vanish by the Gaussian tails of π and the polynomial growth of
+g, ψ and their gradients (the same regularity for g as for ψ_φ, with φ replaced by the polynomially bounded ∇J_m·b − τ₀∇·b).
+
+*Step 6 (d).* Write φ = φ̄ + φ_θ + φ_η with φ_θ(Θ,θ) := φ(Θ,η*,θ) − φ̄(Θ) (zero θ-mean) and φ_η := φ(Θ,η,θ) − φ(Θ,η*,θ)
+(zero at η*). With χ₁ := −(zero-mean antiderivative in θ of φ_θ) and χ₂ := −A₀⁻¹φ_η (Step 2), L_ε(εχ₁ + ε²χ₂) = ∂_θχ₁ +
+A₀χ₂ + ε[B₀χ₁ + (∂_θ + A₁)χ₂] + O(ε²) = −(φ_θ + φ_η) + ε[…] + O(ε²), all terms polynomially bounded. Step 0's identity gives
+m_ε(φ) = m_ε(φ̄) + εm_ε(B₀χ₁ + (∂_θ + A₁)χ₂) + O(ε²) = π(φ̄) + O(ε) by (b). For φ = ‖η‖², φ̄ = ⟨‖r_Θ(x_m(θ))‖²⟩_θ = 2L̄_m(Θ),
+and E‖e‖² = ε²E‖η‖².
+
+*Step 7 (e).* Expand V = V⁰ + εV¹ + O(ε²) with V⁰ the B₀-drift and V¹ the B₁-drift, and apply Step 6 to φ := Θ_kV_l − Θ_lV_k
+keeping the order-ε terms. For φ⁰ := Θ∧V⁰ (∧ on the pair (k,l)): φ̄⁰ = Θ∧⟨H⟩ = Θ∧(−G_m∇J_m), and π(φ̄⁰) = 0 because
+−πG_m∇J_m = τ₀G_m∇π and ∫Θ∧(G_m∇π) = 0 for a symmetric G_m (integration by parts: the integrand is a divergence plus
+π·(G_{lk} − G_{kl})). Next, φ⁰_θ = Θ∧(H − ⟨H⟩) = Θ∧u̇, so χ₁ = −Θ∧u and ⟨(B₀χ₁)|_{η*}⟩ = −⟨H·∇_Θ(Θ∧u)⟩ − τ₀⟨tr G_m∇²(Θ∧u)⟩
+= −⟨H∧u⟩ − ⟨Θ∧(D_Θu·H)⟩ = −⟨u̇∧u⟩ + Θ∧⟨(D_ΘH)u⟩ = ⟨u∧u̇⟩ + Θ∧b_osc (the τ₀ term and ⟨H⟩∧⟨u⟩ vanish since ⟨u⟩ = 0, and
+⟨(D_Θu)H⟩ = −⟨(D_ΘH)u⟩ as in Step 3). Further, φ⁰_η = Θ∧(V⁰(η) − V⁰(η*)) is linear in η − η*, so χ₂ = φ⁰_η and
+⟨((∂_θ + A₁)χ₂)|_{η*}⟩ = Θ∧⟨Σ_iG∇_ϑ((−ṙ + D_xr r)ᵀΦ̃(x_m;ϑ_i))⟩ = Θ∧(lag and error-shift parts of b_fr); with φ̄¹ = Θ∧⟨V¹|_{η*}⟩
+= Θ∧(feature-shift part of b_fr) these complete Θ∧b_fr. Collecting, and using (c) for φ̄⁰ (m_ε(φ̄⁰) = ε∫Θ∧(−G_m∇J_m)g dπ
++ O(ε²)) and (b) for the order-ε observables,
+
+    Λ_ε = ε[ ∫Θ∧(b − gG_m∇J_m) dπ + π(⟨u∧u̇⟩) ] + O(ε²),
+
+and b − gG_m∇J_m = (b − τ₀G_m∇g) + (τ₀G_m∇g − gG_m∇J_m) = b_⊥ + τ₀π⁻¹G_m∇(gπ), whose second term integrates to zero
+against Θ∧ as above. This is the formula of (e). For the irreversibility: under m_ε the Θ-process is stationary;
+reversibility would give E[Θ_{k,t}Θ_{l,t+h}] = E[Θ_{l,t}Θ_{k,t+h}] for all h, i.e. E[Θ_t∧Θ_{t+h}] = 0, whereas
+E[Θ_t∧(Θ_{t+h} − Θ_t)] = E[Θ_t∧∫_t^{t+h}εV ds] + 0 (the martingale term has mean zero) = hεΛ_ε + o(h) by stationarity and
+the continuity of the integrand; so Λ_ε ≠ 0 excludes reversibility. ∎
+
+*Remark J′.1 (reading).*
+
+- *From the periodic orbit to the thermal state.* As τ₀ → 0 with Θ* the non-degenerate global minimiser of J_m, π → δ_{Θ*},
+  ψ_{Θ_k} → the linear function v_kᵀ(Θ − Θ*) with −(G_m∇²J_m)ᵀv_k = e_k, and (c) gives m_ε(Θ) → Θ* + ε(G_m∇²J_m(Θ*))⁻¹b(Θ*):
+  Theorem J(d)'s period mean of the periodic orbit. Theorem J′(c) is the finite-temperature version: the correction is a
+  Gibbs average of the same first-order drift, weighted by the Poisson solution instead of the inverse Hessian.
+- *The orientation effect with dither (branch 2).* Reversing the direction of traversal of the reference flips U_odd and
+  b_osc and leaves U_even, J_m and π unchanged, so the stationary means of the two traversals differ at order ε by
+  2ε∫Θ g_odd dπ with g_odd the correction driven by the odd part of b: the quantity measured in Remark H.7a for the
+  periodic orbit is now a statement about stationary measures, and it is checked below (to within 7–8% at k_e = 10, and
+  within the resolution of the runs at larger k_e) in the single-kernel instance (where, in one state dimension, U_odd ≡ 0 —
+  a 1-form integrated over a path that retraces itself
+  — and the whole odd effect comes from b_osc; a reference with the time-reversal symmetry x_m(θ₀ + θ) = x_m(θ₀ − θ), such
+  as a sinusoid, has no odd effect at all, since its reversal is a time shift).
+- *Non-equilibrium.* (e) says that the dithered learning loop, at stationarity, is not in detailed balance even to first
+  order: the periodic forcing alone (the term π⟨u∧u̇⟩, the signed area swept by the fast parameter loop) breaks the
+  time-reversal symmetry, and the slow dynamics carries in addition the current j₁ of Proposition J′.2, nonzero exactly
+  when the first-order drift is not reciprocal. The first is a property of any periodically forced system; the second is
+  the signature of closed-loop learning (Theorem I).
+- *Hypotheses.* Smoothness of f on the tube and of the features is used through the expansion (three x-derivatives of f,
+  five Θ-derivatives of the Poisson solution, i.e. three Hölder derivatives of the observable) and, for the uniqueness only,
+  through Hörmander's theorem; k_e ≥ k_T keeps the
+  plant in the tube for every parameter path. The constants are not explicit: the result is an asymptotic expansion of the
+  invariant measure, not a quantitative bound at a given k_e, and the numerics show where it applies.
+
+**Proposition J′.2 (the first-order current, entropy production, and reciprocity).** Consider the first-order averaged
+dynamics dΘ = (−G_m∇J_m + εb)ds + √(2τ₀)G_m^{1/2}dW on ℝ^{mp}, with b as above.
+
+(i) Its stationary law m^{(1)}_ε satisfies m^{(1)}_ε(φ) = π(φ) + ε∫φg dπ + O(ε²) for every φ as in Theorem J′ (the
+expansion m^{(1)}_ε = π(1 + εg) + O(ε²) in the weak sense; on the grid it holds in L¹ with an ε² remainder, Numerics
+below), and its stationary current j := m^{(1)}_ε(−G_m∇J_m + εb) − τ₀G_m∇m^{(1)}_ε equals εj₁ + O(ε²) in the same sense, with
+j₁ = πb_⊥; its entropy production rate (in slow time) is
+
+    EPR_ε := ∫‖j‖²_{G_m⁻¹}/(τ₀m^{(1)}_ε) dΘ = ε²τ₀⁻¹π(‖b_⊥‖²_{G_m⁻¹}) + O(ε³)
+
+(formal in the remainder: the ε² term uses only the first-order current, the O(ε³) presumes the expansion of j in L²(1/π)).
+
+(ii) The following are equivalent: j₁ ≡ 0; b_⊥ ≡ 0; b is a G_m-gradient field, b = −G_m∇J₁; D_Θ(G_m⁻¹b) is a symmetric
+matrix at every Θ. In that case the first-order averaged dynamics *is* the Langevin dynamics of J_m + εJ₁, with stationary
+density exactly ∝ exp(−(J_m + εJ₁)/τ₀), in detailed balance.
+
+(iii) The antisymmetric part of D_Θ(G_m⁻¹b) is, block by block ((i,j) blocks of size p × p),
+
+    ½[D(G_m⁻¹b) − D(G_m⁻¹b)ᵀ]_{ij} = (1/(2m))∇_ϑ∇_{ϑ'}A_{μ_Θ}(ϑ_i, ϑ_j) + ½⟨[∇²_Θ𝒥, ∇²_Θ𝒰]_{G_m}⟩_{θ,ij},
+
+where A_μ = S − Sᵀ is the antisymmetric kernel of Theorem I at the atomic measure μ_Θ (derivatives in the kernel arguments,
+μ_Θ frozen), 𝒥(Θ,θ) := (m/2)‖r_Θ(x_m(θ))‖² + (σ₀/2)Σ_i‖ϑ_i − ϑ⁰‖²_{G⁻¹} is the instantaneous loss (so H = −G_m∇𝒥, ⟨𝒥⟩ = J_m),
+𝒰 its zero-mean antiderivative in θ, and [X, Y]_G := XGY − YGX. The first term is the finite-m form of the reciprocity
+defect of Theorem I; the second is the failure of the instantaneous Hessians at different phases to commute, the
+non-gradient part of second-order averaging of a time-periodic gradient flow.
+
+(iv) In the setting of Theorem I (saturated Gaussian features, f ∈ C², x_m ∈ C² periodic), for m ≥ 3, b_fr is never a
+G_m-gradient on ℝ^{mp} (b_fr does not depend on σ₀ and depends on G through the factor G only); consequently, along the gain
+scale t ↦ tG,
+the full drift b = b_fr + b_osc is a (tG)_m-gradient for at most one value of t > 0. For m = 1, 2 the condition of (ii) is
+the explicit vanishing of (iii), checked to fail in the single-kernel instance below (non-gradient fraction
+π(‖b_⊥‖²)/π(‖b‖²) ≈ 0.3–0.5).
+
+*Proof.* (i) Stationary Fokker–Planck: ∇·(mG_m∇J_m) − ε∇·(mb) + τ₀∇·(G_m∇m) = 0; at order ε⁰ the Gibbs measure, at order
+ε¹ with π₁ = gπ: ∇·(gπG_m∇J_m) + τ₀∇·(G_m∇(gπ)) = τ₀∇·(πG_m∇g) (using τ₀∇π = −π∇J_m), so the equation is τ₀∇·(πG_m∇g) =
+∇·(πb), the defining equation of g; the expansion is justified by the same Poisson-equation argument as in Theorem J′
+(the generator of this SDE is L̄₀ + εb·∇, and Steps 4–5 apply verbatim without the fast variables). The current:
+j = π(−G_m∇J_m) − τ₀G_m∇π + ε[πb − gπG_m∇J_m − τ₀G_m∇(gπ)] + O(ε²) = ε π(b − τ₀G_m∇g) + O(ε²). The entropy production rate
+of a diffusion with mobility G_m and temperature τ₀ in a stationary state m with current j is ∫jᵀ(τ₀G_m)⁻¹j/m [S29],
+which gives the formula.
+(ii) j₁ ≡ 0 iff b = τ₀G_m∇g iff b is a G_m-gradient (then τ₀g = −J₁ + const and the equation for g is satisfied); on the
+simply connected ℝ^{mp} a smooth field G_m⁻¹b is a gradient iff its Jacobian is symmetric (Poincaré lemma). When b = −G_m∇J₁ the
+drift −G_m∇(J_m + εJ₁) is a gradient drift, so the SDE is the Langevin dynamics of J_m + εJ₁ with the exact Gibbs law
+∝ exp(−(J_m + εJ₁)/τ₀) and j ≡ 0; consistently, g = −J₁/τ₀ + const solves the defining equation.
+(iii) G⁻¹b_fr,i = ∇_ϑP₂[μ_Θ](ϑ)|_{ϑ_i} with P₂ := U_even + U_odd, a functional of μ (quadratic in μ through r_μ) and of the
+evaluation point. Differentiating with respect to ϑ_j moves the atom ϑ_j of μ_Θ, which gives (1/m)∇_ϑ∇_{ϑ'}S(ϑ_i, ϑ_j) with
+S(ϑ,ϑ') := δP₂[μ](ϑ)/δμ(ϑ') (Theorem I's k_e⁻² second-variation kernel), and, for j = i, additionally the symmetric
+∇²_ϑP₂(ϑ_i). The antisymmetric part of the (i,j) block is therefore (1/(2m))∇∇'[S(ϑ_i,ϑ_j) − S(ϑ_j,ϑ_i)] = (1/(2m))∇∇'A_μ(ϑ_i,ϑ_j).
+For b_osc: H = −G_m∇𝒥 and u = −G_m∇𝒰, so G_m⁻¹b_osc = ⟨∇²𝒥G_m∇𝒰⟩ and ∂_j(G_m⁻¹b_osc)_k = ⟨∂_j∂_k∂_l𝒥G_l∂_l𝒰⟩ +
+⟨(∇²𝒥G_m∇²𝒰)_{kj}⟩; the first is symmetric in (j,k), the antisymmetric part of the second is ½⟨∇²𝒥G_m∇²𝒰 − ∇²𝒰G_m∇²𝒥⟩.
+(iv) Suppose b_fr is a G_m-gradient for some m ≥ 3. By (iii), ∇_ϑ∇_{ϑ'}A_{μ_Θ}(ϑ_i,ϑ_j) = 0 for all Θ and all i, j. A_μ is
+affine in μ (Theorem I): A_μ = A_f + B(∫Φ̃dμ) with B linear in the function ∫Φ̃(·;ϑ)dμ(ϑ), so for Θ = (ϑ, ϑ', ϑ₃, …),
+∇_ϑ∇_{ϑ'}[A_f + (1/m)Σ_jB(Φ̃(·;ϑ_j))](ϑ,ϑ') = 0 with the atom positions inside B frozen. Varying ϑ₃ alone shows that
+∇_ϑ∇_{ϑ'}B(Φ̃(·;ϑ₃))(ϑ,ϑ') does not depend on ϑ₃; at the zero feature ϑ₃ = ϑ_z it vanishes (B(0) = 0), so it vanishes for all
+ϑ₃, and then ∇∇'A_f(ϑ,ϑ') = 0 as well: ∇_ϑ∇_{ϑ'}A_μ(ϑ,ϑ') = 0 for every μ and all (ϑ,ϑ'). A smooth antisymmetric kernel
+with vanishing mixed derivative on the connected ℝ^p × ℝ^p has the form a(ϑ) − a(ϑ'), a coboundary, hence A_μ ≡ 0 by
+Theorem I(i) — for every μ, contradicting Theorem I(vi). For the gain scale: under G → tG, b_fr → t b_fr and b_osc → t²b_osc,
+so the antisymmetric part of D((tG)⁻¹b) is a_fr + t a_osc with a_fr ≢ 0; it vanishes identically in Θ for at most one t. ∎
+
+**Corollary J′.3 (the stationary law in the iterated limit k_e → ∞, m → ∞).** Let π_m be the Gibbs measure of Theorem J′ on
+ℝ^{mp}, and μ*_τ the unique minimiser of Theorem H's free energy F_τ at σ = σ₀/k_e, τ = τ₀/k_e; since k_eF_τ = L̄ + (σ₀/2)∫‖ϑ −
+ϑ⁰‖²_{G⁻¹}dμ + τ₀H(μ) = L̄ + τ₀H(·|γ_τ) + const with γ_τ = N(ϑ⁰, (τ₀/σ₀)G), μ*_τ does not depend on k_e. Then:
+
+(i) *Chaoticity of the Gibbs measures.* Under π_m the empirical measure μ_Θ = (1/m)Σ_iδ_{ϑ_i} converges in probability to μ*_τ
+as m → ∞, and for every k the k-particle marginal of π_m converges weakly to (μ*_τ)^{⊗k}.
+
+(ii) *The iterated limit of the real loop.* For every φ ∈ C²(ℝ^p) bounded with bounded derivatives up to order two,
+
+    lim_{m→∞} lim_{k_e→∞} E_{m_ε}[(1/m)Σ_i φ(ϑ_i)] = ∫φ dμ*_τ,
+
+and the inner limit is attained at the rate O(1/k_e) of Theorem J′(b), with a constant that depends on m.
+
+*Status.* Proved (Sanov's theorem and Varadhan's lemma, [S34, Thms 6.2.10 and 4.3.1]; Theorem H(i)–(ii); Theorem J′(b)).
+The joint limit, with k_e and m related, is Conjecture H.6 and remains open; the corollary places the stationary law of the
+finite loop between Theorem J′ and Theorem H. Numerics: `exp_gibbs_m.py` → `results/dither/gibbs_m.md` (below).
+
+*Proof.* J_m(Θ) = m[L̄(μ_Θ) + (σ₀/2)∫‖ϑ − ϑ⁰‖²_{G⁻¹}dμ_Θ], so π_m(dΘ) ∝ exp(−mL̄(μ_Θ)/τ₀) γ_τ^{⊗m}(dΘ). The map μ ↦ L̄(μ) =
+½∫‖f − ∫Φ̃(·;ϑ)dμ(ϑ)‖²dρ is bounded and continuous for the weak topology of P(ℝ^p) (the features are bounded and continuous
+in ϑ, and ρ is a probability measure). Under γ_τ^{⊗m} the empirical measure satisfies Sanov's large-deviation principle with
+rate function H(·|γ_τ); by Varadhan's lemma (tilting by the bounded continuous −mL̄/τ₀), under π_m it satisfies a
+large-deviation principle with rate function I(μ) = L̄(μ)/τ₀ + H(μ|γ_τ) − inf = (k_e/τ₀)(F_τ(μ) − F_τ(μ*_τ)), by Theorem H(i).
+F_τ is strictly convex (L̄ is convex, the entropy strictly convex) with the unique minimiser μ*_τ (Theorem H(ii)), so I has
+the unique zero μ*_τ and μ_Θ → μ*_τ in probability. Exchangeability of π_m then gives the convergence of the k-marginals to
+(μ*_τ)^{⊗k} (Sznitman's equivalence of chaoticity and the convergence of the empirical measure). For (ii), Theorem J′(b)
+applied to the observable (1/m)Σ_iφ(ϑ_i) ∈ C²(ℝ^{mp}) gives lim_{k_e→∞}E_{m_ε}[(1/m)Σφ(ϑ_i)] = π_m((1/m)Σφ(ϑ_i)) = π_m^{(1)}(φ),
+the one-particle marginal, which converges to ∫φ dμ*_τ by (i). ∎
+
+*Remark J′.4 (what the corollary says about Conjecture H.6).* The conjecture asks for the limit of the real loop's law when
+k_e → ∞ with m fixed or growing, uniformly in time. Theorem J′ settles the stationary part at fixed m, and the corollary
+shows that the resulting Gibbs measures are chaotic with limit μ*_τ, the stationary state of (𝔄): the stationary law of the
+real dithered loop is the minimiser of Theorem H's free energy in the iterated limit. What is missing for the conjecture is
+the uniformity in m of Theorem J′'s O(1/k_e) (its constant grows with m through the Poisson equation on ℝ^{mp}) and the
+time-dependent statement.
+
+*Numerics* (`exp_dither_stationary.py` → `results/dither/table.md`). The single-kernel instance: n = 1, m = 1, plant
+f(x) = e^{−(x−0.5)²/0.5} + 0.4x, reference x_m(t) = 1.5[sin t′ + ⅓ sin 2t′] with t′ = ±t (the two orientations), saturated
+amplitude and centre ϑ = (α, γ) (a_max = 3, c_max = 2.5), frozen width s = 0.6, G = diag(2, 2), σ₀ = 0.4, ϑ⁰ = 0, τ₀ = 0.1,
+k_e ∈ {10, 20, 40, 80}. The averaged data on a 201² grid: π, g, j₁ (rms b_fr = 0.143, rms b_osc = 0.225; non-gradient fraction
+π(‖b_⊥‖²)/π(‖b‖²) = 0.32 and 0.46 for the two orientations; EPR coefficient τ₀⁻¹π(‖b_⊥‖²_{G⁻¹}) = 0.144 and 0.118; circulation
+coefficient ∫Θ∧j₁ + π⟨u∧u̇⟩ = +0.0117 − 0.0167 = −0.0051 and −0.0103 + 0.0167 = +0.0065). The real loop: 2·10⁴ independent
+replicas per (k_e, orientation), started from the first-order law π(1 + εg), Strang splitting with k_eh = ½, burn-in ≥ 10 and
+averaging ≥ 40 slow-time units (whole numbers of reference periods), standard errors from the spread of the per-replica time
+averages (the slowest mode of L̄₀ relaxes in 3.5 slow-time units on this instance, so batch means in time would be
+correlated; referee round 6).
+
+*The first-order law (b), (c).* The stationary means against the Gibbs value and the first-order prediction, orientation +1
+(ε-coefficients ∫φ g dπ: −0.255 for α, −0.426 for γ):
+
+| k_e | m_ε(α) − π(α) (s.e. 0.0013) | ×k_e | m_ε(α) − first order | m_ε(γ) − π(γ) (s.e. 0.0018) | ×k_e | m_ε(γ) − first order |
+|---|---|---|---|---|---|---|
+| 10 | −0.0276 | −0.28 | −0.0021 | −0.0441 | −0.44 | −0.0015 |
+| 20 | −0.0179 | −0.36 | −0.0051 | −0.0269 | −0.54 | −0.0056 |
+| 40 | −0.0089 | −0.36 | −0.0025 | −0.0127 | −0.51 | −0.0020 |
+| 80 | −0.0046 | −0.37 | −0.0015 | −0.0083 | −0.67 | −0.0030 |
+
+The discrepancy between the real loop and the Gibbs measure falls like k_e^{−0.87} (α), k_e^{−0.83} (γ), k_e^{−0.72} (α²) and
+k_e^{−1.09} (αγ) (γ² has a first-order coefficient 0.03, below resolution), and the first-order prediction removes most of it:
+93% and 97% of the α and γ discrepancies at k_e = 10, 70–85% at k_e = 20–40; at k_e = 80 the residuals (−0.0015 ± 0.0013
+and −0.0030 ± 0.0018) are at the Monte Carlo floor. The second-order decay of the residual is *not* resolved: the residuals at
+k_e = 20–80 are 1–3 standard errors with a common sign, compatible with an O(ε²) coefficient of order −1 to −2 and with noise;
+at k_e = 10 the even part of the α² and γ² shifts exceeds its prediction by a factor 1.5–1.8 (an O(ε²) term of the size seen
+in Theorem J's instance A, where c₂/c₁ ≈ 1.4).
+
+*The orientation-odd part (Remark J′.1).* Measured (m₊ − m₋)/2 over predicted (p₁₊ − p₁₋)/(2k_e):
+
+| k_e | α | γ | αγ |
+|---|---|---|---|
+| 10 | 0.92 ± 0.04 | 0.93 ± 0.04 | 0.89 ± 0.06 |
+| 20 | 1.23 ± 0.09 | 1.10 ± 0.07 | 1.28 ± 0.13 |
+| 40 | 1.28 ± 0.17 | 1.15 ± 0.15 | 1.03 ± 0.26 |
+| 80 | 1.25 ± 0.34 | 1.38 ± 0.29 | 1.11 ± 0.51 |
+
+The dither version of Remark H.7a's test: the direction in which the reference is traversed shifts the stationary kernel by
+2ε∫Θ g_odd dπ (here entirely from b_osc), measured to within 7–8% at k_e = 10 (where the odd shift is 0.02–0.03 against standard
+errors of 0.001) and consistent with the prediction within the 10–30% resolution of the runs at k_e = 20–80 (the ratios sit
+10–30% above one with error bars of the same size: a second-order odd term of relative size O(ε) is not excluded).
+
+*The tracking error (d).* k_e²E‖e‖²/(2π(L̄)) = 1.054, 1.033, 1.017, 1.009 (orientation +1) and 1.023, 1.014, 1.008, 1.004 (−1)
+at k_e = 10, 20, 40, 80, with standard errors 0.001: the deviation from one is 0.54–0.74/k_e and 0.23–0.35/k_e, the O(1/k_e)
+of (d).
+
+*The circulation (e) and Proposition J′.2.* The predicted first-order circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] is −5·10⁻⁴ (+1) and
++6.5·10⁻⁴ (−1) at k_e = 10 and scales like 1/k_e, against a Monte Carlo standard error of 5·10⁻⁴ at every k_e: the real loop's
+circulation is not resolved at first order for k_e ≥ 20 (measured −4·10⁻⁴ … +1.2·10⁻³, all within 1.7 standard errors of the
+prediction), and at k_e = 10 the measurement (+3.7·10⁻³ ± 0.5·10⁻³ for +1, −0.6·10⁻³ ± 0.5·10⁻³ for −1) is dominated by
+higher orders (an even O(ε²) term of coefficient ≈ +0.2 and an odd one of the opposite sign to the first-order odd part). The
+current machinery is therefore checked where the signal is clean, on the first-order averaged SDE itself: its stationary
+density m_ε and current j_ε, computed on the grid (the discrete current at ε = 0, −6.6·10⁻⁵, a residual of the central scheme,
+subtracted), give ∫Θ∧(j_ε − j₀)/(ε∫Θ∧j₁) = 1.47, 1.21, 1.09, 1.03 at ε = 0.2, 0.1, 0.05, 0.025 — one plus a term linear in ε —
+and ‖m_ε − m₀(1 + εg)‖₁/ε² = 0.307, 0.308, 0.307, 0.305: the first-order expansion of Proposition J′.2(i) with a clean ε²
+remainder.
+
+*Corollary J′.3* (`exp_gibbs_m.py` → `results/dither/gibbs_m.md`). On the same instance, μ*_τ is computed on the 201² grid as
+the fixed point of the first-variation condition (59 damped iterations, residual 10⁻¹¹): ∫α dμ* = 0.4963, ∫γ dμ* = 0.1873,
+∫α² dμ* = 0.9353, L̄(μ*_τ) = 0.1394. The Gibbs measures π_m for m = 1, 2, 4, 8, 16, 32 are sampled by MALA (4000 replicas,
+acceptance 0.98–0.996, standard errors from the independent replicas; the m = 1 row agrees with the quadrature of π₁ within
+one standard error):
+
+| m | E_{π_m}[α₁²] | E_{π_m}[γ₁] | E_{π_m}[L̄(μ_Θ)] | (E[α₁²] − ∫α²dμ*)·m | (E[γ₁] − ∫γdμ*)·m | (E[L̄] − L̄(μ*))·m |
+|---|---|---|---|---|---|---|
+| 1 | 0.536 | 0.251 | 0.1960 | −0.40 | +0.064 | +0.057 |
+| 2 | 0.729 | 0.225 | 0.1681 | −0.41 | +0.075 | +0.057 |
+| 4 | 0.832 | 0.204 | 0.1540 | −0.41 | +0.067 | +0.058 |
+| 8 | 0.881 | 0.194 | 0.1470 | −0.43 | +0.050 | +0.061 |
+| 16 | 0.909 | 0.191 | 0.1432 | −0.42 | +0.051 | +0.060 |
+| 32 | 0.922 | 0.190 | 0.1413 | −0.42 | +0.084 | +0.059 |
+
+The one-particle marginals converge to μ*_τ with a clean 1/m law (slopes −1.01 for γ and −0.99 for the Gibbs-averaged
+occupation loss, whose rescaled deviation is 0.058 ± 0.002 at every m; the second moment of α moves from 0.54 at m = 1 to 0.92
+at m = 32 against 0.935, with rescaled deviation −0.41 ± 0.01 throughout: the single kernel sits in a narrow well, while in
+the mean field each particle sees the wide one-body potential V[μ*_τ]); the mean of α is within 0.01 of its limit already at
+m = 1 (a small 1/m coefficient, its slope not resolved). The stationary law of the finite dithered loop thus approaches the
+minimiser of Theorem H's free energy in the iterated limit at the rate 1/m, as the corollary states.
+
+*Checked* (`tests/test_dither.py`): the single-kernel averaged data (J, ∇J, b_fr, b_osc) against the general implementation
+of Proposition H.7 and Remark H.7a (`averaging.expansion_terms`, `averaging.oscillation_correction`, `periodic.ClosedLoop`)
+at three parameter points (2·10⁻⁵ relative); the weighted Poisson solver against the Ornstein–Uhlenbeck closed forms (g =
+G⁻¹b·Θ/τ₀, mean shift (Gλ)⁻¹b, the Green identity ∫φg dπ = −π(b·∇ψ_φ), zero current and entropy production for a gradient
+drift); the stationary Fokker–Planck solver of the first-order SDE (OU exact; on the instance the current ratio → 1 and
+‖m − π(1 + εg)‖₁ ∝ ε²); the real loop at k_e = 20 (8000 replicas: the stationary means of α and γ closer to the first-order
+prediction than to π, the γ shift resolved at ≥ 3 standard errors, the tracking error within 10% of 2π(L̄)); and the
+Corollary J′.3 numerics (the mean-field fixed point to 10⁻⁹, the Gibbs sampler against the quadrature of π₁)
+(`test_single_kernel_averaged_data_matches_the_general_H7_implementation`,
+`test_poisson_solver_reproduces_the_ornstein_uhlenbeck_closed_forms`,
+`test_first_order_stationary_density_and_current_of_the_averaged_sde`,
+`test_real_loop_means_are_closer_to_the_first_order_prediction_than_to_gibbs`,
+`test_corollary_J3_mean_field_minimiser_and_gibbs_sampler_consistency`).
+
+---
+
 ## 7. Verification map
 
 Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/test_langevin.py`, `Av` is
@@ -2997,6 +3429,10 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | J(a), (b), (d) | Newton shooting finds the periodic orbit (residual < 1e-10); ‖Θ̄_p − Θ*‖ and max‖e‖ halve from k_e = 20 to 40; the vector error of the first-order prediction of the offset halves as well (it is 0.55 at k_e = 40 in the fast-sweep test instance, and 0.041 at k_e = 40 in instance A of the experiment); the parameter Floquet exponents match (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) with a maximal relative error below 2% at k_e = 40 that halves with k_e; both instances at k_e = 10–160 in the experiment; the error-channel exponent recovered from Liouville's trace identity is k_e − L with |L| < 0.2 | `Pe::test_theorem_J_periodic_orbit_offset_and_floquet_exponents`, `exp_periodic_orbit.py` → `results/periodic_orbit/table.md` |
 | K(i), (ii) | the Hessian of J_m at a collapsed configuration equals I_m ⊗ (σ₀G⁻¹ − R₂) + (1/m)(11ᵀ) ⊗ M₂ (finite differences, 1e-5 relative); σ_crit solves σ = λ_max(G^{1/2}R₂(ϑ̄(σ))G^{1/2}) (1e-8) and the separation block is singular there; the separation Floquet exponents of the collapsed orbit come in (m − 1)-fold multiplets | `Pe::test_proposition_K_hessian_splitting_and_critical_leak`, `exp_orientation_stability.py` |
 | K(iii), (iv) | the orientation difference of the softest separation exponent at σ₀ = 0.5: slope −2.18 against k_e, within 14% → 3% of the prediction at Θ̄₂ for k_e = 10 → 80, while the prediction at Θ* converges to a value 30% off; at σ_crit both orientations are unstable, predictions within 14% at k_e = 40; at the designed σ₀ the signs differ for k_e = 10 and 20 | `exp_orientation_stability.py` → `results/orientation_stability/table.md` |
+| J′ averaged data, solver | the single-kernel J, ∇J, b_fr, b_osc against the general H.7/H.7a code (2·10⁻⁵); the weighted Poisson solver against the Ornstein–Uhlenbeck closed forms (g, the mean shift (Gλ)⁻¹b, the Green identity, zero current for a gradient drift); the stationary Fokker–Planck solver of the first-order SDE: current ratio → 1 linearly in ε, ‖m − π(1 + εg)‖₁ ∝ ε² | `tests/test_dither.py` (3 tests) |
+| J′(b), (c), (d) | real loop, 2·10⁴ replicas, k_e = 10–80, both orientations: the stationary means differ from the Gibbs values by k_e^{−0.87} (α), k_e^{−0.83} (γ), k_e^{−1.09} (αγ); the first-order prediction removes 93–97% of the discrepancy at k_e = 10 and 70–85% at k_e = 20–40, the residual at the Monte Carlo floor at k_e = 80 (second order not resolved); the orientation-odd shift matches its prediction to 7–8% at k_e = 10 and within the 10–30% resolution at k_e = 20–80; k_e²E e²/(2π(L̄)) − 1 = 0.5–0.7/k_e | `tests/test_dither.py::test_real_loop_means_are_closer_to_the_first_order_prediction_than_to_gibbs` (k_e = 20), `exp_dither_stationary.py` → `results/dither/table.md` |
+| J′(e), J′.2 | the circulation of the real loop is below the Monte Carlo resolution at first order (k_e ≥ 20) and dominated by higher orders at k_e = 10; the current and density expansion of the first-order averaged SDE checked on the grid (ratios 1.47 → 1.03, ε² remainder 0.31); the antisymmetric part of D(G⁻¹b) against the formula of J′.2(iii) to six digits (referee round 6) | `exp_dither_stationary.py` → `results/dither/table.md`; `review/REVIEW_round6_Jprime.md` |
+| Corollary J′.3 | the Gibbs measures π_m (MALA, 4000 replicas, m = 1–32) converge to the mean-field minimiser μ*_τ (fixed point to 10⁻¹¹) with a 1/m law: slopes −1.01 (E[γ₁]) and −0.99 (E[L̄(μ_Θ)], rescaled deviation 0.058 ± 0.002 at every m), E[α₁²] from 0.54 to 0.92 against 0.935 with rescaled deviation −0.41 ± 0.01; the m = 1 row agrees with the quadrature of π₁ | `exp_gibbs_m.py` → `results/dither/gibbs_m.md`; `tests/test_dither.py::test_corollary_J3_mean_field_minimiser_and_gibbs_sampler_consistency` |
 | H.7 + H.7a in the real closed loop | the orientation dependence of the learned kernels (same ρ) is predicted to within 3% in size and 11% as a vector, cosine 0.994 at k_e = 40; the measured difference scales like k_e^{−1.01} | `exp_orbit_orientation.py` → `results/orbit_orientation/table_sigma2_slow16.md` |
 
 Not checked in the repository:
@@ -3028,8 +3464,13 @@ Each branch states what is proved, what is open, and the first concrete step.
    - *Done (Theorem J):* the deterministic case (τ = 0, σ = σ₀/k_e) at fixed m: near every hyperbolic critical point
      of J_m the real loop has a unique periodic orbit with the same stability type, k_e-uniform basin, and the
      first-order location of Proposition H.7 and Remark H.7a.
-   - *Next steps:* the same with dither at fixed m (the stationary state is a measure; the averaging transform must
-     act on the Fokker–Planck equation), and uniformity in m.
+   - *Done (Theorem J′):* the dithered case at fixed m. The invariant law of the loop has the Gibbs measure exp(−J_m/τ₀)
+     as its parameter marginal up to O(1/k_e), with the first-order correction driven by the same drift b as Theorem J; the
+     fast error and the phase are eliminated by a Poisson-equation expansion of the generator rather than a transformation
+     of the Fokker–Planck equation (§6f).
+   - *Next steps:* uniformity in m — the mean-field limit of the stationary law (the Gibbs measures of J_m converge to the
+     minimiser of the mean-field free energy F_τ of Theorem H, a propagation-of-chaos question for Gibbs measures which is
+     where Conjecture H.6 now lives), the second-order correction, and quantitative constants in place of the O(ε²).
 
 2. **Non-reciprocal mean-field dynamics from closed-loop learning (new; Proposition H.7).**
    - *Proved at a frozen measure:* the averaged adaptive dynamics is a semi-gradient flow plus a lag term
@@ -3056,9 +3497,18 @@ Each branch states what is proved, what is open, and the first concrete step.
      exponents of the real loop by O(k_e⁻²), with a closed-form prediction from the averaged data; at the critical leak
      σ_crit the direction of traversal decides whether the kernels separate, and the σ₀ at which it does can be computed
      in advance (§6e).
-   - *Next steps:* the same test with dither, where the stationary state is a measure; the design of the orbit's area
-     (not only its orientation) as a control input; and the orientation effect at non-collapsed configurations, where
-     it moves the stationary kernels (Remark H.7a) rather than their stability.
+   - *Done (Theorem J′):* the test with dither. The orientation-odd part of the stationary parameter means is 2ε∫Θ g_odd dπ,
+     with g_odd driven by the odd part of b; measured on the single-kernel instance of §6f (where, in one state dimension,
+     the whole odd effect is b_osc).
+   - *New (Proposition J′.2): the stationary state is a non-equilibrium steady state.* The first-order averaged dynamics
+     carries a stationary current j₁ = π(b − τ₀G∇g) exactly when b is not a G-gradient, which for m ≥ 3 is always the case;
+     its entropy production rate is ε²τ₀⁻¹π(‖b_⊥‖²_{G⁻¹}); and the real loop's stationary parameter process is not
+     reversible. The Lyapunov-functional question for the non-reciprocal flow is therefore a question about a
+     non-equilibrium steady state (its free energy is not a Lyapunov functional of the real loop at order ε).
+   - *Next steps:* the design of the orbit's area (not only its orientation) as a control input; the orientation effect at
+     non-collapsed configurations with several kernels; measuring the current of the real loop (below the Monte Carlo
+     resolution in §6f's instance; a variance-reduced estimator or a stronger instance is needed); the mean-field limit of
+     the current.
 
 3. **Uniform-in-time propagation of chaos with a plant in the loop.**
    - Theorems D and D′ are finite-horizon; D′ gives the m^{−1/2} rate for the dithered loop by synchronous coupling, with
@@ -3135,7 +3585,7 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 ## 9. References
 
-See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S22] are in the audit file.
+See `LITERATURE_TRANSPORT.md`: [1]–[89] are in `review/LITERATURE_refs.md`; [S1]–[S34] are in the audit file.
 
 Key mathematical references used in proofs and remarks:
 

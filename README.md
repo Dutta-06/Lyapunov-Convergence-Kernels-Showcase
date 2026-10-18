@@ -33,7 +33,10 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   characterises the non-reciprocity of the averaged closed loop (Theorem I), the finite-m averaging theorem for the real
   closed loop (Theorem J), propagation of chaos for the dithered loop (Theorem D′), the barycentric OT leak
   (Theorem C′) and the orientation of the reference orbit as a design input for collapsed configurations
-  (Proposition K); see [review/REVIEW_LOG.md](review/REVIEW_LOG.md) round 5 for their adversarial review.
+  (Proposition K); see [review/REVIEW_LOG.md](review/REVIEW_LOG.md) round 5 for their adversarial review. The second
+  increment adds the sharp slow-regime rate (Lemma E.0′), uniform-in-time propagation of chaos in the leak-dominated regime
+  (Theorem D″) and the stationary law of the dithered finite-size loop with its non-equilibrium current (Theorem J′,
+  Proposition J′.2); round 6 of the review log covers them.
 
 ---
 
@@ -58,6 +61,7 @@ particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive l
 | D′ | Finite-horizon propagation of chaos for the dithered loop with the plant in the loop, at the rate m^{−1/2} — whose exponent is dimension-free — for the state and the learned function; uniform in time when the leak dominates the adaptive law's loop gain (Theorem D″; in that leak-dominated regime the network does not learn, and in the learning regime a 1000 s run shows the coupled distance growing, so uniformity there stays open) | proved; the rate checked over 24 seeds, the uniform bound on certified runs with and without dither |
 | C′ | The OT leak toward a prior with a different number of kernels (barycentric projection of the optimal plan) is the continuous-time Lloyd descent of coverage control used as a leak: it dissipates to the equal-mass centroidal configurations of the prior, and its Lyapunov bias is the ideal's distance from the centroids of its prior cells | proved (for generalised solutions) and checked |
 | K | At a collapsed kernel configuration the stability splits into a separation block, independent of the network size, and a collective block; the collapse is a strict minimum iff the leak exceeds a critical gain σ_crit, and near σ_crit the direction in which the reference orbit is traversed decides whether the kernels separate — a design rule computable from the averaged data | proved (the orientation part given the second-order normal form) and checked |
+| J′ | With dither at finite size, the loop's stationary law is the Gibbs measure of the regularised loss up to O(1/k_e), with an explicit first-order correction driven by the same non-reciprocal drift as Theorem J; the stationary tracking error is the Gibbs-averaged occupation loss over k_e²/2; the stationary state carries a probability current, and the parameter process is not time-reversible, exactly when that drift is not reciprocal (always, for three or more kernels) | proved (three standard theorems imported) and checked |
 | I | Reciprocity of the exactly averaged loop at order 1/k_e² is a pairwise property; for n = 1 it holds exactly when the residual vanishes on the orbit, at perfect fit in n ≥ 2 exactly when the orbit carries no circulation and the residual's Jacobian is symmetric along it; no open set of measures is reciprocal, so the averaged loop is nowhere a gradient flow at this order | proved and checked |
 
 **A new closed-loop effect.** Traversing the same reference orbit in the opposite direction leaves the visited
@@ -138,9 +142,9 @@ n = 3 and NTK results contradict them.
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3, 5 and 6, archived version 2 of the theory |
-| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), and the original controller, projection, kernel and plant code |
+| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 72 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 77 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -149,7 +153,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 72 tests, about 16 minutes
+python -m pytest tests                          # 77 tests, about 17 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 

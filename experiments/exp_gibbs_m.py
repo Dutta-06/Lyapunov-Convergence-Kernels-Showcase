@@ -6,8 +6,8 @@ Instance of `exp_dither_stationary.py` (n = 1, ϑ = (α, γ), frozen width, G = 
 1. μ*_τ on the 201² grid by the damped fixed-point iteration f̂ ← (1 − η)f̂ + η∫Φ̃ dμ[f̂], μ[f̂] ∝ exp(−[−⟨(f − f̂)Φ̃⟩_θ +
    (σ₀/2)‖ϑ‖²_{G⁻¹}]/τ₀) (the first variation of F_τ vanishes at μ*_τ: μ*_τ ∝ exp(−V[μ*_τ]/τ), Theorem H(ii)).
 2. π_m for m = 1, 2, 4, 8, 16, 32 by MALA (exact stationary law) with K replicas, in the 2m parameter coordinates; the
-   one-particle marginal means E[α₁], E[γ₁], E[α₁²], E[γ₁²], the Gibbs average of the occupation loss E[L̄(μ_Θ)], with batch
-   standard errors; m = 1 is cross-checked against the quadrature of `dither.GibbsGrid`.
+   one-particle marginal means E[α₁], E[γ₁], E[α₁²], E[γ₁²] (averaged over the m exchangeable particles), the Gibbs average of
+   the occupation loss E[L̄(μ_Θ)], with standard errors from the independent replicas; m = 1 is cross-checked against the quadrature of `dither.GibbsGrid`.
 3. The deviations from the μ*_τ values against m (expected O(1/m)).
 
 Output: results/dither/gibbs_m.md
@@ -28,9 +28,9 @@ from exp_dither_stationary import make_instance, LIM
 OUT = os.path.join(os.path.dirname(__file__), '..', 'results', 'dither')
 MS = (1, 2, 4, 8, 16, 32)
 K_REP = int(os.environ.get('GM_K', 4000))
-N_STEPS = int(os.environ.get('GM_STEPS', 6000))
-DT = 0.02
-N_THETA = 128
+N_STEPS = int(os.environ.get('GM_STEPS', 1500))
+DT = 0.05
+N_THETA = 96
 
 
 def mean_field_minimiser(inst, grid, eta=0.3, iters=400, tol=1e-11):
@@ -71,15 +71,16 @@ def J_m_and_grad(inst, A, Gm, m):
     return J, gA, gG, Lbar
 
 
-def mala(inst, m, K, n_steps, dt, rng, burn_frac=0.25, n_batches=10):
+def mala(inst, m, K, n_steps, dt, rng, burn_frac=0.25):
     """MALA for π_m ∝ exp(−J_m/τ₀) in the G⁻¹ geometry: proposal Θ′ = Θ − dt·G∇J + √(2τ₀dt)G^{1/2}ξ.  Returns the
-    one-particle observables (means and batch s.e.) and the acceptance rate."""
+    one-particle observables (averaged over the m exchangeable particles of each replica and over the steps after the
+    burn-in; the mean over the K independent replicas, with the standard error from their spread) and the acceptance rate."""
     tau0, G = inst.tau0, inst.G
     A = rng.normal(0.5, 0.5, (K, m)); Gm = rng.normal(0.3, 0.5, (K, m))
     J, gA, gG, Lb = J_m_and_grad(inst, A, Gm, m)
     acc = []
     n_burn = int(burn_frac * n_steps)
-    obs = np.zeros((n_batches, 5)); cnt = np.zeros(n_batches)
+    per_rep = np.zeros((5, K)); cnt = 0
     for k in range(n_steps):
         xiA, xiG = rng.standard_normal((K, m)), rng.standard_normal((K, m))
         A2 = A - dt * G[0] * gA + np.sqrt(2 * tau0 * dt * G[0]) * xiA
@@ -93,10 +94,9 @@ def mala(inst, m, K, n_steps, dt, rng, burn_frac=0.25, n_batches=10):
         A[accept] = A2[accept]; Gm[accept] = G2[accept]; J[accept] = J2[accept]; gA[accept] = gA2[accept]; gG[accept] = gG2[accept]; Lb[accept] = Lb2[accept]
         acc.append(float(accept.mean()))
         if k >= n_burn:
-            b = min(n_batches - 1, (k - n_burn) * n_batches // (n_steps - n_burn))
-            obs[b] += np.array([A[:, 0].mean(), Gm[:, 0].mean(), (A[:, 0] ** 2).mean(), (Gm[:, 0] ** 2).mean(), Lb.mean()]); cnt[b] += 1
-    batch = obs / cnt[:, None]
-    return batch.mean(0), batch.std(0, ddof=1) / np.sqrt(n_batches), float(np.mean(acc[n_burn:]))
+            per_rep += np.array([A.mean(1), Gm.mean(1), (A ** 2).mean(1), (Gm ** 2).mean(1), Lb]); cnt += 1
+    per_rep /= cnt
+    return per_rep.mean(1), per_rep.std(1, ddof=1) / np.sqrt(K), float(np.mean(acc[n_burn:]))
 
 
 def main():
@@ -118,19 +118,21 @@ def main():
     L = ["# Corollary J′.3: the Gibbs measures π_m are chaotic with limit μ*_τ (`exp_gibbs_m.py`)", "",
          f"Instance of `exp_dither_stationary.py`; θ-grid of {N_THETA} points; μ*_τ on the 201² grid by {len(hist)} damped fixed-point iterations "
          f"(final residual {hist[-1]:.1e}); π_m by MALA with {K_REP} replicas, {N_STEPS} steps of dt = {DT:g} (first {int(0.25 * N_STEPS)} discarded), "
-         "standard errors from 10 batch means. The m = 1 row is cross-checked against the quadrature of `dither.GibbsGrid`.", "",
+         "standard errors from the spread of the per-replica averages (independent replicas). The m = 1 row is cross-checked against the quadrature of `dither.GibbsGrid`.", "",
          f"μ*_τ: ∫α dμ* = {star['alpha']:+.5f}, ∫γ dμ* = {star['gamma']:+.5f}, ∫α² dμ* = {star['alpha2']:+.5f}, ∫γ² dμ* = {star['gamma2']:+.5f}, L̄(μ*_τ) = {Lbar_star:.5f}. "
          f"Quadrature of π₁: E[α] = {pi1['alpha']:+.5f}, E[γ] = {pi1['gamma']:+.5f}, E[α²] = {pi1['alpha2']:+.5f}, E[γ²] = {pi1['gamma2']:+.5f}, E[L̄] = {pi1['Lbar']:.5f}.", "",
-         "| m | E[α₁] ± s.e. | E[γ₁] | E[α₁²] | E[γ₁²] | E[L̄(μ_Θ)] | acceptance | (E[α₁] − ∫α dμ*)·m | (E[γ₁] − ∫γ dμ*)·m |",
-         "|---|---|---|---|---|---|---|---|---|"]
+         "| m | E[α₁] ± s.e. | E[γ₁] | E[α₁²] | E[γ₁²] | E[L̄(μ_Θ)] | acceptance | (E[α₁] − ∫α dμ*)·m | (E[γ₁] − ∫γ dμ*)·m | (E[L̄(μ_Θ)] − L̄(μ*))·m |",
+         "|---|---|---|---|---|---|---|---|---|---|"]
     for m, mean, se, acc in rows:
-        L.append(f"| {m} | {mean[0]:+.5f} ± {se[0]:.5f} | {mean[1]:+.5f} ± {se[1]:.5f} | {mean[2]:+.5f} ± {se[2]:.5f} | {mean[3]:+.5f} ± {se[3]:.5f} | {mean[4]:.5f} ± {se[4]:.5f} | {acc:.2f} | "
-                 f"{(mean[0] - star['alpha']) * m:+.4f} | {(mean[1] - star['gamma']) * m:+.4f} |")
-    dev = np.array([[abs(r[1][0] - star['alpha']), abs(r[1][1] - star['gamma'])] for r in rows])
+        L.append(f"| {m} | {mean[0]:+.5f} ± {se[0]:.5f} | {mean[1]:+.5f} ± {se[1]:.5f} | {mean[2]:+.5f} ± {se[2]:.5f} | {mean[3]:+.5f} ± {se[3]:.5f} | {mean[4]:.5f} ± {se[4]:.5f} | {acc:.3f} | "
+                 f"{(mean[0] - star['alpha']) * m:+.4f} | {(mean[1] - star['gamma']) * m:+.4f} | {(mean[4] - Lbar_star) * m:+.4f} |")
+    dev = np.array([[abs(r[1][0] - star['alpha']), abs(r[1][1] - star['gamma']), abs(r[1][4] - Lbar_star)] for r in rows])
     ms = np.array([r[0] for r in rows], float)
-    sl = [np.polyfit(np.log(ms[1:]), np.log(dev[1:, k] + 1e-16), 1)[0] for k in range(2)]
-    L += ["", f"Slopes of log|E[·] − ∫· dμ*| against log m over m = 2–32: {sl[0]:.2f} (α), {sl[1]:.2f} (γ) (Corollary J′.3: the deviation vanishes; the "
-          "standard rate for mean-field Gibbs measures is 1/m, slope −1). The last two columns are the rescaled deviations; a constant means a clean 1/m law.", "",
+    sl = [np.polyfit(np.log(ms[1:]), np.log(dev[1:, k] + 1e-16), 1)[0] for k in range(3)]
+    L += ["", f"Slopes of log|E[·] − (μ*_τ value)| against log m over m = 2–32: {sl[0]:.2f} (α), {sl[1]:.2f} (γ), {sl[2]:.2f} (L̄) (Corollary J′.3: the deviations vanish; "
+          "the standard rate for mean-field Gibbs measures is 1/m, slope −1). The last three columns are the rescaled deviations; a constant means a clean 1/m law. "
+          "The Gibbs average of the occupation loss is the cleanest observable: it is a smooth functional of the empirical measure and its 1/m correction is the "
+          "finite-size (fluctuation) energy of the Gibbs measure.", "",
           "Numbers are produced by `experiments/exp_gibbs_m.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'gibbs_m.md'), 'w', encoding='utf-8') as fh_:
         fh_.write("\n".join(L) + "\n")

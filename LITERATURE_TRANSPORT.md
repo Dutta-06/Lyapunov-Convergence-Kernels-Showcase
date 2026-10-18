@@ -7,7 +7,7 @@ chaos, and Wasserstein geometry. A synthesis agent deduplicated their sources in
 are in `review/LITERATURE_sweeps.md`. The final merge agent hit a session limit, so this document is the
 merge, written from the sweep verdicts. It adds sources I verified directly for Theorems G and H, marked
 [S1]–[S9], and, in round 3, sources for Propositions B.6, H.7 and H.8, marked [S10]–[S14]; round 5 adds [S15]–[S17] for
-Lemma E.0 (bibliographic details from memory, not re-verified offline). Numbers [1]–[89]
+Lemma E.0, and round 6 adds [S23]–[S34] for Theorem J′ (bibliographic details from memory, not re-verified offline). Numbers [1]–[89]
 refer to `review/LITERATURE_refs.md`.
 
 The audit was adversarial toward novelty. A verdict of "novel" means only that none of the searches
@@ -41,6 +41,18 @@ found the construction.
 - [S13] J. Chevallier. *Uniform decomposition of probability measures: quantization, clustering and rate of convergence*. J. Appl. Probab. 55(4):1037–1045 (2018). Equal-weight approximation rates in W₂ (used in PARADIGM.md Corollary B.6), with Fournier–Guillin, Probab. Theory Relat. Fields 162 (2015), for i.i.d. atoms.
 
 ---
+- [S23] E. Pardoux, A. Yu. Veretennikov. *On the Poisson equation and diffusion approximation. I*. Ann. Probab. 29(3):1061–1085, 2001 (and *II*, Ann. Probab. 31(3):1166–1192, 2003). Existence, uniqueness and polynomial growth bounds for solutions of the Poisson equation Lu = f − π(f) of a uniformly elliptic diffusion with a recurrence (confining) condition; the tool behind the invariant-measure expansion of Theorem J′. (Details from memory; not re-verified here.)
+- [S24] D. Gilbarg, N. S. Trudinger. *Elliptic Partial Differential Equations of Second Order*. Springer, 2nd ed., 1983 (reprinted 2001), Theorems 6.2 and 6.17: interior Schauder estimates and higher regularity. (Details from memory; not re-verified here.)
+- [S25] L. Hörmander. *Hypoelliptic second order differential equations*. Acta Math. 119:147–171, 1967; and M. Hairer, *On Malliavin's proof of Hörmander's theorem*, Bull. Sci. Math. 135(6–7):650–666, 2011 (a self-contained probabilistic proof for diffusions with smooth coefficients of bounded derivatives). (Details from memory; not re-verified here.)
+- [S26] P. Cattiaux, L. Mesnager. *Hypoelliptic non-homogeneous diffusions*. Probab. Theory Relat. Fields 123:453–483, 2002. Smooth transition densities for time-inhomogeneous diffusions under the parabolic Hörmander condition. (Details from memory; not re-verified here.)
+- [S27] D. W. Stroock, S. R. S. Varadhan. *On the support of diffusion processes with applications to the strong maximum principle*. Proc. Sixth Berkeley Symp. Math. Statist. Prob. III:333–359, 1972. The support of the law of a diffusion is the closure of the skeleton (controlled-ODE) trajectories. (Details from memory; not re-verified here.)
+- [S28] G. Da Prato, J. Zabczyk. *Ergodicity for Infinite Dimensional Systems*. Cambridge University Press, LMS Lecture Notes 229, 1996, Theorem 4.2.1 (Doob–Khasminskii: strong Feller + irreducible ⇒ at most one invariant measure, and convergence of the laws) and §4.3. (Details from memory; not re-verified here.)
+- [S29] U. Seifert. *Stochastic thermodynamics, fluctuation theorems and molecular machines*. Rep. Prog. Phys. 75:126001, 2012; and C. Maes, K. Netočný, *Time-reversal and entropy*, J. Stat. Phys. 110:269–310, 2003. Entropy production rate of a stationary diffusion, ∫jᵀD⁻¹j/ρ, and its vanishing exactly in detailed balance. (Details from memory; not re-verified here.)
+- [S30] G. A. Pavliotis, A. M. Stuart. *Multiscale Methods: Averaging and Homogenization*. Springer, Texts in Applied Mathematics 53, 2008, Chapters 10–11 (averaging for SDEs with fast deterministic or stochastic variables via the perturbation expansion of the backward Kolmogorov equation; the solvability conditions used in Theorem J′'s Step 3). (Details from memory; not re-verified here.)
+- [S31] J. C. Mattingly, A. M. Stuart, M. V. Tretyakov. *Convergence of numerical time-averaging and stationary measures via Poisson equations*. SIAM J. Numer. Anal. 48(2):552–577, 2010. Perturbation of invariant measures through the Poisson equation of the limiting generator; the structure of Theorem J′'s Step 5 (there for numerical discretisations, here for the averaging of a hypoelliptic closed loop). (Details from memory; not re-verified here.)
+- [S32] M. Hairer. *Ergodic properties of Markov processes*. Lecture notes, University of Warwick, 2006 (Lemma 1.13, Corollary 1.14, Theorem 1.16: strong Feller + a point in the support of every transition probability ⇒ uniqueness of the invariant measure; minorisation on compacts). (Details from memory; not re-verified here.)
+- [S33] M. Hairer, J. C. Mattingly. *Yet another look at Harris' ergodic theorem for Markov chains*. In: Seminar on Stochastic Analysis, Random Fields and Applications VI, Progr. Probab. 63:109–117, Birkhäuser, 2011. Geometric ergodicity in a weighted total variation norm from a Lyapunov function and a minorisation on its sublevel sets. (Details from memory; not re-verified here.)
+- [S34] A. Dembo, O. Zeitouni. *Large Deviations Techniques and Applications*. Springer, 2nd ed., 1998, Theorem 6.2.10 (Sanov's theorem) and Theorem 4.3.1 (Varadhan's lemma). The large-deviation principle for the empirical measure under a mean-field Gibbs measure with a bounded continuous energy, used in Corollary J′.3. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
 
@@ -251,6 +263,32 @@ found the construction.
   critical leak, computable from the averaged data — was not found. (The orientation effect itself is Remark H.7a's; the
   round-3 search found no precedent.)
 - **Verdict: new as a design statement; the mathematics is classical.** Checked in one instance.
+
+### J′. The stationary law of the dithered finite-m closed loop
+
+- **Claim.** With dither τ = τ₀/k_e and leak σ = σ₀/k_e, the finite-m closed loop has an invariant law whose
+  parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with an explicit first-order correction driven by
+  the first-order averaged drift of Theorem J (Proposition H.7 + Remark H.7a) as a vector field on parameter space; the
+  stationary state carries a probability current of order 1/k_e that vanishes exactly when that drift is reciprocal, and the
+  stationary parameter process is not time-reversible.
+- **Ingredients, all known:** averaging of SDEs with fast variables through the backward-Kolmogorov expansion [S30];
+  perturbation of invariant measures through the Poisson equation of the limiting generator [S31], [S23]; hypoellipticity
+  and uniqueness [S25]–[S28]; the thermodynamics of non-equilibrium steady states (currents, entropy production,
+  detailed balance) [S29]; second-order averaging [Sanders–Verhulst–Murdock].
+- **Verdict:** no source found that applies the invariant-measure expansion to an adaptive control loop (a hypoelliptic
+  system with a deterministic fast error channel, a periodic reference and a slow Langevin parameter process), nor one that
+  identifies the first-order non-equilibrium current of a learning loop with a reciprocity defect of the averaged dynamics.
+  The closest objects are the stationary measures of performative/strategic learning dynamics [S14] and the non-reciprocal
+  many-body steady states of [S12]; neither has a plant in the loop or a 1/k_e expansion. The proof technique is standard
+  (Pavliotis–Stuart; Mattingly–Stuart–Tretyakov); the result is new in its object and in the identification of the
+  correction with Theorem I's defect. As with Theorem J, the non-commutativity term ½⟨[∇²𝒥, ∇²𝒰]_G⟩ in the antisymmetric part
+  of the second-order averaged drift of a periodic gradient flow is presumably known in the averaging literature; no source
+  was located.
+- **Corollary J′.3** (the Gibbs measures π_m are chaotic with limit the minimiser of Theorem H's free energy) is Sanov's
+  theorem with Varadhan's lemma [S34] applied to a bounded continuous energy; the statement is classical in form
+  (Messer–Spohn 1982 for mean-field Gibbs measures); new only as the bridge between Theorems J′ and H.
+- **Not checked numerically:** the uniqueness of the invariant measure (Step 1); the circulation of the real loop (below the
+  Monte Carlo resolution at the affordable cost; checked on the first-order averaged SDE).
 
 ### H.8 Input-to-state stability of the averaged system
 
