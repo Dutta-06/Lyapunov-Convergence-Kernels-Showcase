@@ -1517,7 +1517,7 @@ set by (A): c₁c₂ = 2.07, 0.51, 0.13, 0.056, 0.032, 0.014 at k = 50, 100, 200
 | k | exact Floquet rate | exact / (λ_min/k) | guaranteed rate γ/2, δ = 0.2 (δ = 0.1) | exact / guaranteed | exact / Lemma E.0 (optimised ε) | sup V̇/V on the grid, −γ (δ = 0.1) |
 |---|---|---|---|---|---|---|
 | 300 | 7.21·10⁻¹⁰ | 0.9997 | 5.70·10⁻¹⁰ (below threshold) | 1.26 (—) | 1.33·10⁵ | — |
-| 400 | 5.41·10⁻¹⁰ | 0.9998 | 4.30·10⁻¹⁰ (4.84·10⁻¹⁰) | 1.26 (1.12) | 1.32·10⁵ | −1.079·10⁻⁹, −9.67·10⁻¹⁰ |
+| 400 | 5.41·10⁻¹⁰ | 0.9998 | 4.30·10⁻¹⁰ (4.84·10⁻¹⁰) | 1.26 (1.12) | 1.32·10⁵ | −1.079·10⁻⁹, −9.68·10⁻¹⁰ |
 | 600 | 3.61·10⁻¹⁰ | 0.9999 | 2.88·10⁻¹⁰ (3.24·10⁻¹⁰) | 1.25 (1.12) | 1.30·10⁵ | −7.20·10⁻¹⁰, −6.47·10⁻¹⁰ |
 
 Above the threshold the guaranteed rate is within 26% (δ = 0.2) and 12% (δ = 0.1) of the exact rate — the factor
@@ -1567,13 +1567,13 @@ and 33.7 (δ = 0.1); L_J = 4.62 estimated from samples; exact linear rate 1.35·
 | Lyapunov function | explicit ball radius r₀ (w-coordinates) | nonlinear rate λ | overshoot C | exact linear rate / λ |
 |---|---|---|---|---|
 | Lemma E.0, optimised ε (Theorem E) | 6.15·10⁻⁶ | 2.63·10⁻⁵ | 1.43 | 51 |
-| Lemma E.0′, δ = 0.2 (this corollary) | 1.42·10⁻⁶ | 4.29·10⁻⁴ | 12.0 | 3.1 |
-| Lemma E.0′, δ = 0.1 (this corollary) | 7.77·10⁻⁷ | 4.91·10⁻⁴ | 17.3 | 2.7 |
+| Lemma E.0′, δ = 0.2 (this corollary) | 1.53·10⁻⁶ | 4.53·10⁻⁴ | 11.8 | 3.0 |
+| Lemma E.0′, δ = 0.1 (this corollary) | 8.32·10⁻⁷ | 5.16·10⁻⁴ | 17.1 | 2.6 |
 
 On this well-conditioned regressor (κ ≈ 7) Lemma E.0 is only an order of magnitude conservative, and the corollary trades
 the certified ball for the rate: λ′ is within a factor 3 of the exact linear rate (the factor 2 of the Lyapunov argument
 times 1/(1 − δ)), while r′₀ is four times smaller than Theorem E's r₀, carrying the anisotropy p′_lo/p′_hi ≈ 1/β of the
-quadratic form (β = 61 and 122). On ill-conditioned regressors the rate improves by the factor of Remark E.0a (table 4);
+quadratic form. On ill-conditioned regressors the rate improves by the factor of Remark E.0a (table 4);
 the radius comparison was not computed there.
 
 *Checked* (`tests/test_excitation.py`): on the single-kernel instance at k_e = 40, δ = 0.2, from a start with ‖w(0)‖ ≤ r′₀,
