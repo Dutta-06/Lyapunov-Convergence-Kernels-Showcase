@@ -1,9 +1,11 @@
-% Verification map (source: PARADIGM.md section 7, lines 1690-1739).
+% Verification map (source: PARADIGM.md section 7, version 4).
 \section{Verification map}\label{sec:verification}
 
 Table~\ref{tab:verification:map} lists the tests and experiments of the accompanying repository that check each
-statement; statements not checked are listed after it. Test files are abbreviated: \code{T} is \code{tests/test_transport.py}, \code{Lg} is
-\code{tests/test_langevin.py}, and \code{Av} is \code{tests/test_averaging.py}.
+statement; statements not checked are listed after it. Test files are abbreviated: \code{T} is
+\code{tests/test_transport.py}, \code{Lg} is \code{tests/test_langevin.py}, \code{Av} is \code{tests/test_averaging.py},
+\code{Ex} is \code{tests/test_excitation.py}, \code{NR} is \code{tests/test_nonreciprocity.py}, \code{Pe} is
+\code{tests/test_periodic.py} and \code{Ba} is \code{tests/test_barycentric.py}.
 
 {\footnotesize
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.19\textwidth}>{\raggedright\arraybackslash}p{0.41\textwidth}%
@@ -56,8 +58,25 @@ C(iv) & an instance satisfying \textbf{every} hypothesis, asserted, including th
   & \code{T::test_theorem_C_iv_exponential_estimate}\\
 C(v), Proposition C.5 & label invariance of the OT leak; the reshuffling transient of the labelled leak
   & \code{exp_ot_sigma_mod.py}, \code{exp_sigma_mod_transient.py}\\
+C$'$(i) & the plan reduces to the assignment for $m_0=m$ ($10^{-10}$) and
+  $W^2=V_{\mathrm{bar}}^2+\mathrm{Var}_\gamma$ ($10^{-10}$); along the pure leak $W^2$ is non-increasing at every
+  step and $D^+Z\le-\sigma_mV_{\mathrm{bar}}^2$ holds at every state; the flow reaches $V_{\mathrm{bar}}^2<10^{-8}$
+  and ends at a fixed point of the equal-mass Lloyd iteration
+  & \code{Ba::test_plan_reduces_to_assignment_and_pythagorean_split},
+    \code{Ba::test_pure_barycentric_leak_dissipates_to_a_centroidal_configuration},
+    \code{exp_barycentric_leak.py} $\to$ \code{results/barycentric_leak/table.md}\\
+C$'$(ii) & $\sqrt{C_{\mathrm{bar}}}\le b+2\eta$ on 90 random configurations; $C_{\mathrm{bar}}=b_{\mathrm{bar}}^2$
+  at small $\eta$ (plan stability)
+  & \code{Ba::test_induced_coupling_bound_and_plan_stability}\\
+C$'$(iii) & the Lyapunov inequality at every recorded state of a closed loop with the barycentric leak toward a
+  24-atom prior
+  & \code{Ba::test_lyapunov_inequality_along_the_barycentric_leak_closed_loop}\\
 D & consistency in $m$ (nearly constant amplification 1.64--1.69; not the constant $e^{\Lambda T}$)
   & \code{exp_mean_field_m.py}\\
+D$'$(b), (d) & the $m^{-1/2}$ rate of the synchronous coupling to a 4096-particle reference: slopes $-0.47\pm0.06$
+  ($\tau=0$) and $-0.46\pm0.05$ ($\tau=2\cdot10^{-3}$) over 24 seeds, $0.94\pm0.08$ and $0.92\pm0.08$ against
+  $(1/m-1/M)^{1/2}$; not the constant
+  & \code{exp_chaos.py} $\to$ \code{results/chaos/table.md}\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid
@@ -69,6 +88,20 @@ E linearisation & Jacobian of the implemented loop equals $A(t)$; $QA+A^\T Q=\op
 E convergence & the matched error decays and the labelled error does not (qualitative); sliding-window excitation and
   fitted rates
   & \code{T::test_theorem_E_matched_error_converges_labelled_does_not}, \code{exp_pe_convergence.py}\\
+Lemma E.0 & $p_{\mathrm{lo}}\norm{w}^2\le V\le p_{\mathrm{hi}}\norm{w}^2$ and $\dot V\le-\gamma\norm{w}^2$ at random
+  $(t,w)$ for four regressors, closed-form and optimised $\varepsilon$; the envelope along trajectories; explicit
+  rate $\le$ exact Floquet rate
+  & \code{Ex::test_lemma_E0_pointwise_inequalities_hold_on_random_states},
+    \code{Ex::test_lemma_E0_envelope_and_floquet_ordering}\\
+Lemma E.0(iii), Remark E.0a & the $\omega^{-2}$ law of the explicit rate and of the exact rate; the saturation of
+  exact/explicit in the slow-adaptation limit; the tables
+  & \code{Ex::test_remark_E1_omega_scaling_of_the_explicit_rate},
+    \code{Ex::test_slow_adaptation_limit_ratio_is_bounded}, \code{exp_explicit_rate.py} $\to$
+    \code{results/explicit_rate/table.md}\\
+E, explicit constants & on the implemented loop, from a start inside the explicit ball,
+  $\norm{w(t)}\le(p_{\mathrm{hi}}/p_{\mathrm{lo}})^{1/2}e^{-\lambda t}\norm{w(0)}$ at every sample ($L_J$ estimated
+  from samples)
+  & \code{Ex::test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop}\\
 G(a), two scales & direct check (cosine $\ge0.998$ in the $\Ginv$ metric, \code{violating}; the weight block fails
   in \code{satisfying}, as explained in Section~\ref{sec:propG}); $\bar L$ at period-mean parameters
   non-increasing
@@ -108,6 +141,43 @@ H.7a, oscillation term & value against an independent one-period near-identity f
   under orbit reversal ($10^{-6}$)
   & \code{Av::test_oscillation_correction_matches_a_one_period_flow},
     \code{Av::test_oscillation_correction_is_odd_under_orbit_reversal}\\
+I(i), (ii) & $a^\T B(\xi,\xi')a'$ equals the antisymmetric part of $S_{\mathrm{even}}+K$ ($10^{-10}$);
+  $A(\vartheta,\vartheta_z)=0$ and the cyclic sum over $(\vartheta_0,\vartheta_1,\vartheta_z)$ equals
+  $A(\vartheta_0,\vartheta_1)$ ($10^{-14}$)
+  & \code{NR::test_bilinear_form_B_reproduces_the_antisymmetric_second_variation},
+    \code{NR::test_zero_feature_collapses_the_cyclic_criterion_to_a_pairwise_one}\\
+I(iii) & $n=1$: $A\equiv0$ at perfect fit ($<10^{-13}$); $A\ne0$ with a residual, equal to the closed form; the
+  positivity witness
+  & \code{NR::test_n1_reciprocal_iff_residual_vanishes_on_the_orbit}, \code{NR::test_positivity_witness_n1}\\
+I(iv) & the closed form of $\kappa$ ($10^{-10}$); the second component of $F_s((0.5,0))$ is positive on the
+  ellipse; $\kappa\equiv0$ on a zero-current orbit; with $f\equiv\fhat_\mu$ on $\R^2$ ($Dr_\mu\equiv0$)
+  $B=2\kappa I$, $A\ne0$ on the ellipse and $A\equiv0$ on the segment; with $f=\fhat_\mu+he_1$, $h$ zero on the
+  ellipse, the curl term survives and equals $-\int\varphi\varphi'\partial_2h\dd\rho\cdot(e_1e_2^\T-e_2e_1^\T)$
+  & \code{NR::test_circulation_kernel_closed_form_and_vanishing_for_a_zero_current_orbit},
+    \code{NR::test_perfect_fit_n2_leaves_only_the_circulation_kernel},
+    \code{NR::test_perfect_fit_on_the_orbit_alone_keeps_the_curl_term}\\
+J, averaged objective & $\nabla J_m$ against finite differences ($10^{-7}$); the critical point is a non-degenerate
+  minimum with two distinct kernels
+  & \code{Pe::test_gradient_of_J_m_matches_finite_differences_and_critical_point_is_nondegenerate}\\
+J(a), (b), (d) & Newton shooting finds the periodic orbit (residual $<10^{-10}$); $\norm{\bar\Theta_p-\Theta^*}$
+  and $\max\norm{e}$ halve from $k_e=20$ to $40$; the vector error of the first-order prediction of the offset
+  halves as well (it is 0.55 at $k_e=40$ in the fast-sweep test instance, and 0.041 at $k_e=40$ in instance A of
+  the experiment); the parameter Floquet exponents match $\frac1{k_e}\lambda(G_m^{1/2}\nabla^2J_mG_m^{1/2})$ with a
+  maximal relative error below 2\% at $k_e=40$ that halves with $k_e$; both instances at $k_e=10$--$160$ in the
+  experiment; the error-channel exponent recovered from Liouville's trace identity is $k_e-L$ with $\abs{L}<0.2$
+  & \code{Pe::test_theorem_J_periodic_orbit_offset_and_floquet_exponents}, \code{exp_periodic_orbit.py} $\to$
+    \code{results/periodic_orbit/table.md}\\
+K(i), (ii) & the Hessian of $J_m$ at a collapsed configuration equals
+  $I_m\otimes(\sigma_0\Ginv-R_2)+\frac1m(\mathbf{1}\mathbf{1}^\T)\otimes M_2$ (finite differences, $10^{-5}$ relative);
+  $\sigma_{\mathrm{crit}}$ solves $\sigma=\lambda_{\max}(G^{1/2}R_2(\bar\vartheta(\sigma))G^{1/2})$ ($10^{-8}$) and
+  the separation block is singular there; the separation Floquet exponents of the collapsed orbit come in
+  $(m-1)$-fold multiplets
+  & \code{Pe::test_proposition_K_hessian_splitting_and_critical_leak}, \code{exp_orientation_stability.py}\\
+K(iii), (iv) & the orientation difference of the softest separation exponent at $\sigma_0=0.5$: slope $-2.18$
+  against $k_e$, within 14\% $\to$ 3\% of the prediction at $\bar\Theta_2$ for $k_e=10\to80$, while the prediction
+  at $\Theta^*$ converges to a value 30\% off; at $\sigma_{\mathrm{crit}}$ both orientations are unstable,
+  predictions within 14\% at $k_e=40$; at the designed $\sigma_0$ the signs differ for $k_e=10$ and $20$
+  & \code{exp_orientation_stability.py} $\to$ \code{results/orientation_stability/table.md}\\
 H.7 + H.7a in the real closed loop & the orientation dependence of the learned kernels (same $\rho$) is predicted to
   within 3\% in size and 11\% as a vector, cosine 0.994 at $k_e=40$; the measured difference scales like
   $k_e^{-1.01}$
@@ -120,7 +190,14 @@ H.7 + H.7a in the real closed loop & the orientation dependence of the learned k
   \item B.5 along (L), and B.6 and B.7;
   \item the Filippov form of C(i), the inequality of C(v), and Proposition C.5's $D^+\VOT=\sigma_m(\delta-\delta^2)$;
   \item D(b), D's constant, and the one-sided constant of Remark D.1;
-  \item the rate of E, Corollary E.2 and Remark E.3;
+  \item the sharpness of the explicit rate of E beyond the tables of Remark E.0a; Corollary E.2 and Remark E.3;
+  \item Theorem I(v) beyond the two instances (the analytic dichotomy is a proof only);
+  \item Theorem J(c) (the basin; a single basin run is reported in \code{review/REVIEW_round5_J.md});
+  \item Proposition K(iii)--(iv) beyond the instance of \code{exp_orientation_stability.py}, and the second-order
+    normal form it rests on;
+  \item Theorem C$'$(iv) (its hypotheses are not met on any tested instance) and the convergence of the pure leak to
+    a critical point beyond the tested instances; Theorem D$'$'s constant, its per-particle bound and its
+    $k$-particle convergence (only the rate of (b) is checked);
   \item H.8, which is a proof only;
   \item Conjecture H.6.
 \end{itemize}

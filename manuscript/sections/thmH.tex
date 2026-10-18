@@ -1,4 +1,5 @@
-% Theorem H: Langevin adaptive control (PARADIGM.md section 6c, up to and including Conjecture H.6).
+% Theorem H: Langevin adaptive control (PARADIGM.md section 6c, up to and including Conjecture H.6 and the
+% paragraph that follows it; version 4 of PARADIGM.md adds the Theorem I clause of that paragraph).
 \section{Theorem H: Langevin adaptive control and global convergence to the regularised optimum}\label{sec:thmH}
 
 \paragraph{Why something new is needed.}
@@ -15,7 +16,9 @@ Chizat--Bach theory or entropy.
   noise, by permutation symmetry and uniqueness of solutions. The test
   \code{test_noiseless_symmetric_initialisation_never_separates_but_dither_does} in the accompanying repository checks
   this on the real closed loop with $m = 6$. The rows stay bit-identical at every snapshot, the common particle moves,
-  and dither separates the rows within $0.1$\,s.
+  and dither separates the rows within $0.1$\,s. (Whether the collapsed configuration is a strict local minimum of the
+  regularised loss, so that nearby non-collapsed starts return to it, is decided by the leak gain against the
+  critical leak $\sigma_{\mathrm{crit}}$ of Proposition K, Section~\ref{sec:thmK}.)
 \end{itemize}
 Entropy removes the obstruction: Theorem H(ii) covers Dirac starts after any positive time.
 
@@ -255,7 +258,8 @@ gives $0.0085$. The unregularised offline optimum over $32$ kernels is about $7.
 restarts, an upper bound), and $\bar L(0) = 0.311$.
 
 At finite $m$, the fluctuation of $\fhat$ is $O(K_\Phi/\sqrt{m})$ at each fixed $t$ (finite-horizon propagation of
-chaos). It is uniform in time only under Remark H.5.
+chaos; Theorem D$'$ of Section~\ref{sec:thmDprime} gives the rate $m^{-1/2}$ for the plant and the learned function
+of the dithered loop). It is uniform in time only under Remark H.5.
 \end{rmk}
 
 \begin{rmk}{Remark}{H.2}[the control knobs, and what the numbers say]
@@ -382,5 +386,7 @@ true periodic error $e_\mu$ and $x = x_m + e_\mu$.
   $6.8\cdot 10^{-3}$, $1.4\cdot 10^{-3}$ and $9.7\cdot 10^{-4}$ at $k_e = 10$, $20$ and $40$. It is small and
   decreasing, but a clean $1/k_e$ law is not resolved in this range.
   \item By Proposition H.7(e) it is not the $\WG$-gradient flow of any free energy. The cyclic sums of its
-  antisymmetric second variation are non-zero in the checked instances, including the network of the experiments.
+  antisymmetric second variation are non-zero in the checked instances, including the network of the experiments; by
+  Theorem I(iii) (Section~\ref{sec:finitegain}) they are non-zero at every $n = 1$ measure whose residual is non-zero
+  on the orbit, and by Theorem I(vi) on no open set of measures do they all vanish.
 \end{itemize}

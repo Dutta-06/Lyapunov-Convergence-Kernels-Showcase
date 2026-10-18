@@ -1,4 +1,4 @@
-% Research program (source: PARADIGM.md section 8, lines 1740-1814).
+% Research program (source: PARADIGM.md section 8, version 4).
 \section{Research program}\label{sec:program}
 
 Each branch states what is proved, what is open, and the first concrete step.
@@ -11,8 +11,11 @@ Each branch states what is proved, what is open, and the first concrete step.
       at frozen measure (H.7); input-to-state stability of the averaged system (H.8).
     \item \emph{Open:} a near-identity averaging transformation for the stochastic McKean--Vlasov loop that keeps the
       frozen-measure correction valid along the moving measure, uniformly in time.
-    \item \emph{First step:} the deterministic case ($\tau=0$, $\sigma>0$) at fixed $m$, where the needed averaging
-      theorem is classical (Sanders--Verhulst--Murdock~\cite[Ch.~5]{svm2007}, ``averaging under attraction'').
+    \item \emph{Done (Theorem J, Section~\ref{sec:thmJ}):} the deterministic case ($\tau=0$, $\sigma=\sigma_0/k_e$)
+      at fixed $m$: near every hyperbolic critical point of $J_m$ the real loop has a unique periodic orbit with the
+      same stability type, a $k_e$-uniform basin, and the first-order location of Proposition H.7 and Remark H.7a.
+    \item \emph{Next steps:} the same with dither at fixed $m$ (the stationary state is a measure; the averaging
+      transform must act on the Fokker--Planck equation), and uniformity in $m$.
   \end{itemize}
 
 \item \textbf{Non-reciprocal mean-field dynamics from closed-loop learning (new; Proposition H.7).}
@@ -25,12 +28,17 @@ Each branch states what is proved, what is open, and the first concrete step.
           the only part for $n=1$;
         \item the circulation kernel $K$, an integral over the region that the reference orbit encloses ($n\ge2$).
       \end{itemize}
-    \item Non-reciprocity is checked in the instances tested, not proved in general.
+    \item \emph{Proved (Theorem I, Section~\ref{sec:finitegain}):} reciprocity at order $k_e^{-2}$ is equivalent to
+      $A_\mu\equiv0$; for $n=1$ it holds exactly at perfect fit on the orbit, and for $n\ge2$ at perfect fit exactly
+      when the orbit carries no circulation and the residual's Jacobian is symmetric along the orbit; no open set of
+      measures is reciprocal, for any $n$. The performative defect is bounded by the residual and the antisymmetric
+      part of its Jacobian; the circulation defect depends on neither.
     \item \emph{Open questions:}
       \begin{itemize}
         \item Are stationary states unique beyond the perturbative regime?
         \item Can circulation be \emph{designed}, choosing the orbit's orientation and area, to break symmetric traps
-          or to speed escape from the collapsed configuration?
+          or to speed escape from the collapsed configuration? (Partly answered by Proposition K, below: the
+          orientation decides the stability of the collapsed configuration in a window around the critical leak.)
         \item Is there a Lyapunov functional other than $F_\tau$ for the non-reciprocal flow?
       \end{itemize}
     \item \emph{Context:} the closest analogues are performative prediction~\cite{S14}, semi-gradient TD
@@ -38,13 +46,20 @@ Each branch states what is proved, what is open, and the first concrete step.
     \item \emph{Done (Remark H.7a):} deterministic $n=2$ closed-loop runs with the reference traversed both ways
       (same $\rho$). The full first-order theory predicts the $O(1/k_e)$ difference of the learned kernels to 3\% in
       size and 11\% as a vector.
-    \item \emph{Next steps:} the same test with dither, where the stationary state is a measure; and the design of the
-      orbit's orientation and area as a control input.
+    \item \emph{Done (Proposition K, Section~\ref{sec:thmK}):} at a collapsed configuration the orientation-odd
+      $k_e^{-2}$ terms shift the separation Floquet exponents of the real loop by $O(k_e^{-2})$, with a closed-form
+      prediction from the averaged data; at the critical leak $\sigma_{\mathrm{crit}}$ the direction of traversal
+      decides whether the kernels separate, and the $\sigma_0$ at which it does can be computed in advance.
+    \item \emph{Next steps:} the same test with dither, where the stationary state is a measure; the design of the
+      orbit's area (not only its orientation) as a control input; and the orientation effect at non-collapsed
+      configurations, where it moves the stationary kernels (Remark H.7a) rather than their stability.
   \end{itemize}
 
 \item \textbf{Uniform-in-time propagation of chaos with a plant in the loop.}
   \begin{itemize}
-    \item Theorem D is finite-horizon. Uniform-in-time results exist for mean-field Langevin dynamics~\cite{S5} and
+    \item Theorems D and D$'$ are finite-horizon; D$'$ gives the $m^{-1/2}$ rate for the dithered loop by synchronous
+      coupling, with constants independent of the temperature and an exponent independent of the dimension for the
+      state and the learned function. Uniform-in-time results exist for mean-field Langevin dynamics~\cite{S5} and
       for shallow networks~\cite{R36}.
     \item \emph{Open:} the closed loop, where the plant couples all particles through $e$, and where (by H.7) the
       averaged interaction is not reciprocal.
@@ -60,6 +75,12 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 \item \textbf{Noiseless global convergence.}
   \begin{itemize}
+    \item \emph{Done (Proposition K):} the local criterion for the collapsed trap: a collapsed configuration is a
+      strict local minimum of the regularised loss iff
+      $\sigma_0>\sigma_{\mathrm{crit}}(\bar\vartheta)=\lambda_{\max}(G^{1/2}R_2G^{1/2})$, where $R_2$ is the Hessian
+      of the first-variation potential at the atom; below $\sigma_{\mathrm{crit}}$ the noiseless flow leaves the
+      trap along the softest separation mode, without dither, and the residual at the atom is what drives the
+      separation ($R_2$ is linear in it).
     \item \emph{Open:} a closed-loop separation condition under which the noiseless flow avoids spurious stationary
       points, despite the failure of the Chizat--Bach~\cite{R29} boundary conditions. Candidates are a compactified
       width coordinate and reflecting boundaries (Remark H.3).
@@ -74,25 +95,37 @@ Each branch states what is proved, what is open, and the first concrete step.
 
 \item \textbf{Excitation theory in measure space.}
   \begin{itemize}
+    \item \emph{Done (Lemma E.0):} a quantitative, uniform UES estimate for the skew-symmetric class, explicit in
+      $(k,\alpha,T,\Psi_M,\Psi_D)$, which reproduces the $\omega^{-2}$ law of Remark E.1.
     \item \emph{Open:} the continuum form of (PE); the trajectory kernel
       \[K_T(\vartheta,\vartheta')=\int\Phi(x(s);\vartheta)\Phi(x(s);\vartheta')\dd s;\]
-      identifiability of measures up to symmetry; the relation to~\cite{R16}. Remark E.1 shows that the PE level alone does not predict the rate.
-      A quantitative, uniform UES estimate for the skew-symmetric class is a first target.
+      identifiability of measures up to symmetry; the relation to~\cite{R16}. Remark E.1 shows that the PE level
+      alone does not predict the rate. The explicit rate of Lemma E.0 is quadratic in
+      $\lambda_{\min}\langle\Psi^\T\Psi\rangle$ where the exact rate is linear (Remark E.0a); a strict Lyapunov
+      function with the linear dependence is the next quantitative target.
   \end{itemize}
 
 \item \textbf{Transport-regularised adaptive laws.}
   \begin{itemize}
     \item Wasserstein proximal (JKO) discrete-time adaptive laws.
-    \item The OT leak toward priors with a different number of atoms, using optimal plans with barycentric
-      projection.
+    \item \emph{Done (Theorem C$'$, Section~\ref{sec:thmCprime}):} the OT leak toward priors with a different number
+      of atoms, using optimal plans with barycentric projection; it is Lloyd's algorithm in continuous time, and its
+      bias is the centroid defect of the ideal.
+    \item \emph{Open:} its mean-field form (a general prior $\nu$ and a general $\mu$, where the barycentric
+      projection is the superdifferential of $\frac12W^2(\cdot,\nu)$; Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}),
+      and adaptive priors ($\nu$ itself learned).
     \item Transfer: transporting a learned measure to a new plant.
   \end{itemize}
 
 \item \textbf{Quantisation and the curse of dimensionality (Corollary B.6).}
   \begin{itemize}
+    \item \emph{Done (Theorem C$'$):} an adaptive law whose leak tracks the equal-mass centroidal quantisers of a prior
+      measure (centroidal Voronoi tessellations~\cite{S20}; coverage control~\cite{S18}, \cite{R89}), and Theorem D$'$'s
+      observation that the state and the learned function converge at the rate $m^{-1/2}$, whose exponent is
+      dimension-free: the curse of dimensionality of Corollary B.6 lives in the $W$-distance of the parameter
+      measures, which the loop never evaluates.
     \item \emph{Open:} second-order (centroid) quantisation rates for the ideal measure on the lifted space;
-      approximation rates that do not go through $W$ (Maurey-type); adaptive laws that track optimal quantisers (the
-      centroidal Voronoi tessellation connection~\cite{R14}).
+      approximation rates that do not go through $W$ (Maurey-type).
   \end{itemize}
 
 \item \textbf{Symmetric systems beyond kernels.} The OT quotient applies verbatim to swarms of identical agents,

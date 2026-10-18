@@ -1,0 +1,230 @@
+% Theorem D': propagation of chaos for the dithered closed loop on finite horizons (PARADIGM.md, section 5c).
+\section{Theorem D$'$: propagation of chaos for the dithered closed loop on finite horizons}\label{sec:thmDprime}
+
+Theorem D covers the deterministic projected law (L). The route to Conjecture H.6 (Section~\ref{sec:finitegain}) lists
+the mean-field limit of the dithered law \textup{(L$_\tau$)} as one of its three missing pieces. This section proves
+it on finite horizons, with an explicit $m^{-1/2}$ rate that does not depend on the temperature, by a synchronous
+coupling. The uniform-in-time statement is Section~\ref{sec:program}, branch 3.
+
+\paragraph{Setting.} The design of Theorem H: saturated features $\tilde\Phi$, $\norm{\tilde\Phi} \le K_\Phi$, with
+all $\vartheta$-derivatives bounded uniformly in $x$, and the $m$-particle closed loop
+\begin{equation}\label{eq:thmDprime:Ltau}
+  \begin{gathered}
+    \dot x = f(x) + \dot x_m - k_e e - \frac1m\sum_j\tilde\Phi(x;\vartheta_j),\qquad e = x - x_m(t),\\
+    \mathrm{d}\vartheta_i = b(x,e,\vartheta_i)\dd t + \sqrt{2\tau}\,G^{1/2}\dd B_i,\qquad i = 1,\dots,m,\\
+    b(x,e,\vartheta) := G\nabla_\vartheta\bigl[e^\T\tilde\Phi(x;\vartheta)\bigr] - \sigma(\vartheta - \vartheta^0),
+  \end{gathered}
+  \tag{$\mathrm{L}_\tau$}
+\end{equation}
+with independent Brownian motions $B_i$, i.i.d.\ initial particles $\vartheta_i(0)\sim\bar\mu_0\in\Prob_2(\R^p)$
+independent of the $B_i$, and a deterministic $x(0) = \bar x_0$. $f$ is $C^1$ and $x_m\in C^1$ with $\dot x_m$ bounded;
+no autonomy or periodicity is needed. The \textbf{McKean--Vlasov closed loop} is
+\begin{equation}\label{eq:thmDprime:MV}
+  \begin{gathered}
+    \dot{\bar x} = f(\bar x) + \dot x_m - k_e\bar e - \int\tilde\Phi(\bar x;\vartheta)\dd\bar\mu_t(\vartheta),\qquad
+    \bar e = \bar x - x_m(t),\\
+    \mathrm{d}\bar\vartheta = b(\bar x_t,\bar e_t,\bar\vartheta)\dd t + \sqrt{2\tau}\,G^{1/2}\dd B,\qquad
+    \bar\mu_t := \operatorname{Law}(\bar\vartheta_t),
+  \end{gathered}
+  \tag{MV}
+\end{equation}
+from the same $\bar x_0$ and $\bar\vartheta(0)\sim\bar\mu_0$. Here $\bar x_t$ is deterministic, and the particle
+$\bar\vartheta$ interacts with its own law only through $\bar x_t$.
+
+\paragraph{Standing bound.} Fix $T>0$ and suppose both $x^m$ (for every $m$ and every realisation) and $\bar x$ remain
+in a compact set $X$ on $[0,T]$. Since $\norm{\frac1m\sum\tilde\Phi} \le K_\Phi$ and
+$\norm{\int\tilde\Phi\dd\bar\mu} \le K_\Phi$ whatever the parameters, the tube bound of Theorem D(b) (with $a_{\max}$
+replaced by $K_\Phi$) gives such an $X$ for every $T$ when its self-consistent growth condition holds, for example for
+bounded $f$; otherwise the statement is local in time, as in Theorem D(d). Put
+$E_X := \sup_{t\le T,\,x\in X}\norm{x - x_m(t)}$ and let
+\begin{gather*}
+  L_f := \Lip_X f,\qquad L_x := \sup\norm{\partial_x\tilde\Phi},\qquad
+  L_\vartheta := \sup\norm{\nabla_\vartheta\tilde\Phi},\\
+  L_b := \lambda_G\bigl(L_\vartheta + E_X\sup\norm{\partial_x\nabla_\vartheta\tilde\Phi}
+  + E_X\sup\norm{\nabla^2_\vartheta\tilde\Phi}\bigr) + \sigma,\\
+  \Lambda := \max\{L_f + L_x + 2L_b,\ L_\vartheta + L_b\},
+\end{gather*}
+where $L_b$ is a Lipschitz constant of $(x,e,\vartheta)\mapsto b$ on $X\times\{\norm{e}\le E_X\}\times\R^p$ for the
+norm $\norm{x} + \norm{e} + \norm{\vartheta}$. All of these are finite by saturation and independent of $m$ and
+$\tau$; the suprema of the $\tilde\Phi$-derivatives are over all $x\in\R^n$ (the saturated features and their
+derivatives are globally bounded), so the segments between $x$ and $\bar x$ used below may leave $X$. The constants
+grow with the output dimension $n$ ($K_\Phi = a_{\max}\sqrt n$), not with the lifted dimension $p$ beyond that.
+
+\begin{thm}{Theorem}{D$'$}
+Under the standing bound:
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item \emph{Well-posedness.} \textup{(MV)} has a unique solution $(\bar x,\operatorname{Law}(\bar\vartheta))$ on
+    $[0,T]$, and $\bar x$ is deterministic.
+  \item \emph{Synchronous coupling.} Let $\bar\vartheta_i$, $i = 1,\dots,m$, be the solutions of \textup{(MV)}'s
+    particle equation driven by the same $B_i$ and started at the same $\vartheta_i(0)$ as the $m$-particle system.
+    Then, pathwise,
+    \begin{gather*}
+      \norm{x_t - \bar x_t} + \frac1m\sum_i\norm{\vartheta_i(t) - \bar\vartheta_i(t)} \le e^{\Lambda t}\int_0^t\zeta_s\dd s,\\
+      \zeta_s := \Bigl\lVert\frac1m\sum_j\tilde\Phi(\bar x_s;\bar\vartheta_j(s))
+      - \int\tilde\Phi(\bar x_s;\cdot)\dd\bar\mu_s\Bigr\rVert,
+    \end{gather*}
+    and since the $\bar\vartheta_j(s)$ are i.i.d.\ with law $\bar\mu_s$ and $\bar x_s$ is deterministic,
+    $\E\zeta_s^2 \le K_\Phi^2/m$. Hence
+    \begin{align*}
+      \E\sup_{t\le T}\Bigl(\norm{x_t - \bar x_t} + \frac1m\sum_i\norm{\vartheta_i(t) - \bar\vartheta_i(t)}\Bigr)
+      &\le TK_\Phi e^{\Lambda T}m^{-1/2},\\
+      \E\sup_{t\le T}\Bigl(\norm{x_t - \bar x_t} + \frac1m\sum_i\norm{\vartheta_i(t) - \bar\vartheta_i(t)}\Bigr)^2
+      &\le T^2K_\Phi^2e^{2\Lambda T}m^{-1},
+    \end{align*}
+    with constants independent of $\tau\ge0$ and of $\bar\mu_0$. The exponent $-1/2$ does not depend on the
+    dimension; the constants do, through $K_\Phi$ and the Lipschitz bounds of $\tilde\Phi$ \textup{(}standing
+    bound\textup{)}.
+  \item \emph{Consequences.}
+    \begin{itemize}
+      \item Propagation of chaos: for each fixed $k$, the law of $(\vartheta_1,\dots,\vartheta_k)$ on $[0,T]$
+        converges to the $k$-fold product of the path law of $\bar\vartheta$, with the per-particle bound
+        $\E\sup_{t\le T}\norm{\vartheta_i(t) - \bar\vartheta_i(t)} \le 2(e^{L_bT} - 1)TK_\Phi e^{\Lambda T}m^{-1/2}$
+        for every $i$. \textup{(}Exchangeability alone gives only the fixed-$t$ bound
+        $\E\norm{\vartheta_i(t) - \bar\vartheta_i(t)} = \E\bar\Delta(t) \le TK_\Phi e^{\Lambda T}m^{-1/2}$, since
+        $\sup_t$ of a mean is not the mean of the $\sup_t$; the per-particle sup bound is the pathwise Grönwall
+        estimate of the proof.\textup{)}
+      \item The learned function converges at the rate $m^{-1/2}$: at each fixed $t$,
+        \begin{align*}
+          \E\Bigl\lVert\fhat^m(x_t) - \int\tilde\Phi(\bar x_t;\cdot)\dd\bar\mu_t\Bigr\rVert
+          &\le (L_x + L_\vartheta)TK_\Phi e^{\Lambda T}m^{-1/2} + \E\zeta_t\\
+          &\le \bigl((L_x + L_\vartheta)Te^{\Lambda T} + 1\bigr)K_\Phi m^{-1/2}
+        \end{align*}
+        \textup{(}the supremum over $t$ would need a chaining argument for $\zeta$ and is not pursued\textup{)}.
+      \item The parameter measure converges in $W_1$ \textup{(}Euclidean cost on $\R^p$; the $G^{-1}$ metric used
+        elsewhere changes it by a factor $\lambda_G^{\pm1/2}$\textup{)} at the i.i.d.\ rate:
+        \[
+          \E W_1(\mu^m_t,\bar\mu_t) \le TK_\Phi e^{\Lambda T}m^{-1/2} + \E W_1(\bar\mu^{\mathrm{emp},m}_t,\bar\mu_t),
+        \]
+        where $\bar\mu^{\mathrm{emp},m}_t$ is the empirical measure of $m$ i.i.d.\ samples of the time-$t$ marginal
+        $\bar\mu_t$; the last term is $O(m^{-1/p})$ for $p>2$ \textup{(}Fournier--Guillin~\cite{fg2015}; applicable
+        because $\bar\mu_t$ has a bounded second moment on $[0,T]$, the drift being linearly bounded\textup{)}. Only
+        this term carries the dimension.
+    \end{itemize}
+  \item \emph{$\tau = 0$.} The statement holds for the deterministic saturated law with i.i.d.\ initial particles,
+    where it gives, for this law \textup{(}not the projected law of Theorem D(d)\textup{)}, the explicit $m^{-1/2}$
+    rate in place of a rate $\delta_m\to0$ for the state and the paired particles.
+\end{enumerate}
+\end{thm}
+\status{Proved; consistency of the $m^{-1/2}$ rate checked by coupling $m$-particle systems to a 4096-particle
+reference (\code{exp_chaos.py}). Novelty (literature audit): the technique is Sznitman's; new in that the plant is in
+the loop and the rate for the state is dimension-free.}
+
+\begin{proof}
+\textit{(a)} Let $X'$ be a compact neighbourhood of $X$ on which $f$ is Lipschitz. For a given curve
+$\bar x\in C([0,T_1];X')$, the particle equation of \textup{(MV)} is an SDE with drift Lipschitz in $\vartheta$
+(bounded $\nabla^2_\vartheta\tilde\Phi$ and the linear leak; the derivative bounds of $\tilde\Phi$ are global in $x$)
+and constant diffusion; it has a unique strong solution, whose law $\bar\mu_t[\bar x]$ depends
+Lipschitz-continuously on $\bar x$: by synchronous coupling of two solutions driven by $\bar x$ and $\bar x'$,
+$\frac{\mathrm{d}}{\mathrm{d}t}\norm{\bar\vartheta - \bar\vartheta'}
+\le L_b\bigl(2\norm{\bar x - \bar x'} + \norm{\bar\vartheta - \bar\vartheta'}\bigr)$, so
+$W_1(\bar\mu_t[\bar x],\bar\mu_t[\bar x']) \le 2L_b\int_0^te^{L_b(t-s)}\norm{\bar x_s - \bar x'_s}\dd s$. The plant
+input $\dot x_m - k_e\bar e - \int\tilde\Phi\dd\bar\mu$ is bounded by $\sup\norm{\dot x_m} + k_eE_{X'} + K_\Phi$
+whatever the measure, so for $T_1$ small the plant solutions from $\bar x_0$ stay in $X'$, and the map taking $\bar x$
+to the solution of the plant ODE with input $\int\tilde\Phi(\cdot\,;\vartheta)\dd\bar\mu_t[\bar x]$ sends
+$C([0,T_1];X')$ into itself and is a contraction there, since $\mu\mapsto\int\tilde\Phi(x;\cdot)\dd\mu$ is
+$W_1$-Lipschitz with constant $L_\vartheta$ and $f$ is Lipschitz on $X'$. This gives a unique solution on $[0,T_1]$ in
+the class of curves with values in $X'$; the standing bound keeps it in $X$, so the local solutions concatenate to
+$[0,T]$, and uniqueness holds among solutions with $\bar x\in C([0,T];X)$. This is the Picard argument of
+Theorem D(a) with the Dobrushin estimate replaced by the coupling estimate. (Theorem D(b)'s tube bound, used in the
+standing bound for a law it does not formally cover, rests only on $\norm{\fhat}\le a_{\max}$ --- here $K_\Phi$ ---
+and on the pathwise error ODE, so it applies.)
+
+\smallskip
+\textit{(b)} Set $\Delta_i := \vartheta_i - \bar\vartheta_i$ and $\delta := x - \bar x$. The noise cancels in
+$\mathrm{d}\Delta_i$, so $\Delta_i$ is absolutely continuous with
+$\frac{\mathrm{d}}{\mathrm{d}t}\norm{\Delta_i} \le \norm{b(x,e,\vartheta_i) - b(\bar x,\bar e,\bar\vartheta_i)}
+\le L_b\bigl(\norm{x - \bar x} + \norm{e - \bar e} + \norm{\Delta_i}\bigr) = L_b\bigl(2\norm{\delta} + \norm{\Delta_i}\bigr)$,
+using $e - \bar e = \delta$ (same $x_m$). For $\delta$,
+\[
+  \dot\delta = f(x) - f(\bar x) - k_e\delta
+  - \Bigl[\frac1m\sum_j\tilde\Phi(x;\vartheta_j) - \int\tilde\Phi(\bar x;\cdot)\dd\bar\mu_t\Bigr],
+\]
+and the bracket splits as
+\begin{multline*}
+  \frac1m\sum_j\bigl[\tilde\Phi(x;\vartheta_j) - \tilde\Phi(\bar x;\vartheta_j)\bigr]
+  + \frac1m\sum_j\bigl[\tilde\Phi(\bar x;\vartheta_j) - \tilde\Phi(\bar x;\bar\vartheta_j)\bigr]\\
+  + \Bigl[\frac1m\sum_j\tilde\Phi(\bar x;\bar\vartheta_j) - \int\tilde\Phi(\bar x;\cdot)\dd\bar\mu_t\Bigr],
+\end{multline*}
+of norms at most $L_x\norm{\delta}$, $L_\vartheta\frac1m\sum\norm{\Delta_j}$ and $\zeta_t$. Dropping the dissipative
+$-k_e\delta$, $\frac{\mathrm{d}}{\mathrm{d}t}\norm{\delta} \le (L_f + L_x)\norm{\delta} + L_\vartheta\bar\Delta + \zeta_t$
+with $\bar\Delta := \frac1m\sum\norm{\Delta_j}$, and
+$\frac{\mathrm{d}}{\mathrm{d}t}\bar\Delta \le L_b\bigl(2\norm{\delta} + \bar\Delta\bigr)$. For
+$D := \norm{\delta} + \bar\Delta$ this gives $\dot D \le \Lambda D + \zeta_t$ with $D(0) = 0$, and Grönwall gives the
+pathwise bound, whose right-hand side is non-decreasing in $t$. For the expectation, $\bar x_s$ is deterministic and
+the $\tilde\Phi(\bar x_s;\bar\vartheta_j(s))$ are i.i.d.\ bounded by $K_\Phi$, so
+\[
+  \E\zeta_s^2 = \frac1m\E\bigl\lVert\tilde\Phi(\bar x_s;\bar\vartheta_1(s))
+  - \E\tilde\Phi(\bar x_s;\bar\vartheta_1(s))\bigr\rVert^2 \le K_\Phi^2/m,
+\]
+and $\E\int_0^T\zeta_s\dd s \le TK_\Phi m^{-1/2}$; for the second moment,
+$\E\bigl(\int_0^T\zeta\bigr)^2 \le T\int_0^T\E\zeta^2 \le T^2K_\Phi^2/m$.
+
+\smallskip
+\textit{(c)} For the first item, $\frac{\mathrm{d}}{\mathrm{d}t}\norm{\Delta_i} \le L_b\bigl(2\norm{\delta} + \norm{\Delta_i}\bigr)$
+with $\norm{\delta(s)} \le D(s) \le e^{\Lambda s}\int_0^s\zeta$ and $\Delta_i(0) = 0$ give, by Grönwall and
+$\Lambda\ge L_b$,
+\[
+  \norm{\Delta_i(t)} \le 2L_b\int_0^te^{L_b(t-s)}e^{\Lambda s}\Bigl(\int_0^s\zeta\Bigr)\dd s
+  \le 2(e^{L_bt} - 1)e^{\Lambda t}\int_0^t\zeta,
+\]
+a pathwise bound whose right-hand side is non-decreasing in $t$; take $\sup_t$ and expectations. Convergence of the
+$k$-particle law follows from the pathwise coupling bound. For the second,
+$\norm{\fhat^m(x_t) - \int\tilde\Phi(\bar x_t;\cdot)\dd\bar\mu_t}$ is bounded by the same three terms as the bracket
+in (b), the first two by $(L_x + L_\vartheta)D(t)$ and the third by $\zeta_t$. For the third, couple $\mu^m_t$ with
+the empirical measure of the $\bar\vartheta_j(t)$ through the identity pairing (cost $\frac1m\sum\norm{\Delta_j}$) and
+use the triangle inequality.
+
+\smallskip
+\textit{(d)} Nothing in the argument uses $\tau>0$: the noise cancels in the coupling and only the i.i.d.\ sampling
+of the initial particles enters through $\zeta$.
+\end{proof}
+
+\begin{rmk}{Remark}{D$'$.1}[what carries the dimension]
+The plant and the learned function see the particle measure only through $\int\tilde\Phi\dd\mu$, the mean of a
+bounded function. Their fluctuation is $K_\Phi/\sqrt m$: the exponent does not see the dimension $p$ of the lifted
+parameter, and the constant $K_\Phi = a_{\max}\sqrt n$ grows with the output dimension only. The curse of
+dimensionality of Corollary B.6 (rates $m^{-1/p}$) concerns the Wasserstein distance between the parameter measures,
+which the closed loop never evaluates. Theorem F, by contrast, bounds the transport of $\mu$ by the tracking error and
+is dimension-free as well.
+\end{rmk}
+
+\begin{rmk}{Remark}{D$'$.2}[what is still missing for Conjecture H.6]
+The constant $e^{\Lambda T}$ grows with the horizon; uniformity in time would follow from a contraction of the coupled
+system, which the plant coupling and the non-reciprocal averaged interaction (Proposition H.7) obstruct for the
+general law. For the averaged system, Remark H.5 points to the uniform-in-time result of~\cite{S5}; with the plant in
+the loop the question is Section~\ref{sec:program}, branch 3.
+\end{rmk}
+
+\paragraph{Numerics} (\code{exp_chaos.py} $\to$ \code{results/chaos/table.md}). An $M = 4096$ particle system stands in
+for (MV); for $m = 16, 32, \dots, 1024$ the $m$-particle system is driven by the first $m$ initial particles and
+Brownian motions of the reference --- the coupling of (b) --- with $n = 1$, $k_e = 10$, $\sigma = 0.02$, $T = 20$, at
+$\tau = 0$ and $\tau = 2\cdot10^{-3}$, and $\sup_tD_m$,
+$D_m := \norm{x^m - x^M} + \frac1m\sum_{i\le m}\norm{\vartheta^m_i - \vartheta^M_i}$, is averaged over 24 seeds.
+Because the $m$-system shares its particles with the reference, the sampling fluctuation that drives $D_m$ has
+variance proportional to $1/m - 1/M$ (the shared particles contribute $(1/m - 1/M)\sum_{i\le m}$, the others
+$(1/M)\sum_{i>m}$), so the predicted law for the mean is a constant times $(1/m - 1/M)^{1/2}$, and $m^{-1/2}$ for
+$m\ll M$.
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}Yll@{}}
+\toprule
+ & $\tau = 0$ & $\tau = 2\cdot10^{-3}$\\
+\midrule
+mean $\sup_tD_m$, $m = 16\to1024$ & $1.49\cdot10^{-1}\to2.17\cdot10^{-2}$ & $1.52\cdot10^{-1}\to2.32\cdot10^{-2}$\\
+log-log slope of the mean against $m$ over $m\le256$ (bootstrap s.e.\ over seeds) & $-0.47\pm0.06$ & $-0.46\pm0.05$\\
+slope of the median & $-0.46$ & $-0.45$\\
+slope of the mean against $(1/m - 1/M)^{1/2}$, all $m$ (predicted $1$) & $0.94\pm0.08$ & $0.92\pm0.08$\\
+mean$\,/\,(1/m - 1/M)^{1/2}$, $m = 32\dots1024$ & $0.70$--$0.80$ & $0.67$--$0.86$\\
+\bottomrule
+\end{tabularx}
+\end{center}
+The rate is the $m^{-1/2}$ of (b) within one standard error, the same at both temperatures (the noise cancels in the
+coupling, (d)), and the two-scale law in $(1/m - 1/M)^{1/2}$ holds up to $m = M/4$. Two features of the data are worth
+recording. First, single seeds differ by more than an order of magnitude at fixed $m$ (the table lists the minimum and
+maximum over seeds): $\sup_tD_m$ is governed by the projection of the initial sampling fluctuation on a few slowly
+amplified directions of the closed loop, so the expectation in (b) needs tens of seeds --- a first version of this
+experiment with three seeds gave slopes $-0.25$ and $-0.21$ and was withdrawn (\code{review/REVIEW_LOG.md}, round 5,
+D2). Second, the measured ratio $\sup_tD_m/(1/m - 1/M)^{1/2}\approx0.7$ is astronomically smaller than the constant
+$TK_\Phi e^{\Lambda T}$ of (b): on this horizon the theorem is a rate statement, not a quantitative bound.
+\checkedby{\code{exp_chaos.py}: the experiment only; there is no test for Theorem D$'$ (its hypotheses are structural
+and the coupling is the experiment itself).}

@@ -2570,8 +2570,8 @@ its k_e⁻² scaling, the prediction and the design window are checked numerical
 (`exp_orientation_stability.py`).
 
 *Proof.* (i) ∂²J_m/∂ϑ_i∂ϑ_j = (1/m)∫∇Φ̃_iᵀ∇Φ̃_j dρ − δ_ij∫Σ_k r_k∇²Φ̃_{i,k} dρ + δ_ijσ₀G⁻¹ (the first term from the
-quadratic dependence of ½∫‖r‖²dρ on the m features with weights 1/m, the second from the ϑ_i-curvature of
-−(1/m)·m∫rᵀΦ̃_i dρ... with r = f − (1/m)ΣΦ̃_j, ∂_{ϑ_i}(mL̄_m) = −∫rᵀ∇Φ̃_i dρ and ∂_{ϑ_j}∂_{ϑ_i}(mL̄_m) = (1/m)∫∇Φ̃_jᵀ∇Φ̃_i dρ − δ_ij∫Σ_k r_k∇²Φ̃_{i,k} dρ).
+quadratic dependence of ½∫‖r‖²dρ on the m features with weights 1/m, the second from the ϑ_i-curvature of the
+residual term: with r = f − (1/m)ΣΦ̃_j, ∂_{ϑ_i}(mL̄_m) = −∫rᵀ∇Φ̃_i dρ and ∂_{ϑ_j}∂_{ϑ_i}(mL̄_m) = (1/m)∫∇Φ̃_jᵀ∇Φ̃_i dρ − δ_ij∫Σ_k r_k∇²Φ̃_{i,k} dρ).
 At a collapsed point all blocks coincide, giving the Kronecker form; the two subspaces are the isotypic components of
 the permutation action, on which (1/m)(1 1ᵀ) acts as 0 and 1 respectively. The second-order averaged drift is
 permutation-equivariant (each particle moves by a function of its own position and of the measure), so its Jacobian at
@@ -2582,7 +2582,7 @@ whose eigenvalues of G_m^{1/2}∇²J_mG_m^{1/2} restricted to the separation sub
 repeated m − 1 times. For the last sentence, the first variation of 𝒢 := L̄ + (σ₀/2)∫‖·−ϑ⁰‖²_{G⁻¹}dμ at μ̄ = δ_ϑ̄ is
 V_L[μ̄](ϑ) + (σ₀/2)‖ϑ − ϑ⁰‖²_{G⁻¹} = −⟨r̄ᵀΦ̃(·;ϑ)⟩_ρ + (σ₀/2)‖ϑ − ϑ⁰‖²_{G⁻¹}, whose Hessian at ϑ̄ is −R₂ + σ₀G⁻¹.
 
-(iii) The proof of Theorem J carries one order further: the near-identity change of variables of its step 2 removes the
+(iii) The proof of Theorem J carries one order further: the near-identity change of variables of its Step 3 removes the
 oscillating terms through order k_e⁻², which turns (CL) into (N) with an O(k_e⁻³) remainder (this is the normal form of
 Remark H.7a's derivation, with b_osc the term that the frozen-measure expansion misses). (N) is a regular perturbation
 of the averaged system near the hyperbolic point Θ*, so it has a unique equilibrium Θ̄₂ within O(1/k_e) of Θ*, obtained
@@ -2703,7 +2703,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | I(iv) | the closed form of κ (1e-10); the second component of F_s((0.5, 0)) is positive on the ellipse; κ ≡ 0 on a zero-current orbit; with f ≡ f̂_μ on ℝ² (Dr_μ ≡ 0) B = 2κI, A ≠ 0 on the ellipse and A ≡ 0 on the segment; with f = f̂_μ + he₁, h zero on the ellipse, the curl term survives and equals −∫φφ'∂₂h dρ·(e₁e₂ᵀ − e₂e₁ᵀ) | `NR::test_circulation_kernel_closed_form_and_vanishing_for_a_zero_current_orbit`, `NR::test_perfect_fit_n2_leaves_only_the_circulation_kernel`, `NR::test_perfect_fit_on_the_orbit_alone_keeps_the_curl_term` |
 | J, averaged objective | ∇J_m against finite differences (1e-7); the critical point is a non-degenerate minimum with two distinct kernels | `Pe::test_gradient_of_J_m_matches_finite_differences_and_critical_point_is_nondegenerate` |
 | J(a), (b), (d) | Newton shooting finds the periodic orbit (residual < 1e-10); ‖Θ̄_p − Θ*‖ and max‖e‖ halve from k_e = 20 to 40; the vector error of the first-order prediction of the offset halves as well (it is 0.55 at k_e = 40 in the fast-sweep test instance, and 0.041 at k_e = 40 in instance A of the experiment); the parameter Floquet exponents match (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) with a maximal relative error below 2% at k_e = 40 that halves with k_e; both instances at k_e = 10–160 in the experiment; the error-channel exponent recovered from Liouville's trace identity is k_e − L with |L| < 0.2 | `Pe::test_theorem_J_periodic_orbit_offset_and_floquet_exponents`, `exp_periodic_orbit.py` → `results/periodic_orbit/table.md` |
-| K(i), (ii) | the Hessian of J_m at a collapsed configuration equals I_m ⊗ (σ₀G⁻¹ − R₂) + (1/m)(11ᵀ) ⊗ M₂ (finite differences, 1e-6); σ_crit solves σ = λ_max(G^{1/2}R₂(ϑ̄(σ))G^{1/2}) (1e-9) and the separation block is singular there; the separation Floquet exponents of the collapsed orbit come in (m − 1)-fold multiplets | `Pe::test_proposition_K_hessian_splitting_and_critical_leak`, `exp_orientation_stability.py` |
+| K(i), (ii) | the Hessian of J_m at a collapsed configuration equals I_m ⊗ (σ₀G⁻¹ − R₂) + (1/m)(11ᵀ) ⊗ M₂ (finite differences, 1e-5 relative); σ_crit solves σ = λ_max(G^{1/2}R₂(ϑ̄(σ))G^{1/2}) (1e-8) and the separation block is singular there; the separation Floquet exponents of the collapsed orbit come in (m − 1)-fold multiplets | `Pe::test_proposition_K_hessian_splitting_and_critical_leak`, `exp_orientation_stability.py` |
 | K(iii), (iv) | the orientation difference of the softest separation exponent at σ₀ = 0.5: slope −2.18 against k_e, within 14% → 3% of the prediction at Θ̄₂ for k_e = 10 → 80, while the prediction at Θ* converges to a value 30% off; at σ_crit both orientations are unstable, predictions within 14% at k_e = 40; at the designed σ₀ the signs differ for k_e = 10 and 20 | `exp_orientation_stability.py` → `results/orientation_stability/table.md` |
 | H.7 + H.7a in the real closed loop | the orientation dependence of the learned kernels (same ρ) is predicted to within 3% in size and 11% as a vector, cosine 0.994 at k_e = 40; the measured difference scales like k_e^{−1.01} | `exp_orbit_orientation.py` → `results/orbit_orientation/table_sigma2_slow16.md` |
 

@@ -30,18 +30,195 @@ In particular the $\vartheta^*_j$ are pairwise distinct, and
 with $d^2:=+\infty$ for $m=1$. The closed form holds because a non-identity permutation moves at least two indices,
 and the transposition of the $G^{-1}$-closest pair attains the bound.
 
-\begin{thm}{Theorem}{E}
-There are $r_0,k,\lambda>0$ such that the following holds.
-\begin{itemize}
-  \item $k$ and $\lambda$ come from the converse Lyapunov function of the linearisation (proof steps~3--4).
-  \item $r_0$ depends in addition on $r:=\min(\rho,\delta)$, and on the Lipschitz constant of the Jacobian on the
-    ball $D$ of step~2.
-\end{itemize}
-Put
+\begin{thm}{Lemma}{E.0}[explicit strict Lyapunov function for the skew-symmetric mixed class]
+Let $\Psi:[0,\infty)\to\R^{n\times q}$ be $C^1$ with $\norm{\Psi(t)}\le\Psi_M$ and $\norm{\dot\Psi(t)}\le\Psi_D$ for
+all $t$, and persistently exciting: there are $T,\alpha>0$ with $\int_t^{t+T}\Psi(r)^\T\Psi(r)\dd r\succeq\alpha I_q$
+for all $t\ge0$. Let $k>0$ and consider
+\begin{equation}\label{eq:thmE:LTV}
+  \dot e=-ke-\Psi(t)\zeta,\qquad \dot\zeta=\Psi(t)^\T e,\qquad w:=(e,\zeta)\in\R^{n+q}.
+  \tag{LTV}
+\end{equation}
+Put $M:=\Psi^\T\Psi$ and
+\begin{gather*}
+  Q(t):=\int_t^{t+T}(t+T-r)M(r)\dd r,\qquad Q_M:=\frac{T^2\Psi_M^2}{2},\qquad
+  c_1:=T^2\Psi_M^3+Tk\Psi_M+T\Psi_D,\\
+  V(t,e,\zeta):=\tfrac12\norm{e}^2+\tfrac12\norm{\zeta}^2-\varepsilon\,\zeta^\T Q(t)\zeta+\varepsilon T\,e^\T\Psi(t)\zeta.
+\end{gather*}
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{Every admissible $\varepsilon$.} For every $\varepsilon>0$ with $\varepsilon(Q_M+T\Psi_M/2)<\frac12$,
+    $V$ is $C^1$ and, along \textup{(LTV)},
+    \begin{gather*}
+      p_{\mathrm{lo}}\norm{w}^2\le V\le p_{\mathrm{hi}}\norm{w}^2,\qquad
+      p_{\mathrm{lo}/\mathrm{hi}}:=\tfrac12\mp\varepsilon(Q_M+T\Psi_M/2),\\
+      \dot V\le-(k-\varepsilon T\Psi_M^2)\norm{e}^2-\varepsilon\alpha\norm{\zeta}^2+\varepsilon c_1\norm{e}\norm{\zeta}.
+    \end{gather*}
+    Hence $\dot V\le-\gamma(\varepsilon)\norm{w}^2$ with
+    $\gamma(\varepsilon):=\lambda_{\min}\bigl[\begin{smallmatrix}a&-c/2\\-c/2&b\end{smallmatrix}\bigr]$,
+    $a:=k-\varepsilon T\Psi_M^2$, $b:=\varepsilon\alpha$, $c:=\varepsilon c_1$, whenever this is positive, and then
+    $\norm{w(t)}\le(p_{\mathrm{hi}}/p_{\mathrm{lo}})^{1/2}e^{-(\gamma/(2p_{\mathrm{hi}}))(t-t_0)}\norm{w(t_0)}$ for
+    all $t\ge t_0\ge0$.
+  \item \emph{Closed form.} With
+    $\varepsilon:=\min\bigl\{1/(4(Q_M+T\Psi_M/2)),\,k/(4T\Psi_M^2),\,k\alpha/c_1^2\bigr\}$, one has
+    $p_{\mathrm{lo}}\ge\frac14$, $p_{\mathrm{hi}}\le\frac34$ and $\dot V\le-\gamma\norm{w}^2$ with
+    $\gamma:=\min\{k/4,\,\varepsilon\alpha/2\}$. Hence
+    \[
+      \norm{w(t)}\le\sqrt3\cdot e^{-(2\gamma/3)(t-t_0)}\cdot\norm{w(t_0)}\qquad\text{for all }t\ge t_0\ge0.
+    \]
+  \item \emph{Dependence on $\Psi_D$ and on time rescaling.} The rate tends to $0$ as $\Psi_D\to\infty$, and it must:
+    $\Psi=\sin t^2$ is bounded and PE with $\Psi_D=\infty$, and \textup{(LTV)} is then not uniformly exponentially
+    stable (part~(f) of the proof). Under the time rescaling $\Psi_\omega(t):=\Psi(\omega t)$, with $\Psi_D>0$, the
+    data transform as $(\alpha,T,\Psi_M,\Psi_D)\mapsto(\alpha/\omega,T/\omega,\Psi_M,\omega\Psi_D)$, so
+    $c_1=T\Psi_D\cdot(1+O(1/\omega))$ and the closed-form rate is
+    $k\alpha^2/(3\omega^2T^2\Psi_D^2)\cdot(1+O(1/\omega))$ as $\omega\to\infty$. This is the $\omega^{-2}$ law of
+    Remark E.1.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+\emph{(a) The Gramian weight.} $0\preceq Q(t)\preceq\int_t^{t+T}(t+T-r)\Psi_M^2\dd r\cdot I=Q_MI$. Since $M$ is
+continuous, $Q$ is $C^1$ with $\dot Q(t)=\int_t^{t+T}M(r)\dd r-TM(t)$: the upper limit contributes
+$(t+T-(t+T))M(t+T)=0$, the lower limit contributes $-TM(t)$, and differentiating the weight under the integral gives
+$\int_t^{t+T}M$.
+
+\noindent\emph{(b) Bounds on $V$.} $\abs{\zeta^\T Q\zeta}\le Q_M\norm{\zeta}^2$ and
+$\abs{e^\T\Psi\zeta}\le\Psi_M\norm{e}\norm{\zeta}\le(\Psi_M/2)(\norm{e}^2+\norm{\zeta}^2)$.
+
+\noindent\emph{(c) Three derivatives along \textup{(LTV)}.}
+\begin{align*}
+  \frac{\mathrm{d}}{\mathrm{d}t}\tfrac12(\norm{e}^2+\norm{\zeta}^2)
+    &=-k\norm{e}^2-e^\T\Psi\zeta+\zeta^\T\Psi^\T e=-k\norm{e}^2,\\
+  \frac{\mathrm{d}}{\mathrm{d}t}(-\zeta^\T Q\zeta)&=-\zeta^\T\dot Q\zeta-2\zeta^\T Q\dot\zeta
+    =-\zeta^\T\Bigl(\int_t^{t+T}M\Bigr)\zeta+T\norm{\Psi\zeta}^2-2\zeta^\T Q\Psi^\T e\\
+    &\le-\alpha\norm{\zeta}^2+T\norm{\Psi\zeta}^2-2\zeta^\T Q\Psi^\T e,\\
+  \frac{\mathrm{d}}{\mathrm{d}t}(e^\T\Psi\zeta)&=\dot e^\T\Psi\zeta+e^\T\dot\Psi\zeta+e^\T\Psi\dot\zeta
+    =-k\,e^\T\Psi\zeta-\norm{\Psi\zeta}^2+e^\T\dot\Psi\zeta+\norm{\Psi^\T e}^2.
+\end{align*}
+Adding them with weights $1$, $\varepsilon$ and $\varepsilon T$, the $\norm{\Psi\zeta}^2$ terms cancel:
 \[
-  c_0:=\frac{r_0^2}{2(1+m\lambda_G)}\qquad\text{and}\qquad
-  C:=\sqrt2\cdot k\cdot\max\bigl\{1,(m\lambda_G)^{1/2}\bigr\}\cdot\max\bigl\{1,(m\lambda_{\min}(G))^{-1/2}\bigr\}.
+  \dot V\le-k\norm{e}^2-\varepsilon\alpha\norm{\zeta}^2-2\varepsilon\zeta^\T Q\Psi^\T e
+  -\varepsilon Tk\,e^\T\Psi\zeta+\varepsilon T\,e^\T\dot\Psi\zeta+\varepsilon T\norm{\Psi^\T e}^2.
 \]
+The last four terms are at most $2\varepsilon Q_M\Psi_M\norm{e}\norm{\zeta}$,
+$\varepsilon Tk\Psi_M\norm{e}\norm{\zeta}$, $\varepsilon T\Psi_D\norm{e}\norm{\zeta}$ and
+$\varepsilon T\Psi_M^2\norm{e}^2$. This is (i); the quadratic form
+$-a\norm{e}^2-b\norm{\zeta}^2+c\norm{e}\norm{\zeta}$ is at most
+\[
+  -\lambda_{\min}\begin{bmatrix}a&-c/2\\-c/2&b\end{bmatrix}\cdot\norm{w}^2,
+\]
+and $V\le p_{\mathrm{hi}}\norm{w}^2$, $\norm{w}^2\le V/p_{\mathrm{lo}}$ give the estimate.
+
+\noindent\emph{(d) The closed form.} Young's inequality gives
+$\varepsilon c_1\norm{e}\norm{\zeta}\le(\varepsilon\alpha/2)\norm{\zeta}^2+(\varepsilon c_1^2/(2\alpha))\norm{e}^2$.
+With $\varepsilon\le k\alpha/c_1^2$ the second coefficient is at most $k/2$, and with
+$\varepsilon\le k/(4T\Psi_M^2)$ the coefficient of $\norm{e}^2$ in (i) is at least $k-k/4$. So
+$\dot V\le-(k/4)\norm{e}^2-(\varepsilon\alpha/2)\norm{\zeta}^2\le-\gamma\norm{w}^2$. Since
+$V\le(3/4)\norm{w}^2$, $\dot V\le-(4\gamma/3)V$, and $\norm{w}^2\le4V$ gives
+\[
+  \norm{w(t)}^2\le4V(t)\le4e^{-(4\gamma/3)(t-t_0)}V(t_0)\le3e^{-(4\gamma/3)(t-t_0)}\norm{w(t_0)}^2.
+\]
+
+\noindent\emph{(e) Rescaling.} $\Psi_\omega$ has sup norm $\Psi_M$, derivative bound $\omega\Psi_D$, and
+\[
+  \int_t^{t+T/\omega}\Psi_\omega^\T\Psi_\omega\dd r=\frac1\omega\int_{\omega t}^{\omega t+T}\Psi^\T\Psi\dd r
+  \succeq\frac\alpha\omega I.
+\]
+Substitute into $c_1$ and the closed form.
+
+\noindent\emph{(f) $\Psi=\sin t^2$ is not uniformly exponentially stabilising} ($n=q=1$, $k>0$). Let
+$F(s):=\int_s^\infty\sin r^2\dd r$, so that $\sin s^2=-F'(s)$ and $\abs{F(s)}\le C/s$ (Fresnel). From
+$w(t_0)=(0,\zeta_0)$, $e(t)=-\int_{t_0}^te^{-k(t-s)}\sin(s^2)\zeta(s)\dd s$; integrating by parts and using
+$\abs{\zeta}\le\norm{w(t_0)}$ (the energy $\frac12\norm{w}^2$ is non-increasing) and
+$\abs{\dot\zeta}=\abs{\Psi e}\le\abs{e}$,
+\[
+  \abs{e(t)}\le\frac{C}{t_0}(2+1)\norm{w(t_0)}+\frac{C}{t_0}\int_{t_0}^te^{-k(t-s)}\abs{e(s)}\dd s,
+\]
+so $\sup_{t\ge t_0}\abs{e}\le3C\norm{w(t_0)}/\bigl(t_0(1-C/(kt_0))\bigr)$ for $t_0>C/k$. Hence
+\[
+  \tfrac12\norm{w(t_0+\Delta)}^2\ge\tfrac12\norm{w(t_0)}^2-k\Delta\Bigl(\frac{3C}{t_0}\Bigr)^2\norm{w(t_0)}^2(1+o(1)):
+\]
+the decay over any fixed $\Delta$ tends to $0$ as $t_0\to\infty$, which excludes a uniform exponential rate. The
+three ratios quoted in step~3 of the proof of Theorem E ($0.9715$, $0.9942$, $0.9980$ for $t_0=5$, $20$, $50$ and
+$\Delta=200$) match $1-\frac18\bigl(1/t_0-1/(t_0+200)\bigr)$ to three digits.
+\end{proof}
+\checkedby{\code{tests/test_excitation.py}: the two bounds on $V$ and $\dot V\le-\gamma\norm{w}^2$ at random $(t,w)$
+for four regressors of different shapes and gains, with the closed-form $\varepsilon$ and with the $\varepsilon$
+maximising the rate (\code{excitation.optimise_eps}; every admissible $\varepsilon$ gives a valid Lyapunov function,
+so the maximum over the grid is a valid bound for the given PE data; the data $\Psi_M$, $\Psi_D$, $\alpha$ are
+themselves grid maxima and a refinement-checked quadrature---the PE level over the $20\pi$ window is computed with
+$800$ Gauss--Legendre nodes, and \code{excitation.pe_level} raises if a $2\times$ refinement disagrees---so the
+ordering against the exact rate is numerical); the envelope along trajectories; the ordering explicit rate $\le$
+exact Floquet rate; the $\omega^{-2}$ law; the slow-adaptation limit (a no-growth check of the ratio, not a
+saturation check); and the explicit nonlinear envelope of Theorem E on the implemented closed loop. The round-5
+referee verified the pointwise form $\lambda_{\max}(N(t))\le-\gamma$ of $\dot V\le-\gamma\norm{w}^2$ over all $w$,
+with an independent quadrature, for ten regressor families ($q>n$, $q<n$, $k$ from $10^{-3}$ to $10^4$,
+$\Psi_D/\Psi_M$ up to $100$, non-periodic PE, near-degenerate PE) and eight choices of $\varepsilon$, without finding
+a violation.}
+
+\begin{rmk}{Remark}{E.0a}[how conservative the explicit rate is]
+The construction is of the Mazenc--Malisoff type, a backward--forward integral of the PE Gramian as a cross term; its
+content here is the explicit, self-contained statement for the mixed class (LTV), which removes the dependence of
+Theorem E on~\cite{S8}. The price is conservativeness, which the table of \code{exp_explicit_rate.py} $\to$
+\code{results/explicit_rate/table.md} quantifies against the exact Floquet rate of the linearised loop.
+\begin{itemize}
+  \item \emph{Slow adaptation} ($T\Psi_M^2\ll k$). To leading order in the gains, $c_1\approx T(k\Psi_M+\Psi_D)$ and
+    $\alpha=T\lambda_{\min}\langle\Psi^\T\Psi\rangle$ for a window equal to the period, so the closed-form bound
+    $\frac23\gamma_{\mathrm{cf}}$ of (ii) is $k\alpha^2/(3c_1^2)$, and the rate with the optimal $\varepsilon$ of the
+    same quadratic form is $k\alpha^2/c_1^2$ (maximise $\varepsilon\alpha-\varepsilon^2c_1^2/(4k)$ over
+    $\varepsilon$). The exact rate is $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$ when $k$ is also large compared with
+    the bandwidth of the reference (Remark E.1). Hence, in that doubly asymptotic regime,
+    \[
+      \frac{\text{exact}}{\text{explicit}}\approx3\kappa_\Psi\Bigl(1+\frac{\Psi_D}{k\Psi_M}\Bigr)^2\ \text{for (ii)},
+      \qquad
+      \approx\kappa_\Psi\Bigl(1+\frac{\Psi_D}{k\Psi_M}\Bigr)^2\ \text{for the optimised }\varepsilon,
+    \]
+    with $\kappa_\Psi:=\Psi_M^2/\lambda_{\min}\langle\Psi^\T\Psi\rangle$ the condition number of the averaged
+    Gramian. The exact rate pays for ill-conditioning once, through $\lambda_{\min}$; the bound pays twice, because
+    the Young step that absorbs the cross term $\varepsilon c_1\norm{e}\norm{\zeta}$ compares $c_1\propto\Psi_M$ with
+    $\alpha\propto\lambda_{\min}$. On the ideal of the Theorem E tests ($m=3$, $n=2$, $k_e=6$), driven by a two-tone
+    reference of period $20\pi$, with $G=g\cdot\operatorname{diag}(2,2,1)$: $\kappa_\Psi=1.27\cdot10^5$,
+    $(1+\Psi_D/(k_e\Psi_M))^2=3.84$, so the two formula values are $1.47\cdot10^6$ and $4.9\cdot10^5$. The measured
+    ratio with the optimised $\varepsilon$ falls from $6.56\cdot10^{10}$ at $g=30$ to $4.22\cdot10^5$ at $g=0.01$
+    ($5.63\cdot10^5$ with the closed-form $\varepsilon$, which the table evaluates with the exact $2\times2$ form and
+    the exact $p_{\mathrm{hi}}$ rather than the bound (ii)). Two corrections account for the difference from
+    $4.9\cdot10^5$: on this instance the exact rate is $0.66$ of $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$ at every
+    $g$ ($k_e=6$ is not large against the reference's bandwidth; the two last columns of the table), and the
+    $T^2\Psi_M^3$ term is still $13\%$ of $c_1$ at $g=0.01$ ($(c_1/c_1^\infty)^2=1.31$); their product,
+    $0.66\times1.31=0.86$, brings $4.9\cdot10^5$ to $4.2\cdot10^5$. The ratio is still decreasing at $g=0.01$ and
+    tends to about $0.66\cdot\kappa_\Psi(1+\Psi_D/(k_e\Psi_M))^2\approx3.2\cdot10^5$ as $g\to0$. In the mean-field
+    normalisation $\Psi_G\propto m^{-1/2}$, so large networks sit in this regime at fixed geometry.
+  \item \emph{Fast adaptation} ($T\Psi_M^2\gtrsim k$). The ratio grows further with the excitation strength, through
+    the $T^2\Psi_M^3$ term of $c_1$ and the $Q_M$ term of $\varepsilon$.
+  \item \emph{Remark E.1's instance} ($m=n=1$, $G=I$, $k_e=3$, $x_m=1.5\sin\omega t$). The ratio exact/explicit
+    decreases from $954$ at $\omega=1$ to $17.6$ at $\omega=64$. Over $\omega\ge4$ the log-log slopes are $-1.97$
+    (exact) and $-1.56$ (explicit); over the last octave, $\omega=32\to64$, the explicit slope is $-1.92$, approaching
+    the asymptotic $\omega^{-2}$ of (iii).
+  \item \emph{The window.} Any window length $T$ is admissible with its own $\alpha(T)$. On the test ideal the best
+    window is half a period.
+  \item \emph{Open.} A strict Lyapunov function whose rate is linear in $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$,
+    matching the averaging value, is the quantitative target of Section~\ref{sec:program}, branch~7.
+\end{itemize}
+\end{rmk}
+
+\begin{thm}{Theorem}{E}[with explicit constants]
+Let $\Psi_G:=m^{-1/2}\Psi(I_m\otimes G^{1/2})\in\R^{n\times mp}$, and let $(\alpha_G,T,\Psi_{G,M},\Psi_{G,D})$ be PE
+data for it: $\int_t^{t+T}\Psi_G^\T\Psi_G\dd r\succeq\alpha_GI$, $\norm{\Psi_G}\le\Psi_{G,M}$,
+$\norm{\dot\Psi_G}\le\Psi_{G,D}$. One may take $\alpha_G:=\alpha\lambda_{\min}(G)/m$,
+$\Psi_{G,M}:=m^{-1/2}\lambda_G^{1/2}\sup\norm{\Psi}$ and $\Psi_{G,D}:=m^{-1/2}\lambda_G^{1/2}\sup\norm{\dot\Psi}$;
+$\dot\Psi$ is bounded because $x_m\in C^1$ with bounded derivative and the Gaussian's mixed derivatives are bounded
+for $s\ge s_{\min}$. Let $(\varepsilon,\gamma,p_{\mathrm{lo}},p_{\mathrm{hi}},g_V)$ be the constants of Lemma E.0 for
+the data $(k_e,\alpha_G,T,\Psi_{G,M},\Psi_{G,D})$, with any admissible $\varepsilon$ (for example the closed form of
+E.0(ii)), where $g_V:=1+\varepsilon(2Q_{G,M}+T\Psi_{G,M})$ bounds $\norm{\partial V/\partial w}/\norm{w}$ (the
+Hessian of $V$ is $I$ plus a matrix of norm at most $\varepsilon T\Psi_{G,M}+2\varepsilon Q_{G,M}$) and
+$Q_{G,M}:=T^2\Psi_{G,M}^2/2$. Let $r:=\min(\rho,\delta)$, let $L_J$ be a Lipschitz constant, uniform in $t$, of the Jacobian of the closed-loop field
+$F$ of step~2 on the ball $D$, and let $S:=\operatorname{diag}\bigl(I_n,\,m^{-1/2}(I_m\otimes G^{-1/2})\bigr)$ be the
+similarity to the coordinates $w:=(e,\zeta)$ of step~3. Put
+\begin{gather*}
+  \tilde C_R:=\norm{S}\,\frac{L_J}{2}\,\norm{S^{-1}}^2,\qquad
+  r_w:=\min\Bigl\{\frac{r}{\norm{S^{-1}}},\ \frac{\gamma}{2g_V\tilde C_R}\Bigr\},\qquad
+  r_0:=r_w\Bigl(\frac{p_{\mathrm{lo}}}{p_{\mathrm{hi}}}\Bigr)^{1/2},\\
+  \lambda:=\frac{\gamma}{4p_{\mathrm{hi}}},\qquad c_0:=\frac{r_0^2}{2},\qquad
+  C:=\Bigl(\frac{2p_{\mathrm{hi}}}{p_{\mathrm{lo}}}\Bigr)^{1/2}\quad(\le\sqrt6\text{ for the closed-form }\varepsilon).
+\end{gather*}
 If $\VOT(t_0)\le c_0$, then:
 \begin{itemize}
   \item the optimal assignment $\pi$ at $t_0$ is unique, and it is the unique optimal assignment for all large $t$;
@@ -55,14 +232,20 @@ If $\VOT(t_0)\le c_0$, then:
     \]
     which is non-zero for $\pi\neq\mathrm{id}$.
 \end{itemize}
-$k$ and $\lambda$ depend on $\Psi(\cdot)$ itself, through the converse Lyapunov function of its linearisation, and on
-$m$, $G$ and $k_e$. $r_0$ and $c_0$ depend in addition on $a_{\max}$, $s_{\min}$, $\rho$ and $\delta$. The cited
-theorems are of existence type, so it is not proved here that $k$ and $\lambda$ can be chosen uniformly over the class
-of $\Psi$ with given $(T,\alpha,\sup\norm{\Psi},\sup\norm{\dot\Psi})$.
+Every constant is an explicit function of $(k_e,\alpha_G,T,\Psi_{G,M},\Psi_{G,D},m,G,r,L_J)$, hence uniform over the
+class of regressors with given PE data $(T,\alpha,\sup\norm{\Psi},\sup\norm{\dot\Psi})$. With the closed-form
+$\varepsilon$, $\lambda\ge\frac13\cdot\min\{k_e/4,\,\varepsilon\alpha_G/2\}$. The constants are conservative, in a
+quantified way (Remark E.0a); their role is to make the statement self-contained. $L_J$ is defined as a supremum; a
+closed-form bound follows from the third-derivative suprema of the Gaussian and is not computed here
+(\code{excitation.jacobian_lipschitz_estimate} estimates it from samples for the tests). The previous version proved
+this theorem with existence constants, conditional on Morgan--Narendra~\cite[Thm.~1]{S8}; Lemma E.0 removes that
+citation.
 \end{thm}
-\status{Proved, conditional on Morgan--Narendra~\cite[Thm.~1]{S8} as stated in its abstract (its hypotheses were not
-checked against the full text); linearisation checked; convergence observed. Novelty (literature audit): partially
-anticipated~\cite{R49}, \cite{R54}.}
+\status{Proved, self-contained (Lemma E.0 replaces the citation of Morgan--Narendra~\cite{S8}); linearisation
+checked; the strict Lyapunov inequality checked pointwise and the explicit envelope checked on the linearised and on
+the implemented loop; convergence observed. The explicit rate is a valid but conservative lower bound of the exact rate
+(Remark E.0a). Novelty (literature audit): partially anticipated~\cite{R49}, \cite{R54}; the strict Lyapunov function
+is of the Mazenc--Malisoff type.}
 
 \begin{proof}\mbox{}
 \begin{enumerate}[label=\arabic*.]
@@ -96,47 +279,61 @@ anticipated~\cite{R49}, \cite{R54}.}
         \code{test_theorem_E_linearisation_and_lyapunov_identity}.
     \end{itemize}
 
-  \item \emph{LTV stability.} Put $w:=(e,\zeta)$ with $\zeta:=m^{-1/2}(I_m\otimes G^{-1/2})\tilde\vartheta$, and
-    $\Psi_G:=m^{-1/2}\Psi(I\otimes G^{1/2})$.
+  \item \emph{LTV stability, with explicit constants.} Put $w:=(e,\zeta)$ with
+    $\zeta:=m^{-1/2}(I_m\otimes G^{-1/2})\tilde\vartheta$, that is $w=Sz$, and $\Psi_G:=m^{-1/2}\Psi(I\otimes G^{1/2})$.
     \begin{itemize}
-      \item The system becomes $\dot e=-k_ee-\Psi_G\zeta$ and $\dot\zeta=\Psi_G^\T e$, that is,
-        $\dot w=[A_0+B(t)]w$ with $A_0=\operatorname{diag}(-k_eI,0)$ and $B$ skew-symmetric, bounded, with bounded
-        derivative.
-      \item The excitation transfers: $\int\Psi_G^\T\Psi_G\dd r\succeq(\alpha\lambda_{\min}(G)/m)I$.
-      \item Morgan--Narendra~\cite[Thm.~1]{S8} characterises uniform asymptotic stability of
+      \item The system becomes $\dot e=-k_ee-\Psi_G\zeta$ and $\dot\zeta=\Psi_G^\T e$: this is (LTV) of Lemma E.0
+        with $k=k_e$ and $\Psi=\Psi_G$, that is, $\dot w=[A_0+B(t)]w$ with $A_0=\operatorname{diag}(-k_eI,0)$ and $B$
+        skew-symmetric, bounded, with bounded derivative.
+      \item The excitation transfers: $\int\Psi_G^\T\Psi_G\dd r\succeq(\alpha\lambda_{\min}(G)/m)I=\alpha_GI$, and
+        $\norm{\Psi_G}\le\Psi_{G,M}$, $\norm{\dot\Psi_G}\le\Psi_{G,D}$.
+      \item Lemma E.0 gives the strict Lyapunov function $V(t,w)$ with
+        $p_{\mathrm{lo}}\norm{w}^2\le V\le p_{\mathrm{hi}}\norm{w}^2$ and $\dot V\le-\gamma\norm{w}^2$ along the
+        linear system, hence
         \[
-          \begin{pmatrix}A&-B(t)\\B(t)^\T&0\end{pmatrix}
+          \norm{w(t)}\le\Bigl(\frac{p_{\mathrm{hi}}}{p_{\mathrm{lo}}}\Bigr)^{1/2}
+          e^{-(\gamma/(2p_{\mathrm{hi}}))(t-t_0)}\norm{w(t_0)}:
         \]
-        with $A+A^\T\prec0$ by richness of $B$. Apply it
-        with $A=-k_eI$ and $B=\Psi_G$ (bounded, with bounded derivative): the origin of the $w$-system is uniformly
-        asymptotically stable.
-      \item (PE) supplies the richness, since
-        $\int_t^{t+T}\norm{\Psi_Gw}\dd r\ge\alpha\lambda_{\min}(G)/(m\cdot\sup\norm{\Psi_G})$ for every unit $w$.
-      \item For linear systems UAS is UES (Khalil~\cite[Thm.~4.11]{khalil2002}). UES transfers to
-        $(e,\tilde\vartheta)$ through the constant similarity $\operatorname{diag}\bigl(I,m^{1/2}(I\otimes
-        G^{1/2})\bigr)$.
+        uniform exponential stability with explicit overshoot and rate.
+      \item The $w$-coordinates are the coordinates of the matched Lyapunov function:
+        $\norm{\zeta}^2=\frac1m\sum_i\norm{\tilde\vartheta_i}^2_{G^{-1}}=W_\pi^2$, so
+        $\norm{w}^2=\norm{e}^2+W_\pi^2=2V_\pi$.
       \item The bound on $\dot\Psi$ cannot be dropped. $\Psi=\sin t^2$ is bounded and PE, but for
         $\dot e=-e-\Psi\zeta$, $\dot\zeta=\Psi e$, from $w(t_0)=(e,\zeta)=(0,1)$, a numerical computation gives the
-        ratio $\norm{w(t_0+200)}/\norm{w(t_0)}$ as $0.9715$, $0.9942$ and $0.9980$ for $t_0=5$, $20$ and $50$. So that
-        system is not UES.
-      \item We could not check the exact richness definition and regularity class of \cite{S8} against its full
-        text. Its abstract's characterisation matches this system.
+        ratio $\norm{w(t_0+200)}/\norm{w(t_0)}$ as $0.9715$, $0.9942$ and $0.9980$ for $t_0=5$, $20$ and $50$, and
+        part~(f) of the proof of Lemma E.0 shows that the decay over a fixed horizon tends to $0$ as $t_0\to\infty$.
+        So that system is not UES. Consistently, the rate of Lemma E.0 tends to $0$ as $\Psi_D\to\infty$.
     \end{itemize}
 
-  \item \emph{Nonlinear system.} Apply Khalil~\cite[Thm.~4.13]{khalil2002} in $z=(e,\tilde\vartheta)$ on
-    $[0,\infty)\times D$. The Jacobian is bounded and Lipschitz on $D$ uniformly in $t$, and the linearisation is UES.
-    This gives $r_0\le r$, $k$ and $\lambda$, with $\norm{z(t)}\le k\norm{z(t_0)}e^{-\lambda(t-t_0)}$ whenever
-    $\norm{z(t_0)}<r_0$. These trajectories stay in $D$, where the closed loop equals $F$.
-
-  \item \emph{Transfer to $(\norm{e},W)$.} If $V_\pi(t_0)\le c_0$, then
+  \item \emph{Nonlinear system, with an explicit ball.} On the closure of $D$ (to which the Lipschitz bound extends)
+    the field is $F(t,z)=A(t)z+R(t,z)$ with $\norm{R(t,z)}\le(L_J/2)\norm{z}^2$ (Taylor with the Lipschitz
+    Jacobian). In $w$-coordinates,
+    $\dot w=[A_0+B(t)]w+\tilde R(t,w)$ with $\tilde R(t,w):=S\,R(t,S^{-1}w)$, so
+    $\norm{\tilde R(t,w)}\le\tilde C_R\norm{w}^2$ on $\{\norm{w}<r/\norm{S^{-1}}\}\subset S(D)$. Along the nonlinear
+    system, since $\norm{\partial V/\partial w}\le g_V\norm{w}$,
     \[
-      \norm{z(t_0)}^2\le2\max(1,m\lambda_G)V_\pi(t_0)\le2\max(1,m\lambda_G)c_0<2(1+m\lambda_G)c_0=r_0^2.
+      \dot V\le-\gamma\norm{w}^2+g_V\tilde C_R\norm{w}^3\le-\frac{\gamma}{2}\norm{w}^2
+      \qquad\text{whenever }\norm{w}\le r_w.
     \]
-    The bound $W\le(m\lambda_{\min}(G))^{-1/2}\norm{\tilde\vartheta}$ and the optimality of $\pi$ at $t_0$ give $C$.
+    The sublevel set $\{V\le p_{\mathrm{lo}}r_w^2\}$ is contained in $\{\norm{w}\le r_w\}$, so it is forward
+    invariant, and it contains the ball $\{\norm{w}\le r_0\}$, since $V\le p_{\mathrm{hi}}\norm{w}^2$. On it
+    $\dot V\le-(\gamma/(2p_{\mathrm{hi}}))V$, so for $\norm{w(t_0)}\le r_0$,
+    \[
+      \norm{w(t)}\le\Bigl(\frac{p_{\mathrm{hi}}}{p_{\mathrm{lo}}}\Bigr)^{1/2}e^{-\lambda(t-t_0)}\norm{w(t_0)},
+      \qquad\lambda=\frac{\gamma}{4p_{\mathrm{hi}}}.
+    \]
+    These trajectories stay in $D$, where the closed loop equals $F$. (Khalil~\cite[Thm.~4.13]{khalil2002} gives the
+    same conclusion with existence constants; the explicit form is what Lemma E.0 adds.)
 
-    \emph{Uniqueness.} Suppose $V_\pi,V_{\pi'}\le c_0$ with $\pi\neq\pi'$. Then the state lies in Khalil balls around
-    both $(0,\vartheta^*\circ\pi)$ and $(0,\vartheta^*\circ\pi')$. The solution would converge to two distinct
-    equilibria, which is impossible.
+  \item \emph{Transfer to $(\norm{e},W)$.} Let $\pi$ be optimal at $t_0$. Then
+    $\norm{w(t_0)}^2=2V_\pi(t_0)=2\VOT(t_0)\le2c_0=r_0^2$, so step~4 applies. Moreover
+    $\norm{e}+W\le\norm{e}+W_\pi=\norm{e}+\norm{\zeta}\le\sqrt2\norm{w}$ at every $t$, and
+    $\norm{w(t_0)}\le\norm{e(t_0)}+\norm{\zeta(t_0)}=\norm{e(t_0)}+W(t_0)$. This gives the estimate with
+    $C=(2p_{\mathrm{hi}}/p_{\mathrm{lo}})^{1/2}$.
+
+    \emph{Uniqueness.} Suppose $V_\pi,V_{\pi'}\le c_0$ with $\pi\neq\pi'$. Then the state lies in the invariant balls
+    of step~4 around both $(0,\vartheta^*\circ\pi)$ and $(0,\vartheta^*\circ\pi')$. The solution would converge to
+    two distinct equilibria, which is impossible.
 
     \emph{Limits.} Hence $z(t)\to0$, that is, $\vartheta_i(t)\to\vartheta^*_{\pi(i)}$. For $\pi'\neq\pi$,
     \[
@@ -146,15 +343,21 @@ anticipated~\cite{R49}, \cite{R54}.}
     converges as stated.\qedhere
 \end{enumerate}
 \end{proof}
-\checkedby{\code{tests/test_transport.py} and \code{experiments/exp_pe_convergence.py}.
+\checkedby{\code{tests/test_transport.py}, \code{tests/test_excitation.py} and\newline
+\code{experiments/exp_pe_convergence.py}.
 \begin{itemize}[nosep]
   \item Linearisation: the Jacobian of the implemented loop equals $A(t)$, and
     $QA+A^\T Q=\operatorname{diag}(-k_eI,0)$\newline
     (\code{test_theorem_E_linearisation_and_lyapunov_identity}).
+  \item Explicit constants: on the implemented loop, from a start inside the explicit ball,
+    $\norm{w(t)}\le(p_{\mathrm{hi}}/p_{\mathrm{lo}})^{1/2}e^{-\lambda t}\norm{w(0)}$ at every sample ($L_J$ estimated
+    from samples)\newline
+    (\code{test_theorem_E_explicit_nonlinear_envelope_on_the_implemented_loop}).
   \item Convergence: the matched error decays and the labelled error does not (qualitative); sliding-window
     excitation and fitted rates\newline
     (\code{test_theorem_E_matched_error_converges_labelled_does_not}, \code{exp_pe_convergence.py}).
-  \item Not checked in the repository: the rate of Theorem E, Corollary E.2 and Remark E.3.
+  \item Not checked in the repository: the sharpness of the explicit rate beyond the tables of Remark E.0a;
+    Corollary E.2 and Remark E.3.
 \end{itemize}}
 
 \begin{rmk}{Remark}{E.1}[the rate]\mbox{}
@@ -168,7 +371,8 @@ anticipated~\cite{R49}, \cite{R54}.}
       \item For $m=n=1$, $\vartheta^*=(1.5,0.3,0.8)$, $G=I$, $k_e=3$ and $x_m=1.5\sin\omega t$ ($T=2\pi$), these four
         quantities do not depend on $\omega$. The exact Floquet rate, computed numerically, falls from
         $4.7\times10^{-2}$ ($\omega=1$) to $2.9\times10^{-5}$ ($\omega=64$), like $\omega^{-2}$.
-      \item A lower bound must also involve $\sup\norm{\dot\Psi_G}$ (step~3 of the proof), and none is proved here.
+      \item A lower bound must also involve $\sup\norm{\dot\Psi_G}$ (step~3). Lemma E.0 gives one; it reproduces the
+        $\omega^{-2}$ law (Remark E.0a).
       \item Exact Floquet rates, computed numerically, are also not monotone in $G$ or in $k_e$, and they decrease for
         large $G$. When $k_e$ is large relative to the reference bandwidth, they approach
         $\lambda_{\min}\langle\Psi_G^\T\Psi_G\rangle/k_e$.
@@ -213,8 +417,7 @@ This gives uniform-in-time Hölder continuity in the basin:
   \delta_0^{\lambda/(\Lambda+\lambda)}.
 \end{equation}
 \end{thm}
-\status{Proved, conditional on Morgan--Narendra~\cite[Thm.~1]{S8} as stated in its abstract (its hypotheses were
-not checked against the full text), through Theorem E. Not checked in the repository.}
+\status{Proved, through Theorem E (self-contained since Lemma E.0). Not checked in the repository.}
 
 \begin{proof}
 $\norm{x_t-x'_t}=\norm{e-e'}\le\norm{e}+\norm{e'}$, and $W(\mu_t,\mu'_t)\le W(\mu_t,\mu^*)+W(\mu'_t,\mu^*)$. Bound

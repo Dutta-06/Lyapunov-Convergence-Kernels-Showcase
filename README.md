@@ -14,8 +14,9 @@ weights, centres and widths are all adapted online. It has two parts.
    placement of kernels all become statements on Wasserstein space, independent of how the kernels are labelled.
 
 **The manuscript.** [lyapunov.pdf](lyapunov.pdf) is the complete mathematical treatment of both parts: every result
-with its proof and status, the numerical evidence and the verification map. It is version 2 and supersedes version
-1 of the same name, whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript/](manuscript).
+with its proof and status, the numerical evidence and the verification map. It is version 3 (version 4 of the
+theory: Lemma E.0, Theorems C′, D′, I, J and Proposition K added) and supersedes versions 2 and 1 of the same name,
+whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript/](manuscript).
 
 **Status.** This is research in progress and has not been peer reviewed.
 
@@ -130,7 +131,7 @@ n = 3 and NTK results contradict them.
 
 | path | content |
 |---|---|
-| [lyapunov.pdf](lyapunov.pdf) | the manuscript (version 2): both parts typeset, with proofs, evidence and the verification map |
+| [lyapunov.pdf](lyapunov.pdf) | the manuscript (version 3): both parts typeset, with proofs, evidence and the verification map |
 | [manuscript/](manuscript) | its LaTeX source: `lyapunov.tex`, `preamble.tex` and one file per section in `sections/` |
 | [PARADIGM.md](PARADIGM.md) | the transport theory: results, proofs, verification map (§7), research program (§8) |
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |

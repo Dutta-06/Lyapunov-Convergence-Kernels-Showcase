@@ -1,0 +1,385 @@
+% Theorem J: the finite-m closed loop as a perturbed gradient flow (PARADIGM.md, section 6d).
+\section{Theorem J: the finite-$m$ closed loop as a perturbed gradient flow}\label{sec:thmJ}
+
+This section proves the first step of Section~\ref{sec:program}, branch 1: at finite $m$, without dither, in the
+scaling $\sigma = \sigma_0/k_e$, the real closed loop has, near every hyperbolic critical point of the $m$-particle
+regularised occupation loss, a unique periodic orbit with the same stability type, at distance $O(1/k_e)$, whose
+first-order location is the one Proposition H.7 and Remark H.7a predict. It turns Remark H.7a's ``formal''
+second-order averaging into a theorem for this system.
+
+\paragraph{Setting.} The closed loop of Theorem H's design with $\tau = 0$, at finite $m$, in the scaling
+$\sigma = \sigma_0/k_e$:
+\begin{equation}\label{eq:thmJ:CL}
+  \begin{gathered}
+    \dot x = f(x) + \dot x_m - k_e e - \fhat_\Theta(x),\qquad e := x - x_m(t),\qquad
+    \fhat_\Theta := \frac1m\sum_j\tilde\Phi(\cdot\,;\vartheta_j),\\
+    \dot\vartheta_i = G\nabla_\vartheta\bigl[e^\T\tilde\Phi(x;\vartheta_i)\bigr]
+    - \frac{\sigma_0}{k_e}(\vartheta_i - \vartheta^0),\qquad i = 1,\dots,m,
+  \end{gathered}
+  \tag{CL}
+\end{equation}
+with $\Theta := (\vartheta_1,\dots,\vartheta_m)\in\R^{mp}$, $G_m := I_m\otimes G$, saturated features, $x_m\in C^2$
+$T_0$-periodic with occupation measure $\rho$, and $f\in C^2$ on a neighbourhood of the tube
+$\mathcal T_R := \{x : \operatorname{dist}(x,x_m([0,T_0])) \le R\}$ for some $R>0$. Put
+\begin{gather*}
+  r_\Theta(x) := f(x) - \fhat_\Theta(x),\qquad
+  J_m(\Theta) := m\bar L_m(\Theta) + \frac{\sigma_0}{2}\sum_i\norm{\vartheta_i - \vartheta^0}^2_{\Ginv},\\
+  \bar L_m(\Theta) := \frac12\int\norm{r_\Theta}^2\dd\rho,\\
+  H_i(\Theta,t) := G\nabla_\vartheta\bigl[r_\Theta(x_m(t))^\T\tilde\Phi(x_m(t);\vartheta)\bigr]\Big|_{\vartheta=\vartheta_i}
+  - \sigma_0(\vartheta_i - \vartheta^0),\\
+  \langle H\rangle(\Theta) = -G_m\nabla J_m(\Theta).
+\end{gather*}
+The averaged system of \textup{(CL)} is
+$\dot\Theta = \frac1{k_e}\langle H\rangle(\Theta) = -\frac1{k_e}G_m\nabla J_m(\Theta)$: the gradient flow of $J_m$ in
+the $G^{-1}$ metric, which is $\Aavg$ at $\tau = 0$ for the $m$-atom measure (Remark H.0); in slow time
+$s := t/k_e$ it does not depend on $k_e$. Its equilibria are the critical points of $J_m$. A critical point $\Theta^*$
+is \emph{hyperbolic} if $\nabla^2J_m(\Theta^*)$ is non-singular; its index is the number of negative eigenvalues; it
+is a \emph{non-degenerate minimum} if $\nabla^2J_m(\Theta^*)\succ0$. Write $\nu_1\le\dots\le\nu_{mp}$ for the
+eigenvalues of $G_m^{1/2}\nabla^2J_m(\Theta^*)G_m^{1/2}$ (those of $G_m\nabla^2J_m(\Theta^*)$), and
+$\lambda_* := \nu_1$ when $\Theta^*$ is a minimum.
+
+Let $u(\Theta,t)$ be the zero-mean antiderivative in $t$ of $H(\Theta,t) - \langle H\rangle(\Theta)$
+($T_0$-periodic), and define, as in Proposition H.7 and Remark H.7a, at the atomic measure
+$\mu^* := \frac1m\sum_j\delta_{\vartheta^*_j}$:
+\begin{gather*}
+  J := D_\Theta\bigl[\tfrac1{k_e}\langle H\rangle\bigr](\Theta^*) = -\frac1{k_e}G_m\nabla^2J_m(\Theta^*),\\
+  b_{\mathrm{frozen},i} := \frac1{k_e^2}G\nabla_\vartheta\bigl(U_{\mathrm{even}} + U_{\mathrm{odd}}\bigr)[\mu^*](\vartheta)
+  \Big|_{\vartheta=\vartheta^*_i},\qquad
+  b_{\mathrm{osc}} := \frac1{k_e^2}\bigl\langle D_\Theta H(\Theta^*,t)\cdot u(\Theta^*,t)\bigr\rangle_t.
+\end{gather*}
+
+\begin{thm}{Theorem}{J}
+Let $\Theta^*$ be a hyperbolic critical point of $J_m$. There are $k_0,\rho_0,C>0$, depending on \textup{(}$f$, $x_m$,
+$G$, $\sigma_0$, $R$, the feature bounds, $\Theta^*$\textup{)} but not on $k_e$, such that for every $k_e\ge k_0$:
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item \emph{Existence, uniqueness, location.} \textup{(CL)} has a $T_0$-periodic solution $(x_p,\Theta_p)$, unique
+    among the $T_0$-periodic solutions with $\sup_t\norm{\Theta_p(t) - \Theta^*}_{\Ginv} \le \rho_0$ and
+    $\sup_t\norm{x_p(t) - x_m(t)} \le R$. It satisfies
+    \begin{gather*}
+      \sup_t\norm{x_p(t) - x_m(t)} \le C/k_e,\qquad \sup_t\norm{\Theta_p(t) - \Theta^*}_{\Ginv} \le C/k_e,\\
+      \Theta_p(t) - \bar\Theta_p = \frac1{k_e}u(\Theta^*,t) + O(k_e^{-2}),
+    \end{gather*}
+    with $\bar\Theta_p$ the period mean of $\Theta_p$.
+  \item \emph{Stability type.} The monodromy matrix of $(x_p,\Theta_p)$ has $n$ eigenvalues of modulus at most
+    $e^{-(k_e - L)T_0}$, with $L$ independent of $k_e$ \textup{(}the error channel\textup{)}, and $mp$ eigenvalues
+    \[
+      \lambda_j = \exp\bigl(-(T_0/k_e)\nu_j + O(k_e^{-2})\bigr),\qquad j = 1,\dots,mp.
+    \]
+    Hence the orbit is hyperbolic with the index of $\Theta^*$: exponentially stable if $\nabla^2J_m(\Theta^*)\succ0$,
+    with parameter Floquet exponents $(1/k_e)\nu_j + O(k_e^{-2})$, and unstable otherwise.
+  \item \emph{Basin \textup{(}non-degenerate minimum\textup{)}.} If $\nabla^2J_m(\Theta^*)\succ0$, every solution of
+    \textup{(CL)} with $\norm{\Theta(0) - \Theta^*}_{\Ginv} \le \rho_0$ and $\norm{x(0) - x_m(0)} \le R$ converges to
+    the periodic orbit, and
+    \begin{gather*}
+      \norm{\Theta(t) - \Theta_p(t)}_{\Ginv} + \norm{x(t) - x_p(t)}
+      \le Ce^{-\mu t}\bigl(\norm{\Theta(0) - \Theta_p(0)}_{\Ginv} + \norm{x(0) - x_p(0)}\bigr),\\
+      \mu := \frac{\lambda_*}{k_e}(1 - \kappa),
+    \end{gather*}
+    with $\kappa = \kappa(\rho_0,1/k_e)\to0$ as $(\rho_0,1/k_e)\to0$. The basin radius $\rho_0$ does not depend on
+    $k_e$; the rate is $\lambda_*/k_e$ to leading order, that is, $\lambda_*$ in slow time.
+  \item \emph{First-order location.} The period mean satisfies
+    \begin{align*}
+      \bar\Theta_p &= \Theta^* - J^{-1}(b_{\mathrm{frozen}} + b_{\mathrm{osc}}) + O(k_e^{-2})\\
+      &= \Theta^* + \frac1{k_e}\bigl(G_m\nabla^2J_m(\Theta^*)\bigr)^{-1}\cdot k_e^2(b_{\mathrm{frozen}} + b_{\mathrm{osc}})
+      + O(k_e^{-2}).
+    \end{align*}
+    The offset is $O(1/k_e)$. Its orientation-odd part is the quantity measured in Remark H.7a, so the prediction
+    $\Theta_+ - \Theta_- = -2J^{-1}(b_{\mathrm{odd}} + b_{\mathrm{osc}}) + O(k_e^{-2})$ of that remark is now a
+    statement with error control.
+\end{enumerate}
+\end{thm}
+\status{Proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map);
+checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian
+and the first-order prediction, at $k_e=10$--$160$ (\code{tests/test_periodic.py}, \code{exp_periodic_orbit.py}).
+Novelty (literature audit): the first step of \S8 branch 1; the tools (two-time-scale averaging under attraction) are
+classical.}
+
+\begin{proof}
+Write $\varepsilon := 1/k_e$. All constants below are uniform in $\varepsilon\le1/k_0$ and in $\Theta$ in the ball
+$\mathcal K := \{\norm{\Theta - \Theta^*} \le 2\rho_0\}$, because the saturated features and their derivatives are
+bounded uniformly in $\Theta$ and $f\in C^2$ on the compact tube $\mathcal T_R$.
+
+\smallskip
+\emph{Step 1 (the tube and the slaved error).} Let
+$M_r := \sup\{\norm{r_\Theta(x)} : x\in\mathcal T_R,\ \Theta\in\mathcal K\}$ and $L_r := \sup\norm{\partial_xr_\Theta}$
+on the same set. For $k_e > M_r/R$ the tube $\{\norm{e}\le R\}$ is forward invariant: on $\norm{e} = R$,
+$\frac{\mathrm{d}}{\mathrm{d}t}\frac12\norm{e}^2 = e^\T r_\Theta(x) - k_e\norm{e}^2 < 0$. Put
+$w := e - \varepsilon r_\Theta(x)$ with $x$ the actual state. Since $r_\Theta(x) - k_e e = -k_e w$ and
+$\dot x = \dot x_m - k_e w$,
+\[
+  \dot w = -\bigl(k_eI - \partial_xr_\Theta(x)\bigr)w - \varepsilon\,\partial_xr_\Theta(x)\dot x_m
+  - \varepsilon\,\partial_\Theta r_\Theta(x)\cdot\dot\Theta,
+\]
+and $\dot\Theta = F(e,\Theta,t) := \bigl(G\nabla_\vartheta[e^\T\tilde\Phi(x;\vartheta_i)]
+- \varepsilon\sigma_0(\vartheta_i - \vartheta^0)\bigr)_i$ is $O(\norm{e} + \varepsilon) = O(\norm{w} + \varepsilon)$.
+So for $k_e\ge2L_r + C$, $\frac{\mathrm{d}}{\mathrm{d}t}\norm{w} \le -(k_e/2)\norm{w} + C_1\varepsilon$ on
+$\{\norm{w}\le1\}\cap\{\norm{e}\le R\}$, whence $\norm{w(t)} \le e^{-k_et/2}\norm{w(0)} + 2C_1\varepsilon^2$. The set
+$W_\varepsilon := \{\norm{w} \le 3C_1\varepsilon^2\}$ is forward invariant and absorbs every solution of the tube
+within $t_1 = O(\varepsilon\log(1/\varepsilon))$, during which $\Theta$ moves by
+$O(\varepsilon\norm{e(0)} + \varepsilon^2\log(1/\varepsilon))$ ($\dot\Theta = O(\norm{e} + \varepsilon)$ and $\norm{e}$
+decays at rate $k_e/2$). On $W_\varepsilon$,
+$e = \varepsilon r_\Theta(x_m(t)) + \varepsilon[r_\Theta(x_m + e) - r_\Theta(x_m)] + w
+= \varepsilon r_\Theta(x_m(t)) + O(\varepsilon^2)$.
+
+\smallskip
+\emph{Step 2 (the slow equation and the fast variable).} Let $e_\Theta(t)$ be the frozen-$\Theta$ periodic error of
+Proposition H.7(a): the unique $T_0$-periodic solution of $\dot e = r_\Theta(x_m(t) + e) - k_e e$, exponentially
+stable with rate at least $k_e/2$, with
+$e_\Theta = \varepsilon r_\Theta(x_m) + \varepsilon^2(\partial_xr_\Theta\,r_\Theta - \dot r_\Theta)(x_m) + O(\varepsilon^3)$
+in sup norm (Taylor expansion of $r_\Theta$ in $x$ to second order; $f\in C^2$). Because $\Theta$ enters
+$r_\Theta = f - \fhat_\Theta$ only through the smooth $\fhat_\Theta$, $e_\Theta(t)$ is $C^2$ in $\Theta$ as soon as
+$f\in C^1$, and differentiating the frozen equation (gain $1/k_e$) gives
+$\partial_\Theta e_\Theta = \varepsilon\,\partial_\Theta r_\Theta(x_m) + O(\varepsilon^2)$ and
+$\partial^2_\Theta e_\Theta = O(\varepsilon)$, uniformly on $\mathcal K$. Let $\zeta := e - e_{\Theta(t)}(t)$ be the
+fast variable. Then
+\[
+  \dot\zeta = \bigl[r_\Theta(x_m + e) - r_\Theta(x_m + e_\Theta)\bigr] - k_e\zeta - \partial_\Theta e_\Theta(t)\cdot\dot\Theta,
+\]
+where the bracket is Lipschitz in $\zeta$ with constant $L_r$ and the last term is
+$O(\varepsilon)\cdot O(\varepsilon) = O(\varepsilon^2)$ ($\dot\Theta = F = O(\norm{e} + \varepsilon)$). So for
+$k_e\ge2L_r + C$ the set $Z_\varepsilon := \{\norm{\zeta} \le C_2\varepsilon^3\}$ is forward invariant and absorbs
+every solution of the tube within $O(\varepsilon\log(1/\varepsilon))$; on $W_\varepsilon$ of Step 1 one has
+$\norm{\zeta} = O(\varepsilon^2)$ at once and $O(\varepsilon^3)$ after this further transient. On $Z_\varepsilon$,
+since $F$ is $C^1$ in $e$ with $\partial_eF = O(1)$,
+\begin{equation}
+  \dot\Theta = F(e_\Theta(t),\Theta,t) + R(\Theta,\zeta,t)
+  = \varepsilon H(\Theta,t) + \varepsilon^2H_2(\Theta,t) + O(\varepsilon^3),\qquad
+  \norm{R} \le C\norm{\zeta} = O(\varepsilon^3),
+  \tag{S}
+\end{equation}
+where $\varepsilon H + \varepsilon^2H_2$ is the expansion of the frozen-$\Theta$ drift along the frozen periodic
+error, and by Proposition H.7(b),
+$\langle H_2\rangle(\Theta)_i = G\nabla_\vartheta(U_{\mathrm{even}} + U_{\mathrm{odd}})[\mu_\Theta](\vartheta_i)$, that
+is, $\varepsilon^2\langle H_2\rangle(\Theta^*) = b_{\mathrm{frozen}}$. $H$ and $H_2$ are $T_0$-periodic and $C^2$ in
+$\Theta$ on $\mathcal K$, with bounds uniform in $\varepsilon$.
+
+\smallskip
+\emph{Regularity of the remainders (used in Steps 4 and 6).} The second-order terms of \textup{(S)}, and of
+\textup{(N)} below, are used in sup norm only, for the location (d). The implicit-function and contraction arguments
+of Steps 4 and 6 need first-order $C^1$ closeness, which holds: $F(e_\Theta(t),\Theta,t)$ is $C^2$ in $\Theta$ with
+$\partial_\Theta[F(e_\Theta(t),\Theta,t)] = \varepsilon\,\partial_\Theta H(\Theta,t) + O(\varepsilon^2)$ (from
+$\partial_\Theta e_\Theta = \varepsilon\,\partial_\Theta r_\Theta(x_m) + O(\varepsilon^2)$ and the smooth dependence of
+$F$ on $(e,\Theta)$ through $\tilde\Phi$); the remainder $R$ is Lipschitz in $\zeta$ with constant
+$\sup\norm{\partial_eF} = O(1)$ and Lipschitz in $\Theta$ with constant $O(\norm{\zeta}) = O(\varepsilon^3)$; and the
+forcing $-\partial_\Theta e_\Theta\cdot\dot\Theta$ of the $\zeta$-equation is Lipschitz in $\Theta$ with constant
+$O(\varepsilon^2)$ (from $\partial^2_\Theta e_\Theta = O(\varepsilon)$ and $\partial_\Theta F = O(\varepsilon)$). None
+of this uses more than $f\in C^2$.
+
+\smallskip
+\emph{Step 3 (second-order averaging normal form).} Let $u$ be the zero-mean antiderivative of $H - \langle H\rangle$
+and $\Theta = Y + \varepsilon u(Y,t)$. Then
+$\dot Y = \varepsilon\langle H\rangle(Y) + \varepsilon^2\bigl[H_2(Y,t) + D_\Theta H(Y,t)u(Y,t)
+- D_Yu(Y,t)\langle H\rangle(Y)\bigr] + O(\varepsilon^3)$. Let $u_2$ be the zero-mean antiderivative of the
+fluctuating part of the bracket and $Y = Y_2 + \varepsilon^2u_2(Y_2,t)$. Since
+$\langle D_Yu\rangle = D_Y\langle u\rangle = 0$,
+\begin{equation}
+  \dot Y_2 = \varepsilon\langle H\rangle(Y_2) + \varepsilon^2\Phi_2(Y_2) + O(\varepsilon^3),\qquad
+  \Phi_2 := \langle H_2\rangle + \langle D_\Theta H\cdot u\rangle,
+  \tag{N}
+\end{equation}
+the second-order averaged equation of Remark H.7a (Sanders--Verhulst--Murdock~\cite[\S2.9]{svm2007}), now with a
+remainder that is uniformly $O(\varepsilon^3)$ on $Z_\varepsilon\times\mathcal K$ because \textup{(S)} holds there.
+The transformation $\Theta\mapsto Y_2$ is a $T_0$-periodic near-identity diffeomorphism from $\mathcal K$ onto its
+image, $O(\varepsilon)$-close to the identity with $O(\varepsilon)$ derivative, and the period mean of $\Theta$ along
+any curve $Y_2(t) = Y_2^0 + O(\varepsilon^2)$ equals the period mean of $Y_2$ up to $O(\varepsilon^3)$, because $u$
+and $u_2$ have zero mean.
+
+\smallskip
+\emph{Step 4 (the Poincaré map in the slow coordinates).} Let $P = (P_Y,P_\zeta)$ be the time-$T_0$ map of
+\textup{(CL)} from $t = 0$, written in the coordinates $(Y_2,\zeta)$ on $\mathcal K\times Z_\varepsilon$. By
+\textup{(N)} and Step 2,
+\begin{gather*}
+  P_Y(Y_2,\zeta) = Y_2 + \varepsilon T_0\tilde A(Y_2) + O(\varepsilon^3),\qquad
+  \tilde A := \langle H\rangle + \varepsilon\bigl[\Phi_2 + (T_0/2)D\langle H\rangle\cdot\langle H\rangle\bigr],\\
+  \norm{P_\zeta(Y_2,\zeta)} \le e^{-k_eT_0/2}\norm{\zeta} + O(\varepsilon^3),
+\end{gather*}
+the $\varepsilon^2(T_0^2/2)D\langle H\rangle\langle H\rangle$ term being the second-order term of the time-$T_0$ flow
+of \textup{(N)}. The Lipschitz constants of the coupling are $\Lip_\zeta P_Y = O(\varepsilon)$ (a perturbation of
+$\zeta$ acts on $\dot\Theta$ through $\partial_eF = O(1)$ while it decays at rate $k_e/2$, so its integrated effect
+over a period is $O(\varepsilon)\norm{\zeta}$) and $\Lip_YP_\zeta = O(\varepsilon^3)$ (the forcing of the
+$\zeta$-equation is $O(\varepsilon^2)$-Lipschitz in $\Theta$ and is integrated against the fast decay). Hence
+$\zeta\mapsto P_\zeta(Y_2,\zeta)$ has a unique fixed point $\zeta^*(Y_2) = O(\varepsilon^3)$, Lipschitz in $Y_2$ with
+constant $O(\varepsilon^3)$, and the fixed points of $P$ are the zeros of
+\[
+  \tilde A_\varepsilon(Y) := \frac{P_Y(Y,\zeta^*(Y)) - Y}{\varepsilon T_0} = \tilde A(Y) + O(\varepsilon^2).
+\]
+By the regularity paragraph, $D_YP_Y = I + \varepsilon T_0D\langle H\rangle(Y) + O(\varepsilon^2)$ (the variational
+equation of the slow flow over one period, whose coefficient is $\varepsilon\,\partial_\Theta H + O(\varepsilon^2)$),
+and the $\zeta^*$-dependence contributes $\Lip_\zeta P_Y\cdot\Lip_Y\zeta^* = O(\varepsilon^4)$, so
+$\tilde A_\varepsilon$ is Lipschitz with $\Lip(\tilde A_\varepsilon - \langle H\rangle) = O(\varepsilon)$ on
+$\mathcal K$. Since $D\langle H\rangle(\Theta^*) = -G_m\nabla^2J_m(\Theta^*)$ is invertible,
+$Y\mapsto Y - D\langle H\rangle(\Theta^*)^{-1}\tilde A_\varepsilon(Y)$ maps a ball of $\varepsilon$-independent radius
+$\rho_0$ around $\Theta^*$ into itself and is a contraction there for $\varepsilon$ small (the Lipschitz form of the
+implicit function theorem), which gives a unique zero $Y_2^* = \Theta^* + O(\varepsilon)$, hence a unique fixed point
+of $P$ with $\Theta$-component within $O(\varepsilon)$ of $\Theta^*$, that is, a unique $T_0$-periodic solution in the
+stated set; the bound on $x_p - x_m$ is Step 1. Expanding $\tilde A_\varepsilon(Y_2^*) = 0$ to first order,
+$D\langle H\rangle(\Theta^*)(Y_2^* - \Theta^*) + \varepsilon\Phi_2(\Theta^*) = O(\varepsilon^2)$ (the term
+$(T_0/2)D\langle H\rangle\langle H\rangle(Y_2^*)$ is $O(\varepsilon)$ because $\langle H\rangle(Y_2^*) = O(\varepsilon)$),
+so
+\[
+  Y_2^* = \Theta^* - \varepsilon D\langle H\rangle(\Theta^*)^{-1}\Phi_2(\Theta^*) + O(\varepsilon^2)
+  = \Theta^* - J^{-1}(b_{\mathrm{frozen}} + b_{\mathrm{osc}}) + O(\varepsilon^2),
+\]
+using $J = \varepsilon D\langle H\rangle(\Theta^*)$ and $\varepsilon^2\Phi_2(\Theta^*) = b_{\mathrm{frozen}} + b_{\mathrm{osc}}$.
+Along the periodic orbit $Y_2(t) = Y_2^* + O(\varepsilon^2)$ (since $\langle H\rangle(Y_2^*) = O(\varepsilon)$), so by
+Step 3 the period mean of $\Theta_p$ is $Y_2^* + O(\varepsilon^2)$: this is \textup{(d)}, and
+$\Theta_p(t) - \bar\Theta_p = \varepsilon u(\Theta^*,t) + O(\varepsilon^2)$ is \textup{(a)}.
+
+\smallskip
+\emph{Step 5 (the monodromy matrix).} Linearise \textup{(CL)} along the periodic orbit: with $\delta e$ and
+$\delta\Theta$,
+\[
+  \delta\dot e = (\partial_xr - k_eI)\delta e + \partial_\Theta r\cdot\delta\Theta,\qquad
+  \delta\dot\Theta = \partial_eF\cdot\delta e + \partial_\Theta F\cdot\delta\Theta,
+\]
+all coefficients $T_0$-periodic and evaluated along the orbit; $\partial_xr$, $\partial_\Theta r$, $\partial_eF$ are
+$O(1)$ and $\partial_\Theta F = O(\varepsilon)$ ($F$ is linear in $e$ with coefficients smooth in $\Theta$, plus the
+leak $-\varepsilon\sigma_0(\vartheta_i - \vartheta^0)$, so $\partial_\Theta F = O(\norm{e} + \varepsilon)$, and
+$e = O(\varepsilon)$ on the orbit). Let $S(t)$ be a $T_0$-periodic solution of the Riccati equation
+\[
+  \dot S = (\partial_xr - k_eI)S + \partial_\Theta r - S\,\partial_eF\,S - S\,\partial_\Theta F.
+\]
+For $k_e$ large it exists, is unique with $\norm{S} \le C/k_e$, and depends smoothly on the data (contraction of the
+periodic solution operator of the dominant part $\dot S = -k_eS + g$; cf.\ Proposition H.7(a)). In the coordinates
+$\eta := \delta e - S\delta\Theta$ the linearisation is block triangular:
+\[
+  \dot\eta = \bigl[(\partial_xr - k_eI) - S\,\partial_eF\bigr]\eta,\qquad
+  \delta\dot\Theta = \partial_eF\cdot\eta + \bigl[\partial_eF\,S + \partial_\Theta F\bigr]\delta\Theta,
+\]
+so the monodromy matrix is similar to a block-triangular matrix whose diagonal blocks are the monodromies of the two
+diagonal equations. The $\eta$-block has norm at most $e^{-(k_e - L)T_0}$ with
+$L := L_r + \sup\norm{S\,\partial_eF} = O(1)$ (Grönwall): these are the $n$ error-channel multipliers. The
+$\delta\Theta$-block is the linearisation along the orbit of the slow equation \textup{(S)} in $\Theta$-coordinates,
+$\varepsilon D_\Theta H(\Theta_p(t),t) + O(\varepsilon^2) = \varepsilon D_\Theta H(\Theta^*,t) + O(\varepsilon^2)$, whose
+monodromy is $I + \varepsilon T_0D\langle H\rangle(\Theta^*) + O(\varepsilon^2)
+= I - \varepsilon T_0G_m\nabla^2J_m(\Theta^*) + O(\varepsilon^2)$. Its eigenvalues are
+$1 - \varepsilon T_0\nu_j + O(\varepsilon^2) = \exp(-\varepsilon T_0\nu_j + O(\varepsilon^2))$, those of
+$G_m\nabla^2J_m(\Theta^*)$ being the $\nu_j$ by similarity with $G_m^{1/2}\nabla^2J_m(\Theta^*)G_m^{1/2}$; the
+$O(\varepsilon^2)$ perturbation moves them by $O(\varepsilon^2)$ because $I - \varepsilon T_0G_m\nabla^2J_m(\Theta^*)$
+is diagonalisable (similar to a symmetric matrix through $G_m^{1/2}$), so the Bauer--Fike theorem applies with a
+condition number independent of $\varepsilon$ --- this covers the repeated eigenvalues of a collapsed configuration.
+This is \textup{(b)}.
+
+\smallskip
+\emph{Step 6 (the basin).} Let $\nabla^2J_m(\Theta^*)\succ0$. In the norm $\norm{v}_{\Ginv} := \norm{G_m^{-1/2}v}$,
+the matrix $I - \varepsilon T_0G_m\nabla^2J_m(\Theta^*)$ is similar to a symmetric contraction with norm exactly
+$1 - \varepsilon T_0\lambda_*$ once $\varepsilon T_0\nu_{mp} < 1$. By Step 4,
+$D_YP_Y = I - \varepsilon T_0G_m\nabla^2J_m(Y) + O(\varepsilon^2)$ on $\mathcal K$, and $\nabla^2J_m$ is Lipschitz, so
+on the ball $\{\norm{Y_2 - Y_2^*}_{\Ginv} \le \rho_0\}$ the Lipschitz constant of $P_Y$ in $Y_2$ is at most
+$1 - \varepsilon T_0\lambda_*(1 - \kappa)$ with $\kappa = O(\rho_0 + \varepsilon)$; the coupling constants are
+$\Lip_\zeta P_Y = O(\varepsilon)$ and $\Lip_YP_\zeta = O(\varepsilon^3)$, and $P_\zeta$ contracts $\zeta$ by
+$e^{-k_eT_0/2}$ (Step 4). The $2\times2$ matrix of Lipschitz constants
+\[
+  \begin{pmatrix} 1 - \varepsilon T_0\lambda_*(1 - \kappa) & C\varepsilon\\ C\varepsilon^3 & e^{-k_eT_0/2}\end{pmatrix}
+\]
+has spectral radius $1 - \varepsilon T_0\lambda_*(1 - \kappa')$ with $\kappa' = O(\rho_0 + \varepsilon)$, so on
+$\{\norm{Y_2 - Y_2^*}_{\Ginv} \le \rho_0\}\times Z_\varepsilon$, with $\rho_0$ small but independent of
+$\varepsilon$, $P$ is a contraction in an adapted product norm with that factor: its iterates converge to the fixed
+point geometrically, uniformly in $\varepsilon$. Solutions started in the tube with $\norm{e(0) - e_p(0)} \le 1$ enter
+$Z_\varepsilon$ within $O(\varepsilon\log(1/\varepsilon))$, during which $\Theta$ moves by
+$O(\varepsilon)\norm{e(0) - e_p(0)}$ (Step 1), which is absorbed by halving $\rho_0$. Between the sampling times the
+solutions stay within a factor $C$ of each other (Grönwall on one period, with the fast variable absorbing
+$\norm{e(0) - e_p(0)}$ into an $O(\varepsilon)\norm{e(0) - e_p(0)}$ displacement of $\Theta$, Step 1). Transporting
+back through the near-identity transformations gives \textup{(c)}.
+\end{proof}
+
+\paragraph{Numerics} (\code{exp_periodic_orbit.py} $\to$ \code{results/periodic_orbit/table.md};
+\code{tests/test_periodic.py}). Two instances, $k_e = 10$, $20$, $40$, $80$, $160$. For each $k_e$ the periodic orbit
+of (CL) is found by Newton shooting on the Poincaré map (DOP853 at relative tolerance $10^{-11}$; residual below
+$10^{-11}$ in every case), its monodromy matrix is the finite-difference Jacobian of the map, and its period mean is
+compared with $\Theta^*$ and with the first-order prediction $\Theta^* - J^{-1}(b_{\mathrm{frozen}} + b_{\mathrm{osc}})$
+of (d). Distances and cosines are in the labelled $G^{-1}$ metric.
+\begin{itemize}
+  \item \textbf{Instance A} ($n = 2$, $m = 3$, the plant and elliptic reference of Remark H.7a, $\sigma_0 = 0.5$,
+    $G = \operatorname{diag}(4,4,1,1,1)$). The minimiser of $J_m$ is a collapsed configuration (kernel spread
+    $4\cdot10^{-14}$) with $\lambda_{\min}(\nabla^2J_m) = 0.0148$: a non-degenerate minimum with permutation symmetry.
+    \begin{center}
+    \small
+    \begin{tabularx}{\linewidth}{@{}llYYY@{}}
+    \toprule
+    $k_e$ & $\norm{\bar\Theta_p - \Theta^*}$ & full prediction: size ratio, cosine, vector error
+      & frozen-measure part only: vector error
+      & parameter Floquet exponents against $(1/k_e)\nu_j$: max, median relative error\\
+    \midrule
+    10  & $4.09\cdot10^{-2}$ & 1.149, 0.9972, 0.169 & 0.398 & $8.3\cdot10^{-2}$, $1.2\cdot10^{-2}$\\
+    20  & $1.91\cdot10^{-2}$ & 1.074, 0.9993, 0.083 & 0.360 & $7.3\cdot10^{-2}$, $7.3\cdot10^{-3}$\\
+    40  & $9.22\cdot10^{-3}$ & 1.036, 0.9998, 0.041 & 0.348 & $4.5\cdot10^{-2}$, $4.0\cdot10^{-3}$\\
+    80  & $4.53\cdot10^{-3}$ & 1.018, 1.0000, 0.020 & 0.343 & $2.5\cdot10^{-2}$, $2.1\cdot10^{-3}$\\
+    160 & $2.24\cdot10^{-3}$ & 1.009, 1.0000, 0.010 & 0.342 & $1.3\cdot10^{-2}$, $1.1\cdot10^{-3}$\\
+    \bottomrule
+    \end{tabularx}
+    \end{center}
+    The offset scales like $k_e^{-1.05}$ (fitted exponent; (a) predicts $-1$), the vector error of the full
+    prediction halves with every doubling of $k_e$ (the $O(k_e^{-2})$ remainder of (d) against an $O(1/k_e)$ offset),
+    and the frozen-measure part alone has a 35\% vector error at every $k_e$: the oscillation term $b_{\mathrm{osc}}$
+    of Remark H.7a is an $O(1)$ fraction of the first-order location. The median relative error of the Floquet
+    exponents is $O(1/k_e)$, as (b) states; the largest relative error sits on the $(m-1)$-fold degenerate separation
+    pair with the smallest exponent ($0.0018$ at $k_e = 20$), where an $O(k_e^{-2})$ absolute error is a large
+    fraction of a small exponent. The two error-channel multipliers are below the resolution of the finite-difference
+    monodromy (exponents of order $k_e$); their product is recovered from Liouville's identity
+    $\sum\log\abs{\lambda} = \int_0^{T_0}\tr\,\partial F/\partial z\dd t$ along the orbit, which gives a mean
+    error-channel exponent of $k_e - 0.16$, $k_e - 0.11$, $k_e - 0.086$, $k_e - 0.074$, $k_e - 0.068$ at
+    $k_e = 10\dots160$ (instance B: $k_e + 0.05\dots k_e + 0.09$): the multipliers are $e^{-(k_e - L)T_0}$ with
+    $\abs{L} < 0.2$, as (b) states.
+  \item \textbf{Instance B} ($n = 1$, $m = 2$, a two-bump plant
+    $f(x) = 1.6e^{-(x-1)^2/0.4} - 1.2e^{-(x+1)^2/0.4} + 0.1x$ on $x_m = 2\sin t$, $\sigma_0 = 0.05$,
+    $G = \operatorname{diag}(2,1,1)$). The minimiser has two distinct kernels of opposite sign (spread $2.1$,
+    $\lambda_{\min}(\nabla^2J_m) = 0.066$). Here $b_{\mathrm{osc}} = 0$ exactly: for a one-dimensional sinusoidal
+    sweep the reflection $t\mapsto\pi - t$ maps $x_m$ to itself and $u$ to $-u$, so $\langle D_\Theta H\cdot u\rangle = 0$,
+    and the full and frozen predictions coincide. The reference is fast on the kernel scale ($\sup\norm{\dot x_m}/s$
+    is $2/s$: between $1.3$ and $10$ over the admissible widths, about $2.6$ at the minimiser's width; the residual
+    bandwidth is of the same order), so $k_e = 10$--$20$ is outside the averaging regime:
+    \begin{center}
+    \small
+    \begin{tabularx}{\linewidth}{@{}llYY@{}}
+    \toprule
+    $k_e$ & $\norm{\bar\Theta_p - \Theta^*}$ & prediction: size ratio, cosine, vector error
+      & Floquet: max, median relative error\\
+    \midrule
+    10  & $6.44\cdot10^{-2}$ & 2.818, 0.880, 1.995 & $9.5\cdot10^{-2}$, $4.0\cdot10^{-2}$\\
+    20  & $2.22\cdot10^{-2}$ & 1.942, 0.929, 1.078 & $3.2\cdot10^{-2}$, $1.4\cdot10^{-2}$\\
+    40  & $8.37\cdot10^{-3}$ & 1.464, 0.970, 0.551 & $1.2\cdot10^{-2}$, $5.4\cdot10^{-3}$\\
+    80  & $3.51\cdot10^{-3}$ & 1.227, 0.990, 0.277 & $4.6\cdot10^{-3}$, $2.2\cdot10^{-3}$\\
+    160 & $1.59\cdot10^{-3}$ & 1.111, 0.9969, 0.139 & $2.0\cdot10^{-3}$, $9.5\cdot10^{-4}$\\
+    \bottomrule
+    \end{tabularx}
+    \end{center}
+    The vector error and the Floquet error halve with each doubling of $k_e$, as the theorem's $O(k_e^{-2})$
+    remainders predict, but the constants are large: the asymptotic regime starts around $k_e\approx80$ here. This
+    instance shows what the theorem does not claim: the $O(1/k_e)$ location is sharp only once $k_e$ exceeds the
+    effective bandwidth $\omega_{\mathrm{eff}}$ of Proposition G's (H2a$'$) (Section~\ref{sec:propG}).
+\end{itemize}
+\checkedby{\code{tests/test_periodic.py}: $\nabla J_m$ against finite differences ($10^{-7}$) and the non-degenerate
+two-kernel minimum of instance B; at $k_e = 20$ and $40$ the shooting residual is below $10^{-10}$,
+$\norm{\bar\Theta_p - \Theta^*}$ and $\max\norm{e}$ fall by more than 35\% from $20$ to $40$, the vector error of the
+first-order location falls by more than 40\% and is below $0.6$ at $k_e = 40$, and the maximal relative Floquet error
+falls by more than 40\% and is below 2\% at $k_e = 40$.}
+
+\begin{rmk}{Remark}{J.1}[what Theorem J says about the program of Section~\ref{sec:program}]
+\leavevmode
+\begin{itemize}
+  \item It is the deterministic, finite-$m$ first step of branch 1: near every hyperbolic critical point of the
+    $m$-particle regularised loss $k_e\cdot\mathcal G$ at $\tau = 0$ the real closed loop has exactly one stationary
+    state (a periodic orbit), an $O(1/k_e)$-perturbation of it with the same stability type, and the convergence rate
+    is the one of the averaged gradient flow in slow time. (The theorem does not say that every periodic orbit of
+    (CL) arises this way.) The two missing pieces of Conjecture H.6 remain: dither ($\tau>0$, where the stationary
+    state is a measure) and uniformity in $m$.
+  \item It makes the stationary (period-mean) prediction of Remark H.7a a theorem for this system: the first-order
+    location of the orbit, hence the orientation difference of the period-mean kernels, is
+    $\Theta^* - J^{-1}(b_{\mathrm{frozen}} + b_{\mathrm{osc}})$ with an $O(k_e^{-2})$ error. When the leading offset
+    is itself small, the $O(k_e^{-2})$ remainder can dominate its \emph{direction} at moderate $k_e$: a collapsed
+    saddle instance examined in the round-5 review (\code{review/REVIEW_round5_J.md}) has a first-order location
+    nearly orthogonal to the true offset at $k_e = 20$ and aligned with it at $k_e = 80$, while the sizes obey the
+    theorem's orders throughout.
+  \item The leak is not needed for the structure, only for the hyperbolicity of $\Theta^*$. At a collapsed critical
+    point the separation Hessian is $\sigma_0G^{-1} - R_2$ (Proposition K, Section~\ref{sec:thmK}); for $n = 1$ and
+    $\sigma_0 = 0$ the amplitude row of $R_2$ vanishes at a leak-free critical point
+    ($\langle r\varphi\rangle = \partial_c\langle r\varphi\rangle = \partial_s\langle r\varphi\rangle = 0$ there), so
+    the $m-1$ amplitude-redistribution directions are exactly flat and the theorem does not apply, while for $n\ge2$
+    only the amplitude block of $R_2$ vanishes and a collapsed critical point is generically non-degenerate even
+    without a leak. Where $\nabla^2J_m$ is singular the theorem does not apply.
+  \item At a collapsed critical point (all $\vartheta^*_i$ equal) the permutation symmetry makes the separation modes
+    $(m-1)$-fold degenerate; the Floquet exponents come in such multiplets (\code{results/periodic_orbit/table.md});
+    Proposition K (Section~\ref{sec:thmK}) works out this case.
+\end{itemize}
+\end{rmk}

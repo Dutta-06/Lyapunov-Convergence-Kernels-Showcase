@@ -1,4 +1,4 @@
-% Source: PARADIGM.md lines 1419--1689 (Proposition H.7, Remark H.7a, Proposition H.8, route to Conjecture H.6,
+% Source: PARADIGM.md section 6c (Proposition H.7, Remark H.7a, Theorem I, Proposition H.8, route to Conjecture H.6,
 % evidence).  Notation: Section~\ref{sec:setting} and Section~\ref{sec:thmH}.
 \section{Finite gain: semi-gradient and non-reciprocal structure}\label{sec:finitegain}
 
@@ -125,14 +125,18 @@ Then for every $R>0$ there is $k_0(R)$, independent of $\mu$, such that for $k_e
         $A_{\mathrm{even}}+2K$ is a coboundary $a(\vartheta)-a(\vartheta')$, that is, only if all its cyclic sums
         vanish.
       \item They do not vanish in the checked instances, for $n=1$ (from $A_{\mathrm{even}}$ alone) and for $n=2$.
-      \item So in these instances, at finite $k_e$, the exactly averaged loop is a non-reciprocal McKean--Vlasov
-        dynamics. It is not the $\WG$-gradient flow of any free energy. A different, $\mu$-dependent metric is not
-        excluded by this argument.
+        Theorem I shows that the cyclic condition is equivalent to $A_{\mathrm{even}}+2K\equiv0$, and characterises
+        when that happens: for $n=1$ exactly when the residual vanishes on the orbit; for $n\ge2$ at perfect fit
+        exactly when the orbit carries no circulation and the residual's Jacobian is symmetric along the orbit. It
+        also shows (Theorem I(vi)) that no open set of measures satisfies the condition, for any $n$.
+      \item So at finite $k_e$, the exactly averaged loop is a non-reciprocal McKean--Vlasov dynamics: it is not the
+        $\WG$-gradient flow of any free energy on any open set of measures. A different, $\mu$-dependent metric is
+        not excluded by this argument.
     \end{itemize}
 \end{enumerate}
 \end{thm}
-\status{The frozen-measure part is proved. Non-reciprocity of the exact second variation is checked, in the
-instances $n=1$ and $n=2$ only, to 3\% (asserted; 1--1.5\% measured). The Stokes identity and the parity under orbit
+\status{The frozen-measure part is proved. Non-reciprocity of the exact second variation is checked to 3\%
+(asserted; 1--1.5\% measured) and characterised by Theorem I. The Stokes identity and the parity under orbit
 reversal hold to machine precision. The expansion is checked through its $O(1/k_e)$ convergence. Novelty (literature audit): no precedent found
 (targeted search); ingredients known (higher-order averaging; performative prediction~\cite{S14}; semi-gradient
 TD~\cite{S11,S10}).}
@@ -206,7 +210,8 @@ measures.
   \item Suppose that, for all large $k_e$, $P_\mu$ were a first variation up to $O(k_e^{-3})$, with constants uniform
     in $k_e$. Then $(\varepsilon^2/(2k_e^2))\abs{\mathrm{cyc}}\le C\varepsilon k_e^{-3}$, that is,
     $\abs{\mathrm{cyc}}\le 2C/(\varepsilon k_e)$. The cyclic sum does not depend on $k_e$, so letting
-    $k_e\to\infty$ at fixed $\varepsilon$ gives $\mathrm{cyc}=0$.
+    $k_e\to\infty$ at fixed $\varepsilon$ gives $\mathrm{cyc}=0$ at the centroid measure of the triangle; letting
+    $\varepsilon\to0$, since $A_{\mathrm{even}}+2K$ is affine in the measure, gives $\mathrm{cyc}=0$ at $\mu$.
 \end{enumerate}
 This is checked numerically: for $\varepsilon=0.05$ and $n=2$ the circulation equals the centroid formula to all
 printed digits.
@@ -343,6 +348,201 @@ orientation dependence of the learned kernels in the real closed loop to 3\% in 
 (cosine 0.994, $k_e=40$).}
 \checkedby{\code{tests/test_averaging.py} (the two tests named above); \code{exp_orbit_orientation.py} $\to$
 \code{results/orbit_orientation/table_sigma2_slow16.md}.}
+
+\subsection{Reciprocity at order \texorpdfstring{$k_e^{-2}$}{k\_e\^{}-2}: a pairwise criterion and its
+characterisation}
+
+\begin{thm}{Theorem}{I}[reciprocity at order $k_e^{-2}$: a pairwise criterion and its characterisation]
+Assume the setting of Proposition H.7: saturated Gaussian features $\tilde\Phi(x;\vartheta)=a\varphi_\xi(x)$ with
+$\xi:=(c,s)$, $f\in C^2(\R^n)$ autonomous, $x_m\in C^2$ $T_0$-periodic with oriented orbit $\mathcal{O}$ and
+occupation measure $\rho$, and a frozen $\mu\in\Prob(\R^p)$. Let $S$ be the $k_e^{-2}$ coefficient of the second
+variation of $P_\mu$, and $A_\mu:=S-S^\T=A_{\mathrm{even}}+2K$ its antisymmetric part, as in H.7(e). Call $\mu$
+\emph{reciprocal at order $k_e^{-2}$} if $A_\mu\equiv0$ (the $1$-form that the $k_e^{-2}$ drift defines is closed at
+$\mu$). Note that $A_\mu$ is affine in $\mu$, because $r_\mu$ is and $K$ does not depend on $\mu$.
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{Pairwise criterion.} $A_\mu$ is a coboundary $a(\vartheta)-a(\vartheta')$ if and only if
+    $A_\mu\equiv0$. Consequently, by Proposition H.7(e), whose hypothesis concerns a neighbourhood of $\mu$ (its
+    triangle of measures), $P_\nu$ can be a first variation of a functional of $\nu$ up to $O(k_e^{-3})$, with
+    constants uniform in $k_e$ and in $\nu$ near $\mu$, only if $A_\nu\equiv0$ for every $\nu$ in a neighbourhood of
+    $\mu$.
+  \item \emph{Structure.} With $Dr$ the Jacobian of $r_\mu$, $(Dr)_{kl}=\partial_lr_k$, and
+    $[X,Y]:=(X\cdot\nabla)Y-(Y\cdot\nabla)X$ the Lie bracket of vector fields on $\R^n$,
+    \begin{equation}\label{eq:finitegain:AevenLie}
+      A_{\mathrm{even}}(\vartheta,\vartheta')=-\int\Bigl\{\tilde\Phi_\vartheta^\T(Dr_\mu-Dr_\mu^\T)\tilde\Phi_{\vartheta'}
+        +r_\mu^\T[\tilde\Phi_{\vartheta'},\tilde\Phi_\vartheta]\Bigr\}\dd\rho.
+    \end{equation}
+    For the Gaussian features $A_\mu$ is a bilinear form in the weights:
+    $A_\mu(\vartheta,\vartheta')=a^\T B_\mu(\xi,\xi')a'$ with
+    \begin{gather}
+      \begin{aligned}
+        B_\mu(\xi,\xi'):={}&-\int(Dr_\mu-Dr_\mu^\T)\varphi_\xi\varphi_{\xi'}\dd\rho
+          -\int r_\mu(\nabla\varphi_\xi)^\T\varphi_{\xi'}\dd\rho\\
+        &+\int(\nabla\varphi_{\xi'})r_\mu^\T\varphi_\xi\dd\rho+2\kappa(\xi,\xi')I_n,
+      \end{aligned}\label{eq:finitegain:B}\\
+      \kappa(\xi,\xi'):=\Bigl\langle\varphi_\xi(x_m(t))\cdot\frac{\mathrm{d}}{\mathrm{d}t}\varphi_{\xi'}(x_m(t))\Bigr\rangle_t,
+        \label{eq:finitegain:kappa}
+    \end{gather}
+    so $A_\mu\equiv0$ if and only if $B_\mu(\xi,\xi')=0$ for all admissible $\xi,\xi'$. The first term is the curl of
+    the residual paired with the features, the next two are the residual paired with the Lie bracket of the feature
+    fields, and the last is the circulation kernel $K(\vartheta,\vartheta')=(a^\T a')\kappa(\xi,\xi')$. The
+    performative part is bounded by the residual and by the antisymmetric part of its Jacobian along the orbit:
+    \[
+      \abs{A_{\mathrm{even}}(\vartheta,\vartheta')}\le\abs{a}\abs{a'}\Bigl[\int\norm{Dr_\mu-Dr_\mu^\T}\dd\rho
+        +\frac{2e^{-1/2}}{s_{\min}}\int\abs{r_\mu}\dd\rho\Bigr].
+    \]
+  \item \emph{$n=1$.} $A_\mu\equiv0$ if and only if $r_\mu=0$ $\rho$-a.e.\ on the orbit. So the one-dimensional loop
+    is reciprocal at order $k_e^{-2}$, at a frozen $\mu$, exactly when $\mu$ interpolates $f$ along the orbit, and its
+    non-reciprocity is bounded by the residual:
+    $\abs{A_\mu(\vartheta,\vartheta')}\le(2e^{-1/2}/s_{\min})\abs{a}\abs{a'}\int\abs{r_\mu}\dd\rho$.
+  \item \emph{$n\ge2$ at perfect fit.} Suppose $r_\mu=0$ $\rho$-a.e. Then the Lie-bracket terms vanish and
+    \[
+      B_\mu(\xi,\xi')=-\int(Dr_\mu-Dr_\mu^\T)\varphi_\xi\varphi_{\xi'}\dd\rho+2\kappa(\xi,\xi')I_n,
+    \]
+    an antisymmetric matrix plus a multiple of the identity. Hence $A_\mu\equiv0$ if and only if both
+    \begin{enumerate}[label=(\alph*)]
+      \item $K\equiv0$, which holds if and only if the $1$-current of the oriented orbit vanishes,
+        $T_{\mathcal{O}}:=\int_0^{T_0}\delta_{x_m(t)}\,\dot x_m(t)\dd t=0$ (an $\R^n$-valued measure;
+        $\int v\cdot\dd T_{\mathcal{O}}=\oint_{\mathcal{O}}v\cdot\dd x$); for $n=2$, iff the winding-number function
+        $w_{\mathcal{O}}$ of the orbit vanishes a.e.; and
+      \item $Dr_\mu=Dr_\mu^\T$ $\rho$-a.e.: the Jacobian of the residual has no antisymmetric part along the orbit.
+    \end{enumerate}
+    Vanishing of $r_\mu$ on the orbit constrains only its tangential derivative, so (b) is a genuine extra condition:
+    for $f:=\fhat_\mu+he_1$ with $h=0$ on the orbit and $\partial_\perp h\neq0$,
+    $A_\mu-2K=-\int\varphi_\xi\varphi_{\xi'}\partial_\perp h\dd\rho\cdot(e_1e_\perp^\T-e_\perp e_1^\T)\neq0$. When
+    $r_\mu$ vanishes on a neighbourhood of the orbit, $Dr_\mu=0$ there and $A_\mu=2K$: the semi-gradient defect has
+    vanished and the loop is non-reciprocal exactly when the orbit carries circulation, through the orbit-area kernel
+    alone.
+  \item \emph{General $n\ge2$.} In any connected finite-dimensional real-analytic family of measures, for example
+    atomic measures with $J$ atoms parametrised by their weights and lifted positions, the set of reciprocal measures
+    is either the whole family or a closed real-analytic subvariety of measure zero. The instances of
+    \code{tests/test_averaging.py} ($n=1$ and the $n=2$ ellipse) have $A_\mu\not\equiv0$, with cyclic sums $-0.0704$
+    and $-0.0464$ of the predicted kernel.
+  \item \emph{Nowhere a gradient flow.} For every $n$, every $(f,x_m)$ and every $\mu$, every neighbourhood of $\mu$
+    contains measures $\nu$ with $A_\nu\not\equiv0$: along the segments $\nu_\delta:=(1-\delta)\mu+\delta\delta_{\vartheta'}$
+    either the zero feature $\vartheta'=\vartheta_z$ or a feature with $a'\neq0$ gives $A_{\nu_\delta}\not\equiv0$ for
+    all small $\delta>0$. Hence, by (i), there is no open set of measures on which $P_\nu$ is a first variation up to
+    $O(k_e^{-3})$ with uniform constants: the exactly averaged closed loop is nowhere the $\WG$-gradient flow of a
+    free energy at order $k_e^{-2}$. The reciprocal measures of (iii) and (iv) are coincidences without interior.
+\end{enumerate}
+\end{thm}
+\status{Proved; every formula checked against the generic second-variation code and, by the round-5 referee, against
+the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances. Novelty
+(literature audit): new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are
+classical.}
+
+\begin{proof}
+\emph{(i)} Let $\vartheta_z:=(\alpha,\gamma,\kappa)$ with $\alpha=0$, an admissible point of $\R^p$, so $a=0$ and
+$\tilde\Phi(\cdot;\vartheta_z)\equiv0$ as a function of $x$; its $x$-derivatives vanish too. Every term of
+$A_{\mathrm{even}}(\vartheta,\vartheta_z)$ contains $\tilde\Phi_{\vartheta_z}$ or $(\tilde\Phi_{\vartheta_z}\cdot\nabla)$,
+and $K(\vartheta,\vartheta_z)=\langle\tilde\Phi_\vartheta^\T\frac{\mathrm{d}}{\mathrm{d}t}\tilde\Phi_{\vartheta_z}\rangle=0$;
+so $A_\mu(\vartheta,\vartheta_z)=0$ for every $\vartheta$. If $A_\mu(\vartheta,\vartheta')=a(\vartheta)-a(\vartheta')$,
+then $a(\vartheta)=a(\vartheta_z)$ for every $\vartheta$, so $A_\mu\equiv0$. The converse is trivial. For the
+consequence, apply H.7(e) at any $\nu$ near $\mu$ with $\vartheta_2:=\vartheta_z$ in its triangle of measures: the
+cyclic sum over $(\vartheta_0,\vartheta_1,\vartheta_z)$ is $A(\vartheta_0,\vartheta_1)$, evaluated at the centroid
+measure of the triangle, which tends to $\nu$ as the triangle's size $\varepsilon\to0$; $A$ is affine in the measure,
+so $A_\nu(\vartheta_0,\vartheta_1)=0$.
+
+\noindent\emph{(ii)} Expand
+$(\tilde\Phi'\cdot\nabla)(r^\T\tilde\Phi)=\sum_{k,l}\tilde\Phi'_l(\partial_lr_k)\tilde\Phi_k
++\sum_{k,l}\tilde\Phi'_lr_k\partial_l\tilde\Phi_k=\tilde\Phi^\T(Dr)\tilde\Phi'+r^\T(\tilde\Phi'\cdot\nabla)\tilde\Phi$,
+and subtract the expression with $\vartheta$ and $\vartheta'$ exchanged. For $\tilde\Phi=a\varphi$,
+$(\tilde\Phi'\cdot\nabla)\tilde\Phi=a(a'^\T\nabla\varphi)\varphi'$, so
+$r^\T[\tilde\Phi',\tilde\Phi]=(r^\T a)(a'^\T\nabla\varphi)\varphi'-(r^\T a')(a^\T\nabla\varphi')\varphi$, and
+$K(\vartheta,\vartheta')=(a^\T a')\kappa(\xi,\xi')$. Collect the bilinear form in $(a,a')$. Since $a$ ranges over the
+open cube $(-a_{\max},a_{\max})^n$, $A_\mu\equiv0$ iff $B_\mu\equiv0$. The bound uses $\varphi\le1$ and
+$\abs{\nabla\varphi}\le e^{-1/2}/s_{\min}$.
+
+\noindent\emph{(iii)} For $n=1$, $Dr-Dr^\T=0$, and for equal widths $s$,
+$\varphi_{c'}D\varphi_c-\varphi_cD\varphi_{c'}=\varphi_c\varphi_{c'}(c-c')/s^2$, so
+$B_\mu(\xi,\xi')=-((c-c')/s^2)\int r_\mu\varphi_c\varphi_{c'}\dd\rho$. Now
+$\varphi_c\varphi_{c'}=e^{-(c-c')^2/(4s^2)}\cdot e^{-(x-m)^2/s^2}$ with $m:=(c+c')/2$. Put $\nu:=r_\mu\rho$, a finite
+signed measure with compact support. The function $m\mapsto\int e^{-(x-m)^2/s^2}\dd\nu(x)$ extends to an entire
+function. If $B_\mu\equiv0$ on admissible pairs, it vanishes for all $m\in(-c_{\max},c_{\max})$ (take $c=m-\delta$,
+$c'=m+\delta$ with $0<\delta$ small), hence everywhere; its Fourier transform is the product of the Gaussian's, which
+has no zeros, with $\hat\nu$, so $\nu=0$, that is $r_\mu=0$ $\rho$-a.e. Conversely, if $\nu=0$ then
+$A_{\mathrm{even}}(\vartheta,\vartheta')=-\int(\varphi'D\varphi-\varphi D\varphi')aa'\dd\nu=0$ for all widths.
+
+\noindent\emph{(iv)} If $r_\mu=0$ $\rho$-a.e.\ the two Lie-bracket integrals vanish, which gives the displayed
+$B_\mu$; the first term is an antisymmetric matrix and the second a multiple of $I_n$, so $B_\mu\equiv0$ iff both
+vanish (take the trace, which is $2n\kappa$, and the antisymmetric part). The first vanishes identically iff the
+matrix-valued measure $(Dr_\mu-Dr_\mu^\T)\rho$ is zero, by the argument of (iii) applied entrywise with equal widths
+(the entries of $\int(Dr-Dr^\T)\varphi_c\varphi_{c'}\dd\rho$ are Gaussian convolutions of the entries of that
+measure). For (a): with equal widths, $\varphi_\xi\varphi_{\xi'}=e^{-\abs{c-c'}^2/(4s^2)}e^{-\abs{x-m}^2/s^2}$ and
+$\nabla\varphi_{\xi'}=-((x-c')/s^2)\varphi_{\xi'}$, so
+\[
+  \kappa(\xi,\xi')=-\frac{1}{s^2}e^{-\abs{c-c'}^2/(4s^2)}
+  \bigl\langle e^{-\abs{x_m-m}^2/s^2}(x_m-c')\cdot\dot x_m\bigr\rangle_t.
+\]
+Write $x_m-c'=(x_m-m)+(c-c')/2$. The first part integrates to zero, being the time derivative of
+$-(s^2/2)e^{-\abs{x_m-m}^2/s^2}$ along a period. Hence
+\begin{gather*}
+  \kappa(\xi,\xi')=-\frac{1}{2s^2}e^{-\abs{c-c'}^2/(4s^2)}(c-c')\cdot F_s(m),\\
+  F_s(m):=\bigl\langle e^{-\abs{x_m(t)-m}^2/s^2}\dot x_m(t)\bigr\rangle_t
+  =\frac{1}{T_0}\int e^{-\abs{x-m}^2/s^2}\dd T_{\mathcal{O}}(x),
+\end{gather*}
+the Gaussian convolution of the vector measure $T_{\mathcal{O}}$. If $\kappa\equiv0$ on admissible pairs, then
+$F_s(m)\cdot v=0$ for every $m$ with $\norm{m}<c_{\max}$ and every direction $v$ (take $c=m-\delta v$,
+$c'=m+\delta v$), so $F_s\equiv0$ on that ball; $F_s$ is entire, so $F_s\equiv0$ on $\R^n$, and the Fourier argument
+gives $T_{\mathcal{O}}=0$. Conversely,
+$\kappa(\xi,\xi')=\frac{1}{T_0}\int\varphi_\xi\nabla\varphi_{\xi'}\cdot\dd T_{\mathcal{O}}=0$ for all widths when
+$T_{\mathcal{O}}=0$. For $n=2$, $\oint_{\mathcal{O}}v\cdot\dd x=\int w_{\mathcal{O}}\operatorname{curl}v\dd A$ for
+every smooth $v$ (Stokes with winding numbers), and every smooth compactly supported $g$ is $\operatorname{curl}v$ for
+some smooth $v$, so $T_{\mathcal{O}}=0$ iff $w_{\mathcal{O}}=0$ a.e.\ ($T_{\mathcal{O}}$ is compactly supported, so
+$v$ need not be). For the example, $r=he_1$ with $h=0$ on $\mathcal{O}$ gives $(Dr-Dr^\T)_{1l}=\partial_lh$ and the
+only non-zero entries are the normal derivative; the Lie-bracket terms vanish because $r=0$ on $\mathcal{O}$.
+
+\noindent\emph{(v)} The saturated features are real-analytic in the lifted coordinates and extend holomorphically to
+a complex neighbourhood of $\R^p$ ($\tanh$ and the logistic function are holomorphic on the strips
+$\abs{\operatorname{Im}}<\pi a_{\max}/2$, $\pi c_{\max}/2$, $\pi$, where $s$ stays away from $0$), uniformly for $x$
+on the compact orbit; integrals over the orbit of such integrands are real-analytic in the parameters, and $r_\mu$ is
+affine in the weights. The zero set of a real-analytic function on a connected real-analytic manifold is either the
+whole manifold or a closed set of Lebesgue measure zero. The instances are those of\newline
+\code{test_exactly_averaged_dynamics_is_non_reciprocal_for_n1_and_n2}.
+
+\noindent\emph{(vi)} Since $r_\nu$ is affine in $\nu$, $B_{\nu_\delta}=B_\mu+\delta B^{\mathrm{even}}[g]$ with
+$g:=\fhat_\mu-\tilde\Phi_{\vartheta'}$, where $B^{\mathrm{even}}[g]$ denotes the three residual terms of $B$ with $g$
+in place of $r_\mu$. The trace of $B^{\mathrm{even}}[g]$ at equal widths is
+$-(1/s^2)(c-c')\cdot\int g\varphi_c\varphi_{c'}\dd\rho$ (the curl term is traceless). If $A_{\nu_\delta}\equiv0$ for
+all small $\delta$, then $B^{\mathrm{even}}[g]\equiv0$, so $(c-c')\cdot F[g\rho]((c+c')/2)=0$ for all admissible
+$c,c'$, where $F[g\rho]$ is the Gaussian convolution of the vector measure $g\rho$; as in (iv), $g\rho=0$, that is
+$g=0$ $\rho$-a.e. For $\vartheta'=\vartheta_z$ this says $\fhat_\mu=0$ on the orbit; for $\vartheta'$ with $a'\neq0$
+it then says $\tilde\Phi_{\vartheta'}=0$ on the orbit, which is false since a Gaussian has no zeros. So one of the two
+segments has $A_{\nu_\delta}\not\equiv0$ for all small $\delta>0$.
+\end{proof}
+\checkedby{\code{tests/test_nonreciprocity.py}, using \code{src/core/nonreciprocity.py} against
+\code{src/core/averaging.py}: the bilinear form $a^\T B_\mu a'$ reproduces the antisymmetric part of the generic
+second-variation coefficient ($10^{-10}$, $n=1$ and $2$); $A_\mu(\vartheta,\vartheta_z)=0$ ($10^{-14}$) and the cyclic
+sum over $(\vartheta_0,\vartheta_1,\vartheta_z)$ equals $A_\mu(\vartheta_0,\vartheta_1)$; for $n=1$ with
+$f:=\fhat_\mu$ (perfect fit) $A_\mu\equiv0$ (below $10^{-13}$) while a non-zero residual gives $A_\mu\neq0$, equal to
+the closed form; the closed form of $\kappa$ ($10^{-10}$), the second component of $F_s(m)$ at $m=(0.5,0)$, $s=0.7$ is
+positive on the ellipse, and $\kappa\equiv0$ on a segment traversed back and forth (below $10^{-12}$); with
+$f\equiv\fhat_\mu$ on $\R^2$ (so $Dr_\mu\equiv0$), $B_\mu=2\kappa I$ ($10^{-13}$), $A_\mu\neq0$ on the ellipse and
+$A_\mu\equiv0$ on the segment; with $f:=\fhat_\mu+he_1$, $h=(x_1/1.2)^2+(x_2/0.8)^2-1$ (zero on the ellipse, non-zero
+normal derivative), $B_\mu-2\kappa I$ equals $-\int\varphi\varphi'\partial_2h\dd\rho\cdot(e_1e_2^\T-e_2e_1^\T)$
+($10^{-12}$) and is not small; the positivity witness $f\equiv0$, $\mu=\delta_{\bar\vartheta}$, for which
+$A_\mu(\vartheta_0,\vartheta_1)=a_0a_1\bar a\,((c_0-c_1)/s^2)\int\varphi_{\bar c}\varphi_{c_0}\varphi_{c_1}\dd\rho$ has
+a strictly positive integral. The round-5 referee re-derived every formula and checked $a^\T B_\mu a'$ against the
+exact second variation of the averaged potential (Richardson in $k_e$) to $2\cdot10^{-4}$--$9\cdot10^{-4}$ relative,
+including parameters at the saturation limits.}
+
+\begin{rmk}{Remark}{I.1}[what Theorem I changes in the reading of Proposition H.7]\mbox{}
+\begin{itemize}
+  \item The non-reciprocity of H.7(e) is no longer an instance-by-instance check. Pointwise, for $n=1$ it holds at
+    every frozen $\mu$ that does not interpolate $f$ along the orbit; for $n\ge2$ at perfect fit it holds unless the
+    orbit carries no circulation and the residual's Jacobian is symmetric along the orbit; in general it fails only on
+    a null set of any connected analytic family that contains one non-reciprocal member. Globally, (vi) shows that no
+    open set of measures is reciprocal, for any $n$: the averaged loop is nowhere a gradient flow at order $k_e^{-2}$.
+  \item The two defects scale differently. The performative (semi-gradient) defect is bounded by the residual and the
+    antisymmetric part of its Jacobian along the orbit, so it is small at a well-fitting equilibrium whose residual is
+    smooth across the orbit; the circulation defect does not depend on the fit at all.
+  \item For the $n=1$ Langevin experiments and Conjecture H.6: the non-gradient correction that falsifies H.6 at
+    fixed $k_e$ is, by (iii), bounded by the residual, which at the regularised optimum $\mu^*_\tau$ is the
+    regularisation bias. Both the leading drift and the correction are proportional to the residual there, so the
+    correction is $O(1/k_e)$ relative to the leading drift and $O(k_e^{-2})$ absolute, as in Remark H.0.
+  \item The pairwise criterion also simplifies the test of reciprocity: a single pair $(\vartheta,\vartheta')$ with
+    $B_\mu(\xi,\xi')\neq0$ suffices.
+\end{itemize}
+\end{rmk}
 
 \subsection{Input-to-state stability of \texorpdfstring{$\Aavg$}{(A)} and the route to Conjecture H.6}
 

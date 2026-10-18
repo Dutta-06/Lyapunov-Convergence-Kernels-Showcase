@@ -1,5 +1,6 @@
 % Numerical evidence for Part II (source: results/RESULTS_PARADIGM.md; numbers checked against the
-% per-experiment files results/*/table*.md and results/langevin_global/gibbs_reference.md).
+% per-experiment files results/*/table*.md and results/langevin_global/gibbs_reference.md). The subsections on
+% Theorems C', D', Lemma E.0, Theorems I, J and Proposition K mirror the version-4 sections of RESULTS_PARADIGM.md.
 \section{Numerical evidence}\label{sec:evidence}
 
 Every number in this section is produced by the named script from raw files, and no table is edited by hand. The
@@ -8,8 +9,10 @@ subdirectories of \code{results/}; ``\code{script.py} $\to$ \code{dir/}'' below 
 directory or file.
 
 \begin{itemize}
-  \item The test files \code{tests/test_transport.py}, \code{tests/test_langevin.py} and \code{tests/test_averaging.py}
-    check the inequalities at every sample of simulated trajectories, or on sampled states.
+  \item \begin{sloppypar}The test files check the inequalities at every sample of simulated trajectories, or on
+    sampled states: \code{tests/test_transport.py}, \code{tests/test_langevin.py}, \code{tests/test_averaging.py},
+    \code{tests/test_excitation.py}, \code{tests/test_nonreciprocity.py}, \code{tests/test_periodic.py} and
+    \code{tests/test_barycentric.py}.\end{sloppypar}
   \item They are run with \texttt{venv\textbackslash Scripts\textbackslash python -m pytest tests}. The current
     number of tests is given in the repository's \code{README.md}.
 \end{itemize}
@@ -128,6 +131,73 @@ $\sigma$-modification, from the aligned start (left) and from the relabelled sta
 \label{fig:evidence:sigmamod}
 \end{figure}
 
+% ------------------------------------------------------------------------------------------------ C'
+\subsection{Theorem C\texorpdfstring{$'$}{'}: the barycentric OT leak}
+
+Script: \code{exp_barycentric_leak.py} $\to$ \code{barycentric_leak/}. Table~\ref{tab:evidence:barycentric} shows the
+pure leak toward a prior with more atoms than the network, and Table~\ref{tab:evidence:barycentricloop} the closed loop
+with three leaks of equal gain toward three priors.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Theorem C$'$: pure barycentric leak toward a 48-atom prior ($m=6$, $n=1$, lifted dimension 3,
+$G=\operatorname{diag}(2,1,0.5)$, $\sigma_m=1$, $\mathrm{d}t=0.01$, 3000 steps). The last column is the best of 20
+equal-mass Lloyd runs.}
+\label{tab:evidence:barycentric}
+\begin{tabular}{@{}cccccccc@{}}
+\toprule
+seed & $W^2(\mu_0,\nu)$ & $W^2(\mu_T,\nu)$ & $V_{\mathrm{bar}}^2$ at $T$ & $\mathrm{Var}_\gamma$ at $T$
+  & $W^2$ non-increasing & plan switches & best Lloyd\\
+\midrule
+0 & 2.5526 & 1.1642 & $1.1\cdot10^{-26}$ & 1.1642 & yes & 3 & 1.1708\\
+1 & 2.3032 & 1.2128 & $4.8\cdot10^{-26}$ & 1.2128 & yes & 2 & 1.1708\\
+2 & 2.5807 & 1.2030 & $2.2\cdot10^{-25}$ & 1.2030 & yes & 6 & 1.1708\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Theorem C$'$: closed loop with three leaks of equal gain ($\sigma_m=0.5$) toward three priors (representable
+plant, $m=4$, $k_e=4$): (A) the OT leak to the ideal, (B) the barycentric leak to a 32-atom cloud, (C) the labelled
+leak to a random 4-subset. Each entry of (A)--(C) is $\RMS\norm{e}$ on $[20,40]$\,s, $W(\mu_T,\mu^*)$. Here
+$b=W(\mu^*,\mathrm{cloud})$, $b_{\mathrm{bar}}$ is the centroid defect of the ideal with respect to the cloud, and
+``labelled'' is the labelled bias to the subset.}
+\label{tab:evidence:barycentricloop}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}cccccccc@{}}
+\toprule
+seed & $b$ & $b_{\mathrm{bar}}$ & $W(\mu^*,\mathrm{subset})$ & labelled & (A) & (B) & (C)\\
+\midrule
+0 & 0.446 & 0.168 & 0.647 & 1.987 & 0.0000, 0.000 & 0.0035, 0.167 & 0.0431, 0.614\\
+1 & 0.328 & 0.097 & 1.027 & 1.479 & 0.0000, 0.000 & 0.0024, 0.097 & 0.0430, 1.016\\
+2 & 0.401 & 0.159 & 0.395 & 1.765 & 0.0000, 0.000 & 0.0069, 0.157 & 0.0293, 0.352\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item The pure leak stops exactly where $W^2=\mathrm{Var}_\gamma$ (every particle at the barycentre of its cell;
+    $V_{\mathrm{bar}}^2\le2.2\cdot10^{-25}$): an equal-mass centroidal configuration of the prior. Like Lloyd's
+    algorithm it finds a local minimiser of the quantisation energy, not always the global one (compare the last two
+    columns of Table~\ref{tab:evidence:barycentric}).
+  \item With $m_0=m$ the same leak gives the exact decay of Theorem C(i): the maximal relative deviation of
+    $W(\mu_t,\mu^0)$ from $(1-\sigma_m\,\mathrm{d}t)^kW_0$ over 500 Euler steps is $5.1\cdot10^{-16}$.
+  \item In the closed loop, the bias of the barycentric leak is governed by $b_{\mathrm{bar}}$, the distance of the
+    ideal from the centroids of the prior's cells: $W(\mu_T,\mu^*)=0.167$, $0.097$, $0.157$ against
+    $b_{\mathrm{bar}}=0.168$, $0.097$, $0.159$, not by $b=W(\mu^*,\nu)=0.45$, $0.33$, $0.40$ (Theorem C$'$(ii)--(iii)).
+    The labelled leak to the subset ends at $W(\mu_T,\mu^*)\approx W(\mu^*,\mathrm{subset})$. A rich prior whose
+    centroidal quantisation is close to the ideal is a better anchor than a crude prior with the right number of
+    atoms.
+  \item Tests (\code{tests/test_barycentric.py}): the plan reduces to the assignment for $m_0=m$ and
+    $W^2=V_{\mathrm{bar}}^2+\mathrm{Var}_\gamma$; the pure leak dissipates at every step with
+    $D^+Z\le-\sigma_mV_{\mathrm{bar}}^2$ and ends at a Lloyd fixed point; $\sqrt{C_{\mathrm{bar}}}\le b+2\eta$ on 90
+    configurations, with $C_{\mathrm{bar}}=b_{\mathrm{bar}}^2$ at small $\eta$; the Lyapunov inequality (iii) along a
+    closed loop with a 24-atom prior.
+\end{itemize}
+
 % ------------------------------------------------------------------------------------------------ D
 \subsection{Theorem D: convergence in \texorpdfstring{$m$}{m}}
 
@@ -165,6 +235,43 @@ This is a consistency check in $m$, not a check of the constant.
 $m=16$, $32$, $64$, $128$ and $256$.}
 \label{fig:evidence:meanfield}
 \end{figure}
+
+% ------------------------------------------------------------------------------------------------ D'
+\subsection{Theorem D\texorpdfstring{$'$}{'}: propagation of chaos for the dithered loop}
+
+Script: \code{exp_chaos.py} $\to$ \code{chaos/} (raw per-seed values in \code{raw_sup_D.npz}). The $m$-particle loop
+($n=1$, $k_e=10$, $\sigma=0.02$, $G=\operatorname{diag}(4,1,1)$, $T=20$\,s, $\mathrm{d}t=0.001$; Euler--Maruyama
+for the particles and RK4 for the plant) is coupled synchronously to an $M=4096$ reference that shares its first $m$
+particles and Brownian motions, and $\sup_tD_m$ with
+$D_m:=\norm{x^m-x^M}+\frac1m\sum_i\norm{\vartheta^m_i-\vartheta^M_i}$ is averaged over 24 seeds
+(Table~\ref{tab:evidence:chaos}).
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Theorem D$'$: synchronous coupling of the $m$-particle dithered loop to an $M=4096$ reference, 24 seeds.
+Slopes are log-log fits, with bootstrap standard errors over seeds.}
+\label{tab:evidence:chaos}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & $\tau=0$ & $\tau=2\cdot10^{-3}$\\
+\midrule
+mean $\sup_tD_m$, $m=16\to1024$ & $1.49\cdot10^{-1}\to2.17\cdot10^{-2}$ & $1.52\cdot10^{-1}\to2.32\cdot10^{-2}$\\
+slope of the mean against $m$ ($m\le256$) & $-0.47\pm0.06$ & $-0.46\pm0.05$\\
+slope of the median & $-0.46$ & $-0.45$\\
+slope against $(1/m-1/M)^{1/2}$ (predicted 1) & $0.94\pm0.08$ & $0.92\pm0.08$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item The $m^{-1/2}$ rate of Theorem D$'$(b) holds within one standard error at both temperatures; the
+    shared-particle coupling predicts the mean $\propto(1/m-1/M)^{1/2}$, which the data follow up to $m=M/4$.
+  \item Single seeds differ by more than an order of magnitude at fixed $m$; a three-seed version of the experiment
+    gave slopes $-0.25$ and $-0.21$ and was withdrawn (review round 5). The constant of the theorem
+    ($TK_\Phi e^{\Lambda T}$) is not checked.
+  \item There is no test: the experiment is the check.
+\end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E
 \subsection{Theorem E: label-free convergence under excitation}
@@ -209,6 +316,77 @@ reference (left) and the single-sine reference (right).}
 \label{fig:evidence:pe}
 \end{figure}
 
+% ------------------------------------------------------------------------------------------------ E.0
+\subsection{Lemma E.0 and Theorem E with explicit constants}
+
+Script: \code{exp_explicit_rate.py} $\to$ \code{explicit_rate/}. The explicit rate of Lemma E.0 is compared with the
+exact Floquet rate of the linearised loop (Tables~\ref{tab:evidence:explicitrate} and
+\ref{tab:evidence:explicitomega}). It lies below the exact rate in every row; the ordering is numerical ($\Psi_M$,
+$\Psi_D$ are grid maxima, $\alpha$ a converged quadrature and $\varepsilon$ a grid optimum), with margins of at least
+$17\times$.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Lemma E.0: the explicit rate against the exact Floquet rate of the linearised loop
+(\texttt{explicit\_rate/table.md}).}
+\label{tab:evidence:explicitrate}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.47\textwidth}>{\raggedright\arraybackslash}p{0.13\textwidth}Y@{}}
+\toprule
+instance & regime & exact\,/\,explicit\\
+\midrule
+Remark E.1 ($m=n=1$, $G=I$, $k_e=3$), $\omega=1,\dots,64$ & $\Psi_M^2/k_e\approx1$ & $954\to17.6$ (decreasing in
+  $\omega$)\\
+the ideal of the Theorem E tests ($m=3$, $n=2$, $k_e=6$), two-tone reference of period $20\pi$,
+  $G=g\cdot\operatorname{diag}(2,2,1)$, $g=30,\dots,0.01$ & fast $\to$ slow & $6.56\cdot10^{10}\to4.22\cdot10^{5}$
+  (optimised $\varepsilon$; $8.74\cdot10^{10}\to5.63\cdot10^{5}$ with the closed-form $\varepsilon$)\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Lemma E.0 in Remark E.1's instance, $x_m=1.5\sin\omega t$ ($m=n=1$, $G=I$, $k_e=3$): PE window $T$, level
+$\alpha(T)$, $\Psi_D$ ($\Psi_M=1.78$ throughout), the exact Floquet rate and the explicit rate with the closed-form
+and with the optimised $\varepsilon$.}
+\label{tab:evidence:explicitomega}
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
+$\omega$ & $T$ & $\alpha(T)$ & $\Psi_D$ & exact rate & explicit, closed-form $\varepsilon$
+  & explicit, optimised $\varepsilon$\\
+\midrule
+1  & 6.28   & 1.13   & 3.69 & $4.660\cdot10^{-2}$ & $3.688\cdot10^{-5}$ & $4.886\cdot10^{-5}$\\
+2  & 3.14   & 0.566  & 7.38 & $2.158\cdot10^{-2}$ & $7.858\cdot10^{-5}$ & $1.040\cdot10^{-4}$\\
+4  & 1.57   & 0.283  & 14.8 & $6.834\cdot10^{-3}$ & $8.696\cdot10^{-5}$ & $1.152\cdot10^{-4}$\\
+8  & 0.785  & 0.142  & 29.5 & $1.831\cdot10^{-3}$ & $4.736\cdot10^{-5}$ & $6.301\cdot10^{-5}$\\
+16 & 0.393  & 0.0708 & 59   & $4.662\cdot10^{-4}$ & $1.650\cdot10^{-5}$ & $2.199\cdot10^{-5}$\\
+32 & 0.196  & 0.0354 & 118  & $1.171\cdot10^{-4}$ & $4.720\cdot10^{-6}$ & $6.286\cdot10^{-6}$\\
+64 & 0.0982 & 0.0177 & 236  & $2.931\cdot10^{-5}$ & $1.249\cdot10^{-6}$ & $1.665\cdot10^{-6}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item In Remark E.1's instance the exact rate falls like $\omega^{-2}$ (log-log slope $-1.97$ over $\omega\ge4$);
+    the explicit rate approaches that law (slope $-1.56$ over $\omega\ge4$, $-1.92$ over the last octave
+    $\omega=32\to64$). Lemma E.0(iii) derives the $\omega^{-2}$ law from $\Psi_D\propto\omega$.
+  \item In the slow-adaptation limit ($T\Psi_M^2\ll k_e$) the ratio decreases towards a constant of order
+    $\kappa_\Psi(1+\Psi_D/(k_e\Psi_M))^2$ for the optimised $\varepsilon$ ($3\kappa_\Psi(\cdots)^2$ for the
+    closed-form bound (ii)), with $\kappa_\Psi$ the condition number of the averaged Gramian ($1.27\cdot10^5$ for this
+    ideal; formula values $4.9\cdot10^5$ and $1.47\cdot10^6$; measured $4.22\cdot10^5$ with the optimised $\varepsilon$
+    and $5.63\cdot10^5$ with the closed-form $\varepsilon$ at $g=0.01$). On this instance the exact rate is $0.66$ of
+    $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k_e$, because $k_e=6$ is not large against the reference's bandwidth and
+    the $T^2\Psi_M^3$ term is still 13\% of $c_1$; the PE level is evaluated with 800 Gauss--Legendre nodes, converged
+    over the $20\pi$ window. The exact rate pays for ill-conditioning once, the bound twice (Remark E.0a).
+  \item Tests (\code{tests/test_excitation.py}): the pointwise inequalities of Lemma E.0 on random states for four
+    regressors, the envelope along trajectories, the ordering explicit $\le$ exact, the $\omega^{-2}$ law, the
+    no-growth of the ratio as the gains shrink, and the explicit nonlinear envelope of Theorem E on the implemented
+    closed loop (single-kernel instance with $G=0.3\,I$, where $r_0\approx10^{-5}$ in the $w$-coordinates and the
+    explicit nonlinear rate is $3.7\cdot10^{-5}$: the inequality holds at every sample over 8000\,s, about 0.3
+    e-folds of the explicit envelope, while the state itself decays by far more).
+\end{itemize}
+
 % ------------------------------------------------------------------------------------------------ F
 \subsection{Theorem F: transport cost}
 
@@ -224,8 +402,8 @@ Theorem F is checked by tests.
 % ------------------------------------------------------------------------------------------------ G
 \subsection{Proposition G: slow geometry}
 
-Scripts: \code{exp_variable_projection.py} and \code{exp_slow_manifold_slope.py}, both $\to$
-\code{variable_projection/}.
+\begin{sloppypar}\noindent Scripts: \code{exp_variable_projection.py} and \code{exp_slow_manifold_slope.py}, both
+$\to$ \code{variable_projection/}.\end{sloppypar}
 
 In Table~\ref{tab:evidence:varpro}, ranges are along the run (5 samples), and ``$a$\,/\,$b$'' means
 first-quarter\,/\,last-quarter medians. Velocities are centred differences of period means.
@@ -491,4 +669,152 @@ $k_e$ & measured $\norm{\Theta_+-\Theta_-}$ & size ratio & cosine & size ratio &
   \item The full first-order theory accounts for it. The frozen-measure terms alone account for less than half.
   \item A first attempt with $\sigma=0.5/k_e$ and half the horizon had not converged (residual drift about a third of
     the difference). It was discarded and rerun.
+\end{itemize}
+
+% ------------------------------------------------------------------------------------------------ I
+\subsection{Theorem I: reciprocity at order \texorpdfstring{$k_e^{-2}$}{k\_e\^{}-2}}
+
+\begin{sloppypar}\noindent There is no new experiment. Every statement of Theorem I is checked against the generic
+second-variation code of \code{src/core/averaging.py} by the tests of \code{tests/test_nonreciprocity.py}
+(Table~\ref{tab:evidence:reciprocity}).\end{sloppypar}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Theorem I: the checks of \texttt{tests/test\_nonreciprocity.py}.}
+\label{tab:evidence:reciprocity}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.58\textwidth}Y@{}}
+\toprule
+check & result\\
+\midrule
+$A(\vartheta,\vartheta')=a^\T B(\xi,\xi')a'$ against the antisymmetric part of $S_{\mathrm{even}}+K$, $n=1$ and $2$
+  & agreement to $10^{-10}$\\
+$A(\vartheta,\vartheta_z)=0$ for the zero feature; the cyclic sum over $(\vartheta_0,\vartheta_1,\vartheta_z)$ equals
+  $A(\vartheta_0,\vartheta_1)$ & $10^{-14}$\\
+$n=1$, $f:=\fhat_\mu$ (perfect fit on the orbit) & $\max\abs{A}<10^{-13}$ over 20 random pairs\\
+$n=1$, non-zero residual & $\abs{A}>10^{-3}$ found; equals the closed form
+  $-aa'\,\frac{c-c'}{s^2}\int r\varphi_c\varphi_{c'}\dd\rho$ to $10^{-12}$\\
+$\kappa(\xi,\xi')$ against its closed form for $n=2$: the Gaussian factor
+  $-\frac{1}{2s^2}e^{-\abs{c-c'}^2/(4s^2)}$ times $(c-c')\cdot F_s$ at the midpoint of $c$ and $c'$ & $10^{-10}$\\
+$F_2((0.5,0))>0$ on the ellipse; $\kappa\equiv0$ on a segment traversed back and forth
+  & $F_2>10^{-3}$; $\abs{\kappa}<10^{-12}$\\
+$n=2$ with $f\equiv\fhat_\mu$ on $\R^2$ (residual and its Jacobian vanish on the orbit): $B=2\kappa I$
+  & $10^{-13}$; $A\ne0$ on the ellipse, $A\equiv0$ ($<10^{-13}$) on the segment\\
+$n=2$ with $f=\fhat_\mu+he_1$, $h$ zero on the ellipse (residual zero on the orbit, Jacobian not symmetric):
+  $B-2\kappa I=-\int\varphi\varphi'\partial_2h\dd\rho\cdot(e_1e_2^\T-e_2e_1^\T)$
+  & $10^{-12}$, and not small (the round-5 correction of Theorem I(iv))\\
+positivity witness $f\equiv0$, $\mu=\delta_{\bar\vartheta}$ & integral $>0$; the generic code equals the closed
+  form to $10^{-12}$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ------------------------------------------------------------------------------------------------ J
+\subsection{Theorem J: periodic orbits of the finite-\texorpdfstring{$m$}{m} closed loop}
+
+Script: \code{exp_periodic_orbit.py} $\to$ \code{periodic_orbit/}. Newton shooting on the Poincar\'e map finds the
+exact periodic orbit of the real closed loop near the critical point $\Theta^*$ of $J_m$ (residual $<10^{-11}$); its
+period mean $\bar\Theta_p$ and its monodromy matrix are compared with the averaged system
+(Table~\ref{tab:evidence:periodic}). Instance A has $n=2$, $m=3$, $\sigma_0=0.5$, $G=\operatorname{diag}(4,4,1,1,1)$
+and a collapsed minimiser ($J_m(\Theta^*)=0.762775$, $\lambda_{\min}(\nabla^2J_m)=0.0148$); instance B has $n=1$,
+$m=2$, $\sigma_0=0.05$, $G=\operatorname{diag}(2,1,1)$, two distinct kernels ($J_m(\Theta^*)=0.258249$,
+$\lambda_{\min}(\nabla^2J_m)=0.0661$) and a fast sweep. Distances and cosines are in the labelled $\Ginv$ metric.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Theorem J: the exact periodic orbit against the averaged system. ``vec.\ error'' is the vector error of the
+first-order location $\Theta^*-J^{-1}(b_{\mathrm{frozen}}+b_{\mathrm{osc}})$ of Proposition H.7 and Remark H.7a;
+``frozen only'' omits $b_{\mathrm{osc}}$ (in instance B, $b_{\mathrm{osc}}=0$ by symmetry). ``Floquet'' is the maximal
+relative error of the parameter Floquet exponents against $\frac1{k_e}\lambda(G_m^{1/2}\nabla^2J_mG_m^{1/2})$.}
+\label{tab:evidence:periodic}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}c cccc ccc@{}}
+\toprule
+ & \multicolumn{4}{c}{instance A (collapsed minimiser)} & \multicolumn{3}{c@{}}{instance B (two distinct kernels)}\\
+\cmidrule(lr){2-5}\cmidrule(l){6-8}
+$k_e$ & $\norm{\bar\Theta_p-\Theta^*}$ & vec.\ error & frozen only & Floquet & $\norm{\bar\Theta_p-\Theta^*}$
+  & vec.\ error & Floquet\\
+\midrule
+10  & $4.09\cdot10^{-2}$ & 0.169 & 0.398 & $8.31\cdot10^{-2}$ & $6.44\cdot10^{-2}$ & 1.995 & $9.48\cdot10^{-2}$\\
+20  & $1.91\cdot10^{-2}$ & 0.083 & 0.360 & $7.34\cdot10^{-2}$ & $2.22\cdot10^{-2}$ & 1.078 & $3.21\cdot10^{-2}$\\
+40  & $9.22\cdot10^{-3}$ & 0.041 & 0.348 & $4.50\cdot10^{-2}$ & $8.37\cdot10^{-3}$ & 0.551 & $1.16\cdot10^{-2}$\\
+80  & $4.53\cdot10^{-3}$ & 0.020 & 0.343 & $2.46\cdot10^{-2}$ & $3.51\cdot10^{-3}$ & 0.277 & $4.63\cdot10^{-3}$\\
+160 & $2.24\cdot10^{-3}$ & 0.010 & 0.342 & $1.28\cdot10^{-2}$ & $1.59\cdot10^{-3}$ & 0.139 & $2.03\cdot10^{-3}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item Fitted exponent of the offset $\norm{\bar\Theta_p-\Theta^*}$ against $k_e$: $-1.05$ (A) and $-1.33$ (B; not
+    yet asymptotic below $k_e\approx80$); Theorem J gives $-1$.
+  \item The vector error of the first-order location halves with every doubling of $k_e$ in both instances. In A the
+    frozen-measure terms alone leave a 35\% error at every $k_e$, so the oscillation term of Remark H.7a is an
+    $O(1)$ fraction of the offset.
+  \item The median relative error of the parameter Floquet exponents falls from $1.2\cdot10^{-2}$ to
+    $1.1\cdot10^{-3}$ (A) and from $4.0\cdot10^{-2}$ to $9.5\cdot10^{-4}$ (B) between $k_e=10$ and $160$.
+  \item Error channel: the error-channel multipliers are below the resolution of the finite-difference monodromy
+    (exponents of order $k_e$), so their product is recovered from Liouville's identity
+    $\sum\log\abs{\lambda}=\int_0^{T_0}\tr\,\partial F/\partial z\dd t$ along the orbit. The mean error-channel
+    exponent is $k_e-L$ with $L=0.160$, $0.111$, $0.086$, $0.074$, $0.068$ (A) and $L=-0.054$, $-0.074$, $-0.084$,
+    $-0.089$, $-0.092$ (B) at $k_e=10$, $20$, $40$, $80$, $160$, as Theorem J(b) states ($L=O(1)$).
+  \item Tests (\code{tests/test_periodic.py}): $\nabla J_m$ against finite differences; shooting residual
+    $<10^{-10}$; the offset, the vector error and the Floquet error all fall by the required factors from $k_e=20$ to
+    $40$ on instance B.
+\end{itemize}
+
+% ------------------------------------------------------------------------------------------------ K
+\subsection{Proposition K: collapsed configurations and the orientation of the orbit}
+
+Script: \code{exp_orientation_stability.py} $\to$ \code{orientation_stability/}. The setting is instance A of
+Theorem J ($n=2$, $m=3$, $G=\operatorname{diag}(4,4,1,1,1)$) with the ellipse $(1.2\cos t,\pm0.8\sin t)$ traversed
+both ways. The Floquet exponents of the collapsed periodic orbit of the real closed loop are computed by Newton
+shooting and restricted to the separation subspace $\sum_iu_i=0$; an exponent is $-\log\abs{\lambda}/T_0$, so
+positive means stable. The leading-order separation exponents are the eigenvalues of
+$(\sigma_0I-G^{1/2}R_2G^{1/2})/k_e$, identical for both orientations. The second-order prediction is the
+linearisation of $\frac1{k_e}\langle H\rangle+b_{\mathrm{frozen}}+b_{\mathrm{osc}}$ at its own equilibrium
+$\bar\Theta_2$ (every $\bar\Theta_2$ found is collapsed, kernel spread below $1.2\cdot10^{-8}$); the prediction ``at
+$\Theta^*$'' uses the Jacobian at the collapsed critical point instead, which omits the third-derivative term
+(Table~\ref{tab:evidence:orientationstability}).
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Proposition K: the softest separation Floquet exponent of the collapsed orbit for the two orientations at
+$\sigma_0=0.5$, and its orientation difference, measured against the second-order prediction
+(\texttt{orientation\_stability/table.md}).}
+\label{tab:evidence:orientationstability}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}c cc ccc cc@{}}
+\toprule
+ & \multicolumn{2}{c}{softest separation exponent} & \multicolumn{3}{c}{difference $(+)-(-)$}
+  & \multicolumn{2}{c@{}}{$k_e^2\times{}$difference}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-6}\cmidrule(l){7-8}
+$k_e$ & $(+)$ & $(-)$ & measured & pred.\ at $\bar\Theta_2$ & pred.\ at $\Theta^*$ & measured
+  & pred.\ at $\bar\Theta_2$\\
+\midrule
+10 & $3.563\cdot10^{-3}$ & $2.660\cdot10^{-3}$ & $9.03\cdot10^{-4}$ & $7.77\cdot10^{-4}$ & $9.01\cdot10^{-4}$ & 0.090 & 0.078\\
+20 & $1.800\cdot10^{-3}$ & $1.614\cdot10^{-3}$ & $1.86\cdot10^{-4}$ & $1.69\cdot10^{-4}$ & $2.08\cdot10^{-4}$ & 0.075 & 0.068\\
+40 & $9.277\cdot10^{-4}$ & $8.863\cdot10^{-4}$ & $4.14\cdot10^{-5}$ & $3.93\cdot10^{-5}$ & $4.98\cdot10^{-5}$ & 0.066 & 0.063\\
+80 & $4.737\cdot10^{-4}$ & $4.640\cdot10^{-4}$ & $9.71\cdot10^{-6}$ & $9.44\cdot10^{-6}$ & $1.22\cdot10^{-5}$ & 0.062 & 0.060\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+  \item Fitted exponent of the difference against $k_e$: $-2.18$ (Proposition K(iii): $-2$). The prediction at
+    $\bar\Theta_2$ converges to the measured $k_e^2$-scaled limit; the prediction at $\Theta^*$, which omits the
+    third-derivative term, converges to a value 30\% too large.
+  \item At $\sigma_{\mathrm{crit}}=0.4606$ both orientations are unstable ($-4.1\cdot10^{-4}$ and $-1.27\cdot10^{-3}$
+    at $k_e=10$); the even part dominates. The two separation exponents coincide (multiplicity $m-1=2$,
+    Proposition K(ii)).
+  \item Designed $\sigma_0$, chosen so that the predicted softest exponents of the two orientations are opposite
+    ($\mathrm{pred}_++\mathrm{pred}_-=0$): $\sigma_0-\sigma_{\mathrm{crit}}=0.0125$ ($k_e=10$) and $0.0061$
+    ($k_e=20$). The measured softest exponents are $+8.5\cdot10^{-4}$\,/\,$-2.5\cdot10^{-5}$ and
+    $+1.4\cdot10^{-4}$\,/\,$-3.7\cdot10^{-5}$: one orientation of the same reference orbit (same occupation measure,
+    same averaged system) leaves the collapsed configuration stable and the other makes it unstable.
+  \item \begin{sloppypar}Test \code{test_proposition_K_hessian_splitting_and_critical_leak} in
+    \code{tests/test_periodic.py}: the Hessian splitting at the collapsed point ($10^{-5}$), the gap equation of
+    $\sigma_{\mathrm{crit}}$ ($10^{-8}$), the two-fold zero separation mode at
+    $\sigma_{\mathrm{crit}}$.\end{sloppypar}
 \end{itemize}

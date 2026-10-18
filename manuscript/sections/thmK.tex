@@ -1,0 +1,220 @@
+% Proposition K: collapsed configurations, the critical leak, and the orientation of the orbit as a design input
+% (PARADIGM.md, section 6e).
+\section{Proposition K: collapsed configurations, the critical leak, and the orientation of the orbit as a design input}\label{sec:thmK}
+
+Branch 2 of Section~\ref{sec:program} asks whether the circulation of the reference orbit can be designed. Theorem J
+(Section~\ref{sec:thmJ}) makes the question precise for the collapsed configuration, the trap that Theorem H's dither
+was introduced to escape: its stability is decided by the eigenvalues of a Hessian that the orientation shifts at
+order $k_e^{-2}$.
+
+\paragraph{Setting.} As in Theorem J. A configuration is \emph{collapsed} if $\vartheta_i = \bar\vartheta$ for all
+$i$. Then $\fhat_\Theta = \tilde\Phi(\cdot\,;\bar\vartheta)$, so $\Theta$ is a critical point of $J_m$ if and only if
+$\bar\vartheta$ is a critical point of the single-kernel objective
+$J_1(\vartheta) := \frac12\int\norm{f - \tilde\Phi(\cdot\,;\vartheta)}^2\dd\rho
++ \frac{\sigma_0}{2}\norm{\vartheta - \vartheta^0}^2_{\Ginv}$. Write $\bar r := f - \tilde\Phi(\cdot\,;\bar\vartheta)$
+and
+\begin{gather*}
+  M_2 := \int\nabla_\vartheta\tilde\Phi(\cdot\,;\bar\vartheta)^\T\nabla_\vartheta\tilde\Phi(\cdot\,;\bar\vartheta)\dd\rho\succeq0,\\
+  R_2 := \int\sum_k\bar r_k\nabla^2_\vartheta\tilde\Phi_k(\cdot\,;\bar\vartheta)\dd\rho
+  = \nabla^2_\vartheta\bigl\langle\bar r^\T\tilde\Phi(\cdot\,;\vartheta)\bigr\rangle_\rho\Big|_{\bar\vartheta}
+  \quad\text{(residual frozen)}.
+\end{gather*}
+$R_2$ is the Hessian of $-V_L[\bar\mu](\vartheta)$ at the atom: the second-order cost of moving a small amount of mass
+off the atom at frozen residual.
+
+\begin{thm}{Proposition}{K}[collapsed configurations, the critical leak, and the orientation as a design input]
+Let $\Theta^*$ be a collapsed critical point of $J_m$ with atom $\bar\vartheta$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{Symmetry splitting.}
+    $\nabla^2J_m(\Theta^*) = I_m\otimes(\sigma_0\Ginv - R_2) + \frac1m(\mathbf 1\mathbf 1^\T)\otimes M_2$. On the
+    separation subspace $\{(u_1,\dots,u_m) : \sum_iu_i = 0\}$, of dimension $(m-1)p$, it acts as
+    $\sigma_0\Ginv - R_2$; on the collective subspace $\{u_i\text{ all equal}\}$ as
+    $\nabla^2J_1(\bar\vartheta) = \sigma_0\Ginv - R_2 + M_2$. The same splitting holds for the Jacobian of any
+    permutation-equivariant particle drift at a collapsed configuration, in particular for the second-order averaged
+    drift of Remark H.7a \textup{(}Section~\ref{sec:finitegain}\textup{)}: it has the form
+    $I_m\otimes D + \frac1m(\mathbf 1\mathbf 1^\T)\otimes E$.
+  \item \emph{Separation stability at leading order.} $\Theta^*$ is a non-degenerate local minimum of $J_m$ iff
+    $\nabla^2J_1(\bar\vartheta)\succ0$ and $\sigma_0\Ginv\succ R_2$, that is, iff $\bar\vartheta$ is a non-degenerate
+    minimiser of $J_1$ and $\sigma_0 > \sigma_{\mathrm{crit}}(\bar\vartheta) := \lambda_{\max}(G^{1/2}R_2G^{1/2})$.
+    The separation Floquet exponents of the collapsed periodic orbit of \textup{(CL)} are then, by Theorem J(b),
+    $(1/k_e)\lambda_j(\sigma_0I - G^{1/2}R_2G^{1/2}) + O(k_e^{-2})$, each with multiplicity $m-1$, and they do not
+    depend on $m$. The condition $\sigma_0\Ginv\succ R_2$ is the statement that the atom is a strict local minimiser
+    of the first-variation potential $V_L[\bar\mu] + \frac{\sigma_0}{2}\norm{\cdot}^2_{\Ginv}$ on its support, the
+    local form of the Chizat--Bach optimality condition for measures.
+  \item \emph{The orientation-odd shift.} Let $\mathcal O$ be traversed in either direction \textup{(}the same $\rho$,
+    hence the same $\Theta^*$ and the same leading exponents\textup{)}. Write the second-order normal form of
+    Theorem J's proof as
+    \begin{equation}
+      \dot\Theta = -\frac1{k_e}G_m\nabla J_m(\Theta) + b(\Theta) + O(k_e^{-3}),\qquad
+      b := b_{\mathrm{frozen}} + b_{\mathrm{osc}} = O(k_e^{-2}),
+      \tag{N}
+    \end{equation}
+    with $b_{\mathrm{frozen}} = \frac1{k_e^2}G_m\nabla(U_{\mathrm{even}} + U_{\mathrm{odd}})$ \textup{(}Proposition
+    H.7\textup{)} and $b_{\mathrm{osc}}$ of Remark H.7a. \textup{(N)} has a unique equilibrium $\bar\Theta_2$ near
+    $\Theta^*$, which is collapsed, with $\bar\Theta_2 - \Theta^* = -J_1^{-1}b(\Theta^*) + O(k_e^{-2})$ for
+    $J_1 := -\frac1{k_e}G_m\nabla^2J_m(\Theta^*)$ \textup{(}the first-order location of Theorem J(d)\textup{)}; let
+    $J_2$ be the Jacobian of \textup{(N)} at $\bar\Theta_2$. The parameter Floquet exponents of the collapsed orbit
+    are the eigenvalues of $-J_2$ up to $O(k_e^{-3})$, and
+    \[
+      J_2 = J_1 + \partial b(\Theta^*) + \partial J_1(\Theta^*)[\bar\Theta_2 - \Theta^*] + O(k_e^{-3}),
+    \]
+    where the third term --- the third derivative of $J_m$ contracted with the first-order offset --- is $O(k_e^{-2})$,
+    of the same order as $\partial b$, and must be kept: the Jacobian of \textup{(N)} at $\Theta^*$ is not the right
+    linearisation. Under orbit reversal $\rho$, $\Theta^*$, $J_1$ and $U_{\mathrm{even}}$ are unchanged while
+    $U_{\mathrm{odd}}$ and $b_{\mathrm{osc}}$ change sign \textup{(}Proposition H.7(d), Remark H.7a\textup{)}, so
+    with $b_{\mathrm{even}} := \frac1{k_e^2}G_m\nabla U_{\mathrm{even}}$ and
+    $b_{\mathrm{odd}} := \frac1{k_e^2}G_m\nabla U_{\mathrm{odd}} + b_{\mathrm{osc}}$,
+    \begin{gather*}
+      J_2 = J_1 + E \pm O,\\
+      E := \partial b_{\mathrm{even}}(\Theta^*) - \partial J_1(\Theta^*)\bigl[J_1^{-1}b_{\mathrm{even}}(\Theta^*)\bigr],\qquad
+      O := \partial b_{\mathrm{odd}}(\Theta^*) - \partial J_1(\Theta^*)\bigl[J_1^{-1}b_{\mathrm{odd}}(\Theta^*)\bigr],
+    \end{gather*}
+    for the two orientations. $J_1$, $E$ and $O$ are permutation-equivariant and preserve the separation subspace;
+    by \textup{(i)} their restrictions to one separation block are $p\times p$ matrices, written
+    $J_1|_{\mathrm{sep}} = -\frac1{k_e}(\sigma_0I - GR_2)$, $D_{\mathrm{even}}$, $D_{\mathrm{odd}}$. The separation
+    Floquet exponents of the two orientations differ by
+    \[
+      \lambda_j^{(+)} - \lambda_j^{(-)} = -2\,\frac{w_j^\T D_{\mathrm{odd}}v_j}{w_j^\T v_j} + O(k_e^{-3})
+    \]
+    \textup{(}simple eigenvalue $\lambda_j$ of $-J_1|_{\mathrm{sep}}$, right and left eigenvectors $v_j$,
+    $w_j$\textup{)}, an $O(k_e^{-2})$ quantity that scales like $k_e^{-2}$ at fixed $(G,\sigma_0)$, while the
+    exponents themselves are $O(1/k_e)$. The difference is a property of the excitation's orientation alone: the
+    occupation measure, the averaged system $\Aavg$ and all of Theorems B--H are blind to it.
+  \item \emph{The critical leak as a design point.} At $\sigma_0 = \sigma_{\mathrm{crit}}(\bar\vartheta)$ the softest
+    separation exponent vanishes at leading order and equals the $k_e^{-2}$ value
+    $-(w^\T D_{\mathrm{even}}v)/(w^\T v) \mp (w^\T D_{\mathrm{odd}}v)/(w^\T v) + O(k_e^{-3})$. If
+    $\abs{w^\T D_{\mathrm{odd}}v} > \abs{w^\T D_{\mathrm{even}}v}$, the collapsed configuration is stable for one
+    orientation and unstable for the other: the direction in which the reference is traversed decides whether the
+    kernels separate. More generally, for $\sigma_0$ in a window of width $O(1/k_e)$ around $\sigma_{\mathrm{crit}}$
+    --- the window where the leading exponent $(\sigma_0 - \sigma_{\mathrm{crit}})(1 + o(1))/k_e$ lies between the two
+    $k_e^{-2}$ values --- the orientation decides the sign, and the centre of the window,
+    $\sigma_0 = \sigma_{\mathrm{crit}} + k_e(w^\T D_{\mathrm{even}}v)/(w^\T v) + O(k_e^{-1})$, can be computed from
+    the averaged data alone.
+\end{enumerate}
+\end{thm}
+\status{(i) and (ii) are proved (linear algebra at the collapsed point and Theorem J(b)). (iii) and (iv) are proved
+given the second-order normal form (N) with an $O(k_e^{-3})$ remainder, which is Theorem J's proof carried one order
+further (periodic averaging to second order, Sanders--Verhulst--Murdock~\cite[Ch.~2--3]{svm2007}; the first-order step
+is written out in the proof of Theorem J, the second-order step is Remark H.7a's derivation and is not written out
+here). The orientation-odd shift, its $k_e^{-2}$ scaling, the prediction and the design window are checked numerically
+in one instance (\code{exp_orientation_stability.py}).}
+
+\begin{proof}
+\textit{(i)} $\partial^2J_m/\partial\vartheta_i\partial\vartheta_j
+= \frac1m\int\nabla\tilde\Phi_i^\T\nabla\tilde\Phi_j\dd\rho - \delta_{ij}\int\sum_kr_k\nabla^2\tilde\Phi_{i,k}\dd\rho
++ \delta_{ij}\sigma_0\Ginv$ (the first term from the quadratic dependence of $\frac12\int\norm{r}^2\dd\rho$ on the
+$m$ features with weights $1/m$, the second from the $\vartheta_i$-curvature of the residual term:
+with $r = f - \frac1m\sum\tilde\Phi_j$,
+$\partial_{\vartheta_i}(m\bar L_m) = -\int r^\T\nabla\tilde\Phi_i\dd\rho$ and
+$\partial_{\vartheta_j}\partial_{\vartheta_i}(m\bar L_m)
+= \frac1m\int\nabla\tilde\Phi_j^\T\nabla\tilde\Phi_i\dd\rho - \delta_{ij}\int\sum_kr_k\nabla^2\tilde\Phi_{i,k}\dd\rho$).
+At a collapsed point all blocks coincide, giving the Kronecker form; the two subspaces are the isotypic components of
+the permutation action, on which $\frac1m(\mathbf 1\mathbf 1^\T)$ acts as $0$ and $1$ respectively. The second-order
+averaged drift is permutation-equivariant (each particle moves by a function of its own position and of the measure),
+so its Jacobian at a collapsed point has the same form with $D$ the self-derivative and $E$ the derivative through
+the measure.
+
+\smallskip
+\textit{(ii)} Positive definiteness of a block-diagonal form; the exponents are Theorem J(b) applied to the separation
+block, whose eigenvalues of $G_m^{1/2}\nabla^2J_mG_m^{1/2}$ restricted to the separation subspace are those of
+$\sigma_0I - G^{1/2}R_2G^{1/2}$, each repeated $m-1$ times. For the last sentence, the first variation of
+$\mathcal G := \bar L + \frac{\sigma_0}{2}\int\norm{\cdot - \vartheta^0}^2_{\Ginv}\dd\mu$ at
+$\bar\mu = \delta_{\bar\vartheta}$ is
+$V_L[\bar\mu](\vartheta) + \frac{\sigma_0}{2}\norm{\vartheta - \vartheta^0}^2_{\Ginv}
+= -\bigl\langle\bar r^\T\tilde\Phi(\cdot\,;\vartheta)\bigr\rangle_\rho + \frac{\sigma_0}{2}\norm{\vartheta - \vartheta^0}^2_{\Ginv}$,
+whose Hessian at $\bar\vartheta$ is $-R_2 + \sigma_0\Ginv$.
+
+\smallskip
+\textit{(iii)} The proof of Theorem J carries one order further: the near-identity change of variables of its Step~3
+removes the oscillating terms through order $k_e^{-2}$, which turns \textup{(CL)} into \textup{(N)} with an
+$O(k_e^{-3})$ remainder (this is the normal form of Remark H.7a's derivation, with $b_{\mathrm{osc}}$ the term that
+the frozen-measure expansion misses). \textup{(N)} is a regular perturbation of the averaged system near the
+hyperbolic point $\Theta^*$, so it has a unique equilibrium $\bar\Theta_2$ within $O(1/k_e)$ of $\Theta^*$, obtained
+by the implicit function theorem; by the first-order expansion,
+$\bar\Theta_2 - \Theta^* = -J_1^{-1}b(\Theta^*) + O(k_e^{-2})$ ($J_1^{-1} = O(k_e)$, $b = O(k_e^{-2})$). \textup{(N)}
+is permutation-equivariant and $\Theta^*$ is collapsed, so the equivariant Newton iterates stay collapsed and
+$\bar\Theta_2$ is collapsed. Theorem J(b) applied to \textup{(N)} (same proof, remainder $O(k_e^{-3})$) gives the
+Floquet exponents as the eigenvalues of $-J_2 + O(k_e^{-3})$. Expanding the Jacobian of \textup{(N)} about $\Theta^*$:
+$J_2 = J_1 + \partial b(\Theta^*) + \partial J_1(\Theta^*)[\bar\Theta_2 - \Theta^*]
++ O(\norm{\bar\Theta_2 - \Theta^*}^2/k_e) + O(k_e^{-2}\norm{\bar\Theta_2 - \Theta^*})$, and both error terms are
+$O(k_e^{-3})$; substituting the offset gives $E$ and $O$, which are the even and odd parts under reversal because
+$\partial J_1$ is even and $b_{\mathrm{even}}$, $b_{\mathrm{odd}}$ have the parities named. All three operators are
+permutation-equivariant, hence preserve the separation subspace, and by the Kronecker structure of \textup{(i)} each
+acts on it as $I_{m-1}\otimes(\text{a $p\times p$ block})$. First-order eigenvalue perturbation of the simple
+eigenvalue $\lambda_j$ of $-J_1|_{\mathrm{sep}}$ gives
+\[
+  \lambda_j^{(\pm)} = \lambda_j - \frac{w_j^\T D_{\mathrm{even}}v_j}{w_j^\T v_j}
+  \mp \frac{w_j^\T D_{\mathrm{odd}}v_j}{w_j^\T v_j} + O(k_e^{-3}),
+\]
+and the difference as stated. (For the $(m-1)$-fold degenerate separation modes the degeneracy is the trivial one of
+the Kronecker structure, which the restriction to one $p$-dimensional block removes; a further degeneracy within the
+block would call for degenerate perturbation theory.)
+
+\smallskip
+\textit{(iv)} is \textup{(iii)} at a vanishing leading eigenvalue; the window follows because the leading exponent is
+$(\sigma_0 - \sigma_{\mathrm{crit}})/k_e\cdot(1 + o(1))$ near $\sigma_{\mathrm{crit}}$ ($\bar\vartheta$, $R_2$ and
+the eigenvectors depend smoothly on $\sigma_0$) while the shifts are $O(k_e^{-2})$; its centre is where the leading
+exponent cancels the even shift.
+\end{proof}
+
+\begin{rmk}{Remark}{K.1}[reading]
+Three things.
+\begin{itemize}
+  \item The collapsed configuration's stability is a single-kernel question at leading order (the Hessian
+    $\sigma_0\Ginv - R_2$ does not depend on $m$), which explains why the $m = 6$ and $m = 32$ experiments of
+    Section~\ref{sec:thmH} collapsed alike: a leak above $\sigma_{\mathrm{crit}}$ traps every network size.
+  \item Dither (Theorem H) and the orientation (this proposition) are two different ways to leave the trap: the first
+    adds entropy, the second tilts the Hessian by $O(k_e^{-2})$. The second is free but small; it matters only near
+    $\sigma_{\mathrm{crit}}$, that is, when the leak is tuned to the edge of trapping, or for nearly flat separation
+    modes such as the weak saddle of Remark H.2.
+  \item The sign of the shift depends on the data $(f,\mathcal O,\bar\vartheta)$ through $D_{\mathrm{odd}}$ and has
+    no general sign: the design rule is to compute $D_{\mathrm{odd}}$ (from the averaged data: $U_{\mathrm{odd}}$,
+    $b_{\mathrm{osc}}$ and the third derivative of $J_m$) and choose the orientation with the smaller softest
+    separation exponent (or the negative one); the window of (iv) is where the choice matters.
+\end{itemize}
+\end{rmk}
+
+\paragraph{Numerics} (\code{exp_orientation_stability.py} $\to$ \code{results/orientation_stability/table.md}).
+Instance A of Theorem J's numerics (Section~\ref{sec:thmJ}; $n = 2$, $m = 3$, the elliptic reference traversed in both
+directions, $G = \operatorname{diag}(4,4,1,1,1)$). For each orientation the collapsed periodic orbit is found by
+Newton shooting (residual $\le4\cdot10^{-13}$), the parameter block of its monodromy matrix is restricted to the
+separation and collective subspaces, and the exponents are compared with the leading order
+$(\sigma_0I - G^{1/2}R_2G^{1/2})/k_e$ and with the second-order prediction, the eigenvalues of $-J_2$ at the
+equilibrium $\bar\Theta_2$ of (N) (Newton from $\Theta^*$; every $\bar\Theta_2$ found is collapsed to $10^{-8}$). The
+second-order equilibrium is $\norm{\bar\Theta_2 - \Theta^*}_{\Ginv} = 3.7\cdot10^{-2}$, $1.8\cdot10^{-2}$,
+$9.0\cdot10^{-3}$, $4.5\cdot10^{-3}$ away from $\Theta^*$ at $k_e = 10$, $20$, $40$, $80$: the $O(1/k_e)$ offset of
+Theorem J(d).
+\begin{itemize}
+  \item \emph{The shift and its prediction} ($\sigma_0 = 0.5$, a stable collapse). The softest separation exponents
+    of the two orientations differ by $9.0\cdot10^{-4}$, $1.9\cdot10^{-4}$, $4.1\cdot10^{-5}$, $9.7\cdot10^{-6}$ at
+    $k_e = 10$, $20$, $40$, $80$: fitted exponent $-2.18$ against $k_e$ ((iii): $-2$). Scaled by $k_e^2$, the
+    measured corrections to the leading order are $-0.032$, $-0.057$, $-0.070$, $-0.077$ for $(+)$ and $-0.123$,
+    $-0.132$, $-0.136$, $-0.139$ for $(-)$, approaching the predicted $-0.083$ and $-0.143$ with a gap that halves at
+    every doubling of $k_e$ (the $O(k_e^{-3})$ remainder); the predicted difference at $\bar\Theta_2$ ---
+    $7.8\cdot10^{-4}$, $1.7\cdot10^{-4}$, $3.9\cdot10^{-5}$, $9.4\cdot10^{-6}$ --- is within 14\%, 9\%, 5\%, 3\% of
+    the measured one. The prediction with the Jacobian taken at $\Theta^*$ instead of $\bar\Theta_2$ (the
+    third-derivative term omitted) reads $9.0\cdot10^{-4}$, $2.1\cdot10^{-4}$, $5.0\cdot10^{-5}$, $1.2\cdot10^{-5}$:
+    it agrees at $k_e = 10$ by accident and its $k_e^2$-scaled value converges to $0.078$ while the measured one
+    converges to $0.060$, the 30\% error that the numerics exposed (\code{review/REVIEW_LOG.md}, round 5, K-1). The
+    separation exponents come in exact pairs (multiplicity $m - 1 = 2$) and the collective exponents differ between
+    the orientations by 2\% at $k_e = 10$ and 0.2\% at $k_e = 80$, as (i)--(iii) describe.
+  \item \emph{At the critical leak} ($\sigma_0 = \sigma_{\mathrm{crit}} = 0.4606$). The leading exponent vanishes and
+    the $k_e^{-2}$ terms decide: the softest separation exponent is $-4.1\cdot10^{-4}$ for $(+)$ and
+    $-1.27\cdot10^{-3}$ for $(-)$ at $k_e = 10$, $-4.8\cdot10^{-5}$ and $-8.7\cdot10^{-5}$ at $k_e = 40$ --- unstable
+    for both orientations in this instance, the even part dominating the odd one by a factor 2--3; the predictions at
+    $\bar\Theta_2$ are within 14\% and 6\% of the measured values at $k_e = 40$.
+  \item \emph{The orientation decides} ($\sigma_0$ designed from the averaged data). Solving
+    $\mathrm{pred}_+(\sigma_0) + \mathrm{pred}_-(\sigma_0) = 0$ for the predicted softest exponents gives
+    $\sigma_0 - \sigma_{\mathrm{crit}} = 0.0125$ at $k_e = 10$ and $0.0061$ at $k_e = 20$, the centre of the window of
+    (iv); there the measured softest separation exponents are $+8.5\cdot10^{-4}$ and $-2.5\cdot10^{-5}$ ($k_e = 10$),
+    $+1.4\cdot10^{-4}$ and $-3.7\cdot10^{-5}$ ($k_e = 20$): the same reference orbit, traversed one way, keeps the
+    collapsed kernels together, and traversed the other way makes them separate. The window is narrow --- the leading
+    exponent at these $\sigma_0$ is $1.2\cdot10^{-3}$ and $3.0\cdot10^{-4}$ --- and the design lands inside it
+    although the $k_e^{-3}$ terms move both measured exponents by about $+4.7\cdot10^{-4}$ and $+6\cdot10^{-5}$
+    against the prediction.
+\end{itemize}
+\checkedby{\code{tests/test_periodic.py}: the Hessian splitting (i) against finite differences ($10^{-5}$ relative) at
+the collapsed minimiser of instance A, the isotypic eigenvalue structure, the gap equation of $\sigma_{\mathrm{crit}}$
+($10^{-8}$), and the two-fold zero of the separation block at $\sigma_{\mathrm{crit}}$ with a positive definite
+collective block (\code{test_proposition_K_hessian_splitting_and_critical_leak}); the experiment above for
+(iii)--(iv) (\code{exp_orientation_stability.py} $\to$ \code{results/orientation_stability/table.md}).}

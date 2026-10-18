@@ -1,0 +1,261 @@
+% Theorem C': the OT leak toward a prior with a different number of atoms (PARADIGM.md, section 4b).
+\section{Theorem C$'$: the OT leak toward a prior with a different number of atoms}\label{sec:thmCprime}
+
+Theorem C needs a prior with as many atoms as the network. Here the prior is any $\nu\in\Prob_2(\ThKe)$, for example
+the empirical measure of a network of a different size (the transfer problem of Section~\ref{sec:program}, branch 8),
+and the leak points at the barycentre of the prior mass that the optimal plan assigns to each particle. The
+dissipation toward the prior survives up to the quantisation error, the fixed points of the pure leak are the
+equal-mass centroidal configurations of $\nu$ (the leak is Lloyd's algorithm in continuous time), and the Lyapunov
+bias is measured by the distance of the ideal from the \emph{centroids} of its prior cells, not by $W(\mu^*,\nu)$.
+
+\paragraph{The law.} Let $\nu\in\Prob_2(\ThKe)$, for instance $\nu = \frac1{m_0}\sum_{j=1}^{m_0}\delta_{\vartheta^0_j}$
+with any $m_0\ge1$. For $\mu = \frac1m\sum\delta_{\vartheta_i}$, let $\gamma$ be a vertex optimal plan from $\mu$ to
+$\nu$ for the cost $\norm{\cdot}^2_{\Ginv}$ (for atomic $\nu$ a vertex of the transportation polytope; for general
+$\nu$ any optimal plan), and let
+\[
+  \bar T_i := m\int\vartheta'\dd\gamma(\vartheta_i,\vartheta')
+\]
+(the barycentric projection of $\gamma$ at $\vartheta_i$; for atomic $\nu$,
+$\bar T_i = m\sum_j\gamma_{ij}\vartheta^0_j$),
+\begin{gather*}
+  V_{\mathrm{bar}}^2 := \frac1m\sum_i\norm{\vartheta_i - \bar T_i}^2_{\Ginv},\qquad
+  \mathrm{Var}_\gamma := \int\norm{\vartheta' - \bar T(\vartheta)}^2_{\Ginv}\dd\gamma(\vartheta,\vartheta'),\\
+  \text{so that}\qquad W(\mu,\nu)^2 = V_{\mathrm{bar}}^2 + \mathrm{Var}_\gamma.
+\end{gather*}
+The \textbf{barycentric OT leak} is
+\begin{equation}\label{eq:thmCprime:Lsigbar}
+  \dot\vartheta_i = \Proj\bigl(\vartheta_i,\ G\nabla g_t(\vartheta_i) - \sigma_m(\vartheta_i - \bar T_i)\bigr).
+  \tag{$\mathrm{L}_{\sigma,\mathrm{bar}}$}
+\end{equation}
+For atomic $\nu$ the plan is a vertex of the transportation polytope (row sums $1/m$, column sums $1/m_0$), computed
+by linear programming (\code{transport.optimal_plan}, \code{transport.barycentric_projection}); for $m_0 = m$ it is a
+permutation and \textup{(L$_{\sigma,\mathrm{bar}}$)} is $\Lsig$. The right-hand side is discontinuous where the
+optimal plan is not unique, and here, unlike Section~\ref{sec:thmC} (Lemma C.3), the plan does switch along solutions
+(numerics below), so two solution concepts are used. \emph{Vertex-selection solutions} are absolutely continuous
+$\vartheta(t)$ with
+$\dot\vartheta_i = \Proj\bigl(\vartheta_i,\ G\nabla g_t - \sigma_m(\vartheta_i - \bar T_i^{\gamma(t)})\bigr)$ for a.e.\
+$t$ and $\gamma(t)$ a vertex optimal plan at $\vartheta(t)$; the time-stepped implementation produces these (switches
+at step times), and their existence for all time is assumed. \emph{Generalised solutions} allow $\gamma(t)$ to be any
+measurable selection of optimal plans. The optimal face $F(\vartheta)$ of the transportation LP is a compact convex
+polytope, upper semicontinuous in $\vartheta$ (finitely many vertices, continuous costs), and
+$\gamma\mapsto\bar T^\gamma$ is linear, so the set of generalised velocities is compact, convex and upper
+semicontinuous in $\vartheta$: it contains the Filippov regularisation of the vertex law, and generalised solutions
+exist on $[0,\infty)$ by the standard theorem for such differential inclusions (the projection is handled as in
+Section~\ref{sec:thmC}). Every statement below holds for both concepts, with $\bar T$ and $V_{\mathrm{bar}}$ computed
+from the plan the solution uses. Since $\ThKe$ is convex, $\bar T_i\in\ThKe$, so property (P) applies with
+$\vartheta' = \bar T_i$.
+
+\paragraph{Notation.} $\eta := W(\mu_t,\mu^*_t)$, $b := \sup_t W(\mu^*_t,\nu)$, and
+\[
+  b_{\mathrm{bar}}(t)^2 := \frac1m\sum_j\norm{\vartheta^*_j(t) - \bar T^*_j(t)}^2_{\Ginv}
+  = W(\mu^*_t,\nu)^2 - \mathrm{Var}_{\gamma^*(t)},\qquad
+  b_{\mathrm{bar}} := \sup_t b_{\mathrm{bar}}(t),
+\]
+the \emph{centroid defect of the ideal}, computed with an optimal plan $\gamma^*(t)$ from $\mu^*_t$ to $\nu$.
+$\Delta_{\mathrm{gap}}(t)$ is the gap between the optimal and the next vertex cost of the transportation polytope at
+$\mu^*_t$ ($\min\emptyset := +\infty$), and $\Delta_{\mathrm{gap}} := \inf_t\Delta_{\mathrm{gap}}(t)$.
+
+\begin{thm}{Theorem}{C$'$}
+Under \textup{(S)}, along every vertex-selection or generalised solution of \textup{(L$_{\sigma,\mathrm{bar}}$)}:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{Dissipation toward the centroidal configurations.} With $Z := \frac12W(\mu_t,\nu)^2$ and $\Gamma$ as in
+    Theorem C(i),
+    \[
+      D^+Z \le -\sigma_mV_{\mathrm{bar}}^2 + V_{\mathrm{bar}}\Gamma
+      \le -2\sigma_m\bigl(Z - \tfrac12\mathrm{Var}_\gamma\bigr) + (2Z)^{1/2}\Gamma
+      \qquad\text{for a.e.\ } t.
+    \]
+    For the pure leak \textup{(}$\Gamma\equiv0$\textup{)}, $W(\mu_t,\nu)$ is non-increasing, strictly decreasing
+    wherever the plan in use is not centroidal \textup{(}$V_{\mathrm{bar}}>0$\textup{)}, and at every $\omega$-limit
+    point $\vartheta_\infty$ of a solution on the compact $\ThK$ some optimal plan $\gamma_\infty$ at
+    $\vartheta_\infty$ is centroidal: $\vartheta_{\infty,i} = \bar T_i^{\gamma_\infty}$ for all $i$ --- a vertex plan
+    for a vertex-selection solution. Such configurations are the fixed points of the equal-mass Lloyd iteration
+    $\vartheta\leftarrow\bar T^\gamma(\vartheta)$ with an optimal \textup{(}vertex\textup{)} plan; where the optimal
+    plan is unique they are the critical points of the quantisation energy
+    $\vartheta\mapsto\frac12W^2\bigl(\frac1m\sum\delta_{\vartheta_i},\nu\bigr)$, which is differentiable there, and the
+    pure leak is its $G$-gradient flow with the factor $m$:
+    $\dot\vartheta_i = -\sigma_m m\,G\,\partial_{\vartheta_i}\bigl[\tfrac12W^2\bigr]$. They include degenerate
+    configurations with coincident particles. For $m_0 = m$, $\mathrm{Var}_\gamma = 0$ and \textup{(i)} is
+    Theorem C(i).
+  \item \emph{Induced coupling.} Let $\pi^*$ be optimal from $\mu$ to $\mu^*$, and let $\gamma$ be the plan the law
+    uses at $t$. Put $C_{\mathrm{bar}} := \frac1m\sum_i\norm{\vartheta^*_{\pi^*(i)} - \bar T_i}^2_{\Ginv}$. Then
+    \[
+      \sqrt{C_{\mathrm{bar}}} \le b(t) + 2\eta \quad\text{always},
+    \]
+    and, for atomic $\nu$, $C_{\mathrm{bar}} = b_{\mathrm{bar}}(t)^2$ whenever
+    $4\eta(b(t)+\eta) < \Delta_{\mathrm{gap}}(t)$ and $\gamma^*(t)$ is unique.
+  \item \emph{Lyapunov inequality.} With $C_{\mathrm{bar}}$ as in \textup{(ii)},
+    \[
+      D^+\VOT \le -k_e\norm{e}^2 + \norm{e}\bigl(\varepsilon_{\max} + K\lambda_G\eta^2\bigr) + V_*\eta
+      - \sigma_m\eta^2 + \sigma_m\eta\sqrt{C_{\mathrm{bar}}},
+    \]
+    and under the gap condition of \textup{(ii)} the leak terms are at most
+    $-(\sigma_m/2)\eta^2 + (\sigma_m/2)b_{\mathrm{bar}}^2$.
+  \item \emph{Local exponential estimate.} For atomic $\nu$, Theorem C(iv) holds verbatim with $b$ replaced by
+    $b_{\mathrm{bar}}$: under $4\bar\eta(b+\bar\eta) < \Delta_{\mathrm{gap}}$, uniqueness of $\gamma^*(t)$, and
+    $8K^2\lambda_G^2\bar\eta^2 \le k_e\sigma_m$, with $\alpha := \min(k_e,\sigma_m/2)$ and
+    $\beta := \varepsilon_{\max}^2/k_e + (\sigma_m/2)b_{\mathrm{bar}}^2 + 2V_*^2/\sigma_m$, if
+    $\max\{\VOT(0),\beta/\alpha\} < \bar\eta^2/2$ then $\VOT(t) \le e^{-\alpha t}\VOT(0) + \beta/\alpha$ and
+    $\{\VOT\le c\}$ is forward invariant for $c\in\bigl[\max\{\VOT(0),\beta/\alpha\},\ \bar\eta^2/2\bigr)$.
+  \item \emph{What the bias measures.} $b_{\mathrm{bar}} \le b$, with $b_{\mathrm{bar}} = 0$ exactly when the ideal is
+    itself an equal-mass centroidal configuration of $\nu$. So a prior with many atoms whose centroidal
+    $m$-quantisation coincides with the ideal anchors the network without bias, although $W(\mu^*,\nu) > 0$; a prior
+    with the right number of atoms but the wrong positions has $b_{\mathrm{bar}} = b$.
+\end{enumerate}
+\end{thm}
+\status{Proved and checked: dissipation at every step and convergence of the pure leak to an equal-mass Lloyd fixed
+point, the coupling bound and plan stability, the Lyapunov inequality along the closed loop
+(\code{tests/test_barycentric.py}, \code{exp_barycentric_leak.py}). Novelty (literature audit): new as a control
+construction; the quantisation side is Lloyd/CVT theory; it reduces to Theorem C for $m_0=m$.}
+
+\paragraph{Scope of (ii)--(iv).} The gap condition $4\eta(b+\eta) < \Delta_{\mathrm{gap}}(t)$ asks the network to be
+closer to the ideal than the optimal vertex of the LP is to the next one. For a prior with many atoms,
+$\Delta_{\mathrm{gap}}$ is at most the cost of exchanging two atoms between two cells, which is $O(1/m_0)$, so the
+condition holds only in a small neighbourhood of the ideal; in the closed-loop experiment below $4\eta(0)(b+\eta(0))$
+exceeds that bound by factors 83--175, and (iv) applies to no tested instance (the table reports the exchange bound on
+$\Delta_{\mathrm{gap}}$, $\eta(0)$ and $4\eta(0)(b+\eta(0))$ for each run). What the experiment confirms is the
+fixed-point structure, (i) and (v): the loop settles at the centroidal configuration of its prior, whose distance from
+the ideal is $b_{\mathrm{bar}}$.
+
+\begin{proof}
+\textit{(i)} At a.e.\ $t$ the law uses an optimal plan $\gamma$, and for $h>0$ the same plan couples $\mu_{t+h}$ and
+$\nu$, so $W(\mu_{t+h},\nu)^2 \le \sum_{ij}\gamma_{ij}\norm{\vartheta_i(t+h) - \vartheta^0_j}^2_{\Ginv}$ (for general
+$\nu$, $\int\norm{\vartheta_i(t+h) - \vartheta'}^2\dd\gamma$). Differentiating the right-hand side at $h = 0$,
+\[
+  D^+Z \le \sum_{ij}\gamma_{ij}\ip{\vartheta_i - \vartheta^0_j}{\Ginv\dot\vartheta_i}
+  = \frac1m\sum_i\ip{\vartheta_i - \bar T_i}{\Ginv\dot\vartheta_i},
+\]
+because $\sum_j\gamma_{ij}(\vartheta_i - \vartheta^0_j) = \frac1m(\vartheta_i - \bar T_i)$. Apply (P) with
+$\vartheta' = \bar T_i\in\ThKe$ and $y = \nabla g_t - \sigma_m\Ginv(\vartheta_i - \bar T_i)$:
+$\ip{\vartheta_i - \bar T_i}{\Ginv\dot\vartheta_i} \le \ip{\vartheta_i - \bar T_i}{\nabla g_t(\vartheta_i)}
+- \sigma_m\norm{\vartheta_i - \bar T_i}^2_{\Ginv}$. Average and use Cauchy--Schwarz for the first term:
+$\frac1m\sum\ip{\vartheta_i - \bar T_i}{\nabla g_t} \le V_{\mathrm{bar}}\Gamma \le (2Z)^{1/2}\Gamma$. The Pythagorean
+identity $W^2 = V_{\mathrm{bar}}^2 + \mathrm{Var}_\gamma$ follows from $\sum_j\gamma_{ij}(\vartheta^0_j - \bar T_i) = 0$:
+for each $i$, $\sum_j\gamma_{ij}\norm{\vartheta_i - \vartheta^0_j}^2
+= \sum_j\gamma_{ij}\bigl(\norm{\vartheta_i - \bar T_i}^2 + \norm{\bar T_i - \vartheta^0_j}^2\bigr)$. For the pure
+leak, $Z$ is non-increasing and $D^+Z \le -\sigma_mV_{\mathrm{bar}}(t)^2$, with $V_{\mathrm{bar}}$ computed from the
+plan in use (the coupling inequality above holds for every optimal plan, vertex or not), so $Z$ converges and
+$\int_0^\infty V_{\mathrm{bar}}^2\dd t \le Z(0)/\sigma_m < \infty$. $V_{\mathrm{bar}}$ itself is neither monotone nor
+continuous --- it jumps at plan switches, upward as well as downward (numerics below) --- so the $\omega$-limit
+statement rests on the stability of the LP instead. Let $\vartheta_\infty$ be an $\omega$-limit point and $F_\infty$
+the set of optimal plans at $\vartheta_\infty$ (for a vertex-selection solution, its finitely many vertices). For a
+fixed plan $\gamma$ the barycentres $\bar T^\gamma_i$ do not depend on $\vartheta$, so
+$V_{\mathrm{bar}}^\gamma(\vartheta) := \bigl(\frac1m\sum\norm{\vartheta_i - \bar T^\gamma_i}^2_{\Ginv}\bigr)^{1/2}$ is
+$1$-Lipschitz in $\vartheta$ for the norm $\bigl(\frac1m\sum\norm{\cdot}^2_{\Ginv}\bigr)^{1/2}$; and the optimal face
+is upper semicontinuous --- the plan costs are continuous in $\vartheta$ and the polytope has finitely many vertices
+--- so every plan optimal at a $\vartheta$ close enough to $\vartheta_\infty$ lies in $F_\infty$. Suppose no plan of
+$F_\infty$ is centroidal; then $\delta := \min_{\gamma\in F_\infty}V_{\mathrm{bar}}^\gamma(\vartheta_\infty) > 0$ (a
+minimum over a compact set), and for $\norm{\vartheta - \vartheta_\infty} < \delta/2$,
+$V_{\mathrm{bar}}(\vartheta) \ge \delta/2$ whatever optimal plan is in use. The speed is bounded by
+$\sigma_m\cdot\diam_{\Ginv}(\ThK)$ (Lemma P.1), so the solution, which enters the ball of radius $\delta/4$ around
+$\vartheta_\infty$ at arbitrarily large times, either stays in the ball of radius $\delta/2$ from some time on or
+spends a time $\ge\delta/(4\sigma_m\diam)$ in it on each of infinitely many visits; either way
+$\int V_{\mathrm{bar}}^2\dd t = \infty$, a contradiction. Hence some plan of $F_\infty$ --- a vertex for
+vertex-selection solutions --- is centroidal at $\vartheta_\infty$. (A two-way tie between vertex plans $\gamma$ and
+$\rho$ is not a sliding mode of the vertex law unless $\bar T^\gamma = \bar T^\rho$: the rate of change of
+$c_\rho - c_\gamma$ when following $\gamma$, plus that of $c_\gamma - c_\rho$ when following $\rho$, equals
+$(2\sigma_m/m)\sum_i\norm{\bar T^\gamma_i - \bar T^\rho_i}^2_{\Ginv} \ge 0$, so at least one of the two plans stays
+optimal when followed. Ties between three or more plans are not analysed.) The gradient identity is the envelope
+theorem for the transportation LP at a configuration with a unique optimal plan:
+$\partial_{\vartheta_i}\bigl[\tfrac12\sum\gamma_{ij}\norm{\vartheta_i - \vartheta^0_j}^2_{\Ginv}\bigr]
+= \sum_j\gamma_{ij}\Ginv(\vartheta_i - \vartheta^0_j) = \frac1m\Ginv(\vartheta_i - \bar T_i)$, so
+$-\sigma_m(\vartheta_i - \bar T_i) = -\sigma_m m\,G\,\partial_{\vartheta_i}\bigl[\tfrac12W^2\bigr]$. (Where the plan
+is not unique, $\frac12W^2(\cdot,\nu)$ is not differentiable; the generalised velocities are then
+$-\sigma_m m\,G\,\xi$ with $\xi$ ranging over the barycentric projections of the optimal plans --- the elements of the
+(sub)differential of $\frac12W^2(\cdot,\nu)$ at an atomic $\mu$, cf.\ Ambrosio--Gigli--Savaré~\cite[\S10.4]{ags2008}.)
+
+\smallskip
+\textit{(ii)} Relabel so that $\frac1m\sum\norm{\vartheta_i - \vartheta^*_i}^2_{\Ginv} = \eta^2$. For any plan $\rho$
+with row sums $1/m$, the plan cost $c_\rho(\vartheta) := \sum\rho_{ij}\norm{\vartheta_i - \vartheta^0_j}^2_{\Ginv}$
+is the squared norm of $(\vartheta_i - \vartheta^0_j)$ in $L^2(\rho)$, so
+$\abs{\sqrt{c_\rho(\vartheta)} - \sqrt{c_\rho(\vartheta^*)}} \le \eta$ by the triangle inequality (the labels of
+$\vartheta$ and $\vartheta^*$ are matched). The barycentric part is dominated by the plan cost:
+$C_{\mathrm{bar}} = \frac1m\sum\norm{\vartheta^*_i - \bar T_i}^2 \le c_\gamma(\vartheta^*)$ because
+$\sum_j\gamma_{ij}\norm{\vartheta^*_i - \vartheta^0_j}^2 = \frac1m\norm{\vartheta^*_i - \bar T_i}^2
++ \sum_j\gamma_{ij}\norm{\bar T_i - \vartheta^0_j}^2$. Let $\gamma^*$ be optimal for $(\vartheta^*,\nu)$. Then
+\[
+  \sqrt{C_{\mathrm{bar}}} \le \sqrt{c_\gamma(\vartheta^*)} \le \sqrt{c_\gamma(\vartheta)} + \eta
+  \le \sqrt{c_{\gamma^*}(\vartheta)} + \eta \le \sqrt{c_{\gamma^*}(\vartheta^*)} + 2\eta = b(t) + 2\eta.
+\]
+For the equality case: $c_\gamma(\vartheta^*) - b(t)^2 \le (b+2\eta)^2 - b^2 = 4\eta(b+\eta) < \Delta_{\mathrm{gap}}(t)$;
+the vertex $\gamma$ (a vertex by the choice of the law) has cost at $\vartheta^*$ strictly below the next vertex cost,
+so it is optimal at $\vartheta^*$; if $\gamma^*(t)$ is unique, $\gamma = \gamma^*(t)$ and
+$C_{\mathrm{bar}} = \frac1m\sum\norm{\vartheta^*_i - \bar T^*_i}^2 = b_{\mathrm{bar}}(t)^2$. [For a generalised
+solution whose plan at $t$ is not a vertex, the same chain applies to each vertex of the optimal face at $\vartheta$,
+so every such vertex is optimal at $\vartheta^*$, and uniqueness of $\gamma^*(t)$ again gives $\gamma = \gamma^*(t)$.]
+
+\smallskip
+\textit{(iii)} Apply Theorem B with $y = \nabla g_t - \sigma_m\Ginv(\vartheta_i - \bar T_i)$ in (P). The extra term is
+\[
+  -\sigma_m\frac1m\sum\ip{\tilde\vartheta_i}{\tilde\vartheta_i + \vartheta^*_{\pi^*(i)} - \bar T_i}_{\Ginv}
+  \le -\sigma_m\eta^2 + \sigma_m\eta\sqrt{C_{\mathrm{bar}}}.
+\]
+Under the gap condition $\sqrt{C_{\mathrm{bar}}} = b_{\mathrm{bar}}(t) \le b_{\mathrm{bar}}$ and
+$\sigma_m\eta b_{\mathrm{bar}} \le (\sigma_m/2)(\eta^2 + b_{\mathrm{bar}}^2)$.
+
+\smallskip
+\textit{(iv)} is the proof of Theorem C(iv) with $b_{\mathrm{bar}}$ in place of $b$.
+
+\smallskip
+\textit{(v)} $b_{\mathrm{bar}}(t)^2 = W(\mu^*_t,\nu)^2 - \mathrm{Var}_{\gamma^*(t)} \le W(\mu^*_t,\nu)^2$, with
+equality iff $\mathrm{Var}_{\gamma^*} = 0$, that is, iff every cell of $\gamma^*$ consists of a single atom of $\nu$
+(coincident atoms counted once) --- the case $m_0 = m$, but also $m_0\mid m$ and priors with repeated atoms --- and
+$b_{\mathrm{bar}} = 0$ iff $\vartheta^*_j = \bar T^*_j$ for all $j$ (at a tie, with the plan $\gamma^*(t)$ fixed by
+the selection).
+\end{proof}
+
+\begin{rmk}{Remark}{C$'$.1}[reading]
+The barycentric leak replaces ``pull each kernel to its prior kernel'' by ``pull each kernel to the centre of mass of
+the prior it is responsible for''. Three consequences.
+\begin{itemize}
+  \item \emph{Transfer across sizes.} A network of $m$ kernels can be anchored to a learned measure of $m_0\ne m$
+    kernels. The bias in the Lyapunov inequality is $b_{\mathrm{bar}}$, the distance of the ideal from the centroids
+    of its cells, not the quantisation error $W(\mu^*,\nu)$ itself.
+  \item \emph{Quantisation on the fly.} With $e\equiv0$ the law is Lloyd's algorithm for the equal-mass quantisation
+    of $\nu$ in the $G^{-1}$ metric, in continuous time --- the continuous-time Lloyd descent of coverage
+    control~\cite{S18}, with the equal-mass constraint of capacity-constrained quantisation~\cite{S19}; so the
+    controller's leak and the quantisation theory of Corollary B.6 (Section~\ref{sec:program}, branch 9) are the same
+    object. Like Lloyd's algorithm it converges to a critical point of the quantisation energy, not necessarily the
+    global minimiser.
+  \item \emph{Theorem F.} The leak clauses (i$'$)--(iii$'$) of Theorem F hold with $W(\mu_r,\nu)$ replaced by
+    $V_{\mathrm{bar}}(r) \le W(\mu_r,\nu)$, since
+    $\norm{\dot\vartheta_i}_{\Ginv} \le \norm{\nabla g_t}_G + \sigma_m\norm{\vartheta_i - \bar T_i}_{\Ginv}$ by
+    Lemma P.1 and Minkowski.
+\end{itemize}
+\end{rmk}
+
+\paragraph{Checked} (\code{tests/test_barycentric.py}). The plan reduces to the assignment for $m_0 = m$
+($10^{-10}$) and the Pythagorean split $W^2 = V_{\mathrm{bar}}^2 + \mathrm{Var}_\gamma$ holds ($10^{-10}$); along the
+pure leak $W^2$ is non-increasing at every step, the Dini bound $D^+Z \le -\sigma_mV_{\mathrm{bar}}^2$ holds at every
+state (within 5\% of the first-order Euler quotient), the flow reaches $V_{\mathrm{bar}}^2 < 10^{-8}$, and the end
+point is a fixed point of the equal-mass Lloyd iteration with the same $W^2$; $\sqrt{C_{\mathrm{bar}}} \le b + 2\eta$
+on 90 random configurations, with $C_{\mathrm{bar}} = b_{\mathrm{bar}}^2$ at small $\eta$; the Lyapunov inequality
+(iii) holds at every recorded state of a closed loop with the barycentric leak toward a 24-atom prior. The numbers are
+in \code{results/barycentric_leak/table.md} (\code{exp_barycentric_leak.py}).
+
+\paragraph{Numerics} (\code{results/barycentric_leak/table.md}).
+\begin{itemize}
+  \item \emph{Pure leak toward a 48-atom prior} ($m = 6$, lifted dimension 3, $G = \operatorname{diag}(2,1,0.5)$,
+    $\sigma_m = 1$, three random starts). $W^2(\mu_t,\nu)$ is non-increasing at every one of the 3000 steps; the flow
+    stops where the centroid defect is at the rounding level ($V_{\mathrm{bar}}^2 \le 2.2\cdot10^{-25}$) and
+    $W^2 = \mathrm{Var}_\gamma$ ($1.164$, $1.213$, $1.203$ from $2.55$, $2.30$, $2.58$), after 2--6 plan switches, at
+    which $V_{\mathrm{bar}}$ jumps (upward as well as downward). The end points are fixed points of the equal-mass
+    Lloyd iteration; the best of 20 Lloyd runs from random starts reaches $1.171$, below two of the three end points
+    and above the third: like Lloyd's algorithm, the leak finds a local minimiser of the quantisation energy, not
+    always the global one. With $m_0 = m$ the same code reproduces the exact decay of Theorem C(i) to
+    $5\cdot10^{-16}$.
+  \item \emph{Closed loop} (representable plant with an $m^* = 4$ ideal, $m = 4$, $k_e = 4$, $\sigma_m = 0.5$, three
+    seeds). Three leaks of the same gain: (A) the OT leak toward the ideal itself, (B) the barycentric leak toward a
+    32-atom cloud of jittered copies of the ideal atoms, (C) the labelled leak toward a random 4-subset of the cloud.
+    The network converges, in each case, to the configuration its leak anchors: (A) to the ideal ($W(\mu_T,\mu^*)$ and
+    $\RMS\norm{e}$ below the printed precision); (B) to the equal-mass centroids of the cloud, at
+    $W(\mu_T,\mu^*) = 0.167$, $0.097$, $0.157$, which equal the centroid defects $b_{\mathrm{bar}}$ of the ideal
+    ($0.168$, $0.097$, $0.159$) although $W(\mu^*,\nu) = 0.45$, $0.33$, $0.40$; (C) to the subset, at
+    $W(\mu_T,\mu^*) = 0.61$, $1.02$, $0.35$ against $W(\mu^*,\text{subset}) = 0.65$, $1.03$, $0.40$. The steady
+    tracking RMS is $0.002$--$0.007$ for (B) and $0.03$--$0.04$ for (C). So the loop settles at the centroidal
+    configuration of its prior, at distance $b_{\mathrm{bar}}$ from the ideal, as the fixed-point statements (i) and
+    (v) describe; the Lyapunov bound (iv) does not apply to these runs (scope paragraph: the exchange bound on
+    $\Delta_{\mathrm{gap}}$ and $4\eta(0)(b+\eta(0))$ are in the table). The comparison with (C) shows the cost of a
+    prior of the right size at the wrong positions, not an advantage of barycentric over labelled leaks as such: a
+    labelled leak toward the cloud's own equal-mass $m$-quantiser would have the same bias $b_{\mathrm{bar}}$ by (v).
+\end{itemize}
