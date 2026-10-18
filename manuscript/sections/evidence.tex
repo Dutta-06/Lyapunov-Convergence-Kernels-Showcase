@@ -419,7 +419,16 @@ $\omega$ & $T$ & $\alpha(T)$ & $\Psi_D$ & exact rate & explicit, closed-form $\v
     $k=20$, $50$, $200$, falling toward $1/(1-\delta)$; on the Theorem E ideal ($\kappa=7.8\cdot10^3$) it is
     $15.4$--$17.5$, the price of $q=15$ directions charged at the worst excitation; the exact value equals the
     averaged Langevin covariance $k\cdot\tr X$ within $3\cdot10^{-4}$ (ideal) and $1.25/k^2$ (sinusoid), and
-    $\E\norm{e}^2=\norm{\Sigma}_F^2/k^2$ to four digits.
+    $\E\norm{e}^2=\norm{\Sigma}_F^2/(2k)=\tr(\bar MX)/k$ to five digits.
+  \item Lemma E.0$''$ (\code{exp_pe_general.py} $\to$ \code{explicit_rate/general_pe.md}): the exponential-average
+    construction on two non-periodic regressors. Quasi-periodic $\Psi=(\sin t,\cos\sqrt2\,t)$: $\lambda_T=0.297$,
+    $0.391$, $0.444$ for windows $2\pi$, $4\pi$, $8\pi$; conditions from $k=20$; exact/guaranteed
+    ($\delta=0.2$ / $0.1$) $2.49/2.13\to1.63/1.45$ at $T=4\pi$ and $2.10/1.81\to1.43/1.27$ at $T=8\pi$ from $k=20$ to
+    $200$; the exact rate is $0.5/k$ to 0.5\%. Chaotic $\Psi=(x_1/20,(x_3-25)/20)$ along a Lorenz orbit traversed
+    five times slower than standard time: $\lambda_T=0.015$, $0.024$, $0.051$ for windows $5$, $10$, $20$ against an
+    effective excitation $0.15$ (exact rates $0.00759/k\cdot20$ \dots); conditions from $k=100$; exact/guaranteed
+    $5.0/4.3$ ($k=100$) $\to4.2/3.7$ ($k=200$) at $T=20$, dominated by the window loss
+    $\lambda_\infty/\lambda_T\approx3$; the certificate holds at every admissible row.
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ F

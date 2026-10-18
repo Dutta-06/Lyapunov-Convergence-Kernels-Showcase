@@ -121,6 +121,13 @@ Corollary E.0$'$.3 & the explicit bound on the stationary parameter spread of th
   excitation); the exact value equals the averaged $k\cdot\tr X$ within $2/k^2$
   & \code{Ex::test_corollary_E0prime_3_dither_covariance_bound_against_the_periodic_lyapunov_solution},
     \code{exp_explicit_rate.py} $\to$ \code{results/explicit_rate/table.md} (table 6)\\
+Lemma E.0$''$ & on $\Psi=(\sin t,\cos\sqrt2\,t)$ (not periodic) with window $4\pi$: the exponential-average
+  identities on the grid ($10^{-4}$), the conditions at $k=20$, $50$, $200$ with $\delta_2\le5\%$, the certificate on
+  400 times, the guaranteed rate below the exact decay rate (top Lyapunov exponent) within a factor 2.6 and improving
+  with $k$; the experiment: exact/guaranteed $2.5\to1.3$ on the quasi-periodic regressor and $5.0\to3.7$ on a slowed
+  Lorenz-driven regressor ($k=100$--$400$), the certificate holding at every admissible row
+  & \code{Ex::test_lemma_E0dprime_quasi_periodic_regressor_certificate_and_rate},
+    \code{exp_pe_general.py} $\to$ \code{results/explicit_rate/general_pe.md}\\
 Lemma E.0$'$ & the certificate $\sup_{t,x}\dot V/V\le-\gamma$ (a generalised eigenvalue problem on a time grid) on
   $\Psi=(\sin t,\cos t)$ at $k=20$, $50$, $200$ and on the slow-adaptation ideal at $g=0.01$, $k=400$; $N_2=0$
   numerically; the guaranteed rate below the exact Floquet rate and within a factor 2 (sinusoid) and 1.5 (ideal) of

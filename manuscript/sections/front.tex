@@ -75,8 +75,10 @@ In Part~I, every step of the stability argument is either proved or verified num
     C$'$, D$'$, I and J, Proposition K) through a fifth, and the second increment --- the sharp slow-regime rate
     (Lemma E.0$'$), uniform-in-time propagation of chaos in the leak-dominated regime (Theorem D$''$) and the
     stationary law of the dithered finite-size loop with its non-equilibrium current (Theorem J$'$,
-    Proposition J$'$.2) --- through a sixth. Every confirmed issue and its fix is logged in
-    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3, 5 and 6 are kept beside it.
+    Proposition J$'$.2) --- through a sixth, and the third increment --- the explicit stationary parameter spread of
+    the dithered linearised loop (Corollary E.0$'$.3) and the slow-regime Lyapunov function for non-periodic
+    persistently exciting regressors (Lemma E.0$''$) --- through a seventh. Every confirmed issue and its fix is
+    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3, 5 and 6 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -147,7 +149,9 @@ radius, overshoot and rate (Lemma E.0); exponential merging of solutions. In the
 strict Lyapunov function (Lemma E.0$'$: second-order slaving and a second-order averaging correction, with the peak
 factors of the regressor as data) has the averaged rate $\lambda_{\min}\langle\Psi^\T\Psi\rangle/k$ up to a factor
 $1-\delta$, and under parameter dither bounds the stationary parameter spread by
-$(1+O(\varepsilon))k\norm{\Sigma}_F^2/(2(1-\delta)\lambda_{\min})$ (Corollary E.0$'$.3)
+$(1+O(\varepsilon))k\norm{\Sigma}_F^2/(2(1-\delta)\lambda_{\min})$ (Corollary E.0$'$.3); for non-periodic PE
+regressors the same construction with an exponential average over a window gives the rate
+$(1-\delta-\delta_2)\lambda_T/k$, $\lambda_T$ the weighted PE level of the window (Lemma E.0$''$)
 & proved, self-contained; linearisation checked; the strict Lyapunov inequalities checked pointwise (E.0$'$ by a
 certificate over all states) and the explicit envelope checked on the linearised and on the implemented loop;
 convergence observed. The rate of E.0 is conservative in a quantified way (Remark E.0a); the rate of E.0$'$ is

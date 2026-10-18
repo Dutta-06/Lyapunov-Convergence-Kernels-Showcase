@@ -137,13 +137,19 @@ Each branch states what is proved, what is open, and the first concrete step.
       $\limsup\E\norm{\zeta}^2\le(1+O(\varepsilon))k\norm{\Sigma}_F^2/(2(1-\delta)\lambda_{\min})$, within
       $1/(1-\delta)$ of the exact (averaged Langevin) value on isotropic regressors and paying the condition number
       in the trace otherwise: an explicit design formula for how much dither a given tracking budget tolerates.
+    \item \emph{Done (Lemma E.0$''$):} the non-periodic case. The period mean is replaced by a forward exponential
+      average over a window $T$ (whose derivative identity $T\dot{\bar M}=\bar M-M$ gives the antiderivatives in
+      closed form), the peak factors become time-local, and one residual second-order term $\bar N_2$ appears,
+      costing $\delta_2=O(1/k)$ in the rate; the guaranteed rate is $(1-\delta-\delta_2)\lambda_T/k$ with
+      $\lambda_T$ the exponentially weighted PE level of the window. Checked on a quasi-periodic regressor and on a
+      regressor driven by a Lorenz orbit, where no periodic construction applies.
     \item \emph{Open:} the continuum form of (PE); the trajectory kernel
       \[K_T(\vartheta,\vartheta')=\int\Phi(x(s);\vartheta)\Phi(x(s);\vartheta')\dd s;\]
       identifiability of measures up to symmetry; the relation to~\cite{R16}. Remark E.1 shows that the PE level
-      alone does not predict the rate. For Lemma E.0$'$: lowering the threshold $k_0$ (a third-order slaving trades
-      $\rho_{DD}$ for the peak factor of $\dddot\Psi$ one order higher), the non-periodic case (a windowed
-      $\bar M(t)$), and the nonlinear Theorem E with the constants of E.0$'$ (its steps 4--5 carry over; the explicit
-      ball radius improves by the same factor as the rate).
+      alone does not predict the rate. For Lemmas E.0$'$ and E.0$''$: lowering the threshold $k_0$ (a third-order
+      slaving trades $\rho_{DD}$ for the peak factor of $\dddot\Psi$ one order higher); the choice of the window $T$
+      as an optimisation; the nonlinear Theorem E with the constants of E.0$''$ (Corollary E.0$'$.2's steps carry over
+      verbatim, with $\lambda_T$ in place of $\lambda_{\min}(\bar M)$).
   \end{itemize}
 
 \item \textbf{Transport-regularised adaptive laws.}
