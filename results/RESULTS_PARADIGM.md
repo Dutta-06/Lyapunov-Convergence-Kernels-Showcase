@@ -183,8 +183,10 @@ Structure of the first correction (`test_averaging.py`):
 
 The setup is deterministic: n = 2, m = 6, G = diag(4,4,1,1,1), σ = 2/k_e, no dither. The same elliptic reference
 is traversed both ways, so the occupation measure is the same, and so is the initial configuration. The runs
-converged to machine precision: the residual drift over the last 10 periods is about 1e-16. Predictions are linear
-responses at the (+) equilibrium.
+converged to machine precision: the residual drift over the last 10 periods is about 1e-16. The six kernels converge
+to a common configuration (kernel spread 1.05 at the start, at most 5.6e-17 at the end of every run), so the
+learned network is effectively a single kernel and the test probes the effect at a collapsed equilibrium.
+Predictions are linear responses at the (+) equilibrium.
 
 | k_e | measured ‖Θ₊ − Θ₋‖ | frozen-measure prediction (H.7): size ratio, cosine | full prediction (H.7 + oscillation term): size ratio, cosine |
 |---|---|---|---|

@@ -1,0 +1,499 @@
+% Front matter: introduction (PARADIGM.md section 0), relation to version 1
+% (lyapunov_text.txt, ASSESSMENT.md, THEORY_REVISED.md section 6, public_showcase/README.md).
+
+\section{Introduction}\label{sec:intro}
+
+\subsection{The idea}
+
+An adaptive approximator with nonlinearly parametrised features can be read as an \emph{empirical measure}
+$\mu = \frac1m\sum_i\delta_{\vartheta_i}$ on a lifted parameter space. Here the features are Gaussian RBF kernels
+with adaptive weights, centres and widths. The adaptive law transports this measure, and the control output
+$\fhat = \int\Phi\dd\mu$ is linear in $\mu$. Stability, robustness modifications, excitation, the many-kernel limit
+and the slow evolution of kernel geometry all acquire formulations on Wasserstein space. So does the global
+optimality of kernel placement. These formulations do not depend on how the kernels are labelled.
+
+\subsection{Why the classical theory needs it}\label{sec:front:defects}
+
+This work identifies two structural defects of the classical labelled analysis, that of version~1 of this manuscript
+and of the literature it builds on.
+\begin{itemize}
+  \item The classical Lyapunov analyses depend on labels. A network that is a relabelling of the ideal has zero
+    function error but a large parameter error.
+  \item There is no object that describes where the kernels go, or whether their placement is good.
+\end{itemize}
+A third apparent defect was that constants grow with the number of kernels. It turned out to be an artefact of the
+normalisation. The mean-field normalisation removes it for labelled and label-free analyses alike (Remark A.1).
+
+\subsection{What the closed loop actually is}
+
+\begin{itemize}
+  \item At infinite feedback gain, the averaged closed loop is a Wasserstein gradient flow. With dither it is a
+    mean-field Langevin dynamics (Theorem H).
+  \item At finite gain it is in general \emph{not} a gradient flow of any free energy in the $\WG$ metric. This
+    already holds for $n = 1$, so it is not a two-dimensional effect (Proposition H.7). The first correction has two
+    parts at a frozen measure, and a third along the real loop.
+    \begin{itemize}
+      \item The first part is a \emph{semi-gradient} term. The adaptive law differentiates the loss on the
+        closed-loop state distribution while ignoring that this distribution depends on the parameters, as in
+        performative prediction. Like semi-gradient TD, the resulting update is not the gradient of any objective.
+        Its performative defect is present for every $n$, and it is non-reciprocal in the checked instances ($n = 1$
+        and $n = 2$).
+      \item The second part is an antisymmetric interaction between kernels ($n \ge 2$). Its kernel is an integral
+        of $\sum_k \det[\nabla\tilde\Phi_k(\vartheta), \nabla\tilde\Phi_k(\vartheta')]$ over the region that the
+        reference orbit encloses (Stokes).
+      \item Along the real loop, a third part comes from the parameters' oscillation within each period. It is a
+        second-order averaging term (Remark H.7a).
+    \end{itemize}
+  \item Together these predict a new closed-loop effect: traversing the reference orbit backwards changes the learned
+    kernels by $O(1/k_e)$, although the occupation measure is unchanged. At $k_e = 40$ the prediction matches to 3\%
+    in size and 11\% as a vector (cosine 0.994). The vector error halves with each doubling of $k_e$
+    (\code{experiments/exp_orbit_orientation.py}).
+  \item The gradient structure survives as an input-to-state Lyapunov function (Proposition H.8). This reduces the
+    global conjecture for the real loop to an averaging estimate.
+\end{itemize}
+
+\subsection{Conventions and verification}\label{sec:front:conventions}
+
+\paragraph{Status labels.} Every result of Part~II is labelled \emph{proved}, \emph{formal} or
+\emph{conjectural}, and the label is given in a status line after the result.
+\begin{itemize}
+  \item ``Proved'' means proved here. ``Formal'' means a derivation without error control.
+  \item ``Checked'' means a test evaluates the statement, or every inequality in it, along simulated trajectories or
+    on sampled states.
+  \item The novelty column of Table~\ref{tab:front:contrib} follows the verdicts in \code{LITERATURE_TRANSPORT.md}.
+\end{itemize}
+In Part~I, every step of the stability argument is either proved or verified numerically by
+\code{tests/test_theorem_to_code.py}.
+
+\paragraph{Verification and review.}
+\begin{itemize}
+  \item Every inequality the tests can evaluate is checked numerically along simulated trajectories, and every number
+    in this document is produced by a script in the accompanying repository (the experiments are in
+    \code{experiments/}); no table is edited by hand.
+  \item The theory went through three rounds of automated multi-agent adversarial review. Every confirmed issue and
+    its fix is logged in \code{review/REVIEW_LOG.md}, and the raw reports are kept beside it.
+  \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
+\end{itemize}
+Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
+
+\subsection{Contributions and their status}
+
+Table~\ref{tab:front:contrib} lists the results of Part~II with their status, in the conventions of
+Section~\ref{sec:front:conventions}, and with the novelty verdict of the literature audit.
+
+\begin{table}[p]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{Contributions of Part~II and their honest status. Status conventions: Section~\ref{sec:front:conventions}.}
+\label{tab:front:contrib}
+\begin{tabularx}{\textwidth}{@{}l>{\hsize=1.12\hsize}Y>{\hsize=1.28\hsize}Y>{\hsize=0.6\hsize}Y@{}}
+\toprule
+result & statement & status & novelty (audit)\\
+\midrule
+A & The adaptive law is the particle form of the Wasserstein gradient flow of a $\mu$-linear potential. Projected
+rates coincide only for a per-kernel projection ($m \ge 2$).
+& proved and checked
+& interpretive; ingredients known \cite{R29}, \cite{R41}, \cite{R46}, \cite{R25}\\
+\addlinespace[0.5pt]
+B & $\VOT = \frac12\norm{e}^2 + \frac12 W^2$ satisfies a Dini inequality with a two-regime matched remainder. It
+gives conditional RMS bounds along (L), and along $\Lsig$ with a leak term.
+& proved and checked, including a moving ideal, $\varepsilon \ne 0$, switches, an active projection, and the failure
+of the plain bound along $\Lsig$
+& packaging new; ingredients known \cite{R62}, \cite{R64}, \cite{R20}, \cite{R49}\\
+\addlinespace[0.5pt]
+C & OT $\sigma$-modification: exact dissipation for selection solutions; a gap-protected strict inequality with
+$\sqrt{C} \le b + 2\eta$; a local exponential estimate, $m$-uniform for a single-atom prior and $O(m^{-1/2})$
+otherwise; reshuffling by the labelled leak
+& proved and checked; the C(iv) instance satisfies every hypothesis
+& novel as a control construction; C(i) and the obstruction are known \cite{R71}, \cite{R73}\\
+\addlinespace[0.5pt]
+D & Local well-posedness of the mean-field loop; a Dobrushin estimate; a tube bound and global existence under a
+self-consistent growth condition; the mean-field limit on the existence interval
+& proved; consistency in $m$ checked numerically (the constant is not checked)
+& technique anticipated \cite{R77,R78,R79}\\
+\addlinespace[0.5pt]
+E & Label-free local exponential convergence under tangential PE, in a uniform tube, at fixed $m$; exponential
+merging of solutions
+& proved, conditional on \cite[Thm.~1]{S8} as stated in its abstract (its hypotheses were not checked against the
+full text); linearisation checked; convergence observed
+& partially anticipated \cite{R49}, \cite{R54}\\
+\addlinespace[0.5pt]
+F & Along (L), the Wasserstein length of learning is $\le \lambda_G^{1/2}L_1\int\norm{e}$; leak versions
+& proved and checked, including the leak clause, a tight leak instance with $e \equiv 0$ and a tight velocity
+instance
+& elementary\\
+\addlinespace[0.5pt]
+G & Averaged joint descent on the occupation loss. The slow geometry follows the gradient flow of the profile loss
+in the metric induced on the slow manifold, which is plain variable projection only when that manifold is flat
+($S \ll 1$).
+& formal; checked directly, including a counterexample to plain VarPro at $S = O(1)$
+& a fixed-$m$, closed-loop analogue of the two-timescale/VarPro training of \cite{S1}, \cite{S2}\\
+\addlinespace[0.5pt]
+H & The averaged mean-field loop with saturated features, $\sigma$-modification and dither is mean-field Langevin
+dynamics. It converges globally and exponentially to the regularised optimum, with the log-Sobolev constant given in
+control quantities.
+& proved for $\Aavg$; the reduction to $\Aavg$ is formal (Remark H.0); real loop: Conjecture H.6
+& a bridge to \cite{S3}, \cite{S4}; new in adaptive control\\
+\addlinespace[0.5pt]
+H.7 & At a frozen measure, the exactly averaged loop is $\Aavg$ plus an explicit $O(1/k_e)$ correction: a
+semi-gradient term, whose performative defect is present for every $n$ and non-reciprocal in the checked instances
+($n = 1, 2$), and an orbit-area circulation kernel ($n \ge 2$). Along the real loop, a second-order averaging term is
+added (Remark H.7a).
+& Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through
+its $O(1/k_e)$ convergence. Non-reciprocity of the exact second variation is checked to 3\% (asserted; 1--1.5\%
+measured). The full first-order theory predicts the orientation dependence of the learned kernels in the real closed
+loop to 3\% in size and 11\% as a vector (cosine 0.994, $k_e = 40$).
+& no precedent found (targeted search in the third review round); ingredients known (higher-order averaging;
+performative prediction \cite{S14}; semi-gradient TD \cite{S10}, \cite{S11})\\
+\addlinespace[0.5pt]
+H.8 & $\Aavg$ is input-to-state stable under drift perturbations, with gain $1/(\tau\rho_\tau)$
+& proved, assuming the chain rule for the perturbed flow
+& elementary given \cite{S3}\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Where the new mathematics lies}
+
+The new mathematics this viewpoint requires lies in the open problems of Section~\ref{sec:program}.
+\begin{enumerate}
+  \item Infinite-horizon averaging for McKean--Vlasov closed loops. Propositions H.7 and H.8 reduce it to
+    controlling a near-identity averaging transformation along the moving measure.
+  \item Uniform-in-time propagation of chaos with a plant in the loop.
+  \item The theory of the non-reciprocal, semi-gradient mean-field dynamics that the closed loop actually produces.
+  \item Global convergence without dither.
+\end{enumerate}
+
+\subsection{Organisation}
+
+Section~\ref{sec:version1} relates this document to version~1: what version~1 claimed, the audit's verdict, the
+errata, what survives and what is withdrawn, and how Part~II answers the structural defects of
+Section~\ref{sec:front:defects}. Part~I treats the projection-based controller: the setting and standing
+assumptions (Section~\ref{sec:p1-setting}), the algorithm (Section~\ref{sec:p1-algorithm}), the lemmas and the
+uniform-ultimate-boundedness theorem (Section~\ref{sec:p1-theorem}), the ``no bias'' claim stated precisely
+(Section~\ref{sec:p1-nobias}), prior art and the honest novelty statement (Section~\ref{sec:p1-prior}), and the
+experiments (Section~\ref{sec:p1-experiments}). Part~II develops transport adaptive control in
+Sections~\ref{sec:setting}--\ref{sec:finitegain}: the setting (Section~\ref{sec:setting}), Theorems A--F
+(Sections~\ref{sec:thmA}--\ref{sec:thmF}), Proposition G (Section~\ref{sec:propG}), Theorem H
+(Section~\ref{sec:thmH}) and the finite-gain structure of Propositions H.7 and H.8 (Section~\ref{sec:finitegain}).
+Part~III collects the numerical evidence (Section~\ref{sec:evidence}) and the research program
+(Section~\ref{sec:program}). Appendix~\ref{sec:verification} is the verification map.
+
+\section{Relation to version 1}\label{sec:version1}
+
+Version~1 of this document, \emph{Mathematical Foundations of Self-Adaptive Kernels Achieving Lyapunov Convergence}
+(14 pages), presented the controller of Part~I. An audit (\code{ASSESSMENT.md}) re-examined its theory, its code and
+its experiments; every numerical statement of the audit was regenerated by running the code, and the scripts and raw
+files are named next to each claim. A revised theory (\code{THEORY_REVISED.md}, Part~I of this document) replaced its
+stability argument. This section records what version~1 claimed, the audit's verdict, the errata, what survives and
+what is withdrawn, and how Part~II answers the structural defects of Section~\ref{sec:front:defects}.
+
+\subsection{What version 1 claimed}
+
+Version~1 was subtitled \emph{Uniform Ultimate Boundedness via Projection-Based Adaptive RBF Control Without
+Persistent Bias of Leaky Modification}. It treated the plant $\dot x = f(x,t) + u$ on a compact domain with the
+certainty-equivalence control $u = \dot x_m - k_e e - \fhat(x,t)$ and the network $\fhat = W^\T\phi(x,c,\sigma)$,
+adapted weights, centres and widths by projected gradient laws, and used the Lyapunov candidate
+$V = \frac12 e^\T e + \frac12\tr(\tilde W^\T\Gamma_W^{-1}\tilde W) + \frac12\tilde c^\T\Gamma_c^{-1}\tilde c
++ \frac12\tilde\sigma^\T\Gamma_\sigma^{-1}\tilde\sigma$. Its claims were the following.
+\begin{itemize}
+  \item \emph{Central contribution} (abstract): ``a rigorous proof that a fully shape-shifting kernel architecture
+    --- with online adaptation of weights, centers, and bandwidths --- achieves Uniform Ultimate Boundedness (UUB) of
+    the tracking error without the persistent steady-state bias introduced by classical leaky modification schemes
+    ($\sigma$-modification, e-modification)''.
+  \item \emph{Key mechanism} (abstract, \S1.3): ``the strict decoupling of offline Tikhonov regularization, which
+    guarantees the well-posedness of the ideal parameter target, from the online smooth projection operator, which
+    provides hard parameter boundedness'', with an implicit-function-theorem (IFT) argument giving finite velocity
+    bounds $V_W, V_c, V_\sigma$ for the ideal parameters.
+  \item \emph{A ``critical and non-trivial'' result} (abstract, \S7.2): the projection's hard cap on parameter
+    energy ``converts the standard boundary-only Lyapunov descent argument into a global interior argument'', proving
+    convergence to the infimal invariant set without LaSalle's invariance principle or Barbalat's lemma, with the
+    ultimate bound
+    \[
+      \limsup_{t\to\infty}\norm{e(t)} \le \sqrt{R_{\mathrm{UUB}}^2 + 2V_{\max,\Theta}}.
+    \]
+  \item Centre separation $\norm{c_i - c_j} \ge \delta > 0$, ``maintained via the projection set construction''
+    (\S1.2); and a corollary that a standard persistent-excitation condition on the regressor is insufficient to
+    guarantee parameter convergence, so that alternative mechanisms, such as integral concurrent learning (ICL), are
+    required (\S8).
+  \item \S9 summarised five architectural choices and the failure mode each was said to close: \mbox{$\sigma_{\min} > 0$}
+    (Hessian blow-up near $\sigma \to 0$); offline Tikhonov regularisation (circular self-consistency of the
+    projection geometry); a smooth convex projection operator (a cancellation gap when the projection is active);
+    the projection's hard energy cap (the LaSalle and Barbalat requirements); and stability from the Lyapunov
+    function and the projection alone (the circularity of ICL, which needs bounded states).
+  \item \S10 stated that ``the theoretical core of this manuscript is mathematically complete and internally
+    consistent'', and that the remaining items were ``completeness additions and empirical validation requirements
+    \ldots, not theoretical repairs'': a constructive feasibility theorem; empirical validation (Lorenz-driven
+    tracking against $\sigma$- and e-modification ``to prove bias elimination'', a Monte Carlo sweep ``verifying
+    $R_{\mathrm{UUB}}$ bound is not violated'', an ablation of fixed against adaptive centres); and a novelty framing
+    in which the architecture ``eliminates this tradeoff entirely'', the projection introduces ``zero bias into the
+    Lyapunov derivative'', and the result is ``not a marginal improvement but a structural result enabled by the
+    strict decoupling of offline regularization from online projection''.
+\end{itemize}
+
+\subsection{The audit's verdict}
+
+The theory is a correct but standard composition of known results (Taylor-linearised inner-layer adaptation,
+boundary-layer projection, level-set UUB), presented with language that overstates its novelty and its conclusion.
+Two of its claims are wrong as written (non-convex ``projection'' for centre separation; an IFT argument that is not a
+proof) and one was not implemented (the $\Gamma$-weighted projection). The experiments contained a hand-chosen
+``theoretical'' threshold, a confounded headline comparison against baselines that failed representationally, GP
+baselines handicapped by stale predictions and a mis-placed inducing grid, invalid significance tests on
+autocorrelated samples, and the public figure omitted the one benchmark ($n = 3$) where the method is weak and the one
+baseline (NTK) that beats it. After revision, the implemented algorithm is exactly the proved one and is
+machine-checked; the honest experiments show a real, consistent advantage of projection over $\sigma$- and
+e-modification on identical geometry (5/5 seeds in every cell) and a modest but consistent gain from adaptive
+geometry, while the a-priori bound is shown to be $915\times$ to $10\,954\times$ loose.
+
+\paragraph{Novelty.} Table~\ref{tab:front:novelty} compares the ingredients of version~1 with prior work. Net: no
+new theorem. What can honestly be claimed after revision (Section~\ref{sec:p1-prior}) is a machine-checked
+theorem-to-code map, an explicit Hessian-free disturbance bound, the RMS form of the bound, and a controlled
+mechanism-versus-geometry experiment.
+
+\begin{table}[tp]
+\centering
+\footnotesize
+\caption{Novelty of the ingredients of version~1 (audit).}
+\label{tab:front:novelty}
+\begin{tabularx}{\textwidth}{@{}>{\hsize=1.05\hsize}Y>{\hsize=1.05\hsize}Y>{\hsize=0.9\hsize}Y@{}}
+\toprule
+ingredient & prior source & status of the claim of version~1\\
+\midrule
+Adaptive RBF control with projection-type robustification
+& Sanner \& Slotine 1992 \cite{sanner1992}; Ioannou \& Sun 1996 \cite{ioannou1996}
+& known\\
+\addlinespace[1.5pt]
+Adapting centres/widths by first-order Taylor expansion with bounded remainder
+& Lewis, Yesildirek \& Liu 1996 \cite{lewis1996}; Polycarpou 1996 \cite{polycarpou1996}; Fabri \& Kadirkamanathan
+1996 \cite{fabri1996}; Ge \& Wang 2002 \cite{ge2002}
+& known; version~1 cites none of these\\
+\addlinespace[1.5pt]
+Smooth projection with $\varepsilon$ boundary layer and inequality (P)
+& Pomet \& Praly 1992 \cite{pp1992}; Lavretsky \& Gibson 2011 \cite{lavretsky2011}; Lavretsky \& Wise 2013
+\cite{lavretsky2013}
+& known; the showcase README called it ``the core theoretical contribution''\\
+\addlinespace[1.5pt]
+Projection introduces no bias in $\dot V$ when $\theta^* \in \Omega$
+& Ioannou \& Sun 1996~\cite[\S4.4]{ioannou1996}
+& known\\
+\addlinespace[1.5pt]
+Level-set (``global interior'') UUB argument
+& Khalil~\cite[Thm.~4.18]{khalil2002}; Lewis et al.\ 1999 \cite{lewis1999}
+& known; called ``critical and non-trivial''\\
+\addlinespace[1.5pt]
+Simultaneous adaptation of $W$, $c$, $\sigma$ for Gaussian RBFs with all three projected
+& ---
+& the only combinational novelty; minor\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Integrity findings.} Table~\ref{tab:front:integrity} lists the integrity findings of the audit, each
+verified by running code, with the evidence and the fix. File names refer to the accompanying repository.
+
+\begin{table}[tp]
+\centering
+\footnotesize
+\caption{Integrity findings of the audit of version~1 and its code (each verified by running code).}
+\label{tab:front:integrity}
+\begin{tabularx}{\textwidth}{@{}l>{\hsize=1.0\hsize}Y>{\hsize=1.0\hsize}Y>{\hsize=1.0\hsize}Y@{}}
+\toprule
+\# & finding & evidence & fix\\
+\midrule
+I1 & Implemented centre update $\ne$ proved update: a pairwise repulsion term broke the projection inequality the
+proof needs
+& \code{tests/test_theorem_to_code.py} (oracle plant): inequality violated at 6054 of 20000 samples with the legacy
+term, 0 of 20000 without; the term also failed its own purpose (min separation 0.07 vs $\delta = 0.5$)
+& removed from the algorithm (\code{enforce_separation=False} default); tracking unchanged on the headline run (mean
+steady-state error $0.0767 \to 0.0774$, max $0.46 \to 0.40$)\\
+\addlinespace[1.5pt]
+I2 & Projection applied the isotropic formula to any $\Gamma$; the proof needs the $\Gamma$-weighted operator
+& \code{tests/test_controller_paths.py}
+& $\Gamma$-weighted projection implemented; fast/dense paths agree to $10^{-12}$\\
+\addlinespace[1.5pt]
+I3 & ``$R_{\mathrm{UUB}}$ threshold'' in the Monte Carlo figure was the constant 0.5
+& \code{tier1_monte_carlo.py} line 69: ``A chosen arbitrary bound''
+& \code{exp_monte_carlo_honest.py}: only exactly checkable statements (200/200 hard-bound and ISS checks)\\
+\addlinespace[1.5pt]
+I4 & ``Theoretical $R_{\mathrm{UUB}}$'' in the $k_e$ sweep used invented constants and an underived formula
+& \code{tier2_ruub_sweep.py}, former \code{estimate_D_max}
+& \code{exp_oracle_ruub.py}: all constants computable; a-priori bound $915\times$--$10\,954\times$ loose; RMS bound
+with measured disturbance holds 48/48\\
+\addlinespace[1.5pt]
+I5 & Headline figure: fixed-grid baselines with a grid not covering the reference; their error ($\approx 15$)
+exceeded open loop, so the figure showed representational failure, not ``bias''
+& \code{results/tier1_lorenz_tracking.png} vs ablation figure (projection $W$-only fails identically)
+& \code{exp_bias_factorial.py}: 3 mechanisms $\times$ 3 geometries, covering grid, 5 seeds\\
+\addlinespace[1.5pt]
+I6 & Wilcoxon tests on ${\sim}12\,000$ time samples with lag-1 autocorrelation 0.9999; the README's ``$p > 0.3$ vs
+Exact GP'' is contradicted by its own data ($p = 1.6\times 10^{-11}$)
+& recomputed from \code{results/*.npy}
+& seed-level statistics only\\
+\addlinespace[1.5pt]
+I7 & $n = 3$ benchmark and NTK baseline removed from the public figure (commits ``exclude n=3 and NTK'')
+& \code{results/n3/*.npy}, \code{results/*/ntk_*.npy}; \code{plot_comparison_hd_complete.py}
+& complete table regenerated: proposed ranks 3/5, 2/5, 3/5, 2/5\\
+\addlinespace[1.5pt]
+I8 & GP baselines held a stale prediction for 50--100 steps; sparse GP inducing points on a diagonal line over
+$x \in [-3,3]$ while the reference spans $\pm 20$
+& \code{sim1}--\code{sim3}
+& \code{kernel_baselines_fair.py}: per-step prediction, $9\times 3$ covering grid, seeds\\
+\addlinespace[1.5pt]
+I9 & ``$O(mn)$ per step'' claim false with the $O(m^2n)$ repulsion
+& \code{projection.py}
+& true after I1\\
+\addlinespace[1.5pt]
+I10 & ``Concurrent Learning'' hook used the current residual only
+& former \code{controller.py}
+& removed\\
+\addlinespace[1.5pt]
+I11 & Lyapunov monitor requires $\theta^*$; never used by any experiment, so ``Lyapunov descent verification'' was
+never run
+& \code{integrator.py}
+& oracle module and tests perform it on a representable plant\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Recommendation.} The audit recommended that version~1 not be submitted in its form, but re-framed as an
+empirical-plus-verified-implementation paper: the factorial result is a clean, reproducible finding, and the theory
+should be the revised one (Sections~\ref{sec:p1-setting}--\ref{sec:p1-nobias}) with the prior work cited.
+
+\subsection{Errata to version 1}
+
+Table~\ref{tab:front:errata} lists the errata to version~1. Section numbers in the second column refer to version~1;
+``README'' refers to the public showcase README that accompanied it.
+
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\captionof{table}{Errata to version~1.}
+\label{tab:front:errata}
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}p{1.5cm}>{\hsize=0.8\hsize}Y>{\hsize=1.2\hsize}Y@{}}
+\toprule
+\# & section & statement in version~1 & status\\
+\midrule
+E1 & 1.2, 9 & Centre separation $\norm{c_i - c_j} \ge \delta$ ``maintained via the projection set construction''
+with ``convex projection boundaries''
+& \textbf{Wrong.} The separation set is non-convex; no projection onto it has property (P). The implemented repulsion
+term violated (P) in 30\% of samples and did not keep the separation (min distance 0.07 vs $\delta = 0.5$). Removed
+from the algorithm; not needed by the proof.\\
+\addlinespace[0.5pt]
+E2 & 1.3 & Offline Tikhonov regularisation of the ideal target: ``This strict separation eliminates the
+circularity''
+& \textbf{Irrelevant to the proof.} Optimality of $\theta^*$ is never used (Section~\ref{sec:p1-setting}, remarks on
+the assumptions).\\
+\addlinespace[0.5pt]
+E3 & 1.3 & IFT gives finite velocity bounds $V_W$, $V_c$, $V_\sigma$
+& \textbf{Not a proof.} The Hessian of a Tikhonov-regularised non-convex loss at a minimiser is PSD, not necessarily
+PD; the IFT hypothesis is asserted, not established. Replaced by Assumption A4.\\
+\addlinespace[0.5pt]
+E4 & 2.1 & $D_{\max}$ from the Taylor remainder, ``a finite geometric scalar''
+& \textbf{Valid but not explicit.} Replaced by the explicit, Hessian-free Lemma 2. The code's former
+\code{estimate_D_max} $= \varepsilon(1 + 2W_{\max}c_{\max})$ had no derivation and is deleted.\\
+\addlinespace[0.5pt]
+E5 & 4 & $\tr(\tilde W^\T\Gamma_W^{-1}\tilde W)$ with $\Gamma_W$ ``positive-definite learning rate matrices''
+& \textbf{Type error} for $\Gamma_W \in \R^{mn\times mn}$; the correct form is
+$\operatorname{vec}(\tilde W)^\T\Gamma_W^{-1}\operatorname{vec}(\tilde W)$. Harmless for scalar $\Gamma$.\\
+\addlinespace[0.5pt]
+E6 & 5 & Projection inequality ``holds as an absolute mathematical certainty --- the cancellation gap does not exist''
+& \textbf{True only under A3} ($\theta^*$ in the inner set) and only for the $\Gamma$-weighted operator; the previous
+code applied the isotropic formula to any $\Gamma$. Fixed and tested.\\
+\addlinespace[0.5pt]
+E7 & 7.2 & ``A critical and non-trivial consequence of the projection operator''; its hard energy cap ``converts
+what would be a boundary-only argument \ldots\ into a global interior argument''
+& \textbf{Standard} level-set / comparison argument (Khalil~\cite[Thm.~4.18]{khalil2002}). Correct, not new; also
+``strict monotone descent through every intermediate level set until the infimal set is penetrated'' overstates:
+entry into every level above $c_{\inf}$ is finite-time, entry into $c_{\inf}$ itself only asymptotic.\\
+\addlinespace[0.5pt]
+E8 & abstract, 7.3, 10.3 & Projection gives UUB ``without the persistent steady-state bias'' (abstract); ``no
+modification bias is introduced'' (7.3); ``zero bias into the Lyapunov derivative'', ``not a marginal improvement but
+a structural result'' (10.3)
+& \textbf{Overclaimed.} The ultimate bound $\sqrt{R_{\mathrm{UUB}}^2 + 2V_{\max,\Theta}}$ contains the
+parameter-energy term; see Section~\ref{sec:p1-nobias}. The tighter, bias-free statement is the RMS bound
+(iii).\\
+\addlinespace[0.5pt]
+E9 & 8 & ``a standard Persistent Excitation (PE) condition on the regressor $\phi$ is insufficient to guarantee
+$\tilde\Theta(t) \to 0$''; convergence ``requires alternative mechanisms'', such as ICL
+& Parameter convergence is not treated; the remark is speculation and the code's former ``Concurrent Learning'' hook
+used only the current residual (not recorded data) and is removed.\\
+\addlinespace[0.5pt]
+E10 & README & ``100\% of the independent simulation trials converged strictly below the calculated
+$R_{\mathrm{UUB}}$ threshold''
+& \textbf{False.} The threshold 0.5 was a hand-chosen constant (\code{tier1_monte_carlo.py}: ``A chosen arbitrary
+bound''). Replaced by \code{exp_monte_carlo_honest.py} / \code{exp_oracle_ruub.py}.\\
+\addlinespace[0.5pt]
+E11 & README & ``$O(mn)$ time''
+& \textbf{Was false} with the $O(m^2n)$ pairwise repulsion; true now that it is off by default.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{What survives and what is withdrawn}
+
+\paragraph{What survives.}
+\begin{itemize}
+  \item \emph{The corrected theorem.} Theorem 1 of Section~\ref{sec:p1-theorem} holds under the explicit Assumptions
+    A1--A5, for an algorithm identical to the implemented one. Its pointwise ultimate bound (ii) is the conclusion of
+    version~1; it is the textbook level-set argument, and its radius contains the parameter-energy term
+    $V_{\max,\Theta}$. Its RMS bound (iii) does not contain that term and is the form of the result that can be
+    confronted with data; its reference bound (iv) holds whatever the adaptation does. The ingredients are the
+    projection property (P) (Lemma 1), the explicit Hessian-free disturbance bound (Lemma 2) and the Lyapunov
+    derivative (Lemma 3), verified numerically along simulated trajectories. Nothing in the stability theorem is new
+    (Section~\ref{sec:p1-prior}). The ``no bias'' claim survives only in the precise form of
+    Section~\ref{sec:p1-nobias}: projection removes the \emph{Lyapunov-derivative} bias of leakage, not the ultimate
+    \emph{tracking} bound's dependence on the parameter set.
+  \item \emph{The projection-versus-leakage finding} (Section~\ref{sec:p1-experiments}). On identical geometry,
+    projection beats both $\sigma$- and e-modification in every cell of a mechanism-by-geometry factorial, 5/5 seeds,
+    with paired confidence intervals excluding zero. Within projection, adaptive centres improve on the fixed grid by
+    0.012 (5/5) and adaptive widths by a further 0.035 (5/5). So the method's real advantage is the robustness
+    mechanism, with geometry adaptation a smaller second-order gain, close to the reverse of the story told by the
+    original figure.
+  \item \emph{The comparison with kernel regression, with its limits} (Section~\ref{sec:p1-experiments}). Against
+    kernel-regression baselines the method is never the most accurate. Its edge is cost: it is cheaper per step than
+    every GP baseline at every $n$ and than NTK except at $n = 3$, and in the fair $n = 1$ rerun, with per-step
+    prediction for every method, it has the cheapest step. Every kernel-regression baseline (GP and NTK, including the
+    fair $n = 1$ rerun) is trained on noise-free samples of the true $f(x,t)$, which is equivalent to measuring the
+    state derivative exactly, while the adaptive law uses only the tracking error.
+\end{itemize}
+
+\paragraph{What is withdrawn.}
+\begin{itemize}
+  \item Earlier versions of the public README stated that the method's steady-state error was ``statistically
+    indistinguishable (Wilcoxon signed-rank $p > 0.3$) from both the Exact GP and the Sparse GP'', that ``100\% of the
+    independent simulation trials converged strictly below the calculated $R_{UUB}$ threshold'', and announced
+    ``Curse of Dimensionality Solved''. Those statements are withdrawn: the significance test was invalid, the threshold was an
+    arbitrary constant, and the omitted $n = 3$ and NTK results contradict them.
+  \item The ``zenith'' language is dropped: ``absolute mathematical certainty'', ``curse of dimensionality
+    solved'', ``structural result''. None of it survives the data. Claims of a ``structural'' advantage over leaky
+    modifications are withdrawn.
+  \item The claim that centre separation is ``maintained via the projection set construction'' is withdrawn
+    (erratum E1); no centre-separation constraint is needed by the proof.
+\end{itemize}
+
+\subsection{How Part II answers the structural defects}
+
+Section~\ref{sec:front:defects} named two structural defects of the classical labelled analysis, that of version~1 and
+of the literature it builds on: its Lyapunov analyses depend on labels, and it has no object that describes where the
+kernels go or whether their placement is good. Part~II addresses both by working with the measure
+$\mu = \frac1m\sum_i\delta_{\vartheta_i}$, which does not see the labels, and with its transport.
+\begin{itemize}
+  \item \emph{Labels.} The Lyapunov function of Theorem B, $\VOT = \frac12\norm{e}^2 + \frac12 W(\mu_t,\mu_t^*)^2$,
+    measures the parameter error by the optimal-assignment (Wasserstein) distance $W$, a minimum over all
+    assignments of kernels to ideal atoms (Section~\ref{sec:setting}). The labelled $\sigma$-modification is not a
+    functional of $\mu$; Theorem C replaces it by an optimal-transport $\sigma$-modification, and Proposition C.5
+    shows that the labelled leak reshuffles kernels. Theorem E gives label-free local exponential convergence under
+    tangential persistent excitation (proved conditional on a cited theorem).
+  \item \emph{Where the kernels go.} The measure $\mu_t$ is that object. By Theorem A the adaptive law is the
+    particle form of the Wasserstein gradient flow of a $\mu$-linear potential; Theorem D treats the mean-field
+    (many-kernel) loop; Theorem F bounds the Wasserstein length of learning by the integrated tracking error;
+    Proposition G describes the slow geometry (formal). Whether the placement is good is the subject of Theorem H: with saturated features,
+    $\sigma$-modification and dither, the averaged mean-field loop converges globally and exponentially to the
+    regularised optimum. This is proved for $\Aavg$; the reduction to $\Aavg$ is formal, and the real loop is
+    Conjecture H.6, which Propositions H.7 and H.8 reduce to an averaging estimate.
+  \item \emph{Constants growing with $m$.} The third apparent defect is an artefact of the normalisation; the
+    mean-field normalisation removes it for labelled and label-free analyses alike (Remark A.1).
+\end{itemize}
+The status of each of these results is that of Table~\ref{tab:front:contrib}.

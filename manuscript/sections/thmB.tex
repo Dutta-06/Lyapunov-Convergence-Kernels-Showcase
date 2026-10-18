@@ -1,0 +1,244 @@
+\section{Theorem B: the optimal-assignment Lyapunov function}\label{sec:thmB}
+
+\begin{thm}{Lemma}{B.1}[Dini derivative of a minimum]
+Suppose each $V_\pi$ is $C^1$ and $\VOT=\min_\pi V_\pi$. Then $\VOT$ is locally Lipschitz, and
+$D^+\VOT(t)\le\dot V_\pi(t)$ for every $\pi$ active at $t$.
+\end{thm}
+
+\begin{proof}
+For $h>0$, $\VOT(t+h)\le V_\pi(t+h)$, and $\VOT(t)=V_\pi(t)$.
+\end{proof}
+
+\begin{thm}{Lemma}{B.2}[matched remainder in two regimes; gradient bound]
+Let $L_0:=2a_{\max}$ and $L_1:=(1+a_{\max}^2J^2)^{1/2}$. For $\vartheta,\vartheta'\in\ThK$:
+\begin{enumerate}[label=(\alph*)]
+\item the remainder $R:=g_t(\vartheta')-g_t(\vartheta)-\ip{\nabla g_t(\vartheta)}{\vartheta'-\vartheta}$ satisfies
+  \[
+    \abs{R}\le\norm{e(t)}\cdot\min\bigl\{K\norm{\vartheta-\vartheta'}^2,\ L_0+L_1\norm{\vartheta-\vartheta'}\bigr\};
+  \]
+\item $\norm{\nabla_\vartheta g_t(\vartheta)}\le L_1\norm{e(t)}$.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+\textit{(b)} We have $\nabla_a g=\varphi e$ and $\nabla_{(c,s)}g=(a^\T e)\nabla_{(c,s)}\varphi$, with $\varphi\le1$ and
+$\norm{\nabla_{(c,s)}\varphi}\le J$ on $s\ge s_{\min}$. So $\norm{\nabla g}^2\le\norm{e}^2(1+a_{\max}^2J^2)$.
+
+\textit{(a)} If $e(t)=0$, both sides vanish. Otherwise set $h:=\vartheta'-\vartheta$.
+\begin{itemize}
+\item \emph{Quadratic branch.} $\ThK$ is convex, so the Lagrange remainder of $\tau\mapsto g_t(\vartheta+\tau h)$
+  gives $R=\frac12 h^\T\nabla^2g_t(\vartheta+\tau_0h)h$ for some $\tau_0\in(0,1)$. Since
+  $g_t=\norm{e}\cdot(u^\T\Phi)$ with $u=e/\norm{e}$, the Hessian bound~(1) of Section~\ref{sec:setting} gives this
+  branch.
+\item \emph{Linear branch.} It follows from $\abs{g_t}\le\norm{e}a_{\max}$ and (b).\qedhere
+\end{itemize}
+\end{proof}
+
+\begin{thm}{Theorem}{B}
+Under (S), along every solution of (L), for every $t$, with $W:=W(\mu_t,\mu^*_t)$:
+\begin{equation}\label{eq:thmB:B}
+  D^+\VOT\le-k_e\norm{e}^2+\norm{e}\Bigl(\varepsilon_{\max}
+    +\min\bigl\{K\lambda_GW^2,\ L_0+L_1\lambda_G^{1/2}W\bigr\}\Bigr)+V_*(t)\,W.
+  \tag{B}
+\end{equation}
+\end{thm}
+
+\status{Proved and checked, including a moving ideal, $\varepsilon\ne0$, switches, an active projection, and the
+failure of the plain bound along $\Lsig$. Novelty (literature audit): packaging new; ingredients
+known~\cite{R62}, \cite{R64}, \cite{R20}, \cite{R49}.}
+\checkedby{\code{tests/test_transport.py}: \code{test_theorem_B_inequality_along_trajectories},\newline
+\code{test_theorem_B_moving_ideal_nonrepresentable_switches_and_active_projection},\newline
+\code{test_dini_derivative_of_V_OT_bounded_by_active_branch},\newline
+\code{test_permuted_ideal_labelled_vs_OT}; \code{experiments/exp_transport_permutation.py}.}
+
+\begin{proof}
+Fix $t$ and an optimal $\pi$, and write $\tilde\vartheta_i:=\vartheta_i-\vartheta^*_{\pi(i)}$. Then
+\[
+  \dot V_\pi=e^\T\dot e+\frac1m\sum_i\ip{\tilde\vartheta_i}{\Ginv\dot\vartheta_i}
+    -\frac1m\sum_i\ip{\tilde\vartheta_i}{\Ginv\dot\vartheta^*_{\pi(i)}}.
+\]
+\begin{enumerate}[label=(\alph*)]
+\item $e^\T\dot e=-k_e\norm{e}^2+e^\T\varepsilon+\frac1m\sum_i\bigl[g_t(\vartheta^*_{\pi(i)})-g_t(\vartheta_i)\bigr]$.
+\item By (P) with $\vartheta'=\vartheta^*_{\pi(i)}$,
+  $\frac1m\sum_i\ip{\tilde\vartheta_i}{\Ginv\dot\vartheta_i}\le\frac1m\sum_i\ip{\tilde\vartheta_i}{\nabla g_t(\vartheta_i)}$.
+\item Since $\pi$ is a bijection and is optimal,
+  \[
+    -\frac1m\sum_i\ip{\tilde\vartheta_i}{\Ginv\dot\vartheta^*_{\pi(i)}}
+    \le\Bigl(\frac1m\sum_i\norm{\tilde\vartheta_i}^2_{\Ginv}\Bigr)^{1/2}
+       \Bigl(\frac1m\sum_i\norm{\dot\vartheta^*_{\pi(i)}}^2_{\Ginv}\Bigr)^{1/2}
+    =W\cdot V_*(t).
+  \]
+\end{enumerate}
+Summing gives
+\[
+  \dot V_\pi\le-k_e\norm{e}^2+\norm{e}\varepsilon_{\max}+\frac1m\sum_iR_i+W\,V_*(t),
+\]
+where each $R_i$ is a matched remainder. Average Lemma B.2(a), using three facts:
+\begin{itemize}
+\item $\frac1m\sum_i\min\{A_i,B_i\}\le\min\{\operatorname{avg}A,\operatorname{avg}B\}$;
+\item $\frac1m\sum_i\norm{\tilde\vartheta_i}^2\le\lambda_GW^2$;
+\item $\frac1m\sum_i\norm{\tilde\vartheta_i}\le\lambda_G^{1/2}W$.
+\end{itemize}
+Lemma B.1 then completes the proof.
+\end{proof}
+
+\begin{thm}{Corollary}{B.3}[ultimate bounds]
+Let $\Delta:=\diam_{\Ginv}(\ThK)$, so $W\le\Delta$. Define
+\begin{gather*}
+  D^{\mathrm{OT}}:=\varepsilon_{\max}+\min\bigl\{K\lambda_G\Delta^2,\ L_0+L_1\lambda_G^{1/2}\Delta\bigr\},\qquad
+  C^{\mathrm{OT}}:=V_*\Delta,\\
+  R^{\mathrm{OT}}:=\frac{D^{\mathrm{OT}}}{2k_e}
+    +\Bigl(\frac{(D^{\mathrm{OT}})^2}{4k_e^2}+\frac{C^{\mathrm{OT}}}{k_e}\Bigr)^{1/2}.
+\end{gather*}
+Then:
+\begin{itemize}
+\item $D^+\VOT<0$ whenever $\norm{e}>R^{\mathrm{OT}}$.
+\item Under (S5) on $[0,\infty)$, $\limsup\norm{e}\le\bigl((R^{\mathrm{OT}})^2+\Delta^2\bigr)^{1/2}$. This uses
+  $\sup\frac12W^2\le\Delta^2/2$.
+\item $\displaystyle \RMS_{[T_1,T_2]}\norm{e}\le\frac{D^{\mathrm{OT}}}{2k_e}
+  +\Bigl(\frac{(D^{\mathrm{OT}})^2}{4k_e^2}+\frac{C^{\mathrm{OT}}}{k_e}
+  +\frac{\VOT(T_1)}{k_e(T_2-T_1)}\Bigr)^{1/2}$.
+\end{itemize}
+\end{thm}
+
+\begin{proof}
+As in Theorem 1 (Section~\ref{sec:p1-theorem}). The Dini comparison lemma, applied with the continuous,
+$V$-independent right-hand side, gives the integrated form.
+\end{proof}
+
+\begin{rmk}{Remark}{B.4}[what OT buys and what it does not]
+\leavevmode
+\begin{itemize}
+\item \textbf{Globally, the OT constant is not smaller than the classical one.} Take the test box: $a_{\max}=8$,
+  $c_{\max}=4$, $s_{\min}=0.3$, $s_{\max}=3$, $G=\operatorname{diag}(2,1,0.5)$ and $F_{\max}:=a_{\max}$. Compare
+  constants on the same per-kernel admissible set.
+  \begin{center}
+  \small
+  \begin{tabularx}{\linewidth}{@{}Yl@{}}
+  \toprule
+  constant & value\\
+  \midrule
+  classical Lemma 2 (Section~\ref{sec:p1-theorem}),
+    $F_{\max}+3a_{\max}+2a_{\max}c_{\max}J_c+a_{\max}(s_{\max}-s_{\min})J_s$ & 214, for every $m$\\
+  OT linear branch, crude form $L_0+L_1\lambda_G^{1/2}\Delta$ & 533\\
+  OT linear branch, block split through $W$ & 382\\
+  OT linear branch, bounded per particle by
+    $\norm{e}\bigl(2a_{\max}+\norm{\tilde a_i}+a_{\max}(J_c\norm{\tilde c_i}+J_s\abs{\tilde s_i})\bigr)$ & 214\\
+  \bottomrule
+  \end{tabularx}
+  \end{center}
+  Bounded per particle, the OT constant equals the classical one. An earlier comparison figure of ``101--138'' used a
+  joint centre ball of radius $c_{\max}$. That radius is $\sqrt m$ times smaller than the radius $\sqrt m\,c_{\max}$
+  of the ball that circumscribes the per-kernel product of Theorem A.
+\item \textbf{Locally, the excess disturbance is quadratic in the matched error} (Corollary B.5).
+\item \textbf{Labels.} A labelled theory can make the same local statement only for a labelling fixed in advance,
+  and only while the optimal assignment does not switch. (B) holds uniformly, with the minimum over $\pi$ taken at
+  each $t$.
+\item \textbf{$m$-uniformity} is a property of the normalisation (Remark A.1), not of OT.
+\end{itemize}
+\end{rmk}
+
+\begin{thm}{Corollary}{B.5}[conditional bound]
+Along a solution of (L), suppose $\sup_{[T_1,T_2]}W(\mu_t,\mu^*_t)\le\bar\eta$. This quantity is available in oracle
+simulations, since it requires $\mu^*_t$, or it can be controlled a priori by Theorem E. With
+$\bar D:=\varepsilon_{\max}+\min\{K\lambda_G\bar\eta^2,\ L_0+L_1\lambda_G^{1/2}\bar\eta\}$,
+\begin{equation}\label{eq:thmB:B5}
+  \RMS_{[T_1,T_2]}(\norm{e})\le\frac{\bar D}{2k_e}
+  +\Bigl(\frac{\bar D^2}{4k_e^2}+\frac{V_*\bar\eta}{k_e}+\frac{\VOT(T_1)}{k_e(T_2-T_1)}\Bigr)^{1/2}.
+\end{equation}
+As $\bar\eta\to0$ and $T_2\to\infty$, this tends to $\varepsilon_{\max}/k_e$, the value of the frozen-parameter error
+channel.
+
+\emph{Variant for $\Lsig$.} Take a solution of $\Lsig$ in the sense of Section~\ref{sec:thmC} with
+$\sup_{[T_1,T_2]}W(\mu_t,\mu^*_t)\le\bar\eta$ and $4\bar\eta(b+\bar\eta)<\Delta_{\mathrm{gap}}$. For example,
+$\bar\eta$ can come from Theorem C(iv). Then, with $\bar D:=\varepsilon_{\max}+K\lambda_G\bar\eta^2$,
+\begin{equation}\label{eq:thmB:B5-variant}
+  \RMS_{[T_1,T_2]}(\norm{e})\le\frac{\bar D}{2k_e}
+  +\Bigl(\frac{\bar D^2}{4k_e^2}+\frac{V_*\bar\eta+\sigma_mb^2/4}{k_e}+\frac{\VOT(T_1)}{k_e(T_2-T_1)}\Bigr)^{1/2}.
+\end{equation}
+\end{thm}
+
+\begin{proof}[Proof of the variant]
+Apply Theorem C(iii) with $C=b(t)^2\le b^2$, and use $-\sigma_m\eta^2+\sigma_m\eta b\le\sigma_mb^2/4$. Without the gap
+condition, replace $b^2$ by $(b+2\bar\eta)^2$ (from $\sqrt C\le b+2\eta$ in C(ii)), or by $b^2+4\bar\eta R$, with $R:=\Delta$ as in Theorem C.
+\end{proof}
+
+As $\bar\eta\to0$ and $T_2\to\infty$ the variant tends formally to
+$\varepsilon_{\max}/(2k_e)+\bigl(\varepsilon_{\max}^2/(4k_e^2)+\sigma_mb^2/(4k_e)\bigr)^{1/2}$. Along $\Lsig$ with
+$b>0$, the measured $\bar\eta$ stays of order $b$ (about $0.9b$ in the test instance), so the bound is first order in
+$b$. The plain bound of Corollary B.5 is false along $\Lsig$. In the test instance, every hypothesis of C(iv) is
+asserted and $\sup W\le\bar\eta$ is measured. There, the bound of Corollary B.5 is exceeded by more than $3\times$,
+while the variant holds
+(\code{tests/test_transport.py::test_corollary_B5_fails_along_lsigma_and_its_leak_variant_holds}). Independent
+numerical checks found violations of 3.8--8.3$\times$.
+
+\status{The bound along (L) is not checked in the repository; its failure along $\Lsig$ and the $\Lsig$ variant are
+checked (Appendix~\ref{sec:verification}).}
+
+\begin{thm}{Corollary}{B.6}[approximation error as quantisation error]
+Suppose $f=\int\Phi\dd\mu^*_\infty+\varepsilon_\infty$ for a probability measure $\mu^*_\infty$ on $\ThKe$, with
+$\norm{\varepsilon_\infty}\le\bar\varepsilon_\infty$. Then for every $m$-atom $\mu^*_m$ supported in $\ThKe$,
+\[
+  \varepsilon_{\max}(m)\le\bar\varepsilon_\infty+L_1\lambda_G^{1/2}\,W(\mu^*_m,\mu^*_\infty).
+\]
+\end{thm}
+
+\status{Not checked in the repository (Appendix~\ref{sec:verification}).}
+
+\begin{proof}
+For any coupling $\gamma$,
+\begin{align*}
+  \Bigl\lVert\int\Phi\dd(\mu^*_m-\mu^*_\infty)\Bigr\rVert
+  &\le\int\norm{\Phi(\vartheta)-\Phi(\vartheta')}\dd\gamma
+  \le L_1\lambda_G^{1/2}\int\norm{\vartheta-\vartheta'}_{\Ginv}\dd\gamma\\
+  &\le L_1\lambda_G^{1/2}\Bigl(\int\norm{\vartheta-\vartheta'}^2_{\Ginv}\dd\gamma\Bigr)^{1/2}.
+\end{align*}
+Minimise over $\gamma$. The block constant $\bigl(g_a+a_{\max}^2(J_c^2g_c+J_s^2g_s)\bigr)^{1/2}$ may replace
+$L_1\lambda_G^{1/2}$.
+\end{proof}
+
+\paragraph{Rates.}
+\begin{enumerate}[label=(\alph*)]
+\item \textbf{First order.} Let $\mu^*_\infty$ be compactly supported and $p\ge3$. Then there are equal-weight
+  $\mu^*_m$, with atoms (cell barycentres) in $\ThKe$, such that $W(\mu^*_m,\mu^*_\infty)=O(m^{-1/p})$. This follows
+  from an equal-mass dyadic decomposition (Chevallier 2018~\cite{S13}). For $p>4$, i.i.d.\ atoms also achieve the rate
+  in expectation (Fournier--Guillin 2015~\cite{fg2015}). If $\mu^*_\infty$ has a non-trivial absolutely continuous
+  part, the order cannot be improved, even with free weights (Zador; Graf--Luschgy~\cite[Thm.~6.2 with
+  Lemma~3.4]{gl2000}).
+\item \textbf{Second order.} Suppose $\mu^*_m$ is a centroid quantiser for an optimal plan; a best equal-weight
+  approximation is one. Then the first-order term cancels, and by the Hessian bound~(1) of Section~\ref{sec:setting}
+  and convexity of $\ThKe$,
+  \[
+    \varepsilon_{\max}(m)\le\bar\varepsilon_\infty+\min\bigl\{K\lambda_GW^2,\ L_1\lambda_G^{1/2}W\bigr\}
+    =\bar\varepsilon_\infty+O(m^{-2/p}).
+  \]
+\item \textbf{Free of $p$.} I.i.d.\ atoms drawn from $\mu^*_\infty$ give, with positive probability, an $m$-atom
+  ideal with
+  \[
+    \varepsilon_{\max}(m)\le\bar\varepsilon_\infty
+    +O\Bigl(a_{\max}\bigl(n\log(m\cdot\diam X)/m\bigr)^{1/2}+a_{\max}/(s_{\min}\sqrt m)\Bigr).
+  \]
+  This is Maurey's empirical method; the constants are not optimised.
+\end{enumerate}
+The exponent $1/p$ is therefore a property of controlling $\varepsilon_{\max}$ through $W$, as Theorem D(e)
+requires. It is not a property of the approximation error itself.
+
+\begin{rmk}{Remark}{B.7}[continuum form, via couplings]
+Let $\mu_0\in\Prob(\ThK)$ and $\mu_t=(X_t)_\#\mu_0$, and let $\mu^*_t$ be an absolutely continuous ideal curve in
+$(\Prob(\ThKe),W)$ with velocity field $w_t$. Set $V_*:=\operatorname*{ess\,sup}_t\norm{w_t}_{L^2(\mu^*_t;\Ginv)}$.
+Its smallest admissible value is the metric derivative $\abs{\dot\mu^*_t}_W$ (AGS~\cite[Thm.~8.3.1]{ags2008}, after the isometry $\vartheta\mapsto G^{-1/2}\vartheta$). Then
+(B) holds for a.e.\ $t$.
+\end{rmk}
+\nopagebreak
+\status{Not checked in the repository (Appendix~\ref{sec:verification}).}
+
+\begin{proof}[Sketch]
+\leavevmode
+\begin{enumerate}[label=\arabic*.]
+\item Push an optimal plan $\gamma_t$ forward by $(X_{t,t+h},Y_{t,t+h})$. Here $Y$ is the flow of $w$, or the
+  superposition measure of AGS~\cite[Thm.~8.2.1]{ags2008} when $w$ is not Lipschitz.
+\item This couples $(\mu_{t+h},\mu^*_{t+h})$, so
+  $D^+\bigl(\frac12W^2\bigr)\le\int\ip{\vartheta-\vartheta'}{v_t(\vartheta)-w_t(\vartheta')}_{\Ginv}\dd\gamma_t$.
+\item Integrate (P) and Lemma B.2 against $\gamma_t$.\qedhere
+\end{enumerate}
+\end{proof}

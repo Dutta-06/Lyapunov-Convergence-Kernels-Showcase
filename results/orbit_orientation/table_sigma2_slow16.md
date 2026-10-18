@@ -11,4 +11,5 @@ Two linear-response predictions of Θ₊ − Θ₋ at the (+) equilibrium: *froz
 | 40 | 1.403e-03 | 1.8e-16, 1.3e-16 | 2.294 | 0.8631 | 0.969 | 0.9944 | 0.109 |
 
 Fitted exponent of the measured difference against k_e: -1.01 (prediction: −1).
+Kernel spread (largest coordinate deviation of a kernel from the mean kernel): 1.05 at the start, at most 5.6e-17 at the end of every run. The 6 kernels converge to a common configuration, so the learned network is effectively a single kernel and the test probes the orientation effect at a collapsed equilibrium of the m = 6 system.
 Reading: the occupation measure is identical for the two orientations, so (𝔄) cannot tell them apart. The difference is the orientation-odd part of the first-order correction of the real averaged loop; compare the frozen and full columns to see how much of it the frozen-measure expansion alone accounts for.

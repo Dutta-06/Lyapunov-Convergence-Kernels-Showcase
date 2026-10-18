@@ -33,12 +33,15 @@ No a-priori threshold is drawn (the old 0.5 line was arbitrary).
 ## Oracle bound study (`experiments/exp_oracle_ruub.py` → `oracle_ruub/`)
 Representable plant, 4 gains × 4 learning-rate scales × 3 seeds: RMS bound with
 the measured disturbance holds 48/48 and scales as 1/k_e; the a-priori R_UUB
-(26–261) is 900×–11 000× above the observed RMS error (0.009–0.09).
+(26–261) is 915×–10954× above the observed RMS error (0.009–0.09).
 
 ## Kernel-method baselines
 * Complete saved-run table, nothing excluded: `comparison_complete_table.md`,
   `comparison_higher_dims_complete.png` (proposed ranks 3/5, 2/5, 3/5, 2/5 by
-  error; fastest by 2–4 orders of magnitude).
+  error; cheaper per step than every GP baseline at every n, and than NTK
+  except at n = 3). Every baseline regresses on noise-free samples of the true
+  f(x, t), i.e. it is given the state derivative; the adaptive law uses only the
+  tracking error.
 * Fair re-run (n = 1, per-step prediction for every method, 9×3 covering
   inducing grid, 3 seeds; `experiments/run_fair_n1.py` then `plot_fair_n1.py`;
   `fair_n1/table.md`, `fair_n1/figure.png`), mean steady-state ‖e‖ ± 95% CI and

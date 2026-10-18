@@ -5,3 +5,8 @@ __pycache__/
 .pytest_cache/
 *.log
 *.err
+manuscript/*.pdf
+manuscript/*.aux
+manuscript/*.toc
+manuscript/*.out
+manuscript/_check_*

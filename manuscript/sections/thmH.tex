@@ -1,0 +1,386 @@
+% Theorem H: Langevin adaptive control (PARADIGM.md section 6c, up to and including Conjecture H.6).
+\section{Theorem H: Langevin adaptive control and global convergence to the regularised optimum}\label{sec:thmH}
+
+\paragraph{Why something new is needed.}
+Theorems B--G are local, or describe the dynamics. A global statement about kernel placement needs either the
+Chizat--Bach theory or entropy.
+\begin{itemize}
+  \item \textbf{Boundary conditions.} The Chizat--Bach theory for noiseless Wasserstein flows (partially
+  $1$-homogeneous case,~\cite{R29}) requires boundary conditions: either Neumann conditions on a bounded convex domain,
+  or $C^1$-uniform behaviour at infinity. Gaussian kernels with free centres and widths satisfy neither.
+  \item \textbf{Separation.} Its Theorem~3.5 also needs the support of $\mu_0$ to separate $\{-r_0\}\times\Theta$ from
+  $\{r_0\}\times\Theta$. A Dirac start violates this, and that is an obstruction distinct from the boundary
+  conditions.
+  \item \textbf{The collapsed configuration is invariant.} It remains a moving Dirac mass and never separates without
+  noise, by permutation symmetry and uniqueness of solutions. The test
+  \code{test_noiseless_symmetric_initialisation_never_separates_but_dither_does} in the accompanying repository checks
+  this on the real closed loop with $m = 6$. The rows stay bit-identical at every snapshot, the common particle moves,
+  and dither separates the rows within $0.1$\,s.
+\end{itemize}
+Entropy removes the obstruction: Theorem H(ii) covers Dirac starts after any positive time.
+
+\paragraph{Design.}
+The particles are unconstrained, $\vartheta = (\alpha, \gamma, \kappa) \in \R^p$, and the features are saturated
+coordinate by coordinate:
+\[
+  a = a_{\max}\tanh(\alpha/a_{\max}), \qquad c = c_{\max}\tanh(\gamma/c_{\max}), \qquad
+  s = s_{\min} + (s_{\max} - s_{\min})\cdot\operatorname{sig}(\kappa).
+\]
+Here $a_{\max}$ bounds each coordinate of $a$, unlike Section~\ref{sec:setting}, where it bounds $\norm{a}$. So
+$\tilde\Phi(x;\vartheta) = a\varphi(x;c,s)$ satisfies $\norm{\tilde\Phi} \le K_\Phi := a_{\max}\sqrt{n}$, and every
+$\vartheta$-derivative of $\tilde\Phi$ is bounded uniformly in $x$. The law is
+\begin{equation}
+  \mathrm{d}\vartheta_i = \bigl[\, G\nabla_\vartheta g_t(\vartheta_i) - \sigma(\vartheta_i - \vartheta^0) \,\bigr]\dd t
+  + \sqrt{2\tau}\, G^{1/2}\dd B_i, \qquad g_t(\vartheta) := e(t)^\T\tilde\Phi(x(t);\vartheta).
+  \tag{$\mathrm{L}_\tau$}\label{eq:thmH:Ltau}
+\end{equation}
+It has three parts: the classical gradient law, $\sigma$-modification written in the $G^{-1}$ metric, and parameter
+dither of temperature $\tau$.
+
+\paragraph{Averaged mean-field system.}
+Assume $f = f(x)$ is continuous and time-invariant, as in Proposition G (the functions \code{occupation_loss} and
+\code{first_variation} of the accompanying code assume this). Let $\rho$ be the occupation measure of a $T_0$-periodic
+reference, and $F_\rho := \sup_{\supp\rho}\norm{f}$. Define
+\begin{align*}
+  r_\mu &:= f - \int\tilde\Phi(\cdot\,;\vartheta')\dd\mu(\vartheta'), &
+  \bar L(\mu) &:= \frac12\int\norm{r_\mu}^2\dd\rho, \\
+  V_L[\mu](\vartheta) &:= -\int r_\mu(x)^\T\tilde\Phi(x;\vartheta)\dd\rho(x), &
+  V[\mu] &:= \frac{1}{k_e}V_L[\mu] + \frac{\sigma}{2}\norm{\vartheta - \vartheta^0}^2_{G^{-1}},
+\end{align*}
+and the averaged system
+\begin{equation}
+  \partial_t\mu = \nabla\cdot\bigl(\mu G\nabla V[\mu]\bigr) + \tau\nabla\cdot(G\nabla\mu).
+  \tag{$\mathfrak{A}$}\label{eq:thmH:A}
+\end{equation}
+
+\begin{rmk}{Remark}{H.0}[from the closed loop to $\Aavg$: a formal reduction with a measured error]
+\leavevmode
+\begin{itemize}
+  \item \textbf{An algebraic identity.} Substitute $e := r_\mu(x_m)/k_e$ and $x := x_m$ in the drift of
+  $(\mathrm{L}_\tau)$, and average over one reference period at frozen $\mu$. The result is exactly $-G\nabla V[\mu]$.
+  The test \code{test_averaged_drift_is_the_mean_field_langevin_drift} checks this identity to $10^{-7}$. It does not
+  test averaging.
+  \item \textbf{The formal reduction.} $\Aavg$ is the leading-order description of the mean-field closed loop under
+  two conditions:
+  \begin{itemize}
+    \item \emph{Tikhonov:}
+    $k_e \gg \max\bigl(\omega_{\mathrm{ref}},\ \Lip(f) + K_\Phi/s_{\min},\ (F_\rho + K_\Phi)/s_{\min}\bigr)$, so that
+    the shift $x - x_m = O(1/k_e)$ is small on the kernel scale.
+    \item \emph{Period averaging:}
+    $T_0\cdot\sup_\vartheta\norm{(1/k_e)G\nabla V_L[\mu](\vartheta)} \ll \ell$, $\sigma T_0 \ll 1$ and
+    $\tau\lambda_G T_0 \ll \ell^2$, where $\ell$ is the $\vartheta$-scale of $\tilde\Phi$. The left-hand side is at most
+    $(T_0/k_e)\lambda_G(F_\rho + K_\Phi)\cdot\sup\norm{\nabla_\vartheta\tilde\Phi}$. The confinement drift does not
+    depend on time and needs no averaging.
+  \end{itemize}
+  \item \textbf{The first corrections.}
+  \begin{itemize}
+    \item At frozen $\mu$ (and frozen $\vartheta$) they are $O(1/k_e)$ relative to the drift, do not depend on the
+    gains, and are given exactly by Proposition H.7.
+    \item Along the loop, the within-period oscillation of the parameters adds the second-order averaging term
+    $b_{\mathrm{osc}}$ of Remark H.7a. Its size relative to the frozen terms is $O(\abs{G}T_0)$, so it does depend on
+    the gains.
+    \item In the formal limit below, both are $O(k_e^{-2})$.
+  \end{itemize}
+  Measured relative errors of the frozen-$\mu$ averaged drift against $\Aavg$, with $b_{\mathrm{osc}}$ excluded:
+  \begin{center}
+    \small
+    \begin{tabular}{lccccc}
+      \toprule
+      instance & $k_e = 10$ & $20$ & $40$ & $80$ & $k_e\times{}$error \\
+      \midrule
+      $n = 1$ & 4.2\% & 2.0\% & 0.91\% & 0.48\% & $\approx 0.4$ \\
+      $n = 2$, ellipse & 43\% & 21\% & 10\% & 5.1\% & $\approx 4.2$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  Tests: \code{test_averaging_error_of_the_formal_reduction_decreases_like_one_over_ke} (instance $n = 1$) and
+  \code{test_averaged_drift_error_decays_like_one_over_ke_for_an_orbit_enclosing_area} (instance $n = 2$;
+  $k_e = 10, 20, 40, 80$).
+  \begin{itemize}
+    \item $k_e = 10$ is outside the averaging regime for the second instance.
+    \item Its larger error does not come from the enclosed area. Proposition H.7 attributes it to the
+    orientation-even state-shift term: it predicts $k_e\times{}$error $\approx 4.05$, of which $U_{\mathrm{odd}}$
+    alone would give $1.5$, and a numerical check on the reversed orbit gives $4.0$.
+    \item A numerical check shows that at the gains of these instances $b_{\mathrm{osc}}$ is not small. $k_e$ times
+    its relative size is $0.92$ ($n = 1$, $G = \operatorname{diag}(4,1,1)$) and $4.4$ ($n = 2$, $G = I$), against
+    $0.42$ and $4.05$ for the frozen terms.
+  \end{itemize}
+  \item \textbf{The exact formal limit} is $k_e \to \infty$ with $G$, $k_e\sigma$ and $k_e\tau$ fixed, in slow time
+  $t/k_e$ (Conjecture H.6).
+  \item \textbf{Not proved here.} The mean-field limit of $(\mathrm{L}_\tau)$ itself is not proved; Theorem D covers
+  the deterministic projected law (L).
+\end{itemize}
+\end{rmk}
+\status{Formal reduction, with a measured error.}
+
+\begin{thm}{Theorem}{H}
+Assume the setting above, and $\sigma > 0$, $\tau > 0$ where stated.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{Identification.} $V[\mu]$ is the first variation of
+  $\mathcal{G}(\mu) := \frac{1}{k_e}\bar L(\mu) + \frac{\sigma}{2}\int\norm{\vartheta - \vartheta^0}^2_{G^{-1}}\dd\mu$.
+  Hence $\Aavg$ is the mean-field Langevin dynamics, in the $G^{-1}$ metric, of the free energy
+  $F_\tau := \mathcal{G} + \tau H$, with $H(\mu) = \int\mu\log\mu$. Equivalently, with
+  $\gamma_\tau := \mathcal{N}(\vartheta^0, (\tau/\sigma)G)$,
+  \[
+    F_\tau = \frac{1}{k_e}\bar L + \tau H(\cdot\,|\,\gamma_\tau) + \mathrm{const}.
+  \]
+  $F_\tau$ is well defined on all of $\Prob(\R^p)$, and finite exactly when $H(\mu\,|\,\gamma_\tau) < \infty$.
+
+  \item \emph{Global exponential convergence \textup{(}$\sigma, \tau > 0$\textup{)}.} $F_\tau$ has a unique
+  minimiser, $\mu^*_\tau \propto e^{-V[\mu^*_\tau]/\tau}$. For every $\mu_0 \in \Prob_2(\R^p)$ with
+  $F_\tau(\mu_0) < \infty$,
+  \begin{align*}
+    F_\tau(\mu_t) - F_\tau(\mu^*_\tau) &\le e^{-2\tau\rho_\tau t}\bigl(F_\tau(\mu_0) - F_\tau(\mu^*_\tau)\bigr), \\
+    \WG(\mu_t, \mu^*_\tau)^2 &\le \frac{2}{\tau\rho_\tau}\,e^{-2\tau\rho_\tau t}\bigl(F_\tau(\mu_0)
+    - F_\tau(\mu^*_\tau)\bigr).
+  \end{align*}
+  Here $\rho_\tau$ is a log-Sobolev constant, for the whitened measures, of every proximal Gibbs measure
+  $\hat\mu \propto e^{-V[\mu]/\tau}$. In $\vartheta$-coordinates this means Fisher information in the $G$ metric. It
+  satisfies
+  \[
+    \rho_\tau \ge \frac{\sigma}{\tau}\cdot\exp\Bigl(-\frac{2K_\Phi(F_\rho + K_\Phi)}{k_e\tau}\Bigr).
+  \]
+  Suppose $\mu_0$ is only in $\Prob_2(\R^p)$, for example a Dirac mass or an empirical measure, so that
+  $H(\mu_0) = +\infty$. Then $F_\tau(\mu_{t_0}) < \infty$ for every $t_0 > 0$, and the estimates hold with $(\mu_0, t)$
+  replaced by $(\mu_{t_0}, t - t_0)$.
+
+  \item \emph{Loss and tracking.} Let $\bar e_t := r_{\mu_t}/k_e$. Then
+  $\langle\norm{\bar e_t}^2\rangle_\rho = 2\bar L(\mu_t)/k_e^2$, and
+  \begin{align*}
+    \abs{\bar L(\mu_t) - \bar L(\mu^*_\tau)}
+    &\le (F_\rho + K_\Phi)L_\Phi\cdot\WG(\mu_t, \mu^*_\tau) \\
+    &\le (F_\rho + K_\Phi)L_\Phi\Bigl(\frac{2}{\tau\rho_\tau}\Bigr)^{1/2}e^{-\tau\rho_\tau t}
+    \bigl(F_\tau(\mu_0) - F_\tau(\mu^*_\tau)\bigr)^{1/2},
+  \end{align*}
+  where $L_\Phi := \sup_{x,\vartheta,\norm{u}=1}\norm{G^{1/2}\nabla_\vartheta(u^\T\tilde\Phi)}$. The regularisation
+  bias satisfies
+  \[
+    \bar L(\mu^*_\tau) \le \inf_\nu\bigl\{\bar L(\nu) + k_e\tau H(\nu\,|\,\gamma_\tau)\bigr\}.
+  \]
+  The link $e \approx \bar e$ between $\Aavg$ and the closed loop is formal (Remark H.0).
+
+  \item \emph{Annealing.} Let $\mu_0 \in \Prob_2$ with $F_{\tau_{\mathrm{init}}}(\mu_0) < \infty$. Let $(\tau_t)$ be
+  smooth and decreasing from $\tau_{\mathrm{init}}$, with $\tau_t = \alpha_a/\log t$ for $t \ge t_1 > 1$, where
+  $\alpha_a > \alpha^* := 2K_\Phi(F_\rho + K_\Phi)/k_e$. Then
+  $\mathcal{G}(\mu_t) - \inf\mathcal{G} \le C'\cdot\log\log t/\log t$, where $\inf\mathcal{G}$ is the
+  $\sigma$-regularised optimum. This is Theorem~4.1 of~\cite{S3}. Its hypotheses hold:
+  \begin{itemize}
+    \item $\mathcal{G} \ge 0$;
+    \item Assumptions 1--3 hold for every $\tau > 0$;
+    \item for $\tau \in (0, \tau_{\mathrm{init}}]$, (ii) gives $\rho_\tau \ge C_0 e^{-\alpha^*/\tau}$ with
+    $C_0 = \sigma/\tau_{\mathrm{init}}$, which is all its proof uses.
+  \end{itemize}
+\end{enumerate}
+\end{thm}
+\status{Proved for $\Aavg$; the reduction to $\Aavg$ is formal (Remark H.0); real loop: Conjecture H.6. Novelty
+(literature audit): a bridge to~\cite{S3}, \cite{S4}; new in adaptive control.}
+\checkedby{\code{tests/test_langevin.py}:\newline
+\code{test_first_variation_bound_used_in_holley_stroock} (the oscillation bound in (ii));\newline
+\code{test_lsi_lower_bound_formula} (formula transcription only);\newline
+\code{experiments/exp_langevin_global.py}, \code{exp_langevin_tradeoff.py} and \code{exp_gibbs_reference.py}
+(global behaviour, speed--bias trade-off, reference values).}
+
+\begin{proof}
+\emph{(i)} We have
+\[
+  \frac{\mathrm{d}}{\mathrm{d}\varepsilon}\bar L\bigl((1-\varepsilon)\mu + \varepsilon\nu\bigr)\Big|_{\varepsilon=0}
+  = -\int r_\mu^\T\Bigl(\int\tilde\Phi\dd(\nu - \mu)\Bigr)\dd\rho = \int V_L\dd(\nu - \mu).
+\]
+This is exact, because $\bar L$ is quadratic in $\mu$. The confinement is linear in $\mu$. In the $G^{-1}$ metric,
+$\nabla\cdot\bigl(\mu G\nabla(V + \tau\log\mu)\bigr) = \nabla\cdot(\mu G\nabla V) + \tau\nabla\cdot(G\nabla\mu)$. Since
+$\log\gamma_\tau = -(\sigma/(2\tau))\norm{\vartheta - \vartheta^0}^2_{G^{-1}} + \mathrm{const}$, we get
+$\tau H(\mu\,|\,\gamma_\tau) = \tau H(\mu) + (\sigma/2)\int\norm{\vartheta - \vartheta^0}^2_{G^{-1}}\dd\mu
++ \mathrm{const}$.
+
+\smallskip
+\emph{(ii)} Whiten with $\zeta := G^{-1/2}\vartheta$. The metric becomes Euclidean, the confinement becomes
+$(\sigma/2)\norm{\zeta - \zeta^0}^2$, $\WG$ becomes $W_2$, and $H$ shifts by $\frac12\log\det G$. $\Aavg$ becomes
+equation~(12) of~\cite{S3}. We verify Assumptions 1--3 of~\cite{S3}.
+\begin{itemize}
+  \item \emph{Assumption 1.} $\nabla V[\mu](\zeta)$ is Lipschitz in $(\zeta, \mu)$. The constants do not depend on
+  $\mu$, because $\norm{r_\mu} \le F_\rho + K_\Phi$ on $\supp\rho$ for every $\mu \in \Prob(\R^p)$.
+  \begin{itemize}
+    \item In $\zeta$, this holds because $\nabla^2\tilde\Phi$ is bounded (saturation, and $s \ge s_{\min}$).
+    \item In $\mu$, it holds because $\int\tilde\Phi\dd\mu$ is $W_1$-Lipschitz, $W_1 \le W_2$, and
+    $\nabla\tilde\Phi$ is bounded.
+  \end{itemize}
+  \item \emph{Assumption 2.} $\mathcal{G}$ is convex: a linear map followed by a convex quadratic, plus a linear term.
+  $F_\tau$ has a minimiser by confinement and lower semicontinuity (proof of~\cite[Prop.~5.1]{S3}).
+  \item \emph{Assumption 3.}
+  $e^{-V[\mu]/\tau} = e^{-(\sigma/(2\tau))\norm{\zeta - \zeta^0}^2}\cdot e^{-V_L[\mu]/(k_e\tau)}$.
+  \begin{itemize}
+    \item The Gaussian factor satisfies $\mathrm{LSI}(\sigma/\tau)$ (Bakry--\'Emery~\cite{be1985}).
+    \item $\abs{V_L[\mu]} \le \int\norm{r_\mu}\norm{\tilde\Phi}\dd\rho \le (F_\rho + K_\Phi)K_\Phi$, so the
+    perturbation has oscillation at most $2K_\Phi(F_\rho + K_\Phi)/(k_e\tau)$. Here $F_\rho$ may be replaced by
+    $\int\norm{f}\dd\rho$.
+    \item Holley--Stroock~\cite{hs1987} gives $\rho_\tau$.
+  \end{itemize}
+\end{itemize}
+Theorem~3.2 and Corollary~3.3 of~\cite{S3} (the latter with Otto--Villani~\cite{ov2000}) give the two
+inequalities. Uniqueness
+follows from strict convexity of $H$.
+
+\emph{$\Prob_2$ starts.} Work in $\zeta$-coordinates and fix the solution $\mu_t$. Compare the particle SDE with the
+Ornstein--Uhlenbeck process $\mathrm{d}Y = -\sigma(Y - \zeta^0)\dd t + \sqrt{2\tau}\dd B$ started from the same law.
+\begin{itemize}
+  \item The two drifts differ by $b_t = -(1/k_e)G^{1/2}\nabla V_L[\mu_t]$, with
+  $\norm{b_t} \le B := (1/k_e)\lambda_G^{1/2}(F_\rho + K_\Phi)\cdot\sup\norm{\nabla_\vartheta\tilde\Phi}$.
+  \item Girsanov and data processing give $H(\mu_{t_0}\,|\,\mathrm{OU}_{t_0}) \le B^2 t_0/(4\tau)$.
+  \item $\mathrm{OU}_{t_0}$ has a density at most
+  $\bigl(2\pi(\tau/\sigma)(1 - e^{-2\sigma t_0})\bigr)^{-p/2}$, so $H(\mu_{t_0}) < \infty$.
+  \item $\mu_{t_0} \in \Prob_2$, because the drift grows linearly.
+\end{itemize}
+Hence $F_\tau(\mu_{t_0}) < \infty$.
+
+\smallskip
+\emph{(iii)} $\bar L(\mu) - \bar L(\nu) = \frac12\int(r_\mu - r_\nu)^\T(r_\mu + r_\nu)\dd\rho$. Here
+$\norm{r_\mu + r_\nu} \le 2(F_\rho + K_\Phi)$, and
+$\norm{r_\mu - r_\nu} = \norm{\int\tilde\Phi\dd(\nu - \mu)} \le L_\Phi\cdot W_{1,G^{-1}} \le L_\Phi\cdot\WG$. Conclude
+with (ii). For the bias:
+$(1/k_e)\bar L(\mu^*_\tau) + \tau H(\mu^*_\tau\,|\,\gamma_\tau) \le (1/k_e)\bar L(\nu) + \tau H(\nu\,|\,\gamma_\tau)$
+for every $\nu$, and $H(\mu^*_\tau\,|\,\gamma_\tau) \ge 0$.
+
+\smallskip
+\emph{(iv)} This is Theorem~4.1 of~\cite{S3} with the stated hypotheses.
+\end{proof}
+
+\begin{rmk}{Remark}{H.1}[dither adds no output noise in the mean-field limit; its cost is the entropic bias]
+In the limit, $\fhat = \int\tilde\Phi\dd\mu$ is deterministic by the law of large numbers. The only effect of dither
+is the entropic bias, which Theorem H(iii) quantifies.
+
+In the experiment ($\sigma = 0.02$, $\tau = 0.004$, $G = \operatorname{diag}(4,1,1)$, $k_e = 10$), a grid computation
+gives $\bar L(\mu^*_\tau) = 0.11118$. It is grid-converged (\code{exp_gibbs_reference.py}~$\to$
+\code{results/langevin_global/gibbs_reference.md}). At $(\sigma, \tau) = (0.002, 5\cdot 10^{-4})$ the same computation
+gives $0.0085$. The unregularised offline optimum over $32$ kernels is about $7.6\cdot 10^{-6}$ (best of $5$ L-BFGS
+restarts, an upper bound), and $\bar L(0) = 0.311$.
+
+At finite $m$, the fluctuation of $\fhat$ is $O(K_\Phi/\sqrt{m})$ at each fixed $t$ (finite-horizon propagation of
+chaos). It is uniform in time only under Remark H.5.
+\end{rmk}
+
+\begin{rmk}{Remark}{H.2}[the control knobs, and what the numbers say]
+\leavevmode
+\begin{itemize}
+  \item \textbf{The knobs.} $\sigma$ is the strong-convexity constant of the confinement, $\tau$ is the temperature,
+  and $a_{\max}$ sets $K_\Phi$.
+  \item \textbf{The role of $\bm{k_e}$.} Since
+  $k_e F_\tau = \bar L + (k_e\sigma/2)\int\norm{\vartheta - \vartheta^0}^2_{G^{-1}}\dd\mu + k_e\tau H$,
+  $\mu^*_\tau$ and $\rho_\tau$ depend on $(\sigma, \tau, k_e)$ only through $(k_e\sigma, k_e\tau)$. Raising $k_e$ at
+  fixed $(\sigma, \tau)$ has three effects:
+  \begin{itemize}
+    \item it improves $\rho_\tau$ and the guaranteed rate $2\sigma e^{-\alpha^*/\tau}$, since $\alpha^* \propto 1/k_e$;
+    \item it moves $\mu^*_\tau$ toward the prior $\mathcal{N}(\vartheta^0, (\tau/\sigma)G)$, which increases the
+    regularisation bias;
+    \item it shrinks the loss-driven drift like $1/k_e$.
+  \end{itemize}
+  \item \textbf{The guaranteed rate} is exponentially small in $1/\tau$, a known feature of Holley--Stroock
+  bounds~\cite{hs1987}:
+  \begin{itemize}
+    \item $2\tau\rho_\tau \ge e^{-8401}$\,s$^{-1}$ at $(\sigma, \tau) = (0.002, 5\cdot 10^{-4})$;
+    \item $2\tau\rho_\tau \ge e^{-1053}$\,s$^{-1}$ at $(0.02, 0.004)$.
+  \end{itemize}
+  The experiments do not test this rate.
+  \item \textbf{The temperature sweep} (\code{results/langevin_tradeoff}; $m = 32$, $\sigma = 0.002$, $k_e = 10$,
+  $T = 1500$\,s, $2$ seeds):
+  \begin{center}
+    \small
+    \begin{tabular}{l>{\centering\arraybackslash}p{4.4cm}>{\centering\arraybackslash}p{3.4cm}}
+      \toprule
+      $\tau$ & escape time of the collapsed start (s), per seed & loss floor of the spread start \\
+      \midrule
+      $0$ & never, never & $7.0\cdot 10^{-3}$ \\
+      $5\cdot 10^{-4}$ & never, $1050$ & $1.1\cdot 10^{-2}$ \\
+      $1\cdot 10^{-3}$ & $1480$, $1005$ & $1.5\cdot 10^{-2}$ \\
+      $2\cdot 10^{-3}$ & $1115$, $800$ & $2.3\cdot 10^{-2}$ \\
+      $4\cdot 10^{-3}$ & $970$, $430$ & $3.6\cdot 10^{-2}$ \\
+      $8\cdot 10^{-3}$ & $390$, $295$ & $6.5\cdot 10^{-2}$ \\
+      annealed, hot start & $990$, $530$ & $3.2\cdot 10^{-2}$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \item \textbf{How escape is measured.} Escape is the first sample at which the collapsed run's loss falls to at
+  most twice the spread run's final loss, at the same $\tau$ and seed. Two caveats follow:
+  \begin{itemize}
+    \item the threshold grows with $\tau$, from $0.022$ to $0.13$, and the escape time includes convergence after
+    escape;
+    \item the $\tau = 5\cdot 10^{-4}$ point is censored and is excluded from the fit.
+  \end{itemize}
+  \item \textbf{The fit.} The seed-averaged escape time fits $t_{\mathrm{esc}} \approx -1693 + 427\cdot\log(1/\tau)$
+  ($4.5\%$ relative residual) better than an Arrhenius law ($25\%$). On the eight per-seed values the two laws fit
+  equally poorly ($27\%$ and $33\%$; \code{langevin_tradeoff/table.md}).
+  \item \textbf{No saddle explanation.} The noiseless collapsed end point is a saddle of the averaged landscape, but,
+  as a numerical check shows, a weak one. Its unstable rate is about \mbox{$5\cdot 10^{-5}$\,s$^{-1}$} for $\Aavg$, and about
+  \mbox{$2\cdot 10^{-4}$\,s$^{-1}$} for the exactly averaged loop at $k_e = 10$. A saddle-escape law would therefore need
+  $\tau \lesssim 10^{-5}$, and would have a $\log(1/\tau)$ slope of $10^3$--$10^4$\,s.
+  \item \textbf{What the data show.} At the tested temperatures escape is governed by diffusion, by the approach
+  transient and by the $\tau$-dependent threshold. The data do not identify the escape mechanism. An earlier
+  ``saddle, not barrier'' reading of these data is withdrawn.
+  \item \textbf{The annealed runs} use $\alpha_a$ between about $2\cdot 10^{-3}$ and $2\cdot 10^{-2}$, far below
+  $\alpha^* = 4.2$. They are not instances of H(iv).
+\end{itemize}
+\end{rmk}
+
+\begin{rmk}{Remark}{H.3}[why saturation and not projection]
+The mean-field Langevin results are on $\R^d$. Projecting the drift with the Pomet--Praly operator~\cite{pp1992},
+while keeping additive noise, leaves the noise unconfined. Reflected (Skorokhod) dynamics on the convex body $\ThK$
+would confine it.
+\begin{itemize}
+  \item Such dynamics satisfy a log-Sobolev inequality with constant of order $1/\diam^2$, even for $\sigma = 0$.
+  \item The argument is a diameter-based log-Sobolev inequality for the uniform measure on a convex body, followed by
+  Holley--Stroock~\cite{hs1987}. The diameter-based inequality comes from $\mathrm{CD}(0,\infty)$ with a convex
+  Neumann boundary plus a diameter bound (F.-Y. Wang 1997~\cite{wang1997}), or from Frieze--Kannan
+  (1999)~\cite{fk1999} for log-concave measures on convex bodies. Together these give
+  $\mathrm{LSI}\bigl(c\cdot\diam^{-2}\cdot e^{-2K_\Phi(F_\rho + K_\Phi)/(k_e\tau)}\bigr)$.
+  \item Bakry--\'Emery~\cite{be1985} alone gives nothing at $\sigma = 0$.
+  \item That route connects to~\cite{R25} and is left open.
+\end{itemize}
+\end{rmk}
+
+\begin{rmk}{Remark}{H.4}[the role of $\sigma$-modification]
+In the classical theory, $\sigma$-modification is a robustness device with a bias. In the saturated design on $\R^p$
+it supplies the confinement that makes $e^{-V/\tau}$ integrable and log-Sobolev, so the global result rests on it. Its
+bias is the regularisation term of the variational problem that $\mu^*_\tau$ solves. Under reflection on $\ThK$,
+compactness would play that role instead.
+\end{rmk}
+
+\begin{rmk}{Remark}{H.5}[finite $m$; conditional]
+The $m$-particle averaged system is
+\[
+  \mathrm{d}\vartheta_i = -G\nabla V[\mu^m_t](\vartheta_i)\dd t + \sqrt{2\tau}\, G^{1/2}\dd B_i, \qquad
+  \mu^m_t := \frac1m\sum_i\delta_{\vartheta_i}.
+\]
+Uniform-in-time propagation of chaos would follow from~\cite{S5}, under its hypotheses.
+\begin{itemize}
+  \item \emph{Available:} convexity of $\mathcal{G}$; a uniform LSI, from (ii); and a bounded, smooth second
+  variation $(1/k_e)\int\tilde\Phi(x;\vartheta)^\T\tilde\Phi(x;\vartheta')\dd\rho$.
+  \item \emph{Still to check:} the remaining regularity conditions of~\cite{S5}, verbatim (open question~4 of
+  \code{LITERATURE_TRANSPORT.md} in the accompanying repository).
+\end{itemize}
+\end{rmk}
+\status{Conditional on the hypotheses of~\cite{S5}; their remaining regularity conditions are still to be checked.}
+
+\begin{thm}{Conjecture}{H.6}[the real closed loop, in the scaling where $\Aavg$ is the limit]
+Let $f = f(x)$ satisfy the tube condition of Theorem D(b), with $a_{\max}$ replaced by $K_\Phi$. Fix $G \succ 0$ and
+$\sigma_0, \tau_0 > 0$, and set $\sigma := \sigma_0/k_e$ and $\tau := \tau_0/k_e$.
+\begin{itemize}
+  \item Then $\mu^*_\tau$, the minimiser of
+  $\bar L + (\sigma_0/2)\int\norm{\vartheta - \vartheta^0}^2_{G^{-1}}\dd\mu + \tau_0 H$, does not depend on $k_e$.
+  \item In slow time $s = t/k_e$, $\Aavg$ is the formal limit of the closed loop.
+\end{itemize}
+\emph{Conjecture:} for the mean-field limit of the closed loop under $(\mathrm{L}_\tau)$, for every
+$\mu_0 \in \Prob_2$ and every $e(0)$, there are $S(\mu_0)$ and $r(k_e) \to 0$ such that
+$\WG(\mu_t, \mu^*_\tau) \le r(k_e)$ for all $t \ge k_e\cdot S$.
+\end{thm}
+\status{Conjectural.}
+
+At fixed $k_e$ the analogous statement is false. The limit of small gains is the exactly averaged system, with the
+true periodic error $e_\mu$ and $x = x_m + e_\mu$.
+\begin{itemize}
+  \item Its stationary state is offset from $\mu^*_\tau$: $\bar L = 0.11415$ against $\bar L(\mu^*_\tau) = 0.11118$ at
+  $k_e = 10$ (\code{results/langevin_global/gibbs_reference.md}).
+  \item In the scaling of Conjecture H.6, the $L^2(\rho)$ distance between the two learned functions is
+  $6.8\cdot 10^{-3}$, $1.4\cdot 10^{-3}$ and $9.7\cdot 10^{-4}$ at $k_e = 10$, $20$ and $40$. It is small and
+  decreasing, but a clean $1/k_e$ law is not resolved in this range.
+  \item By Proposition H.7(e) it is not the $\WG$-gradient flow of any free energy. The cyclic sums of its
+  antisymmetric second variation are non-zero in the checked instances, including the network of the experiments.
+\end{itemize}

@@ -1,6 +1,6 @@
 # Revised theory: projection-based adaptive RBF control with adaptive centres and widths
 
-This document replaces the stability argument of `lyapunov.pdf` ("Mathematical
+This document replaces the stability argument of version 1 of `lyapunov.pdf` ("Mathematical
 Foundations of Self-Adaptive Kernels Achieving Lyapunov Convergence") with a
 statement whose assumptions are explicit, whose algorithm is exactly the one in
 `src/core/`, and whose every step is either proved here or verified numerically
@@ -175,7 +175,7 @@ parameter part of V is at most V_max,Θ, ½‖e‖² > ½R_UUB², so ‖e‖ > R
 precisely, with Δ := V − c_inf > 0 one has ‖e‖² ≥ R_UUB² + 2Δ and therefore
 V̇ ≤ −g(√(R_UUB² + 2Δ)) =: −ψ(Δ) with g(r) = k_e r² − D_max r − C_Ω increasing for
 r ≥ R_UUB and ψ of class K.  The comparison lemma gives V(t) ≤ max{V(0), c_inf},
-finite-time entry into every superlevel c > c_inf, and limsup V ≤ c_inf, i.e. the
+finite-time entry into every sublevel set {V ≤ c} with c > c_inf, and limsup V ≤ c_inf, i.e. the
 stated bound on ‖e‖ (‖e‖² ≤ 2V).  (iii) Integrate (i): k_e∫‖e‖² ≤ V(T₁) − V(T₂) +
 D_max∫‖e‖ + C_Ω(T₂ − T₁) ≤ V(T₁) + D_max √(T₂−T₁) √∫‖e‖² + C_Ω(T₂ − T₁) by
 Cauchy–Schwarz; with S := RMS this reads k_e S² − D_max S − (C_Ω + V(T₁)/(T₂−T₁)) ≤ 0,
@@ -183,7 +183,7 @@ and S is below the positive root.  (iv) Variation of constants.  ∎
 
 **What (ii)–(iv) say together.**  (ii) is the manuscript's conclusion; it is the
 textbook level-set argument (Khalil, *Nonlinear Systems*, Thm 4.18; Lewis et al.
-1996) and its radius contains the parameter-energy reservoir V_max,Θ — a bias-like
+1999) and its radius contains the parameter-energy reservoir V_max,Θ — a bias-like
 term — so it does **not** establish that projection yields a tighter tracking
 bound than σ-modification.  (iii) is tighter and is the statement that can be
 checked without unknown constants (replace D_max by the measured sup ‖d‖, see
@@ -191,8 +191,8 @@ checked without unknown constants (replace D_max by the measured sup ‖d‖, se
 boundedness of e is already a consequence of projection plus a stable error
 channel, independent of the adaptation law; the content of adaptive control is
 in making the *actual* d(t) small, which no a-priori constant captures.  In the
-oracle experiments the a-priori R_UUB exceeds the observed RMS error by three to
-four orders of magnitude (ratios 900× to 11 000×).
+oracle experiments the a-priori R_UUB exceeds the observed RMS error by factors
+of 915× to 10 954×.
 
 *Remark 2 (no LaSalle / Barbalat).*  Correct, and standard: UUB statements never
 need them.  Nothing here claims asymptotic convergence of e or of θ̃.
@@ -222,20 +222,20 @@ compared on identical geometry in `experiments/exp_bias_factorial.py`.
 
 ---
 
-## 6. Errata to `lyapunov.pdf`
+## 6. Errata to version 1 of `lyapunov.pdf`
 
 | # | Section | Statement in the manuscript | Status |
 |---|---|---|---|
 | E1 | 1.2, 9 | Centre separation ‖c_i − c_j‖ ≥ δ "maintained via the projection set construction" with "convex projection boundaries" | **Wrong.** The separation set is non-convex; no projection onto it has property (P). The implemented repulsion term violated (P) in 30% of samples and did not keep the separation (min distance 0.07 vs δ = 0.5). Removed from the algorithm; not needed by the proof. |
-| E2 | 1.3 | "Offline Tikhonov regularisation … strict decoupling eliminates the circularity" | **Irrelevant to the proof.** Optimality of θ* is never used (Section 1 remark). |
+| E2 | 1.3 | Offline Tikhonov regularisation of the ideal target: "This strict separation eliminates the circularity" | **Irrelevant to the proof.** Optimality of θ* is never used (Section 1 remark). |
 | E3 | 1.3 | IFT gives finite velocity bounds V_W, V_c, V_σ | **Not a proof.** The Hessian of a Tikhonov-regularised non-convex loss at a minimiser is PSD, not necessarily PD; the IFT hypothesis is asserted, not established. Replaced by Assumption A4. |
 | E4 | 2.1 | D_max from the Taylor remainder, "a finite geometric scalar" | **Valid but not explicit.** Replaced by the explicit, Hessian-free Lemma 2. The code's former `estimate_D_max = ε(1 + 2W_max c_max)` had no derivation and is deleted. |
-| E5 | 4 | tr(W̃ᵀΓ_W⁻¹W̃) with Γ_W "positive-definite learning-rate matrices" | **Type error** for Γ_W ∈ ℝ^{mn×mn}; the correct form is vec(W̃)ᵀΓ_W⁻¹vec(W̃). Harmless for scalar Γ. |
+| E5 | 4 | tr(W̃ᵀΓ_W⁻¹W̃) with Γ_W "positive-definite learning rate matrices" | **Type error** for Γ_W ∈ ℝ^{mn×mn}; the correct form is vec(W̃)ᵀΓ_W⁻¹vec(W̃). Harmless for scalar Γ. |
 | E6 | 5 | Projection inequality "holds as an absolute mathematical certainty — the cancellation gap does not exist" | **True only under A3** (θ* in the inner set) and only for the Γ-weighted operator; the previous code applied the isotropic formula to any Γ. Fixed and tested. |
-| E7 | 7.2 | "A critical and non-trivial consequence … converts the boundary-only argument into a global interior argument" | **Standard** level-set / comparison argument (Khalil Thm 4.18). Correct, not new; also "strict monotone descent until the infimal set is penetrated" overstates: entry into every level above c_inf is finite-time, entry into c_inf itself only asymptotic. |
-| E8 | 7.2, 7.3, 10.3 | Projection gives UUB "without the persistent bias" / "zero bias", "not a marginal improvement but a structural result" | **Overclaimed.** The ultimate bound √(R_UUB² + 2V_max,Θ) contains the parameter-energy term; see Section 5. The tighter, bias-free statement is the RMS bound (iii). |
-| E9 | 8 | "a standard PE condition on the regressor φ is insufficient … requires ICL" | Parameter convergence is not treated; the remark is speculation and the code's former "Concurrent Learning" hook used only the current residual (not recorded data) and is removed. |
-| E10 | 10.2, README | "100 % of trials converged below the calculated R_UUB" | **False.** The threshold 0.5 was a hand-chosen constant (`tier1_monte_carlo.py`: "A chosen arbitrary bound"). Replaced by `exp_monte_carlo_honest.py` / `exp_oracle_ruub.py`. |
+| E7 | 7.2 | "A critical and non-trivial consequence of the projection operator"; its hard energy cap "converts what would be a boundary-only argument … into a global interior argument" | **Standard** level-set / comparison argument (Khalil Thm 4.18). Correct, not new; also "strict monotone descent through every intermediate level set until the infimal set is penetrated" overstates: entry into every level above c_inf is finite-time, entry into c_inf itself only asymptotic. |
+| E8 | abstract, 7.3, 10.3 | Projection gives UUB "without the persistent steady-state bias" (abstract); "no modification bias is introduced" (7.3); "zero bias into the Lyapunov derivative", "not a marginal improvement but a structural result" (10.3) | **Overclaimed.** The ultimate bound √(R_UUB² + 2V_max,Θ) contains the parameter-energy term; see Section 5. The tighter, bias-free statement is the RMS bound (iii). |
+| E9 | 8 | "a standard Persistent Excitation (PE) condition on the regressor φ is insufficient to guarantee Θ̃(t) → 0"; convergence "requires alternative mechanisms", such as ICL | Parameter convergence is not treated; the remark is speculation and the code's former "Concurrent Learning" hook used only the current residual (not recorded data) and is removed. |
+| E10 | README | "100% of the independent simulation trials converged strictly below the calculated R_UUB threshold" | **False.** The threshold 0.5 was a hand-chosen constant (`tier1_monte_carlo.py`: "A chosen arbitrary bound"). Replaced by `exp_monte_carlo_honest.py` / `exp_oracle_ruub.py`. |
 | E11 | README | "O(mn) time" | **Was false** with the O(m²n) pairwise repulsion; true now that it is off by default. |
 
 ---

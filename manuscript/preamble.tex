@@ -1,0 +1,71 @@
+% Shared preamble for lyapunov.tex.  Section files must not define macros; add them here.
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs,tabularx,longtable,array}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[hypertexnames=false,colorlinks=true,linkcolor=blue!50!black,citecolor=green!35!black,urlcolor=blue!50!black]{hyperref}
+
+\graphicspath{{../results/}}
+\numberwithin{equation}{section}
+\setlist{itemsep=2pt,topsep=4pt}
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% ---------------------------------------------------------------- results with fixed labels
+% \begin{thm}{Theorem}{A}[optional title] ... \end{thm}   (italic body: theorems, propositions, lemmas,
+%                                                           corollaries, conjectures)
+% \begin{rmk}{Remark}{H.7a}[optional title] ... \end{rmk}  (upright body: remarks, definitions, assumptions,
+%                                                           examples)
+\newcommand{\reslabel}{}
+\theoremstyle{plain}
+\newtheorem*{genericthm}{\reslabel}
+\theoremstyle{definition}
+\newtheorem*{genericrmk}{\reslabel}
+\theoremstyle{plain}
+\NewDocumentEnvironment{thm}{m m o}
+  {\renewcommand{\reslabel}{#1 #2}\IfNoValueTF{#3}{\begin{genericthm}}{\begin{genericthm}[#3]}}
+  {\end{genericthm}}
+\NewDocumentEnvironment{rmk}{m m o}
+  {\renewcommand{\reslabel}{#1 #2}\IfNoValueTF{#3}{\begin{genericrmk}}{\begin{genericrmk}[#3]}}
+  {\end{genericrmk}}
+
+% Status line and verification pointers.
+\newcommand{\status}[1]{\par\smallskip\noindent{\small\textsf{\textbf{Status.}} #1}\par\smallskip}
+\DeclareUrlCommand\code{\urlstyle{tt}}
+\newcommand{\checkedby}[1]{\par\noindent{\small\textsf{Checked by:} #1}\par\smallskip}
+
+% ---------------------------------------------------------------- notation
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathcal{P}}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\abs}[1]{\lvert #1\rvert}
+\newcommand{\ip}[2]{\langle #1,\, #2\rangle}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\Proj}{\operatorname{Proj}_K}
+\newcommand{\ThK}{\Theta_K}
+\newcommand{\ThKe}{\Theta_K^{\varepsilon}}
+\newcommand{\Ginv}{G^{-1}}
+\newcommand{\WG}{W_{G^{-1}}}
+\newcommand{\VOT}{V_{\mathrm{OT}}}
+\newcommand{\fhat}{\hat f}
+\newcommand{\Aavg}{(\mathfrak{A})}
+\newcommand{\Lsig}{(\mathrm{L}_\sigma)}
+\newcommand{\RMS}{\operatorname{RMS}}
+\newcommand{\diam}{\operatorname{diam}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\Ent}{\operatorname{Ent}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\Lip}{\operatorname{Lip}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\clip}{\operatorname{clip}}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\T}{\top}

@@ -1,6 +1,6 @@
 # Assessment of "Self-Adaptive Kernels Achieving Lyapunov Convergence"
 
-Scope: the root workspace (`lyapunov.pdf`, `src/`, `experiments/`, `tests/`,
+Scope: the root workspace (version 1 of `lyapunov.pdf`, `src/`, `experiments/`, `tests/`,
 `results/`, `public_showcase/`).  The AAAI and AISTATS folders were excluded on
 request.  Every numerical statement below was regenerated in this revision;
 the scripts and raw files are named next to each claim.
@@ -22,7 +22,7 @@ implemented algorithm is exactly the proved one and is machine-checked; the
 honest experiments show a real, consistent advantage of projection over σ- and
 e-modification on identical geometry (5/5 seeds in every cell) and a modest but
 consistent gain from adaptive geometry, while the a-priori bound is shown to be
-three to four orders of magnitude loose.
+915×–10954× loose (oracle study).
 
 ## 2. Novelty
 
@@ -47,7 +47,7 @@ mechanism-vs-geometry experiment.
 | I1 | Implemented centre update ≠ proved update: a pairwise repulsion term broke the projection inequality the proof needs | `tests/test_theorem_to_code.py` (oracle plant): inequality violated at 6054 of 20000 samples with the legacy term, 0 of 20000 without; the term also failed its own purpose (min separation 0.07 vs δ=0.5) | removed from the algorithm (`enforce_separation=False` default); tracking unchanged on the headline run (mean SS error 0.0767 → 0.0774, max 0.46 → 0.40) |
 | I2 | Projection applied the isotropic formula to any Γ; the proof needs the Γ-weighted operator | `tests/test_controller_paths.py` | Γ-weighted projection implemented; fast/dense paths agree to 1e-12 |
 | I3 | "R_UUB threshold" in the Monte Carlo figure was the constant 0.5 | `tier1_monte_carlo.py` line 69: "A chosen arbitrary bound" | `exp_monte_carlo_honest.py`: only exactly checkable statements (200/200 hard-bound and ISS checks) |
-| I4 | "Theoretical R_UUB" in the k_e sweep used invented constants and an underived formula | `tier2_ruub_sweep.py`, former `estimate_D_max` | `exp_oracle_ruub.py`: all constants computable; a-priori bound 900×–11 000× loose; RMS bound with measured disturbance holds 48/48 |
+| I4 | "Theoretical R_UUB" in the k_e sweep used invented constants and an underived formula | `tier2_ruub_sweep.py`, former `estimate_D_max` | `exp_oracle_ruub.py`: all constants computable; a-priori bound 915×–10954× loose; RMS bound with measured disturbance holds 48/48 |
 | I5 | Headline figure: fixed-grid baselines with a grid not covering the reference; their error (≈15) exceeded open loop, so the figure showed representational failure, not "bias" | `results/tier1_lorenz_tracking.png` vs ablation figure (projection W-only fails identically) | `exp_bias_factorial.py`: 3 mechanisms × 3 geometries, covering grid, 5 seeds |
 | I6 | Wilcoxon tests on ~12 000 time samples with lag-1 autocorrelation 0.9999; README's "p > 0.3 vs Exact GP" is contradicted by its own data (p = 1.6e-11) | recomputed from `results/*.npy` | seed-level statistics only |
 | I7 | n=3 benchmark and NTK baseline removed from the public figure (commits "exclude n=3 and NTK") | `results/n3/*.npy`, `results/*/ntk_*.npy`; `plot_comparison_hd_complete.py` | complete table regenerated: proposed ranks 3/5, 2/5, 3/5, 2/5 |
@@ -75,17 +75,27 @@ second-order gain — close to the reverse of the original figure's story.
 
 Against kernel-regression baselines (saved single runs, nothing excluded,
 `results/comparison_complete_table.md`): the proposed method is never first;
-NTK is first at n=2 and n=6 by 10–25×, sparse GP is first at n=3 where the
-proposed method's error is 7.7.  Its genuine edge is cost: 0.1–0.6 ms per step
-against 13–1900 ms per update for the baselines.
+Every baseline (here and in the fair re-run below) is trained on noise-free
+samples of the true f(x, t), which amounts to measuring the state derivative
+exactly; the adaptive law uses only the tracking error.
+NTK is first at n=2 and n=6 (mean error 25× and 3.4× lower than the proposed
+method's), sparse GP is first at n=3 where the proposed method's error is 7.7.
+Its genuine edge is cost against the GP baselines: 0.10–0.60 ms per step at
+n=1, 2, 6 and 4.1 ms at n=3, against 53–1889 ms per update for the GP
+baselines, which update every 50–100 steps.  NTK (1.6–13 ms per update) updates
+every 50 steps at n=1 but every step at n=2, 3, 6 (`sim4_ntk_control.py`,
+`sim4_ntk_n2.py`, `sim4_ntk_n3.py`, `sim4_ntk_n6.py`; the table caption's
+"every 50–100 steps" holds for NTK only at n=1), so it is cheaper than the
+proposed method only at n=3 (2.3 vs 4.1 ms per step).  In the fair re-run at
+n=1 below, the proposed method has the cheapest step of all five methods.
 
 Fair re-run at n=1 (per-step prediction for all methods, covering inducing
 grid, 3 seeds; `results/fair_n1/table.md`): Exact GP 0.059, Sparse GP 0.187,
 proposed 0.198, Deep GP 0.309, NTK 0.470 (mean steady-state ‖e‖); median
-online step 6.3 / 1.35 / 0.06 / 4.5 / 0.21 ms.  The exact GP is 3–4× more
-accurate than the proposed method in every seed once it is allowed to predict
-every step; the proposed method is on par with a fixed-grid sparse GP at 20×
-lower cost.  This is the version to quote.
+online step 6.3 / 1.35 / 0.06 / 4.5 / 0.21 ms.  The exact GP is more accurate
+than the proposed method in every seed (3.3× on the mean over seeds) once it is
+allowed to predict every step; the proposed method is on par with a fixed-grid sparse GP at 22.6×
+lower cost (median step 0.060 vs 1.353 ms).  This is the version to quote.
 
 Oracle bound study (`results/oracle_ruub/table.md`): the Lyapunov identity
 holds to 3.6e-15, property (P) is never violated, the RMS bound with the
@@ -100,7 +110,7 @@ R_UUB is 26–261 against observed RMS errors of 0.01–0.09.
 * `tests/`: 20 tests (projection inequality incl. non-isotropic Γ, Jacobian suprema, path agreement, theorem-to-code identity and property (P) along trajectories, RMS bound, hard-bound invariants).  Gate: `venv\Scripts\python -m pytest tests`.
 * `experiments/`: `exp_bias_factorial.py`, `exp_monte_carlo_honest.py`, `exp_oracle_ruub.py`, `kernel_baselines_fair.py` + `run_fair_n1.py` + `plot_fair_n1.py`, `plot_comparison_hd_complete.py`.  Old scripts kept untouched for reproduction of the original figures.
 * `THEORY_REVISED.md`: assumptions, lemmas, theorem (i)–(iv), errata E1–E11, prior art.
-* `public_showcase/README.md`: claims corrected locally (not committed, not pushed).
+* `public_showcase/README.md`: claims corrected (since published with the transport theory).
 * Originals backed up in the session scratchpad (`backup_original/`).
 
 ## 6. Recommendation

@@ -1,0 +1,179 @@
+\section{Theorem D: the mean-field closed loop}\label{sec:thmD}
+
+The state is $(x,\mu)\in\R^n\times\Prob(\ThK)$, with
+\begin{equation}\label{eq:thmD:loop}
+\begin{gathered}
+  \dot x = f(x,t) + \dot x_m - k_e(x-x_m) - \int\Phi(x;\vartheta)\dd\mu_t,\qquad
+  \partial_t\mu_t + \nabla\cdot(\mu_t v_t) = 0,\\
+  v_t = \Proj\bigl(\vartheta,\, G\nabla_\vartheta\bigl[(x-x_m)^\T\Phi(x;\vartheta)\bigr]\bigr).
+\end{gathered}
+\end{equation}
+Solutions are Lagrangian: $\mu_t=(\Xi_t)_\#\mu_0$ for the flow $\Xi_t$ of $v_t$. This is law (L). The OT leak is
+multivalued at ties and is excluded here.
+
+\begin{thm}{Theorem}{D}
+Assume \textup{(S0)--(S2)}.
+\begin{enumerate}[label=\textup{(\alph*)}]
+\item \emph{Local well-posedness.} For every $(x_0,\mu_0)\in\R^n\times\Prob(\ThK)$ there is a unique Lagrangian
+  solution. It continues for as long as $x$ stays bounded.
+
+\item \emph{Adaptation-free tube ($m$-uniform, $\mu^*$-free).} For every $\mu\in\Prob(\ThK)$,
+  $\norm{\int\Phi(x;\cdot)\dd\mu}\le a_{\max}$. For $F\ge0$ let
+  \[
+    r(F) := \norm{e(0)} + \frac{F+a_{\max}}{k_e},\qquad
+    S(F) := \sup\bigl\{\norm{f(x,t)} : t\ge0,\ \norm{x-x_m(t)}\le r(F)\bigr\}.
+  \]
+  Suppose some $F\ge0$ satisfies $S(F)\le F$. Then every solution, for every $m$ and every $\mu_0$:
+  \begin{itemize}
+  \item exists for all $t\ge0$;
+  \item satisfies $\norm{x(t)-x_m(t)}\le r(F)$;
+  \item satisfies $\norm{e(t)}\le e^{-k_e t}\norm{e(0)} + (1-e^{-k_e t})(F+a_{\max})/k_e$.
+  \end{itemize}
+  Examples:
+  \begin{itemize}
+  \item For bounded $f$, $F=\sup\norm{f}$ works for every $e(0)$.
+  \item If $\norm{f(x,t)}\le\alpha+\beta\norm{x}$ with $\beta<k_e$, then
+    \[
+      F = \frac{\alpha+\beta\bigl(\sup\norm{x_m}+\norm{e(0)}+a_{\max}/k_e\bigr)}{1-\beta/k_e}
+    \]
+    works.
+  \item The condition can fail for superlinear $f$. For the Van der Pol plant of the numerics, $S(F)-F\ge51.6$ for
+    every $F$.
+  \end{itemize}
+
+\item \emph{Dobrushin estimate.} Let two solutions of the same loop (same $f$, $x_m$, $k_e$, $G$, $\ThK$ and
+  $\varepsilon_K$) remain in a compact $X$ on $[0,T]$. Then
+  \begin{equation}\label{eq:thmD:dobrushin}
+  \begin{gathered}
+    \norm{x_t-x'_t}+W(\mu_t,\mu'_t)\le e^{\Lambda t}\bigl(\norm{x_0-x'_0}+W(\mu_0,\mu'_0)\bigr),\\
+    \Lambda := \max(L_\vartheta+L_2,\,L_x+M_x),
+  \end{gathered}
+  \end{equation}
+  and $\Lambda$ is independent of $m$. The constants are:
+  \begin{itemize}
+  \item $L_\vartheta$: a Lipschitz constant of $\vartheta\mapsto v$ in the $\Ginv$ norm, uniform over $x\in X$ and
+    $t\le T$. It is proportional to $\bar E:=\sup_{X\times[0,T]}\norm{x-x_m(t)}$, and it is $O(\bar E/\varepsilon_K)$
+    because of the ramp ($h'\le2/\varepsilon_K$).
+  \item $L_x$: a Lipschitz constant, Euclidean to $\Ginv$, of $x\mapsto v(\vartheta;x,x-x_m(t))$, uniform over
+    $\vartheta\in\ThK$, $t\le T$ and $x\in X$.
+  \item $M_x$: $M_x:=\sup_{t\le T}\Lip_X f(\cdot,t)+k_e+a_{\max}J_c$. Here $a_{\max}J_c$ bounds
+    $\norm{\nabla_x\int\Phi(x;\cdot)\dd\mu}$ over $x\in\R^n$ and $\mu\in\Prob(\ThK)$.
+  \item $L_2$: $L_2:=\lambda_G^{1/2}L_1$, with $L_1$ from Lemma B.2, is a $W$-Lipschitz constant of
+    $\mu\mapsto\int\Phi(x;\cdot)\dd\mu$. For any coupling,
+    $\norm{\int\Phi(x;\cdot)\dd(\mu-\mu')}\le L_2\bigl(\int\norm{\vartheta-\vartheta'}^2_{\Ginv}\dd\gamma\bigr)^{1/2}$.
+  \end{itemize}
+
+\item \emph{Mean-field limit.} Let $(x,\mu)$ be the solution from $(x_0,\mu_0)$, and let $T$ be smaller than its
+  existence time. Put $X_1:=\{y:\operatorname{dist}(y,x([0,T]))\le1\}$, and let $\Lambda_1$ be the $\Lambda$ of (c)
+  computed on $X_1\times[0,T]$. Suppose $x^m_0\to x_0$ and $\mu^m_0\to\mu_0$ in $W$, and set
+  $\delta_m:=\norm{x^m_0-x_0}+W(\mu^m_0,\mu_0)$. Then, for all large $m$:
+  \begin{itemize}
+  \item the $m$-particle loop exists on $[0,T]$ and stays in $X_1$;
+  \item $\sup_{t\le T}\bigl(\norm{x^m_t-x_t}+W(\mu^m_t,\mu_t)\bigr)\le e^{\Lambda_1T}\delta_m\to0$.
+  \end{itemize}
+  Under the hypothesis of (b), for example for bounded $f$, the limit is global and $T$ is arbitrary.
+
+\item \emph{Passage of (B) to the limit.} Work in the setting of (d), with $X:=X_1$. Let
+  $\mu^{*m}_t=\frac1m\sum_j\delta_{\vartheta^{*m}_j(t)}$ satisfy \textup{(S4)}, and let
+  $\varepsilon^m_{\max}\ge\sup_{X\times[0,T]}\norm{f-\int\Phi\dd\mu^{*m}_t}$. Assume $\mu^{*m}_t\to\mu^*_t$ uniformly
+  in $W$ on $[0,T]$, $\sup_m\varepsilon^m_{\max}\le\varepsilon_{\max}$ and $\sup_m V^m_*\le V_*$. Only tails matter,
+  so $\sup_m$ may be replaced by $\limsup_m$. Then:
+  \begin{itemize}
+  \item $\mu^*_t$ is $V_*$-Lipschitz in $W$, with values in $\Prob(\ThKe)$;
+  \item the limit satisfies \textup{(B)} in integrated form, and in Dini form for every $t\in[0,T)$, with constants
+    $(k_e,\varepsilon_{\max},K,L_0,L_1,\lambda_G,V_*)$.
+  \end{itemize}
+  $V_*$ depends on the approximating ideals; the intrinsic version is Remark B.7.
+\end{enumerate}
+\end{thm}
+
+\status{Proved; consistency in $m$ checked numerically (the constant is not checked). Not checked in the
+repository: (b), the constant of (c), and the one-sided constant of Remark D.1. Novelty (literature audit):
+technique anticipated~\cite{R77,R78,R79}.}
+
+\begin{proof}
+\textit{(a)} Write the loop as an ODE for $(x,\Xi)\in\R^n\times C(\ThK;\R^p)$, with the sup norm (and $\Ginv$ on
+$\R^p$):
+\[
+  \dot x = f(x,t)+\dot x_m-k_e(x-x_m)-\int\Phi(x;\Xi(\vartheta))\dd\mu_0(\vartheta),\qquad
+  \partial_t\Xi(\vartheta)=v(\Xi(\vartheta);x,t),\qquad \Xi_0=\mathrm{id},
+\]
+so that $\mu_t=\Xi_{t\#}\mu_0$. Extend $v$ Lipschitz to a neighbourhood of $\ThK$ inside $\{s>s_{\min}/2\}$
+(McShane). On $\{\norm{x}\le R\}$, with the constants of (c), the right-hand side is Lipschitz:
+\begin{itemize}
+\item $\norm{v(\Xi(\cdot);x,t)-v(\Xi'(\cdot);x',t)}_\infty\le L_\vartheta\norm{\Xi-\Xi'}_\infty+L_x\norm{x-x'}$;
+\item the $x$-field changes by at most $M_x\norm{x-x'}+L_2\norm{\Xi-\Xi'}_\infty$, because
+  $W(\Xi_\#\mu_0,\Xi'_\#\mu_0)\le\norm{\Xi-\Xi'}_{L^2(\mu_0;\Ginv)}$.
+\end{itemize}
+Picard--Lindelöf gives a unique local solution. Each characteristic stays in $\ThK$ (Nagumo, as in A(ii)), so the
+solution continues while $x$ is bounded. Golse~\cite[Thms.~1.3.2 and~1.4.3]{R82}, and \cite{R77,R78,R79}, are
+structural analogues (pairwise $C^1$ kernels, $W_1$), not the proof.
+
+\textit{(b)} While $\norm{e}\le r(F)$, $\dot e=-k_e e+(f-\fhat)$ with $\norm{f-\fhat}\le F+a_{\max}$. Variation of
+constants gives
+\[
+  \norm{e(t)}\le e^{-k_e t}\norm{e(0)}+(1-e^{-k_e t})(F+a_{\max})/k_e<r(F)
+\]
+for every finite $t$, since $a_{\max}>0$. So $x$ never reaches the boundary of the tube (first exit), stays bounded,
+and (a) continues the solution.
+
+\textit{(c)} Let $\gamma_0$ be an optimal plan for $(\mu_0,\mu'_0)$, let $\Xi_t$ and $\Xi'_t$ be the two flows, and
+set $D(t)^2:=\int\norm{\Xi_t(\vartheta)-\Xi'_t(\vartheta')}^2_{\Ginv}\dd\gamma_0$. Then $(\Xi_t,\Xi'_t)_\#\gamma_0$
+couples $\mu_t$ and $\mu'_t$, so $W(\mu_t,\mu'_t)\le D(t)$. Split
+\[
+  v_t(\Xi)-v'_t(\Xi')=\bigl[v_t(\Xi)-v_t(\Xi')\bigr]+\bigl[v_t(\Xi')-v'_t(\Xi')\bigr]
+\]
+and apply Cauchy--Schwarz:
+\[
+  \frac{\mathrm d}{\mathrm dt}D^2\le2L_\vartheta D^2+2L_x\norm{x-x'}D,\qquad
+  D^+\norm{x-x'}\le M_x\norm{x-x'}+L_2D.
+\]
+Apply Grönwall to $D_\delta+\norm{x-x'}$, with $D_\delta:=(D^2+\delta^2)^{1/2}$, and let $\delta\downarrow0$.
+
+\textit{(d)} Let $\tau_m\le T$ be the first time $x^m$ leaves $X_1$, with $\tau_m=T$ if it never leaves. On
+$[0,\tau_m]$ both solutions lie in $X_1$, so (c) gives $\norm{x^m_t-x_t}\le e^{\Lambda_1T}\delta_m<1$ once $m$ is
+large. Then $x^m(\tau_m)$ is interior to $X_1$, so $\tau_m=T$. By (a), the $m$-solution continues while it is bounded.
+
+\textit{(e)} Theorem B for each $m$ gives $V^m(t_2)-V^m(t_1)\le\int R^m\le\int\bar R^m$. Here $\bar R^m$ is $R^m$
+with $\varepsilon^m_{\max}$ and $V^m_*(t)$ replaced by $\varepsilon_{\max}$ and $V_*$. By (d) and the triangle
+inequality for $W$, $e^m\to e$ and $W(\mu^m_t,\mu^{*m}_t)\to W(\mu_t,\mu^*_t)$ uniformly. So $V^m\to V$ and
+$\bar R^m\to\bar R$ uniformly, and $V(t_2)-V(t_1)\le\int\bar R$. $\bar R$ is continuous, which gives the Dini form.
+The identity coupling gives $W(\mu^{*m}_t,\mu^{*m}_s)\le V_*\abs{t-s}$. This passes to the uniform limit, and $\ThKe$
+is closed.
+\end{proof}
+
+\begin{rmk}{Remark}{D.1}[a one-sided constant free of $\varepsilon_K$]
+The coupling step uses $v$ only through $\ip{\Xi-\Xi'}{\Ginv(v(\Xi)-v(\Xi'))}$. So the one-sided constant
+\[
+  L_\vartheta^+ := \sup\frac{\ip{\vartheta-\vartheta'}{\Ginv(v(\vartheta)-v(\vartheta'))}}
+  {\norm{\vartheta-\vartheta'}^2_{\Ginv}}
+\]
+may replace $L_\vartheta$. Let $N(\theta,y):=h(\norm{\theta})(\hat\theta^\T y)_+\hat\theta$ be the norm-ball
+correction, with $r=\norm{\theta}$, $c=\hat\theta^\T\hat\theta'$ and $\alpha=(\hat\theta^\T y)_+$. Then
+\[
+  \ip{\theta-\theta'}{N(\theta,y)-N(\theta',y)}\ge-\frac{\norm{y}\norm{\theta-\theta'}^2}{2(\theta_{\max}-\varepsilon_K)}.
+\]
+This follows from three facts:
+\begin{itemize}
+\item $h$ is monotone;
+\item $\abs{\alpha-\alpha'}\le\norm{y}\sqrt{2(1-c)}$;
+\item $\norm{\theta-\theta'}^2\ge2\sqrt{rr'}\,\abs{r-r'}\sqrt{2(1-c)}$.
+\end{itemize}
+The box correction is monotone. Hence $L_\vartheta^+$ stays bounded as $\varepsilon_K\to0$, and so does
+$\Lambda:=\max(L_\vartheta^++L_2,\,L_x+M_x)$. On the experiment's box, a numerical measurement gives
+$L_\vartheta^+\approx88$--$98$ for $\varepsilon_K$ from $0.2$ to $0.005$. Over the same range the two-sided constant
+grows like $30/\varepsilon_K$. This measurement is not repeated in the repository's tests.
+\end{rmk}
+
+\paragraph{Numerics} (\code{results/mean_field_m}). Halving $W(\mu^m_0,\mu^{2m}_0)$ halves
+$W(\mu^m_T,\mu^{2m}_T)$, with a nearly constant factor ($1.64$--$1.69$ over the four refinements). $\sup_t\norm{e^m-e^{2m}}$ falls from $4.6\times10^{-3}$
+($16$ against $32$ particles) to below $10^{-4}$ ($128$ against $256$).
+
+This is a consistency check only.
+\begin{itemize}
+\item On the experiment's box the guaranteed factor $e^{\Lambda T}$ is at least $e^{496}$, from $L_2=33.08$ alone over
+  $T=15$.
+\item The condition of (b) fails for this Van der Pol plant, so the run is covered by the localised (d) through its
+  observed boundedness, not by (b).
+\end{itemize}
+\checkedby{\code{experiments/exp_mean_field_m.py} (consistency in $m$; not the constant $e^{\Lambda T}$).}

@@ -1,6 +1,6 @@
 # Higher-dimensional comparison — complete (nothing excluded)
 
-Single trajectory per cell; steady state = last 40% of 30 s. Step time = mean wall-clock of the method's update call (GP/NTK: per update every 50–100 steps; proposed: per step). No valid significance test is available (one run per cell).
+Single trajectory per cell; steady state = last 40% of 30 s. Step time = mean wall-clock of the method's update call (GP: per update, every 50–100 steps; NTK: per update, every 50 steps at n=1 and every step at n=2, 3, 6; proposed: per step). Every baseline regresses on noise-free samples of the true f(x, t); the proposed method uses only the tracking error. No valid significance test is available (one run per cell).
 
 | benchmark | method | mean SS ‖e‖ | median SS | max SS | rank (mean SS) | mean update time (ms) |
 |---|---|---|---|---|---|---|

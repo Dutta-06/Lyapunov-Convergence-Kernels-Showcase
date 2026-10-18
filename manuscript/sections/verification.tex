@@ -1,0 +1,126 @@
+% Verification map (source: PARADIGM.md section 7, lines 1690-1739).
+\section{Verification map}\label{sec:verification}
+
+Table~\ref{tab:verification:map} lists the tests and experiments of the accompanying repository that check each
+statement; statements not checked are listed after it. Test files are abbreviated: \code{T} is \code{tests/test_transport.py}, \code{Lg} is
+\code{tests/test_langevin.py}, and \code{Av} is \code{tests/test_averaging.py}.
+
+{\footnotesize
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.19\textwidth}>{\raggedright\arraybackslash}p{0.41\textwidth}%
+>{\raggedright\arraybackslash}p{0.34\textwidth}@{}}
+\caption{Verification map.}\label{tab:verification:map}\\
+\toprule
+statement & what is checked & where\\
+\midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\emph{Table~\ref{tab:verification:map}, continued}}\\
+\toprule
+statement & what is checked & where\\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r@{}}{\emph{continued on the next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+constants (1) of Section~\ref{sec:setting}, closed forms & $\nabla^2_{(c,s)}\varphi\le H_\varphi$ by brute force
+  & \code{T::test_gaussian_constants_are_suprema}\\
+Lemma P.1 & $\norm{\Proj(\vartheta,Gy)}_{\Ginv}\le\norm{y}_G$ on 2000 adversarial states, with equality when
+  inactive; a tight instance of F(i) with ratio $\ge0.99$
+  & \code{T::test_lemma_P1_projection_is_nonexpansive_and_tight_velocity_bound}\\
+A(i) raw rates & lifted raw rates equal classical raw rates under the gain map ($10^{-10}$)
+  & \code{T::test_identification_with_classical_law}\\
+A(i) projected rates, only-if & per-kernel projection with rescaled layer matches to $10^{-10}$ with active
+  projections; an unrescaled layer does not; five joint balls are each distinguished (two-case construction: four
+  active against an inactive per-kernel field, one inactive against an active one)
+  & \code{T::test_identification_projected_rates_per_kernel}\\
+B with constant ideal and $\varepsilon=0$ & the identity to floating-point precision; cross term $\le0$; remainder
+  $\le$ Lemma B.2; $\dot V_\pi\le{}$(B) at every sample
+  & \code{T::test_theorem_B_inequality_along_trajectories}\\
+B with a moving ideal, $\varepsilon\ne0$, switches and active projection & the same plus $V_*W$; at least one
+  switch; projection active at $\ge10$ samples; Dini quotient $\le{}$(B)
+  & \code{T::test_theorem_B_moving_ideal_nonrepresentable_switches_and_active_projection}\\
+B, Dini form & forward-difference quotient of $\VOT\le{}$(B)
+  & \code{T::test_dini_derivative_of_V_OT_bounded_by_active_branch}\\
+B against labelling & matched error $\ll$ labelled error; the bound is 30--45$\times$ smaller
+  & \code{T::test_permuted_ideal_labelled_vs_OT}, \code{exp_transport_permutation.py}\\
+B.5: failure of the plain bound along $\Lsig$; the $\Lsig$ variant holds & with every C(iv) hypothesis asserted, the
+  plain bound fails by $>3\times$ and the leak variant holds
+  & \code{T::test_corollary_B5_fails_along_lsigma_and_its_leak_variant_holds}\\
+C(i), Lemma C.3 (unprojected pure leak) & zero switches and exact $e^{-\sigma t}$ decay (explicit Euler, pure leak)
+  & \code{T::test_theorem_C_i_exact_dissipation_pure_leak}\\
+C(ii) & $C\le b^2+4\eta R$; $\sqrt C\le b+2\eta$; $C=b^2$ under both gap conditions (300 configurations)
+  & \code{T::test_lemma_C_ii_induced_coupling_bound}\\
+C(iv) & an instance satisfying \textbf{every} hypothesis, asserted, including the gap condition
+  $4\bar\eta(b+\bar\eta)<\Delta_{\mathrm{gap}}$; the envelope holds at every sample, with actual contraction
+  & \code{T::test_theorem_C_iv_exponential_estimate}\\
+C(v), Proposition C.5 & label invariance of the OT leak; the reshuffling transient of the labelled leak
+  & \code{exp_ot_sigma_mod.py}, \code{exp_sigma_mod_transient.py}\\
+D & consistency in $m$ (nearly constant amplification 1.64--1.69; not the constant $e^{\Lambda T}$)
+  & \code{exp_mean_field_m.py}\\
+F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
+  & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
+F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid
+  of pairs; a tight instance with $e\equiv0$ (ratio $\ge0.99$), where the motion is $W\approx1.05$
+  & \code{T::test_theorem_F_leak_clause_along_ot_sigma_mod},
+    \code{T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion}\\
+E linearisation & Jacobian of the implemented loop equals $A(t)$; $QA+A^\T Q=\operatorname{diag}(-k_eI,0)$
+  & \code{T::test_theorem_E_linearisation_and_lyapunov_identity}\\
+E convergence & the matched error decays and the labelled error does not (qualitative); sliding-window excitation and
+  fitted rates
+  & \code{T::test_theorem_E_matched_error_converges_labelled_does_not}, \code{exp_pe_convergence.py}\\
+G(a), two scales & direct check (cosine $\ge0.998$ in the $\Ginv$ metric, \code{violating}; the weight block fails
+  in \code{satisfying}, as explained in Section~\ref{sec:propG}); $\bar L$ at period-mean parameters
+  non-increasing
+  & \code{exp_variable_projection.py} $\to$ \code{table_violating.md}, \code{table_satisfying.md}\\
+G(b), (b$'$), (H2c) & VarPro holds when (H2b) and $S\ll1$ hold; it fails when $S=O(1)$ although (H2b) holds; the
+  induced-metric flow tracks the closed loop at every $S$ (started on the slow manifold; gains $\div4$ isolates the
+  averaging error)
+  & \code{exp_variable_projection.py} $\to$ \code{table_satisfying.md}; \code{exp_slow_manifold_slope.py} $\to$
+    \code{table_slope.md}\\
+H(i), algebraic identity & with $e:=r/k_e$ and $x:=x_m$, the averaged drift equals $-G\nabla V$ (code gradients
+  against finite differences, $10^{-7}$); does not test averaging
+  & \code{Lg::test_averaged_drift_is_the_mean_field_langevin_drift}\\
+Remark H.0 & the frozen-$\mu$ averaging error decays like $1/k_e$, $n=1$ and $n=2$
+  & \code{Lg::test_averaging_error_of_the_formal_reduction_decreases_like_one_over_ke},
+    \code{Av::test_averaged_drift_error_decays_like_one_over_ke_for_an_orbit_enclosing_area}\\
+H, need for entropy & finite-$m$ real loop: a noiseless symmetric start stays bit-identical (and moves); dither
+  separates it
+  & \code{Lg::test_noiseless_symmetric_initialisation_never_separates_but_dither_does}\\
+H(ii), oscillation bound & $\abs{V_L[\mu](\vartheta)}\le K_\Phi(F_\rho+K_\Phi)$ for random and adversarial $\mu$,
+  $\vartheta$
+  & \code{Lg::test_first_variation_bound_used_in_holley_stroock}\\
+H(ii) constant & formula transcription only & \code{Lg::test_lsi_lower_bound_formula}\\
+H, global behaviour & collapsed against spread starts, with and without dither, two $(\sigma,\tau)$ settings
+  & \code{exp_langevin_global.py}\\
+H, speed--bias trade-off & escape time and loss floor against $\tau$; $\log(1/\tau)$ and Arrhenius fits,
+  seed-averaged and per seed (neither identifies the mechanism)
+  & \code{exp_langevin_tradeoff.py}\\
+H, reference values & $\bar L(\mu^*_\tau)$ by a concave dual on a grid; the stationary state of the exactly averaged
+  loop; their offset in the scaling of H.6
+  & \code{exp_gibbs_reference.py} $\to$ \code{results/langevin_global/gibbs_reference.md}\\
+H.7 & expansion, Stokes area identity, parity under reversal, non-reciprocity of the exact second variation
+  & \code{Av::test_frozen_measure_expansion_converges_at_rate_one_over_ke},
+    \code{Av::test_circulation_kernel_antisymmetric_vanishes_in_1d_and_equals_the_enclosed_area_integral},
+    \code{Av::test_shift_correction_is_even_and_lag_correction_is_odd_under_orbit_reversal},
+    \code{Av::test_exactly_averaged_dynamics_is_non_reciprocal_for_n1_and_n2}\\
+H.7a, oscillation term & value against an independent one-period near-identity flow (within 3\% at $k_e=80$); odd
+  under orbit reversal ($10^{-6}$)
+  & \code{Av::test_oscillation_correction_matches_a_one_period_flow},
+    \code{Av::test_oscillation_correction_is_odd_under_orbit_reversal}\\
+H.7 + H.7a in the real closed loop & the orientation dependence of the learned kernels (same $\rho$) is predicted to
+  within 3\% in size and 11\% as a vector, cosine 0.994 at $k_e=40$; the measured difference scales like
+  $k_e^{-1.01}$
+  & \code{exp_orbit_orientation.py} $\to$ \code{results/orbit_orientation/table_sigma2_slow16.md}\\
+\end{longtable}
+}
+
+\noindent Not checked in the repository:
+\begin{itemize}
+  \item B.5 along (L), and B.6 and B.7;
+  \item the Filippov form of C(i), the inequality of C(v), and Proposition C.5's $D^+\VOT=\sigma_m(\delta-\delta^2)$;
+  \item D(b), D's constant, and the one-sided constant of Remark D.1;
+  \item the rate of E, Corollary E.2 and Remark E.3;
+  \item H.8, which is a proof only;
+  \item Conjecture H.6.
+\end{itemize}

@@ -11,8 +11,10 @@ nothing excluded, and prints the full table.
 
 Caveats carried from the original protocol (see ASSESSMENT.md):
   * one trajectory per cell — no seed-level uncertainty is available;
-  * the GP/NTK baselines only refresh their prediction every 50–100 steps
-    (a handicap not shared by the proposed method);
+  * the GP baselines only refresh their prediction every 50–100 steps (a handicap not shared by the
+    proposed method); NTK refreshes every 50 steps at n=1 and every step at n=2, 3, 6;
+  * every baseline regresses on noise-free samples of the true f(x, t) (equivalent to measuring the state
+    derivative exactly), an advantage not shared by the proposed method, which uses only the tracking error;
   * the Wilcoxon p-values of the original scripts were computed on ~12 000
     autocorrelated time samples (lag-1 autocorrelation 0.9999) and are not
     valid; they are not reproduced here.
@@ -48,8 +50,10 @@ def main():
     fig, axes = plt.subplots(2, len(DIMS), figsize=(22, 9))
     lines = ["# Higher-dimensional comparison — complete (nothing excluded)", "",
              "Single trajectory per cell; steady state = last 40% of 30 s. "
-             "Step time = mean wall-clock of the method's update call (GP/NTK: per update every 50–100 steps; "
-             "proposed: per step). No valid significance test is available (one run per cell).", "",
+             "Step time = mean wall-clock of the method's update call (GP: per update, every 50–100 steps; "
+             "NTK: per update, every 50 steps at n=1 and every step at n=2, 3, 6; proposed: per step). "
+             "Every baseline regresses on noise-free samples of the true f(x, t); the proposed method uses only the "
+             "tracking error. No valid significance test is available (one run per cell).", "",
              "| benchmark | method | mean SS ‖e‖ | median SS | max SS | rank (mean SS) | mean update time (ms) |",
              "|---|---|---|---|---|---|---|"]
     for col, (label, rdir) in enumerate(DIMS.items()):

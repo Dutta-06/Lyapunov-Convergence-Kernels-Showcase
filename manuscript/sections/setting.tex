@@ -1,0 +1,153 @@
+% PARADIGM.md section 1 (Setting).  File id: setting.
+\section{Setting}\label{sec:setting}
+
+\paragraph{Plant, reference, control, error.}
+\[
+  \dot x = f(x,t) + u,\qquad e = x - x_m(t),\qquad u = \dot x_m - k_e e - \fhat(x).
+\]
+
+\paragraph{Lifted parameter.}
+$\vartheta = (a,c,s)\in\R^n\times\R^n\times\R_{>0}$, and $p := 2n+1$. The feature is
+${\Phi(x;\vartheta) := a\,\varphi(x;c,s)}\in\R^n$, where $\varphi(x;c,s) = \exp\bigl(-\norm{x-c}^2/(2s^2)\bigr)$.
+
+\paragraph{Network as a measure.}
+\[
+  \fhat(x) = \frac1m\sum_{i=1}^m \Phi(x;\vartheta_i) = \int\Phi(x;\vartheta)\dd\mu(\vartheta),
+  \qquad \mu := \frac1m\sum_{i=1}^m\delta_{\vartheta_i}.
+\]
+The map $\mu\mapsto\fhat$ is linear.
+
+\paragraph{Metric.}
+$G = \operatorname{diag}(g_a I_n, g_c I_n, g_s)\succ 0$ is the gain matrix. Distances are measured in
+$\norm{v}_{\Ginv}^2 = v^\T\Ginv v$, and $\lambda_G := \lambda_{\max}(G)$.
+
+\paragraph{Admissible box and projection.}
+\begin{itemize}
+  \item \textbf{The box.}
+    $\ThK := \{\norm{a}\le a_{\max}\}\times\{\norm{c}\le c_{\max}\}\times[s_{\min},s_{\max}]$.
+  \item \textbf{Layer and inner set.} $\varepsilon_K$ is the width of the boundary layer. Shrinking each bound of
+    $\ThK$ by $\varepsilon_K$ gives the inner set $\ThKe$, with interior $\operatorname{int}\ThKe$.
+  \item \textbf{The operator.} $\Proj(\vartheta,y)$ is the per-particle, factor-wise projection (implemented in
+    \code{src/core/projection.py} in the accompanying repository). It uses Pomet--Praly norm-ball
+    operators~\cite{pp1992} for $a$ and $c$, with a quadratic ramp $h\in[0,1]$ (defined in Section~\ref{sec:p1-algorithm}), and a box operator for $s$, with a
+    linear ramp.
+  \item \textbf{Regularity.} The operator is locally Lipschitz in $(\vartheta,y)$. The norm-ball factors are $C^1$ at
+    the inner edge of their layers. The box factor, and every factor at the outer edge, is only Lipschitz. The proofs
+    use only Lipschitz continuity and ramp values in $[0,1]$.
+\end{itemize}
+
+\paragraph{Property (P).}
+For $\vartheta\in\ThK$, $\vartheta'\in\ThKe$ and all $y$,
+\begin{equation}\label{eq:setting:P}
+  \ip{\vartheta-\vartheta'}{\Ginv\Proj(\vartheta,Gy)} \le \ip{\vartheta-\vartheta'}{y}.
+  \tag{P}
+\end{equation}
+On $\partial\ThK$ the projected velocity has no outward component, so $\ThK$ is forward invariant (Nagumo;
+Pomet--Praly 1992~\cite{pp1992}).
+
+\begin{thm}{Lemma}{P.1}[$\Proj$ is non-expansive]
+For every $\vartheta = (a,c,s)\in\ThK$ and $y = (y_a,y_c,y_s)$,
+\[
+  \norm{\Proj(\vartheta,Gy)}_{\Ginv}^2
+  = \norm{y}_G^2 - \sum_{b\in\{a,c,s\}} h_b(2-h_b)\,\frac{\bigl[(n_b^\T G_b y_b)_+\bigr]^2}{n_b^\T G_b n_b}
+  \;\le\; \norm{y}_G^2 .
+\]
+The terms are as follows.
+\begin{itemize}
+  \item For the balls, $n_a = a$ and $n_c = c$, with the quadratic ramps $h_a = h(\norm{a};a_{\max},\varepsilon_K)$ and
+    $h_c = h(\norm{c};c_{\max},\varepsilon_K)$.
+  \item For $s < s_{\min}+\varepsilon_K$, $n_s = -1$ and $h_s = 1-\clip\bigl((s-s_{\min})/\varepsilon_K,0,1\bigr)$.
+  \item For $s > s_{\max}-\varepsilon_K$, $n_s = +1$ and $h_s = 1-\clip\bigl((s_{\max}-s)/\varepsilon_K,0,1\bigr)$.
+  \item Otherwise $h_s = 0$.
+\end{itemize}
+\end{thm}
+
+\begin{proof}
+$G$ is block-diagonal, so both squared norms split over the blocks. On an active ball block,
+$\operatorname{Proj}_b = G_b q_b$ with $q_b = y_b - h_b n_b\,(n_b^\T G_b y_b)/(n_b^\T G_b n_b)$. Expanding
+$q_b^\T G_b q_b$ gives the subtracted term. On an inactive block ($h_b = 0$ or $n_b^\T G_b y_b\le 0$),
+$\operatorname{Proj}_b = G_b y_b$. The $s$-block is the one-dimensional case. Finally $h_b\in[0,1]$, so
+$h_b(2-h_b)\in[0,1]$.
+\end{proof}
+\checkedby{\code{tests/test_transport.py}: \code{test_lemma_P1_projection_is_nonexpansive_and_tight_velocity_bound}.}
+
+\paragraph{Potential.}
+$g_t(\vartheta) := e(t)^\T\Phi(x(t);\vartheta)$, and $F_t(\mu) := -\int g_t\dd\mu = -e(t)^\T\fhat(x(t))$.
+
+\paragraph{Adaptive law (the algorithm).}
+\begin{equation}\label{eq:setting:L}
+  \dot\vartheta_i = \Proj\bigl(\vartheta_i,\, G\nabla_\vartheta g_t(\vartheta_i)\bigr),\qquad i = 1,\dots,m.
+  \tag{L}
+\end{equation}
+
+\paragraph{Ideal measure.}
+For $j = 1,\dots,m$, $\vartheta^*_j(t)\in\ThKe$ is $C^1$ in $t$, and
+$\mu^*_t := \frac1m\sum_j\delta_{\vartheta^*_j(t)}$. Write
+$\varepsilon(x,t) := f(x,t) - \int\Phi(x;\cdot)\dd\mu^*_t$, with $\norm{\varepsilon}\le\varepsilon_{\max}$ on the
+operating set $X$, and set
+\[
+  V_*(t) := \Bigl(\frac1m\sum_j\norm{\dot\vartheta^*_j}_{\Ginv}^2\Bigr)^{1/2},\qquad V_* := \sup_t V_*(t).
+\]
+The proofs never use optimality of $\mu^*$. It is an analytic device, and any admissible $C^1$ curve may be used.
+
+\paragraph{Optimal-transport distance.}
+For uniform atomic $\mu = \frac1m\sum\delta_{\vartheta_i}$ and $\nu = \frac1m\sum\delta_{\vartheta'_j}$,
+\[
+  W(\mu,\nu)^2 := \min_{\pi\in S_m}\frac1m\sum_i\norm{\vartheta_i-\vartheta'_{\pi(i)}}_{\Ginv}^2 .
+\]
+This is the Kantorovich $2$-Wasserstein distance with ground cost $\norm{\cdot}_{\Ginv}^2$. For equal masses the
+optimum is attained at a permutation (Birkhoff). It is computed by linear assignment in $O(m^3)$. For general measures
+on $\ThK$, $W$ denotes the same Kantorovich distance.
+
+\paragraph{Label-free Lyapunov function.}
+\begin{align*}
+  \VOT(t) &:= \tfrac12\norm{e(t)}^2 + \tfrac12 W(\mu_t,\mu^*_t)^2 = \min_\pi V_\pi(t),\\
+  V_\pi &:= \tfrac12\norm{e}^2 + \frac1{2m}\sum_i\norm{\vartheta_i-\vartheta^*_{\pi(i)}}_{\Ginv}^2 .
+\end{align*}
+
+\paragraph{Standing hypotheses (S).}
+\begin{enumerate}[label=(S\arabic*),start=0]
+  \item $k_e>0$; $G = \operatorname{diag}(g_a I_n, g_c I_n, g_s)\succ 0$; $s_{\min}>0$; and
+    $0<\varepsilon_K<\min\{a_{\max},c_{\max},(s_{\max}-s_{\min})/2\}$ (\code{src/core/projection.py} enforces the
+    last condition).
+  \item $f$ is continuous in $(x,t)$ and locally Lipschitz in $x$, uniformly in $t$ on bounded time intervals.
+  \item $x_m\in C^1$, and $x_m$ and $\dot x_m$ are bounded.
+  \item $\vartheta_i(0)\in\ThK$.
+  \item The $\vartheta^*_j$ are $C^1$ with values in $\ThKe$, and $V_*<\infty$.
+  \item $x(t)\in X$ on the interval considered. For bounded $f$, take
+    $X := \bigcup_t\{x : \norm{x-x_m(t)}\le r(F)\}$ with $F = \sup\norm{f}$ (Theorem D(b)). Then $\varepsilon_{\max}$
+    is the supremum over this $X$, and it depends on $\norm{e(0)}$.
+\end{enumerate}
+Under (S0)--(S3) the right-hand side of (L) is continuous in $t$ and locally Lipschitz in $(x,\vartheta)$. Solutions
+are classical ($C^1$) and unique on their maximal interval. Under (S4) as well, each $V_\pi$ is $C^1$.
+
+\paragraph{Notation.}
+\begin{itemize}
+  \item Times are written $t_0\le t_1$ (or $T_1<T_2$), and $r$ is the integration variable in time.
+  \item $\RMS_{[T_1,T_2]}\norm{e} := \Bigl((T_2-T_1)^{-1}\int_{T_1}^{T_2}\norm{e}^2\dd r\Bigr)^{1/2}$.
+\end{itemize}
+
+\paragraph{Constants of the Gaussian.} Closed forms (\code{gaussian_constants} in \code{src/core/transport.py} of the
+accompanying repository). With $u := \norm{x-c}^2/s^2$ and
+$\varphi = e^{-u/2}$, on $s\ge s_{\min}$:
+\begin{gather*}
+  \norm{\nabla_c\varphi}\le J_c := e^{-1/2}/s_{\min},\qquad
+  \abs{\partial_s\varphi}\le J_s := 2e^{-1}/s_{\min},\qquad
+  J := (J_c^2+J_s^2)^{1/2},\\
+  \norm{\nabla^2_{(c,s)}\varphi}\le H_\varphi := \bigl(\max(h_{cc},h_{ss}) + h_{cs}\bigr)/s_{\min}^2,\\
+  h_{cc} = 1,\qquad h_{ss} = 2e^{-1/2},\qquad
+  h_{cs} = \sqrt u\,e^{-u/2}\abs{u-2}\ \text{ evaluated at } u = (5-\sqrt{17})/2 .
+\end{gather*}
+$J$ and $H_\varphi$ are upper bounds. The true supremum of $\norm{\nabla_{(c,s)}\varphi}$ is about $0.92/s_{\min}$,
+and that of $\norm{\nabla^2_{(c,s)}\varphi}$ is about $1.57/s_{\min}^2$. The Hessian of the lifted potential is the
+block matrix
+\[
+  \begin{pmatrix} 0 & u\,\nabla\varphi^\T\\[2pt] \nabla\varphi\,u^\T & (u^\T a)\,\nabla^2\varphi\end{pmatrix}.
+\]
+Hence
+\begin{equation}\label{eq:setting:HK}
+  \sup_{x\in\R^n,\ \vartheta\in\ThK,\ \norm{u}=1}\norm{\nabla^2_\vartheta\bigl(u^\T\Phi(x;\vartheta)\bigr)}
+  \le H_K := J + a_{\max}H_\varphi,\qquad K := \tfrac12 H_K.
+  \tag{1}
+\end{equation}
+A brute-force numerical check over the full lifted Hessian gives $\sup\approx 0.76\,H_K$.

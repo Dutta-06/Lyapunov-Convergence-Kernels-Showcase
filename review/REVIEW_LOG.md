@@ -150,3 +150,42 @@ A judge then adjudicated their reports. The raw reports are in `REVIEW_round3.md
   kernels in the real closed loop to 3% in size and 11% as a vector at k_e = 40.
 - The reproducible slope counterexample, started on the slow manifold.
 - The Gibbs reference values.
+
+## Round 4 (manuscript conversion and review, 2026-10-18)
+
+**Design.** The theory, the audit and the results were typeset as the manuscript `lyapunov.pdf` (version 2, source in
+`manuscript/`). Twelve agents each converted one block. Eleven independent reviewers then compared each section with its
+source, statement by statement and formula by formula, and checked the rendered pages. A twelfth checked the
+bibliography against the published records. The reports are not archived; the confirmed issues are listed here.
+
+**Verdict.** Two critical findings, both in the manuscript text and both fixed. No reviewer found a transcription error
+in any theorem, proof, formula or table cell. The reviews also found the following errors in the sources themselves.
+
+**Fixes to the sources.**
+
+| where | issue | fix |
+|---|---|---|
+| PARADIGM §6c, Remark H.0 (period averaging) | "The sup is at most (T₀/k_e)λ_G(…)": the bound is for T₀ times the sup | "The left-hand side is at most …" |
+| PARADIGM §2, proof of A(ii) | "ϑᵀProj ≤ 0 on the boundary" is wrong for the box factor at s = s_min (outward normal −1) | n_bᵀProj_b ≤ 0 with the outward normals n_b of Lemma P.1 |
+| PARADIGM §5 numerics and §7 | "constant factor 1.68": `mean_field_m/table.md` gives 1.64–1.69 | "nearly constant factor (1.64–1.69)" |
+| PARADIGM §5b | "W(μ_10, μ_0) = 1.05": the test asserts > 1.05 | "≈ 1.05" |
+| PARADIGM §0 | the two structural defects were attributed to `ASSESSMENT.md`, which does not contain them | stated as defects of the classical labelled analysis |
+| Remark H.7a experiment | not disclosed: the six kernels converge to a common configuration (spread 1.05 → at most 5.6e-17), so the effect is measured at a collapsed equilibrium | disclosed in PARADIGM, RESULTS_PARADIGM, the README and the manuscript; `exp_orbit_orientation.py` now reports the spread (table regenerated from `raw_sigma2_slow16.npz`; every other number unchanged) |
+| README, ASSESSMENT §4, Simulation_Report | "0.1–0.6 ms per step against 13–1900 ms per update": the proposed method takes 4.11 ms at n = 3; NTK updates every step at n = 2, 3, 6 (not every 50–100) and is cheaper than the proposed method at n = 3 | exact per-step and per-update times; the cost edge is over every GP baseline at every n and over NTK except at n = 3 |
+| README, ASSESSMENT §4, Simulation_Report, `plot_comparison_hd_complete.py` | not disclosed: every kernel-regression baseline (including the fair n = 1 re-run) regresses on noise-free samples of the true f(x, t), i.e. is given the state derivative; the adaptive law uses only the tracking error | disclosed; the table caption regenerated (numbers unchanged) |
+| ASSESSMENT §4 | "NTK is first … by 10–25×": the factors are 25× (n = 2) and 3.4× (n = 6); "3–4× more accurate in every seed": per-seed ratios 2.79, 3.69, 3.48; "20× lower cost": 22.6× | corrected |
+| ASSESSMENT, THEORY_REVISED, Simulation_Report | "three to four orders of magnitude (900×–11 000×)": the oracle table gives 915×–10954× | the measured factors |
+| THEORY_REVISED §6 (errata) | several quotations of version 1 were not verbatim; E10's "100% of trials …" is from the old README, not version 1 | verbatim quotations with correct attribution |
+| THEORY_REVISED §4 | "superlevel c > c_inf" (sublevel set meant); level-set argument credited to Lewis et al. 1996 (1999 meant) | corrected |
+| README | the withdrawn statements were not quoted verbatim | verbatim quotations of the old README |
+
+**Fixes to the manuscript text only.** The abstract's "not a gradient flow" sentence had dropped "of any free energy in
+the W_{G⁻¹} metric" and "in the checked instances" (critical). The status of Corollary E.2 had dropped "as stated in its
+abstract (its hypotheses were not checked against the full text)" (critical). Other fixes: missing verification
+pointers and novelty verdicts in status lines; an over-general sentence in the verification appendix; caption wording;
+cross-references to the appendix; layout.
+
+**Noted, not changed.** Overloaded symbols (u, ε, σ, X, R, B, J, e) and a few symbols used before or without
+definition (f̂*, W_∞, X_t, θ_max, P₀, S₀, b_odd, F*, R^m) are listed in the agents' reports for a notation pass.
+"Within 3% in size" at k_e = 40 is a ratio of 0.969.
+

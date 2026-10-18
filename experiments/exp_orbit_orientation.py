@@ -98,6 +98,11 @@ def lab_dist(P, Q):
     return float(np.sqrt(np.mean(np.sum((P - Q) ** 2 / GAINS[None, :], axis=1))))
 
 
+def kernel_spread(Th):
+    """Largest coordinate deviation of a kernel from the mean kernel (0 for a collapsed configuration)."""
+    return float(np.max(np.abs(Th - Th.mean(0))))
+
+
 def predicted_difference(ke, Th_eq):
     """
     Linear response at the (+)-orientation equilibrium.  Returns (frozen, full):
@@ -175,7 +180,12 @@ def main():
         verr = lab_dist(meas, full) / nu
         lines.append(f"| {ke:g} | {nm:.3e} | {rp:.1e}, {rm:.1e} | {nm / nf:.3f} | {cos(meas, frozen):.4f} | {nm / nu:.3f} | {cos(meas, full):.4f} | {verr:.3f} |")
     slope = float(np.polyfit(np.log(np.array(KES)), np.log(np.array(meas_n)), 1)[0])
+    end_spread = max(kernel_spread(R[(ke, o)]['last']) for ke in KES for o in (1.0, -1.0))
     lines += ["", f"Fitted exponent of the measured difference against k_e: {slope:.2f} (prediction: −1).",
+              f"Kernel spread (largest coordinate deviation of a kernel from the mean kernel): {kernel_spread(initial()):.2f} "
+              f"at the start, at most {end_spread:.1e} at the end of every run. The {M} kernels converge to a common "
+              "configuration, so the learned network is effectively a single kernel and the test probes the orientation "
+              f"effect at a collapsed equilibrium of the m = {M} system.",
               "Reading: the occupation measure is identical for the two orientations, so (𝔄) cannot tell them apart. The "
               "difference is the orientation-odd part of the first-order correction of the real averaged loop; compare the "
               "frozen and full columns to see how much of it the frozen-measure expansion alone accounts for."]

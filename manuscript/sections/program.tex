@@ -1,0 +1,104 @@
+% Research program (source: PARADIGM.md section 8, lines 1740-1814).
+\section{Research program}\label{sec:program}
+
+Each branch states what is proved, what is open, and the first concrete step.
+
+\begin{enumerate}[label=\arabic*.,leftmargin=*]
+
+\item \textbf{Infinite-horizon averaging for McKean--Vlasov closed loops (Conjecture H.6).}
+  \begin{itemize}
+    \item \emph{Proved:} the averaged system converges globally and exponentially (H(ii)); the exact first correction
+      at frozen measure (H.7); input-to-state stability of the averaged system (H.8).
+    \item \emph{Open:} a near-identity averaging transformation for the stochastic McKean--Vlasov loop that keeps the
+      frozen-measure correction valid along the moving measure, uniformly in time.
+    \item \emph{First step:} the deterministic case ($\tau=0$, $\sigma>0$) at fixed $m$, where the needed averaging
+      theorem is classical (Sanders--Verhulst--Murdock~\cite[Ch.~5]{svm2007}, ``averaging under attraction'').
+  \end{itemize}
+
+\item \textbf{Non-reciprocal mean-field dynamics from closed-loop learning (new; Proposition H.7).}
+  \begin{itemize}
+    \item \emph{Proved at a frozen measure:} the averaged adaptive dynamics is a semi-gradient flow plus a lag term
+      (Proposition H.7). Along the real loop a second-order averaging term is added (Remark H.7a).
+    \item Its interaction has two antisymmetric parts:
+      \begin{itemize}
+        \item the performative defect $A_{\mathrm{even}}$ of the state shift, which is present for every $n$ and is
+          the only part for $n=1$;
+        \item the circulation kernel $K$, an integral over the region that the reference orbit encloses ($n\ge2$).
+      \end{itemize}
+    \item Non-reciprocity is checked in the instances tested, not proved in general.
+    \item \emph{Open questions:}
+      \begin{itemize}
+        \item Are stationary states unique beyond the perturbative regime?
+        \item Can circulation be \emph{designed}, choosing the orbit's orientation and area, to break symmetric traps
+          or to speed escape from the collapsed configuration?
+        \item Is there a Lyapunov functional other than $F_\tau$ for the non-reciprocal flow?
+      \end{itemize}
+    \item \emph{Context:} the closest analogues are performative prediction~\cite{S14}, semi-gradient TD
+      learning~\cite{S10}, \cite{S11} and non-reciprocal phase transitions~\cite{S12}.
+    \item \emph{Done (Remark H.7a):} deterministic $n=2$ closed-loop runs with the reference traversed both ways
+      (same $\rho$). The full first-order theory predicts the $O(1/k_e)$ difference of the learned kernels to 3\% in
+      size and 11\% as a vector.
+    \item \emph{Next steps:} the same test with dither, where the stationary state is a measure; and the design of the
+      orbit's orientation and area as a control input.
+  \end{itemize}
+
+\item \textbf{Uniform-in-time propagation of chaos with a plant in the loop.}
+  \begin{itemize}
+    \item Theorem D is finite-horizon. Uniform-in-time results exist for mean-field Langevin dynamics~\cite{S5} and
+      for shallow networks~\cite{R36}.
+    \item \emph{Open:} the closed loop, where the plant couples all particles through $e$, and where (by H.7) the
+      averaged interaction is not reciprocal.
+  \end{itemize}
+
+\item \textbf{Geometry of two-time-scale adaptation (Proposition G(b$'$)).}
+  \begin{itemize}
+    \item \emph{Proved formally, and checked:} the slow geometry follows the gradient flow of the profile loss in the
+      metric induced on the slow manifold, and the slope $S$ measures the departure from plain variable projection.
+    \item \emph{Open:} a rigorous long-horizon statement; the $O(1/R)$ corrections, which involve $D^2a^*$ and
+      $\partial_\xi M$; gain designs that shape the induced metric.
+  \end{itemize}
+
+\item \textbf{Noiseless global convergence.}
+  \begin{itemize}
+    \item \emph{Open:} a closed-loop separation condition under which the noiseless flow avoids spurious stationary
+      points, despite the failure of the Chizat--Bach~\cite{R29} boundary conditions. Candidates are a compactified
+      width coordinate and reflecting boundaries (Remark H.3).
+  \end{itemize}
+
+\item \textbf{Unbalanced transport, meaning online structure adaptation.}
+  \begin{itemize}
+    \item Treat the weights as masses (Hellinger--Kantorovich\,/\,Wasserstein--Fisher--Rao) to obtain birth and death
+      of kernels with Lyapunov guarantees. The conic particle descent of~\cite{R49} and~\cite{R55} is the static
+      analogue.
+  \end{itemize}
+
+\item \textbf{Excitation theory in measure space.}
+  \begin{itemize}
+    \item \emph{Open:} the continuum form of (PE); the trajectory kernel
+      \[K_T(\vartheta,\vartheta')=\int\Phi(x(s);\vartheta)\Phi(x(s);\vartheta')\dd s;\]
+      identifiability of measures up to symmetry; the relation to~\cite{R16}. Remark E.1 shows that the PE level alone does not predict the rate.
+      A quantitative, uniform UES estimate for the skew-symmetric class is a first target.
+  \end{itemize}
+
+\item \textbf{Transport-regularised adaptive laws.}
+  \begin{itemize}
+    \item Wasserstein proximal (JKO) discrete-time adaptive laws.
+    \item The OT leak toward priors with a different number of atoms, using optimal plans with barycentric
+      projection.
+    \item Transfer: transporting a learned measure to a new plant.
+  \end{itemize}
+
+\item \textbf{Quantisation and the curse of dimensionality (Corollary B.6).}
+  \begin{itemize}
+    \item \emph{Open:} second-order (centroid) quantisation rates for the ideal measure on the lifted space;
+      approximation rates that do not go through $W$ (Maurey-type); adaptive laws that track optimal quantisers (the
+      centroidal Voronoi tessellation connection~\cite{R14}).
+  \end{itemize}
+
+\item \textbf{Symmetric systems beyond kernels.} The OT quotient applies verbatim to swarms of identical agents,
+  mixtures and multi-head models (\cite{R88} and~\cite{R89} are the control-side precedents).
+
+\item \textbf{Deep approximators.} Hierarchical (multi-layer) mean-field measures, with a layer-wise OT Lyapunov
+  function.
+
+\end{enumerate}

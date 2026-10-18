@@ -1,0 +1,287 @@
+% Section: Theorem C (PARADIGM.md section 4, lines 448--647).  File id: thmC.
+\section{Theorem C: optimal-transport \texorpdfstring{$\sigma$}{sigma}-modification}\label{sec:thmC}
+
+Let $\mu^0 = \frac1m\sum_k \delta_{\vartheta^0_k}$ be a prior configuration with $\vartheta^0_k \in \ThKe$. The
+\emph{OT $\sigma$-modified law} is
+\begin{equation}\label{eq:thmC:Lsigma}
+  \begin{gathered}
+    \dot\vartheta_i = \Proj\bigl(\vartheta_i,\ G\nabla g_t(\vartheta_i) - \sigma_m(\vartheta_i - \vartheta^0_{\tau(i)})\bigr),\\
+    \tau(t) \in \operatorname*{argmin}_{\rho}\ \frac1m\sum_i \norm{\vartheta_i - \vartheta^0_{\rho(i)}}^2_{\Ginv}.
+  \end{gathered}
+  \tag{$\mathrm{L}_\sigma$}
+\end{equation}
+
+\paragraph{Solution concept.} The right-hand side of $\Lsig$ is discontinuous at assignment ties.
+\begin{itemize}
+  \item \textbf{Selection solutions.} A solution is an absolutely continuous $(x,\vartheta)$ such that, for a.e.\ $t$,
+    $\dot\vartheta_i = \Proj\bigl(\vartheta_i,\ G\nabla g_t(\vartheta_i) - \sigma_m(\vartheta_i -
+    \vartheta^0_{\tau(t)(i)})\bigr)$ for some $\tau(t)$ optimal at $\vartheta(t)$. This is what
+    \code{src/core/transport.py} in the accompanying repository integrates.
+  \item \textbf{Filippov solutions.} These exist by Filippov's theorem, since the right-hand side is measurable and
+    locally bounded. But they include sliding motions on repelling ties, along which (i) below fails. For example,
+    take ideal${}={}$prior${}=\{a=0,\ a=1\}$, both particles at $a=\frac12$ and $e\equiv0$: this is a stationary
+    Filippov solution.
+  \item \textbf{What holds for which class.}
+    \begin{itemize}
+      \item Parts (ii)--(iv) hold for every Filippov solution, with $C$ taken as the maximum over optimal $\tau$.
+      \item Part (i) and the exact decay hold for selection solutions.
+      \item For Filippov solutions, (i) weakens as stated below.
+    \end{itemize}
+  \item \textbf{Regularity and existence.} $\VOT$ and $Z$ are absolutely continuous along solutions, and every
+    inequality holds for a.e.\ $t$. Existence of selection solutions is proved for the pure leak (Lemma C.3). In
+    general it is assumed: two-way ties are never attracting, by monotonicity of $\Proj$, but multi-way ties, the
+    degenerate ramp $h=1$ and accumulating switch times are not handled.
+\end{itemize}
+
+\paragraph{Notation.}
+\begin{itemize}
+  \item $c_\rho(\vartheta) := \frac1m\sum_i\norm{\vartheta_i - \vartheta^0_{\rho(i)}}^2_{\Ginv}$.
+  \item $\eta := W(\mu_t,\mu^*_t)$, and $R := \Delta = \diam_{\Ginv}(\ThK)$.
+  \item $b(t) := W(\mu^*_t,\mu^0)$, and $b := \sup_t b(t)$.
+  \item $\Delta_{\mathrm{gap}}(t) := \min\{c_\rho(\vartheta^*(t)) - b(t)^2 : c_\rho(\vartheta^*(t)) > b(t)^2\}$, with
+    $\min\emptyset := +\infty$; and $\Delta_{\mathrm{gap}} := \inf_t \Delta_{\mathrm{gap}}(t)$.
+  \item $A_{\tau\tau'} := \frac1m\sum_i\norm{\vartheta^0_{\tau(i)} - \vartheta^0_{\tau'(i)}}^2_{\Ginv}$.
+\end{itemize}
+
+\begin{thm}{Theorem}{C}
+Under \textup{(S)}, along every solution of $\Lsig$ in the sense above:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{Dissipation toward the prior \textup{(}selection solutions\textup{)}.} Let
+    $Z := \frac12 W(\mu_t,\mu^0)^2$ and
+    $\Gamma := \bigl(\frac1m\sum_i\norm{G\nabla g_t(\vartheta_i)}^2_{\Ginv}\bigr)^{1/2} \le
+    \lambda_G^{1/2}L_1\norm{e}$. Then:
+    \begin{itemize}
+      \item $D^+Z \le -2\sigma_m Z + (2Z)^{1/2}\Gamma(t)$;
+      \item hence $W(\mu_t,\mu^0) \le \max\{W(\mu_0,\mu^0),\ \sup\Gamma/\sigma_m\}$;
+      \item for the pure-leak flow \textup{(}$\Gamma\equiv0$\textup{)}, the decay
+        $W(\mu_t,\mu^0) = e^{-\sigma_m t}W(\mu_0,\mu^0)$ is exact for every $G\succ0$ \textup{(}Lemma C.3\textup{)}.
+    \end{itemize}
+    For a Filippov solution with weights $\theta_k$ on tied optimal assignments $\tau_k$, the bound weakens to
+    \[
+      D^+Z \le -2\sigma_m Z + \frac{\sigma_m}{2}\min_\tau\sum_k\theta_k A_{\tau\tau_k} + (2Z)^{1/2}\Gamma,
+    \]
+    with the minimum over assignments $\tau$ optimal at $t$.
+  \item \emph{Induced coupling.} Let $\pi^*$ be optimal from $\mu$ to $\mu^*$, and let $\tau$ be the optimal
+    assignment from $\mu$ to $\mu^0$ that the law uses at $t$ \textup{(}for Filippov solutions, any optimal
+    $\tau$\textup{)}. Set $C := \frac1m\sum_i\norm{\vartheta^*_{\pi^*(i)} - \vartheta^0_{\tau(i)}}^2_{\Ginv}$. Then
+    \[
+      C \le b(t)^2 + 4\eta R \qquad\text{and}\qquad \sqrt{C} \le b(t) + 2\eta,
+    \]
+    and $C = b(t)^2$ whenever $4\eta(b(t)+\eta) < \Delta_{\mathrm{gap}}$.
+  \item \emph{Lyapunov inequality.} With $C$ as in \textup{(ii)} \textup{(}for Filippov solutions, its maximum over
+    optimal $\tau$\textup{)},
+    \[
+      D^+\VOT \le -k_e\norm{e}^2 + \norm{e}\bigl(\varepsilon_{\max} + K\lambda_G\eta^2\bigr) + V_*\eta
+      - \sigma_m\eta^2 + \sigma_m\eta C^{1/2}.
+    \]
+    Under $4\eta(b+\eta) < \Delta_{\mathrm{gap}}$ this becomes
+    \[
+      D^+\VOT \le -k_e\norm{e}^2 + \norm{e}\bigl(\varepsilon_{\max} + K\lambda_G\eta^2\bigr) + V_*\eta
+      - \frac{\sigma_m}{2}\eta^2 + \frac{\sigma_m}{2}b^2.
+    \]
+  \item \emph{Local exponential estimate.} Suppose $4\bar\eta(b+\bar\eta) < \Delta_{\mathrm{gap}}$ and
+    $8K^2\lambda_G^2\bar\eta^2 \le k_e\sigma_m$. Set $\alpha := \min(k_e,\sigma_m/2)$ and
+    $\beta := \varepsilon_{\max}^2/k_e + (\sigma_m/2)b^2 + 2V_*^2/\sigma_m$, and suppose
+    $\max\{\VOT(0),\beta/\alpha\} < \bar\eta^2/2$. Then:
+    \begin{itemize}
+      \item $\{\VOT\le c\}$ is forward invariant for every $c\in\bigl[\max\{\VOT(0),\beta/\alpha\},\
+        \bar\eta^2/2\bigr)$;
+      \item $\VOT(t) \le e^{-\alpha t}\VOT(0) + \beta/\alpha$;
+      \item on this set $\norm{e} < \bar\eta$, so \textup{(S5)} holds with
+        $X := \bigcup_t\{x : \norm{x - x_m(t)} \le \bar\eta\}$.
+    \end{itemize}
+  \item \emph{The labelled leak.} Define
+    $b_{\mathrm{lab}}(\pi)(t) := \bigl(\frac1m\sum_i\norm{\vartheta^*_{\pi(i)}(t) - \vartheta^0_i}^2_{\Ginv}\bigr)^{1/2}$
+    and $b_{\mathrm{lab}}(\pi) := \sup_t b_{\mathrm{lab}}(\pi)(t)$.
+    \begin{itemize}
+      \item For any fixed $\pi$, the labelled $\sigma$-modification \textup{(}leak toward $\vartheta^0_i$\textup{)}
+        satisfies the second display of \textup{(iii)} at every state, with no gap condition. Here $b$ is replaced
+        by $b_{\mathrm{lab}}(\pi)$, $\VOT$ by $V_\pi$, and $\eta$ by the $\pi$-labelled error.
+      \item Choosing $\pi$ to minimise $b_{\mathrm{lab}}(\pi)$ gives the bias
+        $\min_\pi\sup_t b_{\mathrm{lab}}(\pi)(t) \ge b$. Equality holds when one assignment is optimal for
+        $(\mu^*_t,\mu^0)$ at every $t$, for example a static ideal, or whenever $\Delta_{\mathrm{gap}} > 0$.
+      \item The labelled leak does \textbf{not} satisfy \textup{(iii)} for $\VOT$ \textup{(}Proposition
+        C.5\textup{)}.
+    \end{itemize}
+\end{enumerate}
+\end{thm}
+\status{Proved and checked; the instance used to check (iv) satisfies every hypothesis of (iv). Not checked in the
+repository: the Filippov form of (i) and the inequality of (v). Novelty (literature audit): novel as a control construction;
+C(i) and the obstruction are known~\cite{R71}, \cite{R73}.}
+\checkedby{\code{tests/test_transport.py}:\newline
+(i) and Lemma C.3 (unprojected pure leak): \code{test_theorem_C_i_exact_dissipation_pure_leak};\newline
+(ii): \code{test_lemma_C_ii_induced_coupling_bound};\newline
+(iv): \code{test_theorem_C_iv_exponential_estimate}.\newline
+(v) and Proposition C.5, in \code{experiments/}: \code{exp_ot_sigma_mod.py} and \code{exp_sigma_mod_transient.py}.}
+
+\paragraph{Scope.}
+\begin{itemize}
+  \item \textbf{Finite gap.} If $\Delta_{\mathrm{gap}}<\infty$, that is, not all ideal--prior assignments tie, then
+    $\Delta_{\mathrm{gap}}\le 2R^2/m$ always. Indeed, if every transposition of an optimal $\rho_0$ were
+    cost-neutral, the matrix $S(i,j) := B(i,j) - (B(i,i)+B(j,j))/2$ built from
+    $B(i,j) := \ip{\vartheta^*_i}{\vartheta^0_{\rho_0(j)}}_{\Ginv}$ would be antisymmetric, and every assignment
+    would tie.
+    \begin{itemize}
+      \item Hence (iv) needs $\bar\eta < \sqrt{\Delta_{\mathrm{gap}}}/2 \le R/\sqrt{2m}$.
+      \item $\beta/\alpha < \bar\eta^2/2$ forces $b < \bar\eta/\sqrt2$.
+      \item So (iv) is a near-prior local result of size $O(m^{-1/2})$ in $W$, and $O(1/m)$ in $\VOT$.
+    \end{itemize}
+  \item \textbf{Infinite gap.} If $\Delta_{\mathrm{gap}} = +\infty$, for example for a single-atom prior (the
+    classical $\sigma$-modification), the gap condition is void. Then (iv) is $m$-uniform; $\bar\eta$ is then fixed
+    by $8K^2\lambda_G^2\bar\eta^2\le k_e\sigma_m$ alone.
+  \item \textbf{Switching.} $\Delta_{\mathrm{gap}}>0$ forces the set of optimal ideal--prior assignments to be
+    constant in $t$. If that set switches along a moving ideal, then $\Delta_{\mathrm{gap}} = 0$, and the second
+    clause of (ii), the second display of (iii) and all of (iv) are vacuous.
+\end{itemize}
+
+\begin{proof}
+\textit{(i)} For a selection solution, at a.e.\ $t$ the law uses an optimal $\tau(t)$, and
+$Z \le Z_\tau := \frac12 c_\tau$ with equality at $t$. By Lemma B.1 it suffices to bound $\dot Z_\tau$. Apply (P)
+with $\vartheta' = \vartheta^0_{\tau(i)}$ and Cauchy--Schwarz in the $\Ginv$ inner product:
+$\dot Z_\tau \le (2Z)^{1/2}\Gamma - 2\sigma_m Z$. Write $y := (2Z)^{1/2}$.
+\begin{itemize}
+  \item Where $Z>0$, $D^+y \le -\sigma_m y + \Gamma$.
+  \item At $Z = 0$, $D^+y \le \bigl(\frac1m\sum\norm{\dot\vartheta_i}^2_{\Ginv}\bigr)^{1/2} \le \Gamma$, by
+    Lemma P.1 (the leak term vanishes there).
+  \item $\Gamma \le \lambda_G^{1/2}L_1\norm{e}$ by Lemma B.2(b).
+\end{itemize}
+The pure-leak case is Lemma C.3, and the projection is inactive there. In the layer,
+$a^\T(a^0 - a) \le \norm{a}(\norm{a^0} - \norm{a}) \le 0$, and similarly for $c$. For $s$, the leak points away
+from the nearby face.
+
+For Filippov velocities, the leak part averaged over the tie is
+\[
+  -\sigma_m\frac1m\sum_i\sum_k\theta_k\ip{\vartheta_i - \vartheta^0_{\tau(i)}}{\vartheta_i -
+  \vartheta^0_{\tau_k(i)}}_{\Ginv}.
+\]
+By polarisation, and since $c_\tau = c_{\tau_k} = 2Z$ for tied optimal assignments, this equals
+$-2\sigma_m Z + (\sigma_m/2)\sum_k\theta_k A_{\tau\tau_k}$. Property (P) holds termwise for the convex combination.
+The bound is tight at the tie equilibrium of the solution-concept example ($0 = -\sigma_m/4 + \sigma_m/4$).
+
+\smallskip
+\textit{(ii)} Relabel so that $\frac1m\sum\norm{\vartheta_i - \vartheta^*_i}^2_{\Ginv} = \eta^2$. For any $\rho$:
+\begin{itemize}
+  \item $\abs{c_\rho(\vartheta) - c_\rho(\vartheta^*)} \le 2\eta R$;
+  \item $\abs{\sqrt{c_\rho(\vartheta)} - \sqrt{c_\rho(\vartheta^*)}} \le \eta$, by the reverse triangle inequality
+    for the $(1/m)$-weighted $\Ginv$ norm.
+\end{itemize}
+Let $\rho_0$ be optimal for $(\vartheta^*(t),\vartheta^0)$. Then
+\begin{align*}
+  C = c_\tau(\vartheta^*) &\le c_\tau(\vartheta) + 2\eta R \le c_{\rho_0}(\vartheta) + 2\eta R
+    \le b(t)^2 + 4\eta R,\\
+  \sqrt{C} &\le \sqrt{c_\tau(\vartheta)} + \eta \le \sqrt{c_{\rho_0}(\vartheta)} + \eta \le b(t) + 2\eta.
+\end{align*}
+So $C - b(t)^2 \le 4\eta(b(t)+\eta) < \Delta_{\mathrm{gap}} \le \Delta_{\mathrm{gap}}(t)$. No assignment cost at
+time $t$ lies strictly between $b(t)^2$ and $b(t)^2 + \Delta_{\mathrm{gap}}(t)$, so $C = b(t)^2$.
+
+\smallskip
+\textit{(iii)} Apply Theorem B with $y = \nabla g_t - \sigma_m\Ginv(\vartheta_i - \vartheta^0_{\tau(i)})$ in (P).
+With $\tilde\vartheta_i := \vartheta_i - \vartheta^*_{\pi^*(i)}$ as in the proof of Theorem B, the extra term is
+\[
+  -\sigma_m\frac1m\sum\ip{\tilde\vartheta_i}{\tilde\vartheta_i + \vartheta^*_{\pi^*(i)} -
+  \vartheta^0_{\tau(i)}}_{\Ginv} \le -\sigma_m\eta^2 + \sigma_m\eta C^{1/2}.
+\]
+Under the gap condition, (ii) gives $C^{1/2} = b(t) \le b$, and $\sigma_m\eta b \le (\sigma_m/2)(\eta^2 + b^2)$.
+
+\smallskip
+\textit{(iv)} Apply Young's inequality three times:
+\begin{itemize}
+  \item $\norm{e}\varepsilon_{\max} \le (k_e/4)\norm{e}^2 + \varepsilon_{\max}^2/k_e$;
+  \item $\norm{e}K\lambda_G\eta^2 \le (k_e/4)\norm{e}^2 + (\sigma_m/8)\eta^2$ on $\{\eta\le\bar\eta\}$;
+  \item $V_*\eta \le (\sigma_m/8)\eta^2 + 2V_*^2/\sigma_m$.
+\end{itemize}
+This gives $D^+\VOT \le -\alpha\VOT + \beta$. Each set $\{\VOT\le c\}$ with $\beta/\alpha < c < \bar\eta^2/2$ lies
+inside $\{\eta\le\bar\eta\}$ and has a negative boundary derivative. Intersect over $c > \beta/\alpha$ for the
+endpoint, and apply the comparison lemma.
+
+\smallskip
+\textit{(v)} Steps (a)--(c) of Theorem B hold for any fixed $\pi$, so use the classical completion of squares for
+$V_\pi$.
+\begin{itemize}
+  \item \emph{Equality case.} If $\Delta_{\mathrm{gap}}>0$, the costs minus $b(t)^2$ take values in
+    $\{0\}\cup[\Delta_{\mathrm{gap}},\infty)$ and are continuous in $t$, so the optimal set is constant.
+  \item \emph{Strict case.} If the optimal ideal--prior assignment changes along the ideal, the inequality can be
+    strict. For example, $a^*_1(t) = t$ and $a^*_2(t) = 1-t$ on $[0,1]$, with prior $a\in\{0,1\}$, give $b = 0.5$
+    against $1.0$.
+  \item \emph{Not always strict.} For $a^*(t) = (u(t),\,1-u(t))$ with $u(t) = -0.025 + 0.575\sin t$, the optimal
+    assignment alternates between the identity and the swap, yet
+    $\min_\pi\sup_t b_{\mathrm{lab}}(\pi)(t) = \sup_t b_{\mathrm{lab}}(\mathrm{id})(t) = 0.6 = b$ (computed numerically).
+\end{itemize}
+The negative statement is Proposition C.5.
+\end{proof}
+
+\begin{thm}{Lemma}{C.3}[no switching along the pure leak; exact decay for any $G\succ0$]
+Let $\tau$ be optimal for $(\mu_{\mathrm{init}},\mu^0)$ and $\dot\vartheta_i = -\sigma_m(\vartheta_i -
+\vartheta^0_{\tau(i)})$. Then $\tau$ stays optimal and
+$W(\mu_t,\mu^0) = e^{-\sigma_m t}W(\mu_{\mathrm{init}},\mu^0)$.
+\end{thm}
+
+\begin{proof}
+Put $d_i := \vartheta_i(0) - \vartheta^0_{\tau(i)}$, so $\vartheta_i(t) - \vartheta^0_{\tau(i)} = \lambda d_i$ with
+$\lambda = e^{-\sigma_m t}$. For any $\rho$, with $q_i := \vartheta^0_{\tau(i)} - \vartheta^0_{\rho(i)}$,
+\[
+  c_\rho(t) - c_\tau(t) = \frac{2\lambda}{m}\sum\ip{d_i}{q_i}_{\Ginv} + \frac1m\sum\norm{q_i}^2_{\Ginv}.
+\]
+This is affine in $\lambda$. It is non-negative at $\lambda = 1$ by optimality and at $\lambda = 0$ trivially, hence
+on all of $[0,1]$.
+
+At an exact tie at $t = 0$, the chosen assignment becomes strictly optimal immediately against every $\rho$ with
+$A_\rho := \frac1m\sum\norm{q_i}^2 > 0$. Assignments with $A_\rho = 0$ induce the same velocity. So no selection
+solution of the pure leak switches. Filippov sliding on the tie is a different solution, excluded by the solution
+concept.
+\end{proof}
+\checkedby{\code{test_theorem_C_i_exact_dissipation_pure_leak} in \code{tests/test_transport.py}: zero switches,
+and exact decay to integrator accuracy.}
+
+\begin{thm}{Proposition}{C.5}[the labelled leak reshuffles]
+There are configurations with $b = b_{\mathrm{lab}}(\mathrm{id}) = 0$ and $e = 0$ at which the labelled leak gives
+$D^+\VOT > 0$.
+\end{thm}
+
+\begin{proof}[Example]
+Take $n = 1$, $G = I$ and $a_{\max} - \varepsilon_K \ge 1$. Let ideal${}={}$prior${}=\{a=0,\ a=1\}$, with the
+other coordinates equal and in the inner set, and let the network weights be $(1-\delta,\delta)$ with
+$0 < \delta < \frac12$.
+\begin{itemize}
+  \item The optimal assignment to the ideal is the swap.
+  \item The labelled leak moves each particle toward the \emph{other} ideal atom.
+  \item So $D^+\VOT = \sigma_m(\delta - \delta^2) > 0$. \qedhere
+\end{itemize}
+\end{proof}
+
+From a relabelled start, the labelled leak moves every kernel in a non-trivial cycle of the relabelling to its prior
+position. In the reshuffling experiment (\code{results/ot_sigma_mod/transient.md} in the accompanying repository):
+\begin{itemize}
+  \item the steady states coincide;
+  \item the labelled leak's particle path is $5.8\times$ longer ($2.26$ against $0.39$);
+  \item the early $\RMS\norm{e}$ is only about 4\% larger ($0.0771$ against $0.0743$ on $[0,5]$).
+\end{itemize}
+Theorem F does not price this motion. With a leak, Theorem F bounds transport from above by tracking error plus a
+leak term, and the leak can pay for all of it. With $\delta = 0$ above, $e\equiv0$ while every particle crosses the
+domain.
+\checkedby{the reshuffling transient, \code{experiments/exp_sigma_mod_transient.py}. The value
+$D^+\VOT = \sigma_m(\delta - \delta^2)$ is not checked in the repository.}
+
+\begin{rmk}{Remark}{C.6}[the obstruction is known]
+\leavevmode
+\begin{itemize}
+  \item \textbf{Non-convexity.} For some $\nu$, for example a two-atom $\nu$ in dimension $\ge 2$,
+    $\frac12W^2(\cdot,\nu)$ is not $\lambda$-convex along geodesics for any $\lambda$
+    (Ambrosio--Gigli--Savaré~\cite[Example~9.1.5]{ags2008}; Santambrogio~\cite[\S4.5]{R71}). It is
+    $1$-semiconcave in every dimension \cite[Thm.~7.3.2]{ags2008}. For $\nu = \delta_{\vartheta^0}$ it is a
+    potential energy, and $1$-convex.
+  \item \textbf{Generalised geodesics.} $\frac12W^2(\cdot,\nu)$ is $1$-convex along generalised geodesics with base
+    $\nu$ (\cite[Lemma~9.2.1]{ags2008}; Carlen--Craig~\cite{R73}).
+  \item \textbf{Label-free leaks.}
+    \begin{itemize}
+      \item A label-free leak that is $\lambda$-convex ($\lambda > 0$) on the lift $\R^{mp}$ has a unique,
+        permutation-invariant minimiser, at which all particles coincide. So it cannot vanish at a $\mu^0$ with
+        distinct atoms.
+      \item $0$-convex leaks that vanish at $\mu^0$ exist, for example toward $\operatorname{conv}\supp\mu^0$. They
+        do not single out $\mu^0$.
+    \end{itemize}
+\end{itemize}
+So the trade-off reflects this geometry. On one side is a global inequality for a labelled $V_\pi$, which is large
+at relabelled starts (hence the reshuffling of Proposition C.5). On the other is a local, gap-protected inequality
+for the label-free $\VOT$.
+\end{rmk}

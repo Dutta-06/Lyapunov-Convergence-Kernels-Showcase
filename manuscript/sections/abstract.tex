@@ -1,0 +1,23 @@
+% Abstract
+\begin{abstract}
+This is a complete mathematical treatment of adaptive tracking control with Gaussian radial-basis-function
+(RBF) networks whose weights, centres and widths are adapted online. Part~I is the projection-based adaptive RBF
+controller of version~1. An audit found its stability argument to be a correct but standard composition of known
+results, with two claims wrong as written (a non-convex ``projection'' for centre separation and an
+implicit-function-theorem argument that is not a proof); it contains no new theorem. We state it with explicit
+assumptions, a Hessian-free disturbance bound and an RMS bound, and list the errata to version~1. Part~II develops
+transport adaptive control: the network is an empirical measure on a lifted parameter space, and the adaptive law is
+its transport. Theorems A--D and F are proved; A, B, C and F are also checked by tests. Theorem~E is proved
+conditional on Theorem~1 of Morgan and Narendra (1977), in the form stated in that paper's abstract; its hypotheses
+were not checked against the full text. Proposition~G is formal and checked directly. Theorem~H shows that the
+averaged mean-field loop with saturated features, $\sigma$-modification and dither is mean-field Langevin dynamics and
+converges globally and exponentially to the regularised optimum; this is proved for the averaged system, the
+reduction to it is formal, and the real loop is a conjecture. At finite gain the averaged loop is in general not a
+gradient flow of any free energy in the $\WG$ metric: Proposition~H.7 (frozen-measure part proved) exhibits a
+semi-gradient term, whose performative defect is non-reciprocal in the checked instances ($n = 1, 2$), and an
+orbit-area circulation kernel ($n \ge 2$). With a second-order averaging term they predict a closed-loop effect for
+which a targeted literature search found no precedent: traversing the reference orbit backwards changes the learned
+kernels by $O(1/k_e)$, although the occupation measure is unchanged. At $k_e = 40$ the prediction matches to 3\% in
+size and 11\% as a vector (cosine 0.994). Proposition~H.8, proved assuming the chain rule for the perturbed flow,
+gives input-to-state stability of the averaged system.
+\end{abstract}

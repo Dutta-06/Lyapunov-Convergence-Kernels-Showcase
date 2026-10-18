@@ -1,0 +1,458 @@
+% Source: PARADIGM.md lines 1419--1689 (Proposition H.7, Remark H.7a, Proposition H.8, route to Conjecture H.6,
+% evidence).  Notation: Section~\ref{sec:setting} and Section~\ref{sec:thmH}.
+\section{Finite gain: semi-gradient and non-reciprocal structure}\label{sec:finitegain}
+
+This section continues Section~\ref{sec:thmH} at finite feedback gain $k_e$. The notation is that of
+Section~\ref{sec:setting} and Section~\ref{sec:thmH}: the saturated features $\tilde\Phi$, the residual $r_\mu$, the
+potential $V_L[\mu]$, the averaged system $\Aavg$ and the law $(\mathrm{L}_\tau)$. We write
+$\tilde\Phi_\vartheta := \tilde\Phi(\cdot;\vartheta)$.
+
+\subsection{Frozen-measure structure of the exactly averaged loop}
+
+\begin{thm}{Proposition}{H.7}[frozen-measure structure of the exactly averaged closed loop]
+Assume the following:
+\begin{itemize}
+  \item $f\in C^2(\R^n)$ is autonomous;
+  \item $x_m\in C^2$ is $T_0$-periodic, with oriented orbit $\mathcal{O}$;
+  \item the features are the saturated features of the design (Section~\ref{sec:thmH});
+  \item $\mu\in\Prob(\R^p)$ is frozen.
+\end{itemize}
+Then for every $R>0$ there is $k_0(R)$, independent of $\mu$, such that for $k_e\ge k_0(R)$ the following hold.
+\begin{enumerate}[label=(\alph*)]
+  \item \emph{Periodic error.} The frozen-$\mu$ error equation $\dot e = r_\mu(x_m+e) - k_e e$ has exactly one
+    $T_0$-periodic solution $e_\mu$ with $\sup_t\norm{e_\mu}\le R$. It attracts exponentially every solution with
+    $\norm{e(0)}\le R$, and
+    \begin{equation}\label{eq:finitegain:emu}
+      e_\mu = \frac{r_\mu(x_m)}{k_e}
+        + \frac{\nabla r_\mu(x_m)\, r_\mu(x_m) - \frac{\mathrm{d}}{\mathrm{d}t} r_\mu(x_m(t))}{k_e^2}
+        + O(k_e^{-3}),
+    \end{equation}
+    uniformly in $t$ and $\mu$.
+    \begin{itemize}
+      \item Here $\nabla r_\mu$ is the Jacobian $(\partial r_k/\partial x_l)$, and
+        $\partial_x\tilde\Phi = (\partial\tilde\Phi_k/\partial x_l)$.
+      \item If $f$ is one-sided Lipschitz, $\ip{f(x)-f(y)}{x-y}\le L_f\norm{x-y}^2$, then for
+        $k_e > L_f + a_{\max}\sqrt{n}\,e^{-1/2}/s_{\min}$ the periodic solution is unique and attracts every
+        solution.
+      \item Without such a condition uniqueness is only local. For $f(x)=x^2$ there is a second, repelling periodic
+        solution near $e\approx k_e$, and solutions above it blow up.
+    \end{itemize}
+
+  \item \emph{Expansion.} The period average of the drift of $(\mathrm{L}_\tau)$ along $e_\mu$ is
+    $G\nabla_\vartheta P_\mu(\vartheta) - \sigma(\vartheta-\vartheta^0)$, where
+    $P_\mu(\vartheta) := \langle e_\mu^\T\tilde\Phi(x_m+e_\mu;\vartheta)\rangle_t$ satisfies
+    \begin{gather}
+      P_\mu(\vartheta) = -\frac{1}{k_e}V_L[\mu](\vartheta)
+        + \frac{1}{k_e^2}\bigl(U_{\mathrm{even}}[\mu](\vartheta) + U_{\mathrm{odd}}[\mu](\vartheta)\bigr)
+        + O(k_e^{-3}),\label{eq:finitegain:Pmu}\\
+      U_{\mathrm{even}}[\mu](\vartheta) := \int(r_\mu\cdot\nabla_x)\bigl(r_\mu^\T\tilde\Phi(\cdot;\vartheta)\bigr)\dd\rho,
+      \qquad
+      U_{\mathrm{odd}}[\mu](\vartheta) := -\frac{1}{T_0}\oint_{\mathcal{O}}\tilde\Phi(\cdot;\vartheta)^\T\dd r_\mu,
+      \label{eq:finitegain:Ueo}
+    \end{gather}
+    uniformly in $\vartheta$ and $\mu$, together with $\vartheta$-gradients.
+
+  \item \emph{Semi-gradient form.}
+    \begin{equation}\label{eq:finitegain:semigrad}
+      -\frac{1}{k_e}V_L[\mu] + \frac{1}{k_e^2}U_{\mathrm{even}}[\mu]
+        = \frac{1}{k_e}\int r_\mu^\T\tilde\Phi(\cdot;\vartheta)\dd\rho^{\mathrm{cl}}_\mu + O(k_e^{-3}).
+    \end{equation}
+    Here $\rho^{\mathrm{cl}}_\mu$ is the occupation measure of the closed-loop state $x_m+e_\mu$.
+    \begin{itemize}
+      \item So, apart from the lag term $U_{\mathrm{odd}}$, the averaged law follows the gradient of the closed-loop
+        loss $\frac12\int\norm{r_\nu}^2\dd\rho^{\mathrm{cl}}_\mu$ at $\nu=\mu$, with the closed-loop state
+        distribution $\rho^{\mathrm{cl}}_\mu$ held fixed.
+      \item This is a semi-gradient: the update freezes part of its own parameter dependence. In TD learning the
+        frozen part is the bootstrapped target, and the data distribution does not depend on the
+        parameters~\cite{S11,S10}.
+      \item Here the frozen part is the data distribution $\rho^{\mathrm{cl}}_\mu$. This is the structure of
+        performative prediction~\cite{S14}: steps taken with the distribution held at its current value converge to
+        performatively stable points, not to optima.
+      \item \textbf{The performative defect carries the even non-reciprocity.} With
+        $J^{\mathrm{cl}}(\mu) := \frac12\int\norm{r_\mu}^2\dd\rho^{\mathrm{cl}}_\mu$,
+        \begin{equation}\label{eq:finitegain:defect}
+          \begin{aligned}
+            &-\frac{1}{k_e}V_L[\mu] + \frac{1}{k_e^2}U_{\mathrm{even}}[\mu]\\
+            &\qquad= -\frac{1}{k_e}\frac{\delta J^{\mathrm{cl}}}{\delta\mu}
+              - \frac{1}{k_e^2}\int(\tilde\Phi_\vartheta\cdot\nabla)\bigl(\tfrac12\norm{r_\mu}^2\bigr)\dd\rho
+              + O(k_e^{-3}).
+          \end{aligned}
+        \end{equation}
+        The first term is a true first variation, hence reciprocal. The second is the defect: it has the same order
+        as $U_{\mathrm{even}}$, and it carries all of $A_{\mathrm{even}}$ in~(e).
+    \end{itemize}
+
+  \item \emph{Circulation kernel.}
+    $U_{\mathrm{odd}}[\mu](\vartheta) = -\frac{1}{T_0}\oint_{\mathcal{O}}\tilde\Phi(\cdot;\vartheta)^\T\dd f
+      + \int K(\vartheta,\vartheta')\dd\mu(\vartheta')$, with
+    \begin{equation}\label{eq:finitegain:K}
+      K(\vartheta,\vartheta') := \frac{1}{T_0}\oint_{\mathcal{O}}\tilde\Phi(\cdot;\vartheta)^\T\dd\tilde\Phi(\cdot;\vartheta')
+        = \Bigl\langle\tilde\Phi(x_m;\vartheta)^\T\,\frac{\mathrm{d}}{\mathrm{d}t}\tilde\Phi(x_m;\vartheta')\Bigr\rangle_t .
+    \end{equation}
+    \begin{itemize}
+      \item $K$ is antisymmetric.
+      \item By Stokes,
+        $K(\vartheta,\vartheta') = \frac{1}{T_0}\int_\Sigma\sum_k\mathrm{d}\tilde\Phi_k(\cdot;\vartheta)\wedge
+        \mathrm{d}\tilde\Phi_k(\cdot;\vartheta')$ for any $2$-chain $\Sigma$ with $\partial\Sigma=\mathcal{O}$.
+      \item For $n=2$ and a simple, positively oriented orbit bounding $D$,
+        \[
+          K(\vartheta,\vartheta') = \frac{1}{T_0}\sum_k\int_D\det\bigl[\nabla_x\tilde\Phi_k(\cdot;\vartheta),
+          \nabla_x\tilde\Phi_k(\cdot;\vartheta')\bigr]\dd A.
+        \]
+      \item $K$ is an integral over the enclosed region, not the area itself. For Gaussian features,
+        $\sum_k\det[\nabla\tilde\Phi_k(\vartheta),\nabla\tilde\Phi_k(\vartheta')]
+        = (a^\T a')\cdot\det[\nabla\varphi,\nabla\varphi']$, so $K=0$ whenever $a^\T a'=0$ or $c=c'$, whatever the
+        area.
+      \item Hence $U_{\mathrm{odd}}\equiv0$ for $n=1$.
+      \item Reversing the orbit preserves $\rho$, flips $U_{\mathrm{odd}}$, and leaves $U_{\mathrm{even}}$ unchanged.
+    \end{itemize}
+
+  \item \emph{Non-reciprocity.} Write $S(\vartheta,\vartheta') := \delta P_\mu(\vartheta)/\delta\mu(\vartheta')$ for
+    the derivative in the direction $\delta_{\vartheta'}$, and call $S(\vartheta,\vartheta') - S(\vartheta',\vartheta)$
+    its antisymmetric part (without the factor $\frac12$). Adding a function of $\vartheta$ alone, or a constant
+    $c(\mu)$, to $P_\mu$ changes the antisymmetric part by a coboundary, which the criterion below allows.
+    \begin{itemize}
+      \item At order $1/k_e$, $S$ is symmetric: it equals
+        $-\frac{1}{k_e}\int\tilde\Phi(\cdot;\vartheta)^\T\tilde\Phi(\cdot;\vartheta')\dd\rho$.
+      \item At order $1/k_e^2$ it is not. The second variation of the $k_e^{-2}$ coefficient
+        $U_{\mathrm{even}}+U_{\mathrm{odd}}$ has antisymmetric part $A_{\mathrm{even}}+2K$, with
+        \begin{equation}\label{eq:finitegain:Aeven}
+          A_{\mathrm{even}}(\vartheta,\vartheta') := -\int\Bigl[(\tilde\Phi_{\vartheta'}\cdot\nabla)
+            (r_\mu^\T\tilde\Phi_\vartheta) - (\tilde\Phi_\vartheta\cdot\nabla)(r_\mu^\T\tilde\Phi_{\vartheta'})\Bigr]
+            \dd\rho .
+        \end{equation}
+      \item $P_\mu$, up to $O(k_e^{-3})$, can be a first variation of a functional of $\mu$ only if
+        $A_{\mathrm{even}}+2K$ is a coboundary $a(\vartheta)-a(\vartheta')$, that is, only if all its cyclic sums
+        vanish.
+      \item They do not vanish in the checked instances, for $n=1$ (from $A_{\mathrm{even}}$ alone) and for $n=2$.
+      \item So in these instances, at finite $k_e$, the exactly averaged loop is a non-reciprocal McKean--Vlasov
+        dynamics. It is not the $\WG$-gradient flow of any free energy. A different, $\mu$-dependent metric is not
+        excluded by this argument.
+    \end{itemize}
+\end{enumerate}
+\end{thm}
+\status{The frozen-measure part is proved. Non-reciprocity of the exact second variation is checked, in the
+instances $n=1$ and $n=2$ only, to 3\% (asserted; 1--1.5\% measured). The Stokes identity and the parity under orbit
+reversal hold to machine precision. The expansion is checked through its $O(1/k_e)$ convergence. Novelty (literature audit): no precedent found
+(targeted search); ingredients known (higher-order averaging; performative prediction~\cite{S14}; semi-gradient
+TD~\cite{S11,S10}).}
+
+\begin{proof}
+\emph{(a)} Write $e = r_\mu(x_m)/k_e + w$. Then $w$ solves $\dot w = -k_e w + g(t,w)$ with
+$g = \nabla r_\mu(x_m)e - \dot r_\mu/k_e + O(\abs{e}^2)$.
+\begin{itemize}
+  \item The tube $\{\norm{e}\le R\}$ is forward invariant once $k_eR > \sup_{\norm{e}\le R}\norm{r_\mu(x_m+e)}$.
+  \item Inside the tube, solutions contract at rate $k_e - \Lip_R(r_\mu)$, which gives existence, uniqueness and
+    attraction there. A contraction on $T_0$-periodic functions gives the expansion.
+  \item The bounds on $r_\mu$, $\nabla r_\mu$ and $\nabla^2 r_\mu$ on the $R$-neighbourhood of the orbit are uniform in
+    $\mu$, by the saturation and $f\in C^2$.
+  \item The global statement uses $L_f$ in place of the local Lipschitz constant of $f$.
+\end{itemize}
+
+\noindent\emph{(b)} Taylor-expand
+$e^\T\tilde\Phi(x_m+e;\vartheta) = e^\T\tilde\Phi(x_m;\vartheta) + e^\T\partial_x\tilde\Phi(x_m;\vartheta)e
++ O(\abs{e}^3)$, and insert~(a).
+\begin{itemize}
+  \item The period averages of the time-symmetric terms are integrals against $\rho$.
+  \item $(\nabla r\, r)^\T\tilde\Phi + r^\T(\partial_x\tilde\Phi)r = (r\cdot\nabla)(r^\T\tilde\Phi)$.
+  \item $\vartheta$-derivatives commute with the average.
+  \item The remainders are uniform, because the $x$- and $\vartheta$-derivatives of $\tilde\Phi$ of the orders needed
+    are bounded.
+\end{itemize}
+
+\noindent\emph{(c)} We have
+\[
+  \int r_\mu^\T\tilde\Phi_\vartheta\dd\rho^{\mathrm{cl}}_\mu
+  = \bigl\langle r_\mu(x_m+e_\mu)^\T\tilde\Phi(x_m+e_\mu;\vartheta)\bigr\rangle
+  = \int r_\mu^\T\tilde\Phi_\vartheta\dd\rho
+    + \bigl\langle\nabla_x(r_\mu^\T\tilde\Phi_\vartheta)\cdot e_\mu\bigr\rangle + O(k_e^{-2}).
+\]
+By~(a) this equals $\int r_\mu^\T\tilde\Phi_\vartheta\dd\rho + (1/k_e)U_{\mathrm{even}} + O(k_e^{-2})$.
+
+\noindent\emph{(d)} $\frac{\mathrm{d}}{\mathrm{d}t}r_\mu(x_m) = \frac{\mathrm{d}}{\mathrm{d}t}f(x_m)
+- \int\frac{\mathrm{d}}{\mathrm{d}t}\tilde\Phi(x_m;\vartheta')\dd\mu(\vartheta')$.
+\begin{itemize}
+  \item Antisymmetry: $K(\vartheta,\vartheta') + K(\vartheta',\vartheta)
+    = \frac{1}{T_0}\oint\mathrm{d}\bigl(\tilde\Phi_\vartheta^\T\tilde\Phi_{\vartheta'}\bigr) = 0$.
+  \item The area form is Stokes, or Green's theorem for $n=2$.
+  \item For $n=1$, every $1$-form on $\R$ is exact, so its loop integrals vanish.
+  \item Reversal changes the sign of oriented loop integrals and preserves $\rho$.
+\end{itemize}
+
+\noindent\emph{(e)} The second variation of $U_{\mathrm{even}}$ is
+\[
+  S_{\mathrm{even}}(\vartheta,\vartheta')
+  = -\int\Bigl[(\tilde\Phi_{\vartheta'}\cdot\nabla)(r_\mu^\T\tilde\Phi_\vartheta)
+    + (r_\mu\cdot\nabla)(\tilde\Phi_{\vartheta'}^\T\tilde\Phi_\vartheta)\Bigr]\dd\rho,
+\]
+whose second term is symmetric. The second variation of $U_{\mathrm{odd}}$ is $K$. A kernel's antisymmetric part $A$
+is a coboundary if and only if $A(\vartheta_0,\vartheta_1) + A(\vartheta_1,\vartheta_2) + A(\vartheta_2,\vartheta_0)
+= 0$ for all triples.
+
+The remainder of~(b) is not differentiated in $\mu$. Instead the argument uses a circulation around a small triangle of
+measures.
+\begin{enumerate}[label=\arabic*.]
+  \item Fix $\vartheta_0,\vartheta_1,\vartheta_2$ and $\varepsilon\in(0,1)$. For $(a,b)$ in
+    $T_\varepsilon := \{a,b\ge0,\ a+b\le\varepsilon\}$, let
+    $\mu_{a,b} := (1-\varepsilon)\mu + (\varepsilon-a-b)\delta_{\vartheta_0} + a\delta_{\vartheta_1}
+    + b\delta_{\vartheta_2}$.
+  \item The circulation $\oint_{\partial T_\varepsilon}\ip{Q_{\mu_{a,b}}}{\mathrm{d}\mu_{a,b}}$ vanishes when $Q_\mu$
+    is a first variation plus a constant $c(\mu)$, because $\mathrm{d}\mu_{a,b}$ has zero mass. In particular it
+    vanishes for $-(1/k_e)V_L$.
+  \item $U_{\mathrm{even}}+U_{\mathrm{odd}}$ is quadratic in $\mu$, so its circulation equals
+    $-(\varepsilon^2/2)\cdot\sum_{\mathrm{cyc}}(A_{\mathrm{even}}+2K)(\vartheta_i,\vartheta_{i+1})$ at the centroid of
+    $T_\varepsilon$.
+  \item The $O(k_e^{-3})$ remainder of~(b) contributes at most $6\varepsilon\cdot\sup\abs{R} = O(\varepsilon k_e^{-3})$.
+  \item Suppose that, for all large $k_e$, $P_\mu$ were a first variation up to $O(k_e^{-3})$, with constants uniform
+    in $k_e$. Then $(\varepsilon^2/(2k_e^2))\abs{\mathrm{cyc}}\le C\varepsilon k_e^{-3}$, that is,
+    $\abs{\mathrm{cyc}}\le 2C/(\varepsilon k_e)$. The cyclic sum does not depend on $k_e$, so letting
+    $k_e\to\infty$ at fixed $\varepsilon$ gives $\mathrm{cyc}=0$.
+\end{enumerate}
+This is checked numerically: for $\varepsilon=0.05$ and $n=2$ the circulation equals the centroid formula to all
+printed digits.
+\end{proof}
+
+\checkedby{\code{tests/test_averaging.py} in the accompanying repository, using \code{src/core/averaging.py}; seven
+tests: four for Proposition H.7, one for Remark H.0, two for Remark H.7a. The checks of Proposition H.7 are listed in
+Table~\ref{tab:finitegain:checks}.}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption[Checks of Proposition H.7]{Checks of Proposition H.7 (\code{tests/test_averaging.py}).}
+\label{tab:finitegain:checks}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.30\textwidth}Y@{}}
+\toprule
+check & result \\
+\midrule
+expansion: relative error of $k_e^2(P_\mu - P_0)$ against $U_{\mathrm{even}}+U_{\mathrm{odd}}$
+  & halves when $k_e$ doubles. At $k_e = 40\to80$ it goes $0.54\to0.25$ for $n=1$, $0.038\to0.019$ for $n=2$
+    counter-clockwise, and $0.022\to0.011$ clockwise. A Richardson step at $k_e=80$ and $160$ brings $n=1$ within
+    3\% (asserted) \\
+\addlinespace
+Stokes: loop-integral $K$ against the area integral over the enclosed ellipse
+  & agreement to $7\cdot10^{-15}$ relative (asserted at $10^{-6}$); $K$ antisymmetric; $K\equiv0$ for $n=1$ \\
+\addlinespace
+parity under orbit reversal (same $\rho$)
+  & $U_{\mathrm{even}}$ unchanged and $U_{\mathrm{odd}}$ flipped, to $2\cdot10^{-15}$ relative (asserted at
+    $10^{-10}$) \\
+\addlinespace
+non-reciprocity: the \emph{exact} second variation $S$ ($k_e=80$) against the prediction
+  & the full matrix $k_e^2S + k_eS_0$ is within 5\% of $S_{\mathrm{even}}+K$. The cyclic sums of the antisymmetric
+    part agree to 3\%: $n=1$ gives $-0.0711$ against $-0.0704$, all from the state shift; $n=2$ gives $-0.0471$
+    against $-0.0464$ (state shift $-0.089$, circulation $+0.043$) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{The oscillation correction and the orientation of the reference orbit}
+
+\begin{rmk}{Remark}{H.7a}[the full first-order correction, and a test in the real closed loop]
+Proposition H.7 freezes the measure over a period. In the closed loop the parameters also oscillate within each period,
+by $O(1/k_e)$.
+
+\emph{The parameter equation.} In the scaling $\sigma=\sigma_0/k_e$, write
+\begin{align}
+  \dot\Theta &= \frac{1}{k_e}H(\Theta,t) + \frac{1}{k_e^2}H_2(\Theta,t) + O(k_e^{-3}),\label{eq:finitegain:Theta}\\
+  H_i(\Theta,t) &:= G\nabla_\vartheta\bigl[r_\Theta(x_m(t))^\T\tilde\Phi(x_m(t);\vartheta_i)\bigr]
+    - \sigma_0(\vartheta_i-\vartheta^0).\notag
+\end{align}
+
+\emph{Second-order averaging} (Sanders--Verhulst--Murdock~\cite[\S2.9]{svm2007}) gives the dynamics of the period
+mean $Y$:
+\begin{equation}\label{eq:finitegain:Y}
+  \dot Y = \frac{1}{k_e}\langle H\rangle(Y)
+    + \frac{1}{k_e^2}\Bigl[\langle H_2\rangle(Y) + \bigl\langle D_\Theta H(Y,t)\cdot u(Y,t)\bigr\rangle\Bigr]
+    + O(k_e^{-3}).
+\end{equation}
+\begin{itemize}
+  \item $u$ is the zero-mean antiderivative in $t$ of $H-\langle H\rangle$.
+  \item $\langle H_2\rangle$ is the frozen-measure correction of Proposition H.7.
+  \item This is formal. The averaging theorem gives it on finite slow-time horizons.
+  \item \code{averaging.oscillation_correction} computes the oscillation term
+    $b_{\mathrm{osc}} := \langle D_\Theta H\cdot u\rangle$.
+\end{itemize}
+
+Three properties follow.
+\begin{itemize}
+  \item \textbf{Parity and value.} The oscillation term $b_{\mathrm{osc}}$ is odd under reversal of the orbit
+    (\code{test_oscillation_correction_is_odd_under_orbit_reversal}). Its value matches an independent one-period
+    near-identity flow at $k_e=80$: the test asserts 3\%, and 0.7\% is measured
+    (\code{test_oscillation_correction_matches_a_one_period_flow}).
+  \item \textbf{Size.} Relative to the frozen-measure terms it scales like $\abs{G}T_0$, the parameter displacement
+    per period times $k_e$. It is negligible when adaptation is slow within a period, which is the small-gain limit in
+    the fixed-$k_e$ discussion of Conjecture H.6. It is not negligible as $k_e\to\infty$ at fixed $G$. Both terms are
+    $O(k_e^{-2})$ and uniformly bounded, so the order of the route to Conjecture H.6 is unchanged.
+  \item \textbf{Non-reciprocity survives.} The only orientation-even part of the full correction is
+    $U_{\mathrm{even}}$, and its antisymmetric second variation is not a coboundary (Proposition H.7(e)). Suppose the
+    full first-order dynamics were reciprocal for both orientations. Then the average of the two antisymmetric parts,
+    $A_{\mathrm{even}}$, would be a coboundary, which it is not. So the full first-order averaged dynamics is
+    non-reciprocal for at least one orientation.
+\end{itemize}
+
+\emph{A prediction tested in the real closed loop} (\code{exp_orbit_orientation.py} $\to$
+\code{results/orbit_orientation/}).
+\begin{itemize}
+  \item \textbf{The prediction.} Traverse the same elliptic reference both ways. The occupation measure is the same,
+    so $\Aavg$, and any functional of $\rho$, cannot distinguish the two runs. The first-order theory predicts that the
+    learned kernels differ by
+    $\Theta_+ - \Theta_- \approx -2J^{-1}(b_{\mathrm{odd}} + b_{\mathrm{osc}}) = O(1/k_e)$. Here $J$ is the Jacobian
+    of the leading averaged drift at the equilibrium.
+  \item \textbf{The setting.} $n=2$, $m=6$, $G=\operatorname{diag}(4,4,1,1,1)$, $\sigma=2/k_e$, no dither, and the
+    same initial parameters for both runs. The runs converged to machine precision. The six kernels start spread
+    out (kernel spread $1.05$) and converge to a common configuration (spread at most $5.6\cdot10^{-17}$ at the
+    end of every run), so the learned network is effectively a single kernel: the test probes the orientation
+    effect at a collapsed equilibrium of the $m=6$ system.
+\end{itemize}
+
+\begin{center}
+\small
+\captionof{table}[Orientation dependence of the learned kernels]{Orientation dependence of the learned kernels in the
+real closed loop (\code{results/orbit_orientation/table_sigma2_slow16.md}). The size ratio is measured over
+predicted.}
+\label{tab:finitegain:orientation}
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
+ & & \multicolumn{2}{c}{frozen measure only (H.7)} & \multicolumn{2}{c}{full (H.7 + oscillation)} & full \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(l){7-7}
+$k_e$ & measured $\norm{\Theta_+-\Theta_-}$ & size ratio & cosine & size ratio & cosine & vector error \\
+\midrule
+10 & $5.7\cdot10^{-3}$ & 2.67 & 0.76 & 0.94 & 0.93  & 0.36 \\
+20 & $2.8\cdot10^{-3}$ & 2.41 & 0.83 & 0.97 & 0.98  & 0.20 \\
+40 & $1.4\cdot10^{-3}$ & 2.29 & 0.86 & 0.97 & 0.994 & 0.11 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item The measured difference scales like $k_e^{-1.01}$.
+  \item At $k_e=40$ the full first-order theory predicts it to within 3\% in size and 11\% as a vector (cosine 0.994).
+  \item The vector error halves with each doubling of $k_e$: 36\%, 20\% and 11\% at $k_e=10$, 20 and 40.
+  \item The frozen-measure terms alone account for less than half of it.
+  \item A first attempt with a weaker leak ($\sigma=0.5/k_e$) and a shorter horizon had not converged: its residual
+    drift was a third of the difference. It is not used.
+\end{itemize}
+
+The direction in which the reference orbit is traversed is therefore a property of the excitation that the learned
+kernels retain, at order $1/k_e$. The first-order theory predicts its effect.
+\end{rmk}
+\status{The second-order averaged equation~\eqref{eq:finitegain:Y} is formal; the averaging theorem gives it on
+finite slow-time horizons. The oscillation term is checked against an independent one-period near-identity flow
+(within 3\% at $k_e=80$) and is odd under orbit reversal (to $10^{-6}$). The full first-order theory predicts the
+orientation dependence of the learned kernels in the real closed loop to 3\% in size and 11\% as a vector
+(cosine 0.994, $k_e=40$).}
+\checkedby{\code{tests/test_averaging.py} (the two tests named above); \code{exp_orbit_orientation.py} $\to$
+\code{results/orbit_orientation/table_sigma2_slow16.md}.}
+
+\subsection{Input-to-state stability of \texorpdfstring{$\Aavg$}{(A)} and the route to Conjecture H.6}
+
+\begin{thm}{Proposition}{H.8}[input-to-state stability of $\Aavg$]
+Assume $\sigma,\tau>0$ and the setting of Theorem H. Let $\mu_t$ solve the perturbed equation
+\begin{equation}\label{eq:finitegain:perturbed}
+  \partial_t\mu = \nabla\cdot\bigl(\mu(G\nabla V[\mu] - b_t)\bigr) + \tau\nabla\cdot(G\nabla\mu)
+\end{equation}
+from $\mu_0\in\Prob_2$ with $F_\tau(\mu_0)<\infty$. Here $b_t$ is a velocity perturbation with
+$\beta(t)^2 := \int\norm{b_t}^2_{G^{-1}}\dd\mu_t\le\bar\beta^2$. Assume the chain rule of~\cite[Lemma~2.2]{S3}
+holds along this solution:
+\[
+  \frac{\mathrm{d}}{\mathrm{d}t}F_\tau(\mu_t) = \int\ip{\nabla(\delta F_\tau/\delta\mu)(\mu_t)}{v_t}\dd\mu_t,
+\]
+in whitened coordinates, with $v_t$ the velocity. It is expected for smooth bounded perturbations (parabolic regularity and the
+entropy-dissipation estimate), but it is not verified here. Then
+\begin{align}
+  \frac{\mathrm{d}}{\mathrm{d}t}\bigl(F_\tau(\mu_t)-F^*\bigr)
+    &\le -\tau\rho_\tau\bigl(F_\tau(\mu_t)-F^*\bigr) + \tfrac12\beta(t)^2,\label{eq:finitegain:iss1}\\
+  F_\tau(\mu_t)-F^* &\le e^{-\tau\rho_\tau t}\bigl(F_\tau(\mu_0)-F^*\bigr) + \frac{\bar\beta^2}{2\tau\rho_\tau},
+    \label{eq:finitegain:iss2}\\
+  \limsup_{t\to\infty}\WG(\mu_t,\mu^*_\tau) &\le \frac{\bar\beta}{\tau\rho_\tau}.\label{eq:finitegain:iss3}
+\end{align}
+\end{thm}
+\status{Proved, assuming the chain rule for the perturbed flow. A proof only; not checked in the repository.
+Novelty (literature audit): elementary given~\cite{S3}.}
+
+\begin{proof}
+Work in $\zeta=G^{-1/2}\vartheta$, and let
+$\xi_t := \nabla(\delta F_\tau/\delta\mu)(\mu_t) = \nabla\tilde V[\mu_t] + \tau\nabla\log\mu_t$. The velocity is
+$-\xi_t+\tilde b_t$, with $\norm{\tilde b_t} = \norm{b_t}_{G^{-1}}$.
+\begin{enumerate}[label=\arabic*.]
+  \item By the chain rule and Young's inequality,
+    \[
+      \frac{\mathrm{d}}{\mathrm{d}t}F_\tau(\mu_t) = -\int\norm{\xi_t}^2\dd\mu_t + \int\ip{\xi_t}{\tilde b_t}\dd\mu_t
+      \le -\frac12\int\norm{\xi_t}^2\dd\mu_t + \frac12\beta^2.
+    \]
+  \item With $\hat\mu_t\propto e^{-\tilde V[\mu_t]/\tau}$,
+    \[
+      \int\norm{\xi_t}^2\dd\mu_t = \tau^2 I(\mu_t|\hat\mu_t) \ge 2\rho_\tau\tau^2 H(\mu_t|\hat\mu_t)
+      \ge 2\rho_\tau\tau\bigl(F_\tau(\mu_t)-F^*\bigr),
+    \]
+    by the LSI of Theorem H(ii) and the entropy sandwich~\cite[Lemma~3.4]{S3}.
+  \item Grönwall gives the first two lines.
+  \item For the third, $F_\tau(\mu)-F^*\ge\tau H(\mu|\mu^*_\tau)$~\cite[Lemma~3.4]{S3}. $\mu^*_\tau$ satisfies
+    $\mathrm{LSI}(\rho_\tau)$, hence Talagrand's inequality $W^2\le(2/\rho_\tau)H(\cdot|\mu^*_\tau)$
+    (Otto--Villani~\cite{ov2000}). So $W^2\le(2/(\tau\rho_\tau))(F_\tau-F^*)$, and the limsup follows from the second
+    line.\qedhere
+\end{enumerate}
+\end{proof}
+
+The gain $1/(\tau\rho_\tau)\le e^{\alpha^*/\tau}/\sigma$ is exponentially large in $1/\tau$, like the inverse of the
+rate.
+
+\paragraph{Route to Conjecture H.6.} In the scaling of Conjecture H.6:
+\begin{itemize}
+  \item $\tau\rho_\tau\ge(\sigma_0/k_e)\cdot e^{-2K_\Phi(F_\rho+K_\Phi)/\tau_0}$, so $1/(\tau\rho_\tau) = O(k_e)$.
+    \begin{itemize}
+      \item In this scaling the whitened proximal Gibbs measures do not depend on $k_e$, so
+        $\tau\rho_\tau=\Theta(1/k_e)$.
+      \item At the experiment's $\tau_0=0.04$ the constant is $e^{1049}$.
+    \end{itemize}
+  \item Define $b := (1/k_e^2)\bigl[G\nabla(U_{\mathrm{even}}+U_{\mathrm{odd}}) + b_{\mathrm{osc}}\bigr] + O(k_e^{-3})$.
+    The first part is the frozen-measure correction of Proposition H.7; the second is the oscillation term of Remark
+    H.7a. Both are bounded uniformly in $\mu$ and $\vartheta$, so $\bar\beta = O(k_e^{-2})$.
+  \item Proposition H.8 then confines every solution of $\Aavg+b$ to an asymptotic $W$-ball around $\mu^*_\tau$ of
+    radius $O(1/k_e)\cdot e^{2K_\Phi(F_\rho+K_\Phi)/\tau_0}/\sigma_0$. This needs $F_\tau(\mu_0)<\infty$, or a
+    $\Prob_2$ start, after the Girsanov regularisation of Theorem H(ii), which applies because $b$ is bounded.
+\end{itemize}
+
+Three things are still missing for Conjecture H.6:
+\begin{enumerate}[label=\arabic*.]
+  \item control of the frozen-measure approximation along the moving $\mu_t$, that is, a near-identity averaging
+    transformation for the stochastic McKean--Vlasov loop, uniformly in time;
+  \item the mean-field limit of $(\mathrm{L}_\tau)$, since Theorem D covers only (L);
+  \item the chain rule that Proposition H.8 assumes for the perturbed flow.
+\end{enumerate}
+
+\subsection{Evidence from the real closed loop}
+
+The evidence comes from the real closed loop with $m=32$ and $n=1$, not from the averaged system.
+\begin{itemize}
+  \item \textbf{Dither is necessary.} Without dither the collapsed start is trapped forever. Its loss stays at 0.166,
+    against 0.007 from the spread start (\code{results/langevin_tradeoff}, 1500\,s).
+  \item \textbf{Equalisation at moderate temperature.} At $\sigma=0.02$ and $\tau=0.004$ (3 seeds,
+    \code{results/langevin_global/table_sigma0.02_tau0.004.md}):
+    \begin{itemize}
+      \item collapsed and spread starts reach the same loss (ratio 1.03) and tracking RMS (0.0465 against 0.0452);
+      \item their final 32-particle configurations, driven by the same noise realisation, are 4.2$\times$ closer in
+        $W_2$ over the physical coordinates $(a,c,s)$ than without dither (0.40 against 1.69);
+      \item a numerical check shows that two independent 32-point samples of $\mu^*_\tau$ are typically about 0.6
+        apart, so 0.40 is at the sampling floor;
+      \item the common loss of about 0.11 matches the grid value $\bar L(\mu^*_\tau)=0.11118$. It is dominated by the
+        regularisation bias.
+    \end{itemize}
+  \item \textbf{Metastability at low temperature.} At $\sigma=0.002$ and $\tau=5\cdot10^{-4}$ (table for these
+    values in \code{results/langevin_global/}), dither frees the collapsed start ($0.166\to0.048$). But the starts have
+    not equalised within 900\,s (loss ratio 5.2). The spread start's $9.2\cdot10^{-3}$ is close to the regularised
+    optimum $\bar L(\mu^*_\tau)=8.5\cdot10^{-3}$.
+  \item \textbf{Limits of the evidence.}
+    \begin{itemize}
+      \item The Langevin runs have $n=1$. By Proposition H.7, the averaged dynamics is already non-reciprocal for
+        $n=1$, through the state shift.
+      \item The only $n\ge2$ closed-loop runs are the deterministic orientation runs of Remark H.7a. They confirm the
+        first-order theory quantitatively. No $n\ge2$ run with dither has been made.
+      \item The runs use fixed $k_e$, not the scaling of Conjecture H.6.
+      \item All Langevin runs use $k_e=10$, below the Tikhonov scale of Remark H.0 for this network
+        ($(F_\rho+K_\Phi)/s_{\min}\approx35$). The measured frozen-$\mu$ drift error at $k_e=10$ is 4.2\% ($n=1$), so
+        the condition is conservative, but the agreement with $\Aavg$ is empirical.
+      \item So the evidence supports Conjecture H.6 qualitatively, but the equalisation time can exceed practical
+        horizons at low $\tau$.
+    \end{itemize}
+\end{itemize}

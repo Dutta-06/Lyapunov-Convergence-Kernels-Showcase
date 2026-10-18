@@ -31,7 +31,8 @@ centres and widths.
   all acquire formulations on Wasserstein space. So does the global optimality of kernel placement.
 - These formulations do not depend on how the kernels are labelled.
 
-**Why the classical theory needs it.** The audit of `lyapunov.pdf` (`ASSESSMENT.md`) found two structural defects.
+**Why the classical theory needs it.** The classical labelled analysis has two structural defects. This holds for
+version 1 of the manuscript `lyapunov.pdf` (audited in `ASSESSMENT.md`) and for the literature it builds on.
 
 - The classical Lyapunov analyses depend on labels. A network that is a relabelling of the ideal has zero function
   error but a large parameter error.
@@ -266,7 +267,7 @@ are active against an inactive per-kernel field, and one is inactive against an 
 (ii) Proj_K is Lipschitz in ϑ. The ramp vanishes for ‖ϑ‖ ≤ θ_max − ε_K, so the direction ϑ/‖ϑ‖ is evaluated only
 away from 0. Also, ∇g_t is C¹ on s ≥ s_min.
 
-- **Invariance.** Forward invariance follows from Nagumo's theorem, since ϑᵀProj ≤ 0 on the boundary.
+- **Invariance.** Forward invariance follows from Nagumo's theorem, since n_bᵀProj_b ≤ 0 on the boundary, with the outward normals n_b of Lemma P.1.
 - **Continuity equation.** The push-forward of μ_0 by a Lipschitz flow solves the continuity equation (Golse [82];
   AGS §8.1).
 - **Gradient form.** On int Θ_K^{ε} the projection is inactive, so v_t = G∇g_t = −G∇(δF_t/δμ).
@@ -630,7 +631,7 @@ and the leak can pay for all of it. With δ = 0 above, e ≡ 0 while every parti
 *Remark C.6 (the obstruction is known).*
 
 - **Non-convexity.** For some ν, for example a two-atom ν in dimension ≥ 2, ½W²(·,ν) is not λ-convex along geodesics
-  for any λ (AGS Example 9.1.5; Santambrogio [71] §4.4). It is 1-semiconcave in every dimension (AGS Thm 7.3.2). For
+  for any λ (AGS Example 9.1.5; Santambrogio [71] §4.5 of the journal version). It is 1-semiconcave in every dimension (AGS Thm 7.3.2). For
   ν = δ_{ϑ⁰} it is a potential energy, and 1-convex.
 - **Generalised geodesics.** ½W²(·,ν) is 1-convex along generalised geodesics with base ν (AGS Lemma 9.2.1;
   Carlen–Craig [73]).
@@ -770,8 +771,8 @@ The box correction is monotone. Hence L_ϑ⁺ stays bounded as ε_K → 0, and s
 On the experiment's box, the round-2 reviewer measured L_ϑ⁺ ≈ 88–98 for ε_K from 0.2 to 0.005. Over the same range
 the two-sided constant grows like 30/ε_K. This measurement is not repeated in the repository's tests.
 
-*Numerics* (`results/mean_field_m`). Halving W(μ^m_0, μ^{2m}_0) halves W(μ^m_T, μ^{2m}_T), with a constant factor of
-1.68. sup_t‖e^m − e^{2m}‖ falls from 4.6e-3 (16 against 32 particles) to below 1e-4 (128 against 256).
+*Numerics* (`results/mean_field_m`). Halving W(μ^m_0, μ^{2m}_0) halves W(μ^m_T, μ^{2m}_T), with a nearly constant
+factor (1.64–1.69 over the four refinements). sup_t‖e^m − e^{2m}‖ falls from 4.6e-3 (16 against 32 particles) to below 1e-4 (128 against 256).
 
 This is a consistency check only.
 
@@ -830,7 +831,7 @@ is an exchange rate between learning and tracking.
 
 Along a leaky law the proved statement is ∫_{t₀}^{t₁}(λ_G^{1/2}L₁‖e‖ + σ_m d_r)dr ≥ W(μ_{t₁},μ_{t₀}), with
 d_r = W(μ_r,μ⁰) for (L_σ) and d_r = d_lab(r) for the labelled leak. This gives no lower bound on ∫‖e‖, because the
-leak can pay for the whole motion. Under (L_σ) there are runs with e ≡ 0 and W(μ_10, μ_0) = 1.05 (review round 2).
+leak can pay for the whole motion. Under (L_σ) there are runs with e ≡ 0 and W(μ_10, μ_0) ≈ 1.05 (review round 2).
 
 Checked at every sample (with the particle path length ≥ the Wasserstein length):
 
@@ -1210,7 +1211,7 @@ and the averaged system
   - *Tikhonov:* k_e ≫ max(ω_ref, Lip(f) + K_Φ/s_min, (F_ρ + K_Φ)/s_min), so that the shift x − x_m = O(1/k_e) is
     small on the kernel scale.
   - *Period averaging:* T₀·sup_ϑ‖(1/k_e)G∇V_L[μ](ϑ)‖ ≪ ℓ, σT₀ ≪ 1 and τλ_GT₀ ≪ ℓ², where ℓ is the ϑ-scale of Φ̃.
-    The sup is at most (T₀/k_e)λ_G(F_ρ + K_Φ)·sup‖∇_ϑΦ̃‖. The confinement drift does not depend on time and needs no
+    The left-hand side is at most (T₀/k_e)λ_G(F_ρ + K_Φ)·sup‖∇_ϑΦ̃‖. The confinement drift does not depend on time and needs no
     averaging.
 - **The first corrections.**
   - At frozen μ (and frozen ϑ) they are O(1/k_e) relative to the drift, do not depend on the gains, and are given
@@ -1589,7 +1590,9 @@ Three properties follow.
   differ by Θ₊ − Θ₋ ≈ −2J⁻¹(b_odd + b_osc) = O(1/k_e). Here J is the Jacobian of the leading averaged drift at the
   equilibrium.
 - **The setting.** n = 2, m = 6, G = diag(4,4,1,1,1), σ = 2/k_e, no dither, and the same initial parameters for both
-  runs. The runs converged to machine precision.
+  runs. The runs converged to machine precision. The six kernels start spread out (spread 1.05) and converge to a
+  common configuration (spread at most 5.6e-17 at the end of every run), so the learned network is effectively a
+  single kernel: the test probes the orientation effect at a collapsed equilibrium of the m = 6 system.
 
 | k_e | measured ‖Θ₊ − Θ₋‖ | frozen measure only (H.7): size ratio, cosine | full (H.7 + oscillation): size ratio, cosine | full: vector error |
 |---|---|---|---|---|
@@ -1707,7 +1710,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | C(ii) | C ≤ b² + 4ηR; √C ≤ b + 2η; C = b² under both gap conditions (300 configurations) | `T::test_lemma_C_ii_induced_coupling_bound` |
 | C(iv) | an instance satisfying **every** hypothesis, asserted, including version 3's gap condition 4η̄(b + η̄) < Δ_gap; the envelope holds at every sample, with actual contraction | `T::test_theorem_C_iv_exponential_estimate` |
 | C(v), Prop. C.5 | label invariance of the OT leak; the reshuffling transient of the labelled leak | `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py` |
-| D | consistency in m (constant amplification 1.68; not the constant e^{ΛT}) | `exp_mean_field_m.py` |
+| D | consistency in m (nearly constant amplification 1.64–1.69; not the constant e^{ΛT}) | `exp_mean_field_m.py` |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |

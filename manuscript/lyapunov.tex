@@ -1,0 +1,58 @@
+\documentclass[11pt]{article}
+\input{preamble}
+
+\title{\textbf{Self-Adaptive Kernels as Evolving Measures:\\ Transport Adaptive Control}\\[6pt]
+\large Mathematical Foundations of Self-Adaptive Kernels, version 2: a complete mathematical treatment}
+\author{Delhi Technological University}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\begin{center}
+\small
+\begin{minipage}{0.86\textwidth}
+\textbf{Version 2.} This document supersedes version 1, \emph{Mathematical Foundations of Self-Adaptive Kernels
+Achieving Lyapunov Convergence}. Section~\ref{sec:version1} states what survived from version 1 and what was
+withdrawn. This is research in progress and has not been peer reviewed. Code, tests, experiments and review records:
+\url{https://github.com/Dutta-06/Lyapunov-Convergence-Kernels-Showcase}.\\[4pt]
+Copyright \copyright\ 2026 Odwitiyo Dutta. All rights reserved.
+\end{minipage}
+\end{center}
+
+\input{sections/abstract}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+\input{sections/front}
+
+\clearpage
+\part{The projection-based controller}
+\input{sections/part1}
+
+\clearpage
+\part{Transport adaptive control}
+\input{sections/setting}
+\input{sections/thmA}
+\input{sections/thmB}
+\input{sections/thmC}
+\input{sections/thmD}
+\input{sections/thmE}
+\input{sections/thmF}
+\input{sections/propG}
+\input{sections/thmH}
+\input{sections/finitegain}
+
+\clearpage
+\part{Evidence and outlook}
+\input{sections/evidence}
+\input{sections/program}
+
+\appendix
+\input{sections/verification}
+
+\input{sections/refs}
+
+\end{document}

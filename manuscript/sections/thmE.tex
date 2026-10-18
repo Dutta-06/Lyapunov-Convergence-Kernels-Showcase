@@ -1,0 +1,233 @@
+% Theorem E: label-free local convergence under tangential excitation (PARADIGM.md, section 6).
+\section{Theorem E: label-free local convergence under tangential excitation}\label{sec:thmE}
+
+\paragraph{Assumptions.}
+\begin{itemize}
+  \item (S0) holds, in particular $k_e>0$.
+  \item \textbf{Uniform tube.} There is $\rho>0$ such that $\varepsilon(x,t)=0$ whenever $\norm{x-x_m(t)}<\rho$, for
+    all $t\ge0$.
+  \item \textbf{Interior ideal.} $\mu^*$ is constant, with $\vartheta^*_j\in\operatorname{int}\ThKe$. Put
+    $\delta:=\min_j\operatorname{dist}(\vartheta^*_j,\partial\ThKe)>0$.
+  \item $x_m\in C^1$, and $x_m$ and $\dot x_m$ are bounded.
+  \item Define
+    $\Psi(t):=\bigl[\nabla_\vartheta\Phi(x_m(t);\vartheta^*_1),\dots,\nabla_\vartheta\Phi(x_m(t);\vartheta^*_m)\bigr]
+    \in\R^{n\times mp}$.
+  \item \textbf{(PE)} There are $T,\alpha>0$ with $\int_t^{t+T}\Psi^\T\Psi\dd r\succeq\alpha I_{mp}$ for all
+    $t\ge0$.
+\end{itemize}
+
+(PE) forces $a^*_j\neq0$ and pairwise distinct pairs $(c^*_j,s^*_j)$.
+\begin{itemize}
+  \item If $a^*_j=0$, the $(c,s)$-columns of block $j$ vanish.
+  \item If $(c^*_j,s^*_j)=(c^*_k,s^*_k)$, the kernel of $\int\Psi^\T\Psi\dd r$ contains the vector with $v$ in the
+    $a$-slot of block $j$, $-v$ in the $a$-slot of block $k$, and zeros elsewhere.
+\end{itemize}
+In particular the $\vartheta^*_j$ are pairwise distinct, and
+\begin{equation}\label{eq:thmE:gap}
+  d^2:=\min_{\pi\neq\pi'}\frac1m\sum_i\norm{\vartheta^*_{\pi(i)}-\vartheta^*_{\pi'(i)}}^2_{G^{-1}}
+  =\frac2m\cdot\min_{i\neq j}\norm{\vartheta^*_i-\vartheta^*_j}^2_{G^{-1}}>0,
+\end{equation}
+with $d^2:=+\infty$ for $m=1$. The closed form holds because a non-identity permutation moves at least two indices,
+and the transposition of the $G^{-1}$-closest pair attains the bound.
+
+\begin{thm}{Theorem}{E}
+There are $r_0,k,\lambda>0$ such that the following holds.
+\begin{itemize}
+  \item $k$ and $\lambda$ come from the converse Lyapunov function of the linearisation (proof steps~3--4).
+  \item $r_0$ depends in addition on $r:=\min(\rho,\delta)$, and on the Lipschitz constant of the Jacobian on the
+    ball $D$ of step~2.
+\end{itemize}
+Put
+\[
+  c_0:=\frac{r_0^2}{2(1+m\lambda_G)}\qquad\text{and}\qquad
+  C:=\sqrt2\cdot k\cdot\max\bigl\{1,(m\lambda_G)^{1/2}\bigr\}\cdot\max\bigl\{1,(m\lambda_{\min}(G))^{-1/2}\bigr\}.
+\]
+If $\VOT(t_0)\le c_0$, then:
+\begin{itemize}
+  \item the optimal assignment $\pi$ at $t_0$ is unique, and it is the unique optimal assignment for all large $t$;
+  \item $\norm{e(t)}+W(\mu_t,\mu^*)\le Ce^{-\lambda(t-t_0)}\bigl(\norm{e(t_0)}+W(\mu_{t_0},\mu^*)\bigr)$ for
+    $t\ge t_0$;
+  \item $\vartheta_i(t)\to\vartheta^*_{\pi(i)}$. The labelled error
+    \[
+      E_{\mathrm{lab}}(t):=\Bigl(\frac1m\sum_i\norm{\vartheta_i(t)-\vartheta^*_i}^2_{G^{-1}}\Bigr)^{1/2}
+      \quad\text{tends to}\quad
+      \Bigl(\frac1m\sum_i\norm{\vartheta^*_{\pi(i)}-\vartheta^*_i}^2_{G^{-1}}\Bigr)^{1/2},
+    \]
+    which is non-zero for $\pi\neq\mathrm{id}$.
+\end{itemize}
+$k$ and $\lambda$ depend on $\Psi(\cdot)$ itself, through the converse Lyapunov function of its linearisation, and on
+$m$, $G$ and $k_e$. $r_0$ and $c_0$ depend in addition on $a_{\max}$, $s_{\min}$, $\rho$ and $\delta$. The cited
+theorems are of existence type, so it is not proved here that $k$ and $\lambda$ can be chosen uniformly over the class
+of $\Psi$ with given $(T,\alpha,\sup\norm{\Psi},\sup\norm{\dot\Psi})$.
+\end{thm}
+\status{Proved, conditional on Morgan--Narendra~\cite[Thm.~1]{S8} as stated in its abstract (its hypotheses were not
+checked against the full text); linearisation checked; convergence observed. Novelty (literature audit): partially
+anticipated~\cite{R49}, \cite{R54}.}
+
+\begin{proof}\mbox{}
+\begin{enumerate}[label=\arabic*.]
+  \item \emph{Symmetry.} Relabelling the network, $(e,\vartheta)\mapsto(e,\vartheta\circ\sigma)$, maps solutions to
+    solutions. It fixes $e$, is an isometry of the matched metric, and conjugates the dynamics near
+    $(0,\vartheta^*\circ\pi)$ to those near $(0,\vartheta^*)$. So it suffices to treat $\pi=\mathrm{id}$.
+
+  \item \emph{Domain and linearisation.} Let $r:=\min(\rho,\delta)$ and
+    $D:=\{z=(e,\tilde\vartheta)\in\R^{n+mp}:\norm{z}_2<r\}$.
+    \begin{itemize}
+      \item For $z\in D$ we have $\norm{e}<\rho$, so $f=\fhat^*$.
+      \item Also $\norm{\tilde\vartheta_i}<\delta$ for every $i$, so $\vartheta_i\in\operatorname{int}\ThKe$ and
+        $\Proj=\mathrm{id}$.
+    \end{itemize}
+    On $[0,\infty)\times D$ the closed loop is
+    \[
+      F(t,z)=\Bigl(-k_ee+\fhat^*(x)-\fhat(x),\ \bigl(G\nabla_\vartheta\Phi(x;\vartheta_i)^\T e\bigr)_i\Bigr),
+      \qquad x=x_m(t)+e.
+    \]
+    \begin{itemize}
+      \item It is $C^1$ in $(t,z)$, since $x_m\in C^1$, and $C^\infty$ in $z$.
+      \item Its derivatives through order two are bounded uniformly in $t$, because the Gaussian's derivatives through
+        order three are bounded uniformly in $x$ for $s\ge s_{\min}$.
+      \item Its Jacobian at $0$ is
+        \[
+          A(t)=\begin{pmatrix}-k_eI&-\frac1m\Psi\\[2pt](I_m\otimes G)\Psi^\T&0\end{pmatrix},
+        \]
+        and the remainder is $O(\norm{z}^2)$.
+      \item The Jacobian and the identity $QA+A^\T Q=\operatorname{diag}(-k_eI,0)$, with
+        $Q=\operatorname{diag}\bigl(I/2,\,(I\otimes G^{-1})/(2m)\bigr)$, are checked numerically by\newline
+        \code{test_theorem_E_linearisation_and_lyapunov_identity}.
+    \end{itemize}
+
+  \item \emph{LTV stability.} Put $w:=(e,\zeta)$ with $\zeta:=m^{-1/2}(I_m\otimes G^{-1/2})\tilde\vartheta$, and
+    $\Psi_G:=m^{-1/2}\Psi(I\otimes G^{1/2})$.
+    \begin{itemize}
+      \item The system becomes $\dot e=-k_ee-\Psi_G\zeta$ and $\dot\zeta=\Psi_G^\T e$, that is,
+        $\dot w=[A_0+B(t)]w$ with $A_0=\operatorname{diag}(-k_eI,0)$ and $B$ skew-symmetric, bounded, with bounded
+        derivative.
+      \item The excitation transfers: $\int\Psi_G^\T\Psi_G\dd r\succeq(\alpha\lambda_{\min}(G)/m)I$.
+      \item Morgan--Narendra~\cite[Thm.~1]{S8} characterises uniform asymptotic stability of
+        \[
+          \begin{pmatrix}A&-B(t)\\B(t)^\T&0\end{pmatrix}
+        \]
+        with $A+A^\T\prec0$ by richness of $B$. Apply it
+        with $A=-k_eI$ and $B=\Psi_G$ (bounded, with bounded derivative): the origin of the $w$-system is uniformly
+        asymptotically stable.
+      \item (PE) supplies the richness, since
+        $\int_t^{t+T}\norm{\Psi_Gw}\dd r\ge\alpha\lambda_{\min}(G)/(m\cdot\sup\norm{\Psi_G})$ for every unit $w$.
+      \item For linear systems UAS is UES (Khalil~\cite[Thm.~4.11]{khalil2002}). UES transfers to
+        $(e,\tilde\vartheta)$ through the constant similarity $\operatorname{diag}\bigl(I,m^{1/2}(I\otimes
+        G^{1/2})\bigr)$.
+      \item The bound on $\dot\Psi$ cannot be dropped. $\Psi=\sin t^2$ is bounded and PE, but for
+        $\dot e=-e-\Psi\zeta$, $\dot\zeta=\Psi e$, from $w(t_0)=(e,\zeta)=(0,1)$, a numerical computation gives the
+        ratio $\norm{w(t_0+200)}/\norm{w(t_0)}$ as $0.9715$, $0.9942$ and $0.9980$ for $t_0=5$, $20$ and $50$. So that
+        system is not UES.
+      \item We could not check the exact richness definition and regularity class of \cite{S8} against its full
+        text. Its abstract's characterisation matches this system.
+    \end{itemize}
+
+  \item \emph{Nonlinear system.} Apply Khalil~\cite[Thm.~4.13]{khalil2002} in $z=(e,\tilde\vartheta)$ on
+    $[0,\infty)\times D$. The Jacobian is bounded and Lipschitz on $D$ uniformly in $t$, and the linearisation is UES.
+    This gives $r_0\le r$, $k$ and $\lambda$, with $\norm{z(t)}\le k\norm{z(t_0)}e^{-\lambda(t-t_0)}$ whenever
+    $\norm{z(t_0)}<r_0$. These trajectories stay in $D$, where the closed loop equals $F$.
+
+  \item \emph{Transfer to $(\norm{e},W)$.} If $V_\pi(t_0)\le c_0$, then
+    \[
+      \norm{z(t_0)}^2\le2\max(1,m\lambda_G)V_\pi(t_0)\le2\max(1,m\lambda_G)c_0<2(1+m\lambda_G)c_0=r_0^2.
+    \]
+    The bound $W\le(m\lambda_{\min}(G))^{-1/2}\norm{\tilde\vartheta}$ and the optimality of $\pi$ at $t_0$ give $C$.
+
+    \emph{Uniqueness.} Suppose $V_\pi,V_{\pi'}\le c_0$ with $\pi\neq\pi'$. Then the state lies in Khalil balls around
+    both $(0,\vartheta^*\circ\pi)$ and $(0,\vartheta^*\circ\pi')$. The solution would converge to two distinct
+    equilibria, which is impossible.
+
+    \emph{Limits.} Hence $z(t)\to0$, that is, $\vartheta_i(t)\to\vartheta^*_{\pi(i)}$. For $\pi'\neq\pi$,
+    \[
+      V_{\pi'}(t)\to\frac1{2m}\sum_i\norm{\vartheta^*_{\pi(i)}-\vartheta^*_{\pi'(i)}}^2_{G^{-1}}\ge\frac{d^2}2>0,
+    \]
+    while $V_\pi(t)\to0$. So $\pi$ is the unique optimal assignment for all large $t$, and $E_{\mathrm{lab}}$
+    converges as stated.\qedhere
+\end{enumerate}
+\end{proof}
+\checkedby{\code{tests/test_transport.py} and \code{experiments/exp_pe_convergence.py}.
+\begin{itemize}[nosep]
+  \item Linearisation: the Jacobian of the implemented loop equals $A(t)$, and
+    $QA+A^\T Q=\operatorname{diag}(-k_eI,0)$\newline
+    (\code{test_theorem_E_linearisation_and_lyapunov_identity}).
+  \item Convergence: the matched error decays and the labelled error does not (qualitative); sliding-window
+    excitation and fitted rates\newline
+    (\code{test_theorem_E_matched_error_converges_labelled_does_not}, \code{exp_pe_convergence.py}).
+  \item Not checked in the repository: the rate of Theorem E, Corollary E.2 and Remark E.3.
+\end{itemize}}
+
+\begin{rmk}{Remark}{E.1}[the rate]\mbox{}
+\begin{itemize}
+  \item \textbf{What converges.} ``The parameters converge'' is false for the labelled error and true for the matched
+    one.
+  \item \textbf{The rate is not set by the PE level.} $\lambda>0$ exists for each admissible $\Psi$, but it depends
+    on $\Psi(\cdot)$, not only on its PE level. No positive function of $\alpha\lambda_{\min}(G)/m$, $k_e$, $T$ and
+    $\sup\norm{\Psi_G}$ alone bounds it below.
+    \begin{itemize}
+      \item For $m=n=1$, $\vartheta^*=(1.5,0.3,0.8)$, $G=I$, $k_e=3$ and $x_m=1.5\sin\omega t$ ($T=2\pi$), these four
+        quantities do not depend on $\omega$. The exact Floquet rate, computed numerically, falls from
+        $4.7\times10^{-2}$ ($\omega=1$) to $2.9\times10^{-5}$ ($\omega=64$), like $\omega^{-2}$.
+      \item A lower bound must also involve $\sup\norm{\dot\Psi_G}$ (step~3 of the proof), and none is proved here.
+      \item Exact Floquet rates, computed numerically, are also not monotone in $G$ or in $k_e$, and they decrease for
+        large $G$. When $k_e$ is large relative to the reference bandwidth, they approach
+        $\lambda_{\min}\langle\Psi_G^\T\Psi_G\rangle/k_e$.
+    \end{itemize}
+  \item \textbf{The numbers} (\code{results/pe_convergence}; $m=3$, $n=2$, six runs):
+    \begin{center}
+      \small
+      \begin{tabularx}{0.9\linewidth}{Yl}
+        \toprule
+        quantity & range\\
+        \midrule
+        min over sliding $60$\,s windows of $\lambda_{\min}\bigl(\int_t^{t+60}\Psi^\T\Psi\dd r\bigr)$
+          & $5.9\times10^{-4}$ to $2.7\times10^{-2}$\\
+        fitted decay rate of the matched error, second half of the run
+          & $2.3\times10^{-3}$ to $4.3\times10^{-3}$\,s$^{-1}$\\
+        rank correlation between the two & $0.60$\\
+        \bottomrule
+      \end{tabularx}
+    \end{center}
+\end{itemize}
+The convergence test is therefore qualitative. The machine-checked part of the proof is the linearisation.
+\end{rmk}
+
+\begin{thm}{Corollary}{E.2}[uniform-in-time exponential merging under PE]
+Take two solutions of the same closed loop with $\VOT(0)\le c_0$ and $V'_{\mathrm{OT}}(0)\le c_0$. Then
+\begin{equation}\label{eq:thmE:merging}
+  \norm{x_t-x'_t}+W(\mu_t,\mu'_t)\le Ce^{-\lambda t}R_0,\qquad
+  R_0:=\norm{e(0)}+\norm{e'(0)}+W(\mu_0,\mu^*)+W(\mu'_0,\mu^*).
+\end{equation}
+Let $\delta_0:=\norm{x_0-x'_0}+W(\mu_0,\mu'_0)$. Combine this with the coupling estimate of Theorem D(c) on
+$[0,T_0]$, with $T_0:=(\Lambda+\lambda)^{-1}\log(CR_0/\delta_0)$.
+\begin{itemize}
+  \item Both solutions stay in $D$ (proof step~4), so $\norm{x-x_m(t)}<r\le\rho$.
+  \item The segment between $x_t$ and $x'_t$ lies in $B(x_m(t),\rho)$, where $f=\fhat^*$, and $\Proj=\mathrm{id}$.
+  \item Hence Theorem D(c) holds with $M_x:=k_e+2a_{\max}J_c$, with $L_x$ and $L_\vartheta$ computed for $\bar E=r$
+    and an inactive projection, and with $L_2=\lambda_G^{1/2}L_1$. This $\Lambda$ depends neither on $T_0$ nor on $f$
+    outside the tube.
+\end{itemize}
+This gives uniform-in-time Hölder continuity in the basin:
+\begin{equation}\label{eq:thmE:holder}
+  \sup_{t\ge0}\bigl(\norm{x_t-x'_t}+W(\mu_t,\mu'_t)\bigr)\le(CR_0)^{\Lambda/(\Lambda+\lambda)}\,
+  \delta_0^{\lambda/(\Lambda+\lambda)}.
+\end{equation}
+\end{thm}
+\status{Proved, conditional on Morgan--Narendra~\cite[Thm.~1]{S8} as stated in its abstract (its hypotheses were
+not checked against the full text), through Theorem E. Not checked in the repository.}
+
+\begin{proof}
+$\norm{x_t-x'_t}=\norm{e-e'}\le\norm{e}+\norm{e'}$, and $W(\mu_t,\mu'_t)\le W(\mu_t,\mu^*)+W(\mu'_t,\mu^*)$. Bound
+each bracket by Theorem E. On $[0,T_0]$ use $e^{\Lambda T_0}\delta_0$; on $[T_0,\infty)$ use $CR_0e^{-\lambda T_0}$.
+Note that $\delta_0\le R_0\le CR_0$.
+\end{proof}
+
+\begin{rmk}{Remark}{E.3}[the collapse point]
+Take the $G^{-1}$-closest pair $(j,k)$. Set $e=0$ and $\vartheta_j=\vartheta_k=(\vartheta^*_j+\vartheta^*_k)/2$,
+with all other particles ideal.
+\begin{itemize}
+  \item At this point $\VOT=d^2/8$, and there are two optimal assignments.
+  \item By exchange symmetry, $\vartheta_j\equiv\vartheta_k$ for all $t$, so $W(\mu_t,\mu^*)\ge d/2$ forever.
+\end{itemize}
+The uniqueness argument of step~5 shows $c_0<d^2/8$ automatically, and $d^2/8$ is sharp along this direction.
+\end{rmk}

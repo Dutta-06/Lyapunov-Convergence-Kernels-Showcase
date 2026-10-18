@@ -1,0 +1,84 @@
+% Theorem F: the transport cost of adaptation (PARADIGM.md, section 5b).
+\section{Theorem F: the transport cost of adaptation}\label{sec:thmF}
+
+\begin{thm}{Theorem}{F}
+Assume \textup{(S0)--(S3)}, and take $t_0\le t_1$ in the maximal interval of existence (all $t\ge0$ under the
+hypothesis of Theorem D(b)). $\mu^*$, \textup{(S4)} and \textup{(S5)} are not needed. Along \textup{(L)}:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item $\bigl(\frac1m\sum_i\norm{\dot\vartheta_i}^2_{G^{-1}}\bigr)^{1/2}\le\lambda_G^{1/2}L_1\norm{e(t)}$;
+  \item $W(\mu_{t_1},\mu_{t_0})\le\lambda_G^{1/2}L_1\int_{t_0}^{t_1}\norm{e}\dd r$. Hence the $W$-length of
+    $r\mapsto\mu_r$ on $[t_0,t_1]$ is at most $\lambda_G^{1/2}L_1\int_{t_0}^{t_1}\norm{e}\dd r$;
+  \item $W(\mu_{T_2},\mu_{T_1})\le\lambda_G^{1/2}L_1(T_2-T_1)\cdot\RMS_{[T_1,T_2]}\norm{e}$.
+\end{enumerate}
+Along $\Lsig$ with the OT leak, for a.e.\ $t$:
+\begin{enumerate}[label=\textup{(\roman*$'$)}]
+  \item $\bigl(\frac1m\sum_i\norm{\dot\vartheta_i}^2_{G^{-1}}\bigr)^{1/2}\le\lambda_G^{1/2}L_1\norm{e}
+    +\sigma_mW(\mu_t,\mu^0)$;
+  \item $W(\mu_{t_1},\mu_{t_0})\le\int_{t_0}^{t_1}\bigl(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0)\bigr)\dd r$;
+  \item $W(\mu_{T_2},\mu_{T_1})\le\lambda_G^{1/2}L_1(T_2-T_1)\cdot\RMS_{[T_1,T_2]}\norm{e}
+    +\sigma_m\int_{T_1}^{T_2}W(\mu_r,\mu^0)\dd r$.
+\end{enumerate}
+For the labelled leak, replace $W(\mu_r,\mu^0)$ by
+$d_{\mathrm{lab}}(r):=\bigl(\frac1m\sum_i\norm{\vartheta_i(r)-\vartheta^0_i}^2_{G^{-1}}\bigr)^{1/2}\ge
+W(\mu_r,\mu^0)$. The term $W(\mu_r,\mu^0)$ does not suffice there.
+
+All bounds also hold with
+$L_G:=\bigl(g_a+a_{\max}^2(g_cJ_c^2+g_sJ_s^2)\bigr)^{1/2}\le\lambda_G^{1/2}L_1$ in place of $\lambda_G^{1/2}L_1$. Since
+$\max_i\norm{\dot\vartheta_i}_{G^{-1}}\le L_G\norm{e}$ along \textup{(L)}, also
+$W_\infty(\mu_{t_1},\mu_{t_0})\le L_G\int_{t_0}^{t_1}\norm{e}\dd r$.
+\end{thm}
+\status{Proved and checked, including the leak clause, a tight leak instance with $e\equiv0$ and a tight velocity
+instance. Novelty (literature audit): elementary.}
+
+\begin{proof}
+\textup{(i)} By Lemma P.1 and Lemma B.2(b),
+\[
+  \norm{\dot\vartheta_i}_{G^{-1}}\le\norm{\nabla g_t(\vartheta_i)}_G\le\lambda_G^{1/2}\norm{\nabla g_t(\vartheta_i)}
+  \le\lambda_G^{1/2}L_1\norm{e(t)}.
+\]
+Square and average over $i$.
+
+\textup{(ii)} Use the identity coupling $(\vartheta_i(t_0),\vartheta_i(t_1))$ and Minkowski's inequality in
+$L^2\bigl(\frac1m\sum_i;\,G^{-1}\bigr)$. For general measures, use the Lagrangian coupling
+$(X_{t_0},X_{t_1})_\#\mu_0$, or Ambrosio--Gigli--Savaré~\cite[Thm.~8.3.1]{ags2008} after the isometry
+$\vartheta\mapsto G^{-1/2}\vartheta$. Summing over a partition gives the length statement.
+
+\textup{(iii)} Cauchy--Schwarz.
+
+\textup{(i$'$)} Apply Lemma P.1 with $y=\nabla g_t-\sigma_mG^{-1}(\vartheta_i-\vartheta^0_{\tau(i)})$. Then
+Minkowski's inequality gives
+$\norm{y}_G\le\norm{\nabla g_t}_G+\sigma_m\norm{\vartheta_i-\vartheta^0_{\tau(i)}}_{G^{-1}}$. Average over $i$ with
+$\tau$ optimal. At ties, Filippov velocities are convex combinations of fields with $\tau$ optimal at the current
+point. Each such field satisfies (i$'$), and the norm is convex.
+
+\textup{(ii$'$)} and \textup{(iii$'$)} follow as (ii) and (iii).
+
+For $L_G$:
+$\norm{\nabla g}^2_G=g_a\norm{\varphi e}^2+(a^\T e)^2\bigl(g_c\norm{\nabla_c\varphi}^2+g_s(\partial_s\varphi)^2\bigr)
+\le\norm{e}^2L_G^2$.
+\end{proof}
+
+\paragraph{Reading.} Along (L), moving the kernel measure by $W$ costs at least $W/(\lambda_G^{1/2}L_1)$ of integrated
+tracking error. This is an exchange rate between learning and tracking.
+
+Along a leaky law the proved statement is
+\[
+  \int_{t_0}^{t_1}\bigl(\lambda_G^{1/2}L_1\norm{e}+\sigma_m d_r\bigr)\dd r\ge W(\mu_{t_1},\mu_{t_0}),
+\]
+with $d_r=W(\mu_r,\mu^0)$ for $\Lsig$ and $d_r=d_{\mathrm{lab}}(r)$ for the labelled leak. This gives no lower bound on
+$\int\norm{e}$, because the leak can pay for the whole motion. Under $\Lsig$ there are runs with $e\equiv0$ and
+$W(\mu_{10},\mu_0)\approx1.05$ (found numerically).
+
+\paragraph{Numerical checks.} The following are checked at every sample (with the particle path length $\ge$ the
+Wasserstein length):
+\begin{itemize}
+  \item (i) and Lemma P.1, including a tight instance with ratio $\ge0.99$;
+  \item (ii) along (L);
+  \item (ii$'$) along $\Lsig$, on a grid of pairs, including an instance with $e\equiv0$ where it is tight (ratio
+    $\ge0.99$) and the (L) reading fails.
+\end{itemize}
+\checkedby{\code{tests/test_transport.py}:\newline
+\code{test_lemma_P1_projection_is_nonexpansive_and_tight_velocity_bound} ((i) and Lemma P.1);\newline
+\code{test_theorem_F_wasserstein_length_bounded_by_integrated_error} ((ii) along (L));\newline
+\code{test_theorem_F_leak_clause_along_ot_sigma_mod} and\newline
+\code{test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion} ((ii$'$) along $\Lsig$).}

@@ -13,14 +13,19 @@ weights, centres and widths are all adapted online. It has two parts.
    robustness modifications, excitation, the many-kernel limit, the slow evolution of kernel geometry and the global
    placement of kernels all become statements on Wasserstein space, independent of how the kernels are labelled.
 
+**The manuscript.** [lyapunov.pdf](lyapunov.pdf) is the complete mathematical treatment of both parts: every result
+with its proof and status, the numerical evidence and the verification map. It is version 2 and supersedes version
+1 of the same name, whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript/](manuscript).
+
 **Status.** This is research in progress and has not been peer reviewed.
 
 - Every result in [PARADIGM.md](PARADIGM.md) is labelled *proved*, *formal* (a derivation without error control)
   or *conjectural*.
 - Every inequality the tests can evaluate is checked numerically along simulated trajectories, and every number in
   the documents is produced by a script in [experiments/](experiments).
-- The theory went through three rounds of automated multi-agent adversarial review. Every confirmed issue and its fix
-  is logged in [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports are kept beside it.
+- The theory went through three rounds of automated multi-agent adversarial review, and the manuscript through a
+  fourth that compared it line by line with the theory. Every confirmed issue and its fix is logged in
+  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of the first three rounds are kept beside it.
 - The claim-by-claim novelty audit is in [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md).
 
 ---
@@ -46,7 +51,8 @@ particles ϑ_i = (a_i, c_i, s_i). The output is linear in μ, and the adaptive l
 **A new closed-loop effect.** Traversing the same reference orbit in the opposite direction leaves the visited
 states unchanged, yet the learned kernels shift by an amount of order 1/k_e. The first-order theory, H.7 plus the
 second-order averaging term of Remark H.7a, predicts that shift
-([results/orbit_orientation/](results/orbit_orientation)):
+([results/orbit_orientation/](results/orbit_orientation)). In these runs (n = 2, m = 6, no dither) the six kernels
+converge to a common configuration, so the effect is measured at a collapsed equilibrium:
 
 | k_e | measured shift, size relative to prediction | cosine with prediction | vector error |
 |---|---|---|---|
@@ -90,15 +96,22 @@ consistent gains.
 **Kernel-regression baselines** (exact GP, sparse GP, deep GP, NTK; n = 1, 2, 3, 6).
 
 - The proposed method is never the most accurate. NTK is more accurate at n = 2 and n = 6, and a sparse GP at n = 3.
-- Its advantage is cost: 0.1–0.6 ms per step, against 13–1900 ms per update for the baselines.
-- In a fair re-run at n = 1, where every baseline predicts at every step, the exact GP is 3–4 times more accurate at
-  100 times the per-step cost.
+- Its advantage is cost. It takes 0.10–0.60 ms per step at n = 1, 2 and 6, and 4.1 ms at n = 3. The GP baselines
+  take 53–1889 ms per update, with one update every 50–100 steps. NTK updates every 50 steps at n = 1 and every step
+  at n = 2, 3 and 6 (1.6–13 ms per update), so it is cheaper than the proposed method only at n = 3 (2.35 against
+  4.11 ms per step).
+- The comparison is not information-matched. Every baseline is trained on noise-free samples of the true f(x, t),
+  which amounts to measuring the state derivative exactly; the adaptive law uses only the tracking error.
+- In a fair re-run at n = 1, where every method predicts at every step, the exact GP is more accurate in every seed
+  (3.3 times on the mean over seeds) at about 100 times the per-step cost. The proposed method has the cheapest step
+  (median 0.06 ms, against 0.21 ms for NTK and 6.3 ms for the exact GP).
 
 ![All benchmarks](results/comparison_higher_dims_complete.png)
 
-Earlier versions of this README stated that the method was "statistically indistinguishable from the Exact GP", that
-all Monte Carlo trials satisfied "the calculated R_UUB", and that it "solved the curse of dimensionality". Those
-statements are withdrawn: the significance test was invalid, the threshold was an arbitrary constant, and the omitted
+Earlier versions of this README stated that the method's steady-state error was "statistically indistinguishable
+(Wilcoxon signed-rank p > 0.3) from both the Exact GP and the Sparse GP", that "100% of the independent simulation
+trials converged strictly below the calculated R_UUB threshold", and announced "Curse of Dimensionality Solved".
+Those statements are withdrawn: the significance test was invalid, the threshold was an arbitrary constant, and the omitted
 n = 3 and NTK results contradict them.
 
 ---
@@ -107,6 +120,8 @@ n = 3 and NTK results contradict them.
 
 | path | content |
 |---|---|
+| [lyapunov.pdf](lyapunov.pdf) | the manuscript (version 2): both parts typeset, with proofs, evidence and the verification map |
+| [manuscript/](manuscript) | its LaTeX source: `lyapunov.tex`, `preamble.tex` and one file per section in `sections/` |
 | [PARADIGM.md](PARADIGM.md) | the transport theory: results, proofs, verification map (§7), research program (§8) |
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
@@ -126,6 +141,10 @@ python -m pytest tests                          # 50 tests, about 5–7 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 
+To rebuild the manuscript, install [Tectonic](https://tectonic-typesetting.github.io) (a single binary that fetches
+the LaTeX packages it needs) and run `tectonic lyapunov.tex` inside `manuscript/`; then copy `manuscript/lyapunov.pdf`
+to the repository root. Figures are read from `results/`.
+
 Set `OPENBLAS_NUM_THREADS=1` for the experiments that use a multiprocessing pool. Several long experiments save their
 raw runs and can regenerate tables without re-simulating: `VP_REUSE=1` for `exp_variable_projection.py`,
 `OO_REUSE=1` for `exp_orbit_orientation.py`, and `TR_REFIT=1` for `exp_langevin_tradeoff.py`.
@@ -141,6 +160,9 @@ The working conventions are part of the method:
   supports it.
 - **Review and log.** New results go through an adversarial review, and every confirmed issue goes into
   [review/REVIEW_LOG.md](review/REVIEW_LOG.md).
+- **Keep the manuscript in step.** A change to a result in [PARADIGM.md](PARADIGM.md) goes into the corresponding file
+  in `manuscript/sections/`, and `lyapunov.pdf` is rebuilt. Tables in the manuscript are copied from the files in
+  `results/`, so a regenerated table must be copied again.
 
 The open problems are listed in [PARADIGM.md](PARADIGM.md) §8. The most important are:
 

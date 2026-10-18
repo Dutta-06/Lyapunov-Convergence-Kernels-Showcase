@@ -1,0 +1,292 @@
+% Proposition G: the slow geometry (source: PARADIGM.md, Section 6b).
+\section{Proposition G: the slow geometry}\label{sec:propG}
+
+This section concerns joint descent, and variable projection (VarPro) in the induced metric.
+
+\paragraph{Setting.}
+\begin{itemize}
+  \item $f = f(x)$ is time-invariant and $C^2$.
+  \item $x_m$ is $T_0$-periodic, with $\omega_{\mathrm{ref}} := 2\pi/T_0$ and occupation measure
+    $\rho := \frac{1}{T_0}\int_0^{T_0}\delta_{x_m(t)}\dd t$.
+  \item Law (L) acts in the interior, with gains $(g_a, \delta\gamma_c, \delta\gamma_s)$. Put
+    $\Gamma := \operatorname{diag}(\gamma_c I_n, \gamma_s)$, acting per kernel, and $G_\xi := \delta\Gamma$. Write the
+    geometry as $\xi := (c, s)$.
+  \item $\bar L(a,c,s) := \frac12\int\norm{f - \frac1m\sum_i a_i\varphi(\cdot\,;c_i,s_i)}^2\dd\rho$, and
+    $M(c,s) := \frac{1}{m^2}\int\varphi\varphi^\T\dd\rho\otimes I_n$ is the Hessian of $\bar L$ in $a$.
+  \item $\mathcal{K}$ is the set of geometries $\xi$ on which (H1) holds, and $\mathcal{K}'\Subset\mathcal{K}$ is
+    compact. (The set $\mathcal{K}$ is not the functional $\mathcal{G}(\mu)$ of Section~\ref{sec:thmH}.)
+  \item $a^*(\xi) := \operatorname{argmin}_a\bar L$, and $L^*(\xi) := \bar L(a^*(\xi),\xi)$ is the profile
+    (variable-projection) loss.
+  \item Three dimensionless parameters:
+    \begin{itemize}
+      \item the rate ratio
+        $R := g_a m_0\big/\bigl(\delta\cdot\sup_{\mathcal{K}'}\norm{\Gamma^{1/2}\nabla^2L^*\Gamma^{1/2}}\bigr)$;
+      \item the slope $S := (\delta/g_a)\cdot\sup_{\mathcal{K}'}\norm{D_\xi a^*\cdot\Gamma^{1/2}}^2$;
+      \item the averaging parameter
+        $\varepsilon_{\mathrm{avg}} := (m/k_e)\,\lambda_{\max}(G^{1/2}\nabla^2\bar L\,G^{1/2})/\omega_{\mathrm{eff}}$,
+        the second ratio in (H2a$'$). The result tables in \code{results/variable_projection} report its inverse, with $\omega_{\mathrm{ref}}$ in place of
+        $\omega_{\mathrm{eff}}$.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Hypotheses.}
+\begin{itemize}[leftmargin=4.2em,labelsep=0.6em]
+  \item[(H0)] On the interval considered, the closed-loop and reduced geometries stay in $\mathcal{K}'$. The
+    parameters stay in $\operatorname{int}\ThKe$, and $\sup_{\mathcal{K}'}\max_i\norm{a^*_i} < a_{\max} -
+    \varepsilon_K$.
+  \item[(H1)] $M \succeq m_0 I$ on $\mathcal{K}$.
+  \item[(H2a$'$)] \emph{Two scales.} $k_e \gg \omega_{\mathrm{eff}}$ and $\varepsilon_{\mathrm{avg}} \ll 1$, where
+    \begin{equation*}
+      \omega_{\mathrm{eff}} := \max\Bigl\{\omega_{\mathrm{ref}},\ \frac{\sup_t\norm{\dot x_m}}{s_{\min}},\
+      \sup_X\norm{\partial_x(f - \fhat)},\ \frac{\sup_t\norm{\frac{\mathrm{d}}{\mathrm{d}t}r(x_m(t))}}{\sup\norm{r}}
+      \Bigr\}.
+    \end{equation*}
+    The last entry is the bandwidth of the residual along the reference. Also $\sup\norm{r}/k_e \ll s_{\min}$.
+  \item[(H2b)] \emph{Rate separation.} $R \gg 1$: the slowest weight rate $g_a m_0 m/k_e$ is much larger than the
+    geometry rate $(m\delta/k_e)\norm{\Gamma^{1/2}\nabla^2L^*\Gamma^{1/2}}$.
+  \item[(H2c)] \emph{Flat slow manifold.} $S \ll 1$. Since $Da^* = -M^{-1}\partial^2_{a,\xi}\bar L$, a checkable
+    sufficient condition is $\delta\cdot\max(\gamma_c,\gamma_s)\cdot\norm{\partial^2_{a,\xi}\bar L}^2 \ll g_a m_0^2$.
+\end{itemize}
+
+\medskip\noindent Three remarks on the hypotheses.
+\begin{itemize}
+  \item \textbf{(H2b) is about $\boldsymbol{\lambda_{\min}}$.} It is a condition on $\lambda_{\min}$ of the feature
+    Gram matrix. Since $0 < \varphi \le 1$, $m_0 \le 1/m^2$. So the slowest weight rate is at most $g_a/(k_e m)$, and
+    overlapping kernels make (H2b) fail.
+  \item \textbf{The ratios are gain choices.} $R$ and $S$ contain neither $k_e$ nor $\omega_{\mathrm{ref}}$. The
+    separation between weights and geometry is therefore set by the gains.
+  \item \textbf{(H2b) does not imply (H2c).} The product
+    \begin{equation*}
+      R\cdot S = m_0\cdot\sup\norm{Da^*\Gamma^{1/2}}^2\big/\sup\norm{\Gamma^{1/2}\nabla^2L^*\Gamma^{1/2}}
+    \end{equation*}
+    does not depend on $g_a$, $\delta$ or $k_e$. It is fixed by the problem and by the shape of $\Gamma$: in the slope configuration
+    below, a numerical check gives values from 166 to 1149 over $\gamma_s/\gamma_c\in[10^{-4},10^{4}]$. It is large
+    whenever refitting the weights largely compensates a change of geometry.
+\end{itemize}
+
+\begin{thm}{Proposition}{G}[formal reduction]
+\mbox{}
+\begin{enumerate}[label=(\alph*),leftmargin=2.2em]
+  \item[\textup{(a)}] \emph{Two scales, under \textup{(H0)} and \textup{(H2a$'$)}.} To leading order in
+    $\omega_{\mathrm{eff}}/k_e$ and $\varepsilon_{\mathrm{avg}}$, the period-averaged closed loop is the joint gradient
+    flow
+    \begin{equation}\label{eq:propG:joint}
+      \dot\vartheta_i = -\frac{m}{k_e}\,G\,\nabla_{\vartheta_i}\bar L(\vartheta_1,\dots,\vartheta_m).
+    \end{equation}
+    Its measure form is $-\frac{1}{k_e}G\nabla(\delta\bar L/\delta\mu)$.
+    \begin{itemize}
+      \item This is the drift of $\Aavg$ at $\sigma = \tau = 0$, with $\Phi$ in place of $\tilde\Phi$ and $(a,c,s)$
+        in place of $(\alpha,\gamma,\kappa)$, by the same averaging computation as Theorem H(i).
+      \item It is not literally a special case of H(i): the saturated coordinates there induce a different,
+        state-dependent metric.
+      \item $\bar L$ is non-increasing along the averaged flow. Along the closed loop, $\bar L$ at period-averaged
+        parameters decreases while the averaged dissipation $\frac{m}{k_e}\norm{\nabla\bar L}_G^2$ dominates the
+        $O(\omega_{\mathrm{eff}}/k_e)$ corrections of Proposition H.7 and Remark H.7a. Near equilibrium it can
+        increase by $O((\omega_{\mathrm{eff}}/k_e)^2)$, as the weights settle at their shifted equilibrium (in a
+        numerical check: $+8\cdot10^{-7}$ over 35 periods at $k_e = 20$, and $3.7\cdot10^{-8}$, about 22 times less,
+        at $k_e = 80$).
+    \end{itemize}
+
+  \item[\textup{(b$'$)}] \emph{Three scales, for the averaged system \textup{(a)}, under \textup{(H0)}, \textup{(H1)},
+    \textup{(H2a$'$)} and \textup{(H2b)}.} After a boundary layer, the weights follow the slow manifold:
+    \begin{equation}\label{eq:propG:offset}
+      \begin{aligned}
+        a - a^*(\xi) &= -\frac{k_e}{m g_a}M^{-1}Da^*\cdot\dot\xi + \textup{h.o.t.}\\
+        &= \frac{\delta}{g_a}M^{-1}Da^*\Bigl(\Gamma^{-1} + \frac{\delta}{g_a}(Da^*)^\T Da^*\Bigr)^{-1}
+        \nabla L^*(\xi) + \textup{h.o.t.}
+      \end{aligned}
+    \end{equation}
+    This reduces to $\frac{\delta}{g_a}M^{-1}Da^*\,\Gamma\,\nabla L^*(\xi)$ when $S \ll 1$. The geometry follows, to
+    leading order in $1/R$ and for every $S$,
+    \begin{equation}\label{eq:propG:induced}
+      \dot\xi = -\frac{m\delta}{k_e}\Bigl(\Gamma^{-1} + \frac{\delta}{g_a}(Da^*)^\T Da^*\Bigr)^{-1}\nabla L^*(\xi).
+    \end{equation}
+    \begin{itemize}
+      \item This is the gradient flow of $(m/k_e)L^*$ in the metric that the $G^{-1}$ metric induces on the graph
+        $\{(a^*(\xi),\xi)\}$.
+      \item Its metric tensor is $G_\xi^{-1} + g_a^{-1}(Da^*)^\T Da^*$, and it couples all kernels through $Da^*$.
+      \item In the closed loop, the weight equilibrium is further shifted by $O(\omega_{\mathrm{eff}}/k_e)$
+        (Proposition~H.7). This shift can exceed the offset displayed above: in a numerical check on the
+        \code{satisfying} run it is $3$--$6\cdot10^{-3}$, against an offset of $4\cdot10^{-5}$--$3\cdot10^{-4}$.
+    \end{itemize}
+
+  \item[\textup{(b)}] \emph{Variable projection, under \textup{(H2c)} in addition.} Let $(\bar c,\bar s)$ solve
+    $\bar\xi' = -\frac{m\delta}{k_e}\Gamma\nabla L^*(\bar\xi)$, that is,
+    $\bar c_i' = -\frac{m\delta\gamma_c}{k_e}\nabla_{c_i}L^*$ and
+    $\bar s_i' = -\frac{m\delta\gamma_s}{k_e}\partial_{s_i}L^*$, with $(\bar c,\bar s)(0) = (c,s)(0)$. Then
+    \begin{equation}\label{eq:propG:varpro}
+      \sup_{t\le\tau_1k_e/(m\delta)}\norm{(c,s)(t) - (\bar c,\bar s)(t)} \to 0
+      \quad\text{as } (\omega_{\mathrm{eff}}/k_e,\ \varepsilon_{\mathrm{avg}},\ S,\ 1/R)\to0,
+      \text{ with } \tau_1 \text{ fixed.}
+    \end{equation}
+    \begin{itemize}
+      \item Formally the error is $O(\omega_{\mathrm{eff}}/k_e + \varepsilon_{\mathrm{avg}} + S + 1/R)$.
+      \item $L^*$ is non-increasing along $\bar\xi$, and the weights track $a^*$.
+      \item This flow is the $S\to0$ limit of (b$'$).
+    \end{itemize}
+\end{enumerate}
+\end{thm}
+\status{Formal (a derivation without error control); checked directly, including a counterexample to plain VarPro at
+$S = O(1)$ (see the numerics below). Novelty (literature audit): a fixed-$m$, closed-loop analogue of the
+two-timescale/VarPro training of~\cite{S1}, \cite{S2}.}
+
+\paragraph{No mean-field form.} For fixed $m$, on configurations of $m$ distinct geometries in $\mathcal{K}$, the flow
+(b) is the gradient flow of $L^*/k_e$ in the metric $(1/m)\sum_i\norm{\dot\xi_i}^2_{G_\xi^{-1}}$. Locally, that metric
+is the Wasserstein metric restricted to uniform $m$-atom measures.
+\begin{itemize}
+  \item $L^*$ is the unregularised profile loss. It is the $\lambda\to0$ limit of $\lambda\mathcal{L}^\lambda$
+    of~\cite{S2} (time rescaled by $\lambda$). It is not the $\lambda\to0$ functional $\mathcal{L}^0$ of~\cite{S2},
+    which is a min-norm interpolation functional whose flow is an ultra-fast diffusion.
+  \item As a functional of the geometry marginal, $L^*$ depends only on the support, because the free weights absorb
+    the masses. So it is not $W$-continuous, and the statement has no mean-field form. This is consistent with
+    $m_0 \le 1/m^2$.
+\end{itemize}
+
+\begin{proof}[Derivation (formal)]
+Each step is a standard theorem on its own time scale. Their composition on the $O(k_e/(m\delta))$ horizon is formal.
+\begin{enumerate}[label=\arabic*.,leftmargin=2em]
+  \item \emph{Error channel (exact identity).} For $w := e - r(x,\vartheta)/k_e$, $\dot w = -k_e w - \dot r/k_e$. So
+    $\norm{w(t)} \le e^{-k_et}\norm{w(0)} + \sup\norm{\dot r}/k_e^2$, and
+    \begin{equation*}
+      e = r(x_m)/k_e + O\bigl(\sup\norm{\dot r}/k_e^2 + \sup\norm{\partial_x r}\cdot\sup\norm{r}/k_e^2\bigr).
+    \end{equation*}
+    This is $O(\omega_{\mathrm{eff}}\cdot\sup\norm{r}/k_e^2)$, with the bandwidth term in $\omega_{\mathrm{eff}}$.
+  \item \emph{Period averaging of the joint system} (Khalil~\cite[Thm.~10.4]{khalil2002};
+    Sastry--Bodson~\cite[Ch.~4]{sb1989}). This gives (a), on $[0, b/\varepsilon_{\mathrm{avg}}]$.
+  \item \emph{Weights against geometry.} Use Tikhonov in slow time (Kokotović--Khalil--O'Reilly~\cite{kko1986}) with
+    the uniformly exponentially stable averaged weights on $\mathcal{K}'$ (H1).
+    \begin{itemize}
+      \item On the slow manifold $a = h(\xi)$,
+        $\dot a = Dh\,\dot\xi = -\frac{mg_a}{k_e}M(h - a^*)$, so
+        $h - a^* = -\frac{k_e}{mg_a}M^{-1}Dh\,\dot\xi$. This must be evaluated with the (b$'$) velocity, not the
+        VarPro velocity.
+      \item Since $\bar L$ is quadratic in $a$ and $\partial^2_{\xi a}\bar L = -(Da^*)^\T M$, we get
+        $\nabla_\xi\bar L(h,\xi) = \nabla L^* - (Da^*)^\T M(h - a^*) + O((\delta/g_a)^2)$.
+      \item Substituting into $\dot\xi = -\frac{m\delta}{k_e}\Gamma\nabla_\xi\bar L(h,\xi)$, with
+        $Dh = Da^* + O(1/R)$, gives (b$'$). The resummed form solves the invariance equation exactly once
+        $Dh - Da^*$ and the quadratic term are dropped, so the remaining corrections are in $1/R$ (they involve
+        $D^2a^*$ and $\partial_\xi M$), not in $S$.
+    \end{itemize}
+  \item \emph{Envelope theorem.} $\nabla_\xi\bar L(a^*(\xi),\xi) = \nabla L^*(\xi)$. When $S\ll1$, the metric
+    correction in (b$'$) drops out, which gives (b).
+\end{enumerate}
+The composition requires the averaged system to remain valid up to $t\sim\tau_1k_e/(m\delta)$, which is much longer
+than $b/\varepsilon_{\mathrm{avg}}$. Step~2 does not certify this. A proof would combine:
+\begin{itemize}
+  \item a near-identity averaging transform;
+  \item uniform exponential stability of the averaged weights on $\mathcal{K}'$;
+  \item Tikhonov in slow time with an $O(\varepsilon_{\mathrm{avg}})$ perturbation;
+  \item Grönwall in $\xi$ (Sastry--Bodson~\cite[\S4.4]{sb1989}; Sanders--Verhulst--Murdock~\cite[Ch.~5]{svm2007}).
+\end{itemize}
+\end{proof}
+
+\paragraph{Numerics.} The results are in \code{results/variable_projection} of the accompanying repository;
+Table~\ref{tab:propG:numerics} summarises the comparison.
+\begin{itemize}
+  \item The first two rows use centred differences of period means.
+  \item The slope rows use the displacement between the first and last period means. They start on the slow manifold
+    of (b$'$), so no weight boundary layer enters the comparison.
+  \item (b$'$) was evaluated only in the slope rows.
+  \item $k_e/\omega_{\mathrm{eff}}$ is 2.0 in the first two rows with the box's $s_{\min}$, and 2.6--4.8 with the
+    actual widths, so (H2a$'$) holds only marginally there. In the \code{satisfying} run the residual bandwidth, about
+    7.7, then dominates.
+  \item $k_e/\omega_{\mathrm{eff}}$ is about 16 in the slope rows.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.35cm}llYY@{}}
+\toprule
+configuration & (H2b) ratio & $S$ & G(a): closed loop against the joint flow (a) & G(b) and the induced-metric flow
+(b$'$)\\
+\midrule
+\code{violating} ($m = 4$, overlapping) & 0.10--0.23 & 5.4--25 &
+joint cosine 0.9994 / 0.9985, size ratio 1.00 / 0.94 &
+(b) fails: cosine $-0.12$ / 0.39, and $L^*$ \emph{increases} from $3.8\cdot10^{-3}$ to $5.9\cdot10^{-3}$\\
+\addlinespace
+\code{satisfying} ($m = 2$) & 79--87 & 0.006 &
+joint cosine 0.985 / 0.962, size 0.96 / 0.94; geometry block 0.999 / 0.998; the weight block fails (see below) &
+(b) holds: cosine 0.999, ratio 0.97; $L^*$ decreases from $1.20\cdot10^{-2}$ to $4.11\cdot10^{-3}$\\
+\addlinespace
+\code{slope}, $\delta = 0.47$ ($m = 1$) & 81--178 & 2.0--2.8 &
+cosine 0.9992, size 1.10 &
+(b) fails: ratio 0.42, cosine 0.93, and the centre moves the opposite way; (b$'$): cosine 0.9986, ratio 1.12\\
+\addlinespace
+\code{slope}, $\delta = 0.47$, all gains $\div\,4$ & 81--178 & 2.0--2.8 &
+cosine 1.0000, size 1.05 &
+(b) fails: ratio 0.40, cosine 0.92; (b$'$): cosine 0.9999, ratio 1.065\\
+\addlinespace
+\code{slope}, $\delta = 0.047$ & 654--1779 & 0.20--0.32 &
+cosine 1.0000, size 1.04 &
+(b): ratio 0.85, cosine 0.9986; (b$'$): ratio 1.05, cosine 1.0000\\
+\addlinespace
+\code{slope}, $\delta = 0.0047$ & 13162--17790 & 0.020--0.023 &
+cosine 1.0000, size 1.04 &
+(b): ratio 1.02; (b$'$): ratio 1.04; both cosines 1.0000\\
+\bottomrule
+\end{tabularx}
+\caption{Proposition G: the closed loop against the averaged predictions. In the first two rows, an entry
+`$p$ / $q$' gives the medians over the first quarter ($p$) and over the last quarter ($q$) of the run.}
+\label{tab:propG:numerics}
+\end{table}
+
+\begin{itemize}
+  \item \textbf{Joint descent.} In all runs, $\bar L$ at the period-mean parameters is non-increasing, sampled once per
+    period.
+  \item \textbf{(H2b) is not enough.} The \code{slope} rows satisfy (H2b) by a wide margin, yet (b) fails until $S$ is
+    small. Meanwhile (b$'$) tracks the closed loop at every $S$. So (H2c) is the hypothesis missing from an earlier
+    formulation of Proposition G(b), and (b$'$) is the correct leading-order slow flow. The configuration is a
+    counterexample to that earlier formulation, made reproducible in \code{experiments/exp_slow_manifold_slope.py}.
+  \item \textbf{Error decomposition} (\code{slope}, $\delta = 0.47$, started on the slow manifold):
+    \begin{itemize}
+      \item $\norm{(\mathrm{a})}/\norm{(\mathrm{b}')} = 1.015$. This is the intrinsic $O(1/R)$ error of (b$'$).
+      \item $\norm{\mathrm{closed}}/\norm{(\mathrm{a})} = 1.10$. It falls to 1.05 when all gains are divided by 4,
+        which leaves $R$ and $S$ unchanged and divides $\varepsilon_{\mathrm{avg}}\approx0.08$ by 4. So this part is
+        the averaging error.
+      \item The remaining ${\approx}\,4.4\%$ is the $O(1/k_e)$ error-channel factor at $k_e = 20$. It is the same at
+        $\delta = 0.047$ and $0.0047$.
+    \end{itemize}
+  \item \textbf{The size ratio in the \code{satisfying} run.} The centred ratio of 0.97 is the error-channel factor
+    times a $+1.4\%$ averaging correction from the weights' oscillation within each period, the analogue of Remark
+    H.7a.
+    \begin{itemize}
+      \item The frozen-parameter ratio is 0.951--0.956 along the run, and 0.996 at $k_e = 80$.
+      \item The fastest weight rate over $\omega_{\mathrm{ref}}$ is about 0.14.
+      \item In a further numerical check, with the weights running at frozen geometry the ratio is 0.969--0.970;
+        with $g_a/4$ it is 0.956--0.960.
+      \item The slope correction is below 0.01\% here, because $\nabla L^*$ is nearly orthogonal to the range of
+        $(Da^*)^\T$. An earlier estimate of 0.94--0.95 contained a 2.5\% forward-difference bias.
+    \end{itemize}
+  \item \textbf{The weight block.} In the \code{satisfying} run the weights sit at $a^* + O(1/k_e)$, within 0.1\% of
+    $a^*$.
+    \begin{itemize}
+      \item Their actual drift is tiny: 0.001--0.008 of the geometry speed in the $G^{-1}$ norm.
+      \item The prediction $-(m/k_e)g_a\nabla_a\bar L$ at the period-mean weights is 0.17--0.30 of the geometry speed,
+        40--200 times the actual drift. It is the restoring velocity of the $O(1/k_e)$ offset, which (a) does not
+        contain.
+      \item So the weight block fails (cosine $-0.21$ / 0.50, carrying 92--95\% of the residual), while the geometry
+        block matches.
+    \end{itemize}
+\end{itemize}
+\checkedby{\code{experiments/exp_variable_projection.py}, which writes \code{table_violating.md} and
+\code{table_satisfying.md}; and \code{experiments/exp_slow_manifold_slope.py}, which writes \code{table_slope.md}
+(all in \code{results/variable_projection}).}
+
+\paragraph{Status.}
+\begin{itemize}
+  \item \textbf{What the loop supplies.} The error-channel and averaging scales, and the data distribution (the
+    occupation measure of the reference), come from the closed loop.
+  \item \textbf{What the designer supplies.} The separation between weights and geometry is a gain choice, as
+    in~\cite{S1}, \cite{S2}:
+    $\delta \ll g_a\cdot\min\bigl(m_0/\norm{\Gamma^{1/2}\nabla^2L^*\Gamma^{1/2}},\
+    1/\norm{Da^*\Gamma^{1/2}}^2\bigr)$. Equivalently, $\norm{G_\xi^{1/2}\nabla^2L^*G_\xi^{1/2}} \ll g_a m_0$ and
+    $\norm{Da^*G_\xi^{1/2}}^2 \ll g_a$.
+  \item \textbf{What is new here.}
+    \begin{itemize}
+      \item The learner's data distribution is its own excitation, and at finite $k_e$ it moves with the parameters
+        (Proposition H.7(c)).
+      \item The slow flow is variable projection in the \emph{induced} metric, valid for every $S$. The slope $S$
+        measures the departure from plain VarPro.
+    \end{itemize}
+\end{itemize}
