@@ -61,4 +61,16 @@ As g → 0 (slow adaptation) the ratio exact/explicit decreases towards a consta
 
 Reading: above the threshold the guaranteed rate of Lemma E.0′ is the averaged rate λ_min(M̄)/k up to the factor c_ζ/(1 + εp₁ + ε²p₂) ≈ 1 − δ, within a factor 1.3 of the exact rate, where Lemma E.0's optimised rate is five orders of magnitude below it; the certificate sup V̇/V ≤ −γ is verified on the grid wherever the conditions hold. Below the threshold the conditions fail through (A): the derivative peak factor ρ_DD of this regressor is large (the directions that are poorly excited on average are excited in short bursts).
 
+## 5. Corollary E.0′.2: Theorem E in the slow regime on the single-kernel instance (m = n = 1, ϑ* = (1.5, 0.3, 0.8), G = 0.3·I, x_m = 1.5 sin t, k_e = 40)
+
+λ_min(M̄_G) = 5.409e-02, κ(M̄_G) = 6.7, peak factors ρ = 4.8, ρ_D = 30.3, ρ_DD = 461; threshold k₀ = 24.5 (δ = 0.2), 33.7 (δ = 0.1); r = min(ρ, δ) = 0.350, L_J = 4.62 (estimated from samples); exact linear rate 1.348e-03.
+
+| Lyapunov function | explicit ball radius r₀ (w-coordinates) | nonlinear rate λ | overshoot C | exact linear rate / λ |
+|---|---|---|---|---|
+| Lemma E.0, optimised ε (Theorem E) | 6.146e-06 | 2.628e-05 | 1.43 | 51.3 |
+| Lemma E.0′, δ = 0.2 (Corollary E.0′.2) | 1.423e-06 | 4.292e-04 | 11.95 | 3.1 |
+| Lemma E.0′, δ = 0.1 (Corollary E.0′.2) | 7.772e-07 | 4.914e-04 | 17.31 | 2.7 |
+
+Reading: on this well-conditioned regressor (κ ≈ 7) Lemma E.0 is only an order of magnitude conservative, and the corollary trades the certified ball for the rate: its nonlinear rate is within a small factor of the exact linear rate (the factor 2 of the Lyapunov argument times 1/(1 − δ)), while its ball radius carries the anisotropy p_lo/p_hi ≈ 1/β of the quadratic form. On ill-conditioned regressors (table 4) both improve, the rate by the factor of Remark E.0a.
+
 Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand.

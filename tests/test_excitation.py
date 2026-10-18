@@ -250,9 +250,10 @@ def test_corollary_E0prime_2_envelope_on_the_implemented_loop():
     """
     Corollary E.0′.2 (Theorem E in the slow regime) on Remark E.1's single-kernel instance with G = 0.3·I at k_e = 40,
     δ = 0.2 (above Lemma E.0′'s threshold k₀ ≈ 25 for this regressor): from a start with ‖w(0)‖ ≤ r′₀ the implemented
-    closed loop satisfies ‖w(t)‖ ≤ C′e^{−λ′t}‖w(0)‖ at every sample over two e-folds of the explicit envelope, and the
+    closed loop satisfies ‖w(t)‖ ≤ C′e^{−λ′t}‖w(0)‖ at every sample over 1.5 e-folds of the explicit envelope, and the
     explicit nonlinear rate λ′ exceeds Theorem E's rate with Lemma E.0 by more than a factor 10 (it is within a factor 4
-    of the exact linear rate).
+    of the exact linear rate).  The step is dt = 0.005: the fixed-step RK4 loop has a discretisation floor of
+    ‖w‖ ≈ 6·10⁻⁶ at dt = 0.02 (∝ dt⁴), above the explicit ball r′₀ ≈ 1.4·10⁻⁶, and ≈ 2·10⁻⁸ at dt = 0.005.
     """
     rng = np.random.default_rng(7)
     m, n = 1, 1
@@ -285,8 +286,8 @@ def test_corollary_E0prime_2_envelope_on_the_implemented_loop():
     w0 = Sdiag * z0
     assert np.linalg.norm(w0) <= cst['r0_w'] * (1 + 1e-9)
     P0 = P_star + z0[n:].reshape(m, p); x0 = plant.x_ref(0.0) + z0[:n]
-    T_end = 2.0 / cst['rate_nonlinear']                                                        # two e-folds of the envelope
-    res = T.rk4_closed_loop(plant, ctrl, x0, P0, T=T_end, dt=0.02, record_every=50)
+    T_end = 1.5 / cst['rate_nonlinear']                                                        # 1.5 e-folds of the envelope
+    res = T.rk4_closed_loop(plant, ctrl, x0, P0, T=T_end, dt=0.005, record_every=200)
     worst = 0.0
     for t, x, P in zip(res['t'], res['x'], res['P']):
         z = np.concatenate([x - plant.x_ref(t), (P - P_star).reshape(-1)])

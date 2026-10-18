@@ -230,7 +230,7 @@ def main():
     L += ["", "Reading: on this well-conditioned regressor (κ ≈ 7) Lemma E.0 is only an order of magnitude conservative, and the corollary trades the "
           "certified ball for the rate: its nonlinear rate is within a small factor of the exact linear rate (the factor 2 of the Lyapunov argument "
           "times 1/(1 − δ)), while its ball radius carries the anisotropy p_lo/p_hi ≈ 1/β of the quadratic form. On ill-conditioned regressors "
-          "(table 4) both improve, the rate by the factor of Remark E.0a.", "",
+          "the rate improves by the factor of Remark E.0a (table 4); the radius comparison was not computed there.", "",
           "Numbers are produced by `experiments/exp_explicit_rate.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'table.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(L) + "\n")

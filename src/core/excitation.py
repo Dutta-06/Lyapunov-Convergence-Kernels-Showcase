@@ -423,14 +423,14 @@ class SlowRegimeLyapunov:
         PM, PD = self.Psi_M, self.Psi_D
         sr, srD, srDD = np.sqrt(self.rho), np.sqrt(self.rho_D), np.sqrt(self.rho_DD)
         pi1 = 0.5 * T * PM * (sr + 1)                                   # ‖P₁v‖ ≤ π₁‖v‖_M̄
-        pi2 = PM * (sr + 1) + 0.25 * T ** 2 * PM ** 3 * (2 * sr + 1)   # ‖P₂v‖ ≤ π₂‖v‖_M̄
+        pi2 = PM * (sr + 1) + 0.125 * T ** 2 * PM ** 3 * (2 * sr + 1)  # ‖P₂v‖ ≤ π₂‖v‖_M̄ (‖(M−M̄)v‖ + (T/4)sup‖Fv‖)
         p1 = 0.5 * T * PM ** 2                                          # ‖P₁‖ ≤ p₁
-        p2 = PM ** 2 + 0.5 * T ** 2 * PM ** 4                           # ‖P₂‖ ≤ p₂
+        p2 = PM ** 2 + 0.25 * T ** 2 * PM ** 4                          # ‖P₂‖ ≤ p₂  (‖F‖ ≤ 2‖P₁‖‖M‖ ≤ TΨ_M⁴)
         r_z = (e ** 3 * (pi2 * PM * sr + pi1 * PM * srD + PM ** 2 * self.rho)
                + e ** 4 * (pi2 * PM * srD + pi1 * PM ** 3 * sr) + e ** 5 * pi2 * PM ** 3 * sr)
         c1 = sr + e * PM * pi1 + e ** 2 * PM * pi2
         c2 = (e ** 2 * srDD + e ** 3 * (3 * PD * PM * sr + 2 * PM ** 2 * srD) + e ** 4 * (2 * PM ** 4 * sr + PD * PM * srD)
-              + e ** 5 * (PM ** 4 * srD + PD * PM ** 3 * sr) + e ** 6 * PM ** 5 * sr)
+              + e ** 5 * (PM ** 4 * srD + PD * PM ** 3 * sr) + e ** 6 * PM ** 6 * sr)      # ‖ΨM³ζ‖ ≤ Ψ_M·Ψ_M⁴·‖Mζ‖ (round-6 review, E0P-1)
         d_w = e * PM ** 2 + e ** 2 * PD * PM + e ** 3 * PM ** 4
         beta = 2 * c1 ** 2 / delta
         c_z = (1 - delta) - r_z / e

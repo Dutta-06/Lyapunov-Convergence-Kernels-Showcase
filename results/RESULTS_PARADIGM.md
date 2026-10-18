@@ -228,6 +228,9 @@ every row (a numerical ordering: Ψ_M, Ψ_D are grid maxima and ε a grid optimu
   1.26 (δ = 0.2) and 1.12 (δ = 0.1) of the exact Floquet rate at k = 400 and 600, where Lemma E.0's optimised rate is
   1.3·10⁵ times smaller; the certificate sup V̇/V ≤ −γ holds on the grid wherever the conditions hold; exact/(λ_min/k) =
   0.9885, 0.9971, 0.9993, 0.9997, 0.9998, 0.9999 at k = 50 … 600 (the k⁻² law of N₂ = 0).
+- Corollary E.0′.2 (Theorem E in the slow regime; table 5): on the single-kernel instance at k_e = 40 the nonlinear rate from
+  Lemma E.0′'s V is 4.29·10⁻⁴ (δ = 0.2) against 2.63·10⁻⁵ from Lemma E.0 and an exact linear rate of 1.35·10⁻³; the explicit
+  ball radius is 1.42·10⁻⁶ against 6.15·10⁻⁶ (the anisotropy of the quadratic form), the overshoot 12.0 against 1.43.
 - Tests (`tests/test_excitation.py`): the pointwise inequalities of Lemma E.0 on random states for four regressors, the
   envelope along trajectories, the ordering explicit ≤ exact, the ω⁻² law, the no-growth of the ratio as the gains
   shrink, and the explicit nonlinear envelope of Theorem E on the implemented closed loop (single-kernel instance with
@@ -235,6 +238,8 @@ every row (a numerical ordering: Ψ_M, Ψ_D are grid maxima and ε a grid optimu
   every sample over 8000 s, about 0.3 e-folds of the explicit envelope, while the state itself decays by far more).
   Lemma E.0′: the certificate and the sharpness on Ψ = (sin t, cos t) (k = 20, 50, 200; ratio → 1/(1 − δ)) and on the
   slow-adaptation ideal at k = 400 (ratio ≤ 1.5; more than 10⁴ above Lemma E.0's rate).
+  Corollary E.0′.2: the explicit envelope on the implemented single-kernel loop at k_e = 40 over 1.5 e-folds (dt = 0.005,
+  below the fixed-step discretisation floor).
 
 ## Theorem J — periodic orbits of the finite-m closed loop (`exp_periodic_orbit.py` → `periodic_orbit/`)
 
@@ -292,6 +297,11 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
 - Single seeds differ by more than an order of magnitude at fixed m; a three-seed version of the experiment gave slopes
   −0.25 and −0.21 and was withdrawn (review round 5, D2). The constant of the theorem (T K_Φ e^{ΛT}) is not checked.
 - No test: the experiment is the check.
+- Theorem D″ (`exp_chaos_uniform.py` → `chaos/uniform_table.md`; n = 1, k_e = 25, G = 0.05·diag(4,1,1), M = 2048, T = 80 s,
+  8 seeds): certified leak σ_cert = 2.39 from the sampled Lipschitz constants (L_x = 7.98, L_ϑ = 7.70, L₂ = 31.6,
+  L_{xϑ} = 41.1, E_X = 0.052). At σ = 4.66 the reference collapses to one kernel (spread 4·10⁻¹⁷) and the coupled
+  distance is zero; at σ = 0.31 the particles synchronise (spread 2·10⁻¹⁰) and the distance decays to 10⁻⁸; at σ = 0.02
+  the network stays spread (2.57) and the distance is bounded over 80 s at the m^{−0.41} level (window ratios 0.99–1.17).
 
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 

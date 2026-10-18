@@ -127,7 +127,9 @@ def coupled_run(seed, sigma):
     for m in MS:
         D = np.array(rec[m])
         out[m] = [float(D[(rec_t > a) & (rec_t <= b)].max()) for a, b in WINDOWS] + [float(D[(rec_t > 40) & (rec_t <= 80)].mean())]
-    return seed, sigma, out, e_sup, x_sup
+    ThM = systems[M_REF]['Th']
+    spread = float(np.max(np.linalg.norm(ThM - ThM.mean(0), axis=1)))                    # particle spread of the reference at T
+    return seed, sigma, out, e_sup, x_sup, spread
 
 
 def main():
@@ -162,7 +164,8 @@ def main():
              f"(the runs below used a provisional E_X = {E_X_guess} to set the leaks: σ = {sigmas[0]:.3f}, {sigmas[1]:.3f}, {sigmas[2]:.3f}).", ""]
     for sg in sigmas:
         cert = det(sg) > 0 and kappa_th(sg) > 0 and kappa_e > 0
-        lines += [f"## σ = {sg:.3f} ({'certified: det A = ' + format(det(sg), '.3f') if cert else 'below the threshold'})", "",
+        spread = np.mean([r[5] for r in res if r[1] == sg])
+        lines += [f"## σ = {sg:.3f} ({'certified: det A = ' + format(det(sg), '.3f') if cert else 'below the threshold'}); particle spread of the reference at T (max_i ‖ϑ_i − ϑ̄‖, seed mean): {spread:.2e}", "",
                   "| m | max D_m on (10, 20] | on (20, 40] | on (40, 80] | time average on (40, 80] | bound (K_Φκ_ϑ + 2K_ΦL_b′)m^{−1/2}/det A |", "|---|---|---|---|---|---|"]
         R = {m: np.array([r[2][m] for r in res if r[1] == sg]) for m in MS}        # (seeds, 4)
         for m in MS:
@@ -174,9 +177,12 @@ def main():
         growth = np.array([R[m].mean(0)[2] / R[m].mean(0)[0] for m in MS])
         lines += ["", f"Slope of the (40, 80] window maximum against m: {slope:.2f} (Theorem D″: −0.5). Ratio of the (40, 80] to the (10, 20] window maxima: "
                   + ", ".join(f"{g:.2f}" for g in growth) + " (uniform in time means no growth).", ""]
-    lines += ["Reading: the certified leak keeps the coupled distance bounded uniformly in time at the m^{−1/2} rate, far below the bound "
-              "(the Lipschitz constants are worst-case suprema); the two leaks below the threshold show whether the conclusion holds beyond "
-              "what the theorem certifies on this instance.", "",
+    lines += ["Reading: the condition κ_ϑ > 0 makes the particle map a contraction uniformly in time, so it also synchronises the particles "
+              "of one system: at the certified leak the reference collapses to a single kernel (particle spread at the rounding level) and the "
+              "coupled distance vanishes identically — propagation of chaos is uniform in time but trivial. At σ_cert/8 the particles still "
+              "synchronise, more slowly, and the coupled distance decays with them. At σ = 0.02 the network stays spread, the coupled distance "
+              "settles at the m^{−1/2} level and does not grow over the horizon: uniform in time empirically, beyond what the theorem certifies. "
+              "The learning regime is the open part of §8, branch 3.", "",
               "Numbers are produced by `experiments/exp_chaos_uniform.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'uniform_table.md'), 'w', encoding='utf-8') as fh:
         fh.write("\n".join(lines) + "\n")
