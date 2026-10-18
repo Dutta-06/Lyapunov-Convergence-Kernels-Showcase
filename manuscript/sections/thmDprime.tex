@@ -228,3 +228,189 @@ D2). Second, the measured ratio $\sup_tD_m/(1/m - 1/M)^{1/2}\approx0.7$ is astro
 $TK_\Phi e^{\Lambda T}$ of (b): on this horizon the theorem is a rate statement, not a quantitative bound.
 \checkedby{\code{exp_chaos.py}: the experiment only; there is no test for Theorem D$'$ (its hypotheses are structural
 and the coupling is the experiment itself).}
+
+% Theorem D'': uniform-in-time propagation of chaos in the leak-dominated regime (PARADIGM.md, section 5c).
+\subsection*{Theorem D$''$: uniform-in-time propagation of chaos in the leak-dominated regime}
+\addcontentsline{toc}{subsection}{Theorem D\texorpdfstring{$''$}{''}: uniform-in-time propagation of chaos in the
+leak-dominated regime}
+
+\begin{thm}{Theorem}{D$''$}[uniform-in-time propagation of chaos in the leak-dominated regime]
+In the setting and with the constants of Theorem D$'$, assume the standing bound for all $t \ge 0$ and let
+$L_2 := \sup\norm{\nabla^2_\vartheta\tilde\Phi}$, $L_{x\vartheta} := \sup\norm{\partial_x\nabla_\vartheta\tilde\Phi}$
+(over all $x$ and $\vartheta$; for $n > 1$ the operator norms are contracted with unit vectors as in
+\eqref{eq:setting:HK} of Section~\ref{sec:setting}), and
+\begin{gather*}
+  \kappa_e := k_e - L_f - L_x,\qquad \kappa_\vartheta := \sigma - \lambda_GE_XL_2,\\
+  L_{b'} := \lambda_G(L_\vartheta + E_XL_{x\vartheta}),\qquad
+  \det A := \kappa_e\kappa_\vartheta - L_{b'}L_\vartheta.
+\end{gather*}
+If $\kappa_e > 0$ and $\det A > 0$ (then $\kappa_\vartheta > 0$ as well) --- the leak dominates the loop gain of the
+adaptive law --- then, under the synchronous coupling of Theorem D$'$(b), for every $t \ge 0$ and every $\tau \ge 0$,
+\begin{gather*}
+  \E\norm{x_t - \bar x_t} \le K_\Phi\kappa_\vartheta m^{-1/2}/\det A,\\
+  \E\frac1m\sum_i\norm{\vartheta_i(t) - \bar\vartheta_i(t)} = \E\norm{\vartheta_1(t) - \bar\vartheta_1(t)}
+  \le K_\Phi L_{b'}m^{-1/2}/\det A,
+\end{gather*}
+with constants independent of $t$: propagation of chaos is uniform in time, at the rate $m^{-1/2}$. Moreover
+$\sup_t\E W_1(\mu^m_t,\bar\mu_t) \le K_\Phi L_{b'}m^{-1/2}/\det A + \sup_t\E W_1(\bar\mu^{\mathrm{emp},m}_t,\bar\mu_t)$,
+and the second term is finite:
+$\sup_t\int\norm{\vartheta - \vartheta^0}^2\dd\bar\mu_t
+\le \max\bigl\{\int\norm{\vartheta - \vartheta^0}^2\dd\bar\mu_0,\ ((\lambda_GE_XL_\vartheta)^2/\sigma + 2\tau\tr G)/\sigma\bigr\}$.
+\end{thm}
+\status{Proved; checked numerically on one slow-adaptation instance (\code{exp_chaos_uniform.py}), where it also shows
+its limit. The contraction condition $\kappa_\vartheta > 0$ makes the particle map a contraction uniformly in $t$, so in
+the certified regime the particles of a single system stay together: at $\tau = 0$ they synchronise exponentially and
+the network collapses to one kernel; at $\tau > 0$ they form the dither cloud of the prior,
+$\mathcal{N}(\vartheta^0,(\tau/\sigma)G)$ to leading order, and the network's output stays at the level of its prior
+(Remark D$''$.1). In both cases the leak dominates the learning: the certified regime is the one in which the network
+does not learn. What the theorem adds to Theorem D$'$ is the removal of the horizon from the bound in that regime, with
+explicit constants (non-trivially at $\tau > 0$, where the coupled distance is of order $m^{-1/2}$ and not zero), and a
+precise statement of where the contraction method stops. Referee round 6 (\code{review/REVIEW_round6_Dpp.md}) confirmed
+the proof, corrected a double-counted factor 2 in the interconnection gain $L_{b'}$ (sharp constants below), and found
+that the run first reported as ``learning regime'' was a slow collapse to the dead kernel of an odd plant; the instance
+was changed, and the new long-horizon run in the learning regime shows the coupled distance growing in time --- the
+uniform statement is supported only where the theorem proves it.}
+
+\begin{proof}
+Keep the contracting terms that Theorem D$'$'s proof dropped. For $\delta := x - \bar x$, the term $-k_e\delta$ gives
+$D^+\norm{\delta} \le -(k_e - L_f - L_x)\norm{\delta} + L_\vartheta\bar\Delta + \zeta_t$ with the same decomposition
+of the bracket as in D$'$(b). For $\Delta_i := \vartheta_i - \bar\vartheta_i$, split
+$b(x,e,\vartheta_i) - b(\bar x,\bar e,\bar\vartheta_i)
+= [b(x,e,\vartheta_i) - b(\bar x,\bar e,\vartheta_i)] + [b(\bar x,\bar e,\vartheta_i) - b(\bar x,\bar e,\bar\vartheta_i)]$.
+Since $e - \bar e = \delta$, the first bracket is
+$G\nabla_\vartheta\tilde\Phi(x;\vartheta_i)^\T(e - \bar e)
++ G[\nabla_\vartheta\tilde\Phi(x;\vartheta_i) - \nabla_\vartheta\tilde\Phi(\bar x;\vartheta_i)]^\T\bar e$, of norm at
+most $\lambda_GL_\vartheta\norm{\delta} + \lambda_GL_{x\vartheta}\norm{\delta}E_X = L_{b'}\norm{\delta}$ on the tube.
+The second bracket is
+$G[\nabla_\vartheta\tilde\Phi(\bar x;\vartheta_i) - \nabla_\vartheta\tilde\Phi(\bar x;\bar\vartheta_i)]^\T\bar e - \sigma\Delta_i$,
+and $\ip{\Delta_i}{\cdot} \le \lambda_G\norm{\bar e}L_2\norm{\Delta_i}^2 - \sigma\norm{\Delta_i}^2
+\le -\kappa_\vartheta\norm{\Delta_i}^2$, so
+$D^+\norm{\Delta_i} \le -\kappa_\vartheta\norm{\Delta_i} + L_{b'}\norm{\delta}$, and the same for the average
+$\bar\Delta$. The pair $u := (\norm{\delta},\bar\Delta)$ thus satisfies $D^+u \le Au + (\zeta_t,0)^\T$ componentwise,
+$u(0) = 0$, with the Metzler matrix
+$A := \bigl[\begin{smallmatrix}-\kappa_e & L_\vartheta\\ L_{b'} & -\kappa_\vartheta\end{smallmatrix}\bigr]$
+(non-negative off-diagonal entries), whose flow $e^{As}$ is entrywise non-negative. The comparison principle for
+cooperative systems gives $u(t) \le \int_0^te^{A(t-s)}(\zeta_s,0)^\T\dd s$ entrywise. $A$ is Hurwitz exactly when its
+trace is negative and its determinant positive; with $\kappa_e > 0$ and
+$\det A = \kappa_e\kappa_\vartheta - L_{b'}L_\vartheta > 0$ one has $\kappa_\vartheta > L_{b'}L_\vartheta/\kappa_e \ge 0$,
+so both hold, and then
+$\int_0^\infty e^{As}\dd s = -A^{-1}
+= (\det A)^{-1}\bigl[\begin{smallmatrix}\kappa_\vartheta & L_\vartheta\\ L_{b'} & \kappa_e\end{smallmatrix}\bigr]$,
+entrywise non-negative. Taking expectations, with $\E\zeta_s \le (\E\zeta_s^2)^{1/2} \le K_\Phi m^{-1/2}$ for every
+$s$ (the $\bar\vartheta_j(s)$ are i.i.d.\ with law $\bar\mu_s$ and $\bar x_s$ is deterministic, as in D$'$(b)),
+$\E u(t) \le K_\Phi m^{-1/2}(-A^{-1})e_1 = K_\Phi m^{-1/2}(\kappa_\vartheta,L_{b'})^\T/\det A$ for every $t$. The
+per-particle statement is exchangeability at fixed $t$ (valid here, unlike for $\sup_t$: Theorem D$'$(c)); the $W_1$
+statement is the triangle inequality as in D$'$(c). For the second moment of $\bar\mu_t$:
+$z(t) := \E\norm{\bar\vartheta_t - \vartheta^0}^2$ satisfies, by It\^o's formula with
+$\norm{G\nabla_\vartheta(\bar e^\T\tilde\Phi)} \le \lambda_GE_XL_\vartheta =: \beta$,
+$\dot z \le -2\sigma z + 2\beta\sqrt z + 2\tau\tr G \le -\sigma z + \beta^2/\sigma + 2\tau\tr G$, whence
+$z(t) \le \max\{z(0),(\beta^2/\sigma + 2\tau\tr G)/\sigma\}$. The noise cancels in $\Delta_i$, so the coupling
+estimate does not depend on $\tau$.
+\end{proof}
+
+\begin{rmk}{Remark}{D$''$.1}[reading]\mbox{}
+\begin{itemize}
+  \item \emph{The certified regime is the leak-dominated one.} The condition
+    $\kappa_\vartheta = \sigma - \lambda_GE_XL_2 > 0$ says that $\vartheta\mapsto b(\bar x,\bar e,\vartheta)$ is a
+    contraction uniformly in $t$. At $\tau = 0$ the same estimate applied to two particles of the \emph{same} system
+    gives $D^+\norm{\vartheta_i - \vartheta_j} \le -\kappa_\vartheta\norm{\vartheta_i - \vartheta_j}$: all particles
+    synchronise exponentially, the network collapses to a single kernel, and the $m$-system and the $M$-system ---
+    which share their first $m$ particles --- become identical, so the coupled distance is not just bounded but zero
+    (the numerics: particle spread and coupled distance at the rounding level). At $\tau > 0$ the two Brownian
+    increments do not cancel in $\vartheta_i - \vartheta_j$; the particles form a cloud around the common mean motion
+    whose second moment is bounded as in the proof, $\mathcal{N}(\vartheta^0,(\tau/\sigma)G)$ to leading order when
+    the leak dominates (measured: rms spread within 3\% of $(\tau\tr G/\sigma)^{1/2}$ in the referee's runs), the
+    coupled distance is of order $m^{-1/2}$ and the bound is not trivial --- but the network's output stays at the
+    level of its prior: $\sup\abs{\fhat}$ is a few percent of $\sup\abs{f}$ in the certified runs. Either way,
+    propagation of chaos is uniform in time because the leak has stopped the learning. This is the price of the
+    contraction method, not of the closed loop: the learning regime, in which kernels separate and the network fits
+    the plant ($\sigma$ below the critical leak of Proposition K at the collapsed critical point, the leak below the
+    separating force of the residual), is where Theorems H, I and K live, where the averaged interaction is
+    non-reciprocal, and where uniformity in time remains the open part of Section~\ref{sec:program}, branch 3.
+  \item \emph{What the conditions say in the scalings of the program.} On the a-priori tube of Theorem D(b) with
+    $e(0) = 0$, $k_eE_X = F + K_\Phi$, so the certified leak is
+    $\sigma_{\mathrm{cert}} := \lambda_GE_XL_2 + L_{b'}L_\vartheta/\kappa_e
+    = [\lambda_G(F + K_\Phi)L_2 + \lambda_GL_\vartheta^2]/k_e + O(k_e^{-2})$: every fixed leak gain $\sigma > 0$
+    certifies uniform-in-time propagation of chaos for $k_e$ large, provided the tracking error starts at zero (or
+    $\norm{e(0)} = O(1/k_e)$; otherwise $E_X \ge \norm{e(0)}$ and the condition does not improve with $k_e$) --- and
+    stops the learning. In the scaling $\sigma = \sigma_0/k_e$ of Theorem J the condition reads
+    $\sigma_0 > \lambda_G(F + K_\Phi)L_2 + \lambda_GL_\vartheta^2$, which implies that $J_m$ is strongly convex in the
+    $\Ginv$ metric (its Hessian is bounded below by
+    $\sigma_0 - \lambda_G\sup_\Theta\norm{r_\Theta}L_2 \ge \sigma_0 - \lambda_G(F + K_\Phi)L_2$ there) with a unique,
+    collapsed minimiser.
+  \item \emph{Why the constants are conservative.} $L_\vartheta$, $L_2$, $L_{x\vartheta}$ are suprema over the
+    parameter box and the tube; for sharp kernels (small $s_{\min}$) they are large, so $\sigma_{\mathrm{cert}}$ can
+    exceed the adaptation gains by an order of magnitude; the a-priori $E_X$ is itself several times the measured
+    $\sup\norm{\bar e}$ ($0.23$ against $0.07$ in the numerics below). The gap to the learning regime is not a matter
+    of constants, however: in the numerics the coupled distance grows over the horizon once the kernels separate.
+  \item \emph{Technique.} The comparison system is the standard contraction argument for McKean--Vlasov systems with
+    a confining potential, with the plant as a second contracting channel (rate $\kappa_e$) and the two
+    interconnection gains $L_\vartheta$ (particles $\to$ plant) and $L_{b'}$ (plant $\to$ particles); $\det A > 0$ is
+    the small-gain condition of that interconnection.
+\end{itemize}
+\end{rmk}
+
+\paragraph{Numerics} (\code{exp_chaos_uniform.py} $\to$ \code{results/chaos/uniform_table.md}; reproduced in
+Table~\ref{tab:thmDpp:uniform}). A slow-adaptation instance ($n = 1$, $k_e = 25$, $G = 0.05\cdot\operatorname{diag}(4,1,1)$, saturated features with $a_{\max} = 4$,
+$s \ge 0.3$, prior $\vartheta^0 = 0$), a two-bump plant that is not odd,
+$f(x) = 1.6e^{-(x-1)^2/0.4} - 1.2e^{-(x+1)^2/0.4} + 0.1x$, on $x_m = 1.5\sin t + 0.5\sin2t$ (so that the dead kernel
+is not a critical point; referee round 6), $m = 16$, $64$, $256$ coupled to an $M = 2048$ reference. The constants are
+exact: the Lipschitz constants of the saturated features in closed form,
+$L_x = L_\vartheta = a_{\max}e^{-1/2}/s_{\min} = 8.087$ and $L_2 = L_{x\vartheta} = a_{\max}/s_{\min}^2 = 44.4$ (a
+numerical search over $1.2\cdot10^5$ parameter samples with Nelder--Mead polish reproduces them to $10^{-8}$),
+$L_f = 2.29$, and the a-priori tube radius of Theorem D(b) with $e(0) = 0$, $E_X = (F + K_\Phi)/k_e = 0.228$
+($F = 1.70$; the measured $\sup\norm{\bar e}$ is $0.070$): $\kappa_e = 14.6$, $L_{b'} = 3.64$,
+$\sigma_{\mathrm{cert}} = 4.04$. Proposition K gives the critical leak of the collapsed critical point (the best single
+kernel, $a = 0.136$, $c = 0.068$, $s = 1.15$): $\sigma_K = \sigma_{0,\mathrm{crit}}/k_e = 0.00144$ --- the certified
+leak is 2800 times the leak below which the kernels separate. Four runs:
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Theorem D$''$: four runs of the slow-adaptation instance]{Theorem D$''$ on the slow-adaptation
+instance: four runs at different leaks (\code{results/chaos/uniform_table.md}).}
+\label{tab:thmDpp:uniform}
+\begin{tabularx}{\textwidth}{@{}>{\hsize=0.8\hsize}Y>{\hsize=0.8\hsize}Y>{\hsize=0.65\hsize}Y>{\hsize=1.35\hsize}Y>{\hsize=1.75\hsize}Y>{\hsize=0.85\hsize}Y>{\hsize=0.8\hsize}Y@{}}
+\toprule
+$\sigma$, $\tau$ & regime & $T$, seeds
+  & reference network at $T$: rms spread in $(a,c,s)$ (from 1.53), fit error $\norm{f - \fhat}/\norm{f}$ (from 1.00)
+  & max $D_m$, first $\to$ last window, $m = 16$ and $256$
+  & slope against $m$ (per-seed, $\pm$ s.e.)
+  & bound $\sup_t\E D_m$, $m = 16$ / $256$\\
+\midrule
+4.85 ($1.2\sigma_{\mathrm{cert}}$), 0.02 & certified, with dither & 80\,s, 8
+  & 0.033 (the dither cloud: $(\tau\tr G/\sigma)^{1/2} = 0.035$), 1.000
+  & $6.7\cdot10^{-4}$ $\to$ $7.9\cdot10^{-4}$ and $1.6\cdot10^{-4}$ $\to$ $1.9\cdot10^{-4}$
+  & $-0.51\pm0.02$ & 0.55 / 0.14\\
+4.85, 0 & certified, no dither & 80\,s, 8
+  & $1.7\cdot10^{-14}$, 1.000
+  & $2.5\cdot10^{-25}$ $\to$ $0$ and $1.2\cdot10^{-26}$ $\to$ $0$
+  & --- & 0.55 / 0.14\\
+0.505 ($\sigma_{\mathrm{cert}}/8$), 0 & leak-dominated, below the threshold & 80\,s, 8
+  & $3.2\cdot10^{-14}$, 1.000
+  & $7.2\cdot10^{-5}$ $\to$ $4.3\cdot10^{-11}$ and $3.1\cdot10^{-5}$ $\to$ $1.8\cdot10^{-11}$
+  & $-0.33\pm0.20$ & ---\\
+0.00048 ($\sigma_K/3$), 0 & learning regime & 1000\,s, 6
+  & 1.53, 0.632
+  & $6.1\cdot10^{-2}$ $\to$ $2.0\cdot10^{-1}$ and $1.3\cdot10^{-2}$ $\to$ $3.9\cdot10^{-2}$
+  & $-0.62\pm0.16$ & ---\\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+\noindent(Windows $(10,20]$, $(20,40]$, $(40,80]$ for the 80\,s runs and $(100,200]$, $(200,500]$, $(500,1000]$ for
+the long run; the table reports $\E\max_tD_m$ over a window, which exceeds the theorem's $\sup_t\E D_m$.) At the
+certified leak with dither the particles stay in the cloud of the prior, the network's output stays at the level of
+the empty network (fit error 1.000), and the coupled distance is of order $m^{-1/2}$ (slope $-0.51\pm0.02$), bounded
+in time (the last window, twice as long, has maxima 15--18\% above the first) and seven hundred times below the bound:
+the theorem's content at $\tau > 0$. Without dither the reference collapses (spread $10^{-14}$) and the coupled
+distance is zero to rounding; at $\sigma_{\mathrm{cert}}/8$ the particles still synchronise and the distance decays
+with them. In the learning regime ($\sigma_K/3$, the collapsed configuration unstable) the network stays spread, fits
+the plant (fit error $1.00\to0.63$ at $T = 1000$\,s with these slow gains) and the coupled distance follows the
+$m^{-1/2}$ law at each time but \emph{grows} over the horizon --- by a factor 3 between the windows $(100,200]$ and
+$(500,1000]$ for every $m$: on this horizon propagation of chaos in the learning regime is the finite-horizon
+statement of Theorem D$'$, not a uniform one. Whether the growth saturates on longer horizons (the leak's own time
+scale is $1/\sigma = 2000$\,s) is open; the earlier claim that the distance stays bounded in a ``spread'' regime
+(version 4, first draft) rested on a run that was in fact a slow collapse, and is withdrawn (referee round 6, DPP-3).
+\checkedby{\code{exp_chaos_uniform.py}: the experiment only.}

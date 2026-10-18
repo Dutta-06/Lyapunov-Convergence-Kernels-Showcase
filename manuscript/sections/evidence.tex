@@ -271,6 +271,19 @@ slope against $(1/m-1/M)^{1/2}$ (predicted 1) & $0.94\pm0.08$ & $0.92\pm0.08$\\
     gave slopes $-0.25$ and $-0.21$ and was withdrawn (review round 5). The constant of the theorem
     ($TK_\Phi e^{\Lambda T}$) is not checked.
   \item There is no test: the experiment is the check.
+  \item Theorem D$''$ (\code{exp_chaos_uniform.py} $\to$ \code{chaos/uniform_table.md}; $n=1$, $k_e=25$,
+    $G=0.05\cdot\operatorname{diag}(4,1,1)$, a two-bump plant that is not odd, $M=2048$): exact Lipschitz constants
+    $L_x=L_\vartheta=8.087$, $L_2=L_{x\vartheta}=44.4$ and the a-priori tube $E_X=0.228$ give
+    $\sigma_{\mathrm{cert}}=4.04$, against Proposition K's critical leak $\sigma_K=0.00144$ of the collapsed critical
+    point (ratio 2800). At $1.2\sigma_{\mathrm{cert}}$ with dither $\tau=0.02$ (80\,s, 8 seeds) the coupled distance
+    is $6.7\cdot10^{-4}\to7.9\cdot10^{-4}$ ($m=16$) and $1.6\cdot10^{-4}\to1.9\cdot10^{-4}$ ($m=256$) between the
+    first and the last window, slope $-0.51\pm0.02$, bound $0.55$ and $0.14$; the network stays at its prior (fit
+    error $1.000$, rms spread $0.033={}$the dither cloud). Without dither the reference collapses (spread $10^{-14}$)
+    and the distance is zero; at $\sigma_{\mathrm{cert}}/8$ it decays to $10^{-11}$. In the learning regime
+    ($\sigma_K/3$, 1000\,s, 6 seeds) the network stays spread (rms $1.53$) and fits the plant (fit error $0.632$),
+    and the distance follows $m^{-1/2}$ (slope $-0.62\pm0.16$) but grows threefold between the windows $(100,200]$
+    and $(500,1000]$: no empirical uniformity there (the first draft's ``spread regime'' run was a slow collapse;
+    review round 6).
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E

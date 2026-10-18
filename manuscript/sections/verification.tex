@@ -77,6 +77,14 @@ D$'$(b), (d) & the $m^{-1/2}$ rate of the synchronous coupling to a 4096-particl
   ($\tau=0$) and $-0.46\pm0.05$ ($\tau=2\cdot10^{-3}$) over 24 seeds, $0.94\pm0.08$ and $0.92\pm0.08$ against
   $(1/m-1/M)^{1/2}$; not the constant
   & \code{exp_chaos.py} $\to$ \code{results/chaos/table.md}\\
+D$''$ & with exact Lipschitz constants and the a-priori tube, $\sigma_{\mathrm{cert}}=4.04$ against Proposition K's
+  $\sigma_K=0.00144$; at $1.2\sigma_{\mathrm{cert}}$ with dither the coupled distance is of order $m^{-1/2}$ (slope
+  $-0.51\pm0.02$), bounded in time and $700\times$ below the bound, with the network at its prior (fit error $1.000$);
+  without dither the reference collapses (spread $10^{-14}$) and the distance is zero; at $\sigma_{\mathrm{cert}}/8$
+  it decays to $10^{-11}$; in the learning regime ($\sigma_K/3$, 1000\,s) the network stays spread and fits the plant
+  (fit error $0.63$) and the distance follows $m^{-1/2}$ ($-0.62\pm0.16$) but grows threefold between the windows
+  $(100,200]$ and $(500,1000]$
+  & \code{exp_chaos_uniform.py} $\to$ \code{results/chaos/uniform_table.md}\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid

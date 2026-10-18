@@ -61,8 +61,20 @@ Each branch states what is proved, what is open, and the first concrete step.
       coupling, with constants independent of the temperature and an exponent independent of the dimension for the
       state and the learned function. Uniform-in-time results exist for mean-field Langevin dynamics~\cite{S5} and
       for shallow networks~\cite{R36}.
-    \item \emph{Open:} the closed loop, where the plant couples all particles through $e$, and where (by H.7) the
-      averaged interaction is not reciprocal.
+    \item \emph{Done (Theorem D$''$, Section~\ref{sec:thmDprime}):} uniform in time when the leak dominates the loop
+      gain of the adaptive law (a small-gain condition between the plant channel and the particle channel, explicit in
+      Lipschitz constants). The certified regime is leak-dominated: the network does not learn (without dither it
+      collapses to one kernel; with dither it stays in the cloud of the prior, where the bound has content: the
+      coupled distance is of order $m^{-1/2}$ and bounded in time). The result marks where the contraction method
+      stops rather than settling the question.
+    \item \emph{Open, and now with a negative indication:} the learning regime (kernels separated, leak below the
+      critical value of Proposition K), where the plant couples all particles through $e$ and (by H.7) the averaged
+      interaction is not reciprocal. The long-horizon run of \code{exp_chaos_uniform.py} ($\sigma = \sigma_K/3$,
+      1000\,s) shows the coupled distance growing threefold between the windows $(100,200]$ and $(500,1000]$ while
+      keeping the $m^{-1/2}$ law at each time: on that horizon only the finite-horizon Theorem D$'$ is supported.
+      Whether the growth saturates (the leak's time scale is $1/\sigma = 2000$\,s), and whether a uniform statement
+      holds at all in the learning regime, is the open question; the first draft's claim of empirical uniformity was
+      based on a run that was in fact a slow collapse and is withdrawn (review round 6).
   \end{itemize}
 
 \item \textbf{Geometry of two-time-scale adaptation (Proposition G(b$'$)).}

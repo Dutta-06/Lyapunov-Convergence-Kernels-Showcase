@@ -188,7 +188,10 @@ D$'$ & Finite-horizon propagation of chaos for the dithered closed loop $(\mathr
 coupling, $\E\sup_{t \le T}\bigl(\norm{x^m - \bar x} + \frac1m\sum_i\norm{\vartheta_i - \bar\vartheta_i}\bigr)
 \le TK_\Phi e^{\Lambda T}m^{-1/2}$, with $\Lambda$ independent of $m$ and $\tau$, and a per-particle sup bound of
 the same order; the plant and the learned function converge at the rate $m^{-1/2}$, whose exponent is
-dimension-free, and only $W_1(\mu^m,\bar\mu)$ carries $m^{-1/p}$
+dimension-free, and only $W_1(\mu^m,\bar\mu)$ carries $m^{-1/p}$; under a dominant leak (small-gain condition
+$\kappa_e\kappa_\vartheta > L_{b'}L_\vartheta$) the bound is uniform in time (Theorem D$''$), a leak-dominated regime
+in which the network does not learn (at $\tau = 0$ it collapses to one kernel; at $\tau > 0$ it stays in the dither
+cloud of the prior)
 & proved; checked: the coupled distance to a 4096-particle reference decays like $m^{-0.47 \pm 0.06}$ (24 seeds,
 $\tau = 0$; $-0.46 \pm 0.05$ with dither) and like $(1/m - 1/M)^{0.94 \pm 0.08}$, the law of the shared-particle
 coupling
