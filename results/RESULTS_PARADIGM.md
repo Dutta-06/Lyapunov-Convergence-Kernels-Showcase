@@ -436,6 +436,20 @@ carry the ghost spectrum (Proposition D‴.15, m = 6).
   ghosts to 2·10⁻⁵ relative, = (σ₀ − λ_j(R^G_k))/k_e within 0.2–4.1% (defects ≤ 5.7·10⁻⁸); the saddle's class 0 exponent −9.13·10⁻⁵ (predicted
   −8.77·10⁻⁵, multiplicity 8); period-start offsets from Θ*(w) 1.1·10⁻², 1.6·10⁻² (Theorem J(a)).
 
+## Theorem D‴.18 — Theorem J uniformly in m (`exp_uniform_basin.py` → `chaos/uniform_basin.md`)
+
+- Real loop at k_e = 25 (σ₀ = 0.15σ_crit, dt = 5·10⁻³), 8000 time units, many systems integrated together.
+- Matching prior at the matching masses (constant lift), sizes 3, 15, 60, 240, per-particle random displacements ρ: inside the cells
+  (ρ = 0.3, 1.0, 2.5) both leaks identical, fitted decay rates of the per-particle distance 2.69–2.97·10⁻⁴ for m ≥ 15 (predicted
+  σ₀/k_e = 2.83·10⁻⁴; ratios 0.95–1.05), 2.95–4.06·10⁻⁴ at m = 3 (no separation modes; collective 2.95·10⁻⁴), constants C = 1.00–1.29.
+- Across a cell boundary (ρ = 4.5): nearest-atom leak ends at counts (2, 0, 1), (6, 5, 4), (23, 19, 18), (87, 70, 83), W² 12.3–1.9; OT leak
+  at q for every m, W² 0.010–0.23 (still falling).
+- Moving orbit (OT leak, prior centres +0.15): rates 2.18–2.63·10⁻⁴ against 2.27·10⁻⁴ (ratios 0.96–1.16), constants 1.04–1.23.
+
+Tests (`tests/test_uniform_basin.py`): the drift's second-order remainder ≤ C_N|||u|||² with C_N ≤ 0.04 for random per-particle displacements at
+m = 6, 30, 150, 600 and exactly 0.064 for a collective one; a one-particle separation moves nothing else at first order (response −σ₀u at
+m = 6, 60, 300); the averaged loop contracts |||·||| at 0.9σ₀ with one constant for m = 6, 30, 150.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
