@@ -140,3 +140,72 @@ def test_forest_bound_and_the_exact_W2_between_empirical_measures():
     assert abs(OT.W2_empirical(A, B, G) - float(np.sum(lp * OT._cost_matrix(A, B, G)))) < 1e-10
     assert abs(OT.W2_empirical(A, C, G) - OT.W2_empirical(C, A, G)) < 1e-10          # 6 ∤ 9: the LP route
     assert np.sqrt(OT.W2_empirical(A, C, G)) <= np.sqrt(OT.W2_empirical(A, B, G)) + np.sqrt(OT.W2_empirical(B, C, G)) + 1e-10
+
+
+# ---------------------------------------------------------------------- Corollary D‴.14: the collapsed subspace of the real loop
+def _real_step(net, Th, x, t, leak_target, ke=25.0, sig=SIGMA0 / 25.0, dt=1e-3):
+    """One Euler step of the parameters and one RK4 step of the plant of the real closed loop (CL) with the leak target leak_target(Th)."""
+    xr, xrd = X_REF(t), np.array([2.0 * np.cos(t)])
+    e = x - xr
+    u = xrd - ke * e - net.f_hat(x, Th)
+    f = lambda y: F_VEC(y)
+    k1 = f(x) + u; k2 = f(x + 0.5 * dt * k1) + u; k3 = f(x + 0.5 * dt * k2) + u; k4 = f(x + dt * k3) + u
+    Th_new = Th + dt * (G[None, :] * net.grad_g(x, e, Th) - sig * (Th - leak_target(Th)))
+    return Th_new, x + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+
+
+def test_collapsed_subspace_of_the_real_loop_is_invariant_and_carries_the_weighted_K_atom_loop():
+    """Corollary D‴.14(a): on a configuration collapsed by class with masses q (OT leak) or any weights inside the cells (nearest-atom
+    leak) the real loop (CL) is the weighted K₀-atom loop: the collapsed m-system and the K₀-atom system stay identical as measures."""
+    net = _net()
+    exact = _exact(net)
+    loop = OT.OTPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, n_quad=64)
+    atoms = exact + np.array([[0.3, -0.2, 0.1], [-0.1, 0.2, 0.0], [0.2, 0.1, -0.2]])          # off the stationary point: a moving orbit
+    # OT leak, masses q = 1/3: the 15-particle lift (5 per class) against the 3-atom loop (m = 3 is the weighted loop for uniform q)
+    Th15, lab = loop.replicated(atoms, 15)
+    Th3 = atoms.copy()
+    x15, x3, t = X_REF(0.0) + 0.05, X_REF(0.0) + 0.05, 0.0
+    for _ in range(300):
+        Th15, x15 = _real_step(net, Th15, x15, t, loop.leak_target)
+        Th3, x3 = _real_step(net, Th3, x3, t, loop.leak_target)
+        t += 1e-3
+    assert np.abs(Th15 - Th3[lab]).max() < 1e-12 and np.abs(x15 - x3).max() < 1e-12       # invariant, and the same dynamics
+    assert np.abs(Th15 - Th15[0]).max() > 1e-3                                              # the atoms moved (a genuine orbit, not a fixed point)
+    # nearest-atom leak, unequal weights w = (6, 5, 4)/15: the collapsed 15-system stays collapsed (any w inside the cells)
+    Thw = np.repeat(atoms, [6, 5, 4], axis=0); labw = np.repeat(np.arange(3), [6, 5, 4])
+    xw, t = X_REF(0.0) + 0.05, 0.0
+    for _ in range(300):
+        Thw, xw = _real_step(net, Thw, xw, t, loop.nearest.leak_target)
+        t += 1e-3
+    for k in range(3):
+        assert np.abs(Thw[labw == k] - Thw[labw == k][0]).max() < 1e-12
+    # the OT leak with class masses w ≠ q is NOT invariant: the plan assigns one particle of the over-weighted class elsewhere
+    Thq = np.repeat(atoms, [6, 5, 4], axis=0)
+    T = loop.leak_target(Thq)
+    lab_assigned = loop.assignment(Thq)
+    assert np.sum(lab_assigned != labw) == 1 and np.abs(T[labw == 0] - T[labw == 0][0]).max() > 1.0
+
+
+def test_the_lifted_orbit_measure_does_not_depend_on_m():
+    """Corollary D‴.14(b): two commensurate sizes started on their collapsed lifts with masses q follow the same orbit measure under the
+    OT leak; with the nearest-atom leak the lifts of two different weight vectors follow different orbits."""
+    net = _net()
+    exact = _exact(net)
+    loop = OT.OTPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, n_quad=64)
+    atoms = exact + np.array([[0.2, -0.1, 0.1], [-0.1, 0.1, 0.0], [0.1, 0.1, -0.1]])
+    Th15, lab15 = loop.replicated(atoms, 15); Th30, lab30 = loop.replicated(atoms, 30)
+    x15, x30, t = X_REF(0.0).copy(), X_REF(0.0).copy(), 0.0
+    for _ in range(200):
+        Th15, x15 = _real_step(net, Th15, x15, t, loop.leak_target)
+        Th30, x30 = _real_step(net, Th30, x30, t, loop.leak_target)
+        t += 1e-3
+    assert OT.W2_empirical(Th15, Th30, G) < 1e-12 and np.abs(x15 - x30).max() < 1e-12            # round-off
+    assert np.abs(net.f_hat_batch(np.linspace(-2, 2, 50)[:, None], Th15) - net.f_hat_batch(np.linspace(-2, 2, 50)[:, None], Th30)).max() < 1e-13
+    # nearest-atom leak: the lifts of two weight vectors, (6, 5, 4)/15 and (5, 5, 5)/15, are different measures from the start and stay so
+    Tha = np.repeat(atoms, [6, 5, 4], axis=0); Thb = np.repeat(atoms, [5, 5, 5], axis=0)
+    xa, xb, t = X_REF(0.0).copy(), X_REF(0.0).copy(), 0.0
+    for _ in range(200):
+        Tha, xa = _real_step(net, Tha, xa, t, loop.nearest.leak_target)
+        Thb, xb = _real_step(net, Thb, xb, t, loop.nearest.leak_target)
+        t += 1e-3
+    assert OT.W2_empirical(Tha, Thb, G) > 1e-3                                              # the weights' cross-cluster transport
