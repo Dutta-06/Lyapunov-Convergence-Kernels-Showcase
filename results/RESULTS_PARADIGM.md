@@ -477,6 +477,28 @@ Tests (`tests/test_entropic_leak.py`): marginals and the agreement of the two so
 limits ε → 0 and ε → ∞; the separation blocks of the finite-difference Hessian at a collapsed configuration equal to σ₀(I − (2/ε)Cov^G) − R^G;
 the over-weighted class of (6, 5, 4)/15 unstable at ε = 4, 16 and stable at 20, 64.
 
+
+## Theorem D‴.21 — a measure-level basin for the OT leak (`exp_ot_basin.py` → `chaos/ot_basin.md`)
+
+- Averaged slow loop at σ₀ = 0.15σ_crit, the warm clouds of Proposition D‴.12, m = 15, 60, 240, 510, four seeds, 600 slow units, the matching
+  prior and the prior with centres +0.15, both leaks. The identities (E), (P) hold along every run to 6·10⁻¹³ relative.
+- OT leak: no particle relabelled; the margin α positive from s ≤ 300 on (from s ≤ 25 in 19 of 32 runs); the observed ratio at least λ at
+  every record with α > 0 (smallest ratio/λ 1.00 at the matching prior, 1.58–1.72 at the shifted one); E from 4.1·10⁻³–4.0·10⁻² to
+  8.3·10⁻⁷–8.1·10⁻⁶ (W²(μ_Θ, μ*) from 1.0–5.2 to 2.3·10⁻⁴–2.3·10⁻³), below the a-posteriori bound; at the end the observed rate is
+  0.01416–0.01417 against 2σ₀ = 0.01415 and λ = 0.0140–0.0141 (matching prior: sharp); at the shifted prior λ = 0.0077–0.0078 against the
+  observed 0.0137–0.0139.
+- Nearest-atom leak: E stays at 3.5·10⁻³–1.9·10⁻² (W² 1.0–4.7), the excess energy of the replicated configuration of the sampled weights (within
+  0.3 % at m ≥ 240) — a critical point of the nearest-atom energy (drift ≤ 6·10⁻¹⁴) but not of the OT energy (drift 2.3–4.4·10⁻²).
+- The a-priori basin: E₀ = 2.0·10⁻⁷ at the matching prior (κ = σ₀); at the shifted prior the largest λ_max R^G[μ*] on the runs' box is
+  4.3·10⁻³ < σ₀, so (H*) holds there (κ = 0.0027, E₀ = 3.0·10⁻⁸).
+- The measure-level basin (matching prior): a fraction p of the particles moved 0.6 of the way into another cell stays in its class; κ^Θ =
+  0.0093, 0.019, 0.028, 0.047 and α = +0.0024 at p = 1/30, negative from p = 1/15 — identically at m = 30 and m = 300. One particle moved:
+  E 3.3·10⁻³ → 2.5·10⁻⁵ (m = 30) and 2.3·10⁻⁴ → 3.1·10⁻⁶ (m = 300), at 2σ₀ at the end, the particle back in its cell; under the nearest-atom
+  leak E rises to 5.7·10⁻³ and 5.6·10⁻⁴.
+
+Tests (`tests/test_ot_basin.py`): (E) and (P) to 10⁻¹² for random assignments with the counts mq at both priors; the PL chain; the constant
+2σ₀ attained by a separation to 10⁻⁴; the decay from a particle in another cell below the a-posteriori bound, at 2σ₀ at the end, against the
+nearest-atom floor; the spurious minimum (11, 9, 10)/30 of the nearest-atom energy, not critical for the OT leak.
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

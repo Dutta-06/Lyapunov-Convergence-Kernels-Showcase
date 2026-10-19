@@ -65,6 +65,8 @@ found the construction.
 - [S44] K. Kurdyka. *On gradients of functions definable in o-minimal structures*. Ann. Inst. Fourier 48(3):769–783, 1998 (the gradient inequality for C¹ definable functions and the convergence of their gradient trajectories). L. van den Dries, A. Macintyre, D. Marker. *The elementary theory of restricted analytic fields with exponentiation*. Ann. of Math. 140:183–205, 1994 (ℝ_{an,exp} is o-minimal: restricted analytic functions and the exponential are definable). Used in Proposition D‴.17. (Details from memory; not re-verified here.)
 - [S45] M. Cuturi. *Sinkhorn distances: lightspeed computation of optimal transport*. NeurIPS 2013; G. Peyré, M. Cuturi. *Computational Optimal Transport*. Foundations and Trends in Machine Learning 11(5–6), 2019 (the entropic plan, its duality and Sinkhorn's algorithm); R. Cominetti, J. San Martín. *Asymptotic analysis of the exponential penalty trajectory in linear programming*. Math. Program. 67:169–187, 1994 (as ε → 0 the entropic solution converges to an optimal plan); N. Courty, R. Flamary, D. Tuia, A. Rakotomamonjy. *Optimal transport for domain adaptation*. IEEE TPAMI 39(9):1853–1865, 2017 (barycentric mappings of entropic plans). Used in Proposition D‴.20. (Details from memory; not re-verified here.)
 - [S46] K. Rose, E. Gurewitz, G. C. Fox. *Statistical mechanics and phase transitions in clustering*. Phys. Rev. Lett. 65(8):945–948, 1990; K. Rose. *Deterministic annealing for clustering, compression, classification, regression, and related optimization problems*. Proc. IEEE 86(11):2210–2239, 1998 (a cluster's codevector splits when the temperature falls below twice the largest eigenvalue of the conditional covariance of its data). The precedent of the critical regularisation of Proposition D‴.20. (Details from memory; not re-verified here.)
+- [S47] B. T. Polyak. *Gradient methods for minimizing functionals*. Zh. Vychisl. Mat. Mat. Fiz. 3(4):643–653, 1963 (the gradient-dominance inequality ‖∇f‖² ≥ 2μ(f − f*) and the linear convergence of gradient descent under it); H. Karimi, J. Nutini, M. Schmidt. *Linear convergence of gradient and proximal-gradient methods under the Polyak–Łojasiewicz condition*. ECML PKDD 2016 (its place among the conditions weaker than strong convexity). The form of the inequality of Theorem D‴.21. (Details from memory; not re-verified here.)
+- [S48] A. Blanchet, J. Bolte. *A family of functional inequalities: Łojasiewicz inequalities and displacement convex functions*. J. Funct. Anal. 275(7):1650–1673, 2018 (Łojasiewicz inequalities in Wasserstein space; for displacement-convex functionals they are equivalent to Talagrand-type inequalities and give the convergence of the Wasserstein gradient flow). The Wasserstein PL theory that Theorem D‴.21 cannot use, the loss being flat-convex but not displacement-convex. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
 
@@ -323,6 +325,16 @@ found the construction.
   What is new is the soft mass constraint as an adaptive law's leak — a smooth gradient flow between the OT leak and the σ-modification
   toward the prior's barycentre — and its consequence for propagation of chaos: the masses equalise only down to a critical excess, so
   the finite-size floor returns at large m for every positive regularisation.
+- **Theorem D‴.21 (a measure-level basin for the OT leak).** The Polyak–Łojasiewicz inequality and its linear convergence are classical ([S47]);
+  in Wasserstein space Łojasiewicz inequalities are known for displacement-convex functionals ([S48]), and the leak alone, ½W²(·, ν), satisfies
+  one with constant 2 (its slope is W(·, ν) where the plan is a map; AGS §10.4). The adaptive law's energy is not displacement-convex — the
+  loss is flat-convex — and the multimodality of the stationary measure rules out a global convexity argument. What is new is the pair of
+  identities along the plan segments, in which the fixed counts of the mass constraint make the fitted function's increment the average of
+  the per-particle increments: they give a PL inequality whose constant is set by the residual-weighted curvature along the segments and does
+  not depend on m (sharp, 2σ₀, at a matching prior), an m-independent energy basin, and uniqueness of the minimum among empirical measures
+  under a curvature hypothesis at the stationary residual; and the converse for the nearest-atom leak, whose energy has a spurious minimum at
+  every admissible count vector — the energy-landscape form of the finite-size floor. Numerics: `exp_ot_basin.py`.
+  Verdict: classical inequality, new mechanism (the plan as the test direction, the counts as the source of uniformity in m).
   Verdict: standard ingredients, new object and new consequence (only the hard constraint is floor-free for every m).
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
