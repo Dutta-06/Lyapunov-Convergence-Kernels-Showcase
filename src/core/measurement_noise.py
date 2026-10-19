@@ -14,6 +14,13 @@ coordinates diffuse with the matrix (N₀/k_e)Q, Q := ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + 
 noise increment, so the separations are not excited: the noise is coherent and its floor does not average out with m. This module gives
 Q and H = ⟨ĴᵀĴ⟩, the stationary covariance of the averaged collective block (the Lyapunov equation), the closed-form function-level floors
 (N₀/2k_e)Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) in the eigenbasis of H, and the exact periodic stationary covariance of the linearised loop.
+
+Proposition D‴.31: the adaptive prior is a washout leak — on the class barycentre the leak acts through the high-pass iω/(iω + η) — and
+along the prior family dz/ds = −η(z − T̂) − κ(z − z_a) the zero-frequency response R and bias B satisfy HR + B = I (`collective_block`
+with κ, `zero_frequency_leak`, `stationary_operators`, `washout_transfer`); a persistent force's function-level response is at most
+FᵀH⁻¹F, the smallest equivalent target perturbation (`equivalent_perturbation`, `response_size`); and with the regressor at the reference
+(`NoisyRealLoop(regressor='reference')`, and the compensation too) the second-order force is the least-squares force of g = k_eE[e]
+(`eiv_force(variant=…)`, `mean_error`; the linearisation with the compensation at the reference: `reference_compensation`).
 """
 import numpy as np
 from scipy.integrate import solve_ivp

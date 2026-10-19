@@ -719,6 +719,25 @@ Tests (`tests/test_measurement_noise.py`): the closed form against the Lyapunov 
 increasing in η; the exact periodic floors of the linearised loop at k_e = 100; a lift m = 6 under a noise path staying replicated and
 following the K₀-atom loop; the responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the force linear in the noise's variance.
 
+## Proposition D‴.31 — the adaptive prior is a washout leak; the desired regressor makes the noise's persistent force a least-squares force (`exp_eiv_remedy.py` → `chaos/eiv_remedy.md`)
+
+- The instance of Proposition D‴.30 with an Ornstein–Uhlenbeck noise of rate B; MR the measured regressor (Proposition D‴.30), DR the
+  regressor at the reference, DR* the regressor and the compensation at the reference (the desired compensation adaptation law).
+- The adaptive prior's function-level errors-in-variables bias per unit (Eν²)²: 2397 (MR), 0.471 (DR), 0.0526 (DR*) at k_e = 25,
+  B = 100; MR over DR 3.0·10³–3.3·10⁸ over k_e = 25–200 and B = 100, 1000; MR's growing like k_e² (B ≫ k_e), DR's and DR*'s at most
+  1.18, below ¼‖∂²_xf‖²_ρ = 1.31; DR at its least-squares bound to 0.01%, with no projected mean tracking error (MR's 2394). The noise
+  std at which the bias reaches the floor: 0.0012 (MR), 0.086 (DR), 0.26 (DR*).
+- The prior family dz/ds = −η(z − T̂) − κ(z − z_a): HR + B = I to 2.4·10⁻¹⁵; the weakest mode's response 3269 → 136 as its bias factor
+  goes 0 → 0.959; MR's bias 2397 → 491, DR's 0.471 → 0.211.
+- The real loop on common noise paths (k_e = 25, std 0.01, η = ∞, 12 runs of 300 time units): E‖f̂ − f‖² at t = 300 2.43·10⁻⁶ (MR)
+  against 2.80·10⁻⁷ (DR) and 2.75·10⁻⁷ (DR*), DR and DR* at their covariance part; the MR − DR run mean at its prediction to 0.5–5.3%.
+
+Tests (`tests/test_eiv_remedy.py`): the washout identity along a real-loop solution at finite η; the collective block's transfer function
+against the washout formula and HR + B = I along the prior family; the response bound under random leaks S ≥ 0, the smallest equivalent
+target perturbation and the projection; the lift exact under DR and DR*, and on a common noise path DR's run within the second order of
+MR's (the difference ∝ the noise's variance); DR's and DR*'s forces least-squares with their pointwise bounds on g, MR's F₁ three orders
+of magnitude above.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
