@@ -178,6 +178,15 @@ is a delta-method statement, new in its object.}
     specific is its object (the shared-particle coupling of a particle approximation to a stationary $K$-atom measure,
     with the covariance $(1/m - 1/M)(\operatorname{diag}\bar w - \bar w\bar w^\T)$) and its role as the sharp form of
     the theorem's constant (stiffness$^{-1}$ $\times$ feature correlations against $\kappa^{-1}L_\vartheta^GK_\Phi$).
+  \item \emph{Proposition D$'''$.9 (measure-valued priors).} Leaks toward a single prior ($\sigma$-modification,
+    Ioannou--Kokotovi\'c) are the standard of robust adaptive control; regularisation toward the nearest of several
+    centres is standard in machine learning (mixture priors, prototype regularisers) and this document's own
+    Theorem C$'$ leaks toward a prior \emph{measure} through an optimal plan. The nearest-atom leak is the simplest
+    measure-valued prior; what is new is its role in the window of Theorem D$'''$ --- the prior's placement sets the
+    stationary residual, hence the lower end of the window and the relaxation rate --- and the finding that removing
+    the bias raises the coupling's floors (on the instance the weight sensitivity rises with the amplitudes): a
+    bias--variance trade-off stated for the particle system. Verdict: standard object, new design statement; the
+    function-level sensitivity law is the delta method once more.
 \end{itemize}
 
 \begin{proof}
@@ -457,8 +466,9 @@ Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is p
       \text{ and }\nabla^2\mathcal{G}_w(\Theta^*(w))\succ0\bigr\},
     \]
     a neighbourhood of $\bar w$ (both conditions are open and hold at $\bar w$ by (H) and the assumption), and a
-    saddle when the splitting condition fails at some cluster: a cluster can then split, and the $m$-system leaves
-    the configuration by migrating particles between basins.
+    saddle when the splitting condition fails at some cluster: a cluster can then split --- by Proposition K's local separation inside its basin (sub-clusters along
+    the unstable direction, the cluster weights unchanged) or by particles migrating to other basins; the numerics
+    show both (this section, referee rounds 9 and 10).
   \item \emph{(the stationary distance)} Under the shared-particle coupling of Theorem D$'''$ with i.i.d.\ cluster
     labels of law $\bar w$ (the $m$ particles are the first $m$ of the $M$ reference particles), suppose
     $w^m, w^M\in W_{\mathrm{adm}}$ and that the $m$-system converges to $\Theta^*_m(w^m)$ and the reference to
@@ -486,9 +496,9 @@ Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is p
     $\delta_w := \sup\{\delta : \norm{w - \bar w}_\infty\le\delta\Rightarrow w\in W_{\mathrm{adm}}\} > 0$. By
     Hoeffding's inequality for each multinomial coordinate,
     $\mathbb{P}(w^m\notin W_{\mathrm{adm}})\le2K\exp(-2m\delta_w^2)$: the finite-$m$ configuration is a strict local
-    minimiser with probability exponentially close to one, the exceptional event being the one on which Remark
-    D$'''$.2's floor appears on a warm start --- a cluster of the $m$-system splits and particles migrate to other
-    basins, because the realised weights make the replicated configuration a saddle.
+    minimiser with probability exponentially close to one, the exceptional event being the one on which the realised weights make the replicated configuration a saddle: a
+    cluster of the $m$-system then splits, locally or by migration to other basins --- in the latter case with
+    Remark D$'''$.2's floor on a warm start.
 \end{enumerate}
 \end{thm}
 \status{Formal: (i) and the algebra of (ii)--(iv) are exact (the block splitting is Proposition K(i) cluster by
@@ -591,6 +601,271 @@ $\nabla^2\mathcal{G}_{w^m}\oplus{}$the separation blocks $\sigma_0\Ginv - R_k$ o
 of $m$ beyond the weights), so the threshold and the basin are expected to be uniform in $m$ for configurations with
 the same weights; the corollary does not prove this, and the cold start --- where the coupled distance of the real
 loop grew in Theorem D$''$'s experiment --- is outside it on the same two counts as in Remark D$'''$.2.
+\end{rmk}
+
+\begin{thm}{Proposition}{D$'''$.9}[the leak toward a measure-valued prior, and the design of the window]
+Let $\nu = \sum_{j=1}^{K_0}q_j\delta_{\vartheta^0_j}$ be a prior measure with distinct atoms and let the leak be the
+$G$-gradient of the distance-to-support potential
+\[
+  V_\nu(\vartheta) := \tfrac12\min_j\norm{\vartheta - \vartheta^0_j}^2_{\Ginv},\qquad
+  -G\nabla V_\nu(\vartheta) = -(\vartheta - \vartheta^0_{j(\vartheta)}),\qquad
+  j(\vartheta) := \operatorname*{argmin}_j\norm{\vartheta - \vartheta^0_j}_{\Ginv}
+\]
+(the \emph{nearest-atom leak}: inside each Voronoi cell of $\nu$ it is the $\sigma$-modification toward that cell's
+atom; the barycentric OT leak of Theorem C$'$ is its mass-constrained relative). Write
+\textup{($\mathfrak{A}_m^\nu$)} and \textup{($\mathfrak{A}_0^\nu$)} for \textup{($\mathfrak{A}_m$)} and
+\textup{($\mathfrak{A}_0$)} with $\sigma_0(\vartheta - \vartheta^0)$ replaced by
+$\sigma_0(\vartheta - \vartheta^0_{j(\vartheta)})$, and $\mathcal{V}^\nu[\mu] := V_L[\mu] + \sigma_0V_\nu$ for the
+first-variation potential.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the theorems carry over)} Assume, in addition to the hypotheses of Theorem D$'''$ for
+    \textup{($\mathfrak{A}_0^\nu$)}, that the assignment is locally constant along the flow: for every $s\ge0$ the
+    neighbourhood $N_{\varrho'}(\supp\mu_s)$ meets no Voronoi boundary of $\nu$ (in particular when the gap between
+    the distances to the two nearest atoms exceeds $2\varrho'$ on $\supp\mu_s$, the $\Ginv$-distance to the boundary
+    being at least half the gap). Then Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 hold for
+    \textup{($\mathfrak{A}_m^\nu$)} with the same constants, $R_\Theta$ replaced by
+    $\max\{R_0, L_\vartheta^G(F_\rho + K_\Phi)/\sigma_0\} + \max_j\norm{\vartheta^0_j - \vartheta^0_1}_{\Ginv}$ and
+    $\vartheta^0$ by $\vartheta^0_{j(\cdot)}$ in the a priori bounds, and Theorem J's basin radius $\rho_0$ at the
+    replicated configuration taken below $\min_k\operatorname{dist}_{\Ginv}(\vartheta^*_k,\partial\,\mathrm{cell}_k)$.
+    The masses $q_j$ enter the nearest-atom leak only through $\supp\nu$; they matter in (ii), and they are what the
+    mass constraint of the OT leak (Theorem C$'$, Remark D$'''$.10) acts on.
+  \item \emph{(the stationary residual and the window)} If $\nu$ is placed on an exact representation of the plant
+    on the orbit --- $K_0 = K$ atoms $\vartheta^0_k$ with $\sum_kq_k\tilde\Phi(\cdot\,;\vartheta^0_k) = f$ on
+    $\supp\rho$ --- then $\mu^* := \sum_kq_k\delta_{\vartheta^0_k}$ is a stationary measure of
+    \textup{($\mathfrak{A}_0^\nu$)} with $r_{\mu^*} = 0$, $R[\mu^*]\equiv0$, and the window of Remark D$'''$.1 has
+    its maximal margin: $\kappa_R[\mu^*](A) = 0$ for every set $A$ ($R[\mu^*]\equiv0$) and $\kappa = \sigma_0$, the
+    only restriction on $\varrho'$ being (i)'s Voronoi hypothesis, against
+    $\kappa = \sigma_0 - \kappa_R[\mu^*_\sigma](N_{\varrho'})$ for the $\sigma$-modification's stationary measure
+    $\mu^*_\sigma$, whose residual is the leak's bias. For a prior $\nu_\delta$ displaced from the exact
+    representation the residual of the stationary measure is $O(\delta)$ and
+    $\kappa_R[\mu^*_{\nu_\delta}] = O(\delta)$: the margin decreases with the misplacement, and the window closes
+    when the displacement makes the residual-weighted curvature at an atom reach $\sigma_0$.
+  \item \emph{(the floors)} Under the shared-particle coupling the stationary distances are the weight-sensitivity
+    laws of Proposition D$'''$.5 at parameter level,
+    $\E[D_\infty\mid w^m, w^M\in W_{\mathrm{adm}}] = (1/m - 1/M)\sum_k\bar w_k\tr(\tilde S_k\tilde C\tilde S_k^\T)
+    + O(m^{-3/2}) + O(m^{-1}M^{-1/2})$, and at function level,
+    \begin{gather*}
+      \E\norm{\fhat_{\Theta^*(w^m)} - \fhat_{\Theta^*(w^M)}}^2_{L^2(\rho)}
+      = (1/m - 1/M)\cdot\tr(F\tilde CF^\T)/N + O(m^{-3/2}),\\
+      F_{\cdot j} := \partial\fhat_w/\partial w_j
+      = \tilde\Phi(\cdot\,;\vartheta^*_j) + \sum_kw_k\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^*_k)S_{k\cdot j},
+    \end{gather*}
+    with $S$ the sensitivity of the weighted stationary point of \textup{($\mathfrak{A}_0^\nu$)} to the weights.
+    Neither floor vanishes for the matching prior: away from $\bar w$ the weighted stationary point does not stay on
+    the zero-residual manifold (the leak pulls the amplitudes back to the prior while the fit asks for
+    $a_k\propto1/w_k$); on the instance both sensitivities rise with the amplitudes of the stationary atoms along the
+    amplitude-scaled priors --- a numerical trend, not a law (at a fixed amplitude the width changes the
+    sensitivity, Table~\ref{tab:thmDppp:design}).
+\end{enumerate}
+\end{thm}
+\status{(i) proved (the proofs of Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 use the leak only
+through its curvature $\sigma_0\Ginv$ and its a priori bound --- the latter goes through with
+$\operatorname{dist}(\cdot,\supp\nu)$ in place of $\norm{\cdot - \vartheta^0}$, the upper Dini derivative of the
+minimum of quadratics along the flow being bounded by the active branch's. The local constancy of the assignment
+makes every segment $[\bar\vartheta_i,\vartheta_i]$ of Step~2 lie in one cell, and it is needed for every $s\ge0$,
+not only from $s_1$ on, because (2.1) and (5.2) are used on $[0,s_1)$ as well: a pair straddling a boundary adds
+$(\sigma_0/m)\ip{\delta_i}{\vartheta^0_{j(\vartheta_i)} - \vartheta^0_{j(\bar\vartheta_i)}}_{\Ginv}\ge0$ to
+$\frac12\dd D/\dd s$ (the sum of the two cell inequalities; $V_\nu$ is semiconcave and its leak expands across the
+boundaries), a forcing of size up to $\sigma_0\operatorname{diam}(\supp\nu)\sqrt D$ that none of the theorem's
+constants absorbs --- referee round 10 found \code{decomposition}'s same-cell convention and the true
+$\frac12\dd D/\dd s$ to differ by exactly this term on a straddling pair. The same hypothesis gives the
+well-posedness of \textup{($\mathfrak{A}_0^\nu$)}, whose vector field is discontinuous on the boundaries, and
+Theorem J applies to $J_m^\nu$, which is $C^2$ away from the Voronoi boundaries, on a basin that meets none.)
+(ii) proved ($r_{\mu^*} = 0$ and $\nabla V_\nu(\vartheta^0_k) = 0$ give stationarity;
+$R[\mu^*] = \langle r_{\mu^*}\nabla^2\tilde\Phi\rangle_\rho = 0$; the $O(\delta)$ statements are the smooth
+dependence of the weighted stationary point on the prior, by the implicit function theorem at $\mu^*$, whose
+$K$-atom Hessian $\mathrm{Gram} + \sigma_0\operatorname{diag}(q)\Ginv$ is positive definite --- on the instance its
+whitened, weighted eigenvalues are $0.0074$--$0.20$, all at or above $\sigma_0$, referee round 10). (iii) formal as
+Proposition D$'''$.5 (the function-level law is the delta method applied to $w\mapsto\fhat_{\Theta^*(w)}$); the
+sign of the comparison with the $\sigma$-modification is a numerical finding (\code{exp_prior_design.py} $\to$
+\code{results/chaos/prior_design.md}, below), not a theorem. Checked: \code{tests/test_prior_design.py} (the
+single-atom prior reproduces \textup{($\mathfrak{A}_m$)}; the gradient of $J_m^\nu$ against finite differences; the
+coupling identity inside the cells; the matching prior's exact representation stationary with zero residual and
+zero curvature, margin $\sigma_0$ against the $\sigma$-modification's; the parameter- and function-level
+sensitivities, the latter against finite differences of the fitted function of the weighted stationary point).}
+
+\begin{rmk}{Remark}{D$'''$.10}[design]
+The leak's prior is a design input of the window. The $\sigma$-modification's single $\vartheta^0$ biases every
+kernel toward one point and leaves a residual at the fitted configuration --- the residual-weighted curvature that
+bounds the window from below and slows the relaxation ($\kappa = 0.00196$ on the instance of this section, the
+theorem's relaxation time $1/\kappa = 511$ slow units). A prior measure whose atoms sit on the plant's structure
+removes the bias and gives the maximal margin $\kappa = \sigma_0$ ($1/\kappa = 141$ slow units, 3.6 times shorter;
+the observed e-folding times of the coupled distance are 3.3 times shorter in the median, numerics below), at the
+price of a larger floor at both levels (the stationary atoms have the full amplitudes, to which the weight
+sensitivity is proportional): the classical trade-off between bias and variance, here between the window's margin
+and the coupling's floor. A misplaced prior does worse than no structured prior (centres off by $0.6$, amplitudes
+$\times1.2$ or widths $\times0.7$ close the window, which the $\sigma$-modification keeps open with margin
+$0.0020$), and a shrunk prior does better than the matching one (amplitudes $\times0.5$--$0.7$: margin above
+$\sigma_0$ at the uniform weights, both floors lower, all four tested unbalanced weights admissible --- with
+splitting margins above $\sigma_0$ at one of them and slightly below at the other three; numerics below and
+Remark D$'''$.11). The barycentric OT leak of Theorem C$'$ adds a mass constraint to the same geometry --- each
+prior atom must receive its mass --- and so acts on the cluster weights themselves, the source of the floor; its
+interplay with the weight fluctuation (an equal-mass Lloyd dynamics against the fit) is the natural next step
+(Section~\ref{sec:program}, branch 8).
+\end{rmk}
+
+% Numerics of Proposition D'''.9 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/prior_design.md).
+\paragraph{Numerics} (\code{exp_prior_design.py} $\to$ \code{results/chaos/prior_design.md}). The three-bump
+instance of Theorem D$'''$'s numerics at the same leak $\sigma_0 = 0.15\sigma_{\mathrm{crit}} = 0.00707$, with the
+nearest-atom leak toward a prior of three atoms placed at the exact representation $(3A_k, C_k, S_k)$ and misplaced
+from it, against the $\sigma$-modification ($\vartheta^0 = 0$); $\varrho' = 0.1$; the floors predicted for $m = 64$
+against $M = 2048$.
+
+\smallskip
+\noindent\emph{The design table (table 1).} Stationary three-atom measure $\mu^*_\nu$ under each prior --- fit
+error, $\kappa_R$ at the atoms and over $N_{0.1}$, margin $\kappa = \sigma_0 - \kappa_R(N_{0.1})$, whitened
+$\norm{S_k}$, predicted $\E D_\infty$ and $\E\norm{\fhat_{64} - \fhat_M}^2$ (Table~\ref{tab:thmDppp:design}):
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Proposition D$'''$.9: the design table]{Proposition D$'''$.9 on the three-bump instance: the
+stationary three-atom measure under each prior --- fit error, residual curvature at the atoms and over $N_{0.1}$,
+margin, whitened weight sensitivities, and the predicted parameter- and function-level floors for $m = 64$ against
+$M = 2048$ (\code{results/chaos/prior_design.md}, table 1).}
+\label{tab:thmDppp:design}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}>{\hsize=1.05\hsize\raggedright\arraybackslash}X>{\hsize=0.9\hsize\centering\arraybackslash}X>{\hsize=0.95\hsize\centering\arraybackslash}X>{\hsize=0.95\hsize\centering\arraybackslash}X>{\hsize=0.95\hsize\centering\arraybackslash}X>{\hsize=1.25\hsize\centering\arraybackslash}X>{\hsize=1.0\hsize\centering\arraybackslash}X>{\hsize=0.95\hsize\centering\arraybackslash}X@{}}
+\toprule
+prior & fit error & $\kappa_R$ at the atoms (max) & $\kappa_R$ over $N_{0.1}$ & margin $\kappa$ & $\norm{S_k}$
+  & $\E D_\infty$ ($m = 64$), $\times10^{-1}$ & $\E\norm{\fhat_{64} - \fhat_M}^2$, $\times10^{-4}$\\
+\midrule
+$\sigma$-modification, $\vartheta^0 = 0$ & 0.2439 & $+0.00411$ & $+0.00512$ & $+0.00196$ & 8.38, 4.66, 8.32
+  & 2.010 & 4.287\\
+matching prior (exact representation) & 0.0000 & $+0.00000$ & $+0.00000$ & $+0.00707$ & 13.01, 6.18, 8.91
+  & 3.227 & 9.334\\
+centres shifted by $+0.15$ / $+0.3$ / $+0.45$ / $+0.6$ & 0.0098 / 0.0200 / 0.0311 / 0.0436
+  & $+0.00140$ / $+0.00298$ / $+0.00480$ / $+0.00698$ & $+0.00157$ / $+0.00333$ / $+0.00534$ / $+0.00770$
+  & $+0.00550$ / $+0.00374$ / $+0.00173$ / $-0.00063$ & 12.9--13.0, 6.18, 8.92 & 3.21--3.22 & 9.40--9.51\\
+amplitudes $\times0.5$ / $\times0.7$ / $\times1.2$ & 0.0921 / 0.0624 / 0.0861
+  & $-0.00039$ / $-0.00028$ / $+0.03684$ & $-0.00033$ / $-0.00023$ / $+0.03875$
+  & $+0.00740$ / $+0.00731$ / $-0.03167$ & 9.76, 5.01, 7.47 / 10.59, 5.40, 7.92 / 17.80, 6.96, 10.11
+  & 1.991 / 2.303 / 5.242 & 7.106 / 7.657 / 18.02\\
+widths $\times0.7$ / $\times1.5$ / $\times2$ & 0.2195 / 0.0581 / 0.1190
+  & $+0.03086$ / $+0.00113$ / $+0.00294$ & $+0.03316$ / $+0.00126$ / $+0.00306$
+  & $-0.02609$ / $+0.00581$ / $+0.00401$ & 13.00, 2.82, 9.77 / 11.13, 7.19, 8.50 / 10.39, 7.27, 8.71
+  & 3.062 / 2.932 / 3.008 & 17.16 / 7.459 / 6.148\\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+The matching prior makes the exact representation stationary with zero residual (fit error $1.2\cdot10^{-16}$),
+$\kappa_R = 0$ and the maximal margin $\kappa = \sigma_0 = 0.00707$, 3.6 times the $\sigma$-modification's
+$0.00196$ (the theorem's relaxation time $1/\kappa$: 141 against 511 slow units); the $\sigma$-modification's bias
+(amplitudes $2.45$, $-2.29$, $2.05$ against $3A_k = 3.0$, $-2.1$, $2.4$; widths $0.83$, $0.70$, $0.88$ against
+$0.5$, $0.4$, $0.5$) is removed. The floors move the other way: $\norm{S_k} = 13.01$, $6.18$, $8.91$ against
+$8.38$, $4.66$, $8.32$, $\E D_\infty$ 1.61 times and the function-level floor 2.18 times the
+$\sigma$-modification's. Misplacing the prior brings the residual curvature back and closes the window at centres
+shifted by $+0.6$ (margin $-0.00063$), at amplitudes $\times1.2$ ($-0.03167$) and at widths $\times0.7$
+($-0.02609$), while shrinking the amplitudes ($\times0.5$, $\times0.7$) gives margins above $\sigma_0$ ($+0.00740$,
+$+0.00731$: $\kappa_R$ is negative at every atom) with floors below the matching prior's ($\E D_\infty$ $0.199$,
+$0.230$; function level $7.1\cdot10^{-4}$, $7.7\cdot10^{-4}$) at fit errors $0.09$, $0.06$. The cell margins (the
+gap between the two nearest prior atoms along the configuration) are $1.2$--$6.3$, above $2\varrho' = 0.2$
+everywhere.
+
+\smallskip
+\noindent\emph{Admissible weights (table 2).} The splitting margin of the replicated weighted stationary
+configuration $\Theta^*(w)$ under the three priors (Table~\ref{tab:thmDppp:adm}):
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Proposition D$'''$.9: admissible weights]{Proposition D$'''$.9 on the three-bump instance: the
+splitting margin $\sigma_0 - \max_k\kappa_R$ of the replicated weighted stationary configuration $\Theta^*(w)$ at
+four weight vectors under the $\sigma$-modification, the matching prior and the shrunk prior
+(\code{results/chaos/prior_design.md}, table 2).}
+\label{tab:thmDppp:adm}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+weights $w$ & $\sigma$-modification & matching prior & amplitudes $\times0.7$\\
+\midrule
+$(7,5,4)/16$ & $+0.00257$ & $-0.00544$ & $+0.00733$\\
+$(9,4,3)/16$ & $-0.00219$ & $-0.00579$ & $+0.00570$\\
+$(10,3,3)/16$ & $-0.00377$ & $-0.00415$ & $+0.00536$\\
+$(0.5,0.3,0.2)$ & $-0.00062$ & $-0.00653$ & $+0.00663$\\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\medskip
+
+The matching prior's admissible set is the smallest: any excess weight overshoots the plant ($\kappa_R$ at the
+over-weighted atom $+0.0112$ to $+0.0136$), so even $(7,5,4)/16$ is a saddle, and the set is smallest in the
+direction of the largest bump (an excess $\varepsilon$ on the first atom alone,
+$w = \bar w + \varepsilon(1.5e_1 - 0.5)$, has margins $+0.00279$, $-0.00031$, $-0.00392$ at $\varepsilon = 0.02$,
+$0.04$, $0.08$, while $\varepsilon = 0.08$ on the second or third atom alone keeps $+0.00208$, $+0.00316$); the
+$\sigma$-modification undershoots ($\fhat/f = 0.77$--$0.78$ at the first atom) and tolerates $(7,5,4)/16$ but not
+$(9,4,3)/16$ (Theorem D$'''$'s inadmissible seed); the shrunk prior keeps all four admissible, with margins
+$+0.00536$ to $+0.00733$ --- above $\sigma_0$ at $(7,5,4)/16$ and slightly below it at the other three, where its
+over-weighted first atom overshoots the plant at the centre by 1--3\% ($\fhat/f = 1.020$, $1.028$, $1.007$;
+$\kappa_R$ there $+0.0014$, $+0.0017$, $+0.0004$; Remark D$'''$.11). At the realised weights of the matching-prior
+coupled runs below, two of the nine (seed, $m$) pairs are saddles ($m = 16$, seed 0 with $w = (6,5,5)/16$, margin
+$-0.00052$; $m = 64$, seed 1 with $w = (26,17,21)/64$, $-0.00296$), the other seven admissible ($+0.00056$ to
+$+0.00609$).
+
+\smallskip
+\noindent\emph{Coupled runs with the matching prior (table 3).} $m = 16$, $64$, $256$ against $M = 2048$, warm
+start the mixture of Gaussians of width $0.02$ around the exact representation, 300 slow units (2.1 relaxation
+times), three seeds. Along the run $\kappa_R[\mu^*]$ over the spheres is $0$ ($r^* = 0$) and with the reference's
+own residual at most $0.00674 < \sigma_0$ (per-seed maxima $0.00634$, $0.00674$, $0.00155$, each at the first
+record; the seed-mean curve peaks at $0.00488$); the reference's fit error falls from $0.029$ to $0.008$ and its
+rms drift from $3.6\cdot10^{-3}$ to $3.0\cdot10^{-5}$ (seed means; per seed the fit error $0.041$, $0.036$,
+$0.011\to0.012$, $0.009$, $0.003$). Window maxima of $D_m$ over $(0,37.5]$, $(37.5,75]$, $(75,150]$, $(150,300]$:
+$0.114\to0.193\to0.239\to0.250\pm0.017$ ($m = 16$), $0.0954\to0.157\to0.190\to0.197\pm0.12$ ($64$),
+$0.00933\to0.0140\to0.0166\to0.0173\pm0.010$ ($256$): last-to-previous $1.05$, $1.04$, $1.04$ --- saturated within
+2.1 of the theorem's relaxation times $1/\kappa$; the observed late-time e-folding times of $D_m$ (from the
+geometric decay of its increments over $(150,300]$) are 48--84 slow units, median 59, against 107--306 (median 195)
+for the $\sigma$-modification's warm runs of Theorem D$'''$'s numerics --- a factor 3.3 in the medians, against 3.6
+in $1/\kappa$; slope $-1.23\pm0.40$ in $m$ (the function-level distance $-0.63\pm0.21$). Per seed, the linearised
+law from the realised weights predicts the measured $D_m$ at $s = 300$ with ratios 0.81--1.11 at parameter level
+(nine pairs) and 0.61--1.69 at function level, and the exact form of Proposition D$'''$.5(ii),
+$\sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}$, with ratios 0.987--0.998 in all nine pairs:
+the linearised law's deviations are its second-order remainder (its two lowest ratios, $0.81$ and $0.82$, sit at
+$\abs{w^m - w^M}_\infty = 0.084$ and $0.033$), not the saddles' doing. The two inadmissible pairs (ratios $0.91$ and
+$0.81$; exact $0.995$ and $0.994$) sit on their replicated saddles at $s = 300$; continued autonomously to
+$s = 6000$ and $9000$ (referee round 10, \code{review/REVIEW_round10_D3c.md}), both $m$-systems leave the saddle by
+Proposition K's local split --- the over-weighted cluster separates into two sub-clusters along the centre direction
+inside its own cell, the cluster weights unchanged --- and the coupled distance stays on its plateau ($-1.3$\% at
+$m = 64$), unlike the $\sigma$-modification's seed of round 9, which migrated between basins.
+
+\smallskip
+\noindent\emph{The function-level law for the $\sigma$-modification (table 4).} Against the warm runs of Theorem
+D$'''$'s numerics ($M = 2048$, last window): the predicted root-mean-square
+$(1/m - 1/M)^{1/2}(\tr F\tilde CF^\T/N)^{1/2}$ is $0.0419$, $0.0207$, $0.00984$ against the measured means
+$0.0307\pm0.0097$, $0.0154\pm0.0033$, $0.00467\pm0.0012$ (ratios $0.73$, $0.74$, $0.48$; a mean of norms over four
+seeds lies below the root-mean-square).
+
+\smallskip
+\noindent\emph{Reading.} The prior is a design input on three counts. Its placement sets the stationary residual,
+hence the window's lower end and the relaxation rate (the matching prior: margin $\sigma_0$, the theorem's
+relaxation time 3.6 times shorter, the observed one 3.3 times); the amplitudes it induces set the floors (which rise
+with them along the amplitude-scaled priors, so removing the bias raises the floors by 1.6--2.2 times); and the sign
+of the residual it leaves at each cluster sets the admissible set of weights (overshoot splits, undershoot
+stabilises). A shrunk prior --- amplitudes 0.5--0.7 of the plant's --- wins on all three at a fit error of
+0.06--0.09; a misplaced one (centres off by more than a bump width, amplitudes too large, widths too narrow) closes
+the window.
+
+\begin{rmk}{Remark}{D$'''$.11}[undershoot stabilises, overshoot splits]
+For a Gaussian kernel, $\partial^2_{cc}\tilde\Phi(x;\vartheta) = -(a/s^2)(1 - (x - c)^2/s^2)\varphi$ is negative at
+the centre, so the $(c,c)$ entry of $R[\mu](\vartheta_k) = \langle r_\mu\nabla^2\tilde\Phi\rangle_\rho$ has the sign
+of $-a_k\cdot r_\mu$ near the centre: a cluster whose kernel overshoots the plant there ($r$ of the sign opposite to
+$a_k$) gets $R\succ0$ in the centre direction --- the separation block $\sigma_0\Ginv - R$ loses margin, and the
+cluster splits once $\kappa_R$ exceeds $\sigma_0$ --- while an undershooting cluster gets $R\prec0$ and a splitting
+margin above $\sigma_0$. For the matching prior this is exactly what Table~\ref{tab:thmDppp:adm} shows: at every
+tested weight the over-weighted atom overshoots at its centre ($\fhat/f = 1.07$--$1.10$), its $R_{cc}$ is positive
+and the top eigenvector of $R^G$ is the centre direction, $(0.01, 1.00, -0.02)$ in $(a,c,s)$, while the
+under-weighted atoms have $R_{cc} < 0$; the shrunk prior undershoots at the uniform weights and at $(7,5,4)/16$, and
+at the three more unbalanced weights its over-weighted atom overshoots slightly ($\fhat/f = 1.007$--$1.028$), taking
+the margin just below $\sigma_0$. The two other instabilities of this section and Section~\ref{sec:thmK} have a
+different anatomy (referee round 10): the $\sigma$-modification's inadmissible seed (weight $9/16$ on the first
+bump) still undershoots at its centre ($R_{cc} < 0$), its unstable direction being a mixed amplitude--width
+direction --- the broad kernel (width $0.88$ against the bump's $0.5$) overshoots in its tails, through the
+cross-curvature $\langle r\varphi(x - c)^2/s^3\rangle_\rho$; and Proposition K's collapsed kernel owes its
+$R_{cc} = +0.055$ to the overshoot over the negative bump and to the undershoot of the outer bumps beyond its
+inflection points, where $1 - (x - c)^2/s^2 < 0$, not to the region between the bumps. It is an observation about
+the Gaussian kernel's second derivative, not a theorem: the width and amplitude directions carry other signs, and
+the residual's profile matters; the splitting margin itself is the quantity to compute.
 \end{rmk}
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).

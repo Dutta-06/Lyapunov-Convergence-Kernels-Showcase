@@ -94,6 +94,18 @@ D$'''$, D$'''$.5, D$'''$.7 & the window realised at $\sigma_0=0.15\sigma_{\mathr
   $m^{-0.64\pm0.08}$; real loop at $k_e=25$ within 0.7\% of its averaged slow dynamics on the same clouds; not the
   constants $C_1$, $m_0$ (vacuous: $2\cdot10^9$, $10^{23}$) nor the saturation of Corollary D$'''$.7
   & \code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}\\
+D$'''$.9, D$'''$.11 & the matching prior: zero residual, $\kappa_R=0$, margin $\sigma_0=0.00707$ against the
+  $\sigma$-modification's $0.00196$, floors $1.61\times$ and $2.18\times$ higher; misplacement closes the window
+  (centres $+0.6$, amplitudes $\times1.2$, widths $\times0.7$); shrunk amplitudes $\times0.5$--$0.7$ give margins
+  above $\sigma_0$ at the uniform weights and lower floors; admissible-weight table under three priors (overshoot
+  splits, undershoot stabilises; the shrunk prior keeps all four tested weights admissible, $+0.0054$ to $+0.0073$);
+  matching-prior coupled runs saturate within 2.1 of the theorem's relaxation times (observed e-folding 48--84 slow
+  units against 107--306 for the $\sigma$-modification) with per-seed linearised-law ratios 0.81--1.11 (parameter)
+  and 0.61--1.69 (function) and the exact law within 0.987--0.998 in all nine pairs; the two saddles among them are
+  left by a local split with the coupled distance on its plateau; the function-level law for the
+  $\sigma$-modification within ratios 0.48--0.74 of the measured means (RMS over seeds 0.52--0.84; per-seed law from
+  the realised weights 0.60--1.57)
+  & \code{exp_prior_design.py} $\to$ \code{results/chaos/prior_design.md}\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid

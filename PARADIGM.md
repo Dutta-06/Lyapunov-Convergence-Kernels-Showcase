@@ -19,17 +19,18 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
     current and stationary Fokker–Planck solvers, and the vectorised dithered loop of Theorem J′.
   - `src/core/chaos_learning.py` implements the averaged slow loop (𝔄_m), the three terms of its coupling identity, the
     residual-weighted curvature κ_R and the constants of Theorem D‴; `src/core/prior_design.py` the nearest-atom leak toward a
-    measure-valued prior and the two weight-sensitivity laws of Proposition D‴.9.
+    measure-valued prior and the two weight-sensitivity laws of Proposition D‴.9; `src/core/ot_leak.py` the barycentric OT leak toward
+    a prior measure (the vertex plan, the Laguerre/diagonal-plan checks, the exact W² between empirical measures) of Proposition D‴.12.
 - **Tests.** `tests/test_transport.py`, `tests/test_langevin.py`, `tests/test_averaging.py`, `tests/test_excitation.py`,
-  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py`, `tests/test_dither.py`, `tests/test_chaos_learning.py` and `tests/test_prior_design.py`. Run them with
+  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py`, `tests/test_dither.py`, `tests/test_chaos_learning.py`, `tests/test_prior_design.py` and `tests/test_ot_leak.py`. Run them with
   `venv\Scripts\python -m pytest tests`.
 - **Experiments.** The scripts are `experiments/exp_transport_*.py`, `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py`, `exp_mean_field_m.py`,
   `exp_pe_convergence.py`, `exp_variable_projection.py`, `exp_slow_manifold_slope.py`, `exp_langevin_global.py`,
   `exp_langevin_tradeoff.py`, `exp_gibbs_reference.py`, `exp_orbit_orientation.py`, `exp_explicit_rate.py` and
-  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_chaos_learning.py`, `exp_prior_design.py`, `exp_barycentric_leak.py`,
+  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_chaos_learning.py`, `exp_prior_design.py`, `exp_ot_leak.py`, `exp_barycentric_leak.py`,
   `exp_dither_stationary.py` and `exp_pe_general.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
-  point to `review/LITERATURE_refs.md`, and [S1]–[S39] point to the audit file.
+  point to `review/LITERATURE_refs.md`, and [S1]–[S42] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
@@ -1838,6 +1839,106 @@ in its tails, through the cross-curvature ⟨r φ(x − c)²/s³⟩_ρ; and Prop
 over the negative bump and to the undershoot of the outer bumps beyond its inflection points, where 1 − (x − c)²/s² < 0, not to the region
 between the bumps. It is an observation about the Gaussian kernel's second derivative, not a theorem: the width and amplitude directions
 carry other signs, and the residual's profile matters; the splitting margin itself is the quantity to compute.
+
+**Proposition D‴.12 (the mass constraint removes the weight-fluctuation floor).** Let ν = Σ_{j=1}^{K₀}q_jδ_{ϑ⁰_j} be a prior measure
+with distinct atoms and masses q_j > 0, Δ_ν := min_{j≠k}‖ϑ⁰_j − ϑ⁰_k‖_{G⁻¹}, and let the leak be the barycentric OT leak of Theorem C′
+toward ν for the cost ‖·‖²_{G⁻¹}: with γ = γ(Θ) a vertex optimal plan from μ_Θ to ν (row sums 1/m, column sums q_j) and
+T̄_i := mΣ_jγ_{ij}ϑ⁰_j its barycentric projection,
+
+    dϑ_i/ds = G⟨∇_ϑ(r_ΘΦ̃(·;ϑ_i))⟩_ρ − σ₀(ϑ_i − T̄_i),                                                                  (𝔄_m^{OT})
+
+the G-gradient flow of J_m^{OT}(Θ) := mL̄(μ_Θ) + (σ₀m/2)W²_{G⁻¹}(μ_Θ, ν) wherever the optimal plan is unique (Danskin's theorem, as in
+Theorem C′(i)), with the vertex-selection solutions of §4b where it is not. Its mean-field form is the *Laguerre-cell leak*: for μ giving
+no mass to their boundaries, the optimal plan from μ to the atomic ν is induced by the map T_μ(ϑ) = ϑ⁰_j on the Laguerre cell
+L_j[μ] := {ϑ : ‖ϑ − ϑ⁰_j‖²_{G⁻¹} − ψ_j ≤ ‖ϑ − ϑ⁰_k‖²_{G⁻¹} − ψ_k for all k}, the dual weights ψ being fixed by μ(L_j[μ]) = q_j (semi-discrete
+optimal transport [S42]), and (𝔄₀^{OT}) is (𝔄₀) with the leak −σ₀(ϑ − T_{μ_s}(ϑ)): the nearest-atom leak of Proposition D‴.9 with the
+Voronoi cells replaced by cells of prescribed masses. Call m *commensurate* with ν if mq_j ∈ ℕ for every j.
+
+(i) *(conservation against constraint)* Along (𝔄_m^ν) on the good event 𝒢_S of Theorem D‴ (Proposition D‴.9(i)) no particle changes
+cell, so the cluster masses w_k(Θ_s) := (1/m)#{i : j(ϑ_i(s)) = k} are conserved: w^m(s) = w^m(0), the multinomial sample of the initial
+cloud, and the stationary floor of Proposition D‴.5 is the memory of the initial condition that this conservation law carries. Along
+(𝔄_m^{OT}) the masses assigned to the atoms are constrained instead: Σ_iγ_{ij}(s) = q_j for every s.
+
+(ii) *(the frozen plan)* If m is commensurate, every vertex of the transportation polytope is integral — γ_{ij} ∈ {0, 1/m}: each particle
+is assigned to one atom π(i) and atom j receives exactly mq_j particles — so T̄_i = ϑ⁰_{π(i)} and (𝔄_m^{OT}) is (𝔄_m^ν) with the Voronoi
+assignment j(·) replaced by the plan's assignment π, locally constant in Θ wherever the optimal plan is unique. There J_m^{OT} is C² with
+the leak's Hessian σ₀G⁻¹ ⊗ I, and Theorem D‴, Proposition D‴.5 and Corollary D‴.7 hold for (𝔄_m^{OT}) with the same constants under the
+hypothesis of Proposition D‴.9(i) read with the plan: for every s ≥ 0 the plan assigns each particle to the atom of its reference's
+Laguerre cell L_{·}[μ_s], and N_{ϱ′}(supp μ_s) meets no Laguerre boundary.
+
+(iii) *(the stationary measure does not depend on m)* Let Θ*(q) = (ϑ*_1, …, ϑ*_{K₀}) be the weighted stationary point of 𝒢_q with the
+prior atoms (Proposition D‴.5 with w = q, each class k leaking toward ϑ⁰_k as in Proposition D‴.9) and ε := max_k‖ϑ*_k − ϑ⁰_k‖_{G⁻¹}. If
+ε < Δ_ν/2 then, for every commensurate m, the replicated configuration Θ*_m(q) (mq_k particles at ϑ*_k) has the diagonal plan (class k →
+atom k) as its unique optimal plan, is a critical point of J_m^{OT}, and is a strict local minimiser iff q ∈ W_adm (its Hessian is
+Proposition D‴.5's, with separation blocks σ₀I − R^G_k of multiplicities mq_k − 1). The stationary measure μ*(q) := Σ_kq_kδ_{ϑ*_k} and the
+learned function f̂*(q) = Σ_kq_kΦ̃(·;ϑ*_k) are therefore the same for every commensurate m, and the stationary floors vanish:
+
+    W_{G⁻¹}(μ*_m, μ*_M) = 0,    ‖f̂*_m − f̂*_M‖_{L²(ρ)} = 0    for all commensurate m, M,
+
+against E[D_∞ | adm] = (1/m − 1/M)Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ) and (1/m − 1/M)tr(FC̃Fᵀ)/N under the nearest-atom leak (Propositions D‴.5 and
+D‴.9(iii)), whose stationary measures are moreover at W₂-distance ½‖w^m − w^M‖₁·O(Δ_ν²) = O(Δ_ν²m^{−1/2}) from each other — the
+cross-cluster transport of the weight mismatch, which the shared-particle distance D does not see. The price is the bias of the masses: the
+stationary residual r*(q) = f − Σ_kq_kΦ̃(·;ϑ*_k) vanishes iff ν carries an exact representation of the plant *with its masses*,
+Σ_kq_kΦ̃(·;ϑ⁰_k) = f on supp ρ; for masses q_δ displaced from those of the exact representation the residual is O(δ) and the window's margin
+decreases with δ (Proposition D‴.9(ii) with the masses as the parameter), and the designed masses must themselves be admissible, q ∈ W_adm:
+past the admissible set the over-weighted equal-mass cluster splits (Remark D‴.11).
+
+(iv) *(incommensurate m: the quantisation remainder)* For any m and any configuration a vertex optimal plan splits at most K₀ − 1 particles
+between two or more atoms (a vertex of the transportation polytope is supported on a forest of the bipartite graph with m + K₀ nodes, so on
+at most m + K₀ − 1 edges, every particle carrying at least one). At a stationary configuration whose unsplit particles are collapsed by
+class (the minimisers of Proposition D‴.5's type) a split particle sits where the fit force balances the pull toward its barycentric target
+T̄_i ∈ conv{ϑ⁰_j : γ_{ij} > 0} — a *bridge particle* between the clusters — so the stationary measure differs from μ*(q) by at most
+(K₀ − 1)/m of mass at the bridge positions and by the O(K₀/m) shift of the class weights:
+
+    W²_{G⁻¹}(μ*_m, μ*(q)) ≤ 4(K₀ − 1)R_Θ²/m + O(K₀²‖S‖²/m²),    ‖f̂*_m − f̂*(q)‖_{L²(ρ)} ≤ 2(K₀ − 1)K_Φ/m + O(K₀(K_Φ + L_ϑ^G‖S‖)/m),
+
+R_Θ the a priori radius of Step 0: the function-level floor is O(K₀²/m²) in square — one order in m below the (1/m − 1/M) law — and the
+W₂ floor keeps the order 1/m, with a deterministic quantisation constant in place of the fluctuation's.
+
+(v) *(the transit)* From a cloud with cluster masses w^m ≠ q the plan assigns a mass ½‖w^m − q‖₁ (up to the split particles) of the
+over-weighted clusters to under-weighted atoms, and these particles migrate between the clusters against the fit force at the leak's rate —
+for the pure leak a migrating particle crosses the Voronoi midpoint at s = ln 2/σ₀. During the transit the synchronous coupling of Theorem D‴
+sees the mass migrating in one system and not in the other at a distance of order Δ_ν, D = O(Δ_ν²‖w^m − w^M‖₁) — it is not a coupling the
+OT leak respects — W²_{G⁻¹}(μ_m, μ_M) is of the same order O(Δ_ν²m^{−1/2}), the sampling term of the cluster masses, and the function-level
+distance is O(K_Φ‖w^m − w^M‖₁) = O(m^{−1/2}); after the transit all three vanish on the commensurate sizes ((iii)). The mean-field flow has
+the same transit: when the clusters of μ₀ have masses w ≠ q the Laguerre boundaries cut the over-weighted clusters, and the mass ½‖w − q‖₁
+migrates.
+
+*Status.* (i) proved on 𝒢_S (Theorem D‴'s per-particle bound keeps every particle within 3ϱ′/4 of its reference, whose cell has margin
+ϱ′). (ii) proved (the transportation constraints are the incidence matrix of a bipartite graph, totally unimodular, so with integral
+right-hand sides every vertex is integral — Hoffman–Kruskal [S40]; a unique optimal vertex of a linear program stays optimal under small
+perturbations of its cost; the proofs of Theorem D‴ and Proposition D‴.5 use the leak only through its Hessian and its a priori bound, as
+in Proposition D‴.9(i), the constancy of the plan being needed for every s ≥ 0 as referee round 10 showed for the Voronoi assignment; the
+Laguerre form of the mean-field leak is semi-discrete optimal transport [S42]). (iii) proved (c-cyclical monotonicity [S41]: for ε < Δ_ν/2
+every off-diagonal pair costs at least ½(Δ_ν − ε)² > ½ε² ≥ every diagonal pair, so along any cycle the diagonal plan is strictly cheaper;
+the diagonal plan is therefore optimal, and every other plan, which differs from it by a nonnegative combination of cycle flows, costs
+strictly more; the Hessian is Proposition D‴.5(i)'s block splitting with the plan frozen; the bias statements are Proposition D‴.9(ii)'s
+implicit-function argument with the masses as the parameter). (iv) the count proved (the vertices of the transportation polytope are the
+plans supported on spanning forests, Klee–Witzgall [S40]); the two bounds formal (they assume the stationary configuration's structure).
+(v) formal; the transit and the three distances are numerical (`exp_ot_leak.py` → `results/chaos/ot_leak.md`, below). Open: the
+uniform-in-time coupling *through* the transit — Theorem D‴'s proof starts from i.i.d. particles, and after the transit the m-system is no
+longer an i.i.d. sample of μ_s (a random subset of its particles has moved) — so what is proved about the dynamics is the frozen-plan
+statement (ii) and the stationary statement (iii). Checked: `tests/test_ot_leak.py` (the plan is a vertex with the prescribed masses,
+integral when m is commensurate and with at most K₀ − 1 split rows otherwise, and the single-atom prior gives the σ-modification; the leak is
+the G-gradient flow of J_m^{OT} against finite differences, for commensurate and incommensurate m; the replicated weighted configuration is
+stationary for three commensurate sizes with the diagonal plan and the same learned function — for the matching masses and for mismatched
+ones — with W² = 0 between the sizes and the splitting margin of Proposition D‴.5 (σ₀ at the matching masses); the conservation of the
+cluster masses under the nearest-atom leak against their equalisation under the OT leak on a short run, with the mass in transit equal to
+½‖w(0) − q‖₁ and the fit error lower at the end; the forest bound on random clouds; the exact W² between empirical measures by replication
+against the transportation LP).
+
+*Remark D‴.13 (conservation, constraint, and what the mean-field limit forgets).* Theorem D‴ bounds the coupled distance uniformly in time,
+and Proposition D‴.5 says what the bound's constant is made of: the m-system's memory of its initial cluster masses, which the nearest-atom
+leak conserves. The OT leak replaces the conservation law by a constraint and the memory is erased — the finite-m stationary measure *is*
+the mean-field one on the commensurate sizes, and within (K₀ − 1)/m of mass of it otherwise. This is a statement about the design of the
+leak, not about m: the same clouds under the nearest-atom leak keep their floors. Three consequences. (a) The masses join the atoms as
+design inputs of the leak's prior — both are read from the plant's structure (Proposition D‴.9(ii)) — and the admissible set W_adm of
+Proposition D‴.5, a probability statement about the realised weights under the nearest-atom leak, becomes a condition on the design,
+q ∈ W_adm, under the OT leak. (b) The mean-field form of Theorem C′'s leak for an atomic prior is the Laguerre-cell leak; its finite-m
+fluctuation is not a random displacement of the cells but the split particles — at most K₀ − 1 — and the migrating ones during the transit.
+(c) A soft mass constraint (an entropic or penalised plan) would interpolate between the two leaks, with a floor set by the stiffness of
+the penalty; open (§8, branch 8), as is the transfer of a learned measure to a plant whose representation weights are unknown, where q
+itself would have to be learned.
 
 *Numerics* (`exp_chaos_learning.py` → `results/chaos/learning_table.md`). The instance: n = 1, saturated features with a_max = 4,
 c_max = 3, s ∈ [0.3, 2], prior ϑ⁰ = 0, G = diag(1, 0.25, 0.25); a plant of three Gaussian bumps, (A, C, S) = (1, −1.5, 0.5),
@@ -4443,12 +4544,21 @@ Each branch states what is proved, what is open, and the first concrete step.
    - Wasserstein proximal (JKO) discrete-time adaptive laws.
    - *Done (Theorem C′):* the OT leak toward priors with a different number of atoms, using optimal plans with
      barycentric projection; it is Lloyd's algorithm in continuous time, and its bias is the centroid defect of the ideal.
-   - *Open:* its mean-field form (a general prior ν and a general μ, where the barycentric projection is the
-     superdifferential of ½W²(·, ν); AGS Thm 10.4.12), and adaptive priors (ν itself learned).
+   - *Open (in part):* its mean-field form — done for an atomic prior (the Laguerre-cell leak, Proposition D‴.12), open for a general
+     prior ν and a general μ (where the barycentric projection is the superdifferential of ½W²(·, ν); AGS Thm 10.4.12) — and adaptive
+     priors (ν itself learned).
    - *Done (Proposition D‴.9):* the nearest-atom leak toward a prior measure inherits Theorem D‴, Proposition D‴.5 and Corollary D‴.7
      inside the Voronoi cells; the prior is a design input of the window (maximal margin κ = σ₀ at a matching prior, the window
-     closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes). *Open:* the barycentric OT
-     leak's mass constraint against the weight fluctuation (equal-mass Lloyd dynamics with the fit term).
+     closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes).
+   - *Done (Proposition D‴.12):* the barycentric OT leak's mass constraint against the weight fluctuation. The nearest-atom leak conserves
+     the cluster masses, and the finite-m floor of Proposition D‴.5 is the memory of the initial cloud that this conservation carries; the
+     OT leak constrains the masses to the prior's, so on the sizes commensurate with the masses the finite-m stationary measure is the
+     mean-field one exactly (the replicated weighted configuration is a critical point for every such m, by total unimodularity and
+     c-cyclical monotonicity), and otherwise differs from it by at most K₀ − 1 split particles; for an atomic prior the mean-field form of
+     the barycentric leak is the Laguerre-cell leak. *Open:* the uniform-in-time coupling through the transit (the m-system is no longer an
+     i.i.d. sample after the mass transfer); a soft (entropic or penalised) mass constraint interpolating between the two leaks; the
+     mean-field form for a general prior ν (the barycentric projection as the superdifferential of ½W²(·, ν), AGS Thm 10.4.12) and adaptive
+     priors (ν, and its masses, learned).
    - Transfer: transporting a learned measure to a new plant.
 
 9. **Quantisation and the curse of dimensionality (Corollary B.6).**

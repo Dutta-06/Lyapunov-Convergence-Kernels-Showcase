@@ -79,9 +79,10 @@ In Part~I, every step of the stability argument is either proved or verified num
     the dithered linearised loop (Corollary E.0$'$.3) and the slow-regime Lyapunov function for non-periodic
     persistently exciting regressors (Lemma E.0$''$) and uniform-in-time propagation of chaos in the learning
     regime for the averaged slow loop (Theorem D$'''$, with the finite-$m$ weight-sensitivity law of
-    Proposition D$'''$.5) --- through a seventh (the first two) and an eighth (the third). Every confirmed issue
+    Proposition D$'''$.5, the real loop on a warm start of Corollary D$'''$.7 and the leak's prior as a design input of
+    the window, Proposition D$'''$.9) --- through a seventh (the first two) and an eighth to a tenth (the third). Every confirmed issue
     and its fix is
-    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--9 are kept beside it.
+    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--10 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -229,7 +230,11 @@ while the network learns; the window $\kappa_R[\mu_\infty] < \sigma_0 < \sigma_{
 and uniformity coexist; at finite $m$ the stationary coupled distance follows the weight-sensitivity law
 $\E D_\infty = (1/m - 1/M)\sum_k\bar w_k\tr(\tilde S_k\tilde C\tilde S_k^\T)$, $S = \partial\Theta^*/\partial w$ the
 sensitivity of the stationary atoms to the cluster weights (Proposition D$'''$.5, the sharp form of the theorem's
-constant)
+constant); the leak's prior is a design input of the window: with a measure-valued prior (nearest-atom leak) placed
+on the plant's structure the stationary residual vanishes and the margin is maximal, $\kappa = \sigma_0$, while the
+floors at parameter and function level rise (1.6--2.2$\times$ on the instance, with the amplitudes), and the sign of
+the residual at a cluster sets its admissible weights --- overshoot splits, undershoot stabilises, so a shrunk prior
+enlarges the admissible set (Proposition D$'''$.9, Remark D$'''$.11)
 & proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle
 distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow;
 it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the

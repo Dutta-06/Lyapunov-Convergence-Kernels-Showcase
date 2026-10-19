@@ -176,6 +176,12 @@ Each branch states what is proved, what is open, and the first concrete step.
     \item \emph{Open:} its mean-field form (a general prior $\nu$ and a general $\mu$, where the barycentric
       projection is the superdifferential of $\frac12W^2(\cdot,\nu)$; Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}),
       and adaptive priors ($\nu$ itself learned).
+    \item \emph{Done (Proposition D$'''$.9, Section~\ref{sec:thmDppp}):} the nearest-atom leak toward a prior measure
+      inherits Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 inside the Voronoi cells; the prior is a
+      design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window closing as the
+      prior is misplaced) and of the floors (which grow with the stationary amplitudes). \emph{Open:} the
+      barycentric OT leak's mass constraint against the weight fluctuation (equal-mass Lloyd dynamics with the fit
+      term).
     \item Transfer: transporting a learned measure to a new plant.
   \end{itemize}
 

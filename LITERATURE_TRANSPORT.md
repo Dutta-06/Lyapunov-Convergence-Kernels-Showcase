@@ -58,6 +58,9 @@ found the construction.
 - [S37] F. Malrieu. *Logarithmic Sobolev inequalities for some nonlinear PDE's*. Stochastic Processes and their Applications 95(1):109–132, 2001. Uniform-in-time propagation of chaos for McKean–Vlasov diffusions with a uniformly convex confinement and a convex interaction, by synchronous coupling and functional inequalities. The convexity there is global; Theorem D‴ needs it on a neighbourhood of the support of the mean-field flow and gets the interaction's sign from flat convexity. (Details from memory; not re-verified here.)
 - [S38] A. Durmus, A. Eberle, A. Guillin, R. Zimmer. *An elementary approach to uniform in time propagation of chaos*. Proceedings of the AMS 148:5387–5398, 2020. Uniform-in-time propagation of chaos by reflection coupling for McKean–Vlasov diffusions whose confinement is convex outside a ball and whose interaction is Lipschitz with a small constant. The interaction of the fitted network is not small in the learning regime; its sign (Theorem D‴, Step 3) replaces the smallness. (Details from memory; not re-verified here.)
 - [S39] C. Liu, L. Zhu, M. Belkin. *Loss landscapes and optimization in over-parameterized non-linear systems and neural networks*. Applied and Computational Harmonic Analysis 59:85–116, 2022. The decomposition of the Hessian of a least-squares loss into the Gram (tangent-kernel) term and the residual-weighted second-derivative term, the latter vanishing at interpolation; the PL condition near interpolation. The same decomposition, per particle, is the self term of Theorem D‴'s coupling identity. (Details from memory; not re-verified here.)
+- [S40] A. J. Hoffman, J. B. Kruskal. *Integral boundary points of convex polyhedra*. In: Linear Inequalities and Related Systems (H. W. Kuhn, A. W. Tucker, eds.), Annals of Mathematics Studies 38, Princeton, 1956, 223–246 (total unimodularity: with integral right-hand sides every vertex is integral; the transportation constraints are the incidence matrix of a bipartite graph). V. Klee, C. Witzgall. *Facets and vertices of transportation polytopes*. In: Mathematics of the Decision Sciences, Part 1, Lectures in Applied Mathematics 11, AMS, 1968, 257–282 (the vertices of the transportation polytope are the plans supported on spanning forests). A. Schrijver, *Theory of Linear and Integer Programming*, Wiley, 1986, Ch. 19. Used in Proposition D‴.12(ii), (iv). (Details from memory; not re-verified here.)
+- [S41] C. Villani. *Optimal Transport: Old and New*. Grundlehren der mathematischen Wissenschaften 338, Springer, 2009, Theorem 5.10 (c-cyclical monotonicity characterises the optimal plans); F. Santambrogio. *Optimal Transport for Applied Mathematicians*. Birkhäuser, 2015, Ch. 1 (the discrete case: the transportation linear program and its vertices). Used in Proposition D‴.12(iii).
+- [S42] F. Aurenhammer, F. Hoffmann, B. Aronov. *Minkowski-type theorems and least-squares clustering*. Algorithmica 20:61–76, 1998 (semi-discrete optimal transport: the optimal plan from an absolutely continuous measure to an atomic one is induced by a power diagram — Laguerre cells — with prescribed masses). J. Kitagawa, Q. Mérigot, B. Thibert. *Convergence of a Newton algorithm for semi-discrete optimal transport*. J. Eur. Math. Soc. 21(9):2603–2651, 2019. Used for the mean-field form of the barycentric leak toward an atomic prior (Proposition D‴.12). (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
 
@@ -296,6 +299,16 @@ found the construction.
   the coupling's floors (on the instance the weight sensitivity rises with the amplitudes): a bias–variance trade-off stated for the
   particle system.
   Verdict: standard object, new design statement; the function-level sensitivity law is the delta method once more.
+- **Proposition D‴.12 (the mass constraint).** Capacity-constrained and equal-mass quantisation through optimal plans, and semi-discrete
+  optimal transport with its Laguerre cells, are classical ([S19], [S42]); the integrality of the transportation polytope and the forest
+  structure of its vertices are textbook ([S40]); c-cyclical monotonicity is the standard optimality criterion ([S41]). What is new is the
+  observation that the finite-m floor of the mean-field limit of an adaptive law is carried by a conservation law of its leak (the cluster
+  masses under the nearest-atom leak), and that a design of the leak — the mass constraint of the OT plan — breaks it: on the commensurate
+  sizes the stationary measure of the particle system coincides with the mean-field one, and the finite-m fluctuation of the plan is counted
+  (at most K₀ − 1 split particles) rather than estimated. Propagation of chaos with an exactly m-independent stationary law is not in the
+  literature we know of; the mean-field form of the barycentric leak for an atomic prior (the Laguerre-cell leak) was §8's open item.
+  Numerics: `exp_ot_leak.py`.
+  Verdict: textbook ingredients, new mechanism and new object (a conservation law of the leak as the source of the finite-size floor, broken by the plan's mass constraint).
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 
