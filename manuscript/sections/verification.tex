@@ -121,8 +121,8 @@ D$'''$.12 & the same clouds under the nearest-atom and the OT leak: cluster weig
   & \code{exp_ot_leak.py} $\to$ \code{results/chaos/ot_leak.md}; \code{tests/test_ot_leak.py} (the vertex plan, the
     gradient flow, the $m$-independent stationary configuration, conservation against constraint, the forest bound,
     the exact $W^2$)\\
-D$'''$.14 & the real loop at $k_e=25$ from the contracted clouds of \code{exp_ot_leak.py} and from the collapsed
-  lifts: under the OT leak $\norm{\fhat_m-\fhat_M}^2_{L^2(\mathrm{orbit})}=7.5\cdot10^{-9}$--$2.7\cdot10^{-8}$
+D$'''$.14 & the real loop at $k_e=25$ from the clouds at the end of \code{exp_ot_leak.py} (contracted where the
+  weights are admissible) and from the collapsed lifts: under the OT leak $\norm{\fhat_m-\fhat_M}^2_{L^2(\mathrm{orbit})}=7.5\cdot10^{-9}$--$2.7\cdot10^{-8}$
   ($m=15$, $60$ against $510$) and $5.2\cdot10^{-10}$--$3.6\cdot10^{-8}$ against the 3-atom lift, rms tracking error
   $0.9\cdot10^{-6}$--$7.3\cdot10^{-6}$ (the lift $8\cdot10^{-12}$); under the nearest-atom leak
   $1.1\cdot10^{-4}$--$2.5\cdot10^{-3}$ with tracking errors $3.2\cdot10^{-4}$--$1.9\cdot10^{-3}$; at the one pair
@@ -139,10 +139,12 @@ D$'''$.15 & lifts of the 3-atom orbit to $m=6$, $9$, $15$ (OT leak, matching mas
   within 0.6--3.2\%; the saddle's exponent $-9.13\cdot10^{-5}$ (multiplicity 8) at $(9,4,3)/16$
   & \code{exp_lifted_orbit.py} $\to$ \code{results/chaos/lifted_orbit.md}; \code{tests/test_ot_leak.py} (the $m=6$
     lift against the ghosts and the 3-atom loop)\\
-D$'''$.16 & the dithered averaged slow loop, $m=15$ from the counts $(6,5,4)$: nearest-atom hop rates
-  $1.0\cdot10^{-5}$, $5.1\cdot10^{-4}$, $5.6\cdot10^{-3}$ per slow unit at $\tau_0=0.005$, $0.01$, $0.02$ (Arrhenius
-  barriers 0.039--0.048 against the ridge estimate 0.035); time at the balanced counts under the nearest-atom leak
-  0.00, 0.54, 0.25 against the leading-order Gibbs law 0.86, 0.58, 0.33 and against the OT leak 0.996, 0.992, 0.88
+D$'''$.16 & the dithered averaged slow loop, $m=15$ from the counts $(6,5,4)$: nearest-atom record-level label
+  changes $1.0\cdot10^{-5}$, $5.1\cdot10^{-4}$, $5.6\cdot10^{-3}$ per slow unit at $\tau_0=0.005$, $0.01$, $0.02$
+  (Arrhenius barrier 0.048, among the ridge minima 0.040--0.074); time at the balanced counts 0.00, 0.54, 0.25
+  against the energy--multinomial law 0.86, 0.58, 0.33 (standard errors $\approx0.1$ at $\tau_0=0.01$) and against
+  the OT leak 0.996, 0.992, 0.88, whose excursions are returns of the crossing particle (121 of 121, 298 of 336) with
+  the effective barrier 0.058
   & \code{exp_dither_ot.py} $\to$ \code{results/chaos/dither_ot.md}\\
 D$'''$.14 ($n=2$) & a planar plant (four vector-valued bumps, a Lissajous reference, $p=5$), $k_e=25$,
   $\sigma_0=0.05$, sizes 8, 32 against 128 from the same clouds: the OT leak equalises the weights at 13--14 slow
@@ -151,11 +153,24 @@ D$'''$.14 ($n=2$) & a planar plant (four vector-valued bumps, a Lissajous refere
   $1.9\cdot10^{-3}$--$6.7\cdot10^{-3}$ under the nearest-atom leak (fit errors along the orbit
   $2$--$9\cdot10^{-4}$ against 0.11--0.39)
   & \code{exp_ot_2d.py} $\to$ \code{results/chaos/ot_2d.md}\\
-D$'''$.17 & $J_m^{\mathrm{OT}}$ non-increasing along 300 steps of a run with reassigned particles (strong leak),
-  $\dd J/\dd s=-\norm{\mathrm{drift}}^2_{\Ginv}$ where the plan is unique, and at a constructed tie between two
+D$'''$.17 & $J_m^{\mathrm{OT}}$ non-increasing along 300 steps of a run with reassigned particles (strong leak; the
+  plan does not switch there, so this is a smooth gradient flow), $\dd J/\dd s=-\norm{\mathrm{drift}}^2_{\Ginv}$ where the plan is unique, and at a constructed tie between two
   optimal plans (mirror-image particles) $J^{\mathrm{OT}}$ equals both frozen energies and decreases along either
   plan's drift
   & \code{tests/test_ot_leak.py}\\
+D$'''$.18 & the real loop at $k_e=25$, 8000 time units, sizes 3--240: the 3-atom orbit's Floquet exponents within
+  0.56--3.22\% of $\lambda_j(H_q)/k_e$ and the ghosts' equal to $(\sigma_0-\lambda_j(R^G_k))/k_e$ to $3\cdot10^{-4}$
+  (matching and shifted priors); inside the cells the per-particle distance to the lift decays at
+  $2.69$--$2.97\cdot10^{-4}$ for $m\ge15$ (prediction $2.83\cdot10^{-4}$) with constants 1.03--1.29 under both leaks,
+  the $m=3$ runs mixtures of collective modes; across a cell boundary ($\rho=4.5$) the nearest-atom leak ends at
+  other counts ($W^2$ 1.9--12.3, that of the lifts of the realised weights; two of them inadmissible) and the OT leak
+  at $q$ ($W^2$ 0.010--0.23, falling at $2\sigma_0$); one particle across a boundary: $W^2$ grows to 0.79, 0.20
+  (nearest) and falls to $3.0\cdot10^{-3}$, $8.2\cdot10^{-4}$ (OT); on a moving orbit (shifted prior)
+  $2.18$--$2.63\cdot10^{-4}$ against $2.27\cdot10^{-4}$, constants 1.04--1.23; the proof's radius at most 0.019
+  & \code{exp_uniform_basin.py} $\to$ \code{results/chaos/uniform_basin.md}; \code{tests/test_uniform_basin.py} (at
+    the shifted prior: the remainder constant and the exact $N_a+N_b/m$ structure of the per-particle term, the
+    separation response $(GR_k-\sigma_0I)v$, the contraction at
+    $\mu=\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}$ with one constant, the same for every $m$)\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid

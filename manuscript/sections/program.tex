@@ -111,10 +111,18 @@ Each branch states what is proved, what is open, and the first concrete step.
       the realised weights (Corollary D$'''$.7's floor is exactly the distance between two weighted $K_0$-atom
       orbits); the Floquet spectrum of a lifted orbit is the $K_0$-atom orbit's together with each class's
       single-particle (ghost) spectrum of multiplicity $n_k - 1$, independent of $m$ --- the spectral part of
-      Corollary D$'''$.7's uniformity question. \emph{Open:} Theorem J's basin radius at a replicated configuration
-      in the mean norm; the dithered loop with the OT leak (Remark D$'''$.16: the Gibbs measure of
-      $J_m^{\mathrm{OT}}$ keeps the plan's masses at $q$ up to a barrier $\sigma_0\Delta_\nu^2/2$ per misplaced
-      particle, while under the nearest-atom leak dither equalises the masses only on the Arrhenius time scale) ---
+      Corollary D$'''$.7's uniformity question.
+    \item \emph{Done (Theorem D$'''$.18):} Theorem J uniformly in $m$ at a replicated configuration with admissible
+      weights (margins $\lambda_0$ on a compact set $\mathcal{W}$), in the per-particle norm --- one threshold $k_0$,
+      one basin radius $\rho$ and one rate for every size; for $k_e\ge k_0$ the proviso of Corollary D$'''$.14(ii) is
+      replaced by this $m$-uniform statement. In the mean-square norm no $m$-independent basin exists for the
+      nearest-atom leak (Remark D$'''$.19).
+      % The Open clause below is PARADIGM's text of this bullet through referee round 14 (commit ebd4c03), with the
+      % round-13 wording of the dithered loop; at HEAD it closes the Done (Theorem D'''.21) bullet, a later part.
+      \emph{Open:} the measure-level ($W_2$) basin of the OT leak, which the numerics suggest (the plan restores the
+      masses after a particle crosses a cell); the dithered real loop with the OT leak (Remark D$'''$.16, checked on
+      the averaged loop: under the OT leak a ridge crossing is reversible --- the particle stays assigned to its own
+      atom --- while under the nearest-atom leak dither equalises the masses only on the Arrhenius time scale) ---
       Theorem J$'$'s numerics with the two leaks.
     \item \emph{Open:} the measure-weighted form of hypothesis (H) (a bad set of small $\mu_s$-mass, the bootstrap on
       the good particles, the flip fraction $p_m$ and its $m$-law); the transfer to the real loop at finite $k_e$

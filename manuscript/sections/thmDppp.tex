@@ -1219,9 +1219,9 @@ vectors under the nearest-atom leak are different measures).}
 $k_e = 25$ ($\sigma = \sigma_0/k_e$; RK4 plant with the control and the reference evaluated at the stages and the
 parameters frozen over the step, Euler parameters, $\mathrm{d}t = 10^{-3}$ --- an earlier zero-order hold of the
 control had set a tracking floor of $4\cdot10^{-5}$, referee round 12) for 100 time units --- 16 periods, 4 slow
-units --- from the contracted clouds at the end of Proposition D$'''$.12's averaged runs (seeds 0 and 1; $m = 15$,
-$60$ and $M = 510$; the OT runs' clouds carry the masses $q$, the nearest-atom runs' their conserved sampled
-weights) and from the collapsed lifts (the exact representation for the OT leak --- the 3-atom loop --- and the
+units --- from the clouds at the end of Proposition D$'''$.12's averaged runs (contracted where the realised
+weights are admissible) (seeds 0 and 1; $m = 15$, $60$ and $M = 510$; the OT runs' clouds carry the masses $q$, the
+nearest-atom runs' their conserved sampled weights) and from the collapsed lifts (the exact representation for the OT leak --- the 3-atom loop --- and the
 replicated $\Theta^*(w^m)$ for the nearest-atom leak); statistics over the last five periods on the reference
 orbit. Under the OT leak the learned functions of the three sizes agree to
 $\norm{\fhat_m - \fhat_M}^2_{L^2(\mathrm{orbit})} = 7.5\cdot10^{-9}$--$2.7\cdot10^{-8}$ and with the 3-atom lift to
@@ -1230,8 +1230,9 @@ approaching their atoms) at second order --- with fit errors along the orbit $3.
 and rms tracking errors $0.9\cdot10^{-6}$--$7.3\cdot10^{-6}$ (the fit error over $k_e$; the collapsed lift tracks
 to $8\cdot10^{-12}$, the scheme's floor), and $W^2(\mu_m,\mu_M) = 3.3\cdot10^{-4}$--$1.4\cdot10^{-3}$ at the end.
 Under the nearest-atom leak they disagree by $1.1\cdot10^{-4}$--$2.5\cdot10^{-3}$, with fit errors 0.012--0.075 and
-rms tracking errors $3.2\cdot10^{-4}$--$1.9\cdot10^{-3}$ --- the weight bias as a tracking error, 40 to 2000 times
-the OT leak's --- and $W^2(\mu_m,\mu_M) = 1.6$--$5.5$, the cross-cluster transport of the weight mismatch. Three of
+rms tracking errors $3.2\cdot10^{-4}$--$1.9\cdot10^{-3}$ --- the weight bias as a tracking error, 130 to 550 times
+the OT leak's per system --- and $W^2(\mu_m,\mu_M) = 1.6$--$5.5$, the cross-cluster transport of the weight
+mismatch. Three of
 the six nearest-atom systems have inadmissible realised weights (seed 0, $m = 15$: $(6,5,4)/15$, splitting margin
 $-0.0035$; seed 1, $m = 15$: $(6,3,6)/15$, $-0.0011$; seed 1, $m = 60$: $(24,15,21)/60$, $-0.0022$): their lifts are
 saddle orbits and the $m$-systems are not on them --- the over-weighted class has split (within-class spread
@@ -1257,9 +1258,11 @@ $\norm{\fhat_m - \fhat_M}^2_{L^2(\mathrm{orbit})} = 5.5\cdot10^{-3}$--$2.3\cdot1
 is $1.9\cdot10^{-3}$--$6.7\cdot10^{-3}$. Under the OT leak the weights reach $(\frac14,\frac14,\frac14,\frac14)$ at
 13--14 slow units in all six systems ($\ln2/\sigma_0 = 14$), the fit errors fall to
 $2.1\cdot10^{-4}$--$8.7\cdot10^{-4}$ (the within-class spread 0.012--0.018 still contracting), the sizes agree to
-$5.0\cdot10^{-8}$--$1.6\cdot10^{-7}$ --- five orders of magnitude below the nearest-atom leak --- and the rms
-tracking error is $3.9\cdot10^{-6}$--$1.6\cdot10^{-5}$, three hundred to a thousand times smaller: the weight bias
-is a tracking error in any dimension, and the mass constraint removes it for every size at once.
+$5.0\cdot10^{-8}$--$1.6\cdot10^{-7}$ at the stopping time $5/\sigma_0$ --- five orders of magnitude below the
+nearest-atom leak, and still falling by about 3.5 times per 10 slow units ($1.8\cdot10^{-12}$ at $10/\sigma_0$ in
+referee round 13's continued run) --- and the rms tracking error is $3.9\cdot10^{-6}$--$1.6\cdot10^{-5}$, 290 to 480
+times smaller per system: the weight bias is a tracking error in any dimension, and the mass constraint removes it
+for every size at once.
 
 \begin{thm}{Proposition}{D$'''$.15}[the transverse spectrum of a lifted orbit]
 Let $\Gamma = (x_p,\Theta_p)$ be a $T_0$-periodic orbit of \textup{(CL)} --- with any leak whose targets are locally
@@ -1352,39 +1355,54 @@ weighted 3-atom orbit's to $2\cdot10^{-5}$ relative.
 \begin{rmk}{Remark}{D$'''$.16}[dither and the mass constraint]
 With dither (Theorem J$'$: $\tau = \tau_0/k_e$, $\sigma = \sigma_0/k_e$) the leading-order stationary law of the slow
 variables is the Gibbs measure $\pi\propto\exp(-J_m/\tau_0)$, and the cluster masses are no longer conserved under
-the nearest-atom leak: a particle hops across a Voronoi ridge at the Arrhenius rate $\exp(-\Delta V/\tau_0)$,
-$\Delta V\gtrsim\sigma_0\Delta_\nu^2/8$ (the leak's potential at the ridge, $(\sigma_0/2)(\Delta_\nu/2)^2$, plus the
-fit's variation), and the masses relax toward the weights that minimise the restricted energy
-$w\mapsto\min_\Theta J_m^\nu(\Theta;w) = m\mathcal{G}^*_w$ --- the matching prior's $q$ --- with Gaussian
-fluctuations of variance $\tau_0/(m\nabla^2_w\mathcal{G}^*_w)$ around them: dither does on the Arrhenius time scale
-what the OT leak does deterministically in $\ln2/\sigma_0$ slow units at $\tau_0 = 0$. Under the OT leak the Gibbs
-measure is $\pi^{\mathrm{OT}}\propto\exp(-J_m^{\mathrm{OT}}/\tau_0)$ (the drift $-G\nabla J_m^{\mathrm{OT}}$ is the
-gradient of a Lipschitz, piecewise-smooth potential), and $J_m^{\mathrm{OT}}$ charges a particle sitting in one
-cluster while the plan assigns it to another atom with
-$(\sigma_0/2)\norm{\vartheta - \vartheta^0_j}^2_{\Ginv}\approx\sigma_0\Delta_\nu^2/2$ --- a barrier of $0.14$ on the
-instance, twenty times $\tau_0$ at $\tau_0 = 0.007$ --- so the plan's masses are exactly $q$ and the masses by
-nearest atom are $q$ up to events of probability of order $\exp(-\sigma_0\Delta_\nu^2/(2\tau_0))$: a hop across a
-ridge is answered by a swap of assignments and the transit of one particle back, not by a change of mass.
+the nearest-atom leak: a particle crosses a Voronoi ridge at the Arrhenius rate $\exp(-\Delta V/\tau_0)$, $\Delta V$
+the single-particle barrier out of the configuration --- at least the leak's part
+$\sigma_0\Delta_\nu^2/8 = (\sigma_0/2)(\Delta_\nu/2)^2$ at the lowest ridge point, plus the fit's variation --- and
+the counts sample the Gibbs law over the count vectors $n$: in the Laplace approximation
+$\mathrm{multinomial}(n)\cdot\exp(-m\mathcal{G}^*_{n/m}/\tau_0)$ times the determinants of the separation and
+collective blocks of Proposition D$'''$.5(i), for $n/m\in W_{\mathrm{adm}}$ (at a saddle weight the split
+configuration lies lower, and its soft and unstable separation modes carry entropy that the quadratic approximation
+misses). Dither thus does on the Arrhenius time scale, and only in distribution, what the OT leak does
+deterministically in $\ln2/\sigma_0$ slow units at $\tau_0 = 0$. Under the OT leak the Gibbs measure is
+$\pi^{\mathrm{OT}}\propto\exp(-J_m^{\mathrm{OT}}/\tau_0)$ ($J_m^{\mathrm{OT}}$ is locally Lipschitz, piecewise smooth,
+with Gaussian tails), the plan's masses are $q$ by construction, and a particle that crosses a Voronoi ridge stays
+assigned to its own atom: with integral plans an exchange of the assignments of particles $a\in{}$class $j$ and
+$b\in{}$class $k$ lowers the cost only once
+$\langle\vartheta_a - \vartheta_b,\vartheta^0_k - \vartheta^0_j\rangle_{\Ginv} > 0$, that is, once they have passed
+each other. So the counts by nearest atom leave $q$ at the nearest-atom leak's ridge barrier, but only for a
+reversible excursion --- beyond the ridge the leak toward the particle's own atom keeps pulling it back --- of
+stationary probability of order $\exp(-\Delta V_{\mathrm{ridge}}/\tau_0)$; exchanges of assignments (whose barrier is
+at most the lowest tie point of two particles) leave the masses at $q$ as well. The mass constraint does not raise
+the barrier of a crossing; it makes the crossing reversible.
 \end{rmk}
-\status{Formal (the Gibbs law of a Lipschitz potential; the Arrhenius estimate; the Laplace asymptotics of the
-restricted energy).}
+\status{Formal (the Gibbs law of a locally Lipschitz potential with Gaussian tails; the Arrhenius estimate; the
+Laplace asymptotics).}
 
 % Numerics of Remark D'''.16 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
 % results/chaos/dither_ot.md).
 \paragraph{Numerics} (\code{exp_dither_ot.py} $\to$ \code{results/chaos/dither_ot.md}): the dithered averaged slow
-loop --- Langevin in slow time, with the Gibbs law $\exp(-J_m/\tau_0)$ --- for $m = 15$ particles started at the
-counts $(6,5,4)$ under the matching prior at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$, at $\tau_0 = 0.005$, $0.01$,
-$0.02$ over 50\,000, 200\,000 and 50\,000 slow units, two seeds. Under the nearest-atom leak the masses change only
-by hops across the Voronoi ridges, at the rates $1.0\cdot10^{-5}$, $5.1\cdot10^{-4}$, $5.6\cdot10^{-3}$ per slow unit
---- Arrhenius barriers 0.039--0.048 against the leak's ridge height $\sigma_0\Delta_\nu^2/8 = 0.035$ --- so at
-$\tau_0 = 0.005$ the counts $(6,5,4)$ stand for 50\,000 slow units ($350/\sigma_0$; one hop in one of the two seeds),
-while at $\tau_0 = 0.01$ and $0.02$ the counts sample a distribution whose weight on the balanced $(5,5,5)$ is $0.54$
-and $0.25$, against $0.58$ and $0.33$ for the leading-order Gibbs law
-$\mathrm{multinomial}(n)\cdot\exp(-m\mathcal{G}^*_n/\tau_0)$ (the Laplace determinant factors over-weight the count
-vectors with a soft separation mode, where the quadratic approximation fails, and are not used). Under the OT leak
-the counts by nearest atom are balanced 99.6\%, 99.2\% and 88\% of the time: a hop is answered by a swap of
-assignments and the transit of one particle --- the label changes are as frequent as the nearest-atom leak's hops
---- and the plan's masses never leave $q$.
+loop --- Langevin in slow time (Euler--Maruyama, $\mathrm{d}s = 0.05$), with the Gibbs law $\exp(-J_m/\tau_0)$ ---
+for $m = 15$ particles started at the counts $(6,5,4)$ under the matching prior at
+$\sigma_0 = 0.15\sigma_{\mathrm{crit}}$, at $\tau_0 = 0.005$, $0.01$, $0.02$ over 50\,000, 200\,000 and 50\,000 slow
+units, two seeds. On the instance the single-particle barriers out of the balanced configuration --- the lowest points
+of the Voronoi ridges with the fourteen other particles relaxed --- are 0.040--0.074 (the leak's part 0.035), and the
+lowest exchange barrier between two classes is 0.083 (referee round 13). Under the nearest-atom leak the record-level
+label changes (every 10 slow units; about half of them undone at the next change, recrossings) occur at
+$1.0\cdot10^{-5}$, $5.1\cdot10^{-4}$, $5.6\cdot10^{-3}$ per slow unit --- an Arrhenius barrier of 0.048 (0.043--0.052
+at 95\%) from $\tau_0 = 0.01$ and $0.02$, among the ridge minima, while $\tau_0 = 0.005$ has one event in 100\,000 slow
+units --- so at $\tau_0 = 0.005$ the counts $(6,5,4)$ stand for $350/\sigma_0$, and at $\tau_0 = 0.01$ and $0.02$ the
+counts sample a distribution whose weight on $(5,5,5)$ is $0.54$ and $0.25$, against $0.58$ and $0.33$ for the
+energy--multinomial law $\mathrm{multinomial}(n)\cdot\exp(-m\mathcal{G}^*_n/\tau_0)$ --- a comparison that cannot
+discriminate at $\tau_0 = 0.01$ (an integrated autocorrelation time of 7\,400--23\,000 slow units leaves 9--27
+effective samples per seed, a standard error of about 0.1) and puts the law 2.1 standard errors above the data at
+$\tau_0 = 0.02$; the law under-weights the saddle count vectors $(6,4,5)$ and $(6,5,4)$ by 3.2 and 2.7 times
+(total-variation distance 0.20, against 0.07 between the two seeds): their soft and unstable separation modes carry
+the excess, the very factors the law omits. Under the OT leak the counts by nearest atom are balanced in every record
+after the initial transit at $\tau_0 = 0.005$ (no excursion in 50\,000 slow units; 99.6\% of the whole run), and in
+99.4\% and 88\% of the records after it at $\tau_0 = 0.01$ and $0.02$; the excursions are returns of the crossing
+particle --- all 121 at $\tau_0 = 0.01$, 298 of 336 at $0.02$, the other 38 exchanges --- the label changes are about
+as frequent as the nearest-atom leak's (ratios 1.18--1.30), and the off-balance fraction ($6.3\cdot10^{-3}$, $0.117$)
+has an effective barrier of 0.058, inside the ridge range.
 
 \begin{thm}{Proposition}{D$'''$.17}[convergence of the OT dynamics]
 Let $J_m^{\mathrm{OT}}$ be the energy of Proposition D$'''$.12 for the saturated Gaussian features, with $\rho$ the
@@ -1405,22 +1423,29 @@ finite quadrature of the code or the period average of an analytic reference, on
   \item \emph{(convergence)} $J_m^{\mathrm{OT}}$ is definable in the o-minimal structure $\R_{\mathrm{an},\exp}$ on
     the a priori ball --- finitely many compositions of polynomials, exponentials and the saturations $\tanh$ and
     $\operatorname{sig}$, a finite quadrature sum (or an analytic function of $\Theta$ for the period average of an
-    analytic reference), and a minimum over finitely many such functions --- so it satisfies the
-    Kurdyka--{\L}ojasiewicz inequality in the nonsmooth sense~\cite{S43}; definable locally Lipschitz functions obey
-    the chain rule along absolutely continuous curves, so along a subgradient trajectory
-    $\dd J/\dd s = -\norm{\dd\Theta/\dd s}^2_{G_m^{-1}}$~\cite{S43}, and with the KL inequality every bounded
-    subgradient trajectory has finite length and converges to a Clarke-critical point. Every vertex-selection and
-    every generalised solution of \textup{($\mathfrak{A}_m^{\mathrm{OT}}$)} is such a trajectory, bounded by
-    Step~0's a priori estimate with $\operatorname{conv}\supp\nu$; hence it converges, and so do the solutions of
-    \textup{($\mathfrak{A}_m^\nu$)} (a minimum over the Voronoi assignments) and of \textup{($\mathfrak{A}_m$)}
-    (smooth: {\L}ojasiewicz~\cite{S44}).
+    analytic reference), and a minimum over finitely many such functions; for the finite quadrature it is definable in
+    $\R_{\exp}$ on all of $\R^{mp}$, and for the period average of an analytic reference in $\R_{\mathrm{an}}$ on the
+    ball --- so it satisfies the Kurdyka--{\L}ojasiewicz inequality in the nonsmooth sense~\cite{S43}. The change of
+    variables $Y = G_m^{-1/2}\Theta$ maps $\dd\Theta/\dd s\in-G_m\partial J$ into
+    $\dd Y/\dd s\in-\partial(J\circ G_m^{1/2})(Y)$, the form in which the theorems of~\cite{S43} are stated;
+    definable locally Lipschitz functions obey the chain rule along absolutely continuous curves, so along a
+    subgradient trajectory $\dd J/\dd s = -\norm{\dd\Theta/\dd s}^2_{G_m^{-1}}$~\cite{S43}, and with the KL
+    inequality every bounded subgradient trajectory has finite length and converges to a Clarke-critical point.
+    Every vertex-selection and every generalised solution of \textup{($\mathfrak{A}_m^{\mathrm{OT}}$)} is such a
+    trajectory, bounded by Step~0's a priori estimate with $\operatorname{conv}\supp\nu$; hence it converges, and so
+    do the solutions of \textup{($\mathfrak{A}_m^\nu$)} (a minimum over the Voronoi assignments) and of
+    \textup{($\mathfrak{A}_m$)} (smooth: {\L}ojasiewicz's gradient inequality for real-analytic functions, in
+    Kurdyka's form for definable ones~\cite{S44}).
   \item \emph{(the limit)} At a Clarke-critical point whose optimal plan is unique, the plan is a vertex and the
-    point is a critical point of the frozen energy $J^\gamma_m$; for commensurate $m$ the plan is integral and the
-    limit is a critical point of $J_m$ with every particle leaking toward its assigned atom --- the replicated
-    weighted configuration $\Theta^*_m(q)$ when the classes are collapsed, or a split configuration of Proposition
-    K's type when $q$ lies outside $W_{\mathrm{adm}}$ --- and a trajectory that enters the basin of $\Theta^*_m(q)$
-    converges to it: the stationary statement of Proposition D$'''$.12(iii) is reached dynamically, from every
-    initial condition in that basin, with the limit's masses the plan's masses $q$.
+    point is a critical point of the frozen energy $J^\gamma_m$; for commensurate $m$ the plan is integral (an
+    assignment $\pi$) and the limit is a critical point of the frozen energy $J^\pi_m$, every particle leaking toward
+    its assigned atom --- $\Theta^*_m(q)$, the replication of another critical point of $\mathcal{G}_q$, or a split
+    configuration. (iii) does not classify these limits: on the instance $\mathcal{G}_q$ has a second local minimum
+    (fit error 0.37), whose replication to $m = 15$ has the diagonal plan as its unique optimal plan and is a saddle
+    of $J^{\mathrm{OT}}_{15}$ --- one of its separation blocks is indefinite although $q\in W_{\mathrm{adm}}$, the
+    admissible set being defined at the branch $\Theta^*(q)$ (referee round 13). A trajectory that enters the basin
+    of $\Theta^*_m(q)$ converges to it: the stationary statement of Proposition D$'''$.12(iii) is reached dynamically
+    from every initial condition in that basin, with the limit's masses the plan's masses $q$.
 \end{enumerate}
 \end{thm}
 \status{(i) proved (Danskin's theorem and the structure of a minimum of smooth functions; the energy decrease is
@@ -1428,13 +1453,221 @@ checked along a run with reassigned particles, and the two-sided decrease at a c
 \code{tests/test_ot_leak.py}). (ii) proved given the imported Kurdyka--{\L}ojasiewicz theorem for Clarke
 subgradient trajectories of definable functions~\cite{S43} and the definability of restricted analytic and
 exponential functions~\cite{S44}; the KL exponent is not quantified, so the statement carries no rate --- the
-uniform-in-$m$ rate is Theorem D$'''$'s question, which this does not answer. (iii) proved. Under the pure leak a
-plan never switches once optimal: $\Theta(s) = (1 - e^{-\sigma_0s})T + e^{-\sigma_0s}\Theta(0)$, and the cost
-difference between two plans along any cycle is affine in $\Theta$ (the quadratic terms cancel), so it is the convex
-combination of its value at $\Theta(0)$, nonnegative, and at the targets, positive for distinct atoms. In the runs
-tried for the test --- a mixture start with unbalanced classes and six cold starts at $m = 15$ under a ten-times
-stronger leak --- the fit force did not overturn it either: the optimal plan never switched once chosen; the
-switches of Theorem C$'$'s numerics belong to priors with many atoms.}
+uniform-in-$m$ rate is Theorem D$'''$'s question, which this does not answer. (iii) proved. Under the pure leak an
+integral plan (commensurate $m$) never switches once optimal:
+$\Theta(s) = (1 - e^{-\sigma_0s})T + e^{-\sigma_0s}\Theta(0)$, and the cost difference between two plans is affine in
+$\Theta$ (the quadratic terms cancel), so it is the convex combination of its value at $\Theta(0)$, nonnegative, and
+at the targets $T$, positive because an integral plan costs nothing there and every other plan costs something for
+distinct atoms. A split plan can switch even under the pure leak --- its barycentric targets are not atoms, and it
+need not be optimal at them (referee round 13: switches in 216 of 400 random incommensurate instances, none in 200
+commensurate ones). With the fit, cold starts on the instance switch the plan in 2 of 6 runs at $m = 15$ and in all
+6 at $m = 16$ at the experiments' $\sigma_0$, and in none at ten times that leak --- the test's run, which is
+therefore a smooth gradient flow; the nonsmooth part of (i) is tested at the static tie.}
+
+% Theorem D'''.18 with its proof, Remark D'''.19, Status and numerics (PARADIGM.md section 5d, round-14 version; the
+% numbers are PARADIGM's copies of results/chaos/uniform_basin.md).
+\begin{thm}{Theorem}{D$'''$.18}[Theorem J uniformly in $m$ at a replicated configuration]
+Let \textup{(CL)} be the real closed loop of Theorem J with a leak whose targets are class-constant and locally
+constant near the configurations considered (the $\sigma$-modification; the nearest-atom leak with every class atom
+inside its Voronoi cell; the OT leak at $w = q$ with $\varepsilon < \Delta_\nu/2$, Proposition D$'''$.12(iii)), and
+let $\mathcal{W}$ be a compact set of weight vectors with $\min_kw_k\ge w_{\min} > 0$ such that for every
+$w\in\mathcal{W}$ the weighted stationary point $\Theta^*(w)$ of $\mathcal{G}_w$ is a non-degenerate minimum with
+margins
+\[
+  \lambda_{\mathrm{coll}}(w) := \lambda_{\min}(H_w)\ge\lambda_0 > 0,\qquad
+  \lambda_{\mathrm{sep}}(w) := \min_k\lambda_{\min}(\sigma_0I - R^G_k(w))\ge\lambda_0 > 0,
+\]
+$H_w$ the whitened, weighted collective block and $\sigma_0I - R^G_k(w)$ the separation blocks of Proposition
+D$'''$.5(i) (so $\mathcal{W}\subset W_{\mathrm{adm}}$). For a configuration $\Theta = (\vartheta_1,\dots,\vartheta_m)$
+with a class map $\pi_0$ whose class sizes are $n_k = mw_k$, $w\in\mathcal{W}$, write
+$u_i := \vartheta_i - \vartheta^*_{\pi_0(i)}(w)$, $\bar u_k$ for the class means of $u$,
+$u_i^\perp := u_i - \bar u_{\pi_0(i)}$, and
+\begin{gather*}
+  \tnorm{u} := \max\Bigl\{\Bigl(\sum_kw_k\norm{\bar u_k}^2_{\Ginv}\Bigr)^{1/2},\ \max_i\norm{u_i^\perp}_{\Ginv}\Bigr\},\\
+  \text{so that}\qquad\max_i\norm{u_i}_{\Ginv}\le(1 + w_{\min}^{-1/2})\tnorm{u}\qquad\text{and}\qquad
+  \tnorm{u}\le2\max_i\norm{u_i}_{\Ginv}
+\end{gather*}
+(the second constant is sharp up to the factor $1 - 1/\max_kn_k$). There are $k_0$, $\rho$, $C$, $\kappa$ depending
+on the plant, the reference, the features, $\sigma_0$, $G$, $\mathcal{W}$, $\lambda_0$ and the leak's prior (through
+its cell and plan margins) --- but \textbf{not on $m$} --- such that for every $m$, every $w\in\mathcal{W}$ with
+$mw\in\N^{K_0}$, every class map $\pi_0$ with those class sizes and every $k_e\ge k_0$:
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item the lift of the weighted $K_0$-atom orbit $\Gamma_w$ (Corollary D$'''$.14) is the unique $T_0$-periodic orbit
+    of \textup{(CL)} whose parameters satisfy
+    $\sup_t\max_i\norm{\vartheta_i(t) - \vartheta^*_{\pi_0(i)}(w)}_{\Ginv}\le\rho/2$ and whose plant state stays in
+    Theorem J's tube;
+  \item every solution with $\max_i\norm{\vartheta_i(0) - \vartheta^*_{\pi_0(i)}(w)}_{\Ginv}\le\rho/2$ and
+    $\norm{x(0) - x_m(0)}\le R/2$ converges to it, and with $u(t)$ the deviation from the lifted orbit at the times
+    $t = jT_0$,
+    \[
+      \tnorm{u(jT_0)}\le C e^{-(1 - \kappa)\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}jT_0/k_e}
+      \bigl(\tnorm{u(0)} + \norm{x(0) - x_p(0)}/k_e\bigr);
+    \]
+  \item its Floquet spectrum is Proposition D$'''$.15's --- the $K_0$-atom orbit's and each class's ghost exponents
+    with multiplicity $n_k - 1$ --- and the exponents are $(1/k_e)\lambda_j(H_w)$ and
+    $(1/k_e)\lambda_j(\sigma_0I - R^G_k(w))$ up to $O(k_e^{-2})$, uniformly in $m$.
+\end{enumerate}
+In particular, for $k_e\ge k_0$ Corollary D$'''$.14(ii)'s proviso is replaced by a statement uniform in $m$: for
+every commensurate $m$ the lift of $\Gamma_q$ is the unique periodic orbit in the per-particle ball of radius
+$\rho/2$ around $\Theta^*_m(q)$, and it attracts that ball. (Theorem J's own orbit, unique in its unnormalised ball,
+coincides with the lift wherever Theorem J applies, but its threshold in that norm grows like $\sqrt m$, Remark
+D$'''$.19.) Corollary D$'''$.7's open point --- the $m$-uniformity of Theorem J's thresholds --- is settled in the
+per-particle norm.
+\end{thm}
+
+\begin{proof}
+Theorem J's proof with the norm $\tnorm{\cdot}$ in place of the unnormalised $\norm{\cdot}_{G_m^{-1}}$; what has to
+be checked is that every constant of its Steps 1--6 is independent of $m$ in the new norm. Three structural facts do
+it.
+
+(1) \emph{The plant sees the configuration through the class means, up to second order in the separations.}
+$\fhat_\Theta = \sum_kw_kn_k^{-1}\sum_{i\in k}\tilde\Phi(\cdot\,;\vartheta_i)$ and $\sum_{i\in k}u_i^\perp = 0$, so
+\[
+  \fhat_\Theta = \sum_kw_k\tilde\Phi(\cdot\,;\bar\vartheta_k)
+  + \tfrac12\sum_kw_kn_k^{-1}\sum_{i\in k}\nabla^2\tilde\Phi(\cdot\,;\bar\vartheta_k)[u_i^\perp,u_i^\perp]
+  + O(\max_i\norm{u_i^\perp}^3):
+\]
+the first-order variation of the residual $r_\Theta$, hence of the slaved error
+$e_\Theta = \varepsilon r_\Theta(x_m) + O(\varepsilon^2)$ of Steps 1--2, is a function of the class means alone, and
+the separations enter at second order with a coefficient bounded by $\sup\norm{\nabla^2\tilde\Phi}$, whatever $m$.
+Steps 1--2 (the tube, the slaved error, the fast variable $\zeta$) involve $\Theta$ through $r_\Theta$ and --- in the
+$\zeta$-forcing $-\partial_\Theta e_\Theta\cdot\dot\Theta$ and the remainder $\partial_eF\cdot\zeta$ --- through the
+particles' drifts, which are $O(\varepsilon)$ per particle; by (1) and (2) their constants are uniform in $m$.
+
+(2) \emph{Each particle's drift depends on the others only through the plant.} The particle law is
+$\dot\vartheta_i = F(x,e,\vartheta_i) - \sigma(\vartheta_i - T_i)$: the right-hand side of particle $i$ is a function
+of $(x,e,\vartheta_i)$ and of its target. So the frozen-$\Theta$ averaged drift
+$\langle H\rangle_i(\Theta) = -G\nabla\mathcal{V}[\mu_\Theta](\vartheta_i)$ and the antiderivative $u_i(\Theta,t)$ of
+Step~3 are functions of $(\vartheta_i,\fhat_\Theta)$, bounded and $C^2$ in $\vartheta_i$ with $m$-independent bounds,
+and their derivatives in $\vartheta_j$ ($j\ne i$) are $O(1/m)$ and pass through $\fhat$ --- that is, through the class
+means at first order. Writing the second-order remainder of the drift at the replicated configuration per particle,
+$N_i(u) = O(\norm{u_i}^2) + O(\norm{u_i}\cdot(1/m)\sum_j\norm{u_j}) + O((1/m)\sum_j\norm{u_j}^2)$ (the second
+derivatives $\partial^2_{\vartheta_i\vartheta_i}$ are $O(1)$, $\partial^2_{\vartheta_i\vartheta_j}$ and
+$\partial^2_{\vartheta_j\vartheta_j}$ for $j\ne i$ are $O(1/m)$; $\partial^2_{\vartheta_j\vartheta_l}$ for distinct
+$j,l\ne i$ vanishes in $\langle H\rangle$, whose residual is linear in the $\tilde\Phi$'s, and is $O(1/m^2)$ in the
+second-order term $H_2$, which contains products of $\fhat$), so the remainder is bounded in $\tnorm{\cdot}$ by an
+$m$-independent multiple of $\tnorm{u}^2$; the same holds for the near-identity transformations of Step~3 and for the
+$O(\varepsilon^3)$ remainders of \textup{(N)}, which are built from the same functions.
+
+(3) \emph{The linearisation at the replicated configuration is block diagonal with an $m$-independent spectrum, and
+contracts in $\tnorm{\cdot}$.} By Proposition D$'''$.5(i) and (1)--(2), $D\langle H\rangle(\Theta^*_m(w))$ acts on each
+separation $u_i^\perp$ of class $k$ separately, as the matrix $GR_k - \sigma_0I$ --- the same for every particle of
+the class, similar to $-(\sigma_0I - R^G_k(w))$ whose eigenvalues are $\le-\lambda_{\mathrm{sep}}$ --- and on the
+class means as minus the collective block, self-adjoint in the weighted norm
+$(\sum_kw_k\norm{\bar u_k}^2_{\Ginv})^{1/2}$ with eigenvalues $\ge\lambda_{\mathrm{coll}}$; the two families do not
+mix. Hence $I + \varepsilon T_0D\langle H\rangle(\Theta^*_m(w))$ has $\tnorm{\cdot}$-operator norm
+$1 - \varepsilon T_0\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}$ once $\varepsilon T_0$ times the largest
+eigenvalue is below 1, the same bound for every $m$; by (2), $D\langle H\rangle$ is Lipschitz on the
+$\tnorm{\cdot}$-ball around $\Theta^*_m(w)$ in that operator norm with an $m$-independent constant $C_N$, the
+constant used below (the remainder of (2) is then at most $(C_N/2)\tnorm{u}^2$, by integration).
+
+With (1)--(3), Step~4 runs as written in the norm $\tnorm{\cdot}$ for $P_Y$ ($P_\zeta$ is unchanged), giving the
+Lipschitz constant $1 - \varepsilon T_0\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}(1 - \kappa)$ of $P_Y$ on
+the $\tnorm{\cdot}$-ball of radius $\rho$, $\kappa = O(\rho + \varepsilon)$, with $\rho := \min\{\lambda_0/(4C_N)$,
+the cell and plan margins of the leak divided by $C(1 + w_{\min}^{-1/2})\}$ --- the $\tnorm{\cdot}$-ball of radius
+$\rho$ reaches the per-particle distance $(1 + w_{\min}^{-1/2})\rho$, the solutions of (b) reach $C$ times that, and
+the leak's targets must stay constant there; the coupling constants $\Lip_\zeta P_Y = O(\varepsilon)$ and
+$\Lip_YP_\zeta = O(\varepsilon^3)$ are $m$-independent by (1) and (2). Step~6's $2\times2$ Lipschitz matrix then makes
+$P$ a contraction in the adapted product norm on that ball, uniformly in $m$: its fixed point is unique there, and it
+is the lift of $\Gamma_w$, which is a fixed point by Corollary D$'''$.14(i) and lies in the ball for $k_e\ge k_0$
+because $\sup_t\tnorm{\vartheta^\Gamma(t) - \vartheta^*(w)} = O(1/k_e)$ with an $m$-independent constant (it is the
+weighted $K_0$-atom distance, Theorem J(a) for \textup{(CL$_w$)}). This is (a) and (b): the per-particle ball of
+radius $\rho/2$ lies in the $\tnorm{\cdot}$-ball of radius $\rho$ (since $\tnorm{u}\le2\max_i\norm{u_i}$), which
+gives the uniqueness set of (a) and the start set of (b), and the $\tnorm{\cdot}$-ball of radius $\rho$ lies in the
+per-particle ball of radius $(1 + w_{\min}^{-1/2})\rho$, which is what the margins have to cover. (c) is Proposition
+D$'''$.15 with its averaging argument, the ghost matrices $A_k$ being $m$-independent.
+\end{proof}
+
+% Remark D'''.19's last sentence cites Theorem D'''.21, which is transcribed in a later part (plain text, no \ref).
+\begin{rmk}{Remark}{D$'''$.19}[which norm]
+In the unnormalised norm $\norm{\cdot}_{G_m^{-1}}$ of Theorem J the basin radius $\rho_0$ is $m$-independent too ---
+the Hessian of $J_m$ has the $m$-independent spectrum of (3) and its Lipschitz constant in that norm is $O(1)$ --- but
+a ball of fixed radius in that norm contains only configurations whose particles are within $\rho_0/\sqrt m$ of their
+atoms on average: it shrinks per particle. And Theorem J's threshold is not $m$-independent in that norm: the lifted
+orbit sits $\sqrt m\cdot O(1/k_e)$ away from $\Theta^*_m(w)$ there ($\sqrt m$ times the weighted $K_0$-atom
+distance), and so does the first averaging correction, so the implicit-function step needs $k_e\ge C\sqrt m/\rho_0$
+--- Corollary D$'''$.14(ii)'s proviso, and the actual reason for the per-particle norm. That norm is the right one
+because the dynamics is a mean-field one --- each particle feels its own position and the class means --- and it
+cannot be weakened to a mean-square ($W_2$-type) ball for the nearest-atom leak: a single particle pushed into
+another Voronoi cell changes the cluster weights, and the solution converges to the lift of different weights however
+small its mean-square displacement --- for $m$ large enough that the shifted weights are admissible. At small $m$
+they need not be (at $m = 15$ on the matching prior, one particle moved out of a class of five gives the weights
+$(6,5,4)/15$, whose lift is a saddle, numerics below); the solution then splits instead, and either way it does not
+converge to $\Gamma_q$. Under the OT leak the plan restores the masses (a transit, Proposition D$'''$.12(v)), and the
+basin at the level of the empirical measure is larger: for the averaged loop Theorem D$'''$.21 below proves an
+$m$-independent energy basin, which contains configurations with a fixed fraction of the particles in other cells.
+\end{rmk}
+\status{Proved as an adaptation of Theorem J's proof, at Theorem J's level of detail: Steps 1--3 and 5 carry over
+with $m$-independent constants by the structural facts (1)--(2), and Steps 4 and 6 are rerun in the norm
+$\tnorm{\cdot}$ with (3); the $m$-uniformity rests on the two-sided norm equivalence and on the mean-field structure
+of every map built in Steps 1--4. The inputs are those of Theorem J, Corollary D$'''$.14(i), Proposition D$'''$.15,
+the margins $\lambda_0$ of $\mathcal{W}$ and the leak's cell and plan margins. It replaces Corollary D$'''$.14(ii)'s
+proviso by an $m$-uniform statement and settles the spectral and the basin part of Corollary D$'''$.7's uniformity
+question in the per-particle norm. Checked: \code{tests/test_uniform_basin.py}, on the averaged loop at the prior
+with centres shifted by $+0.15$ at the matching masses, where the residual is not zero and
+$\lambda_{\mathrm{sep}} = 0.80\sigma_0$ (so the per-particle terms that vanish at the matching prior are exercised):
+the second-order remainder of the drift is bounded by $C_N\tnorm{u}^2$ with $C_N < 0.1$ for random per-particle
+displacements at $m = 6$, $30$, $150$, $600$, not growing with $m$; for a one-particle displacement the displaced
+particle's remainder is exactly $N_a + N_b/m$ with $N_a$ the same for every $m$ --- non-zero (above $10^{-5}$) here
+and zero (below $10^{-11}$) at the matching prior --- and every other particle's remainder is exactly $O(1/m)$; a
+separation perturbation (two particles of one class moved by $\pm v$) moves only those particles at first order, with
+the response $(GR_k - \sigma_0I)v$, not the leak's $-\sigma_0v$, at $m = 6$, $60$, $300$; and
+$\tnorm{u(s)}\le Ce^{-\mu s}\tnorm{u(0)}$ at $\mu = \min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}$ itself,
+with one constant $C\le1.05$ for $m = 6$, $30$, $150$.}
+
+% Numerics of Theorem D'''.18 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/uniform_basin.md).
+\paragraph{Numerics} (\code{exp_uniform_basin.py} $\to$ \code{results/chaos/uniform_basin.md}). The real loop at
+$k_e = 25$ ($\sigma_0 = 0.15\sigma_{\mathrm{crit}}$; RK4 plant with the control and the reference at the stages, Euler
+parameters, $\mathrm{d}t = 5\cdot10^{-3}$) for 8000 time units --- 1273 periods, 320 slow units --- with all systems
+integrated together. \emph{The rates.} The exponents that test (b) and (c) are Floquet exponents (Part F, by
+shooting). At the matching prior the 3-atom orbit's parameter exponents are $2.9355\cdot10^{-4}$,
+$3.5579\cdot10^{-4}$, $3.9986\cdot10^{-4}$, \dots{} against $\lambda_j(H_q)/k_e = 2.9521\cdot10^{-4}$,
+$3.6155\cdot10^{-4}$, $4.0755\cdot10^{-4}$, \dots{} (0.56--3.22\%), and every ghost exponent is
+$2.830\cdot10^{-4} = \sigma_0/k_e$. At the prior with centres shifted by $+0.15$ the parameter exponents are within
+0.57--3.15\% of $\lambda_j(H_q)/k_e$ and the ghost exponents equal $(\sigma_0 - \lambda_j(R^G_k))/k_e$ to
+$3\cdot10^{-4}$ relative, the slowest $2.2701\cdot10^{-4}$ (class 2) against
+$\lambda_{\mathrm{sep}}/k_e = 2.2696\cdot10^{-4}$. \emph{The proof's radius} is small: a sampled lower bound
+$C_N\ge0.092$ on the $\tnorm{\cdot}$-Lipschitz constant of $D\langle H\rangle$ gives $\rho\le0.019$ at the matching
+prior and $\rho\le0.015$ at the shifted one, so the runs below, at per-particle radii 0.3--2.5, start 31--261 times
+outside the proved start radius $\rho/2$: the clean contraction there is evidence that the basin extends to the cell
+margins, which the theorem does not claim. (A) The matching prior at the matching masses, where the lift is the exact
+representation, a constant orbit: sizes $m = 3$, $15$, $60$, $240$, every particle displaced from its class atom by
+$\rho$ in a random direction of the $\Ginv$-unit sphere, the same displacements under both leaks. Inside the cells
+($\rho = 0.3$, $1.0$, $2.5 < \Delta_\nu/2 = 3.13$) no particle leaves its cell and the two leaks give identical runs;
+$d_\infty = \max_i\min_k\norm{\vartheta_i - \vartheta^0_k}_{\Ginv}$ decays at the fitted rates
+$2.69\cdot10^{-4}$--$2.97\cdot10^{-4}$ for $m\ge15$ against $\sigma_0/k_e = 2.83\cdot10^{-4}$ (ratios 0.95--1.05),
+with $C(T) := \max_{t\le T}d_\infty(t)e^{\mu t}/d_\infty(0) = 1.03$--$1.29$ at $T = 8000$ --- still growing at the
+horizon in the $m = 15$ runs at $\rho = 0.3$ and $1$ (1.16 and 1.27), constant from $T = 2000$ on in the others. The
+$m = 3$ runs (one particle per class, no separation modes) are mixtures of collective modes: at $\rho = 1$ the end of
+the run is carried by the slowest one and the fitted rate is $2.948\cdot10^{-4}$
+($\lambda_{\mathrm{coll}}/k_e = 2.952\cdot10^{-4}$), at $\rho = 2.5$ by the third (amplitudes 0.029, 0.024, 0.086;
+fitted $4.06\cdot10^{-4}$ against $4.08\cdot10^{-4}$), at $\rho = 0.3$ by all three ($3.48\cdot10^{-4}$). At
+$\rho = 4.5$ some particles start in another cell (1, 3, 13 and 55 for $m = 3$, $15$, $60$, $240$). The nearest-atom
+leak ends at other weights --- the counts $(2,0,1)$, $(6,5,4)$, $(23,19,18)$, $(87,70,83)$ --- and not only through
+the initial misplacement: at $m = 60$ and $240$ the counts change during the transient (in 3 and 12 records, the last
+at $t = 420$ and $285$), and $m = 240$ starts at exactly $q$. Its clouds have not collapsed at the horizon
+(within-class rms spreads 0.24--0.66 for $m\ge15$), but $W^2 = 12.3$, $2.81$, $2.30$, $1.92$ is already that of the
+lifts of the realised weights for $m = 15$, $60$, $240$ (3.21, 2.35, 1.93): the cross-cluster transport of the weight
+mismatch. Two of these weight vectors are inadmissible --- $(6,5,4)/15$ and $(23,19,18)/60$ have splitting margins
+$-0.00348$ and $-0.00161$, so their lifts are saddles --- while $(87,70,83)/240$ is admissible ($+0.00167$) and
+$(2,0,1)/3$ empties a class (Newton finds no collapsed stationary point near the prior atoms). The OT leak ends at the
+counts $q$ at every $m$ (the last count change at $t = 2555$, $2695$, $1610$, $1445$), with $W^2 = 0.010$--$0.23$
+still falling at the leak's rate $2\sigma_0$ per slow unit for $m\ge15$ (log-slopes $-0.01411$, $-0.01408$,
+$-0.01417$ against $2\sigma_0 = 0.01415$): the transit is over, and what remains is the leak's contraction. The plan
+relabels --- 4, 15 and 53 particles end outside the cell of their initial class --- so the OT leak restores the
+masses $q$, not the class map $\pi_0$. (C) Remark D$'''$.19's mechanism: the lift of $q$ with one particle of class 0
+moved 0.6 of the way to atom 1, a mean-square displacement of 0.311 ($m = 60$) and 0.078 ($m = 240$). Under the
+nearest-atom leak $W^2$ grows to 0.79 and 0.20, toward the lifts of the admissible weights $(19,21,20)/60$ and
+$(79,81,80)/240$ ($W^2$ 0.8655 and 0.2163); under the OT leak it falls to $3.0\cdot10^{-3}$ and $8.2\cdot10^{-4}$.
+(B) A moving orbit: the OT leak toward the prior with centres shifted by $+0.15$ (a non-zero residual, so $\Gamma_q$
+moves and the tracking error along it is $2.55\cdot10^{-4}$), masses $q$; sizes 15, 60, 240 started at the lift of
+$\Theta^*(q)$ displaced by $\rho = 0.3$, $1.0$ and measured against the lift of the 3-atom loop's trajectory. The
+second-half fits $2.18\cdot10^{-4}$--$2.63\cdot10^{-4}$ (ratios 0.96--1.16 to $2.27\cdot10^{-4}$) are mixtures of
+separation modes whose gaps exceed the fit window; they are consistent with
+$(1 - \kappa)\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}/k_e$, and the Floquet exponents above are the
+test of the rate. $C(8000) = 1.04$--$1.23$ (still growing at the horizon at $m = 15$, $\rho = 0.3$), and every
+$m$-system's tracking error is $2.55$--$2.56\cdot10^{-4}$ at the end.
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
 \paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}). The instance:

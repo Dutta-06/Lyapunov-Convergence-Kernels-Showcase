@@ -82,9 +82,10 @@ In Part~I, every step of the stability argument is either proved or verified num
     Proposition D$'''$.5, the real loop on a warm start of Corollary D$'''$.7, the leak's prior as a design input of
     the window, Proposition D$'''$.9, and the barycentric OT leak's mass constraint, which removes the finite-size
     floor, Proposition D$'''$.12 --- in the real loop too, where the collapsed subspace carries one $K_0$-atom orbit
-    for every commensurate size, Corollary D$'''$.14 and Proposition D$'''$.15) --- through a seventh (the first two)
-    and an eighth to a twelfth (the third). Every confirmed issue and its fix is logged in
-    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--12 are kept beside it.
+    for every commensurate size, Corollary D$'''$.14 and Proposition D$'''$.15, and Theorem J holds uniformly in the
+    number of kernels in the per-particle norm, Theorem D$'''$.18) --- through a seventh (the first two) and an
+    eighth to a fourteenth (the third). Every confirmed issue and its fix is logged in \code{review/REVIEW_LOG.md},
+    and the raw reports of rounds 1--3 and 5--14 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -96,8 +97,8 @@ Section~\ref{sec:front:conventions}, and with the novelty verdict of the literat
 
 {\footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.05\textwidth}>{\raggedright\arraybackslash}p{0.34\textwidth}%
->{\raggedright\arraybackslash}p{0.345\textwidth}>{\raggedright\arraybackslash}p{0.22\textwidth}@{}}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.057\textwidth}>{\raggedright\arraybackslash}p{0.34\textwidth}%
+>{\raggedright\arraybackslash}p{0.338\textwidth}>{\raggedright\arraybackslash}p{0.22\textwidth}@{}}
 \caption{Contributions of Part~II and their honest status. Status conventions:
 Section~\ref{sec:front:conventions}.}\label{tab:front:contrib}\\
 \toprule
@@ -269,9 +270,10 @@ measure, learned function and tracking error exactly, the real loop's finite-siz
 the nearest-atom leak it is the lift of the orbit of the realised weights, whose distance between sizes is
 Corollary D$'''$.7's floor (Corollary D$'''$.14); the Floquet spectrum of a lifted orbit is the $K_0$-atom orbit's
 together with each class's ghost spectrum of multiplicity $n_k - 1$, independent of $m$ (Proposition D$'''$.15);
-with dither the nearest-atom leak equalises the masses only by Arrhenius hops across the Voronoi ridges (barrier
-$\approx0.04$ on the instance: frozen for $350/\sigma_0$ at $\tau_0 = 0.005$) while the OT leak holds them at $q$
-88--99.6\% of the time (Remark D$'''$.16); every trajectory of the OT dynamics converges to a Clarke-critical point
+with dither the nearest-atom leak equalises the masses only by Arrhenius crossings of the Voronoi ridges
+(barrier $\approx0.05$ on the instance: frozen for $350/\sigma_0$ at $\tau_0 = 0.005$), while under the OT leak a
+crossing particle stays assigned to its own atom and returns, so the counts are balanced 88--99.6\% of the time at
+the same crossing barrier (Remark D$'''$.16); every trajectory of the OT dynamics converges to a Clarke-critical point
 of its energy (Kurdyka--{\L}ojasiewicz for the definable, semiconcave-plus-smooth $J_m^{\mathrm{OT}}$), so the
 stationary statement is reached from every initial condition in the basin (Proposition D$'''$.17)
 & for the OT leak the frozen-plan equivalence and the stationary statement are proved (total
@@ -297,6 +299,25 @@ as a conservation law of the leak, broken by the plan's mass constraint so that 
 measure is exactly the mean-field one, is new; the lift of a weighted $K_0$-atom orbit as the exact periodic orbit of
 every commensurate size, with an $m$-independent Floquet spectrum (the orbit-level form of Proposition K's block
 structure), is new in adaptive control, where the size of the approximator is usually a nuisance parameter\\
+\addlinespace[0.5pt]
+D$'''$.18 & Theorem J uniformly in $m$ at a replicated configuration: for weights with margins (collective block and
+separation blocks $\ge\lambda_0$) the real loop's orbit near $\Theta^*_m(w)$ is the lift of the weighted $K_0$-atom
+orbit, unique in the per-particle ball of radius $\rho/2$ (inside the $\tnorm{\cdot}$-ball of radius $\rho$ where the
+period map contracts) and attracting every solution started in it at the rate
+$(1 - \kappa)\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}/k_e$, with $k_0$, $\rho$, $C$ independent of $m$;
+in the unnormalised norm of Theorem J the basin is $m$-independent too but shrinks per particle like $m^{-1/2}$ and
+the threshold $k_0$ grows like $\sqrt m$, and for the nearest-atom leak no mean-square ($W_2$-type) basin is possible
+--- one particle in another cell changes the weights (Remark D$'''$.19)
+& proved as an adaptation of Theorem J's proof in the per-particle norm (three structural facts: the plant sees the
+class means up to second order in the separations; each particle's drift depends on the others only through the
+plant; the linearisation is block diagonal with an $m$-independent spectrum); numerics: the Floquet exponents within
+0.56--3.22\% of the averaged prediction and the ghosts' to $3\cdot10^{-4}$; on the matching prior fitted rates
+0.95--1.05 of the prediction for $m\ge15$ and constants 1.03--1.29, on a moving orbit 0.96--1.16 and 1.04--1.23, all
+from radii 31--261 times the proved one; across a cell boundary the nearest-atom leak ends at other weights (two of
+them inadmissible) while the OT leak restores the masses $q$
+& uniform-in-$m$ averaging for an adaptive law with a mean-field interaction: the size of the approximator drops out
+of the stability constants --- new in adaptive control, where Lyapunov and averaging constants usually grow with the
+number of parameters\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance
