@@ -9,10 +9,11 @@ while the particles follow the OT leak toward ν_Z := Σ_jq_jδ_{z_j}:
 
 γ an optimal plan from μ_Θ to ν_Z and T̄_i = mΣ_jγ_{ij}z_j its barycentric projection. By the envelope theorem
 ∇_{z_j}W²(μ_Θ, ν_Z) = 2q_jG⁻¹(z_j − T̂_j), so (𝔄_m^{OT,η}) is the gradient flow of the joint energy 𝒥(μ_Θ, Z) := L̄(μ_Θ) + (σ₀/2)W²_{G⁻¹}(μ_Θ, ν_Z)
-in the metric (1/m)G⁻¹ per particle and (σ₀q_j/η)G⁻¹ on z_j. At a replicated stationary configuration with z_j at the class atom the leak
-force vanishes: the stationary points are the critical points of the unregularised K₀-atom loss with weights q. As η → ∞ the prior is the
-class barycentres, z_j = T̂_j, and the flow is the gradient flow of L̄ + (σ₀/2)𝒬_q with 𝒬_q(μ) := min_Z W²(μ, ν_Z) the capacity-constrained
-K₀-means distortion.
+in the metric (1/m)G⁻¹ per particle and (σ₀q_j/η)G⁻¹ on z_j (η > 0). At a replicated stationary configuration with z_j at the class atom the
+leak force vanishes: the replicated stationary points are the critical points of the unregularised K₀-atom loss with weights q, while a
+non-replicated one may hold a class apart by the leak toward its barycentre (the K₀-cluster bias of the fast limit). As η → ∞ the prior is
+the class barycentres, z_j = T̂_j, and the flow is the gradient flow of L̄ + (σ₀/2)𝒬_q with 𝒬_q(μ) := min_Z W²(μ, ν_Z) the
+capacity-constrained K₀-means distortion. The leak toward an adaptive prior is an internal force, so it no longer bounds the parameters.
 
 This module implements the joint drift (a vertex plan frozen inside a step, the prior moving with the particles), the joint energy, the
 integrator of `experiments/exp_adaptive_prior.py` (η finite or infinite), and the linear theory at an exact representation: the whitened
@@ -46,31 +47,61 @@ def barycentres(Th, gamma, q):
     return (gamma.T @ Th) / q[:, None]
 
 
+def nearest_plan(Th, Z, G):
+    """The nearest-atom (cell) plan from μ_Θ to the atoms Z: γ_{ij} = 1/m for the nearest atom j of ϑ_i (G⁻¹ metric), and the distortion
+    (1/m)Σ_i min_j‖ϑ_i − z_j‖²_{G⁻¹} — the minimum of W²(μ_Θ, Σ_jq_jδ_{z_j}) over the masses q, attained at the cell masses (semi-relaxed
+    transport: with free target masses every particle goes to its nearest atom)."""
+    m = Th.shape[0]
+    C = _cost_matrix(Th, Z, G)
+    lab = np.argmin(C, axis=1)
+    gamma = np.zeros((m, Z.shape[0])); gamma[np.arange(m), lab] = 1.0 / m
+    return gamma, float(np.mean(C[np.arange(m), lab]))
+
+
 class AdaptivePriorLoop:
     """(𝔄_m^{OT,η}) on top of an `ot_leak.OTPriorLoop` (whose drift(Th, T) supplies the particles' learning term and the leak toward the targets
-    T; its own prior is not used), with the prior mobility η (np.inf: the prior is the class barycentres)."""
+    T; its own prior is not used), with the prior mobility η (np.inf: the prior is the class barycentres). plan='nearest' (Proposition D‴.24):
+    the nearest-atom leak toward the adaptive prior — the cell plan, the cell masses in place of q (an empty cell keeps its atom), no transit —
+    the gradient flow of L̄ + (σ₀/2)(1/m)Σ_i min_j‖ϑ_i − z_j‖²_{G⁻¹} = min over the masses of the OT energy."""
 
-    def __init__(self, ot_loop, eta):
+    def __init__(self, ot_loop, eta, plan='ot'):
+        assert plan in ('ot', 'nearest')
         self.loop = ot_loop
         self.eta = float(eta)
         self.q = ot_loop.q
         self.G = ot_loop.G
         self.sigma0 = ot_loop.sigma0
+        self.plan_kind = plan
+
+    def plan(self, Th, Z):
+        """(γ, the transport cost): the optimal plan to ν_Z with the masses q (OT) or the cell plan (nearest)."""
+        return plan_to(Th, Z, self.q, self.G) if self.plan_kind == 'ot' else nearest_plan(Th, Z, self.G)
+
+    def bary(self, Th, gamma, Z):
+        """The class barycentres of the plan (OT: divided by q; nearest: by the cell masses, an empty cell keeping z_j)."""
+        if self.plan_kind == 'ot':
+            return barycentres(Th, gamma, self.q)
+        w = gamma.sum(axis=0); out = np.array(Z, float).copy(); nz = w > 0
+        out[nz] = (gamma.T @ Th)[nz] / w[nz, None]
+        return out
 
     def drift(self, Th, Z, gamma):
         """(dΘ/ds, dZ/ds) for the plan γ (finite η); for η = ∞ the prior is replaced by the barycentres and dZ/ds is not used."""
         m = Th.shape[0]
         if np.isinf(self.eta):
-            Zb = barycentres(Th, gamma, self.q)
+            Zb = self.bary(Th, gamma, Z)
             return self.loop.drift(Th, m * (gamma @ Zb)), np.zeros_like(Z)
-        return self.loop.drift(Th, m * (gamma @ Z)), -self.eta * (Z - barycentres(Th, gamma, self.q))
+        return self.loop.drift(Th, m * (gamma @ Z)), -self.eta * (Z - self.bary(Th, gamma, Z))
 
     def energy(self, Th, Z):
         """𝒥(μ_Θ, Z) = L̄(μ_Θ) + (σ₀/2)W²(μ_Θ, ν_Z) with an optimal plan (for η = ∞ evaluate it at Z = the barycentres of an optimal plan)."""
-        return self.loop.L_bar(Th) + 0.5 * self.sigma0 * plan_to(Th, Z, self.q, self.G)[1]
+        return self.loop.L_bar(Th) + 0.5 * self.sigma0 * self.plan(Th, Z)[1]
 
     def in_transit(self, Th, Z, gamma):
-        """True if some particle is assigned by the plan to an atom of ν_Z that is not its nearest one (the mass in transit)."""
+        """True if some particle is assigned by the plan to an atom of ν_Z that is not its nearest one (the mass in transit; never for the
+        cell plan)."""
+        if self.plan_kind == 'nearest':
+            return False
         lab = np.argmax(gamma, axis=1)
         return bool(np.any(lab != np.argmin(_cost_matrix(Th, Z, self.G), axis=1)))
 
@@ -93,7 +124,7 @@ class AdaptivePriorLoop:
         settled = gate != 'settled'
         for k in range(n + 1):
             if k % plan_every == 0:
-                gamma, _ = plan_to(Th, Z, self.q, self.G)
+                gamma, _ = self.plan(Th, Z)
                 free = not self.in_transit(Th, Z, gamma)
                 if free and not settled and self.fixed_prior_drift(Th, Z, gamma) < settle_tol:
                     settled = True
@@ -101,8 +132,8 @@ class AdaptivePriorLoop:
                 if adapting and not np.isfinite(t_open):
                     t_open = k * dt
                 if adapting and np.isinf(eta):
-                    Z = barycentres(Th, gamma, self.q)
-                    gamma, _ = plan_to(Th, Z, self.q, self.G)
+                    Z = self.bary(Th, gamma, Z)
+                    gamma, _ = self.plan(Th, Z)
             if callback is not None and k % rec_every == 0:
                 callback(k * dt, Th, Z, adapting)
             if k == n:
@@ -118,7 +149,7 @@ class AdaptivePriorLoop:
             self.eta = eta
             Th, Z = Th + dt * k2T, Z + dt * k2Z
             if adapting and np.isinf(eta):
-                Z = barycentres(Th, gamma, self.q)
+                Z = self.bary(Th, gamma, Z)
         return Th, Z, t_open
 
 

@@ -3,8 +3,11 @@
 atoms is stationary, while the fixed prior's stationary point is not stationary for the adaptive prior; the linearisation at the exact
 representation has the separation rate σ₀ and the collective pairs' rates λ_j^± of pair_rates; the fixed prior's bias is σ₀(H_L + σ₀I)⁻¹x⁰ to
 first order; a gated run keeps the prior frozen while mass is in transit, with 𝒥 non-increasing; the joint linearisation is self-adjoint in
-the gradient-flow metric (M times the Jacobian is minus the Hessian of 𝒥); and the settled gate opens only when the fixed-prior drift has
-fallen below its tolerance, after the transit."""
+the gradient-flow metric (M times the Jacobian is minus the Hessian of 𝒥); the settled gate opens only when the fixed-prior drift has
+fallen below its tolerance, after the transit; the limits of (i): a non-replicated stationary point (a class split over two bumps and held
+by the leak toward its barycentre, against a non-zero loss gradient — a saddle) and a permuted prior that is stationary at the exact
+representation (z_σ(k) = ϑ_k for the plan's bijection σ); and the loss of the a-priori bound: with a target bump beyond the saturation the
+fixed prior's K₀-atom solution converges while the adaptive prior's amplitude coordinate runs off."""
 import os
 import sys
 
@@ -150,7 +153,7 @@ def test_the_linearisation_is_self_adjoint_in_the_gradient_flow_metric():
         assert np.linalg.eigvalsh(-0.5 * (S + S.T)).min() > -1e-9 * np.abs(S).max()
 
 
-def test_the_settled_gate_opens_at_the_fixed_prior_stationary_point():
+def test_the_settled_gate_opens_when_the_fixed_prior_drift_first_falls_below_its_tolerance_after_the_transit():
     loop, exact, prior = _setup()
     m, tol = 15, 1e-3
     Th = np.repeat(exact, m // 3, axis=0)
@@ -168,3 +171,64 @@ def test_the_settled_gate_opens_at_the_fixed_prior_stationary_point():
     assert all(np.array_equal(r[1], prior) for r in rec[:first + 1])             # … with the prior frozen until it opens
     assert rec[first][3] < tol and not rec[first][4] and rec[first - 1][3] >= tol  # it opens when the fixed-prior drift first falls below tol
     assert np.all(np.diff([r[5] for r in rec]) <= 1e-12)                         # 𝒥 non-increasing in both phases
+
+
+def _bumps(B):
+    return lambda X: sum(A * np.exp(-(X - C) ** 2 / (2 * S ** 2)) for A, C, S in B)
+
+
+def test_a_non_replicated_stationary_point_is_held_by_the_leak_and_a_permuted_prior_is_stationary():
+    from scipy.optimize import least_squares
+    net = L.SaturatedLiftedNetwork(1, a_max=4.0, c_max=3.0, s_min=0.3, s_max=2.0)
+    m = 6                                                                        # four bumps, six kernels: one class split over the last two
+    Th0 = net.unconstrained(np.array([[3.0], [3.0], [-2.1], [-2.1], [2.4], [2.4]]), np.array([[-1.5], [-1.5], [0.0], [0.0], [1.3], [2.3]]),
+                            np.array([0.5, 0.5, 0.4, 0.4, 0.4, 0.4]))
+    loop = OT.OTPriorLoop(net, _bumps([(1.0, -1.5, 0.5), (-0.7, 0.0, 0.4), (0.4, 1.3, 0.4), (0.4, 2.3, 0.4)]), X_REF, PER, G, SIGMA0, Th0[[0, 2, 4]], n_quad=96)
+    lab = np.array([0, 0, 1, 1, 2, 2]); gam = np.zeros((m, 3)); gam[np.arange(m), lab] = 1.0 / m
+    assert loop.fit_error(Th0) < 1e-12                                           # the exact six-kernel fit
+    F_inf = lambda v: (loop.drift(v.reshape(m, 3), m * (gam @ AP.barycentres(v.reshape(m, 3), gam, Q))) / np.sqrt(G)[None, :]).ravel()
+    Th = least_squares(F_inf, Th0.ravel(), xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=5000).x.reshape(m, 3)
+    Z = AP.barycentres(Th, gam, Q)
+    leak = SIGMA0 * np.sqrt(np.sum((Th - m * (gam @ Z)) ** 2 / G[None, :], axis=1))
+    unreg = np.abs(loop.drift(Th, Th) / np.sqrt(G)[None, :]).max()
+    assert np.sqrt(np.sum((Th[4] - Th[5]) ** 2 / G)) > 0.5                       # the class stays split …
+    assert leak[4:].min() > 1e-3 and leak[:4].max() < 1e-12 and unreg > 1e-3     # … held by the leak against a non-zero loss gradient
+    apl = AP.AdaptivePriorLoop(loop, SIGMA0)
+    g_, _ = AP.plan_to(Th, Z, Q, G)
+    dT, dZ = apl.drift(Th, Z, g_)
+    assert np.array_equal(np.argmax(g_, axis=1), lab) and np.abs(dT).max() < 1e-12 and np.abs(dZ).max() < 1e-12   # stationary for the joint flow
+
+    def Fj(v):
+        x, y = apl.drift(v[:3 * m].reshape(m, 3), v[3 * m:].reshape(3, 3), g_)
+        return np.concatenate([x.ravel(), y.ravel()])
+    v0 = np.concatenate([Th.ravel(), Z.ravel()]); d = v0.size; h = 1e-6; J = np.zeros((d, d))
+    for j in range(d):
+        e = np.zeros(d); e[j] = h
+        J[:, j] = (Fj(v0 + e) - Fj(v0 - e)) / (2 * h)
+    assert np.linalg.eigvals(J).real.max() > 1e-6                                # a saddle
+    loop3, exact, prior = _setup()                                               # the relabelling: a permuted prior at the exact representation
+    Th3 = np.repeat(exact, 2, axis=0); Zp = exact[[1, 2, 0]]
+    g3, W2 = AP.plan_to(Th3, Zp, Q, G)
+    dT3, dZ3 = AP.AdaptivePriorLoop(loop3, SIGMA0).drift(Th3, Zp, g3)
+    assert np.abs(Zp - exact).max() > 1.0 and W2 < 1e-24 and np.abs(dT3).max() < 1e-14 and np.abs(dZ3).max() < 1e-14
+
+
+def test_the_adaptive_prior_gives_up_the_leaks_a_priori_bound():
+    from scipy.integrate import solve_ivp
+    net = L.SaturatedLiftedNetwork(1, a_max=4.0, c_max=3.0, s_min=0.3, s_max=2.0)
+    start = net.unconstrained(np.array([[3 * A] for A, C, S in BUMPS]), np.array([[C] for A, C, S in BUMPS]), np.array([S for A, C, S in BUMPS]))
+    loop = OT.OTPriorLoop(net, _bumps([(1.6, -1.5, 0.5), (-0.7, 0.0, 0.4), (0.8, 1.5, 0.5)]), X_REF, PER, G, SIGMA0, start, n_quad=96)   # 3·1.6 > a_max
+    gamma = np.eye(3) / 3.0
+    out = {}
+    for eta in (0.0, SIGMA0):
+        apl = AP.AdaptivePriorLoop(loop, eta)
+
+        def rhs(t, v, apl=apl):
+            dT, dZ = apl.drift(v[:9].reshape(3, 3), v[9:].reshape(3, 3), gamma)
+            return np.concatenate([dT.ravel(), dZ.ravel()])
+        sol = solve_ivp(rhs, (0.0, 1e4), np.concatenate([start.ravel(), start.ravel()]), method='LSODA', t_eval=[1e3, 1e4], rtol=1e-10, atol=1e-12)
+        out[eta] = (sol.y[0], np.abs(rhs(1e4, sol.y[:, -1])).max(), net.physical(sol.y[:9, -1].reshape(3, 3))[0][0, 0])
+    th, drift, a = out[0.0]
+    assert abs(th[1] - th[0]) < 1e-6 and drift < 1e-12 and a < 3.7               # the fixed prior: converged at finite parameters
+    th, drift, a = out[SIGMA0]
+    assert th[1] - th[0] > 3.0 and drift > 1e-5 and a > 3.97                     # the adaptive prior: the amplitude coordinate runs off (≈ 2 ln s)

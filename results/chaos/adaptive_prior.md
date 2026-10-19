@@ -20,21 +20,41 @@ The whitened weighted Gauss–Newton eigenvalues h_j of the loss (the collective
 
 A fixed prior's collective rates are h_j + σ₀ = 7.3803e-03–2.0229e-01.
 
+(v)'s radius. A sampled lower bound on the Lipschitz constant C_N of the collective Jacobian in the whitened weighted norm (the unregularised K₀-atom drift by central differences at Θ*(q) and at 160 random points at whitened distances 0.005–0.05 from the exact representation, where the Jacobian is −H_L to 7.7e-12): C_N ≥ 0.3406. The proof's radius is then at most min{σ₀, λ_1^−}/(4C_N) (the plan-margin term can only lower it), against the norm |||·|||_η of Part C's start (Θ*(q) and the shifted prior; at η = ∞ the prior is the class barycentres and the norm has no ζ part):
+
+| η | λ_1^− | min{σ₀, λ_1^−}/σ₀ | upper bound on ρ | |||start|||_η | start / bound |
+|---|---|---|---|---|---|
+| 0.00071 | 2.684e-05 | 0.0038 | 1.97e-05 | 1.172e+00 | 59507 |
+| 0.00707 | 1.513e-04 | 0.0214 | 1.11e-04 | 3.713e-01 | 3344 |
+| 0.07074 | 2.780e-04 | 0.0393 | 2.04e-04 | 1.191e-01 | 584 |
+| ∞ | 3.059e-04 | 0.0432 | 2.24e-04 | 2.102e-02 | 94 |
+
+The runs of Parts C–F start outside the ball that the proof of (v) covers, by these factors: they probe the dynamics beyond it.
+
 ## B. The fixed prior's bias (shifted prior)
 
-Θ*(q) by Newton (residual 4.3e-17; diagonal plan ε = 0.389 < Δ_ν/2 = 3.162); fit error at Θ*(q) 9.7765e-03 (0 at the exact representation). Mode amplitudes (components on the eigenvectors of H_L, whitened weighted coordinates) of the prior's error y⁰, of the actual bias y = Θ*(q) − exact, and of the first-order prediction σ₀(H_L + σ₀I)⁻¹y⁰; ‖y − prediction‖/‖y‖ = 4.805e-02.
+Θ*(q) by Newton (residual 4.3e-17; diagonal plan ε = 0.389 < Δ_ν/2 = 3.162); fit error at Θ*(q) 9.7765e-03 (0 at the exact representation). Mode amplitudes (components on the eigenvectors of H_L, whitened weighted coordinates) of the prior's error x⁰, of the actual bias y = Θ*(q) − exact, and of the first-order prediction σ₀(H_L + σ₀I)⁻¹x⁰; ‖y − prediction‖/‖y‖ = 4.805e-02.
 
-| j | y⁰_j | y_j (actual) | predicted | actual/y⁰ |
-|---|---|---|---|---|
-| 1 | -1.9429e-03 | -1.5815e-03 | -1.8624e-03 | 0.814 |
-| 2 | +1.3012e-02 | +1.0715e-02 | +1.0184e-02 | 0.823 |
-| 3 | +3.6625e-03 | +1.8500e-03 | +2.5430e-03 | 0.505 |
-| 4 | +4.2598e-03 | +1.2441e-03 | +1.3560e-03 | 0.292 |
-| 5 | +2.1436e-02 | +5.6414e-03 | +5.3817e-03 | 0.263 |
-| 6 | +2.6124e-02 | +4.7319e-03 | +4.6724e-03 | 0.181 |
-| 7 | -1.3160e-01 | -9.9217e-03 | -9.7291e-03 | 0.075 |
-| 8 | +1.2244e-01 | +6.3699e-03 | +6.1314e-03 | 0.052 |
-| 9 | +3.2208e-01 | +1.1232e-02 | +1.1264e-02 | 0.035 |
+| j | x⁰_j | y_j (actual) | predicted | actual/x⁰ | actual/predicted |
+|---|---|---|---|---|---|
+| 1 | -1.9429e-03 | -1.5815e-03 | -1.8624e-03 | 0.814 | 0.849 |
+| 2 | +1.3012e-02 | +1.0715e-02 | +1.0184e-02 | 0.823 | 1.052 |
+| 3 | +3.6625e-03 | +1.8500e-03 | +2.5430e-03 | 0.505 | 0.727 |
+| 4 | +4.2598e-03 | +1.2441e-03 | +1.3560e-03 | 0.292 | 0.917 |
+| 5 | +2.1436e-02 | +5.6414e-03 | +5.3817e-03 | 0.263 | 1.048 |
+| 6 | +2.6124e-02 | +4.7319e-03 | +4.6724e-03 | 0.181 | 1.013 |
+| 7 | -1.3160e-01 | -9.9217e-03 | -9.7291e-03 | 0.075 | 1.020 |
+| 8 | +1.2244e-01 | +6.3699e-03 | +6.1314e-03 | 0.052 | 1.039 |
+| 9 | +3.2208e-01 | +1.1232e-02 | +1.1264e-02 | 0.035 | 0.997 |
+
+The first-order formula against the shift of the prior's centres (Newton residual of Θ*(q); the relative error in norm; actual/predicted in the modes 1–4):
+
+| shift | Newton residual | ‖y − prediction‖/‖y‖ | actual/predicted, modes 1, 2, 3, 4 |
+|---|---|---|---|
+| 0.15 | 4.3e-17 | 4.805e-02 | 0.849, 1.052, 0.727, 0.917 |
+| 0.075 | 3.3e-16 | 2.341e-02 | 0.917, 1.023, 0.871, 0.963 |
+| 0.0375 | 1.3e-16 | 1.157e-02 | 0.956, 1.011, 0.937, 0.982 |
+| 0.01875 | 6.0e-17 | 5.754e-03 | 0.977, 1.005, 0.969, 0.991 |
 
 ## C. The K₀-atom adaptive loop from Θ*(q) with the prior at the shifted centres
 
@@ -46,24 +66,42 @@ Mode amplitudes of the atoms' deviation from the exact representation at s = 0, 
 | 0.00071 | 2 | +1.072e-02, +9.278e-03, +6.893e-03, +4.461e-03 | +1.072e-02, +8.974e-03, +6.719e-03, +4.352e-03 | 1.034, 1.026, 1.025 | 1.002 |  |  |
 | 0.00071 | 3 | +1.850e-03, +1.708e-03, +1.192e-03, +6.459e-04 | +1.850e-03, +2.083e-03, +1.379e-03, +7.433e-04 | 0.820, 0.864, 0.869 | 0.992 |  |  |
 | 0.00071 | 4 | +1.244e-03, +8.167e-04, +3.237e-04, +7.943e-05 | +1.244e-03, +8.589e-04, +3.307e-04, +7.898e-05 | 0.951, 0.979, 1.006 | 0.981 |  |  |
+| 0.00071 | 5 | +5.641e-03, +3.343e-03, +1.153e-03, +2.364e-04 | +5.641e-03, +3.240e-03, +1.131e-03, +2.330e-04 | 1.032, 1.020, 1.015 | 1.003 |  |  |
+| 0.00071 | 6 | +4.732e-03, +2.670e-03, +8.345e-04, +1.469e-04 | +4.732e-03, +2.658e-03, +8.347e-04, +1.469e-04 | 1.005, 1.000, 1.000 | 1.000 |  |  |
+| 0.00071 | 7 | -9.922e-03, -5.155e-03, -1.384e-03, -1.940e-04 | -9.922e-03, -5.090e-03, -1.374e-03, -1.927e-04 | 1.013, 1.007, 1.007 | 1.000 |  |  |
+| 0.00071 | 8 | +6.370e-03, +3.226e-03, +8.317e-04, +1.103e-04 | +6.370e-03, +3.147e-03, +8.209e-04, +1.094e-04 | 1.025, 1.013, 1.008 | 1.003 |  |  |
 | 0.00071 | 9 | +1.123e-02, +5.699e-03, +1.456e-03, +1.879e-04 | +1.123e-02, +5.711e-03, +1.458e-03, +1.881e-04 | 0.998, 0.999, 0.999 | 1.000 |  |  |
 | 0.00707 | 1 | -1.582e-03, -1.421e-03, -1.049e-03, -6.663e-04 | -1.582e-03, -1.500e-03, -1.108e-03, -7.040e-04 | 0.947, 0.946, 0.947 | 1.000 | 9.776e-03, 3.153e-04, 5.717e-05, 1.825e-05 | 7.096e-11 |
 | 0.00707 | 2 | +1.072e-02, +4.517e-03, +7.254e-04, +4.670e-05 | +1.072e-02, +4.435e-03, +7.123e-04, +4.585e-05 | 1.019, 1.018, 1.018 | 1.000 |  |  |
 | 0.00707 | 3 | +1.850e-03, +5.554e-04, +3.425e-05, +4.782e-07 | +1.850e-03, +6.277e-04, +3.911e-05, +6.082e-07 | 0.885, 0.876, — | — |  |  |
 | 0.00707 | 4 | +1.244e-03, +2.490e-05, +1.651e-07, +1.986e-08 | +1.244e-03, +2.234e-05, +4.243e-09, +1.111e-14 | 1.115, —, — | — |  |  |
+| 0.00707 | 5 | +5.641e-03, +4.704e-05, +3.469e-08, +5.253e-09 | +5.641e-03, +4.694e-05, +2.489e-09, +9.610e-16 | 1.002, —, — | — |  |  |
+| 0.00707 | 6 | +4.732e-03, +2.019e-05, -2.310e-08, -1.649e-08 | +4.732e-03, +2.001e-05, +2.734e-10, +1.381e-17 | 1.009, —, — | — |  |  |
+| 0.00707 | 7 | -9.922e-03, -1.599e-05, -2.844e-08, +2.816e-09 | -9.922e-03, -1.549e-05, -3.409e-11, -1.114e-19 | 1.032, —, — | — |  |  |
+| 0.00707 | 8 | +6.370e-03, +7.979e-06, -3.637e-08, -8.988e-09 | +6.370e-03, +7.903e-06, +1.192e-11, +2.206e-20 | 1.010, —, — | — |  |  |
 | 0.00707 | 9 | +1.123e-02, +1.269e-05, +2.622e-09, +3.392e-09 | +1.123e-02, +1.275e-05, +1.524e-11, +1.993e-20 | 0.996, —, — | — |  |  |
 | 0.07074 | 1 | -1.582e-03, -1.196e-03, -6.858e-04, -2.979e-04 | -1.582e-03, -1.222e-03, -7.010e-04, -3.045e-04 | 0.978, 0.978, 0.978 | 1.000 | 9.776e-03, 1.308e-04, 1.884e-05, 8.035e-06 | 1.358e-11 |
 | 0.07074 | 2 | +1.072e-02, +1.848e-03, +5.238e-05, +2.564e-07 | +1.072e-02, +1.836e-03, +5.203e-05, +2.483e-07 | 1.007, 1.007, — | — |  |  |
 | 0.07074 | 3 | +1.850e-03, +1.128e-04, +3.384e-07, -9.957e-09 | +1.850e-03, +1.199e-04, +4.255e-07, +8.993e-11 | 0.941, —, — | — |  |  |
 | 0.07074 | 4 | +1.244e-03, +6.503e-07, +2.122e-08, +3.563e-09 | +1.244e-03, +2.142e-09, +4.167e-21, +1.130e-38 | —, —, — | — |  |  |
+| 0.07074 | 5 | +5.641e-03, -6.404e-08, +5.800e-09, +5.237e-10 | +5.641e-03, +6.135e-11, +4.430e-27, +2.717e-51 | —, —, — | — |  |  |
+| 0.07074 | 6 | +4.732e-03, +2.316e-08, -1.743e-08, -3.391e-09 | +4.732e-03, +5.551e-15, +3.386e-39, +1.613e-75 | —, —, — | — |  |  |
+| 0.07074 | 7 | -9.922e-03, -1.117e-07, +2.846e-09, +8.489e-10 | -9.922e-03, -1.993e-27, -1.844e-77, -1.642e-152 | —, —, — | — |  |  |
+| 0.07074 | 8 | +6.370e-03, -5.311e-08, -9.603e-09, -1.622e-09 | +6.370e-03, +1.362e-30, +2.142e-86, +4.221e-170 | —, —, — | — |  |  |
 | 0.07074 | 9 | +1.123e-02, -4.462e-09, +3.566e-09, +7.371e-10 | +1.123e-02, +1.277e-31, +7.465e-90, +3.338e-177 | —, —, — | — |  |  |
 | ∞ | 1 | -1.582e-03, -1.153e-03, -6.253e-04, -2.498e-04 | -1.582e-03, -1.165e-03, -6.318e-04, -2.524e-04 | 0.990, 0.990, 0.990 | 1.000 | 9.776e-03, 1.078e-04, 1.699e-05, 6.738e-06 | 9.543e-12 |
 | ∞ | 2 | +1.072e-02, +1.506e-03, +2.963e-05, +8.633e-08 | +1.072e-02, +1.503e-03, +2.955e-05, +8.150e-08 | 1.003, 1.003, — | — |  |  |
 | ∞ | 3 | +1.850e-03, +7.978e-05, +1.088e-07, -7.039e-09 | +1.850e-03, +8.215e-05, +1.620e-07, +1.418e-11 | 0.971, —, — | — |  |  |
 | ∞ | 4 | +1.244e-03, +4.577e-07, +1.683e-08, +2.504e-09 | +1.244e-03, +3.280e-10, +2.280e-23, +4.180e-43 | —, —, — | — |  |  |
+| ∞ | 5 | +5.641e-03, -1.653e-08, +3.902e-09, +3.653e-10 | +5.641e-03, +3.855e-12, +1.800e-30, +5.745e-58 | —, —, — | — |  |  |
+| ∞ | 6 | +4.732e-03, +4.631e-09, -1.467e-08, -2.385e-09 | +4.732e-03, +3.712e-17, +2.284e-45, +1.102e-87 | —, —, — | — |  |  |
+| ∞ | 7 | -9.922e-03, -8.316e-08, +2.898e-09, +5.984e-10 | -9.922e-03, -3.247e-41, -3.477e-118, -1.219e-233 | —, —, — | — |  |  |
+| ∞ | 8 | +6.370e-03, -4.982e-08, -7.668e-09, -1.139e-09 | +6.370e-03, +3.341e-61, +9.190e-178, +0.000e+00 | —, —, — | — |  |  |
 | ∞ | 9 | +1.123e-02, -2.001e-09, +3.072e-09, +5.186e-10 | +1.123e-02, +1.868e-87, +5.166e-257, +0.000e+00 | —, —, — | — |  |  |
 
 Ratio: the amplitude over the linear prediction (constant in time when the rate is the predicted one; its offset from 1 is set in the nonlinear first phase, the shift being finite). Log-slope: the decay rate of the amplitude on [3000, 6000] over λ_j^−. Both only where the amplitudes are above 1e-06: below it the faster modes stop at the level of the second-order remainder driven by the slow modes (the amplitudes below 1e-06 at s ≥ 3000, every mode and η: 5.0e-11–9.7e-07).
+
+Over every mode and η above 1e-06: log-slopes 0.981–1.003 of λ_j^− (13 modes), ratios 0.820–1.115; the largest change of a ratio from s = 1000 to s = 3000 or 6000 (modes with a ratio at s = 1000 and a later one): 5.96% at η = 0.00071, 1.04% at η = 0.00707, 0.02% at η = 0.07074, 0.01% at η = ∞.
 
 ## D. m-particle systems from the warm clouds (shifted prior)
 
@@ -102,6 +140,8 @@ Sizes m = 15, 60, 240 and M = 510, 4 seeds, 3000 slow units, plan every 4 steps.
 
 The settled gate against the K₀-atom run of Part C: per seed, ‖ȳ‖ and the fit error at s = 3000 over the K₀-atom run's at s = 3000 − t_open (min–max over the seeds): η = 0.00707, m = 15: ‖ȳ‖ 0.995–0.999, fit error 0.998–1.000; η = 0.00707, m = 60: ‖ȳ‖ 0.999–1.000, fit error 1.000–1.000; η = 0.00707, m = 240: ‖ȳ‖ 1.000–1.000, fit error 1.000–1.000; η = 0.00707, m = 510: ‖ȳ‖ 1.000–1.000, fit error 1.000–1.000; η = ∞, m = 15: ‖ȳ‖ 0.968–0.995, fit error 0.979–0.997; η = ∞, m = 60: ‖ȳ‖ 0.991–1.000, fit error 0.995–1.000; η = ∞, m = 240: ‖ȳ‖ 0.996–0.999, fit error 0.998–1.000; η = ∞, m = 510: ‖ȳ‖ 0.997–1.001, fit error 0.999–1.000.
 
+The settled systems open replicated: at the last record before the opening (32 runs) the rms separation is 1.2e-04–7.9e-04 and the class means lie 7.4e-07–6.7e-05 from Θ*(q) (‖y*(q)‖ = 2.102e-02). Each system is then the K₀-atom system started from its own class means, so the ratios above measure the invariance of the replicated configurations and the opening offset in the weakest modes, not the uniformity of (v); Part F tests (v) from separated starts.
+
 ## E. The ungated η = ∞ system with the largest ‖ȳ‖ at s = 3000, continued
 
 Seed 3, m = 15 (‖ȳ‖ = 2.124 at s = 3000), re-run from its seed (fit error at s = 3000: 4.009106e-02, stored 4.009106e-02) and continued to s = 23000.
@@ -119,5 +159,62 @@ Seed 3, m = 15 (‖ȳ‖ = 2.124 at s = 3000), re-run from its seed (fit error a
 | 23000 | 3.4639e-02 | 2.522042e-04 | 0.0000 | 1.38e-05 |
 
 At s = 23000 the classes are collapsed onto the atoms a = (+3.133, -2.808, +3.037), c = (-1.415, +0.188, +1.224), s = (0.583, 0.694, 0.692) (exact representation: a = (+3.000, -2.100, +2.400), c = (-1.500, +0.000, +1.500), s = (0.500, 0.400, 0.500)); the unregularised weighted loss there is 2.5220e-04, the eigenvalues of its Hessian (whitened, weighted) are -1.84e-05, 7.16e-05, 9.46e-04 (smallest three) — a plateau, not a minimum — and a BFGS minimisation of the unregularised loss from those atoms ends at 1.7e-17 with a = (+3.000, -2.100, +2.400), c = (-1.500, -0.000, +1.500), s = (0.500, 0.400, 0.500).
+
+The collapsed η = ∞ dynamics from the same atoms, the unregularised K₀-atom gradient flow (LSODA, rtol 10⁻¹⁰, flow time counted from the s = 23000 state, crossings read on 200 logarithmically spaced times from 10² to 2e+05): the loss stays above 0.9 of its 2.5220e-04 until 4.18e+04, halves by 4.87e+04, falls below 10⁻¹² by 8.00e+04 and ends at 7.8e-31 with a = (+3.000, -2.100, +2.400), c = (-1.500, +0.000, +1.500), s = (0.500, 0.400, 0.500): the same basin, crossed on the time scale of the negative curvature (1/1.84e-05 = 5.43e+04).
+
+## F. The test of (v): separated starts
+
+From the lift of Θ*(q) plus zero-mean per-particle separations (rms in the G⁻¹ norm), the prior at the shifted centres, ungated, 1750 slow units: ‖ȳ‖ at the end over the K₀-atom run's at the same time (Part C) − 1. The settled gate's agreement of Part D tests the invariance of the replicated configurations (the systems open collapsed), not (v); here the separations are at the start, and (v) and Theorem D‴.18's facts (1)–(2) predict a departure of second order in the separations and uniform in m.
+
+| η | rms 0.02, m = 15 | rms 0.02, m = 510 | rms 0.1, m = 15 | rms 0.1, m = 510 |
+|---|---|---|---|---|
+| 0.00707 | +0.0008 | +0.0007 | +0.0209 | +0.0177 |
+| ∞ | +0.0044 | +0.0059 | +0.1093 | +0.1446 |
+
+From rms 0.02 to 0.1 the departure grows by the factors 24.6–25.0 (the square of the ratio of the rms, 25, for a second-order effect), and at each rms it is of the same size at both m (the separations' class covariances, not their number, enter at second order).
+
+## G. The limits of (i)
+
+(a) A non-replicated stationary point. The four-bump target (A, C, S) = (1, -1.5, 0.5), (-0.7, 0, 0.4), (0.4, 1.3, 0.4), (0.4, 2.3, 0.4), which six kernels of weight 1/6 fit exactly with the third class split over the last two bumps (fit error 1.7e-16, G⁻¹-distance of the split pair 3.2892; K₀ = 3, q = 1/3, m = 6). The stationary point of the η = ∞ form (the leak toward the class barycentres) by least squares from that fit (residual 8.7e-17): the split pair at distance 1.6401, the leak force σ₀‖ϑ_i − T̂_π(i)‖ on its particles 0.0058, 0.0058 (largest on the others 3.1e-18), the unregularised gradient there 5.80e-03 (at the exact fit 5.4e-17), fit error 4.246e-02. With the prior at the class barycentres it is stationary for the joint flow — η = 0.00707: the plan the classes True, drift 4.4e-17 (Θ) and 0.0e+00 (Z), largest real part of the joint Jacobian +3.66e-05; η = 0.07074: the plan the classes True, drift 4.4e-17 (Θ) and 0.0e+00 (Z), largest real part of the joint Jacobian +6.64e-05 — a saddle: the leak holds the split class against the loss.
+
+The joint flow from the exact split fit (40000 slow units), and at the end the stationary point refined by least squares with the final plan:
+
+| η | split distance at s = 0, 4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000, 36000, 40000 | fit error at the same s | refined: residual, split distance, largest leak force, unregularised gradient, fit error | largest real part of the joint Jacobian (η = σ₀, 10σ₀) |
+|---|---|---|---|---|
+| ∞ | 3.2892, 0.0076, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 | 1.730e-16, 4.362e-02, 2.964e-02, 2.621e-02, 2.476e-02, 2.394e-02, 2.340e-02, 2.301e-02, 2.271e-02, 2.247e-02, 2.227e-02 | 5.6e-10, 6.3e-16, 7.2e-18, 5.6e-10, 1.9433e-02 | -1.4e-10, -2.5e-10 |
+| 0.00707 | 3.2892, 0.9801, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 | 1.730e-16, 6.012e-02, 3.928e-02, 3.218e-02, 2.891e-02, 2.709e-02, 2.595e-02, 2.518e-02, 2.462e-02, 2.419e-02, 2.385e-02 | 4.8e-10, 1.3e-15, 1.5e-17, 4.8e-10, 1.9433e-02 | -1.3e-10, -2.3e-10 |
+
+η = ∞: the refined class atoms a = (+2.260, -3.364, +1.381), c = (-1.518, +0.035, +0.655), s = (0.446, 0.502, 2.000) (largest unconstrained coordinate 8.72); the eigenvalues of the unregularised weighted K₀-atom Hessian there (whitened), smallest three: 2.81e-10, 3.11e-05, 9.46e-04.
+
+η = 0.00707: the refined class atoms a = (+2.260, -3.365, +1.381), c = (-1.518, +0.035, +0.655), s = (0.446, 0.502, 2.000) (largest unconstrained coordinate 8.86); the eigenvalues of the unregularised weighted K₀-atom Hessian there (whitened), smallest three: 2.43e-10, 3.11e-05, 9.46e-04.
+
+The exact six-kernel fit is not stationary: the joint flow collapses the split class onto a replicated configuration, whose merged atom then widens toward the saturation bound s_max — a critical point of the unregularised weighted K₀-atom loss on the boundary, flat in that direction, with a larger fit error than the exact fit's: the K₀-cluster bias of (iv)'s regulariser.
+
+(b) Unbounded solutions. The target (A, C, S) = (1.6, -1.5, 0.5), (-0.7, 0, 0.4), (0.8, 1.5, 0.5): the first bump's weighted amplitude 3·1.6 = 4.8 exceeds a_max = 4, so no exact representation with q = 1/3 exists. The K₀-atom system from the instance's exact atoms with the prior there (LSODA, rtol 10⁻¹⁰): the first atom's amplitude coordinate ϑ_a and its prior atom's z_a (unconstrained), its amplitude a, the fit error and the largest drift.
+
+| η | s | ϑ_a | z_a | a | fit error | largest drift |
+|---|---|---|---|---|---|---|
+| 0.00000 | 0e+00 | 3.8918 | 3.8918 | 3.000000 | 3.2951e-01 | 6.18e-02 |
+| 0.00000 | 1e+02 | 5.6514 | 3.8918 | 3.552385 | 1.8564e-01 | 4.12e-03 |
+| 0.00000 | 1e+03 | 5.8692 | 3.8918 | 3.596246 | 1.7498e-01 | 1.84e-08 |
+| 0.00000 | 1e+04 | 5.8692 | 3.8918 | 3.596246 | 1.7498e-01 | 7.76e-17 |
+| 0.00000 | 1e+05 | 5.8692 | 3.8918 | 3.596246 | 1.7498e-01 | 4.17e-17 |
+| 0.00000 | 1e+06 | 5.8692 | 3.8918 | 3.596246 | 1.7498e-01 | 1.73e-17 |
+| 0.00707 | 0e+00 | 3.8918 | 3.8918 | 3.000000 | 3.2951e-01 | 6.18e-02 |
+| 0.00707 | 1e+02 | 5.7754 | 4.5893 | 3.577871 | 1.7971e-01 | 8.39e-03 |
+| 0.00707 | 1e+03 | 7.9940 | 7.7684 | 3.855686 | 1.2530e-01 | 1.60e-03 |
+| 0.00707 | 1e+04 | 11.7934 | 11.7668 | 3.978072 | 1.0792e-01 | 1.88e-04 |
+| 0.00707 | 1e+05 | 16.2457 | 16.2429 | 3.997627 | 1.0527e-01 | 1.98e-05 |
+| 0.00707 | 1e+06 | 20.8276 | 20.8273 | 3.999760 | 1.0498e-01 | 2.00e-06 |
+| ∞ | 0e+00 | 3.8918 | — | 3.000000 | 3.2951e-01 | 6.18e-02 |
+| ∞ | 1e+02 | 6.1997 | — | 3.655085 | 1.6257e-01 | 1.06e-02 |
+| ∞ | 1e+03 | 9.1282 | — | 3.917504 | 1.1623e-01 | 1.51e-03 |
+| ∞ | 1e+04 | 13.1310 | — | 3.988751 | 1.0647e-01 | 1.90e-04 |
+| ∞ | 1e+05 | 17.6245 | — | 3.998809 | 1.0511e-01 | 1.98e-05 |
+| ∞ | 1e+06 | 22.2129 | — | 3.999880 | 1.0497e-01 | 2.00e-06 |
+
+The increments of ϑ_a per decade of s over ln 10, from s = 10³ on: η = 0.00707: 1.650, 1.934, 1.990; η = ∞: 1.738, 1.951, 1.993 — ϑ_a grows like 2 ln s, and a approaches a_max like 1/s: under an adaptive prior the solution leaves every compact set, while the fixed prior's converges.
+
+(c) The relabelling. The exact representation (m = 6) with the prior's atoms permuted cyclically (largest offset 6.225, unconstrained coordinates): the plan maps the classes to the atoms (2, 2, 0, 0, 1, 1), W² = 0.0e+00, drift 1.1e-17 (Θ) and 3.1e-18 (Z) — stationary, with z_σ(k) = ϑ_k for the plan's bijection σ.
 
 Numbers are produced by `experiments/exp_adaptive_prior.py`; nothing is edited by hand.
