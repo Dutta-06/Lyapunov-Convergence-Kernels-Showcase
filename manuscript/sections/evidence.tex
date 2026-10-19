@@ -291,8 +291,38 @@ slope against $(1/m-1/M)^{1/2}$ (predicted 1) & $0.94\pm0.08$ & $0.92\pm0.08$\\
 
 Script: \code{exp_chaos_learning.py} $\to$ \code{chaos/learning_table.md}.
 \begin{itemize}
-  \item \textbf{[D3 NUMERICS PENDING]} (second pass: the tables of \code{results/chaos/learning_table.md} and the
-    reading of \code{results/RESULTS_PARADIGM.md}).
+  \item Instance: $n=1$, $G=\operatorname{diag}(1,0.25,0.25)$, three-bump plant $(1,-1.5,0.5)$, $(-0.7,0,0.4)$,
+    $(0.8,1.5,0.5)$, $x_m=2\sin t$, $\sigma_{\mathrm{crit}}=0.04716$ (Proposition K),
+    $\sigma_0=0.15\sigma_{\mathrm{crit}}=0.00707$; $L_\vartheta^G=4.044$, $L_2^G=11.11$, $K_\Phi=4$, $F_\rho=0.999$.
+    Averaged slow loop $(\mathfrak{A}_m)$, $m=16$, $64$, $256$ against $M=2048$, 900 slow units, 4 seeds per start;
+    real loop at $k_e=25$ over 2000 time units, 3 seeds.
+  \item The hypothesis at the three-atom stationary measure (fit error $0.244$): $\kappa_R$ at the atoms $0.00004$,
+    $-0.00227$, $0.00411$; over spheres of radius $0.05$, $0.1$, $0.2$, $0.3$: $0.00461$, $0.00512$, $0.00619$,
+    $0.00730$ --- (H) holds with $\varrho'=0.1$ and margin $0.00195$ ($1/\kappa=512$), the window
+    $\kappa_R[\mu^*](N_{0.1})=0.00512<\sigma_0=0.00707<\sigma_{\mathrm{crit}}=0.04716$ is realised; at
+    $0.3\sigma_{\mathrm{crit}}$ the three-atom measure fails splitting ($\kappa_R=0.01696>0.01415$). Theorem
+    constants: $C_1=2.2\cdot10^9$, $m_0=1.2\cdot10^{23}$ (vacuous envelopes).
+  \item Along the warm run (jittered mixture around the atoms) the margin $a(s)$ stays in $[+0.00139,+0.00167]$; the
+    own-residual statistic exceeds the $r^*$-one by $\le0.00013$ ((0.2) allows $0.214$); rms drift
+    $6\cdot10^{-3}\to3\cdot10^{-6}$. Along the cold run (connected cloud) the margin is negative throughout
+    ($-0.196\to-0.0025$) while the fit converges to $0.244$ as well.
+  \item Warm start: window maxima of $D_m$ $0.396\to0.448$ ($m=16$), $0.122\to0.138$ ($64$), $0.0119\to0.0137$
+    ($256$) over $(0,112.5]\to(450,900]$ (last/first 1.13--1.15, last/previous 1.01--1.02: saturated); slope
+    $-1.28\pm0.30$ (mean square; theorem $-1$), learned function $-0.69\pm0.16$; per-particle maxima $1.36$, $0.62$,
+    $0.21\gg3\varrho'/4=0.075$ (Remark D$'''$.6).
+  \item Proposition D$'''$.5: $\norm{S_k}=8.38$, $4.66$, $8.32$; $\E D_\infty$ predicted $0.823$, $0.201$, $0.0454$
+    against means $0.446\pm0.28$, $0.138\pm0.051$, $0.0136\pm0.0055$ (four seeds, heavy-tailed); per seed the
+    realised-weight prediction is within 25\% of the measured $D$ in 9 of 12 pairs (worst ratio $0.57$ at
+    $\abs{w^m-w^M}=0.275$); per-cluster displacements along $S_k(w^m-w^M)$ with cosines 0.92--1.000 and norms within
+    5--20\%.
+  \item Cold start: $D$ grows $1.81\to5.33$ ($16$), $0.505\to1.79$ ($64$), $0.0744\to0.583$ ($256$) (last/first
+    $2.95$, $3.54$, $7.84$), slope $-0.87\pm0.14$; bimodal deviations (medians $0.40$, $0.14$, $0.067$; maxima
+    6.2--6.7); fraction of pairs $>1$ whitened unit apart $0.203\pm0.047$, $0.082\pm0.021$, $0.037\pm0.010$
+    ($\propto m^{-1/2}$): the floor of Remark D$'''$.2.
+  \item Real loop ($k_e=25$, warm start): window maxima $0.328\to0.590$ ($16$), $0.0605\to0.0909$ ($64$),
+    $0.0188\to0.0294$ ($256$) over $(0,500]\to(1000,2000]$ (slow time $\le80=0.16/\kappa$), slope $-1.13\pm0.15$;
+    against the averaged runs at equal slow times the last-window ratios are $1.57$, $0.78$, $2.58$ with relative
+    standard errors of 30--60\% on both sides: the real loop tracks the averaged transient (Corollary D$'''$.7).
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E

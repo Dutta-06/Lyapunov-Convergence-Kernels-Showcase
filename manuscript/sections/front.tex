@@ -81,7 +81,7 @@ In Part~I, every step of the stability argument is either proved or verified num
     regime for the averaged slow loop (Theorem D$'''$, with the finite-$m$ weight-sensitivity law of
     Proposition D$'''$.5) --- through a seventh (the first two) and an eighth (the third). Every confirmed issue
     and its fix is
-    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--7 are kept beside it.
+    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--8 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -236,8 +236,14 @@ it fails for a connected cold start whose mass splits between basins (the suppor
 coupling carries a floor; the real loop at finite $k_e$: settled on a warm start by Corollary D$'''$.7 through
 Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D$'''$.5's up to $O(1/k_e)$),
 open for a cold start (Remark D$'''$.4); dither: the entropy method of \cite{S5} (imported); the theorem's regime
-$m\ge m_0$ is asymptotic ($m_0\sim10^{23}$ on the instance) and Proposition D$'''$.5 is formal; numerics:
-\textbf{[D3 NUMERICS PENDING]}
+$m\ge m_0$ is asymptotic ($m_0\sim10^{23}$ on the instance) and Proposition D$'''$.5 is formal; numerics: on a
+three-bump instance at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$ the window is realised
+($\kappa_R[\mu^*](N_{0.1}) = 0.0051 < \sigma_0 = 0.0071 < \sigma_{\mathrm{crit}} = 0.047$) and (H) holds along a
+warm-start run; the coupled distance saturates (window maxima within 15\% over 900 slow units) with slope
+$-1.28\pm0.30$ in $m$, and the per-seed weight-sensitivity law predicts it within 25\% in 9 of 12 cases with
+per-cluster cosines 0.92--1.00; a connected cold start grows and carries a floor of pairs in different basins whose
+fraction 0.20, 0.08, 0.04 ($m = 16$, $64$, $256$) follows $m^{-1/2}$; the real loop at $k_e = 25$ tracks the averaged
+transient within the seed spread
 & the two ingredients --- the sign of the interaction from flat convexity, and the curvature at the actual rather
 than the worst-case residual --- are new in propagation of chaos for adaptive control; the decomposition
 Gram + residual$\times$curvature is the one of the interpolation literature (\cite{S39}); the window between
