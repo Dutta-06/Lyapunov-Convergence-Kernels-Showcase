@@ -312,17 +312,21 @@ Script: \code{exp_chaos_learning.py} $\to$ \code{chaos/learning_table.md}.
     $0.21\gg3\varrho'/4=0.075$ (Remark D$'''$.6).
   \item Proposition D$'''$.5: $\norm{S_k}=8.38$, $4.66$, $8.32$; $\E D_\infty$ predicted $0.823$, $0.201$, $0.0454$
     against means $0.446\pm0.28$, $0.138\pm0.051$, $0.0136\pm0.0055$ (four seeds, heavy-tailed); per seed the
-    realised-weight prediction is within 25\% of the measured $D$ in 9 of 12 pairs (worst ratio $0.57$ at
-    $\abs{w^m-w^M}=0.275$); per-cluster displacements along $S_k(w^m-w^M)$ with cosines 0.92--1.000 and norms within
-    5--20\%.
+    linearised prediction is within 25\% of the measured $D$ in 9 of 12 pairs (worst ratio $0.57$ at
+    $\abs{w^m-w^M}=0.275$) and the exact stationary distance of the replicated weighted configuration within 2.3\% in
+    all 12; splitting margins positive in 11 of 12 ($+0.0006$ to $+0.0050$), negative ($-0.0022$) for $m=16$, seed 3
+    (weights $(9,4,3)/16$: a saddle, left later by particle migration --- review round 9); per-cluster displacements
+    along $S_k(w^m-w^M)$ with cosines 0.92--1.000 and norms within 0.8--20\%.
   \item Cold start: $D$ grows $1.81\to5.33$ ($16$), $0.505\to1.79$ ($64$), $0.0744\to0.583$ ($256$) (last/first
     $2.95$, $3.54$, $7.84$), slope $-0.87\pm0.14$; bimodal deviations (medians $0.40$, $0.14$, $0.067$; maxima
-    6.2--6.7); fraction of pairs $>1$ whitened unit apart $0.203\pm0.047$, $0.082\pm0.021$, $0.037\pm0.010$
-    ($\propto m^{-1/2}$): the floor of Remark D$'''$.2.
+    6.2--6.7); fraction of pairs $>1$ whitened unit apart $0.203\pm0.047$, $0.082\pm0.021$, $0.037\pm0.010$, decaying
+    like $m^{-0.64\pm0.08}$ (medians $m^{-0.62\pm0.07}$): the floor of Remark D$'''$.2.
   \item Real loop ($k_e=25$, warm start): window maxima $0.328\to0.590$ ($16$), $0.0605\to0.0909$ ($64$),
-    $0.0188\to0.0294$ ($256$) over $(0,500]\to(1000,2000]$ (slow time $\le80=0.16/\kappa$), slope $-1.13\pm0.15$;
-    against the averaged runs at equal slow times the last-window ratios are $1.57$, $0.78$, $2.58$ with relative
-    standard errors of 30--60\% on both sides: the real loop tracks the averaged transient (Corollary D$'''$.7).
+    $0.0188\to0.0294$ ($256$) over $(0,500]\to(1000,2000]$ (slow time $\le80=0.16/\kappa$), slope $-1.13\pm0.15$; on
+    the same initial clouds the averaged flow gives $D_{\mathrm{real}}/D_{\mathrm{averaged}}$ between $0.993$ and
+    $1.004$ at every window end (across different clouds the last-window ratios are $1.57$, $0.78$, $2.58$): the real
+    loop follows its averaged slow dynamics to within 0.7\% (Corollary D$'''$.7); two of the three $m=16$ clouds have
+    inadmissible or marginal weights (margins $-0.0021$, $-0.00001$).
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E

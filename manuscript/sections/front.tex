@@ -81,7 +81,7 @@ In Part~I, every step of the stability argument is either proved or verified num
     regime for the averaged slow loop (Theorem D$'''$, with the finite-$m$ weight-sensitivity law of
     Proposition D$'''$.5) --- through a seventh (the first two) and an eighth (the third). Every confirmed issue
     and its fix is
-    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--8 are kept beside it.
+    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--9 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -241,9 +241,11 @@ three-bump instance at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$ the window is rea
 ($\kappa_R[\mu^*](N_{0.1}) = 0.0051 < \sigma_0 = 0.0071 < \sigma_{\mathrm{crit}} = 0.047$) and (H) holds along a
 warm-start run; the coupled distance saturates (window maxima within 15\% over 900 slow units) with slope
 $-1.28\pm0.30$ in $m$, and the per-seed weight-sensitivity law predicts it within 25\% in 9 of 12 cases with
-per-cluster cosines 0.92--1.00; a connected cold start grows and carries a floor of pairs in different basins whose
-fraction 0.20, 0.08, 0.04 ($m = 16$, $64$, $256$) follows $m^{-1/2}$; the real loop at $k_e = 25$ tracks the averaged
-transient within the seed spread
+per-cluster cosines 0.92--1.00; the exact stationary distance of the replicated weighted configuration reproduces the
+measured one within 2.3\% in all pairs, one $m = 16$ seed with inadmissible weights sitting on a saddle; a connected
+cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 ($m = 16$, $64$,
+$256$) decays like $m^{-0.64\pm0.08}$; the real loop at $k_e = 25$ follows its averaged slow dynamics on the same
+clouds to within 0.7\%
 & the two ingredients --- the sign of the interaction from flat convexity, and the curvature at the actual rather
 than the worst-case residual --- are new in propagation of chaos for adaptive control; the decomposition
 Gram + residual$\times$curvature is the one of the interpolation literature (\cite{S39}); the window between

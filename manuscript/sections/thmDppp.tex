@@ -143,7 +143,10 @@ worst-case and its regime is asymptotic: on the instance below $m_0$ is of order
 finite-$m$ behaviour is described sharply by Proposition D$'''$.5. Referee round 8
 (\code{review/REVIEW_round8_Dppp.md}) re-derived every constant of Steps 0--9, found no counterexample to (2.1),
 (3.1), (4.1) on an adversarial search, and corrected the wording of Remarks D$'''$.1--D$'''$.2, the good event per
-horizon and the well-posedness sentence (all applied). Novelty (literature audit): the technique (synchronous
+horizon and the well-posedness sentence (all applied). Referee round 9 (\code{review/REVIEW_round9_D3b.md}) reviewed
+Proposition D$'''$.5, Corollary D$'''$.7 and the numerics: all hold with fixes, the main one being that the finite-$m$
+replicated configuration is a minimiser only for admissible weights (Proposition D$'''$.5(iv)) --- one of the four
+$m = 16$ warm seeds sits on a saddle, which the numerics paragraph now says. Novelty (literature audit): the technique (synchronous
 coupling + bootstrap + bounded differences) is standard; the sign structure of the interaction and the local,
 residual-weighted hypothesis --- and with them a uniform-in-time statement in a regime where the network learns ---
 are new in propagation of chaos for adaptive control; the theorem's regime is asymptotic in $m$ and the finite-$m$ law
@@ -395,7 +398,11 @@ $\norm{\fhat_\Theta - \fhat_{\bar\Theta}}\le L_\vartheta^G\frac1m\sum\norm{\delt
 form of (H) --- a bad set of small $\mu_s$-mass, with the per-particle bootstrap run on the good particles only and
 the interaction split as in Step~3 --- is the natural extension and is listed in Section~\ref{sec:program}; what the
 present theorem shows is where the clean statement holds (supports inside basins) and why the cold start of Theorem
-D$''$'s experiment was outside it on two counts (the transient and the connected support).
+D$''$'s experiment was outside it on two counts (the transient and the connected support). (iii) The floor has a
+second source at small $m$, on a warm start: when the realised cluster weights fall outside the admissible set of
+Proposition D$'''$.5(iv) the replicated configuration is a saddle of $J_m$, the $m$-system lingers on it and then
+splits a cluster, so that pairs end in different basins although the mean-field flow satisfies (H); its probability
+is exponentially small in $m$ but appreciable at $m = 16$ on the instance below.
 \end{rmk}
 
 \begin{rmk}{Remark}{D$'''$.3}[dither]
@@ -431,30 +438,42 @@ Let $\mu^* = \sum_{k=1}^K\bar w_k\delta_{\vartheta^*_k}$ be a $K$-atom stationar
 $w\in(0,\infty)^K$ let $\mathcal{G}_w(\Theta) := \frac12\langle\norm{f - \sum_kw_k\tilde\Phi(\cdot\,;\vartheta_k)}^2\rangle_\rho
 + \frac{\sigma_0}2\sum_kw_k\norm{\vartheta_k - \vartheta^0}^2_{\Ginv}$ be the mean-field energy of
 $\mu_w := \sum_kw_k\delta_{\vartheta_k}$, so that $\nabla_{\vartheta_k}\mathcal{G}_w(\Theta) = w_k\nabla_\vartheta\mathcal{V}[\mu_w](\vartheta_k)$.
-Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is invertible. Then:
+Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is positive definite. Then:
 \begin{enumerate}[label=\textup{(\roman*)}]
   \item \emph{(the weighted stationary point and its replication)} there is a smooth map $w\mapsto\Theta^*(w)$ on a
     neighbourhood of $\bar w$ with $\Theta^*(\bar w) = \Theta^*$ and
     $\nabla_\vartheta\mathcal{V}[\mu_{\Theta^*(w)}](\vartheta^*_k(w)) = 0$ for every $k$ (implicit function theorem);
-    $S := \partial\Theta^*/\partial w$ ($S_k := \partial\vartheta^*_k/\partial w\in\R^{p\times K}$) is given by
+    $S(w) := \partial\Theta^*/\partial w$ ($S_k := \partial\vartheta^*_k/\partial w\in\R^{p\times K}$) is given by
     $S = -[\nabla^2_\Theta\mathcal{G}_w]^{-1}\partial_w\nabla_\Theta\mathcal{G}_w$ at $(\Theta^*(w),w)$. For $m$
-    particles with $n_k$ of them in cluster $k$ ($w^m_k := n_k/m$), the configuration with $n_k$ copies of
-    $\vartheta^*_k(w^m)$ is a critical point of $J_m$ ($\mu_\Theta = \mu_{w^m}$ there), and a strict local minimiser
-    of $J_m$ when in addition the splitting condition $\sigma_0\Ginv - R[\mu_{w^m}](\vartheta^*_k(w^m))\succ0$ holds
-    at every cluster (Proposition K(i): the Hessian of $J_m$ at a configuration with coinciding particles splits into
-    the collective block $\nabla^2\mathcal{G}_{w^m}$ and the separation blocks of each cluster).
+    particles with $n_k$ of them in cluster $k$ ($w^m_k := n_k/m$), the configuration $\Theta^*_m(w^m)$ with $n_k$
+    copies of $\vartheta^*_k(w^m)$ is a critical point of $J_m$ ($\mu_\Theta = \mu_{w^m}$ there). Its whitened
+    Hessian splits (Proposition K(i), applied cluster by cluster) into the separation blocks
+    $\sigma_0I - R^G[\mu_{w^m}](\vartheta^*_k(w^m))$, each with multiplicity $n_k - 1$, and the collective block
+    $\operatorname{diag}(w^m)^{-1/2}\cdot G_K^{1/2}\nabla^2_\Theta\mathcal{G}_{w^m}G_K^{1/2}\cdot\operatorname{diag}(w^m)^{-1/2}$
+    (the $K$-atom Hessian, whitened and weighted). Hence $\Theta^*_m(w^m)$ is a strict local minimiser of $J_m$
+    exactly when $w^m$ lies in the \emph{admissible set}
+    \[
+      W_{\mathrm{adm}} := \bigl\{w : \sigma_0\Ginv - R[\mu_{\Theta^*(w)}](\vartheta^*_k(w))\succ0\text{ for every }k
+      \text{ and }\nabla^2\mathcal{G}_w(\Theta^*(w))\succ0\bigr\},
+    \]
+    a neighbourhood of $\bar w$ (both conditions are open and hold at $\bar w$ by (H) and the assumption), and a
+    saddle when the splitting condition fails at some cluster: a cluster can then split, and the $m$-system leaves
+    the configuration by migrating particles between basins.
   \item \emph{(the stationary distance)} Under the shared-particle coupling of Theorem D$'''$ with i.i.d.\ cluster
-    labels of law $\bar w$ (the $m$ particles are the first $m$ of the $M$ reference particles), suppose the
-    $m$-system converges to the configuration of \textup{(i)} with its weights $w^m$ and the reference to the one
-    with $w^M$. Then the coupling distance converges to
+    labels of law $\bar w$ (the $m$ particles are the first $m$ of the $M$ reference particles), suppose
+    $w^m, w^M\in W_{\mathrm{adm}}$ and that the $m$-system converges to $\Theta^*_m(w^m)$ and the reference to
+    $\Theta^*_M(w^M)$. Then the coupling distance converges to
     \[
       D_\infty = \sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}
-      = \sum_kw^m_k\norm{S_k(w^m - w^M)}^2_{\Ginv} + O(\norm{w^m - w^M}^3),
+      = \sum_kw^m_k\norm{S_k(w^M)(w^m - w^M)}^2_{\Ginv} + O(\norm{w^m - w^M}^3),
     \]
-    and since $\E[(w^m - w^M)(w^m - w^M)^\T] = (1/m - 1/M)\tilde C$ with
+    and, with $\tilde S_k := G^{-1/2}S_k(\bar w)$ (replacing $S(w^M)$ by $S(\bar w)$ costs a relative
+    $O(\norm{w^M - \bar w})$) and $\E[(w^m - w^M)(w^m - w^M)^\T] = (1/m - 1/M)\tilde C$,
     $\tilde C := \operatorname{diag}(\bar w) - \bar w\bar w^\T$ (multinomial counts of the shared labels),
+    conditionally on the admissibility of both weights,
     \[
-      \E D_\infty = (1/m - 1/M)\cdot\sum_k\bar w_k\tr\bigl(G^{-1/2}S_k\tilde CS_k^\T G^{-1/2}\bigr) + O(m^{-3/2}):
+      \E[D_\infty\mid w^m, w^M\in W_{\mathrm{adm}}] = (1/m - 1/M)\cdot\sum_k\bar w_k\tr\bigl(\tilde S_k\tilde C\tilde S_k^\T\bigr)
+      + O(m^{-3/2}) + O(m^{-1}M^{-1/2}):
     \]
     the $1/m$ law with an explicit constant, and the $(1/m - 1/M)$ law of the shared-particle coupling observed in
     Theorem D$'$'s numerics.
@@ -463,11 +482,20 @@ Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is i
     with $\xi\sim\mathcal{N}(0,\tilde C)$ for every particle $i$ of cluster $k(i)$: the fluctuations of the coupling
     are Gaussian, carried entirely by the cluster weights, and all particles of a cluster are displaced by the same
     vector.
+  \item \emph{(admissibility)} Let
+    $\delta_w := \sup\{\delta : \norm{w - \bar w}_\infty\le\delta\Rightarrow w\in W_{\mathrm{adm}}\} > 0$. By
+    Hoeffding's inequality for each multinomial coordinate,
+    $\mathbb{P}(w^m\notin W_{\mathrm{adm}})\le2K\exp(-2m\delta_w^2)$: the finite-$m$ configuration is a strict local
+    minimiser with probability exponentially close to one, the exceptional event being the one on which Remark
+    D$'''$.2's floor appears on a warm start --- a cluster of the $m$-system splits and particles migrate to other
+    basins, because the realised weights make the replicated configuration a saddle.
 \end{enumerate}
 \end{thm}
-\status{Formal: (i) and the algebra of (ii)--(iii) are exact (implicit function theorem; the multinomial covariance
-of shared labels), the convergence of both systems to the stated configurations is assumed (it is what Theorem
-D$'''$ proves for $m\ge m_0$ and what the numerics show for $m = 16$--$256$). Checked:
+\status{Formal: (i) and the algebra of (ii)--(iv) are exact (the block splitting is Proposition K(i) cluster by
+cluster, confirmed on $J_{10}$ to $8\cdot10^{-12}$ in referee round 9; implicit function theorem; the multinomial
+covariance of shared labels; Hoeffding), the convergence of both systems to the stated configurations is assumed (it
+is what Theorem D$'''$ proves for $m\ge m_0$ and what the numerics show for $m = 16$--$256$ at admissible weights; at
+inadmissible weights the $m$-system sits on the saddle for a long time and then leaves it, numerics below). Checked:
 \code{weighted_stationary_atoms}, \code{weight_sensitivity}, \code{predicted_stationary_D} in
 \code{chaos_learning.py}; on the instance below the replicated weighted stationary point is a critical point of
 $J_{16}$ to $10^{-10}$, the linearisation $\vartheta^*(\bar w + \mathrm{d}w) - \vartheta^* = S\cdot\mathrm{d}w$ has a
@@ -485,8 +513,9 @@ $(L_\vartheta^G)^2D^{1/2}$ and divided by the stiffness $\kappa$. This is not an
 only: Proposition D$'''$.5 says the particles of a cluster are displaced by $S_k(w^m - w^M)$, of order
 $\norm{S}m^{-1/2}$ with $\norm{S}\sim(\text{stiffness})^{-1}$, which exceeds any fixed $\varrho'$ for $m$ below
 $(\norm{S}/\varrho')^2$ --- on the instance below the $m = 16$ particles sit $0.4$--$1.4$ whitened units from their
-reference copies, outside the neighbourhood $N_{\varrho'}$ in which $\mathcal{V}[\mu_{\bar\Theta}]$ is convex, at a
-stable stationary point of their own $J_{16}$. Hypothesis (H) is nevertheless the right object: it is the condition
+reference copies, outside the neighbourhood $N_{\varrho'}$ in which $\mathcal{V}[\mu_{\bar\Theta}]$ is convex, at the replicated stationary configuration $\Theta^*_{16}(w^m)$ of
+their own $J_{16}$ --- a strict local minimiser when $w^m\in W_{\mathrm{adm}}$ and a saddle otherwise (Proposition
+D$'''$.5(i), (iv); one of the four $m = 16$ seeds below). Hypothesis (H) is nevertheless the right object: it is the condition
 under which the reference configuration is stable to splitting, and the $m$-system's configuration is the same
 configuration with perturbed weights. What the numerics test is therefore (a) hypothesis (H) at the stationary
 measure and along the flow, (b) the mechanism --- the coupled distance saturates (no growth) and follows the $1/m$
@@ -498,12 +527,11 @@ record.
 Let $\mu^* = \sum_k\bar w_k\delta_{\vartheta^*_k}$ be a $K$-atom stationary measure as in Proposition D$'''$.5,
 satisfying the splitting condition $\sigma_0\Ginv - R[\mu^*](\vartheta^*_k)\succ0$ at every atom and the
 non-degeneracy of the $K$-atom Hessian, and let $w\mapsto\Theta^*(w)$ be the weighted stationary point of
-D$'''$.5(i). Fix $m\le M$ and cluster weights $w^m$, $w^M$ in the neighbourhood of $\bar w$ on which $\Theta^*(\cdot)$
-is defined and the splitting condition persists, and let $\Theta^*_m :=$ the configuration with $n_k = mw^m_k$ copies
-of $\vartheta^*_k(w^m)$ (likewise $\Theta^*_M$). Both are non-degenerate local minimisers of $J_m$ and $J_M$
-(Proposition D$'''$.5(i)), hence hyperbolic critical points, and Theorem J applies to each loop: there are $k_0$,
-$\rho_0$, $C$ (depending on $\Theta^*_m$ and $\Theta^*_M$, hence on $m$, $M$ and the weights) such that for
-$k_e\ge k_0$ the real closed loop \textup{(CL)} with $m$ kernels started at
+D$'''$.5(i). Fix $m\le M$ and cluster weights $w^m, w^M\in W_{\mathrm{adm}}$ (Proposition D$'''$.5(i)), and let
+$\Theta^*_m :=$ the configuration with $n_k = mw^m_k$ copies of $\vartheta^*_k(w^m)$ (likewise $\Theta^*_M$). Both are
+non-degenerate local minimisers of $J_m$ and $J_M$ (Proposition D$'''$.5(i)), hence hyperbolic critical points, and
+Theorem J applies to each loop: there are $k_0$, $\rho_0$, $C$ (depending on $\Theta^*_m$ and $\Theta^*_M$, hence on
+$m$, $M$ and the weights) such that for $k_e\ge k_0$ the real closed loop \textup{(CL)} with $m$ kernels started at
 $\norm{\Theta(0) - \Theta^*_m}_{\Ginv}\le\rho_0$, $\norm{e(0)}\le R$ converges to its $T_0$-periodic orbit
 $\Theta_p^m$, and likewise the $M$-kernel loop to $\Theta_p^M$. Under the shared-particle coupling (the $m$ kernels
 are the first $m$ of the $M$, the plants are driven by the same reference) the coupled distance
@@ -512,7 +540,8 @@ $D(t) := \frac1m\sum_i\norm{\vartheta_i(t) - \bar\vartheta_i(t)}^2_{\Ginv}$ sati
   D(t)^{1/2}\le D_{\mathrm{orb}}^{1/2} + Ce^{-\mu t}\bigl(\norm{\Theta(0) - \Theta_p^m(0)}_{\Ginv} + \norm{x(0) - x_p^m(0)}\bigr)\\
   + Ce^{-\mu t}\bigl(\norm{\bar\Theta(0) - \Theta_p^M(0)}_{\Ginv} + \norm{\bar x(0) - x_p^M(0)}\bigr),
 \end{multline*}
-with $\mu = (\lambda_*/k_e)(1 - \kappa)$ the rate of Theorem J(c) (the smaller of the two loops' rates) and
+with $\mu = (\lambda_*/k_e)(1 - \kappa_J)$ the rate of Theorem J(c) ($\kappa_J$ its small parameter; the smaller of
+the two loops' rates) and
 \begin{align*}
   D_{\mathrm{orb}} &:= \sup_t\frac1m\sum_i\norm{\Theta_p^m(t)_i - \Theta_p^M(t)_i}^2_{\Ginv}\\
   &= \sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv} + O(1/k_e)\\
@@ -520,20 +549,21 @@ with $\mu = (\lambda_*/k_e)(1 - \kappa)$ the rate of Theorem J(c) (the smaller o
 \end{align*}
 the coupled distance of the real loop is bounded uniformly in time, converges to the distance between the two
 periodic orbits, and that distance is Proposition D$'''$.5's stationary distance up to the $O(1/k_e)$ offsets of
-Theorem J(a),(d) (which differ between the two loops by $O(k_e^{-1}\norm{w^m - w^M})$, the offset being a smooth
-function of the configuration). In particular, for cluster labels i.i.d.\ of law $\bar w$ and conditionally on both
-starts lying in their basins,
+Theorem J(a),(d) (which differ between the two loops by $O(k_e^{-1}\norm{w^m - w^M}) + O(k_e^{-2})$, the first-order
+offset of a replicated configuration being a smooth function of the $K$-atom data $(\Theta^*(w),w)$ by permutation
+equivariance). In particular, for cluster labels i.i.d.\ of law $\bar w$ and conditionally on both weights being
+admissible and both starts lying in their basins,
 $\E D_{\mathrm{orb}} = (1/m - 1/M)\sum_k\bar w_k\tr(\tilde S_k\tilde C\tilde S_k^\T) + O(m^{-3/2}) + O(1/k_e)$.
 \end{thm}
 \status{Proved as stated (Theorem J(a),(c),(d) applied to each loop, the triangle inequality in the $\Ginv$ metric,
 and Proposition D$'''$.5(ii) for the distance between the critical points), under Theorem J's hypotheses for both
 configurations: the constants $k_0$, $\rho_0$, $C$, $\mu$ are those of Theorem J at $\Theta^*_m$ and $\Theta^*_M$,
 and the corollary does not assert their uniformity in $m$ or $M$ (Remark D$'''$.8). It is the statement of Remark
-D$'''$.4 for a warm start: the real loop's coupled distance saturates, at a value set by the cluster weights. Checked
-on the instance of this section's numerics (table 5: the real loop at $k_e = 25$ from the jittered mixture over 80 slow
-units, a sixth of the relaxation time $1/\kappa$: its window maxima grow by $1.5$--$1.8$, as the averaged runs' do over
-the same slow times, and agree with them within the seed-to-seed spread, ratios $0.8$--$2.6$ against relative standard
-errors of 30--60\%; the saturation at the orbit distance lies beyond the horizon run).}
+D$'''$.4 for a warm start: the real loop's coupled distance saturates, at a value set by the cluster weights.
+Consistent with the instance of this section's numerics (table 5: the real loop at $k_e = 25$ from the jittered
+mixture over 80 slow units, a sixth of the relaxation time $1/\kappa$, follows its averaged slow dynamics on the same
+initial clouds to within a few percent at every window end; the saturation at the orbit distance lies beyond the
+horizon run and is not checked).}
 
 \begin{proof}
 Theorem J(c) for the $m$-kernel loop gives
@@ -545,10 +575,12 @@ norm dominates the mean square over the first $m$ rows), so by the triangle ineq
 $D(t)^{1/2}\le[\frac1m\sum_i\norm{\Theta_p^m(t)_i - \Theta_p^M(t)_i}^2]^{1/2} + (\text{the two transients})$.
 Theorem J(a) places each orbit within $C/k_e$ of its critical point, uniformly in $t$, so the first term is
 $\sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}$ up to $O(1/k_e)$ (the two offsets are
-$O(1/k_e)$ each; their difference is $O(k_e^{-1}\norm{\Theta^*_m - \Theta^*_M})$ because
-$\Theta\mapsto J^{-1}(b_{\mathrm{frozen}} + b_{\mathrm{osc}})(\Theta)$ is smooth, which sharpens the $O(1/k_e)$ to
-$O(k_e^{-1}\norm{w^m - w^M})$), and Proposition D$'''$.5(ii) expands it in $w^m - w^M$. The expectation statement is
-D$'''$.5(ii)'s.
+$O(1/k_e)$ each, with $O(k_e^{-2})$ remainders; at a replicated configuration the first-order offset is the same
+vector for all particles of a cluster and depends smoothly on the $K$-atom data $(\Theta^*(w),w)$, by the permutation
+equivariance of \textup{(CL)} and the block splitting of Proposition D$'''$.5(i), so the two loops' offsets differ by
+$O(k_e^{-1}\norm{w^m - w^M}) + O(k_e^{-2})$ --- the two loops live on $\R^{mp}$ and $\R^{Mp}$, and it is this
+reduction to the $K$-atom data that makes them comparable), and Proposition D$'''$.5(ii) expands the distance between
+the critical points in $w^m - w^M$. The expectation statement is D$'''$.5(ii)'s.
 \end{proof}
 
 \begin{rmk}{Remark}{D$'''$.8}[what the corollary does and does not say]
@@ -561,7 +593,7 @@ the same weights; the corollary does not prove this, and the cold start --- wher
 loop grew in Theorem D$''$'s experiment --- is outside it on the same two counts as in Remark D$'''$.2.
 \end{rmk}
 
-% Numerics (PARADIGM.md section 5d, second pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
+% Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
 \paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}). The instance:
 $n = 1$, saturated features with $a_{\max} = 4$, $c_{\max} = 3$, $s\in[0.3,2]$, prior $\vartheta^0 = 0$,
 $G = \operatorname{diag}(1,0.25,0.25)$; a plant of three Gaussian bumps, $(A,C,S) = (1,-1.5,0.5)$, $(-0.7,0,0.4)$,
@@ -591,7 +623,8 @@ $\kappa_R[\mu^*](N_{0.1}) = 0.00512 < \sigma_0 = 0.00707 < \sigma_{\mathrm{crit}
 $\sigma_0 = 0.3\sigma_{\mathrm{crit}}$, by contrast, the three-atom critical point (fit error $0.406$) fails the
 splitting condition at its third atom ($\kappa_R = 0.01696 > \sigma_0 = 0.01415$): there the mean-field limit has
 more atoms, and the hypothesis has to be checked at that configuration. The theorem's constants for the warm start
-($\Lambda_1 = 0$, $\kappa := \frac12\min\{\kappa(\varrho'),\min_sa(s)\} = 0.00070$): $R_\Theta = 2857$,
+($\Lambda_1 = 0$, $\kappa := \frac12\min\{\kappa(\varrho'),\min_sa(s)\} = 0.00070$, the factor $\frac12$ leaving room for the
+sampling of the supremum by finitely many directions): $R_\Theta = 2857$,
 $\varrho = 1.1\cdot10^{-6}$, $\theta = 4.6\cdot10^{-11}$, $C_1 = 2.2\cdot10^9$, $m_0 = 1.2\cdot10^{23}$ --- the
 worst-case envelope of Remark D$'''$.6.
 
@@ -601,10 +634,9 @@ width $0.02$ around the atoms) the margin $a(s) = \sigma_0 - \kappa_R[\mu^*]($sp
 particles, 24 directions$)$ stays between $+0.00139$ and $+0.00167$ over the whole run, so (H) holds
 with $s_1 = 0$; the same statistic with the reference's own residual is larger by at most $0.00013$ (its sampling
 fluctuation; the proof's bound (0.2) allows $L_2^G\norm{r_{\mathrm{ref}} - r^*}_{L^1(\rho)}\le0.214$), the
-reference's rms drift decays from $6\cdot10^{-3}$ to $3\cdot10^{-6}$ and its fit error is $0.245$ throughout: the
-reference is stationary. On the cold start ($a\sim\mathcal{N}(0,0.8^2)$, $c\sim\mathcal{U}(-2,2)$,
-$s\sim\mathcal{U}(0.4,1)$, a connected cloud) the margin is negative over the whole run, $-0.196$ at $s = 1$ and
-$-0.0025$ at $s = 900$, while the fit error falls from $0.948$ to $0.244$ --- the same fit as the warm limit --- and
+reference's rms drift decays from $6\cdot10^{-3}$ to $3\cdot10^{-6}$ and its fit error stays at $0.245$--$0.248$: the reference is stationary. On the cold start ($a\sim\mathcal{N}(0,0.8^2)$, $c\sim\mathcal{U}(-2,2)$,
+$s\sim\mathcal{U}(0.4,1)$, a connected cloud) the margin is negative over the whole run, $-0.196$ at the first record ($-0.179$ at $s = 1$) and $-0.0025$ at
+$s = 900$, while the fit error falls from $0.948$ to $0.244$ --- the same fit as the warm limit --- and
 the rms drift from $0.15$ to $4.7\cdot10^{-4}$: the cold reference converges to a configuration of the same quality
 whose support reaches the ridges (Remark D$'''$.2).
 
@@ -641,7 +673,7 @@ The distance saturates: last-to-first window ratios $1.13$, $1.13$, $1.15$ and l
 $1.02$. Its $m$-law has slope $-1.28\pm0.30$ (per-seed fits; the theorem's mean square: $-1$), the learned function's
 $-0.69\pm0.16$ ($m^{-1/2}$: $-0.5$). The per-particle maxima $1.36$, $0.62$, $0.21$ are far above
 $3\varrho'/4 = 0.075$: the localisation of part (c) is not in force at these $m$ (Remark D$'''$.6), and the values
-lie below the vacuous $C_1/m$ by seven to eight orders of magnitude.
+lie below the vacuous $C_1/m$ by 8.4--8.8 orders of magnitude.
 
 \smallskip
 \noindent\emph{Proposition D$'''$.5 (the same table).} The sensitivities of the three atoms to the weights have
@@ -653,22 +685,34 @@ per-seed law is the sharp test: $\sum_kw^m_k\norm{\tilde S_k(w^m - w^M)}^2$ comp
 weights predicts the measured $D_m$ at $s = 900$ within 25\% in 9 of the 12 (seed, $m$) pairs (for instance
 $0.123\to0.112$, $0.187\to0.186$, $0.206\to0.205$ at $m = 16$; $0.0303\to0.0261$, $0.00087\to0.00085$,
 $0.0081\to0.0087$, $0.0187\to0.0190$ at $m = 256$); the largest deviation, a ratio $0.57$ at $m = 16$, is the seed
-with the largest weight fluctuation $\abs{w^m - w^M} = 0.275$, where the linearisation's cubic remainder and the
-saturation $a\le a_{\max}$ enter. Per cluster (seed 0), the measured mean displacements of the $m$-system's particles
-point along $S_k(w^m - w^M)$ with cosines $0.92$--$1.000$ and norms within 5--20\% ($m = 16$: $0.434$ against
-$0.455$, $0.130$ against $0.129$, $0.338$ against $0.358$): the particles of a cluster move together, by the
-predicted vector.
+with the largest weight fluctuation $\abs{w^m - w^M} = 0.275$, where the linearisation's remainder and the saturation
+$a\le a_{\max}$ enter. The exact first equality of (ii) --- $\sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2$
+with the weighted stationary points themselves --- reproduces the measured $D_m$ within 2.3\% in all 12 pairs
+($1.292\to1.292$ for the seed just mentioned): every $m$-system sits at the replicated weighted stationary
+configuration. The splitting margin of $\Theta^*(w^m)$ is positive in 11 of the 12 pairs ($+0.0006$ to $+0.0050$);
+it is negative, $-0.0022$, for $m = 16$, seed 3, whose weights $(9,4,3)/16$ lie outside the admissible set: there
+the replicated configuration is a saddle of $J_{16}$ and the plateau at $s = 900$ is the saddle's --- referee round 9
+continued that run to $s = 3600$ and saw $D$ grow from $1.29$ to $5.13$ as two particles changed basins and the
+weights re-sorted to $(7,5,4)/16$ (Proposition D$'''$.5(iv); the root-mean-square weight fluctuation is $0.204$,
+$0.102$, $0.051$ at $m = 16$, $64$, $256$ against admissible margins of $0.06$--$0.36$ in $\norm{\cdot}_\infty$). Per
+cluster (seed 0), the measured mean displacements of the $m$-system's particles point along $S_k(w^m - w^M)$ with
+cosines $0.92$--$1.000$ and norms within 0.8--20\% ($m = 16$: $0.434$ against $0.455$, $0.130$ against $0.129$,
+$0.338$ against $0.358$): the particles of a cluster move together, by the predicted vector. The ratios $0.54$,
+$0.69$, $0.30$ of the four-seed means to the multinomial expectation are the sampling of a heavy-tailed quantity at
+$m = 16$ and $64$ and, at $m = 256$, four seeds whose realised fluctuations happen to be small.
 
 \smallskip
 \noindent\emph{Cold start (table 4).} Window maxima of $D_m$: $1.81\pm0.28\to3.13\to4.50\to5.33\pm0.16$
 ($m = 16$), $0.505\to0.900\to1.42\to1.79\pm0.93$ ($64$), $0.0744\to0.162\to0.347\to0.583\pm0.19$ ($256$): the
 distance grows over the whole horizon (last-to-first $2.95$, $3.54$, $7.84$; last-to-previous $1.19$, $1.26$,
-$1.68$), with slope $-0.87\pm0.14$ in $m$ (the learned function $-0.66\pm0.06$). The per-particle deviations are
+$1.68$), with slope $-0.87\pm0.14$ in $m$ (the learned function $-0.66\pm0.06$, steeper than the $-0.5$ of the warm start). The
+per-particle deviations are
 bimodal: medians $0.40$, $0.14$, $0.067$ (the $m^{-1/2}$ law of the particles that stayed with their references)
 against maxima $6.7$, $6.3$, $6.2$ for every $m$ (the separation between basins), and the fraction of pairs more than
-one whitened unit apart is $0.203\pm0.047$, $0.082\pm0.021$, $0.037\pm0.010$ --- a factor $2.5$ and $2.2$ per factor
-4 in $m$, the $m^{-1/2}$ law of the floor predicted in Remark D$'''$.2 (the flips contribute
-$p_m\cdot O(R^2)\approx0.2\cdot38 = 7.8$, $3.1$, $1.4$ against the measured $5.3$, $1.8$, $0.58$). This is Theorem
+one whitened unit apart is $0.203\pm0.047$, $0.082\pm0.021$, $0.037\pm0.010$ --- a factor $2.5$ and $2.2$ per factor 4 in $m$, a decay like $m^{-0.64\pm0.08}$
+(per-seed fits; the medians decay like $m^{-0.62\pm0.07}$) --- steeper than the $m^{-1/2}$ of Remark D$'''$.2's
+boundary-layer count, which is a lower-order prediction (the flips contribute $p_m\cdot O(R^2)\approx0.2\cdot38 = 7.8$,
+$3.1$, $1.4$ against the measured $5.3$, $1.8$, $0.58$). This is Theorem
 D$''$'s negative finding reproduced and diagnosed on the averaged system: a connected cold start that splits between
 basins is outside (H), and its coupling distance is dominated by the pairs that chose different basins.
 
@@ -678,21 +722,27 @@ $\tau = 0$, $\mathrm{d}t = 10^{-3}$, three seeds) from the same warm start: wind
 $(500,1000]$, $(1000,2000]$ real-time units are $0.328\pm0.11\to0.467\to0.590\pm0.17$ ($m = 16$),
 $0.0605\to0.0801\to0.0909\pm0.045$ ($64$), $0.0188\to0.0253\to0.0294\pm0.011$ ($256$), slope $-1.13\pm0.15$ in $m$;
 the reference's fit error stays at $0.245$--$0.246$. The horizon is 80 slow units, a sixth of the relaxation time
-$1/\kappa = 512$, and the growth (last-to-first $1.80$, $1.50$, $1.56$) is the early transient of the averaged
-dynamics, whose own window maxima over $(0,20]$, $(20,40]$, $(40,80]$ in slow time are $0.249\to0.325\to0.377$
-($m = 16$), $0.0736\to0.101\to0.117$ ($64$), $0.00745\to0.00984\to0.0114$ ($256$): the real loop's last-window
-maxima are $1.57$, $0.78$ and $2.58$ times the averaged ones, within the seed-to-seed spread of both (relative
-standard errors 30--60\%). The real loop tracks the averaged transient (Corollary D$'''$.7); its saturation lies
-beyond the horizon run, at the orbit distance of the corollary.
+$1/\kappa = 512$, and the growth (last-to-first $1.80$, $1.50$, $1.56$) is the early transient of the averaged dynamics: the averaged
+flow started from the real loop's own initial clouds (reproduced from their seeds) gives
+$D_{\mathrm{real}}(t)/D_{\mathrm{averaged}}(t/k_e)$ between $0.993$ and $1.004$ at every window end, for every seed
+and every $m$ --- the real loop at $k_e = 25$ follows its averaged slow dynamics to within 0.7\% (across different
+clouds the last-window maxima are $1.57$, $0.78$ and $2.58$ times the averaged runs' $0.377$, $0.117$, $0.0114$,
+within the seed-to-seed spread). Two of the three $m = 16$ clouds have inadmissible or marginal weights (splitting
+margins $-0.0021$, $-0.00001$; the third $+0.0026$), so their eventual configuration is a saddle's; at $m = 64$ and
+$256$ all margins are positive ($+0.0029$ to $+0.0049$). The saturation at the orbit distance of Corollary
+D$'''$.7 lies beyond the horizon run.
 
 \smallskip
 \noindent\emph{Reading.} In the window $\kappa_R[\mu^*] < \sigma_0 < \sigma_{\mathrm{crit}}$ the network learns
 (the collapsed configuration is unstable, the three kernels fit the plant to $0.244$) and propagation of chaos is
-uniform in time on a warm start: the coupled distance saturates with the $1/m$ law, and its level is the
-weight-sensitivity law of Proposition D$'''$.5, not the theorem's constant. The cold start of a connected cloud
-shows what the hypothesis excludes: growth over the horizon and a floor of pairs in different basins whose fraction
-decays like $m^{-1/2}$, while the learned function still converges at the $m^{-1/2}$ rate in both cases. The real
-loop at $k_e = 25$ behaves as its averaged slow dynamics over the horizon run.
+uniform in time on a warm start with admissible weights: the coupled distance saturates with the $1/m$ law at the
+stationary distance of the replicated weighted configuration, which the exact form of Proposition D$'''$.5(ii) gives
+within 2.3\% --- the level is the weight-sensitivity law, not the theorem's constant. At $m = 16$ the multinomial
+weights leave the admissible set with appreciable probability; the one such seed sits on a saddle and later splits a
+cluster. The cold start of a connected cloud shows what the hypothesis excludes: growth over the horizon and a floor
+of pairs in different basins whose fraction decays like $m^{-0.64}$, while the learned function still converges at a
+rate between $m^{-1/2}$ and $m^{-2/3}$ in both cases. The real loop at $k_e = 25$ follows its averaged slow dynamics
+to within 0.7\% over the horizon run.
 
 \checkedby{\code{tests/test_chaos_learning.py}: \textup{($\mathfrak{A}_m$)}'s drift equals $-G\nabla J_m$ of
 \code{periodic.ClosedLoop} to machine precision (\code{test_averaged_slow_loop_is_the_G_gradient_flow_of_J_m}); the
