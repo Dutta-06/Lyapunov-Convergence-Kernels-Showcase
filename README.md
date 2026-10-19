@@ -26,7 +26,7 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   the documents is produced by a script in [experiments/](experiments).
 - The theory went through three rounds of automated multi-agent adversarial review, and the manuscript through a
   fourth that compared it line by line with the theory. Every confirmed issue and its fix is logged in
-  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of rounds 1–3 and 5–9 are kept beside it.
+  [review/REVIEW_LOG.md](review/REVIEW_LOG.md), and the raw reports of rounds 1–3 and 5–10 are kept beside it.
 - The claim-by-claim novelty audit is in [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md).
 - Version 4 of the theory adds a self-contained strict Lyapunov function for Theorem E (Lemma E.0, with the sharp slow-regime
   version Lemma E.0′), a theorem that
@@ -41,7 +41,7 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   exciting regressors (Lemma E.0″), and uniform-in-time propagation of chaos in the learning regime for the averaged
   slow loop (Theorem D‴: the flat convexity of the loss makes the particle interaction contract, and the fitted
   configuration's second-order optimality replaces the dominant leak), with the finite-size weight-sensitivity law (Proposition D‴.5),
-  the real loop on a warm start (Corollary D‴.7) and the leak's prior as a design input of the window (Proposition D‴.9); rounds 7, 8 and 9
+  the real loop on a warm start (Corollary D‴.7) and the leak's prior as a design input of the window (Proposition D‴.9); rounds 7–10
   of the review log cover them.
 
 ---
@@ -148,7 +148,7 @@ n = 3 and NTK results contradict them.
 | [PARADIGM.md](PARADIGM.md) | the transport theory: results, proofs, verification map (§7), research program (§8) |
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
-| [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5–9, archived version 2 of the theory |
+| [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5–10, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
 | [tests/](tests) | 88 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |

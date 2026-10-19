@@ -15,8 +15,9 @@ verbatim for the averaged slow loop
 
 whenever the ϱ′-neighbourhood of the support of the mean-field flow stays inside the cells (the assignment is locally
 constant).  What changes is the stationary residual: a prior whose atoms sit near the plant's structure removes the leak's
-bias, lowers κ_R[μ*] (the window's lower end), raises the margin κ and lowers the weight sensitivity S (the floor of
-Proposition D‴.5).  This module implements (𝔄_m^ν) as a subclass of `chaos_learning.AveragedSlowLoop` and the design table of
+bias, lowers κ_R[μ*] (the window's lower end) and raises the margin κ, and *raises* the weight sensitivity S (the floor of
+Proposition D‴.5): the stationary atoms carry the plant's full amplitudes, to which the sensitivity is proportional — bias
+against variance.  This module implements (𝔄_m^ν) as a subclass of `chaos_learning.AveragedSlowLoop` and the design table of
 `experiments/exp_prior_design.py`.
 """
 import numpy as np
@@ -50,8 +51,8 @@ class MixturePriorLoop(AveragedSlowLoop):
 
     def cell_margin(self, Th):
         """For every row, the gap between the distances to the nearest and the second-nearest prior atom (G⁻¹ metric); a
-        positive lower bound over the ϱ′-neighbourhood of the support is the 'assignment locally constant' hypothesis of
-        Proposition D‴.9 (the gap must exceed 2ϱ′)."""
+        gap above 2ϱ′ on the support is sufficient for the 'assignment locally constant' hypothesis of Proposition D‴.9 (the G⁻¹-distance
+        to the nearest Voronoi boundary is at least half the gap, with equality on the segment between the two atoms)."""
         d = np.sqrt(np.sum((Th[:, None, :] - self.prior[None, :, :]) ** 2 / self.G[None, None, :], axis=2))
         d.sort(axis=1)
         return d[:, 1] - d[:, 0] if d.shape[1] > 1 else np.full(Th.shape[0], np.inf)

@@ -293,7 +293,8 @@ found the construction.
   prototype regularisers) and the paradigm's own Theorem C′ leaks toward a prior *measure* through an optimal plan. The nearest-atom
   leak is the simplest measure-valued prior; what is new is its role in the window of Theorem D‴ — the prior's placement sets the
   stationary residual, hence the lower end of the window and the relaxation rate — and the finding that removing the bias raises
-  the coupling's floors (the weight sensitivity grows with the amplitudes): a bias–variance trade-off stated for the particle system.
+  the coupling's floors (on the instance the weight sensitivity rises with the amplitudes): a bias–variance trade-off stated for the
+  particle system.
   Verdict: standard object, new design statement; the function-level sensitivity law is the delta method once more.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss

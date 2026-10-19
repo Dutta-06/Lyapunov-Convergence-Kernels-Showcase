@@ -55,7 +55,8 @@ def test_coupling_identity_inside_the_cells():
     Th = Thb + 0.03 * rng.standard_normal(Thb.shape)
     d = mix.decomposition(Th, Thb, fhat_mf=mix.f_hat(CL.mixture_start(prior, 300, rng, 0.05, G)))
     assert d['same_cell'] and abs(d['total'] - d['half_dD']) < 1e-15 * max(1.0, abs(d['half_dD']))
-    assert d['T_B'] <= 11.12 ** 2 * d['D'] ** 2 / 16
+    # the content of (3.1): T_B = −‖h‖² + a cross term bounded by (L₂^G/2)‖h‖D (L₂^G = 11.11 on this network), so T_B < 0 here
+    assert abs(d['T_B'] + d['h_norm'] ** 2) <= 11.12 / 2 * d['h_norm'] * d['D'] and d['T_B'] < 0
 
 
 def test_matching_prior_gives_the_exact_representation_with_maximal_margin_and_the_two_sensitivity_laws():
@@ -83,7 +84,7 @@ def test_matching_prior_gives_the_exact_representation_with_maximal_margin_and_t
     Dm, Ds = CL.predicted_stationary_D(S, w, 64, 2048, G), CL.predicted_stationary_D(S_s, w, 64, 2048, G)
     fm, fs = PD.predicted_stationary_function_D(Fm, w, 64, 2048), PD.predicted_stationary_function_D(Fs, w, 64, 2048)
     assert Dm > Ds and fm > fs                                               # both floors are higher with the matching prior: the exact fit has
-    assert fm < 4 * fs                                                       # larger amplitudes, and the floor grows with them (bias against variance)
+    assert 1.4 < Dm / Ds < 1.9 and 1.9 < fm / fs < 2.5                       # larger amplitudes (table 1: 1.61× and 2.18×; bias against variance)
     # the function-level sensitivity against finite differences of the fitted function of the weighted stationary point
     h = 1e-4
     for j in range(3):

@@ -535,3 +535,38 @@ with minor fixes; the fifth test passes and tests what it says, with two near-va
 | D3b-12 | cosmetic | κ halved without a stated reason; S̃_k undefined; "within 5–20%" → 0.8–20%; "0.245 throughout" → 0.245–0.248; the heavy-tail explanation does not fit m = 256 | fixed in the texts |
 | D3b-13 | cosmetic (test) | the (0.2) and (0.1) assertions have slack ≥ 10²; `sigma0 < SIGMA_CRIT` a tautology; a docstring mismatch | tautology removed, slack stated, docstring corrected, a splitting-margin check added |
 | D3b-14 | minor (code) | the recorded κ_R at the m-particles used the reference's residual and cannot see the m-system's own instability (0.0053 against 0.0101 with its own residual) | `coupled_run` records both (future runs) |
+
+## Round 10 (adversarial review of Proposition D‴.9, 2026-10-19)
+
+**Design.** One referee on the material new since round 9: Proposition D‴.9 (i)–(iii) and its Status, Remark D‴.10, the D‴.9 numerics
+block (tables 1–4, Reading), Remark D‴.11, `src/core/prior_design.py`, `experiments/exp_prior_design.py`, `tests/test_prior_design.py`
+(`review/REVIEW_round10_D3c.md`). Every number of tables 1–4 and of the prose was recomputed from the raw data (`prior_design_raw.npz`,
+`learning_raw.npz`); the regeneration by `--from-raw` was byte-identical; the two inadmissible m-systems were re-simulated autonomously
+to s = 6000 and 9000.
+
+**Verdicts.** (i) holds with one major fix (a hidden hypothesis); (ii) holds; (iii) holds with fixes; Remark D‴.10, the numerics and Remark
+D‴.11 hold with fixes (two attributions wrong on the instance); the code holds; the experiment holds with minor fixes; the tests pass with
+one vacuous assertion. Independent confirmations: grad_J against finite differences (5.6·10⁻¹⁰), drift = −G∇J, the single-atom reduction
+(8.9·10⁻¹⁶), the weighted energy gradient (6·10⁻¹²), the function sensitivity, all rows of table 1, table 2 from scratch, table 3's
+windows and slopes, the per-seed laws, the K-atom Hessian at the exact representation (eigenvalues 0.0074–0.20), the exact law in all nine
+pairs (0.987–0.998, not yet reported), and the saddles' fate.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3c-1 | **major** (statement/Status (i)) | the no-Voronoi-boundary hypothesis was imposed for s ≥ s₁ only, while Step 2's (2.1) and (5.2) are used on [0, s₁); a pair straddling a boundary adds (σ₀/m)⟨δ_i, ϑ⁰_{j(ϑ_i)} − ϑ⁰_{j(ϑ̄_i)}⟩_{G⁻¹} ≥ 0 to ½dD/ds (V_ν semiconcave), up to σ₀·diam(supp ν)·D^{1/2}, confirmed numerically to all digits; also needed for the well-posedness of (𝔄₀^ν) | hypothesis required for every s ≥ 0; the mechanism stated in Status (i); Theorem J's ρ₀ below the cell distance |
+| D3c-2 | minor (texts ×4, results md) | "the shrunk prior keeps all four admissible with margins at or above σ₀" false for three of four (+0.0054 to +0.0066 < σ₀); "undershoots everywhere" false (the over-weighted atom overshoots by 1–3%) | `report()` computes f̂/f at the centres and the margins' position relative to σ₀; texts corrected |
+| D3c-3 | minor (Remark D‴.11) | the centre-overshoot mechanism is exact for the matching prior only: the σ-modification's inadmissible seed undershoots at its centre (unstable direction amplitude–width, the tails), Proposition K's R₂ is carried by the overshoot over the negative bump and the undershoot beyond the inflection points, not "between the bumps"; "loses definiteness" → "loses margin"; the admissible set is asymmetric | attributions corrected; the asymmetry computed by `report()` (excess on one atom alone) |
+| D3c-4 | minor (Numerics) | "plateaus being saddles that a longer horizon would see left": the saddles are left by Proposition K's local split inside the cell, weights unchanged, D on its plateau (−1.3%); the ratios 0.91/0.81 are the linearisation remainder (exact law 0.987–0.998) | `report()` computes the exact law for the nine pairs; the saddles' fate described; Proposition D‴.5(i)/(iv) wording ("migrating particles") widened to both mechanisms |
+| D3c-5 | minor | "κ_R(r_ref) at most 0.00488" was the seed-mean curve's maximum (per seed 0.00634, 0.00674, 0.00155); fit and drift endpoints were seed means | `report()` prints per-seed maxima and labels the seed means |
+| D3c-6 | minor ((iii)) | "both sensitivities grow with the amplitudes" is a trend of the amplitude rows, not a law | moved to the numerical findings, qualified |
+| D3c-7 | cosmetic | "equivalently the gap exceeds 2ϱ′" is sufficient, not equivalent (distance to the boundary ≥ gap/2) | "in particular when"; `cell_margin` docstring and table header |
+| D3c-8 | cosmetic (code) | module docstring said the matching prior "lowers S" | corrected (it raises S) |
+| D3c-9 | cosmetic (tests) | test 2's T_B bound vacuous (T_B < 0 against a positive bound); test 3's fm < 4fs loose | test 2 asserts the content of (3.1), \|T_B + ‖h‖²\| ≤ (L₂^G/2)‖h‖D; test 3 brackets the ratios (1.4–1.9, 1.9–2.5) |
+| D3c-10 | cosmetic | "3.6 times faster", "relaxation 141 against 511/512" are the theorem's 1/κ, not observed times | `report()` measures the late-time e-folding times (48–84 against 107–306 slow units, medians 59 and 195, factor 3.3); texts say "the theorem's 1/κ"; 511 |
+| D3c-11 | cosmetic | q_j plays no role in the nearest-atom leak; κ_R[μ*] ≡ 0 for every set; IFT non-degeneracy unstated | stated in (i), (ii) and Status |
+| D3c-12 | cosmetic | E D_∞ quoted as an equality | conditional form with the remainders |
+| D3c-13 | cosmetic (table 4) | the Jensen gloss explains only part of the ratio 0.48 | `report()` adds the RMS over seeds (0.84, 0.79, 0.52) and the per-seed law from the realised weights (0.60–1.57) |
+
+**Lesson.** A hypothesis imposed "from s₁ on" must be checked against every step of the proof that uses it, including the transient
+estimates feeding Λ₁; and the convention of a diagnostic (`decomposition`'s same-cell leak) is not the identity it stands in for once its
+hypothesis fails — the true derivative should be recorded alongside.

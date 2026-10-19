@@ -140,6 +140,36 @@ def fmt(x, se=None, p=3):
     return f"{x:.{p}e}" if se is None or not np.isfinite(se) else f"{x:.{p}e} ± {se:.1e}"
 
 
+def overshoot_at_centres(loop, w, Tw):
+    """f̂_w(c_k)/f(c_k) at the centres of the weighted stationary atoms, f̂_w = Σ_j w_jΦ̃(·;ϑ*_j): above 1 the kernel overshoots the plant at
+    its centre (Remark D‴.11)."""
+    a, c, s = loop.net.physical(Tw)
+    X = c[:, 0]
+    Phi = a[None, :, 0] * np.exp(-(X[:, None] - c[None, :, 0]) ** 2 / (2 * s[None, :] ** 2))
+    return Phi @ np.asarray(w, float) / f_vec(X)
+
+
+def efold_time(s, D, s_from):
+    """Late-time e-folding time of a saturating D(s): least-squares slope of log(ΔD) against s over the records with s > s_from, the
+    increments ΔD between consecutive records decaying geometrically toward the plateau (nan if fewer than five increments are positive)."""
+    msk = s > s_from
+    ss, dd = s[msk], D[msk]
+    inc = np.diff(dd)
+    ok = inc > 0
+    if ok.sum() < 5:
+        return float('nan')
+    sl = np.polyfit(ss[1:][ok], np.log(inc[ok]), 1)[0]
+    return float(-1.0 / sl) if sl < 0 else float('nan')
+
+
+def exact_law_prior(loop, w_m, w_M, atoms, n_cont=4):
+    """Σ_k w^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹} with the weighted stationary points of the nearest-atom loop (the exact first equality of
+    Proposition D‴.5(ii)); continuation from the uniform weights."""
+    Tm, rm = PD.weighted_stationary_atoms_prior(loop, w_m, atoms, w0=W_BAR, n_cont=n_cont)
+    TM, rM = PD.weighted_stationary_atoms_prior(loop, w_M, atoms, w0=W_BAR, n_cont=n_cont)
+    return float(np.sum(np.asarray(w_m, float) * np.sum((Tm - TM) ** 2 / G[None, :], axis=1))), max(rm, rM)
+
+
 def report(rows, runs, t0=None):
     net = make_net()
     exact = exact_representation(net)
@@ -173,6 +203,7 @@ def report(rows, runs, t0=None):
     W_TEST = [np.array([7, 5, 4]) / 16.0, np.array([9, 4, 3]) / 16.0, np.array([10, 3, 3]) / 16.0, np.array([0.5, 0.3, 0.2])]
     priors3 = [("σ-modification, ϑ⁰ = 0", dict(single=True)), ("mixture prior at the exact representation", dict()), ("amplitudes ×0.7", dict(a_scale=0.7))]
     lines += ["", "## 2. Admissible weights: the splitting margin σ₀ − max_k κ_R of the replicated weighted stationary configuration Θ*(w) (Proposition D‴.5(i), (iv)) under three priors", "",
+              "Each cell: the margin (κ_R at the atoms; f̂_w/f at the centres of the atoms — above 1 the kernel overshoots the plant there, Remark D‴.11).", "",
               "| weights w | " + " | ".join(n for n, c in priors3) + " |", "|---|" + "---|" * len(priors3)]
     adm = {}
     for w in W_TEST:
@@ -180,15 +211,33 @@ def report(rows, runs, t0=None):
         for n, c in priors3:
             lp = make_loop(net, c)
             mg, Tw, k = PD.splitting_margin_prior(lp, w, exact)
-            adm[(tuple(np.round(w, 4)), n)] = (mg, k)
-            cells.append(f"{mg:+.5f} (κ_R at the atoms {', '.join(f'{x:+.4f}' for x in k)})")
+            ov = overshoot_at_centres(lp, w, Tw)
+            adm[(tuple(np.round(w, 4)), n)] = (mg, k, ov)
+            cells.append(f"{mg:+.5f} (κ_R {', '.join(f'{x:+.4f}' for x in k)}; f̂/f {', '.join(f'{x:.3f}' for x in ov)})")
         lines.append(f"| ({', '.join(f'{x:.4f}' for x in w)}) | " + " | ".join(cells) + " |")
-    lines += ["", "Reading: the sign of the residual at a cluster decides the sign of its splitting curvature. A cluster that overshoots the plant (too much weight, or a prior "
-              "with too large an amplitude) has a residual of the sign opposite to its kernel at the centre, where ∂²_{cc}Φ̃ = −aφ/s², so R > 0 and the cluster can split; one that "
-              "undershoots has R < 0 and is stabilised. The matching prior puts the stationary configuration exactly on the plant, so any excess weight overshoots: its admissible set "
-              "is the smallest of the three; the σ-modification undershoots the amplitudes and tolerates (7, 5, 4)/16 but not (9, 4, 3)/16; the shrunk prior (amplitudes ×0.7) "
-              "undershoots at every cluster and keeps all four weight vectors admissible with margins at or above σ₀ — a shrinkage prior enlarges the admissible set, lowers both floors "
-              "and keeps the window's margin maximal, at the price of a fit error of 0.06."]
+    # the asymmetry of the matching prior's admissible set: an excess ε on one atom alone, w = w̄ + ε(1.5e_k − 0.5)
+    EPS = (0.02, 0.04, 0.08)
+    asym = np.zeros((3, len(EPS)))
+    for kk in range(3):
+        for j, eps in enumerate(EPS):
+            asym[kk, j] = PD.splitting_margin_prior(mix, W_BAR + eps * (1.5 * np.eye(3)[kk] - 0.5), exact)[0]
+    shr = [adm[(tuple(np.round(w, 4)), priors3[2][0])] for w in W_TEST]
+    mt = [adm[(tuple(np.round(w, 4)), priors3[1][0])] for w in W_TEST]
+    sg = [adm[(tuple(np.round(w, 4)), priors3[0][0])] for w in W_TEST]
+    above = [i for i, (mg, k, ov) in enumerate(shr) if mg >= SIGMA0]
+    below = [i for i, (mg, k, ov) in enumerate(shr) if mg < SIGMA0]
+    wname = lambda i: "(" + ", ".join(f"{x:.4f}" for x in W_TEST[i]) + ")"
+    lines += ["", "Reading: the sign of the residual at a cluster decides the sign of its splitting curvature. A cluster that overshoots the plant at its centre (too much weight, or a prior "
+              "with too large an amplitude) has a residual of the sign opposite to its kernel there, where ∂²_{cc}Φ̃ = −aφ/s², so R_cc > 0 and the cluster loses margin (it splits once "
+              "κ_R > σ₀); one that undershoots has R_cc < 0 and is stabilised. The matching prior puts the stationary configuration exactly on the plant, so any excess weight overshoots "
+              f"(f̂/f at the over-weighted first atom {min(ov[0] for mg, k, ov in mt):.3f}–{max(ov[0] for mg, k, ov in mt):.3f}): its admissible set is the smallest of the three, and smallest in the "
+              f"direction of the largest bump — an excess ε = {', '.join(f'{e:g}' for e in EPS)} on one atom alone (w = w̄ + ε(1.5e_k − 0.5)) gives the margins "
+              + "; ".join(f"atom {kk + 1}: " + ", ".join(f"{asym[kk, j]:+.5f}" for j in range(len(EPS))) for kk in range(3))
+              + f". The σ-modification undershoots the amplitudes (f̂/f at the first atom {min(ov[0] for mg, k, ov in sg):.3f}–{max(ov[0] for mg, k, ov in sg):.3f}) and tolerates (7, 5, 4)/16 but not "
+              f"(9, 4, 3)/16. The shrunk prior (amplitudes ×0.7) keeps all four weight vectors admissible, with margins {min(mg for mg, k, ov in shr):+.5f} to {max(mg for mg, k, ov in shr):+.5f}: "
+              f"above σ₀ = {SIGMA0:.5f} at {', '.join(wname(i) for i in above) if above else 'none'}, below it at {', '.join(wname(i) for i in below) if below else 'none'}"
+              + (", where its over-weighted first atom overshoots slightly (f̂/f = " + ", ".join(f"{shr[i][2][0]:.4f}" for i in below) + "; κ_R at that atom " + ", ".join(f"{shr[i][1][0]:+.4f}" for i in below) + ")" if below else "")
+              + " — a shrinkage prior enlarges the admissible set, lowers both floors and keeps the window's margin at the uniform weights above σ₀, at the price of a fit error of 0.06."]
     # realised weights of the matching-prior coupled runs
     mgs = []
     for r in runs:
@@ -201,10 +250,14 @@ def report(rows, runs, t0=None):
     # ---- coupled runs with the matching prior
     s_grid = runs[0]['s']
     kR_fx = np.mean([r['kR_ref_nbhd_fixed'] for r in runs], axis=0); kR_own = np.mean([r['kR_ref_nbhd'] for r in runs], axis=0)
+    kR_own_seed = [float(np.nanmax(r['kR_ref_nbhd'])) for r in runs]
     dr = np.mean([r['drift_rms'] for r in runs], axis=0); fit = np.mean([r['fit'] for r in runs], axis=0)
+    fit_seed = [(float(r['fit'][0]), float(r['fit'][-1])) for r in runs]; dr_seed = [(float(r['drift_rms'][0]), float(r['drift_rms'][-1])) for r in runs]
     lines += ["", f"## 3. Coupled runs with the matching prior (m = {', '.join(str(m) for m in MS)} against M = {M_REF}; warm start = the mixture of Gaussians of width {JITTER:g} around the exact representation; {S_END:g} slow units = {S_END * row_m['margin']:.1f} relaxation times; {N_SEEDS} seeds)", "",
               f"Hypothesis along the run (κ_R over the spheres of radius ϱ′ around 256 reference particles, with the stationary residual r* = 0 and with the reference's own residual): "
-              f"max_s κ_R(r*) = {kR_fx.max():.5f}, max_s κ_R(r_ref) = {kR_own.max():.5f} (σ₀ = {SIGMA0:.5f}); the reference's rms drift {dr[0]:.1e} → {dr[-1]:.1e}, fit error {fit[0]:.4f} → {fit[-1]:.4f}.", "",
+              f"max_s κ_R(r*) = {kR_fx.max():.5f}; max_s κ_R(r_ref) = {max(kR_own_seed):.5f} over the seeds (per seed {', '.join(f'{x:.5f}' for x in kR_own_seed)}, each at the first record; the seed-mean curve peaks at {kR_own.max():.5f}; σ₀ = {SIGMA0:.5f}); "
+              f"the reference's rms drift {dr[0]:.1e} → {dr[-1]:.1e} and fit error {fit[0]:.4f} → {fit[-1]:.4f} (seed means; per seed the fit error {', '.join(f'{a:.3f}' for a, b in fit_seed)} → {', '.join(f'{b:.3f}' for a, b in fit_seed)}, "
+              f"the drift {', '.join(f'{a:.1e}' for a, b in dr_seed)} → {', '.join(f'{b:.1e}' for a, b in dr_seed)}).", "",
               "| m | " + " | ".join(f"max D_m on ({a:g}, {b:g}]" for a, b in WINDOWS) + f" | mean D_m on ({WINDOWS[-1][0]:g}, {WINDOWS[-1][1]:g}] | mean ‖f̂_Θ − f̂_ref‖ on the last window | predicted E D_∞ | predicted E‖f̂_m − f̂_M‖² |",
               "|---|" + "---|" * (len(WINDOWS) + 4)]
     S_m, F_m = row_m['S'], row_m['F']
@@ -219,8 +272,11 @@ def report(rows, runs, t0=None):
     ratios2 = [np.mean([w[len(WINDOWS) - 1] for w in W[m]]) / np.mean([w[len(WINDOWS) - 2] for w in W[m]]) for m in MS]
     lines += ["", f"Slope of the last-window maximum of D_m against m: {sl:.2f} ± {se:.2f} (−1 for the mean square); of the function-level distance: {slh:.2f} ± {seh:.2f} (−0.5). "
               f"Ratios of the last to the first window maxima: {', '.join(f'{r:.2f}' for r in ratios)}; last to the one before: {', '.join(f'{r:.2f}' for r in ratios2)}."]
+    tau_m = [efold_time(r['s'], r[f'D{m}'], S_END / 2) for m in MS for r in runs]
+    lines += ["", f"Observed late-time e-folding times of D_m, from the geometric decay of its increments over ({S_END / 2:g}, {S_END:g}] (nine (m, seed) pairs): {np.nanmin(tau_m):.0f}–{np.nanmax(tau_m):.0f} slow units, "
+              f"median {np.nanmedian(tau_m):.0f}, against the theorem's relaxation time 1/κ = {1 / row_m['margin']:.0f} (the smallest eigenvalue of the K-atom collective block sets the slowest mode; the theorem's κ is an envelope)."]
     # per-seed laws from the realised weights
-    agree_D, agree_f = [], []
+    agree_D, agree_f, agree_ex, dw_inf = [], [], [], []
     per_lines = []
     for m in MS:
         for r in runs:
@@ -229,25 +285,39 @@ def report(rows, runs, t0=None):
             D_pred = float(np.sum(r[f'w{m}'] * np.sum(pv ** 2, axis=1)))
             f_pred = float(np.mean((F_m @ dw) ** 2))
             h_meas = float(r[f'h{m}'][-1]) ** 2
+            D_ex, res_ex = exact_law_prior(mix, r[f'w{m}'], r['w_ref'], exact)
+            assert res_ex < 1e-9
             if D_pred > 0 and f_pred > 0:
-                agree_D.append(float(r[f'D{m}'][-1] / D_pred)); agree_f.append(h_meas / f_pred)
-            per_lines.append(f"m = {m}, seed {r['seed']}: D {D_pred:.3e} → {r[f'D{m}'][-1]:.3e}; ‖f̂_Θ − f̂_ref‖² {f_pred:.3e} → {h_meas:.3e}")
-    lines += ["", ("No realised weight vector of these runs is inadmissible." if not inadm_runs else "Inadmissible realised weights (saddles): " + ", ".join(f"m = {m}, seed {sd}" for m, sd in inadm_runs) + " — their plateaus are saddles' and would be left on a longer horizon (Proposition D‴.5(iv)).")]
-    lines += ["", f"Per seed at s = {S_END:g}, predicted from the realised cluster weights → measured (parameter level Σ_k w^m_k‖S̃_k(w^m − w^M)‖², function level ‖F(w^m − w^M)‖²_{{L²(ρ)}}): "
-              + "; ".join(per_lines) + f". Ratios measured/predicted: parameter level {', '.join(f'{x:.2f}' for x in agree_D)}; function level {', '.join(f'{x:.2f}' for x in agree_f)}."]
+                agree_D.append(float(r[f'D{m}'][-1] / D_pred)); agree_f.append(h_meas / f_pred); agree_ex.append(float(r[f'D{m}'][-1] / D_ex)); dw_inf.append(float(np.abs(dw).max()))
+            per_lines.append(f"m = {m}, seed {r['seed']}: D {D_pred:.3e} (exact {D_ex:.3e}) → {r[f'D{m}'][-1]:.3e}; ‖f̂_Θ − f̂_ref‖² {f_pred:.3e} → {h_meas:.3e}")
+    lines += ["", ("No realised weight vector of these runs is inadmissible." if not inadm_runs else "Inadmissible realised weights (saddles): " + ", ".join(f"m = {m}, seed {sd}" for m, sd in inadm_runs)
+              + " — at s = 300 these m-systems sit on the replicated saddles (the Hessian of J_m^ν there has n₁ − 1 negative eigenvalues equal to σ₀ − κ_R^max, Proposition D‴.5(i)); continued autonomously to s = 6000 and 9000 "
+              "(referee round 10, `review/REVIEW_round10_D3c.md`) they leave the saddles by Proposition K's local split inside the cell — the over-weighted cluster separates into two sub-clusters along the centre direction, "
+              "the cluster weights by nearest atom unchanged — and the coupled distance stays on its plateau (−1.3% at m = 64), unlike Theorem D‴'s σ-modification seed of round 9, which migrated between basins.")]
+    lines += ["", f"Per seed at s = {S_END:g}, predicted from the realised cluster weights → measured (parameter level: the linearised law Σ_k w^m_k‖S̃_k(w^m − w^M)‖² and, in brackets, the exact form Σ_k w^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{{G⁻¹}} "
+              f"of Proposition D‴.5(ii); function level ‖F(w^m − w^M)‖²_{{L²(ρ)}}): " + "; ".join(per_lines) + f". Ratios measured/predicted: linearised law {', '.join(f'{x:.2f}' for x in agree_D)}; exact law {', '.join(f'{x:.3f}' for x in agree_ex)} "
+              f"(range {min(agree_ex):.3f}–{max(agree_ex):.3f}); function level {', '.join(f'{x:.2f}' for x in agree_f)}. The linearised law's deviations are its remainder — second order in the weight "
+              f"fluctuation and in the curvature of w ↦ Θ*(w) (the two lowest ratios, " + " and ".join(f"{a:.2f} at |w^m − w^M|_∞ = {d:.3f}" for a, d in sorted(zip(agree_D, dw_inf))[:2]) + ") — which the exact form removes in all nine pairs."]
     # ---- the function-level law against the σ-modification's measured distances
     raw = os.path.join(OUT, 'learning_raw.npz')
     if os.path.exists(raw):
         z = np.load(raw, allow_pickle=True)
         warm = list(z['warm']); M0 = 2048
         lines += ["", f"## 4. The function-level law for the σ-modification against `exp_chaos_learning.py`'s warm runs (M = {M0}, last window)", "",
-                  "| m | predicted RMS (1/m − 1/M)^{1/2}(tr FC̃Fᵀ/N)^{1/2} | measured mean ‖f̂_Θ − f̂_ref‖ on (450, 900] | ratio |", "|---|---|---|---|"]
+                  "| m | predicted RMS (1/m − 1/M)^{1/2}(tr FC̃Fᵀ/N)^{1/2} | measured mean ‖f̂_Θ − f̂_ref‖ on (450, 900] | ratio | RMS over seeds / predicted | per-seed law from the realised weights, mean‖f̂_Θ − f̂_ref‖²/‖F(w^m − w^M)‖² |",
+                  "|---|---|---|---|---|---|"]
         for m in MS:
             pred = np.sqrt(PD.predicted_stationary_function_D(row_s['F'], W_BAR, m, M0))
             meas = [float(r[f'h{m}'][(r['s'] > 450) & (r['s'] <= 900)].mean()) for r in warm]
+            meas2 = [float((r[f'h{m}'][(r['s'] > 450) & (r['s'] <= 900)] ** 2).mean()) for r in warm]
+            per = [m2 / float(np.mean((row_s['F'] @ (r[f'w{m}'] - r['w_ref'])) ** 2)) for m2, r in zip(meas2, warm)]
             mu, se_ = mean_se(meas)
-            lines.append(f"| {m} | {pred:.3e} | {fmt(mu, se_)} | {mu / pred:.2f} |")
-        lines += ["", "The measured value is a mean of norms over the seeds (below the RMS by Jensen's inequality), and the prediction is the leading term in the weight fluctuation."]
+            lines.append(f"| {m} | {pred:.3e} | {fmt(mu, se_)} | {mu / pred:.2f} | {np.sqrt(np.mean(meas2)) / pred:.2f} | {', '.join(f'{x:.2f}' for x in per)} |")
+        tau_s = [efold_time(r['s'], r[f'D{m}'], 450.0) for m in MS for r in warm]
+        lines += ["", "The measured mean of norms lies below the RMS over the seeds (Jensen), and the prediction is the leading term at the mean weights; the per-seed law from the realised weights is the "
+                  "supported statement (the m = 256 seeds of these runs have small realised fluctuations, Theorem D‴'s numerics). Observed late-time e-folding times of D_m over (450, 900] for the "
+                  f"σ-modification's warm runs: {np.nanmin(tau_s):.0f}–{np.nanmax(tau_s):.0f} slow units, median {np.nanmedian(tau_s):.0f}, against the theorem's 1/κ = {1 / row_s['margin']:.0f}; "
+                  f"the matching prior's {np.nanmin(tau_m):.0f}–{np.nanmax(tau_m):.0f} (median {np.nanmedian(tau_m):.0f}) are shorter by a factor {np.nanmedian(tau_s) / np.nanmedian(tau_m):.1f} (medians), against 1/κ shorter by {row_m['margin'] / row_s['margin']:.1f}."]
     lines += ["", "Numbers are produced by `experiments/exp_prior_design.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'prior_design.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")

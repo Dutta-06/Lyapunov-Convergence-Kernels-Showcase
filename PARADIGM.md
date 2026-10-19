@@ -34,7 +34,7 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
   `review/REVIEW_round6_Dpp.md` and `review/REVIEW_round6_Jprime.md`, for round 7 `review/REVIEW_round7_E0p3_E0dp.md` and for
-  round 8 `review/REVIEW_round8_Dppp.md` and for round 9 `review/REVIEW_round9_D3b.md`.
+  round 8 `review/REVIEW_round8_Dppp.md`, for round 9 `review/REVIEW_round9_D3b.md` and for round 10 `review/REVIEW_round10_D3c.md`.
 
 ---
 
@@ -102,7 +102,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | H.7 | At a frozen measure, the exactly averaged loop is (𝔄) plus an explicit O(1/k_e) correction: a semi-gradient term, whose performative defect is present for every n, and an orbit-area circulation kernel (n ≥ 2). Along the real loop, a second-order averaging term is added (Remark H.7a). | Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through its O(1/k_e) convergence. Non-reciprocity of the exact second variation is checked to 3% (asserted; 1–1.5% measured) and characterised by Theorem I. The full first-order theory predicts the orientation dependence of the learned kernels in the real closed loop to 3% in size and 11% as a vector (cosine 0.994, k_e = 40). | no precedent found (targeted search, round 3); ingredients known (higher-order averaging; performative prediction [S14]; semi-gradient TD [S10], [S11]) |
 | I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A_μ ≡ 0 iff the residual vanishes on the orbit, and the performative non-reciprocity is bounded by the residual. For n ≥ 2 at perfect fit, A_μ ≡ 0 iff the oriented orbit carries no circulation (n = 2: zero winding function) and the residual's Jacobian is symmetric along the orbit; A_μ = 2K when the residual vanishes near the orbit. A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. No open set of measures is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻². | proved; every formula checked against the generic second-variation code and, by the round-5 referee, against the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
 | D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > L_b′L_ϑ) the bound is uniform in time (Theorem D″), a leak-dominated regime in which the network does not learn (at τ = 0 it collapses to one kernel; at τ > 0 it stays in the dither cloud of the prior) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
-| D‴ | Uniform-in-time propagation of chaos *in the learning regime* for the averaged slow loop (𝔄_m) at τ = 0 (Theorem J′'s leading order): under the synchronous coupling with the mean-field characteristic flow, the interaction term of the coupling identity is −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} + O(D²) — flat convexity of the loss makes it contract whatever the gains — and only the residual-weighted feature curvature R[μ](ϑ) = ⟨r_μ∇²_ϑΦ̃⟩_ρ (Proposition K's R₂) can expand; if along the mean-field flow σ₀I − G^{1/2}RG^{1/2} ⪰ κI on a neighbourhood of the support from a time s₁ on — the strict second-order optimality condition of the fitted configuration, compatible with σ₀ < σ_crit — then sup_s E(1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} ≤ 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) plus a tail exponentially small in m (uniformly in time under exponential convergence of the flow, over horizons e^{cm} without it), no particle changes basin, and the learned function converges at m^{−1/2} uniformly in time while the network learns; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and uniformity coexist; at finite m the stationary coupled distance follows the weight-sensitivity law E D_∞ = (1/m − 1/M)Σ_k w̄_k tr(S̃_kC̃S̃_kᵀ), S = ∂Θ*/∂w the sensitivity of the stationary atoms to the cluster weights (Proposition D‴.5, the sharp form of the theorem's constant); the leak's prior is a design input of the window: with a measure-valued prior (nearest-atom leak) placed on the plant's structure the stationary residual vanishes and the margin is maximal, κ = σ₀, while the floors at parameter and function level rise with the amplitudes, and the sign of the residual at a cluster sets its admissible weights — overshoot splits, undershoot stabilises, so a shrunk prior enlarges the admissible set (Proposition D‴.9, Remark D‴.11) | proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow; it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the coupling carries a floor; the real loop at finite k_e: settled on a warm start by Corollary D‴.7 through Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D‴.5's up to O(1/k_e)), open for a cold start (Remark D‴.4); dither: the entropy method of [S5] (imported); the theorem's regime m ≥ m₀ is asymptotic (m₀ ~ 10²³ on the instance) and Proposition D‴.5 is formal; numerics: on a three-bump instance at σ₀ = 0.15σ_crit the window is realised (κ_R[μ*](N_{0.1}) = 0.0051 < σ₀ = 0.0071 < σ_crit = 0.047) and (H) holds along a warm-start run; the coupled distance saturates (window maxima within 15% over 900 slow units) with slope −1.28 ± 0.30 in m, and the per-seed weight-sensitivity law predicts it within 25% in 9 of 12 cases with per-cluster cosines 0.92–1.00; the exact stationary distance of the replicated weighted configuration reproduces the measured one within 2.3% in all pairs, one m = 16 seed with inadmissible weights sitting on a saddle; a connected cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 (m = 16, 64, 256) decays like m^{−0.64±0.08}; the real loop at k_e = 25 follows its averaged slow dynamics on the same clouds to within 0.7% | the two ingredients — the sign of the interaction from flat convexity, and the curvature at the actual rather than the worst-case residual — are new in propagation of chaos for adaptive control; the decomposition Gram + residual×curvature is the one of the interpolation literature ([S39]); the window between Proposition K's collapsed instability and the fitted configuration's stability is new |
+| D‴ | Uniform-in-time propagation of chaos *in the learning regime* for the averaged slow loop (𝔄_m) at τ = 0 (Theorem J′'s leading order): under the synchronous coupling with the mean-field characteristic flow, the interaction term of the coupling identity is −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} + O(D²) — flat convexity of the loss makes it contract whatever the gains — and only the residual-weighted feature curvature R[μ](ϑ) = ⟨r_μ∇²_ϑΦ̃⟩_ρ (Proposition K's R₂) can expand; if along the mean-field flow σ₀I − G^{1/2}RG^{1/2} ⪰ κI on a neighbourhood of the support from a time s₁ on — the strict second-order optimality condition of the fitted configuration, compatible with σ₀ < σ_crit — then sup_s E(1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} ≤ 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) plus a tail exponentially small in m (uniformly in time under exponential convergence of the flow, over horizons e^{cm} without it), no particle changes basin, and the learned function converges at m^{−1/2} uniformly in time while the network learns; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and uniformity coexist; at finite m the stationary coupled distance follows the weight-sensitivity law E D_∞ = (1/m − 1/M)Σ_k w̄_k tr(S̃_kC̃S̃_kᵀ), S = ∂Θ*/∂w the sensitivity of the stationary atoms to the cluster weights (Proposition D‴.5, the sharp form of the theorem's constant); the leak's prior is a design input of the window: with a measure-valued prior (nearest-atom leak) placed on the plant's structure the stationary residual vanishes and the margin is maximal, κ = σ₀, while the floors at parameter and function level rise (1.6–2.2× on the instance, with the amplitudes), and the sign of the residual at a cluster sets its admissible weights — overshoot splits, undershoot stabilises, so a shrunk prior enlarges the admissible set (Proposition D‴.9, Remark D‴.11) | proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow; it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the coupling carries a floor; the real loop at finite k_e: settled on a warm start by Corollary D‴.7 through Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D‴.5's up to O(1/k_e)), open for a cold start (Remark D‴.4); dither: the entropy method of [S5] (imported); the theorem's regime m ≥ m₀ is asymptotic (m₀ ~ 10²³ on the instance) and Proposition D‴.5 is formal; numerics: on a three-bump instance at σ₀ = 0.15σ_crit the window is realised (κ_R[μ*](N_{0.1}) = 0.0051 < σ₀ = 0.0071 < σ_crit = 0.047) and (H) holds along a warm-start run; the coupled distance saturates (window maxima within 15% over 900 slow units) with slope −1.28 ± 0.30 in m, and the per-seed weight-sensitivity law predicts it within 25% in 9 of 12 cases with per-cluster cosines 0.92–1.00; the exact stationary distance of the replicated weighted configuration reproduces the measured one within 2.3% in all pairs, one m = 16 seed with inadmissible weights sitting on a saddle; a connected cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 (m = 16, 64, 256) decays like m^{−0.64±0.08}; the real loop at k_e = 25 follows its averaged slow dynamics on the same clouds to within 0.7% | the two ingredients — the sign of the interaction from flat convexity, and the curvature at the actual rather than the worst-case residual — are new in propagation of chaos for adaptive control; the decomposition Gram + residual×curvature is the one of the interpolation literature ([S39]); the window between Proposition K's collapsed instability and the fitted configuration's stability is new |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | J′ | At finite m with dither τ = τ₀/k_e and leak σ = σ₀/k_e: the closed loop has an invariant law (unique under a smoothness hypothesis) whose parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with the explicit first-order correction ε∫φ g dπ driven by the first-order drift b of Theorem J as a vector field on parameter space (g solves τ₀∇·(πG∇g) = ∇·(πb)); the stationary tracking error is (2/k_e²)π(L̄_m) + O(k_e⁻³); the stationary parameter process is not reversible, with a circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] + O(ε²), where j₁ = π(b − τ₀G∇g) is the first-order stationary current, nonzero exactly when b is not a G-gradient (Proposition J′.2: the finite-m form of Theorem I's reciprocity defect plus a Hessian commutator from second-order averaging; never a gradient for m ≥ 3) | proved (the Poisson-equation expansion of the invariant measure with the fast error and phase eliminated; three standard theorems imported and named); checked on a single-kernel instance: the first-order prediction removes the O(1/k_e) discrepancy between the real loop's stationary means and the Gibbs measure, the orientation-odd part of the means (the dither version of Remark H.7a) matches its prediction, and the current machinery is checked on the first-order averaged SDE | the technique is the Pavliotis–Stuart / Mattingly–Stuart–Tretyakov expansion; new in its object (a hypoelliptic learning loop with a plant) and in the identification of the first-order non-equilibrium current with the reciprocity defect of Theorem I |
@@ -1579,8 +1579,9 @@ local minimiser of J_m exactly when w^m lies in the *admissible set*
     W_adm := {w : σ₀G⁻¹ − R[μ_{Θ*(w)}](ϑ*_k(w)) ≻ 0 for every k and ∇²𝒢_w(Θ*(w)) ≻ 0},
 
 a neighbourhood of w̄ (both conditions are open and hold at w̄ by (H) and the assumption), and a saddle when the splitting
-condition fails at some cluster: a cluster can then split, and the m-system leaves the configuration by migrating particles
-between basins.
+condition fails at some cluster: a cluster can then split — by Proposition K's local separation inside its basin (sub-clusters along
+the unstable direction, the cluster weights unchanged) or by particles migrating to other basins; the numerics show both (§5d, referee
+rounds 9 and 10).
 
 (ii) *(the stationary distance)* Under the shared-particle coupling of Theorem D‴ with i.i.d. cluster labels of law w̄ (the m
 particles are the first m of the M reference particles), suppose w^m, w^M ∈ W_adm and that the m-system converges to Θ*_m(w^m) and
@@ -1601,8 +1602,8 @@ all particles of a cluster are displaced by the same vector.
 
 (iv) *(admissibility)* Let δ_w := sup{δ : ‖w − w̄‖_∞ ≤ δ ⇒ w ∈ W_adm} > 0. By Hoeffding's inequality for each multinomial coordinate,
 P(w^m ∉ W_adm) ≤ 2K exp(−2mδ_w²): the finite-m configuration is a strict local minimiser with probability exponentially close to
-one, the exceptional event being the one on which Remark D‴.2's floor appears on a warm start — a cluster of the m-system splits
-and particles migrate to other basins, because the realised weights make the replicated configuration a saddle.
+one, the exceptional event being the one on which the realised weights make the replicated configuration a saddle: a cluster of the
+m-system then splits, locally or by migration to other basins — in the latter case with Remark D‴.2's floor on a warm start.
 
 *Status.* Formal: (i) and the algebra of (ii)–(iv) are exact (the block splitting is Proposition K(i) cluster by cluster, confirmed
 on J₁₀ to 8·10⁻¹² in referee round 9; implicit function theorem; the multinomial covariance of shared labels; Hoeffding), the
@@ -1689,33 +1690,45 @@ of Theorem C′ is its mass-constrained relative). Write (𝔄_m^ν) and (𝔄�
 σ₀(ϑ − ϑ⁰_{j(ϑ)}), and 𝒱^ν[μ] := V_L[μ] + σ₀V_ν for the first-variation potential.
 
 (i) *(the theorems carry over)* Assume, in addition to the hypotheses of Theorem D‴ for (𝔄₀^ν), that the assignment is locally
-constant along the flow: for s ≥ s₁ the neighbourhood N_{ϱ′}(supp μ_s) meets no Voronoi boundary of ν (equivalently the gap
-between the distances to the two nearest atoms exceeds 2ϱ′ on supp μ_s). Then Theorem D‴, Proposition D‴.5 and Corollary D‴.7
-hold for (𝔄_m^ν) with the same constants, R_Θ replaced by max{R₀, L_ϑ^G(F_ρ + K_Φ)/σ₀} + max_j‖ϑ⁰_j − ϑ⁰_1‖_{G⁻¹} and ϑ⁰ by ϑ⁰_{j(·)}
-in the a priori bounds.
+constant along the flow: for every s ≥ 0 the neighbourhood N_{ϱ′}(supp μ_s) meets no Voronoi boundary of ν (in particular when the
+gap between the distances to the two nearest atoms exceeds 2ϱ′ on supp μ_s, the G⁻¹-distance to the boundary being at least half the
+gap). Then Theorem D‴, Proposition D‴.5 and Corollary D‴.7 hold for (𝔄_m^ν) with the same constants, R_Θ replaced by
+max{R₀, L_ϑ^G(F_ρ + K_Φ)/σ₀} + max_j‖ϑ⁰_j − ϑ⁰_1‖_{G⁻¹} and ϑ⁰ by ϑ⁰_{j(·)} in the a priori bounds, and Theorem J's basin radius ρ₀ at the
+replicated configuration taken below min_k dist_{G⁻¹}(ϑ*_k, ∂cell_k). The masses q_j enter the nearest-atom leak only through supp ν;
+they matter in (ii), and they are what the mass constraint of the OT leak (Theorem C′, Remark D‴.10) acts on.
 
 (ii) *(the stationary residual and the window)* If ν is placed on an exact representation of the plant on the orbit — K₀ = K atoms
 ϑ⁰_k with Σ_kq_kΦ̃(·;ϑ⁰_k) = f on supp ρ — then μ* := Σ_kq_kδ_{ϑ⁰_k} is a stationary measure of (𝔄₀^ν) with r_{μ*} = 0, R[μ*] ≡ 0,
-and the window of Remark D‴.1 has its maximal margin: κ_R[μ*](N_{ϱ′}(supp μ*)) = 0 and κ = σ₀ for every ϱ′ below half the cell
-margin, against κ = σ₀ − κ_R[μ*_σ](N_{ϱ′}) for the σ-modification's stationary measure μ*_σ, whose residual is the leak's bias. For
+and the window of Remark D‴.1 has its maximal margin: κ_R[μ*](A) = 0 for every set A (R[μ*] ≡ 0) and κ = σ₀, the only restriction
+on ϱ′ being (i)'s Voronoi hypothesis, against κ = σ₀ − κ_R[μ*_σ](N_{ϱ′}) for the σ-modification's stationary measure μ*_σ, whose
+residual is the leak's bias. For
 a prior ν_δ displaced from the exact representation the residual of the stationary measure is O(δ) and κ_R[μ*_{ν_δ}] = O(δ): the
 margin decreases with the misplacement, and the window closes when the displacement makes the residual-weighted curvature at an
 atom reach σ₀.
 
 (iii) *(the floors)* Under the shared-particle coupling the stationary distances are the weight-sensitivity laws of Proposition
-D‴.5 at parameter level, E D_∞ = (1/m − 1/M)Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ), and at function level,
+D‴.5 at parameter level, E[D_∞ | w^m, w^M ∈ W_adm] = (1/m − 1/M)Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ) + O(m^{−3/2}) + O(m⁻¹M^{−1/2}), and at
+function level,
 
     E‖f̂_{Θ*(w^m)} − f̂_{Θ*(w^M)}‖²_{L²(ρ)} = (1/m − 1/M)·tr(FC̃Fᵀ)/N + O(m^{−3/2}),    F_{·j} := ∂f̂_w/∂w_j = Φ̃(·;ϑ*_j) + Σ_kw_k∇_ϑΦ̃(·;ϑ*_k)S_{k·j},
 
 with S the sensitivity of the weighted stationary point of (𝔄₀^ν) to the weights. Neither floor vanishes for the matching prior:
 away from w̄ the weighted stationary point does not stay on the zero-residual manifold (the leak pulls the amplitudes back to the
-prior while the fit asks for a_k ∝ 1/w_k), and both sensitivities grow with the amplitudes of the stationary atoms.
+prior while the fit asks for a_k ∝ 1/w_k); on the instance both sensitivities rise with the amplitudes of the stationary atoms along
+the amplitude-scaled priors — a numerical trend, not a law (at a fixed amplitude the width changes the sensitivity, table 1).
 
 *Status.* (i) proved (the proofs of Theorem D‴, Proposition D‴.5 and Corollary D‴.7 use the leak only through its curvature σ₀G⁻¹
-and its a priori bound, both unchanged inside a cell; the local constancy of the assignment makes every segment [ϑ̄_i, ϑ_i] of Step
-2 lie in one cell, and Theorem J applies to J_m^ν, which is C² away from the Voronoi boundaries). (ii) proved (r_{μ*} = 0 and
-∇V_ν(ϑ⁰_k) = 0 give stationarity; R[μ*] = ⟨r_{μ*}∇²Φ̃⟩_ρ = 0; the O(δ) statements are the smooth dependence of the weighted
-stationary point on the prior, by the implicit function theorem at the non-degenerate μ*). (iii) formal as Proposition D‴.5 (the
+and its a priori bound — the latter goes through with dist(·, supp ν) in place of ‖· − ϑ⁰‖, the upper Dini derivative of the minimum
+of quadratics along the flow being bounded by the active branch's. The local constancy of the assignment makes every segment [ϑ̄_i, ϑ_i]
+of Step 2 lie in one cell, and it is needed for every s ≥ 0, not only from s₁ on, because (2.1) and (5.2) are used on [0, s₁) as well:
+a pair straddling a boundary adds (σ₀/m)⟨δ_i, ϑ⁰_{j(ϑ_i)} − ϑ⁰_{j(ϑ̄_i)}⟩_{G⁻¹} ≥ 0 to ½dD/ds (the sum of the two cell inequalities; V_ν is
+semiconcave and its leak expands across the boundaries), a forcing of size up to σ₀ diam(supp ν)√D that none of the theorem's constants
+absorbs — referee round 10 found `decomposition`'s same-cell convention and the true ½dD/ds to differ by exactly this term on a
+straddling pair. The same hypothesis gives the well-posedness of (𝔄₀^ν), whose vector field is discontinuous on the boundaries, and
+Theorem J applies to J_m^ν, which is C² away from the Voronoi boundaries, on a basin that meets none.) (ii) proved (r_{μ*} = 0 and
+∇V_ν(ϑ⁰_k) = 0 give stationarity; R[μ*] = ⟨r_{μ*}∇²Φ̃⟩_ρ = 0; the O(δ) statements are the smooth dependence of the weighted stationary
+point on the prior, by the implicit function theorem at μ*, whose K-atom Hessian Gram + σ₀diag(q)G⁻¹ is positive definite — on the
+instance its whitened, weighted eigenvalues are 0.0074–0.20, all at or above σ₀, referee round 10). (iii) formal as Proposition D‴.5 (the
 function-level law is the delta method applied to w ↦ f̂_{Θ*(w)}); the sign of the comparison with the σ-modification is a
 numerical finding (`exp_prior_design.py` → `results/chaos/prior_design.md`, below), not a theorem. Checked: `tests/test_prior_design.py`
 (the single-atom prior reproduces (𝔄_m); the gradient of J_m^ν against finite differences; the coupling identity inside the cells;
@@ -1725,13 +1738,15 @@ stationary point).
 
 *Remark D‴.10 (design).* The leak's prior is a design input of the window. The σ-modification's single ϑ⁰ biases every kernel toward
 one point and leaves a residual at the fitted configuration — the residual-weighted curvature that bounds the window from below
-and slows the relaxation (κ = 0.00195 on the instance of §5d, a relaxation time of 512 slow units). A prior measure whose atoms
-sit on the plant's structure removes the bias and gives the maximal margin κ = σ₀ (relaxation 141 slow units, 3.6 times faster),
+and slows the relaxation (κ = 0.00196 on the instance of §5d, the theorem's relaxation time 1/κ = 511 slow units). A prior measure
+whose atoms sit on the plant's structure removes the bias and gives the maximal margin κ = σ₀ (1/κ = 141 slow units, 3.6 times
+shorter; the observed e-folding times of the coupled distance are 3.3 times shorter in the median, numerics below),
 at the price of a larger floor at both levels (the stationary atoms have the full amplitudes, to which the weight sensitivity is
 proportional): the classical trade-off between bias and variance, here between the window's margin and the coupling's floor. A
 misplaced prior does worse than no structured prior (centres off by 0.6, amplitudes ×1.2 or widths ×0.7 close the window, which the
 σ-modification keeps open with margin 0.0020), and a shrunk prior does better than the matching one (amplitudes ×0.5–0.7: margin above
-σ₀, both floors lower, all tested weights admissible; numerics below and Remark D‴.11). The barycentric OT leak of Theorem C′ adds a mass constraint
+σ₀ at the uniform weights, both floors lower, all four tested unbalanced weights admissible — with splitting margins above σ₀ at one of
+them and slightly below at the other three; numerics below and Remark D‴.11). The barycentric OT leak of Theorem C′ adds a mass constraint
 to the same geometry — each prior atom must receive its mass — and so acts on the cluster weights themselves, the source of the
 floor; its interplay with the weight fluctuation (an equal-mass Lloyd dynamics against the fit) is the natural next step (§8,
 branch 8).
@@ -1752,7 +1767,7 @@ misplaced from it, against the σ-modification (ϑ⁰ = 0); ϱ′ = 0.1; the flo
 | widths ×0.7 / ×1.5 / ×2 | 0.2195 / 0.0581 / 0.1190 | +0.03086 / +0.00113 / +0.00294 | +0.03316 / +0.00126 / +0.00306 | −0.02609 / +0.00581 / +0.00401 | 13.00, 2.82, 9.77 / 11.13, 7.19, 8.50 / 10.39, 7.27, 8.71 | 3.062 / 2.932 / 3.008·10⁻¹ | 17.16 / 7.459 / 6.148·10⁻⁴ |
 
 The matching prior makes the exact representation stationary with zero residual (fit error 1.2·10⁻¹⁶), κ_R = 0 and the maximal margin
-κ = σ₀ = 0.00707, 3.6 times the σ-modification's 0.00196 (relaxation time 141 against 511 slow units); the σ-modification's bias (amplitudes
+κ = σ₀ = 0.00707, 3.6 times the σ-modification's 0.00196 (the theorem's relaxation time 1/κ: 141 against 511 slow units); the σ-modification's bias (amplitudes
 2.45, −2.29, 2.05 against 3A_k = 3.0, −2.1, 2.4; widths 0.83, 0.70, 0.88 against 0.5, 0.4, 0.5) is removed. The floors move the other way:
 ‖S_k‖ = 13.01, 6.18, 8.91 against 8.38, 4.66, 8.32, E D_∞ 1.61 times and the function-level floor 2.18 times the σ-modification's. Misplacing
 the prior brings the residual curvature back and closes the window at centres shifted by +0.6 (margin −0.00063), at amplitudes ×1.2
@@ -1770,38 +1785,59 @@ The cell margins (the gap between the two nearest prior atoms along the configur
 | (0.5, 0.3, 0.2) | −0.00062 | −0.00653 | +0.00663 |
 
 The matching prior's admissible set is the smallest: any excess weight overshoots the plant (κ_R at the over-weighted atom +0.0112 to +0.0136),
-so even (7, 5, 4)/16 is a saddle; the σ-modification tolerates (7, 5, 4)/16 but not (9, 4, 3)/16 (Theorem D‴'s inadmissible seed); the shrunk
-prior keeps all four admissible with margins at or above σ₀ (Remark D‴.11). At the realised weights of the matching-prior coupled runs
+so even (7, 5, 4)/16 is a saddle, and the set is smallest in the direction of the largest bump (an excess ε on the first atom alone, w = w̄ +
+ε(1.5e₁ − 0.5), has margins +0.00279, −0.00031, −0.00392 at ε = 0.02, 0.04, 0.08, while ε = 0.08 on the second or third atom alone keeps
++0.00208, +0.00316); the σ-modification undershoots (f̂/f = 0.77–0.78 at the first atom) and tolerates (7, 5, 4)/16 but not (9, 4, 3)/16
+(Theorem D‴'s inadmissible seed); the shrunk prior keeps all four admissible, with margins +0.00536 to +0.00733 — above σ₀ at (7, 5, 4)/16 and
+slightly below it at the other three, where its over-weighted first atom overshoots the plant at the centre by 1–3% (f̂/f = 1.020, 1.028,
+1.007; κ_R there +0.0014, +0.0017, +0.0004; Remark D‴.11). At the realised weights of the matching-prior coupled runs
 below, two of the nine (seed, m) pairs are saddles (m = 16, seed 0 with w = (6, 5, 5)/16, margin −0.00052; m = 64, seed 1 with w = (26, 17, 21)/64,
 −0.00296), the other seven admissible (+0.00056 to +0.00609).
 
 *Coupled runs with the matching prior (table 3).* m = 16, 64, 256 against M = 2048, warm start the mixture of Gaussians of width 0.02 around the
 exact representation, 300 slow units (2.1 relaxation times), three seeds. Along the run κ_R[μ*] over the spheres is 0 (r* = 0) and with the
-reference's own residual at most 0.00488 < σ₀; the reference's fit error falls from 0.029 to 0.008 and its rms drift from 3.6·10⁻³ to 3.0·10⁻⁵.
+reference's own residual at most 0.00674 < σ₀ (per-seed maxima 0.00634, 0.00674, 0.00155, each at the first record; the seed-mean curve peaks
+at 0.00488); the reference's fit error falls from 0.029 to 0.008 and its rms drift from 3.6·10⁻³ to 3.0·10⁻⁵ (seed means; per seed the fit
+error 0.041, 0.036, 0.011 → 0.012, 0.009, 0.003).
 Window maxima of D_m over (0, 37.5], (37.5, 75], (75, 150], (150, 300]: 0.114 → 0.193 → 0.239 → 0.250 ± 0.017 (m = 16), 0.0954 → 0.157 → 0.190 →
-0.197 ± 0.12 (64), 0.00933 → 0.0140 → 0.0166 → 0.0173 ± 0.010 (256): last-to-previous 1.05, 1.04, 1.04 — saturated within 2.1 relaxation times,
-3.6 times sooner than under the σ-modification; slope −1.23 ± 0.40 in m (the function-level distance −0.63 ± 0.21). Per seed, the linearised
-law from the realised weights predicts the measured D_m at s = 300 with ratios 0.81–1.11 at parameter level (nine pairs) and 0.61–1.69 at
-function level; the two inadmissible pairs are among them (0.91 and 0.81), their plateaus being saddles' that a longer horizon would see left.
+0.197 ± 0.12 (64), 0.00933 → 0.0140 → 0.0166 → 0.0173 ± 0.010 (256): last-to-previous 1.05, 1.04, 1.04 — saturated within 2.1 of the theorem's relaxation
+times 1/κ; the observed late-time e-folding times of D_m (from the geometric decay of its increments over (150, 300]) are 48–84 slow units,
+median 59, against 107–306 (median 195) for the σ-modification's warm runs of Theorem D‴'s numerics — a factor 3.3 in the medians, against
+3.6 in 1/κ; slope −1.23 ± 0.40 in m (the function-level distance −0.63 ± 0.21). Per seed, the linearised law from the realised weights
+predicts the measured D_m at s = 300 with ratios 0.81–1.11 at parameter level (nine pairs) and 0.61–1.69 at function level, and the exact
+form of Proposition D‴.5(ii), Σ_kw^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹}, with ratios 0.987–0.998 in all nine pairs: the linearised law's
+deviations are its second-order remainder (its two lowest ratios, 0.81 and 0.82, sit at |w^m − w^M|_∞ = 0.084 and 0.033), not the saddles'
+doing. The two inadmissible pairs (ratios 0.91 and 0.81; exact 0.995 and 0.994) sit on their replicated saddles at s = 300; continued
+autonomously to s = 6000 and 9000 (referee round 10, `review/REVIEW_round10_D3c.md`), both m-systems leave the saddle by Proposition K's
+local split — the over-weighted cluster separates into two sub-clusters along the centre direction inside its own cell, the cluster weights
+unchanged — and the coupled distance stays on its plateau (−1.3% at m = 64), unlike the σ-modification's seed of round 9, which migrated
+between basins.
 
 *The function-level law for the σ-modification (table 4).* Against the warm runs of Theorem D‴'s numerics (M = 2048, last window): the predicted
 root-mean-square (1/m − 1/M)^{1/2}(tr FC̃Fᵀ/N)^{1/2} is 0.0419, 0.0207, 0.00984 against the measured means 0.0307 ± 0.0097, 0.0154 ± 0.0033,
 0.00467 ± 0.0012 (ratios 0.73, 0.74, 0.48; a mean of norms over four seeds lies below the root-mean-square).
 
 *Reading.* The prior is a design input on three counts. Its placement sets the stationary residual, hence the window's lower end and the
-relaxation rate (the matching prior: margin σ₀, 3.6 times faster); the amplitudes it induces set the floors (which rise with them, so
-removing the bias raises the floors by 1.6–2.2 times); and the sign of the residual it leaves at each cluster sets the admissible set of
+relaxation rate (the matching prior: margin σ₀, the theorem's relaxation time 3.6 times shorter, the observed one 3.3 times); the
+amplitudes it induces set the floors (which rise with them along the amplitude-scaled priors, so removing the bias raises the floors by
+1.6–2.2 times); and the sign of the residual it leaves at each cluster sets the admissible set of
 weights (overshoot splits, undershoot stabilises). A shrunk prior — amplitudes 0.5–0.7 of the plant's — wins on all three at a fit error
 of 0.06–0.09; a misplaced one (centres off by more than a bump width, amplitudes too large, widths too narrow) closes the window.
 
 *Remark D‴.11 (undershoot stabilises, overshoot splits).* For a Gaussian kernel, ∂²_{cc}Φ̃(x;ϑ) = −(a/s²)(1 − (x − c)²/s²)φ is negative at the
 centre, so the (c, c) entry of R[μ](ϑ_k) = ⟨r_μ∇²Φ̃⟩_ρ has the sign of −a_k·r_μ near the centre: a cluster whose kernel overshoots the plant
-there (r of the sign opposite to a_k) gets R ≻ 0 in the centre direction — the separation block σ₀G⁻¹ − R loses definiteness and the cluster
-can split — while an undershooting cluster gets R ≺ 0 and a splitting margin above σ₀. This is the mechanism behind table 2 (the matching
-prior overshoots at every over-weighted cluster; the shrunk prior undershoots everywhere), behind Theorem D‴'s inadmissible seed (weight 9/16
-on the first bump) and behind Proposition K's collapsed instability (the single kernel overshoots the plant between the bumps). It is an
-observation about the Gaussian kernel's second derivative, not a theorem: the width and amplitude directions carry other signs, and the
-residual's profile matters; the splitting margin itself is the quantity to compute.
+there (r of the sign opposite to a_k) gets R ≻ 0 in the centre direction — the separation block σ₀G⁻¹ − R loses margin, and the cluster
+splits once κ_R exceeds σ₀ — while an undershooting cluster gets R ≺ 0 and a splitting margin above σ₀. For the matching prior this is
+exactly what table 2 shows: at every tested weight the over-weighted atom overshoots at its centre (f̂/f = 1.07–1.10), its R_cc is positive
+and the top eigenvector of R^G is the centre direction, (0.01, 1.00, −0.02) in (a, c, s), while the under-weighted atoms have R_cc < 0; the
+shrunk prior undershoots at the uniform weights and at (7, 5, 4)/16, and at the three more unbalanced weights its over-weighted atom
+overshoots slightly (f̂/f = 1.007–1.028), taking the margin just below σ₀. The two other instabilities of §5d and §6e have a different
+anatomy (referee round 10): the σ-modification's inadmissible seed (weight 9/16 on the first bump) still undershoots at its centre
+(R_cc < 0), its unstable direction being a mixed amplitude–width direction — the broad kernel (width 0.88 against the bump's 0.5) overshoots
+in its tails, through the cross-curvature ⟨r φ(x − c)²/s³⟩_ρ; and Proposition K's collapsed kernel owes its R_cc = +0.055 to the overshoot
+over the negative bump and to the undershoot of the outer bumps beyond its inflection points, where 1 − (x − c)²/s² < 0, not to the region
+between the bumps. It is an observation about the Gaussian kernel's second derivative, not a theorem: the width and amplitude directions
+carry other signs, and the residual's profile matters; the splitting margin itself is the quantity to compute.
 
 *Numerics* (`exp_chaos_learning.py` → `results/chaos/learning_table.md`). The instance: n = 1, saturated features with a_max = 4,
 c_max = 3, s ∈ [0.3, 2], prior ϑ⁰ = 0, G = diag(1, 0.25, 0.25); a plant of three Gaussian bumps, (A, C, S) = (1, −1.5, 0.5),
@@ -4220,7 +4256,7 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | D′(b), (d) | the m^{−1/2} rate of the synchronous coupling to a 4096-particle reference: slopes −0.47 ± 0.06 (τ = 0) and −0.46 ± 0.05 (τ = 2·10⁻³) over 24 seeds, 0.94 ± 0.08 and 0.92 ± 0.08 against (1/m − 1/M)^{1/2}; not the constant | `exp_chaos.py` → `results/chaos/table.md` |
 | D″ | with exact Lipschitz constants and the a-priori tube, σ_cert = 4.04 against Proposition K's σ_K = 0.00144; at 1.2σ_cert with dither the coupled distance is of order m^{−1/2} (slope −0.51 ± 0.02), bounded in time and 700× below the bound, with the network at its prior (fit error 1.000); without dither the reference collapses (spread 10⁻¹⁴) and the distance is zero; at σ_cert/8 it decays to 10⁻¹¹; in the learning regime (σ_K/3, 1000 s) the network stays spread and fits the plant (fit error 0.63) and the distance follows m^{−1/2} (−0.62 ± 0.16) but grows threefold between the windows (100, 200] and (500, 1000] | `exp_chaos_uniform.py` → `results/chaos/uniform_table.md` |
 | D‴, D‴.5, D‴.7 | the window realised at σ₀ = 0.15σ_crit (κ_R[μ*](N_{0.1}) = 0.0051 < 0.0071 < 0.047), (H) along the warm run (margin ≥ 0.0014), saturation of the coupled distance (last/first window ratios 1.13–1.15 over 900 slow units), slope −1.28 ± 0.30 in m; the weight-sensitivity law per seed within 25% in 9 of 12 pairs, per-cluster cosines 0.92–1.00; the exact stationary distance of Proposition D‴.5(ii) within 2.3% in all 12 pairs, splitting margins positive in 11 (one m = 16 seed a saddle); cold start: growth (2.9–7.8×) and the floor's fraction 0.20, 0.08, 0.04 decaying like m^{−0.64±0.08}; real loop at k_e = 25 within 0.7% of its averaged slow dynamics on the same clouds; not the constants C₁, m₀ (vacuous: 2·10⁹, 10²³) nor the saturation of Corollary D‴.7 | `exp_chaos_learning.py` → `results/chaos/learning_table.md` |
-| D‴.9, D‴.11 | the matching prior: zero residual, κ_R = 0, margin σ₀ = 0.00707 against the σ-modification's 0.00196, floors 1.61× and 2.18× higher; misplacement closes the window (centres +0.6, amplitudes ×1.2, widths ×0.7); shrunk amplitudes ×0.5–0.7 give margins above σ₀ and lower floors; admissible-weight table under three priors (overshoot splits, undershoot stabilises); matching-prior coupled runs saturate within 2.1 relaxation times with per-seed law ratios 0.81–1.11 (parameter) and 0.61–1.69 (function); the function-level law for the σ-modification within ratios 0.48–0.74 of the measured means | `exp_prior_design.py` → `results/chaos/prior_design.md` |
+| D‴.9, D‴.11 | the matching prior: zero residual, κ_R = 0, margin σ₀ = 0.00707 against the σ-modification's 0.00196, floors 1.61× and 2.18× higher; misplacement closes the window (centres +0.6, amplitudes ×1.2, widths ×0.7); shrunk amplitudes ×0.5–0.7 give margins above σ₀ at the uniform weights and lower floors; admissible-weight table under three priors (overshoot splits, undershoot stabilises; the shrunk prior keeps all four tested weights admissible, +0.0054 to +0.0073); matching-prior coupled runs saturate within 2.1 of the theorem's relaxation times (observed e-folding 48–84 slow units against 107–306 for the σ-modification) with per-seed linearised-law ratios 0.81–1.11 (parameter) and 0.61–1.69 (function) and the exact law within 0.987–0.998 in all nine pairs; the two saddles among them are left by a local split with the coupled distance on its plateau; the function-level law for the σ-modification within ratios 0.48–0.74 of the measured means (RMS over seeds 0.52–0.84; per-seed law from the realised weights 0.60–1.57) | `exp_prior_design.py` → `results/chaos/prior_design.md` |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
