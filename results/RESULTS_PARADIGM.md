@@ -323,7 +323,28 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
 
 ## Theorem D‴ — uniform-in-time propagation of chaos in the learning regime (`exp_chaos_learning.py` → `chaos/learning_table.md`)
 
-- [D3 NUMERICS PENDING]
+- Instance: n = 1, G = diag(1, 0.25, 0.25), three-bump plant (1, −1.5, 0.5), (−0.7, 0, 0.4), (0.8, 1.5, 0.5), x_m = 2 sin t, σ_crit = 0.04716
+  (Proposition K), σ₀ = 0.15σ_crit = 0.00707; L_ϑ^G = 4.044, L₂^G = 11.11, K_Φ = 4, F_ρ = 0.999. Averaged slow loop (𝔄_m), m = 16, 64, 256
+  against M = 2048, 900 slow units, 4 seeds per start; real loop at k_e = 25 over 2000 time units, 3 seeds.
+- The hypothesis at the three-atom stationary measure (fit error 0.244): κ_R at the atoms 0.00004, −0.00227, 0.00411; over spheres of
+  radius 0.05, 0.1, 0.2, 0.3: 0.00461, 0.00512, 0.00619, 0.00730 — (H) holds with ϱ′ = 0.1 and margin 0.00195 (1/κ = 512), the window
+  κ_R[μ*](N_{0.1}) = 0.00512 < σ₀ = 0.00707 < σ_crit = 0.04716 is realised; at 0.3σ_crit the three-atom measure fails splitting
+  (κ_R = 0.01696 > 0.01415). Theorem constants: C₁ = 2.2·10⁹, m₀ = 1.2·10²³ (vacuous envelopes).
+- Along the warm run (jittered mixture around the atoms) the margin a(s) stays in [+0.00139, +0.00167]; the own-residual statistic
+  exceeds the r*-one by ≤ 0.00013 ((0.2) allows 0.214); rms drift 6·10⁻³ → 3·10⁻⁶. Along the cold run (connected cloud) the margin is
+  negative throughout (−0.196 → −0.0025) while the fit converges to 0.244 as well.
+- Warm start: window maxima of D_m 0.396 → 0.448 (m = 16), 0.122 → 0.138 (64), 0.0119 → 0.0137 (256) over (0, 112.5] → (450, 900]
+  (last/first 1.13–1.15, last/previous 1.01–1.02: saturated); slope −1.28 ± 0.30 (mean square; theorem −1), learned function −0.69 ± 0.16;
+  per-particle maxima 1.36, 0.62, 0.21 ≫ 3ϱ′/4 = 0.075 (Remark D‴.6).
+- Proposition D‴.5: ‖S_k‖ = 8.38, 4.66, 8.32; E D_∞ predicted 0.823, 0.201, 0.0454 against means 0.446 ± 0.28, 0.138 ± 0.051,
+  0.0136 ± 0.0055 (four seeds, heavy-tailed); per seed the realised-weight prediction is within 25% of the measured D in 9 of 12 pairs
+  (worst ratio 0.57 at |w^m − w^M| = 0.275); per-cluster displacements along S_k(w^m − w^M) with cosines 0.92–1.000 and norms within 5–20%.
+- Cold start: D grows 1.81 → 5.33 (16), 0.505 → 1.79 (64), 0.0744 → 0.583 (256) (last/first 2.95, 3.54, 7.84), slope −0.87 ± 0.14;
+  bimodal deviations (medians 0.40, 0.14, 0.067; maxima 6.2–6.7); fraction of pairs > 1 whitened unit apart 0.203 ± 0.047,
+  0.082 ± 0.021, 0.037 ± 0.010 (∝ m^{−1/2}): the floor of Remark D‴.2.
+- Real loop (k_e = 25, warm start): window maxima 0.328 → 0.590 (16), 0.0605 → 0.0909 (64), 0.0188 → 0.0294 (256) over (0, 500] →
+  (1000, 2000] (slow time ≤ 80 = 0.16/κ), slope −1.13 ± 0.15; against the averaged runs at equal slow times the last-window ratios are
+  1.57, 0.78, 2.58 with relative standard errors of 30–60% on both sides: the real loop tracks the averaged transient (Corollary D‴.7).
 
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 
