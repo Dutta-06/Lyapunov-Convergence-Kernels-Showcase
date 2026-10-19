@@ -417,6 +417,15 @@ over 300 steps); the collapsed system with weights (6, 5, 4)/15 stays collapsed 
 OT leak; two commensurate lifts keep W² = 0 and the same learned function; the lifted orbit's class separation subspaces are invariant and
 carry the ghost spectrum (Proposition D‴.15, m = 6).
 
+## Corollary D‴.14 in two dimensions (`exp_ot_2d.py` → `chaos/ot_2d.md`)
+
+- Planar plant (four Gaussian bumps with vector amplitudes), Lissajous reference, p = 5 parameters per kernel, matching prior (masses ¼),
+  k_e = 25, σ₀ = 0.05, 2500 time units = 100 slow units, sizes 8, 32 vs 128 from the same jittered clouds, two seeds.
+- OT leak: weights equalised at 13–14 slow units (ln 2/σ₀ = 14); ‖f̂_m − f̂_M‖² = 5.0·10⁻⁸–1.6·10⁻⁷; fit error along the orbit
+  2.1·10⁻⁴–8.7·10⁻⁴; rms tracking error 3.9·10⁻⁶–1.6·10⁻⁵; W²(μ_m, μ_M) 2.0·10⁻⁴–4.4·10⁻⁴.
+- Nearest-atom leak: weights conserved; ‖f̂_m − f̂_M‖² = 5.5·10⁻³–2.3·10⁻²; fit errors 0.11–0.39; rms tracking errors 1.9·10⁻³–6.7·10⁻³;
+  W²(μ_m, μ_M) 4.7–11.8.
+
 ## Proposition D‴.15 — the transverse spectrum of a lifted orbit (`exp_lifted_orbit.py` → `chaos/lifted_orbit.md`)
 
 - Real loop at k_e = 25; monodromies by central differences (DOP853, rtol 10⁻¹¹). OT leak at the matching masses: the 3-atom orbit (the exact
