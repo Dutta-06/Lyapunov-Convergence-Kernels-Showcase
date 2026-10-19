@@ -450,6 +450,19 @@ Tests (`tests/test_uniform_basin.py`): the drift's second-order remainder ≤ C_
 m = 6, 30, 150, 600 and exactly 0.064 for a collective one; a one-particle separation moves nothing else at first order (response −σ₀u at
 m = 6, 60, 300); the averaged loop contracts |||·||| at 0.9σ₀ with one constant for m = 6, 30, 150.
 
+## Proposition D‴.20 — the entropic OT leak (`exp_entropic_leak.py` → `chaos/entropic_leak.md`)
+
+- Matching prior, σ₀ = 0.15σ_crit; the entropic plan by semi-dual Newton.
+- Critical excess at w_δ = q + δ(1.5e₁ − 0.5): ε_c = 5.1, 13.5, 23.1, 136 for δ = 0.02, 0.05, 0.1, 0.2; rank-one formula 6.2, 16.6, 30.3, 88.
+- Dynamics (m = 15, 60, 240 vs M = 510, 600 slow units, 4 seeds): ε = 1 — all sizes equalised, fit errors 1.7–3.0·10⁻⁴, function-level
+  distances 1.0–5.6·10⁻⁷; ε = 4 — m = 15 equalised, the larger sizes stop at residual excesses 0.017–0.029, fit errors 8.8–9.6·10⁻³; ε = 16 —
+  sampled weights kept for m ≥ 60, function-level floors 1.5·10⁻³, 2.2·10⁻⁴, 3.5·10⁻⁵ (the nearest-atom leak's order), fit errors 0.033–0.069;
+  ε = 64 — no equalisation, fit errors 0.12–0.14 (the barycentric bias).
+
+Tests (`tests/test_entropic_leak.py`): marginals and the agreement of the two solvers; the gradient of J^ε_m against finite differences; the
+limits ε → 0 and ε → ∞; the separation blocks of the finite-difference Hessian at a collapsed configuration equal to σ₀(I − (2/ε)Cov^G) − R^G;
+the over-weighted class of (6, 5, 4)/15 unstable at ε = 4, 16 and stable at 20, 64.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
