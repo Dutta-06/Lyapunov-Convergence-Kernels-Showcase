@@ -118,6 +118,18 @@ def window_mean(s, v, a, b):
     return float(np.nanmean(v[msk]))
 
 
+def transit_end_time(s, transit, nsplit, m):
+    """The first record time from which the mass in transit stays at or below (split particles)/m — no unsplit particle is assigned away
+    from its nearest atom any more; nan if never.  For commensurate m this is the equalisation time."""
+    ok = np.asarray(transit) <= np.asarray(nsplit) / m + 1e-12
+    if not ok[-1]:
+        return float('nan')
+    idx = len(ok) - 1
+    while idx > 0 and ok[idx - 1]:
+        idx -= 1
+    return float(s[idx])
+
+
 def mean_se(v):
     v = np.asarray(v, float)
     return float(np.mean(v)), (float(np.std(v, ddof=1) / np.sqrt(len(v))) if len(v) > 1 else float('nan'))
@@ -161,16 +173,18 @@ def report(runs, design, t0=None):
         lines += [f"## {'1' if set_name == 'commensurate' else '2'}. {set_name.capitalize()} sizes: m = {', '.join(str(m) for m in ms)} against M = {M}" + (" (mq ∈ ℕ³: every plan integral)" if set_name == 'commensurate' else " (mq ∉ ℕ³: one or two split particles)"), ""]
         # weights, transit, equalisation
         lines += ["### Cluster masses: conserved by the nearest-atom leak, driven to q by the OT leak", "",
-                  "| m | mean |w(0) − q|₁ over seeds (both leaks start from the same clouds) | nearest-atom leak: max_s |w(s) − w(0)|_∞ | OT leak: |w(end) − q|_∞ | OT leak: equalisation time s_eq (first record from which w = q to within half a particle; per seed) | OT leak: mass in transit at s = 0 (= ½|w(0) − q|₁) and at the end | split particles (OT, end) |",
-                  "|---|---|---|---|---|---|---|"]
+                  "| m | mean |w(0) − q|₁ over seeds (both leaks start from the same clouds) | ½|w^m(0) − w^M(0)|₁ (mean; the mass the two systems' clusters disagree on) | nearest-atom leak: max_s |w(s) − w(0)|_∞ | OT leak: |w(end) − q|_∞ (by nearest atom) | OT leak: equalisation time s_eq (first record from which w = q to within half a particle; per seed) | OT leak: end of the transit s_tr (first record from which the mass in transit stays ≤ split particles/m; per seed) | OT leak: mass in transit at s = 0 (= ½|w(0) − q|₁) and at the end | split particles (OT, end) |",
+                  "|---|---|---|---|---|---|---|---|---|"]
         for m in list(ms) + [M]:
             w0 = [float(np.abs(r[f'w{m}'][0] - Q).sum()) for r in R['ot']]
+            dwM = [0.5 * float(np.abs(r[f'w{m}'][0] - r[f'w{M}'][0]).sum()) for r in R['ot']]
             cons = [float(np.abs(r[f'w{m}'] - r[f'w{m}'][0][None, :]).max()) for r in R['nearest']]
             wend = [float(np.abs(r[f'w{m}'][-1] - Q).max()) for r in R['ot']]
             seq = [OT.equalisation_time(r['s'], r[f'w{m}'], Q, m) for r in R['ot']]
+            str_ = [transit_end_time(r['s'], r[f'transit{m}'], r[f'nsplit{m}'], m) for r in R['ot']]
             tr0 = [float(r[f'transit{m}'][0]) for r in R['ot']]; tr1 = [float(r[f'transit{m}'][-1]) for r in R['ot']]
             nsp = [int(r[f'nsplit{m}'][-1]) for r in R['ot']]
-            lines.append(f"| {m}{' (reference)' if m == M else ''} | {np.mean(w0):.4f} | {max(cons):.1e} | {max(wend):.1e} | {', '.join(f'{x:.0f}' if np.isfinite(x) else '—' for x in seq)} | {np.mean(tr0):.4f} → {np.mean(tr1):.4f} | {', '.join(str(n) for n in nsp)} |")
+            lines.append(f"| {m}{' (reference)' if m == M else ''} | {np.mean(w0):.4f} | {np.mean(dwM):.4f} | {max(cons):.1e} | {max(wend):.1e} | {', '.join(f'{x:.0f}' if np.isfinite(x) else '—' for x in seq)} | {', '.join(f'{x:.0f}' if np.isfinite(x) else '—' for x in str_)} | {np.mean(tr0):.4f} → {np.mean(tr1):.4f} | {', '.join(str(n) for n in nsp)} |")
         ln2 = np.log(2) / SIGMA0
         lines += ["", f"The pure leak carries a migrating particle across the Voronoi midpoint at s = ln 2/σ₀ = {ln2:.0f} slow units; the equalisation times above are where the last migrating particle's nearest atom flips.", ""]
         # fit errors
@@ -181,16 +195,23 @@ def report(runs, design, t0=None):
         # the three distances on the last window
         a_w, b_w = WINDOWS[-1]
         lines += ["", f"### The distances to the reference on the last window ({a_w:g}, {b_w:g}] (means over the window and over seeds)", "",
-                  "| m | ‖f̂_m − f̂_M‖²_{L²(ρ)}: nearest | OT | predicted (1/m − 1/M)tr(FC̃Fᵀ)/N (nearest, Proposition D‴.9(iii)) | W²_{G⁻¹}(μ_m, μ_M): nearest | OT | synchronous D: nearest | OT |",
-                  "|---|---|---|---|---|---|---|---|"]
+                  "| m | ‖f̂_m − f̂_M‖²_{L²(ρ)}: nearest | OT | predicted (1/m − 1/M)tr(FC̃Fᵀ)/N (nearest, Proposition D‴.9(iii)) | W²_{G⁻¹}(μ_m, μ_M): nearest | OT | ½|w^m − w^M|₁·Δ_ν² (nearest: the cross-cluster transport of the weight mismatch, mean over seeds) | synchronous D: nearest | OT |",
+                  "|---|---|---|---|---|---|---|---|---|"]
         H = {leak: {m: [window_mean(r['s'], r[f'h2{m}'], a_w, b_w) for r in R[leak]] for m in ms} for leak in R}
         W = {leak: {m: [window_mean(r['s'], r[f'W2{m}'], a_w, b_w) for r in R[leak]] for m in ms} for leak in R}
         D = {leak: {m: [window_mean(r['s'], r[f'D{m}'], a_w, b_w) for r in R[leak]] for m in ms} for leak in R}
+        a_p, b_p = WINDOWS[-2]
+        Hp = {leak: {m: [window_mean(r['s'], r[f'h2{m}'], a_p, b_p) for r in R[leak]] for m in ms} for leak in R}
+        Wp = {leak: {m: [window_mean(r['s'], r[f'W2{m}'], a_p, b_p) for r in R[leak]] for m in ms} for leak in R}
         for m in ms:
-            lines.append(f"| {m} | {fmt(*mean_se(H['nearest'][m]))} | {fmt(*mean_se(H['ot'][m]))} | {PD.predicted_stationary_function_D(F, Q, m, M):.3e} | {fmt(*mean_se(W['nearest'][m]))} | {fmt(*mean_se(W['ot'][m]))} | {fmt(*mean_se(D['nearest'][m]))} | {fmt(*mean_se(D['ot'][m]))} |")
+            cross = np.mean([0.5 * float(np.abs(r[f'w{m}'][-1] - r[f'w{M}'][-1]).sum()) * Delta ** 2 for r in R['nearest']])
+            lines.append(f"| {m} | {fmt(*mean_se(H['nearest'][m]))} | {fmt(*mean_se(H['ot'][m]))} | {PD.predicted_stationary_function_D(F, Q, m, M):.3e} | {fmt(*mean_se(W['nearest'][m]))} | {fmt(*mean_se(W['ot'][m]))} | {cross:.3e} | {fmt(*mean_se(D['nearest'][m]))} | {fmt(*mean_se(D['ot'][m]))} |")
         ratios_h = [np.mean(H['ot'][m]) / np.mean(H['nearest'][m]) for m in ms]; ratios_w = [np.mean(W['ot'][m]) / np.mean(W['nearest'][m]) for m in ms]
+        lp = {leak: ([np.mean(H[leak][m]) / np.mean(Hp[leak][m]) for m in ms], [np.mean(W[leak][m]) / np.mean(Wp[leak][m]) for m in ms]) for leak in R}
         sl = {leak: {k: slope_se(X[leak]) for k, X in (('h2', H), ('W2', W), ('D', D))} for leak in R}
-        lines += ["", f"Ratios OT/nearest of the function-level distance: {', '.join(f'{x:.3f}' for x in ratios_h)}; of W²: {', '.join(f'{x:.3f}' for x in ratios_w)}. "
+        lines += ["", f"Ratios OT/nearest of the function-level distance: {', '.join(f'{x:.1e}' for x in ratios_h)}; of W²: {', '.join(f'{x:.1e}' for x in ratios_w)}. "
+                  f"Ratios of the last window to the one before (({a_p:g}, {b_p:g}]; 1 = stationary): function level nearest {', '.join(f'{x:.2f}' for x in lp['nearest'][0])}, OT {', '.join(f'{x:.3f}' for x in lp['ot'][0])}; "
+                  f"W² nearest {', '.join(f'{x:.2f}' for x in lp['nearest'][1])}, OT {', '.join(f'{x:.3f}' for x in lp['ot'][1])}. "
                   f"Slopes in m (log–log, per seed, mean ± s.e.): function level nearest {sl['nearest']['h2'][0]:.2f} ± {sl['nearest']['h2'][1]:.2f}, OT {sl['ot']['h2'][0]:.2f} ± {sl['ot']['h2'][1]:.2f}; "
                   f"W² nearest {sl['nearest']['W2'][0]:.2f} ± {sl['nearest']['W2'][1]:.2f}, OT {sl['ot']['W2'][0]:.2f} ± {sl['ot']['W2'][1]:.2f}; synchronous D nearest {sl['nearest']['D'][0]:.2f} ± {sl['nearest']['D'][1]:.2f}, OT {sl['ot']['D'][0]:.2f} ± {sl['ot']['D'][1]:.2f}."]
         # time course of the OT distances: window means

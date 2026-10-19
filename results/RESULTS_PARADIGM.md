@@ -371,6 +371,31 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
   0.0307 ± 0.0097, 0.0154 ± 0.0033, 0.0047 ± 0.0012 (ratios 0.73, 0.74, 0.48; RMS over seeds/predicted 0.84, 0.79, 0.52; per-seed law from the
   realised weights 0.60–1.57).
 
+## Proposition D‴.12 — the OT leak's mass constraint against the weight fluctuation (`exp_ot_leak.py` → `chaos/ot_leak.md`)
+
+- Same instance and matching prior as Proposition D‴.9's numerics (σ₀ = 0.15σ_crit, q = (1/3, 1/3, 1/3), Δ_ν = 6.26); the nearest-atom
+  and the barycentric OT leak on the same warm clouds, 600 slow units (4.2/σ₀), 4 seeds; m = 15, 60, 240 vs M = 510 (commensurate) and
+  m = 16, 64, 256 vs M = 512 (incommensurate).
+- Cluster weights: conserved exactly under the nearest-atom leak (max deviation 0 in 32 systems); under the OT leak the mass in transit
+  ½|w(0) − q|₁ = 0.117, 0.058, 0.027, 0.024 reaches zero and the weights equal q from s_eq = 93–164 slow units (ln 2/σ₀ = 98). Fit error at
+  the end: 0.067, 0.029, 0.017, 0.012 (nearest) → 2.8·10⁻⁴, 1.2·10⁻⁴, 1.2·10⁻⁴, 0.8·10⁻⁴ (OT).
+- Commensurate sizes, last window: function-level distance² 2.5·10⁻³, 5.2·10⁻⁴, 5.9·10⁻⁵ (nearest; law predicts 4.0·10⁻³, 9.1·10⁻⁴,
+  1.4·10⁻⁴) vs 4.9·10⁻⁷, 4.9·10⁻⁸, 7.5·10⁻⁹ (OT, still falling ×0.02–0.035 per 150 slow units); W² 5.1, 2.7, 0.81 (nearest; cross-cluster
+  transport ½|w^m − w^M|₁Δ_ν² = 4.9, 2.5, 0.70; slope −0.67 ± 0.13) vs 7.9·10⁻³, 2.3·10⁻³, 6.9·10⁻⁴ (OT, ×0.12 per 150 slow units);
+  synchronous D 0.87, 0.25, 0.017 (nearest) vs 5.8, 3.3, 0.94 (OT: the reassigned particles).
+- Incommensurate sizes: one or two split (bridge) particles per system at 0.28–0.58 Δ_ν from the nearest atom; stationary floors OT
+  3.4·10⁻⁴, 3.1·10⁻⁵, 1.1·10⁻⁶ (function level, slope −2.07 ± 0.05) and 1.16, 0.29, 0.041 (W², slope −1.21 ± 0.04; bound (K₀ − 1)Δ_ν²/m =
+  4.9, 1.2, 0.31) vs nearest 2.5·10⁻³, 5.0·10⁻⁴, 4.4·10⁻⁵ (−1.59 ± 0.27) and 4.8, 2.7, 0.69 (−0.79 ± 0.12); fit error OT 0.028, 0.0093,
+  0.0023, 0.0011 vs nearest 0.061, 0.035, 0.013, 0.012.
+- Masses as a design input: q_δ = (1/3 + δ, 1/3 − δ/2, 1/3 − δ/2) gives fit error 0.0069–0.049 for δ = 0.01–0.1, splitting margin +0.0048,
+  +0.0028, +0.0011, −0.0015, −0.0049 (inadmissible between δ = 0.03 and 0.05), diagonal plan unique at every row (ε ≤ 1.04 < 3.13).
+
+Tests (`tests/test_ot_leak.py`): the plan is a vertex with the prescribed masses (integral when commensurate, ≤ K₀ − 1 split rows
+otherwise) and the single-atom prior is the σ-modification; the leak is the G-gradient flow of J_m^{OT} against finite differences; the
+replicated weighted configuration is stationary for three commensurate sizes with the diagonal plan and the same learned function (W² = 0
+between sizes), for matching and mismatched masses; conservation against constraint on a short run; the forest bound; the exact W² by
+replication against the transportation LP.
+
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 
 | experiment | result |
