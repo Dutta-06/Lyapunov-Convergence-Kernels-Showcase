@@ -6,7 +6,7 @@ commensurate size
 The real closed loop of Theorem J (k_e = 25, σ = σ₀/k_e, RK4 plant with the control and the reference evaluated at the stages and the
 parameters frozen over the step, Euler parameters, dt = 10⁻³) on the
 three-bump instance, with the nearest-atom leak and with the barycentric OT leak toward the matching prior (plan recomputed every 100 steps),
-started from the contracted clouds at the end of the averaged runs of `exp_ot_leak.py` (commensurate set: m = 15, 60 and M = 510; the OT
+started from the clouds at the end of the averaged runs of `exp_ot_leak.py` (commensurate set: m = 15, 60 and M = 510; the OT
 runs' clouds have the prior's masses, the nearest-atom runs' clouds their conserved sampled weights) and from the collapsed lifts — the
 three atoms of the exact representation for the OT leak (the weighted 3-atom loop with q = (1/3, 1/3, 1/3)), and the replicated weighted
 stationary configurations Θ*(w^m) for the nearest-atom leak. Over the last five periods: the learned function along the reference orbit
@@ -172,7 +172,7 @@ def report(res, t0=None):
     lines = ["# Corollary D‴.14: the real closed loop with the OT leak — the orbit is the lift of the weighted K₀-atom loop's, the same for every commensurate size (`exp_ot_real_loop.py`)", "",
              f"The real closed loop of Theorem J on the three-bump instance (k_e = {KE:g}, σ = σ₀/k_e with σ₀ = 0.15σ_crit = {SIGMA0:.5f}, RK4 plant with the control and the reference evaluated at the stages and the parameters frozen over the step, Euler parameters, dt = {DT:g}), "
              f"{T_END:g} time units = {T_END / PER:.1f} periods = {T_END / KE:.1f} slow units; statistics over the last {N_PER} periods on the 400-point grid of the reference orbit. "
-             f"Starts: the contracted clouds at the end of `exp_ot_leak.py`'s averaged runs (commensurate set, m = {', '.join(str(m) for m in MS)}, M = {M_REF}; the OT runs' clouds carry the prior's masses q = (1/3, 1/3, 1/3), "
+             f"Starts: the clouds at the end of `exp_ot_leak.py`'s averaged runs (contracted where the realised weights are admissible) (commensurate set, m = {', '.join(str(m) for m in MS)}, M = {M_REF}; the OT runs' clouds carry the prior's masses q = (1/3, 1/3, 1/3), "
              f"the nearest-atom runs' clouds their conserved sampled weights), and the collapsed lifts: the three atoms of the exact representation for the OT leak (the weighted 3-atom loop with weights q, "
              f"itself the m = 3 loop), and the replicated weighted stationary configurations Θ*(w^m) for the nearest-atom leak. Seeds {', '.join(str(r['seed']) for r in res)}; the leak target (the nearest atom, or the barycentric "
              f"projection of the vertex plan) recomputed every {PLAN_EVERY} steps.", ""]
@@ -186,7 +186,7 @@ def report(res, t0=None):
             w = r['ot_w0'][m] if k != 'lift' else Q
             lines.append(f"| {r['seed']} | {k if k != 'lift' else 'lift (m = 3)'} | ({', '.join(f'{x:.4f}' for x in w)}) | {class_spread(A[k]['Th'], exact):.1e} | {fdist(A[k], A[f'm{M_REF}']):.3e} | {fdist(A[k], A['lift']):.3e} | {fit_orbit(A[k]):.3e} | {e_rms(A[k]):.3e} | "
                          f"{OT.W2_empirical(A[k]['Th'], A[f'm{M_REF}']['Th'], G):.3e} | {OT.W2_empirical(A[k]['Th'], A['lift']['Th'], G):.3e} |")
-    lines += ["", "## 2. The nearest-atom leak: every size on the orbit of its own weights", "",
+    lines += ["", "## 2. The nearest-atom leak: every size with admissible weights on the orbit of its own weights", "",
               "| seed | m | conserved weights w^m | splitting margin σ₀ − max κ_R at w^m (Proposition D‴.5(i); ≤ 0: the lift is a saddle orbit) | within-class spread at the end (rms, whitened) | ‖f̂_m − f̂_M‖² | ‖f̂_m − f̂_{lift(w^m)}‖² | ‖f̂_{lift(w^m)} − f̂_{lift(w^M)}‖² | fit error along the orbit (m-system / its lift) | rms tracking error (m-system / its lift) | W²(μ_m, μ_M) | W² to its lift |",
               "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     margins = {}
@@ -215,7 +215,7 @@ def report(res, t0=None):
     sp_adm = [class_spread(r['nearest'][f'm{m}']['Th'], exact) for r in res for m in MS + (M_REF,) if (r['seed'], m) not in sad]
     lines += ["", f"Reading. Under the OT leak the learned functions of m = 15, 60 and M = 510 agree along the orbit to ‖f̂_m − f̂_M‖² = {min(ot_mM):.1e}–{max(ot_mM):.1e} and with the 3-atom lift to {min(ot_ml):.1e}–{max(ot_ml):.1e} "
               f"(the within-class spread of the clouds, second order); under the nearest-atom leak they disagree by {min(nr_mM):.1e}–{max(nr_mM):.1e}. Where both realised weight vectors are admissible this disagreement is the distance "
-              f"between the lifted orbits of the conserved weights to a ratio of {min(ratio_adm):.4f}–{max(ratio_adm):.4f} ({len(ratio_adm)} pairs), and each admissible m-system is within {max(ml_adm):.1e} of its own lift (within-class spread {min(sp_adm):.1e}–{max(sp_adm):.1e}); "
+              f"between the lifted orbits of the conserved weights to a ratio of {', '.join(f'{x:.4f}' for x in ratio_adm)} ({len(ratio_adm)} pair{'s' if len(ratio_adm) != 1 else ''}), and each admissible m-system is within {max(ml_adm):.1e} of its own lift (within-class spread {min(sp_adm):.1e}–{max(sp_adm):.1e}); "
               + (f"the {len(sad)} systems with inadmissible realised weights — " + ", ".join(f"seed {s}, m = {m} (margin {margins[(s, m)]:+.5f})" for s, m in sad) + f" — are not on their lifts, which are saddle orbits: their over-weighted class is split (within-class spread {min(sp_sad):.1e}–{max(sp_sad):.1e}), "
                  f"the distance to the lift {min(ml_sad):.1e}–{max(ml_sad):.1e} being the split's second-order effect on f̂, and the lift-to-lift ratio at those pairs is {', '.join(f'{a / b:.3f}' for a, b, (s, m) in [(fdist(r['nearest'][f'm{m}'], r['nearest'][f'm{M_REF}']), fdist(r['nearest'][f'lift{m}'], r['nearest'][f'lift{M_REF}']), (r['seed'], m)) for r in res for m in MS] if (s, m) not in adm)}. " if sad else "all realised weights are admissible. ")
               + f"The rms tracking error is {min(e_ot):.1e}–{max(e_ot):.1e} under the OT leak (the m-systems' remaining fit error over k_e; the collapsed lift tracks to {e_rms(res[0]['ot']['lift']):.1e}, the scheme's floor) "

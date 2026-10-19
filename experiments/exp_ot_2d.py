@@ -6,7 +6,7 @@ The mechanism of Propositions D‴.12 and Corollary D‴.14 is dimension-free: a
 bumps with vector amplitudes, a Lissajous reference x_m(t) = (2 sin t, 1.5 sin 2t), a saturated network with p = 2n + 1 = 5 parameters per
 kernel, and the matching prior (four atoms at the exact representation, masses 1/4). The real loop (k_e = 25, σ = σ₀/k_e, RK4 plant with the
 control held over the step, Euler parameters, dt = 2·10⁻³) runs from the same jittered warm clouds under the nearest-atom leak and under the
-barycentric OT leak (plan recomputed every 100 steps), for 2500 time units = 100 slow units = 5/σ₀ at σ₀ = 0.05 (the leak is a design input;
+barycentric OT leak (plan recomputed every 100 steps; RK4 plant with the control and the reference at the stages), for 2500 time units = 100 slow units = 5/σ₀ at σ₀ = 0.05 (the leak is a design input;
 the transit of the OT leak takes about ln 2/σ₀ ≈ 14 slow units, the within-class contraction 1/σ₀ = 20): sizes m = 8, 32 and M = 128
 (commensurate with the masses). Records: the cluster weights by nearest atom
 (conserved against equalised), the rms tracking error over the last ten periods, the fit error along the reference orbit at the end, the
@@ -151,7 +151,7 @@ def fdist(o1, o2):
 
 def report(res, t0=None):
     lines = ["# Corollary D‴.14 in two dimensions: the real closed loop with the OT leak on a planar plant (`exp_ot_2d.py`)", "",
-             f"Plant ẋ = f(x) + u on ℝ², f the sum of four Gaussian bumps with vector amplitudes (A_k, C_k, S_k) = {[(tuple(A), tuple(C), S) for A, C, S in BUMPS]}, reference x_m(t) = (2 sin t, 1.5 sin 2t), "
+             f"Plant ẋ = f(x) + u on ℝ², f the sum of four Gaussian bumps with vector amplitudes (A_k, C_k, S_k) = " + ", ".join(f"(({A[0]:g}, {A[1]:g}), ({C[0]:g}, {C[1]:g}), {S:g})" for A, C, S in BUMPS) + ", reference x_m(t) = (2 sin t, 1.5 sin 2t), "
              f"saturated network with n = 2 (a_max = {NET_KW['a_max']}, c_max = {NET_KW['c_max']}, s ∈ [{NET_KW['s_min']}, {NET_KW['s_max']}]), G = diag{tuple(float(g) for g in G)}, matching prior = the exact representation "
              f"(four atoms with amplitudes 4A_k, masses q = 1/4). Real loop at k_e = {KE:g}, σ = σ₀/k_e with σ₀ = {SIGMA0:g} (ln 2/σ₀ = {np.log(2) / SIGMA0:.0f} slow units), RK4 plant with the control and the reference evaluated at the stages and the parameters frozen over the step, Euler parameters, dt = {DT:g}, {T_END:g} time units = {T_END / KE:.0f} slow units = {T_END * SIGMA0 / KE:.1f}/σ₀ = {T_END / PER:.0f} periods; "
              f"warm start = the mixture of Gaussians of width {JITTER:g} (G⁻¹ metric) around the exact representation with random class labels; the same clouds under the nearest-atom leak and under the OT leak "
@@ -181,9 +181,11 @@ def report(res, t0=None):
                 eq.append((r['seed'], m, float('nan')))
     e_ot = [e_rms(r['ot'][m]) for r in res for m in MS + (M_REF,)]; e_nr = [e_rms(r['nearest'][m]) for r in res for m in MS + (M_REF,)]
     h_ot = [fdist(r['ot'][m], r['ot'][M_REF]) for r in res for m in MS]; h_nr = [fdist(r['nearest'][m], r['nearest'][M_REF]) for r in res for m in MS]
+    per = [e_rms(r['nearest'][m]) / e_rms(r['ot'][m]) for r in res for m in MS + (M_REF,)]
     lines += ["", f"Equalisation of the OT leak's cluster weights (first weight record from which w = q to within half a particle, in slow units): " + "; ".join(f"seed {s}, m = {m}: {x:.0f}" if np.isfinite(x) else f"seed {s}, m = {m}: not reached" for s, m, x in eq) + f" (ln 2/σ₀ = {np.log(2) / SIGMA0:.0f}).", "",
               f"Reading. In two dimensions as in one: the nearest-atom leak conserves the clouds' sampled cluster weights and the sizes learn different functions (‖f̂_m − f̂_M‖² = {min(h_nr):.1e}–{max(h_nr):.1e}), the OT leak drives the weights to the prior's masses and the sizes agree "
-              f"({min(h_ot):.1e}–{max(h_ot):.1e}); the rms tracking error is {min(e_ot):.1e}–{max(e_ot):.1e} under the OT leak against {min(e_nr):.1e}–{max(e_nr):.1e} under the nearest-atom leak.", "",
+              f"({min(h_ot):.1e}–{max(h_ot):.1e}, at the stopping time 5/σ₀ and still falling); the rms tracking error is {min(e_ot):.1e}–{max(e_ot):.1e} under the OT leak against {min(e_nr):.1e}–{max(e_nr):.1e} under the nearest-atom leak, "
+              f"{min(per):.0f}–{max(per):.0f} times larger per system.", "",
               "Numbers are produced by `experiments/exp_ot_2d.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'ot_2d.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")

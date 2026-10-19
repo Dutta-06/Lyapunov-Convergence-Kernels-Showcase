@@ -403,7 +403,7 @@ replication against the transportation LP.
 ## Corollary D‴.14 — the real loop with the OT leak (`exp_ot_real_loop.py` → `chaos/ot_real_loop.md`)
 
 - Real loop at k_e = 25 (σ = σ₀/k_e, RK4 plant with the control and the reference evaluated at the stages, Euler parameters, dt = 10⁻³,
-  100 time units = 16 periods) from the contracted clouds of Proposition D‴.12's averaged runs (seeds 0, 1; m = 15, 60, M = 510) and from
+  100 time units = 16 periods) from the clouds at the end of Proposition D‴.12's averaged runs (contracted where the weights are admissible) (seeds 0, 1; m = 15, 60, M = 510) and from
   the collapsed lifts; last five periods on the reference orbit.
 - OT leak: ‖f̂_m − f̂_M‖²_{L²(orbit)} = 7.5·10⁻⁹–2.7·10⁻⁸, against the 3-atom lift 5.2·10⁻¹⁰–3.6·10⁻⁸; fit error along the orbit
   3.5·10⁻⁵–2.9·10⁻⁴; rms tracking error 0.9·10⁻⁶–7.3·10⁻⁶ (the lift 8·10⁻¹²); W²(μ_m, μ_M) 3.3·10⁻⁴–1.4·10⁻³; within-class spreads 0.013–0.033.
@@ -430,7 +430,7 @@ carry the ghost spectrum (Proposition D‴.15, m = 6).
 
 - Real loop at k_e = 25; monodromies by central differences (DOP853, rtol 10⁻¹¹). OT leak at the matching masses: the 3-atom orbit (the exact
   representation, zero tracking error) lifted to m = 6, 9, 15 — return residuals ≤ 1.7·10⁻¹⁵; separation exponents σ₀/k_e = 2.830·10⁻⁴ in
-  every class (= ghosts; invariance defects ≤ 1.8·10⁻⁸); collective exponents 2.935·10⁻⁴ … 7.934·10⁻³ identical across m to four digits,
+  every class (= ghosts; invariance defects ≤ 1.8·10⁻⁸); collective exponents 2.935·10⁻⁴ … 7.934·10⁻³ identical across m to 10⁻⁴ relative,
   Theorem J(b)'s prediction 2.952·10⁻⁴ … 8.091·10⁻³ (0.6–3.2%).
 - σ-modification at (7, 5, 4)/16 (margin +0.00257) and (9, 4, 3)/16 (−0.00219), lifts to m = 16 (residuals ≤ 4.9·10⁻¹⁴): separation exponents =
   ghosts to 2·10⁻⁵ relative, = (σ₀ − λ_j(R^G_k))/k_e within 0.2–4.1% (defects ≤ 5.7·10⁻⁸); the saddle's class 0 exponent −9.13·10⁻⁵ (predicted
@@ -454,10 +454,12 @@ m = 6, 60, 300); the averaged loop contracts |||·||| at 0.9σ₀ with one const
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
   σ₀ = 0.15σ_crit; τ₀ = 0.005, 0.01, 0.02 over 50 000, 200 000, 50 000 slow units; two seeds.
-- Nearest-atom leak: hop rates 1.0·10⁻⁵, 5.1·10⁻⁴, 5.6·10⁻³ per slow unit (Arrhenius barriers 0.039–0.048; ridge estimate σ₀Δ_ν²/8 = 0.035);
-  time at the balanced counts 0.00, 0.54, 0.25 against the leading-order Gibbs law 0.86, 0.58, 0.33 (the Laplace determinant factors
-  over-weight soft separation modes and are not used).
-- OT leak: balanced counts 99.6%, 99.2%, 88% of the time; label changes 1–364 per run (swaps followed by transits); the plan's masses stay q.
+- Nearest-atom leak: record-level label changes 1.0·10⁻⁵, 5.1·10⁻⁴, 5.6·10⁻³ per slow unit (about half undone at the next change;
+  Arrhenius barrier 0.048, 0.043–0.052 at 95%, among the ridge minima 0.040–0.074); time at the balanced counts 0.00, 0.54, 0.25 against the
+  energy–multinomial law 0.86, 0.58, 0.33 (standard errors ≈ 0.1 at τ₀ = 0.01; the law under-weights the saddle count vectors 2.7–3.2 times).
+- OT leak: balanced counts in 100%, 99.4%, 88% of the records after the initial transit (99.6%, 99.2%, 88% of the whole runs); the excursions are returns
+  of the crossing particle (121 of 121 at τ₀ = 0.01, 298 of 336 at 0.02, the rest exchanges); off-balance fraction 6.3·10⁻³, 0.117, effective
+  barrier 0.058: the mass constraint makes a crossing reversible without raising its barrier.
 
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 

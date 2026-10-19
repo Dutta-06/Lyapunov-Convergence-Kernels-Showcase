@@ -10,8 +10,9 @@ barycentric OT leak (𝔄_m^{OT}), at τ₀ = 0.005, 0.01, 0.02 and σ₀ = 0.15
 Records the cluster masses by nearest atom along long runs: under the nearest-atom leak the masses change only by a particle hopping across a
 Voronoi ridge (Arrhenius), and their stationary distribution is the Laplace approximation of the Gibbs measure over the count vectors n,
 P(n) ∝ multinomial(n)·exp(−m𝒢*_{n/m}/τ₀)·Π_k det(σ₀I − R^G_k(n))^{−(n_k−1)/2}·det(H_n)^{−1/2} (the replicated weighted stationary configuration's
-energy and its Hessian's block determinants, Proposition D‴.5(i)); under the OT leak the plan keeps the assigned masses at q, a hop is answered
-by a swap of assignments and a transit, and the masses by nearest atom sit at q except during transits.
+energy and its Hessian's block determinants, Proposition D‴.5(i)); under the OT leak the plan's masses are q by construction and a particle
+that crosses a ridge stays assigned to its own atom, so the counts by nearest atom leave q only during reversible excursions, which the
+report classifies (the crossing particle returns, or two particles exchange their assignments).
 
 Output: results/chaos/dither_ot.md and dither_ot_raw.npz (DOT_SEEDS, DOT_SCALE to shorten the horizons).
 """
@@ -134,6 +135,45 @@ def gibbs_prediction(table, tau0, with_hessian=True):
     return {n: float(np.exp(v - mx) / Z) for n, v in logp.items()}
 
 
+def excursions(labs, balanced=(5, 5, 5)):
+    """After the first balanced record: the maximal runs of records whose counts are not `balanced`, classified by the per-particle labels of
+    the balanced records before and after the run — 'return' (the same labels) or 'exchange' (balanced again with some labels changed).
+    Returns (n_return, n_exchange, off-balance fraction after the first balanced record, index of the first balanced record)."""
+    counts = np.array([[int(np.sum(l == k)) for k in range(3)] for l in labs])
+    bal = np.all(counts == np.array(balanced)[None, :], axis=1)
+    if not bal.any():
+        return 0, 0, float('nan'), -1
+    i0 = int(np.argmax(bal))
+    n_ret = n_exc = 0
+    i = i0
+    while i < len(bal):
+        if bal[i]:
+            i += 1
+            continue
+        j = i
+        while j < len(bal) and not bal[j]:
+            j += 1
+        if j < len(bal):
+            if np.array_equal(labs[i - 1], labs[j]):
+                n_ret += 1
+            else:
+                n_exc += 1
+        i = j
+    return n_ret, n_exc, float(1.0 - bal[i0:].mean()), i0
+
+
+def undone_changes(labs):
+    """Record-level label changes, and how many of them are undone by the same particle at the next change (recrossings)."""
+    L = labs.astype(int)
+    ch = [i for i in range(1, len(L)) if np.any(L[i] != L[i - 1])]
+    undone = 0
+    for a, b in zip(ch[:-1], ch[1:]):
+        moved = np.flatnonzero(L[a] != L[a - 1])
+        if np.array_equal(L[b][moved], L[a - 1][moved]) and np.array_equal(np.flatnonzero(L[b] != L[b - 1]), moved):
+            undone += 1
+    return len(ch), undone
+
+
 def count_stats(labs):
     counts = np.array([[int(np.sum(l == k)) for k in range(3)] for l in labs])
     hops = int(np.sum(np.any(np.diff(labs.astype(int), axis=0) != 0, axis=1)))
@@ -157,16 +197,19 @@ def report(res, table, t0=None):
     for tau0 in TAUS:
         pred = gibbs_prediction(table, tau0); pred0 = gibbs_prediction(table, tau0, with_hessian=False)
         top = sorted(pred0.items(), key=lambda kv: -kv[1])[:5]; topH = sorted(pred.items(), key=lambda kv: -kv[1])[:3]
-        lines += [f"## τ₀ = {tau0} (horizon {S_END[tau0]:g} slow units; the OT leak's barrier per misplaced particle σ₀Δ_ν²/2 = {0.5 * SIGMA0 * 6.263 ** 2:.3f} = {0.5 * SIGMA0 * 6.263 ** 2 / tau0:.0f}τ₀)", "",
-                  "Gibbs prediction for the nearest-atom leak at leading order (entropy × energy, multinomial(n)·exp(−m𝒢*_n/τ₀)), P(n): " + ", ".join(f"{n}: {p:.3f}" for n, p in top)
-                  + "; with the Laplace determinant factors: " + ", ".join(f"{n}: {p:.3f}" for n, p in topH) + " — the determinant factors over-weight the count vectors whose over-weighted class has a nearly flat separation block (a soft mode, where the quadratic approximation fails; Remark D‴.11), and are not used in the reading.", "",
-                  "| leak | seed | hop records / records | time fraction by counts (top four) | mean |w − q|₁ | final counts |", "|---|---|---|---|---|---|"]
+        lines += [f"## τ₀ = {tau0} (horizon {S_END[tau0]:g} slow units; the leak's part of the lowest ridge σ₀Δ_ν²/8 = {SIGMA0 * 6.263 ** 2 / 8:.3f} = {SIGMA0 * 6.263 ** 2 / 8 / tau0:.1f}τ₀)", "",
+                  "The energy–multinomial law over the count vectors, multinomial(n)·exp(−m𝒢*_n/τ₀) (count vectors with n/m ∈ W_adm and the saddles alike; not an order of an expansion: the Laplace determinant factors are of the same order and are omitted), P(n): " + ", ".join(f"{n}: {p:.3f}" for n, p in top)
+                  + "; with the Laplace determinant factors (saddle count vectors omitted): " + ", ".join(f"{n}: {p:.3f}" for n, p in topH) + ".", "",
+                  "| leak | seed | records with a label change / records (undone at the next change) | time fraction by counts (top four) | mean |w − q|₁ | final counts | excursions off the balanced counts after the first balanced record: returns / exchanges; off-balance fraction |", "|---|---|---|---|---|---|---|"]
         for leak in ('nearest', 'ot'):
             for r in [r for r in res if r['tau0'] == tau0 and r['leak'] == leak]:
                 counts, hops, frac = count_stats(r['labs'])
-                arr[(leak, tau0, r['seed'])] = (hops, len(r['labs']) - 1, float(np.mean(np.abs(counts / M - Q[None, :]).sum(axis=1))), frac.get((5, 5, 5), 0.0))
+                nch, und = undone_changes(r['labs'])
+                nret, nexc, offb, i0 = excursions(r['labs'])
+                arr[(leak, tau0, r['seed'])] = (hops, len(r['labs']) - 1, float(np.mean(np.abs(counts / M - Q[None, :]).sum(axis=1))), frac.get((5, 5, 5), 0.0), nret, nexc, offb, und)
                 top4 = sorted(frac.items(), key=lambda kv: -kv[1])[:4]
-                lines.append(f"| {leak} | {r['seed']} | {hops}/{len(r['labs']) - 1} | " + ", ".join(f"{k}: {v:.3f}" for k, v in top4) + f" | {arr[(leak, tau0, r['seed'])][2]:.3f} | {tuple(counts[-1])} |")
+                lines.append(f"| {leak} | {r['seed']} | {hops}/{len(r['labs']) - 1} ({und}) | " + ", ".join(f"{k}: {v:.3f}" for k, v in top4) + f" | {arr[(leak, tau0, r['seed'])][2]:.3f} | {tuple(int(x) for x in counts[-1])} | "
+                             + (f"{nret} / {nexc}; {offb:.2e}" if leak == 'ot' and np.isfinite(offb) else "—") + " |")
         lines.append("")
     # Arrhenius estimate from the nearest-atom hop rates at the two higher temperatures
     rates = {tau0: np.mean([arr[('nearest', tau0, s)][0] / S_END[tau0] for s in SEEDS]) for tau0 in TAUS}
@@ -175,12 +218,19 @@ def report(res, table, t0=None):
         if rates[ta] > 0 and rates[tb] > 0:
             est.append((ta, tb, float(np.log(rates[tb] / rates[ta]) / (1 / ta - 1 / tb))))
     bal = {tau0: (np.mean([arr[('nearest', tau0, s)][3] for s in SEEDS]), np.mean([arr[('ot', tau0, s)][3] for s in SEEDS]), gibbs_prediction(table, tau0, with_hessian=False)[(5, 5, 5)]) for tau0 in TAUS}
+    ret = {t: (sum(arr[('ot', t, s)][4] for s in SEEDS), sum(arr[('ot', t, s)][5] for s in SEEDS)) for t in TAUS}
+    offb = {t: np.mean([arr[('ot', t, s)][6] for s in SEEDS]) for t in TAUS}
+    eff = float(np.log(offb[0.02] / offb[0.01]) / (1 / 0.01 - 1 / 0.02)) if offb[0.01] > 0 and offb[0.02] > 0 else float('nan')
+    ratios = [arr[('ot', t, s)][0] / arr[('nearest', t, s)][0] for t in (0.01, 0.02) for s in SEEDS if arr[('nearest', t, s)][0] > 0]
     lines += ["## Reading", "",
-              "Nearest-atom leak: hop rates " + ", ".join(f"{rates[t]:.2e} per slow unit at τ₀ = {t}" for t in TAUS) + (" — Arrhenius barriers ΔV = " + ", ".join(f"{e:.3f} from τ₀ = {a}, {b}" for a, b, e in est) + f" against the leak's ridge height σ₀Δ_ν²/8 = {SIGMA0 * 6.263 ** 2 / 8:.3f}" if est else "") + ". "
-              + "Time fraction at the balanced counts (5, 5, 5), nearest-atom leak against the OT leak against the leading-order Gibbs prediction: " + "; ".join(f"τ₀ = {t}: {bal[t][0]:.3f} / {bal[t][1]:.3f} / {bal[t][2]:.3f}" for t in TAUS) + ". "
-              + "At the lowest temperature the nearest-atom leak's masses do not move within the horizon (the hop time exceeds it) while the OT leak holds the balanced counts; at the highest the nearest-atom "
-              "leak samples its Gibbs law over the count vectors by rare hops and the OT leak still holds the balanced counts most of the time, the excursions being the transits that follow a swap of assignments: "
-              "dither does on the Arrhenius time scale, and only in distribution, what the mass constraint does deterministically in ln 2/σ₀.", "",
+              "Nearest-atom leak: record-level label changes (every 10 slow units, about half undone at the next change — recrossings) at " + ", ".join(f"{rates[t]:.2e} per slow unit at τ₀ = {t}" for t in TAUS)
+              + (" — Arrhenius barriers ΔV = " + ", ".join(f"{e:.3f} from τ₀ = {a}, {b}" for a, b, e in est) + " (the second pair rests on one event at τ₀ = 0.005)" if est else "") + f"; the leak's part of the lowest ridge is σ₀Δ_ν²/8 = {SIGMA0 * 6.263 ** 2 / 8:.3f}. "
+              + "Time fraction at the balanced counts (5, 5, 5), nearest-atom leak against the OT leak against the energy–multinomial law: " + "; ".join(f"τ₀ = {t}: {bal[t][0]:.3f} / {bal[t][1]:.3f} / {bal[t][2]:.3f}" for t in TAUS)
+              + " (two seeds; the balanced indicator's autocorrelation is long at τ₀ = 0.01, so these fractions carry standard errors of order 0.1 there). "
+              + "OT leak: the plan's masses are q by construction; the counts by nearest atom leave the balanced counts in excursions that end with the crossing particle back in its cluster (returns) or, rarely, with two particles' assignments exchanged — "
+              + "; ".join(f"τ₀ = {t}: {ret[t][0]} returns, {ret[t][1]} exchanges, off-balance fraction {offb[t]:.2e}" for t in TAUS)
+              + f" — an effective barrier of {eff:.3f} between τ₀ = 0.01 and 0.02, and label changes as frequent as the nearest-atom leak's (ratios {min(ratios):.2f}–{max(ratios):.2f}): the crossing barrier is the nearest-atom ridge barrier, and what the mass constraint changes is that a crossing is reversible — "
+              "the particle stays assigned to its own atom and is pulled back. Dither does on the Arrhenius time scale, and only in distribution, what the mass constraint does deterministically in ln 2/σ₀.", "",
               "Numbers are produced by `experiments/exp_dither_ot.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'dither_ot.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")

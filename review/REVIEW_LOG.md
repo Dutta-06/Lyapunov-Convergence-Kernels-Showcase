@@ -641,3 +641,33 @@ with two ranges wrong; the code holds; the tests pass with two weak assertions.
 **Lesson.** A comparison of tracking errors must first establish the integrator's floor (here the zero-order hold of the control over the
 step), and a run that is meant to sit on an orbit must check that the orbit is stable at the realised weights — the admissible set of
 Proposition D‴.5 is where it decides.
+
+## Round 13 (adversarial review of Remark D‴.16, the two-dimensional numerics, Proposition D‴.17, and the fixes of rounds 11–12, 2026-10-19)
+
+**Design.** One referee on Remark D‴.16 and its dithered numerics (`exp_dither_ot.py`), the paragraph on the planar plant (`exp_ot_2d.py`),
+Proposition D‴.17 with its test and references [S43], [S44], and a verification pass on every fix of rounds 11 and 12
+(`review/REVIEW_round13_D3f.md`). Every number recomputed from the raw data (both md files regenerate byte-identically; single runs reproduced
+from their seeds); the ridge and exchange barriers of the dithered instance computed by constrained minimisation; the excursions of the OT
+runs classified particle by particle; the planar OT run continued to 10/σ₀; the pure-leak plan stability tested on random instances.
+
+**Verdicts.** Remark D‴.16: the nearest-atom half holds (formal) with fixes, the OT half fails (major). The dithered numerics reproduce; several
+readings fail. The planar numerics hold with cosmetic fixes. Proposition D‴.17 (i)–(ii) hold; (iii) holds as stated with a false gloss; its
+Status fails in one sentence. The test passes and discriminates (a control 10⁻³ off the tie fails). The round-11/12 fixes are in and correct
+except D3e-12, which was logged as applied but was not.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3f-1 | **major** (Remark D‴.16, its numerics, `dither_ot.md`, RESULTS, §8, docstring) | the OT half — "J^{OT} charges a misplaced particle ≈ σ₀Δ_ν²/2 = 0.14, so the counts are q up to exp(−σ₀Δ_ν²/(2τ₀)); a hop is answered by a swap of assignments and a transit" — is false: the plan keeps a particle that crosses a ridge assigned to its own atom (an exchange needs two particles to pass each other), so the counts change at the nearest-atom ridge barrier (0.040 at the lowest ridge, J^{OT} = J^ν there); the off-balance fractions 6.3·10⁻³, 0.117 are 6700 and 121 times the claimed order (effective barrier 0.058); the excursions are returns of the crossing particle (121 of 121 at τ₀ = 0.01, 298 of 336 at 0.02), and the plan never changes at τ₀ = 0.01 | the mechanism rewritten (a crossing is reversible, the barrier unchanged); `report()` classifies the excursions (returns/exchanges) and computes the off-balance fraction and its barrier; RESULTS, §0, §7, §8, docstring |
+| D3f-2 | minor | the "leading-order Gibbs law multinomial × energy" is not an order (the Laplace factors are of the same order); the agreement 0.54/0.58 cannot discriminate (N_eff 9–27 per seed, SE ≈ 0.1); at τ₀ = 0.02 the law is 2.1 SE above; the law under-weights the saddle count vectors 2.7–3.2 times (TV 0.20 against 0.07 between seeds); "min J^ν = m𝒢*_w" needs w ∈ W_adm | "energy–multinomial law", SEs and TV quoted, the saddle excess attributed to the soft and unstable modes, "for n/m ∈ W_adm" |
+| D3f-3 | minor | the barrier 0.039 rests on one event; the "hop rates" count record-level label changes, about half undone at the next change | "record-level label changes, about half undone"; 0.048 (0.043–0.052) among the ridge minima 0.040–0.074 |
+| D3f-4 | minor (D‴.17 Status, §7) | "under the pure leak a plan never switches once optimal" holds for integral plans only (split plans switch: 216 of 400 random incommensurate instances); with the fit, cold starts at σ₀ switch the plan (2 of 6 at m = 15, 6 of 6 at m = 16); the test's run never switches | restricted to commensurate m; the switches reported; the test's run described as a smooth gradient flow |
+| D3f-5 | minor (D‴.17(iii)) | the gloss reads as a classification of the limits; 𝒢_q has a second local minimum whose replication is a saddle of J^{OT}_15 although q ∈ W_adm; "J_m" should be the frozen energy J^π_m | reworded; the example stated |
+| D3f-6 | minor (tests, log) | the round-12 test fix D3e-12 was logged but not applied (test 1 compared particles with particle 0; test 2's W² > 10⁻³ held at t = 0; docstrings cited (a)/(b)) | applied: motion against the start, the two lifts' class-atom displacements compared, docstrings (i)/(ii) |
+| D3f-7 | cosmetic | "contracted clouds" for the split saddle clouds; `ot_real_loop.md` §2 title; "to four digits" in RESULTS; "from below" next to a ratio 1.116 in `ot_leak.md` | corrected (the md files regenerated) |
+| D3f-8 | cosmetic | "three hundred to a thousand times" is 285–480 per system; "40 to 2000" is 126–548 per system; the planar OT distance at 5/σ₀ is a stopping-time value (1.8·10⁻¹² at 10/σ₀); the planar docstring said "control held over the step"; numpy reprs in two md headers | corrected; `report()` prints the per-system ratios |
+| D3f-9 | cosmetic (D‴.17) | the change of variables Y = G_m^{−1/2}Θ unstated; ℝ_exp (or ℝ_an) suffices; Łojasiewicz's inequality attributed to [S44]; "Lipschitz" for a locally Lipschitz potential; the test docstring's "Clarke-subgradient inclusion" | stated and corrected |
+
+**Lesson.** A barrier argument must follow the particle that actually moves: under the mass constraint the plan does not follow a single
+crossing particle, so the relevant barrier is the crossing's, and the constraint acts on what happens after the crossing (reversibility), not on
+its probability. And a fix logged in the review log must be checked in the repository before the round is closed — a patch script that stops
+at its first failing anchor silently skips everything after it.
