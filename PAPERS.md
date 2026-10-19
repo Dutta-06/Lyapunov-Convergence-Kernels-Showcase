@@ -161,3 +161,19 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
 - **Missing.** A measured cogging profile (hardware or a high-fidelity simulation), measurement noise, input saturation, and
   velocity-dependent friction (a sharp Stribeck step, whose best approximant lies at infinity) with the projected prior in the real loop.
 - **Venue.** IEEE/ASME Trans. Mechatronics; Control Engineering Practice.
+
+### 12. Measurement noise in mean-field adaptive control: coherent floors and the price of learned priors
+
+- **Claim.** In kernel adaptive control with transport leaks, measurement noise is coherent across the kernels (a replicated
+  configuration stays replicated, so the floor does not average out with the network's size), the closed loop high-passes it (a
+  function-level floor ∝ N₀/k_e in closed form, the prior's mobility η entering the Tikhonov filter factor as h_j + η), and its
+  errors-in-variables part is a persistent force to which an adaptive prior answers with the inverse excitation spectrum — a
+  quantitative bias–variance–robustness trade-off for the choice of η and k_e.
+- **Rests on.** Proposition D‴.30 ((i) exact; (ii)–(iii) formal, their closed forms exact for the averaged system, checked against the
+  exact linearised loop and the real loop), Corollary D‴.26, `exp_measurement_noise.py`.
+- **Novelty (audit).** Classical ingredients (the errors-in-variables bias, stochastic averaging, desired compensation); new structural
+  statements for the mean-field, transport-leak setting.
+- **Missing.** The stochastic averaging proved; the remedies (the reference in the regressor; an anchored or projected prior on the weak
+  modes) analysed and tested; the stationary biases in the real loop (the weak modes equilibrate over 10⁴ time units); second-order
+  plants (Proposition D‴.29) and a servo with a realistic sensor.
+- **Venue.** IEEE Trans. Automatic Control or Automatica (a technical note); Systems & Control Letters.

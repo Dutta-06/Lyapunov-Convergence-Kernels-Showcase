@@ -701,6 +701,24 @@ Tests (`tests/test_sliding.py`): the phase-plane averaged loop is the gradient f
 kernels have one zero Gauss–Newton eigenvalue each; the servo's parameters follow the averaged loop over ten periods (within 3% at
 k_s = 25, closer at 50), its position error within 1% of both predictions.
 
+## Proposition D‴.30 — measurement noise at perfect tracking: coherent, high-passed, and the errors in variables (`exp_measurement_noise.py` → `chaos/measurement_noise.md`)
+
+- The three-bump instance at the lift of the exact representation of q = 1/3 (σ₀ = 0.15σ_crit, x_m = 2 sin t, k_e = 25), the measurement
+  y = x + ν in the controller and the adaptive law.
+- The linear theory: tr Q = 8.784 (the derivative Gram 8.105, the slope term 0.679); the parameters' floor per unit N₀ 0.1597 (fixed
+  prior), 0.1627 (η = σ₀), 0.1690 (10σ₀), 0.1757 = tr Q/(2k_e) (η = ∞); the weakest mode's parameter variance 0.0865 → 2.09; the fast
+  parts tr H² = 0.0657, ⟨|Ĵ|⁴⟩ = 0.299.
+- The errors in variables (OU noise, B = 100): the stationary function-level bias 491 (fixed) and 2397 (adaptive, every η > 0) per unit
+  (Eν²)², above the floor of the parameters beyond the noise std 0.0026 and 0.0012.
+- The exactly linearised loop: its periodic stationary covariance at the prediction to 0.976–0.980 (k_e = 25), 0.994–0.995 (50),
+  0.9986–0.9988 (100), 0.9997–0.9998 (200).
+- The real loop (12 runs of 300 time units): within 1.75 standard errors of the linear prediction plus the mean part at both noise levels,
+  the mean part 42% (std 0.003) and 89% (std 0.01) at t = 300; the lift m = 15 on a common noise path identical to the K₀-atom run.
+
+Tests (`tests/test_measurement_noise.py`): the closed form against the Lyapunov solution, the trace identity at η = ∞ and the floor
+increasing in η; the exact periodic floors of the linearised loop at k_e = 100; a lift m = 6 under a noise path staying replicated and
+following the K₀-atom loop; the responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the force linear in the noise's variance.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
