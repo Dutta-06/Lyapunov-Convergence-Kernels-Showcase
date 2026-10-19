@@ -2099,6 +2099,672 @@ leak it stays in cell 1, and $E$ rises toward the spurious minimum of the counts
 $(99,101,100)/300$, both admissible: $5.72\cdot10^{-3}$ and $5.56\cdot10^{-4}$ at $s = 300$, $6.304\cdot10^{-3}$ and
 $6.128\cdot10^{-4}$ at $s = 1000$, and the minimum's $6.3126\cdot10^{-3}$ and $6.1328\cdot10^{-4}$ at $s = 3000$.
 
+% Theorem D'''.23 with its proof, Status and numerics (PARADIGM.md section 5d, round-18 version, (i)'s pointer to
+% Proposition D'''.27 and one sentence of the numerics (Part F) round 19; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_prior.md). The anchors res:thmDppp:23 to res:thmDppp:25 are \hyperref targets for later
+% results, as res:thmDppp:21 is. The references [S49], [S51] (LITERATURE_TRANSPORT.md) and [30] (PARADIGM.md) cited by
+% D'''.23 and D'''.24 are the bibitems S49, S51 and R30 of refs.tex.
+\begin{thm}{Theorem}{D$'''$.23}[adaptive priors: a learned prior removes the leak's bias, at the rate of the
+measure-space excitation]\phantomsection\label{res:thmDppp:23}%
+Let $q$ be masses, $m$ commensurate, $\eta\ge0$, and let the prior's atoms $Z = (z_1,\dots,z_{K_0})$ move toward the
+barycentres of the particles that the plan assigns to them while the particles follow the OT leak toward
+$\nu_Z := \sum_jq_j\delta_{z_j}$:
+\begin{equation}
+  \begin{gathered}
+    \frac{\dd\vartheta_i}{\dd s} = G\langle\nabla_\vartheta(r_\Theta\tilde\Phi(\cdot\,;\vartheta_i))\rangle_\rho
+    - \sigma_0(\vartheta_i - z_{\pi(i)}),\qquad
+    \frac{\dd z_j}{\dd s} = -\eta(z_j - \hat T_j),\\
+    \hat T_j := \frac{1}{mq_j}\sum_{i\in\pi^{-1}(j)}\vartheta_i,
+  \end{gathered}
+  \tag{$\mathfrak{A}_m^{\mathrm{OT},\eta}$}
+\end{equation}
+$\pi$ an optimal assignment from $\mu_\Theta$ to $\nu_Z$ ($\eta = 0$ is the fixed prior of Proposition D$'''$.12).
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(a gradient flow whose replicated stationary points carry no leak bias)} For $\eta > 0$,
+    \textup{($\mathfrak{A}_m^{\mathrm{OT},\eta}$)} is the vertex-selection gradient flow of
+    $\mathcal{J}(\mu_\Theta,Z) := \bar L(\mu_\Theta) + (\sigma_0/2)W^2_{\Ginv}(\mu_\Theta,\nu_Z)$ in the metric that
+    weighs $\vartheta_i$ by $(1/m)\Ginv$ and $z_j$ by $(\sigma_0q_j/\eta)\Ginv$ --- by the envelope theorem
+    $\nabla_{z_j}W^2 = 2q_j\Ginv(z_j - \hat T_j)$ --- so $\mathcal{J}$ is non-increasing (under any schedule
+    $\eta(s)\ge0$: $\mathcal{J}$ does not involve $\eta$), and bounded solutions converge to Clarke-critical points
+    (Proposition D$'''$.17's argument: $\mathcal{J}$ is a minimum over the vertices of definable smooth functions of
+    $(\Theta,Z)$). Boundedness is now a hypothesis (Proposition D$'''$.27 restores it by projecting the prior onto a
+    compact convex set). Proposition D$'''$.17's a-priori bound rested on the fixed prior's support, while the leak
+    toward an adaptive prior is an internal force between a class and its atom --- with the plan held, the leak
+    cancels from
+    $\frac{\mathrm{d}}{\mathrm{d}s}[(1/m)\sum_{i\in\pi^{-1}(j)}\vartheta_i + (\sigma_0q_j/\eta)z_j]
+    = (1/m)\sum_{i\in\pi^{-1}(j)}G\langle r\nabla\tilde\Phi(\vartheta_i)\rangle$ --- and solutions can leave every
+    compact set (numerics, Part G(a) and (b)), even from a fit that the network attains exactly. At a stationary
+    point $z_j = \hat T_j$, and each particle satisfies
+    $G\langle r\nabla\tilde\Phi(\vartheta_i)\rangle = \sigma_0(\vartheta_i - \hat T_{\pi(i)})$: the learning forces
+    cancel over each class, but a particle may be held off its class barycentre by the leak. A replicated
+    configuration --- the particles of each class $\pi^{-1}(j)$ at one point $\vartheta_j$ --- is therefore stationary
+    with $Z$ iff $z_j = \vartheta_j$ and $\nabla V_L[\sum_lq_l\delta_{\vartheta_l}](\vartheta_j) = 0$ for every $j$:
+    the leak force vanishes, and the stationary replicated configurations are the critical points of the
+    unregularised weighted $K_0$-atom loss. (The classes are the plan's: labelled by the atoms of a given
+    configuration this reads $z_{\sigma(k)} = \vartheta_k$ for the plan's class-to-atom bijection $\sigma$, and at an
+    exact representation a prior permuted among atoms of equal mass is stationary; a permutation between atoms of
+    different masses is not, since a replicated configuration with $W^2 = 0$ needs $q_{\sigma(k)} = q_k$.)
+    Non-replicated stationary points --- a class held apart against the loss by the leak toward its barycentre ---
+    exist (a saddle on the instance), and carry the $K_0$-cluster bias of (iv)'s regulariser (numerics, Part G(a)).
+    The stationary equations do not involve the prior's initial position: an exact representation with the weights
+    $q$, with the prior at its atoms, is stationary and a global minimum ($\mathcal{J} = 0$ there); which stationary
+    point is reached does depend on it ((vi)).
+  \item \emph{(the linearisation at an exact representation)} At an exact representation
+    $\mu^* = \sum_kq_k\delta_{\vartheta^*_k}$ ($r^* = 0$) with $Z = (\vartheta^*_k)$, the linearisation of
+    \textup{($\mathfrak{A}_m^{\mathrm{OT},\eta}$)} splits, for every $m$, into the separations of each class, which
+    decay at $\sigma_0$, and the collective pairs $(\bar u,\zeta)$ of class means and prior offsets. In the whitened
+    weighted coordinates $y_k := \sqrt{q_k}G^{-1/2}\bar u_k$, $x_k := \sqrt{q_k}G^{-1/2}\zeta_k$ it reads
+    $\dot y = -H_Ly - \sigma_0(y - x)$, $\dot x = -\eta(x - y)$, with the Gauss--Newton block
+    $H_L := [\sqrt{q_kq_l}G^{1/2}\langle\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^*_k)^\T
+    \nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^*_l)\rangle_\rho G^{1/2}]_{kl}\succeq0$ (eigenvalues
+    $h_1\le\dots\le h_{pK_0}$). On its eigenvectors every pair evolves by
+    $\bigl[\begin{smallmatrix}-(h_j + \sigma_0) & \sigma_0\\ \eta & -\eta\end{smallmatrix}\bigr]$, whose rates
+    $\lambda_j^\pm$ are the roots of $\lambda^2 - (h_j + \sigma_0 + \eta)\lambda + \eta h_j = 0$; for $h_j,\eta > 0$
+    the slower one satisfies
+    \[
+      \eta h_j/(h_j + \sigma_0 + \eta) < \lambda_j^- < \min\{h_j,\eta\},
+    \]
+    the lower bound being tight as $\eta\to0$; $\lambda_j^- = 0$ if $h_j\eta = 0$ and $\lambda_j^- = h_j$ at
+    $\eta = \infty$; and $\lambda^-$ increases with $h$
+    ($\dd\lambda^-/\dd h = (\eta - \lambda^-)/(\lambda^+ - \lambda^-) > 0$), so the slowest collective rate is
+    $\lambda_1^-$. So the adaptive prior's convergence in mode $j$ is never faster than the loss's own curvature
+    $h_j$, while a fixed prior's is $h_j + \sigma_0$; in an unexcited mode ($h_j = 0$) $\lambda_j^- = 0$, and the
+    network and the prior drift together, as an adaptive law without a leak does without persistent excitation. The
+    pair matrix is self-adjoint in the metric of (i) (in the coordinates $(y_j,(\sigma_0/\eta)^{1/2}x_j)$ it is
+    symmetric, with off-diagonal $(\sigma_0\eta)^{1/2}$).
+  \item \emph{(the bias it removes)} With a fixed prior near an exact representation, the stationary point is, to
+    first order in the prior's error $x^0$, $y^* = \sigma_0(H_L + \sigma_0I)^{-1}x^0$: mode $j$ keeps the fraction
+    $\sigma_0/(h_j + \sigma_0)$ of the error. The leak buys the rate $h_j + \sigma_0$ at the price of that fraction,
+    and the adaptive prior removes it at the rate $\lambda_j^-$. Weakly excited modes ($h_j\ll\sigma_0$) keep almost
+    all of the prior's error under a fixed prior and lose it slowly under an adaptive one; the fit,
+    $\frac12\sum_jh_jy_j^2$ to second order, weighs them by $h_j$, so the fit is restored faster than the parameters.
+    The spectrum $\{h_j\}$ is the measure-space excitation level of the reference at $\mu^*$
+    (Section~\ref{sec:program}, branch 7).
+  \item \emph{(infinitely fast priors: a capacity-constrained $K_0$-means regulariser)} Formally, as $\eta\to\infty$
+    the prior follows the class barycentres, $z_j = \hat T_j$, and \textup{($\mathfrak{A}_m^{\mathrm{OT},\eta}$)}
+    becomes the gradient flow of $\bar L(\mu_\Theta) + (\sigma_0/2)\mathcal{Q}_q(\mu_\Theta)$, with
+    $\mathcal{Q}_q(\mu) := \min_ZW^2(\mu,\nu_Z)$ the capacity-constrained $K_0$-means distortion of $\mu$: a
+    regulariser that pulls the network toward $K_0$ clusters of the prescribed masses without biasing where they sit.
+    The separations keep the rate $\sigma_0$, and mode $j$ of the class means relaxes at $h_j$. It does bias how many
+    there are: a target that the network fits exactly only with a class split is fitted with $K_0$ clusters
+    (numerics, Part G), so $K_0$ remains a design input.
+  \item \emph{(uniformity in $m$)} The blocks of (ii) and their rates do not depend on $m$. In the norm
+    \[
+      \tnorm{(u,\zeta)}_\eta := \max\Bigl\{\Bigl(\sum_kq_k\bigl(\norm{\bar u_k}^2_{\Ginv}
+      + (\sigma_0/\eta)\norm{\zeta_k}^2_{\Ginv}\bigr)\Bigr)^{1/2},\ \max_i\norm{u_i^\perp}_{\Ginv}\Bigr\},
+    \]
+    the per-particle norm of Theorem D$'''$.18 with the prior's offsets added in the metric of (i), the linearisation
+    acts on the separations as $-\sigma_0I$ and is self-adjoint on the collective part with the eigenvalues
+    $-\lambda_j^\pm$; the prior is driven by the class barycentres, which are linear in the class means while the
+    plan is diagonal, so Theorem D$'''$.18's facts (1)--(2) hold for the joint drift with $m$-independent constants,
+    and for $0 < \eta < \infty$ the averaged loop converges, for every commensurate $m$, in the
+    $\tnorm{\cdot}_\eta$-ball of radius
+    \begin{gather*}
+      \rho(\eta) := \min\Bigl\{\lambda_0(\eta)/(4C_N),\
+      \mathrm{margin}/\bigl(C[1 + q_{\min}^{-1/2} + (\eta/(\sigma_0q_{\min}))^{1/2}]\bigr)\Bigr\},\\
+      \lambda_0(\eta) := \min\{\sigma_0,\lambda_1^-(\eta)\},
+    \end{gather*}
+    at the rate $(1 - \kappa)\lambda_0(\eta)$ --- $C_N$ the Lipschitz constant of the joint drift's Jacobian in the
+    $\tnorm{\cdot}_\eta$-operator norm (the prior's part of the drift is linear, so it is the particles'),
+    $\mathrm{margin}$ the plan margin of Proposition D$'''$.12(iii) at the exact representation, $C$ as in Theorem
+    D$'''$.18: the ball reaches the per-particle distance $(1 + q_{\min}^{-1/2})\rho$ and the prior's offsets
+    $\norm{\zeta_k}_{\Ginv}\le\rho(\eta/(\sigma_0q_k))^{1/2}$, and the plan stays diagonal while both are within the
+    margin. At $\eta = \infty$ the prior is the class barycentres ($\zeta = \bar u$), the norm is Theorem
+    D$'''$.18's, $\lambda_0 = \min\{\sigma_0,h_1\}$, and the margin term is
+    $\mathrm{margin}/(C(1 + 2q_{\min}^{-1/2}))$; for large finite $\eta$ the bound degenerates like $\eta^{-1/2}$,
+    because this norm does not use the prior's relaxation onto the class means at the rate $\eta$ (a singular
+    perturbation). As $\eta\to0$, $\lambda_1^- < \eta$ and the rate and the radius vanish with it; at $\eta = 0$ the
+    prior is a parameter, and the statement is Theorem D$'''$.18's contraction for the fixed prior.
+  \item \emph{(the transit: when the prior may start)} From a sample whose cluster masses differ from $q$, the plan's
+    classes contain particles of other clusters until the transit of Proposition D$'''$.12 ends, and their
+    barycentres $\hat T_j$ are pulled toward those clusters: an adaptive prior is dragged along, and afterwards
+    relaxes back only at the rates $\lambda_j^-$. At $\eta = \infty$ the collective modes keep no leak curvature at
+    all, and the drag can carry the class atoms onto a plateau of the unregularised loss, which the flow then crosses
+    at that loss's own curvature. Freezing the prior while mass is in transit --- $\eta = 0$ as long as some particle
+    is assigned to an atom that is not its nearest --- keeps the prior out of the drag; $\mathcal{J}$ stays
+    non-increasing, as under any schedule of $\eta$, and at $\eta = \infty$ the opening is a jump of $Z$ to the class
+    barycentres, which lowers $\mathcal{J}$. But the adaptive prior forgets a perturbation of mode $j$ only at
+    $\lambda_j^- < h_j$, so whatever the transient leaves in the weakly excited modes when the prior starts is kept
+    for a time of order $1/\lambda_1^-$. When the parameters, not only the fit, are wanted at a given horizon, the
+    adaptation should therefore start from the fixed-prior stationary point --- after the transit, and after the
+    fixed-prior dynamics has settled, which it does at the fixed prior's rates (of order $\sigma_0$ and faster) ---
+    and then (ii) and (iii) apply with the prior's error as the only initial displacement. The wait is a delay, which
+    the fit error does not always repay (numerics).
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) $W^2(\mu_\Theta,\nu_Z) = \min_\gamma\sum_{ij}\gamma_{ij}\norm{\vartheta_i - z_j}^2_{\Ginv}$; where the optimal plan
+is unique, $\nabla_{z_j}W^2 = \sum_i\gamma_{ij}2\Ginv(z_j - \vartheta_i) = 2q_j\Ginv(z_j - \hat T_j)$, so
+$\dd z_j/\dd s = -(\eta/(\sigma_0q_j))G\nabla_{z_j}\mathcal{J}$ and
+$\dd\vartheta_i/\dd s = -mG\nabla_{\vartheta_i}\mathcal{J}$ (Proposition D$'''$.12); the vertex-selection argument and
+the convergence are Proposition D$'''$.17's with $(\Theta,Z)$ in place of $\Theta$, for solutions that stay bounded.
+With the plan held,
+$(1/m)\sum_{i\in\pi^{-1}(j)}\sigma_0(\vartheta_i - z_j) = \sigma_0q_j(\hat T_j - z_j) = (\sigma_0q_j/\eta)\dot z_j$,
+which is the conservation law. $\dot z = 0$ forces $z_j = \hat T_j$ for every $j$, and then $\dot\vartheta_i = 0$
+reads $G\langle r\nabla\tilde\Phi(\vartheta_i)\rangle = \sigma_0(\vartheta_i - \hat T_{\pi(i)})$. At a replicated
+configuration $\hat T_j$ is the class point $\vartheta_j$, so the leak term vanishes and stationarity is
+$z_j = \vartheta_j$ and $\nabla V_L(\vartheta_j) = 0$. At an exact representation $\bar L = 0$ and
+$W^2(\mu^*,\nu_{Z^*}) = 0$. (ii) At $r^* = 0$,
+$-G\nabla V_L[\mu](\vartheta_i) = -G\langle\Delta\fhat^\T\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)\rangle$ with
+$\Delta\fhat = \sum_lq_l\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^*_l)\bar u_l + O(\norm{u}^2)$ (the separations
+enter at second order, Theorem D$'''$.18's fact (1)), so a separation evolves by $-\sigma_0u^\perp$ and the class
+means by $\dot{\bar u}_k = -G\sum_l\langle\nabla\tilde\Phi_k^\T\nabla\tilde\Phi_l\rangle q_l\bar u_l
+- \sigma_0(\bar u_k - \zeta_k)$, with $\dot\zeta_k = -\eta(\zeta_k - \bar u_k)$ because
+$\hat T_k - \vartheta^*_k = \bar u_k$; the coordinates $y$, $x$ symmetrise it. The eigenvalues of the pair matrix are
+$-\lambda$ with $\lambda^2 - (h + \sigma_0 + \eta)\lambda + \eta h = 0$. Their product is $\eta h$ and their sum
+$h + \sigma_0 + \eta$; for $h,\eta > 0$ both roots are positive, so $\lambda^+ < h + \sigma_0 + \eta$ and
+$\lambda^- = \eta h/\lambda^+ > \eta h/(h + \sigma_0 + \eta)$; the polynomial is $-\sigma_0h < 0$ at $\lambda = h$ and
+$-\sigma_0\eta < 0$ at $\lambda = \eta$, so both lie strictly between the roots; and differentiating the polynomial
+in $h$ at $\lambda^-$ gives $\dd\lambda^-/\dd h = (\eta - \lambda^-)/(\lambda^+ - \lambda^-) > 0$. (iii) The
+stationary equations of the fixed prior, linearised, read $0 = -H_Ly - \sigma_0(y - x^0)$;
+$\bar L = \frac12\norm{\Delta\fhat}^2 = \frac12y^\T H_Ly + O(\norm{y}^3)$. (iv) For a fixed assignment the minimiser
+of $W^2$ over $Z$ is the class barycentres; by the envelope theorem the particles' drift of
+$\bar L + (\sigma_0/2)\mathcal{Q}_q$ is $-G\nabla V_L - \sigma_0(\vartheta_i - \hat T_{\pi(i)})$, the $\eta\to\infty$
+limit of \textup{($\mathfrak{A}_m^{\mathrm{OT},\eta}$)} (formal: a singular perturbation in which $Z$ is the fast
+variable). (v) (sketch) The symmetrisation of (ii) makes the collective part self-adjoint in $\tnorm{\cdot}_\eta$,
+with the eigenvalues $-\lambda_j^\pm$, and the separations decouple at $-\sigma_0$; the rest is Theorem D$'''$.18's
+contraction argument (its fact (3) with this norm) for the averaged loop, the diagonal plan being locally constant at
+commensurate $m$ (Proposition D$'''$.12(iii)) inside the ball, whose per-particle and prior extents are as stated.
+The constants $\kappa$, $C$, $C_N$ and the margin are not derived. (vi) $\mathcal{J}$ does not involve $\eta$, so it
+is non-increasing for any schedule $\eta(s)\ge0$, the gates' included; at $\eta = \infty$ the opening sets $Z$ to the
+class barycentres of the current plan, the minimiser of $\mathcal{J}$ over $Z$ for that plan, so $\mathcal{J}$ drops
+there.
+\end{proof}
+\status{(i)--(iii) proved, (i) for the solutions that stay bounded (a hypothesis now); (iv) formal; (v) sketched, as
+an adaptation of Theorem D$'''$.18's contraction argument for the averaged loop in the norm $\tnorm{\cdot}_\eta$ ---
+the structure (the decoupled separations, the self-adjoint collective pairs, the $m$-independent blocks) verified, the
+radius stated, its constants not derived; (vi) the monotonicity of $\mathcal{J}$ under the gates proved (it holds
+under any schedule of $\eta$), the drag, the memory of the weak modes and the remedy numerical (below). The prior
+that tracks the network is the continuous-time form of the proximal point method, or iterated Tikhonov
+regularisation --- the leak toward a moving centre --- and the coupled flow of the particles and a centre drawn to
+their mean is elastic averaging; the fast limit is the $K$-means form of soft weight-sharing, a regulariser of network
+compression \cite{S49}, here with the masses fixed (capacity-constrained, \cite{S19}). The per-mode formulas are those of
+the quadratic analyses: $\sigma_0/(h_j + \sigma_0)$ is the complement $1 - h_j/(h_j + \sigma_0)$ of the Tikhonov
+filter factor in the Gauss--Newton eigenbasis (the residual factor: the fraction of the prior's error that the
+regularised solution keeps), iterated Tikhonov contracts mode $j$ by it per step (in continuous time, the gradient
+flow of the Moreau envelope, whose curvature $h_j\sigma_0/(h_j + \sigma_0)$ gives the slow-prior limit
+$\eta h_j/(h_j + \sigma_0)$ of $\lambda_j^-$), and the pair matrix is the continuous-time form of elastic averaging's
+worker--centre map on a quadratic \cite{S49}. New are their transfer to the mass-constrained particle system --- $H_L$
+identified as the measure-space excitation spectrum, and the separations decoupled at $\sigma_0$, which make the
+trade-off between the fixed prior's bias and the adaptive prior's rate hold uniformly in $m$ --- and the transit's
+drag with its gate. The limits of the bias removal are the precedents' own properties in this form: the lost
+a-priori bound is the proximal point method's behaviour without a minimiser (its iterates are bounded iff a zero
+exists \cite{S49}, cited from memory), and the $K_0$-cluster bias is the quantisation error of soft weight-sharing's hard
+limit \cite{S49}; specific here are their particle and mass-constrained form, and the run-off from a fit that the network
+attains exactly (Part G(a)). Checked: \code{tests/test_adaptive_prior.py} (the joint drift against finite differences
+of $\mathcal{J}$ in the stated metric; the exact representation stationary with the prior at its atoms and the fixed
+prior's stationary point not; the spectrum of the linearisation at $m = 6$ equal to the separation rate $\sigma_0$
+and the pair rates $\lambda_j^\pm$ for two $\eta$, and the linearisation self-adjoint in the gradient-flow metric;
+the fixed prior's bias at a smaller shift to the first-order formula; the transit gate frozen while mass is in
+transit and the settled gate opening only when the fixed-prior drift has fallen below its tolerance, with
+$\mathcal{J}$ non-increasing in both; the limits of (i): a non-replicated stationary saddle held by the leak, a prior
+permuted among atoms of equal mass stationary at the exact representation, and the adaptive prior's run-off --- the
+force on the amplitude tending to the positive Karush--Kuhn--Tucker multiplier of the loss's minimum on the face
+$a = a_{\max}$, where a bounded limit would need it to vanish, and the run-off law
+$(a_{\max} - a)s\to a_{\max}^2(\sigma_0 + \eta)/(4\eta G_\alpha F_\infty)$ of the conservation law --- against the
+fixed prior's convergence).}
+
+% Numerics of Theorem D'''.23 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_prior.md).
+\paragraph{Numerics} (\code{exp_adaptive_prior.py} $\to$ \code{results/chaos/adaptive_prior.md}). The averaged slow
+loop at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$ with the OT leak toward a misplaced prior --- the matching prior's
+centres shifted by $+0.15$, masses $1/3$. \emph{The linear theory.} At the exact representation the whitened weighted
+Gauss--Newton spectrum is $h_j = 3.06\cdot10^{-4}\ \dots\ 0.195$. A fixed prior keeps the fraction
+$\sigma_0/(h_j + \sigma_0)$ of its error, 0.959 in the weakest mode and 0.035 in the strongest, with collective rates
+$h_j + \sigma_0\ge7.38\cdot10^{-3}$; the adaptive prior's slowest rate is $\lambda_1^- = 2.68\cdot10^{-5}$,
+$1.51\cdot10^{-4}$, $2.78\cdot10^{-4}$, $3.06\cdot10^{-4}$ for $\eta = \sigma_0/10$, $\sigma_0$, $10\sigma_0$,
+$\infty$. \emph{(v)'s radius.} A sampled lower bound on the Jacobian-Lipschitz constant of the collective block is
+$C_N\ge0.341$, so the proof's radius is at most $2.0\cdot10^{-5}$, $1.1\cdot10^{-4}$, $2.0\cdot10^{-4}$,
+$2.2\cdot10^{-4}$ for the four $\eta$ --- $\lambda_0/\sigma_0 = 0.0038$--$0.043$ times Theorem D$'''$.18's at the same
+$C_N$ --- while the $K_0$-atom runs below start at $\tnorm{\cdot}_\eta = 1.17$, $0.37$, $0.12$, $0.021$, 94 to
+$6\cdot10^4$ times outside, the warm clouds of the $m$-particle systems $2.2\cdot10^4$--$3.6\cdot10^5$ times and the
+separated starts of Part F 131--3344 times: they probe the dynamics beyond the proved ball. \emph{The fixed prior's
+bias.} $\Theta^*(q)$ has the fit error $9.78\cdot10^{-3}$, and the first-order formula
+$y^* = \sigma_0(H_L + \sigma_0I)^{-1}x^0$ describes it to 4.8\% in norm; per mode the weak modes 1 and 3 hold 0.85 and
+0.73 of the prediction, and the error is first order in the shift (halving the shift from 0.15 to 0.01875 takes the
+norm error through 4.8, 2.3, 1.2, 0.58\% and modes 1 and 3 to 0.98 and 0.97 of the prediction). The weakest mode keeps
+0.814 of its error, against the predicted 0.959. \emph{The $K_0$-atom loop} from $\Theta^*(q)$, with the prior at the
+shifted centres, for the four $\eta$ over 6000 slow units: every mode amplitude above $10^{-6}$ --- thirteen of the 36
+--- decays at its predicted rate (log-slopes on $[3000,6000]$ between 0.981 and 1.003 times $\lambda_j^-$), at a ratio
+to the exact pair solution between 0.82 and 1.12 that changes by at most 1.04\% from $s = 1000$ on for
+$\eta\ge\sigma_0$ (6.0\% at $\sigma_0/10$; the offset is set in the first, nonlinear phase); below $10^{-6}$ the
+faster modes stop at the level of the second-order remainder. The fit error falls from $9.78\cdot10^{-3}$ to
+$3.6\cdot10^{-4}$, $1.8\cdot10^{-5}$, $8.0\cdot10^{-6}$, $6.7\cdot10^{-6}$ at $s = 6000$, while the weakest mode still
+holds $1.45\cdot10^{-3}$, $6.7\cdot10^{-4}$, $3.0\cdot10^{-4}$, $2.5\cdot10^{-4}$ of its $1.58\cdot10^{-3}$: the fit is
+restored long before the parameters, as (iii) says. \emph{$m$-particle systems:} $m = 15$, $60$, $240$ and $M = 510$
+from the warm clouds of Proposition D$'''$.12's numerics, four seeds, 3000 slow units. Under the fixed prior every
+system ends at the lift of $\Theta^*(q)$ ($\norm{\bar y} = 2.10\cdot10^{-2}$,
+$W^2(\mu_\Theta,\mu_{\mathrm{exact}}) = 4.4\cdot10^{-4}$, fit error $9.78\cdot10^{-3}$). Ungated, the adaptive prior is
+dragged by the transit: at $s = 500$ $\norm{\bar y}$ is 0.032--0.32 ($\eta = \sigma_0$) and 0.048--0.71
+($\eta = \infty$) in seed means, against the $K_0$-atom run's $7.4\cdot10^{-3}$ and $4.3\cdot10^{-3}$, and at
+$s = 3000$ still 0.0094--0.10 and 0.012--0.59, the largest at $m = 15$. At $\eta = \infty$ one $m = 15$ system is
+carried onto a plateau of the unregularised loss: its split class re-collapses by $s = 7000$, onto atoms where the
+loss's Hessian has the eigenvalues $-1.8\cdot10^{-5}$ and $7.2\cdot10^{-5}$ (fit error $3.46\cdot10^{-2}$ at
+$s = 23000$, the drift $1.4\cdot10^{-5}$). The collapsed $\eta = \infty$ dynamics from there, the unregularised
+$K_0$-atom gradient flow, falls below 0.9 of the plateau's loss $2.52\cdot10^{-4}$ after $4.16\cdot10^4$ more slow
+units, halves it at $4.78\cdot10^4$ and falls below $10^{-12}$ at $7.97\cdot10^4$ (the crossings located as events),
+at the exact representation: the plateau is crossed on the time scale $1/1.84\cdot10^{-5} = 5.4\cdot10^4$ of its
+negative curvature. The transit gate opens at $s = 88$--$149$ and removes the plateau, but the transient's residue in
+the weak modes stays: $\norm{\bar y} = 4.9\cdot10^{-3}$--$3.7\cdot10^{-2}$ ($\eta = \sigma_0$) at $s = 3000$, against
+the $K_0$-atom run's $1.3\cdot10^{-3}$, decreasing with $m$. The settled gate opens at $s = 1211$--$1304$, with the
+systems replicated (rms separations $1.2\cdot10^{-4}$--$7.9\cdot10^{-4}$) and their class means within
+$6.7\cdot10^{-5}$ of $\Theta^*(q)$; each is then the $K_0$-atom system started from its own class means, and at
+$s = 3000$ $\norm{\bar y}$ and the fit error of every system equal the $K_0$-atom run's at $s - t_{\mathrm{open}}$ ---
+per-seed ratios 0.995--1.000 ($\eta = \sigma_0$) and 0.968--1.001 ($\eta = \infty$) for every $m$ from 15 to 510, as
+the invariance of the replicated configurations requires, the departures from 1 being the opening offset in the
+weakest mode --- with fit errors $1.6\cdot10^{-4}$ ($\eta = \sigma_0$) and $3.4$--$3.5\cdot10^{-5}$ ($\eta = \infty$)
+against the fixed prior's $9.78\cdot10^{-3}$, $W^2(\mu_\Theta,\mu_{\mathrm{exact}}) = 6.7$--$7.2\cdot10^{-6}$ and
+$9.3$--$9.9\cdot10^{-7}$ against $4.4\cdot10^{-4}$, and the counts at $q$ in every run. The wait costs 1211--1304 of
+the 3000 slow units: in the seed means the settled gate's $\norm{\bar y}$ and $W^2$ are the lower everywhere, and its
+fit error at $\eta = \infty$ and at $m\le240$ (at $\eta = \sigma_0$ and $m = 510$ the transit gate's fit error is the
+lower, $1.55\cdot10^{-4}$ against $1.64\cdot10^{-4}$); system by system the transit gate ends lower in all three in 6
+of the 32 systems. \emph{The structure behind (v), beyond its ball} (Part F): from the lift of $\Theta^*(q)$ plus
+zero-mean per-particle separations of rms 0.02 and 0.1 ($m = 15$ and $510$, ungated, five draws of their direction),
+$\norm{\bar y}$ at $s = 1750$ departs from the $K_0$-atom run's, in the draw means, by $+0.13$\% and $+3.1$\% at
+$\eta = \sigma_0$ and by $+0.77$\% and $+18.5$\% at $\eta = \infty$ for $m = 15$ ($+0.09$\%, $+2.2$\%, $+0.63$\% and
+$+15.5$\% for $m = 510$): second order in the separations draw by draw (factors 23.8--25.0 for the factor 5), with a
+spread across the draws 3.3--6.0 times larger at $m = 15$, and consistent with the same expected size at both $m$ (the
+draw means, higher at $m = 15$ in all four columns, differ by $+0.9$ to $+1.7$ combined standard errors; five draws)
+--- the prediction of Theorem D$'''$.18's facts (1)--(2) at second order, the departure being linear in the
+separations' class covariances, whose expectation is the same at every $m$. The starts lie 131--3344 times outside
+(v)'s ball, so (v) itself asserts nothing there. \emph{The limits of (i)} (Part G). On a four-bump target that six
+kernels fit exactly with one class split ($K_0 = 3$, $m = 6$), the joint flow has a stationary saddle with the class
+split --- the pair at $\Ginv$-distance 1.64, against the exact fit's 3.29 --- held by a leak force $5.8\cdot10^{-3}$
+against an unregularised gradient of the same size (fit error $4.2\cdot10^{-2}$); from the exact fit the flow
+collapses the class within 8000 slow units (at $s = 4\cdot10^4$, $\eta = \infty$: the merged width 1.05, fit error
+$2.23\cdot10^{-2}$), and the merged atom then widens toward $s_{\max}$ --- continued, its width coordinate runs off
+like $\ln s$ and the width tends to $s_{\max}$ like $1/s$, as in (b): the solution is unbounded --- while its physical
+image approaches the minimiser of the loss on the face $s = s_{\max}$ (fit error $1.943\cdot10^{-2}$, a
+Karush--Kuhn--Tucker point with $\partial L/\partial s = -1.3\cdot10^{-6}$, not a critical point), reached only as
+$s\to\infty$: the $K_0$-cluster bias drives the solution from an exact fit to infinity while $\mathcal{J}$ decreases.
+With a target bump of weighted amplitude $4.8 > a_{\max} = 4$, the fixed prior's $K_0$-atom solution converges (fit
+error 0.175), while under the adaptive prior ($\eta = \sigma_0$ and $\infty$) the amplitude coordinate grows like
+$2\ln s$ (its increments per decade $1.99\ln10$ by $s = 10^6$) and the amplitude tends to $a_{\max}$ like $1/s$: the
+solution leaves every compact set. At the exact representation (equal masses) a cyclically permuted prior is
+stationary (drift $1.1\cdot10^{-17}$), with $z_{\sigma(k)} = \vartheta_k$.
+
+% Proposition D'''.24 with its proof, Status, numerics and planar check, and Remark D'''.25 with its design table
+% (PARADIGM.md section 5d, round-19 version; the numbers are PARADIGM's copies of results/chaos/adaptive_floor.md and
+% results/chaos/adaptive_floor_2d.md).
+\begin{thm}{Proposition}{D$'''$.24}[the finite-size floor is the leak's bias at the sampled weights; an adaptive prior
+removes it without a mass constraint]\phantomsection\label{res:thmDppp:24}%
+Let the target admit, for the weights $w$ in a neighbourhood $W$ of $q$, an exact weighted $K_0$-atom representation
+$\vartheta^e(w)$ --- $f = \sum_kw_k\tilde\Phi(\cdot\,;\vartheta^e_k(w))$, a critical point of the unregularised
+weighted loss whose whitened weighted Gauss--Newton block $H_L(w)$ is invertible, smooth in $w$ --- and let the prior
+be matching, $\vartheta^0 = \vartheta^e(q)$. (On the instance the network's amplitude--mass degeneracy gives
+$\vartheta^e(w)$ explicitly: the amplitudes $A_k/w_k$ with the bumps' centres and widths, on the branch of
+$\vartheta^e(q)$ while $\abs{A_k}/w_k < a_{\max}$; these weights are the \emph{representable} ones, $W$. They are not
+Proposition D$'''$.5's admissible set $W_{\mathrm{adm}}$ of the fixed prior, where its replicated stationary point is a
+strict local minimiser; a sample in $W_{\mathrm{adm}}$ is called \emph{D$'''$.5-admissible}.)
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the floor is the bias)} Under the nearest-atom leak toward the fixed prior, the weighted stationary
+    point $\Theta^*(w)$ of Proposition D$'''$.5 satisfies, with Theorem D$'''$.23's whitened weighted coordinates at
+    the weights $w$,
+    \begin{gather*}
+      \fhat_{\Theta^*(w)} - f = \hat J(w)\sigma_0(H_L(w) + \sigma_0I)^{-1}x^0(w) + O(\norm{x^0(w)}^2),\\
+      x^0_k(w) := \sqrt{w_k}G^{-1/2}(\vartheta^0_k - \vartheta^e_k(w)),
+    \end{gather*}
+    $\hat J(w) := [\sqrt{w_k}\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^e_k(w))G^{1/2}]_k$ (so that
+    $\hat J^\T\hat J = H_L$): the leak's bias at the sampled weights, zero at $w = q$. The function-level
+    weight-sensitivity of Propositions D$'''$.5 and D$'''$.9 is its derivative,
+    $F = \hat J\sigma_0(H_L + \sigma_0I)^{-1}\partial_wx^0$ at $q$ --- exactly, the remainder's derivative vanishing
+    with $x^0(q)$ --- and on the eigenvectors $v_j$ of $H_L(q)$ (eigenvalues $h_j$) the function-level floor law of
+    Proposition D$'''$.9 reads
+    \begin{equation}
+      \E\norm{\fhat_m - \fhat_M}^2 = (1/m - 1/M)\cdot\sum_j\frac{h_j\sigma_0^2}{(h_j + \sigma_0)^2}\cdot
+      z_j^\T\tilde Cz_j + o(1/m),\qquad z := V^\T\partial_wx^0,
+      \tag{B}
+    \end{equation}
+    $\partial_w$ taken along the zero-sum directions $e_j - e_{K_0}$ and $\tilde C$ the multinomial covariance of
+    $(w_1,\dots,w_{K_0-1})$ --- Proposition D$'''$.9's law written on the eigenvectors, and like it a law for samples
+    in $W_{\mathrm{adm}}$: at a saddle the replicated stationary point is left by a split (Proposition D$'''$.5), and
+    the floor is the split configuration's. Each mode is weighted by
+    $h_j\sigma_0^2/(h_j + \sigma_0)^2\le\sigma_0/4$, with equality at $h_j = \sigma_0$: a band-pass centred at the
+    level of the leak, at least half its peak for $h_j/\sigma_0\in[3 - 2\sqrt2,3 + 2\sqrt2]$ (a factor 5.8 either
+    side). The law is therefore at most $(1/m - 1/M)(\sigma_0/4)\tr(\partial_wx^0\tilde C\partial_wx^{0\T})$, whatever
+    the excitation spectrum. A weakly excited mode keeps its bias but hardly shows it in the function; a stiff one
+    shows little bias; which modes carry the floor is set first by the gauge's displacement $\partial_wx^0$ and then
+    re-weighted toward $h\approx\sigma_0$.
+  \item \emph{(the nearest-atom leak toward an adaptive prior: the masses minimised out)} Let the prior's atoms follow
+    the means of their Voronoi cells, $\dd z_j/\dd s = -\eta(z_j - \hat T_j)$ ($\eta > 0$) with $\hat T_j$ the mean
+    of the particles nearest to $z_j$, while the particles follow the nearest-atom leak toward $Z$. Inside the cells
+    this is the gradient flow of
+    \[
+      \mathcal{J}_\circ(\Theta,Z) := \bar L(\mu_\Theta)
+      + (\sigma_0/2m)\sum_i\min_j\norm{\vartheta_i - z_j}^2_{\Ginv}
+      = \min_{q'\in\Delta}\mathcal{J}(\mu_\Theta,\sum_jq'_j\delta_{z_j})
+    \]
+    in the metric $(1/m)\Ginv$ per particle and $(\sigma_0w_j/\eta)\Ginv$ per atom, $w$ the cell masses: the OT leak
+    of Theorem D$'''$.23 with the prior's masses minimised out (semi-relaxed transport --- the infinitely fast limit of
+    a dynamics of the masses, not a learning law for them), which sends every particle to its nearest atom. The counts
+    change only when a particle crosses into another cell; across a crossing the flow is the vertex-selection flow of
+    $\mathcal{J}_\circ$ --- a minimum over the assignments of smooth functions, in a metric that depends on the active
+    assignment --- and $\mathcal{J}_\circ$ stays non-increasing, as in Theorem D$'''$.23(i). A cell without particles
+    has a degenerate metric: its atom is frozen, and the cell is refilled only if a particle's own dynamics carries it
+    in (on the instance an empty cell stays empty; tests).
+  \item \emph{(no function-level floor at the representable samples)} At fixed counts $N$, $w = N/m$, the stationary
+    replicated configurations are the critical points of the unregularised weighted $K_0$-atom loss at $w$ (Theorem
+    D$'''$.23(i) with $w$ in place of $q$), and for $w\in W$ the exact representation $\vartheta^e(w)$ with the prior
+    at its atoms is one, with $\fhat = f$. At representable sampled weights the function-level sensitivity therefore
+    vanishes identically, and the function-level distance between two systems at their exact representations is
+    zero. There $r = 0$, so $R = 0$ and Proposition D$'''$.5's splitting margins are the maximal $\sigma_0$ for every
+    $w\in W$: the adaptive prior also removes the fixed prior's splitting instability, whose replicated point is a
+    saddle wherever a cluster overshoots (on the instance at $w_1\gtrsim0.4$). Outside $W$ (on the instance some
+    $\abs{A_k}/w_k\ge a_{\max}$) no exact representation exists on the branch of $\vartheta^e(q)$ --- a permutation of
+    the classes over the bumps can be representable, but the dynamics from the warm clouds follows the branch --- and
+    the adaptive prior removes the leak's bias without reaching $f$: the amplitude coordinates run off (Theorem
+    D$'''$.23(i)), and the sample keeps a function-level error. The probability of such samples decays exponentially
+    in $m$ (on the instance at most $\sum_k\exp(-2m(q_k - \abs{A_k}/a_{\max})^2)$, by Hoeffding's inequality,
+    vacuous at $m = 15$), so if every representable sample converges to its exact representation the expected
+    limiting floor is exponentially small in $m$ rather than of order $1/m$; on the instance this asymptotic statement
+    is not yet in force at $m\le60$ (numerics, Part E). The parameter-level stationary measure
+    $\sum_kw_k\delta_{\vartheta^e_k(w)}$ still carries the sample's weights --- the counts fix the amplitude--mass
+    gauge --- and its coupled distance is the larger one, conditionally on representability (outside $W$ the
+    parameters run off and the coupled distance diverges): Proposition D$'''$.5's coupled distance has the sensitivity
+    $S^e := \partial_w\vartheta^e$ of the exact representation, where the fixed prior's is, in the whitened weighted
+    coordinates and to first order, $H_L(H_L + \sigma_0I)^{-1}S^e$. Per mode, the weight fluctuation of the exact
+    representation divides into the fraction $h_j/(h_j + \sigma_0)$ carried by the parameters and the fraction
+    $\sigma_0/(h_j + \sigma_0)$ left as the bias, which the function sees with the weight $h_j$; the adaptive prior
+    moves all of it into the parameters. Since $S^e = -\partial_wx^0$, the bound of (i) is $\sigma_0/4$ times the
+    adaptive prior's coupled-distance law: the fixed prior's function-level law is at most $\sigma_0/4$ times the
+    adaptive prior's parameter-level law. At the measure level the two priors hardly differ: between the stationary
+    measures of two samples, $W^2$ is the transport of the mass $\frac12\norm{w - w'}_1$ across the inter-cluster
+    distances, of order $\norm{w - w'}_1\sim m^{-1/2}$ under both priors, plus a within-class part of order
+    $\norm{w - w'}^2$, the larger under the adaptive prior.
+  \item \emph{(the rates)} At $\vartheta^e(w)$ the linearisation is Theorem D$'''$.23(ii) with $w$ in place of $q$:
+    the collective pairs relax at $\lambda_j^-(w) < \min\{h_j(w),\eta\}$, and the fit, weighted by $h_j$, recovers
+    faster than the parameters. On the boundary of $W$ (an amplitude $A_k/w_k$ equal to the saturation $a_{\max}$)
+    the exact representation sits at infinity in the unconstrained coordinates and the convergence is algebraic: with
+    $a = a_{\max}\tanh(\tilde a/a_{\max})$, $a_{\max} - a\approx2a_{\max}e^{-2\tilde a/a_{\max}}$, the loss along the
+    saturating coordinate is of order $e^{-4\tilde a/a_{\max}}$, its gradient flow gives
+    $\tilde a\approx(a_{\max}/4)\log s$, and the function-level error decays like
+    $a_{\max}^2w_k(1 + \sigma_0/\eta)/(8G_\alpha s)$, the loss's curvature cancelling (formal).
+  \item \emph{(the design table)} Fixed prior, nearest-atom leak: the function-level floor \textup{(B)} at the
+    D$'''$.5-admissible samples (elsewhere a cluster splits) and, if the prior is misplaced, its bias. Fixed prior, OT
+    leak (Proposition D$'''$.12): on the commensurate sizes no function- or measure-level floor, and the prior's bias.
+    Adaptive prior, nearest-atom leak: at the representable samples no function-level floor and no bias, and the
+    larger coupled distance of the gauge. Adaptive prior, OT leak (Theorem D$'''$.23): neither function-level floor nor
+    bias, the masses fixed by design. Under both OT leaks the coupled distance keeps the transit's mismatch
+    (Proposition D$'''$.12's \emph{Open}). The mass constraint fixes the gauge, and the adaptive prior removes the bias
+    --- with it the function-level floor, which is its slope in $w$. This resolves Remark D$'''$.10's trade-off
+    between the window's margin and the coupling's floor at the function level: at an exact representation the
+    separation margin is the maximal $\sigma_0$ and both the bias and the function-level floor vanish. The price is
+    the collective rate, $\lambda_j^-$ in place of $h_j + \sigma_0$ (Theorem D$'''$.23(ii)), the leak's a-priori bound
+    (restored by projecting the prior, Proposition D$'''$.27), and a larger coupled distance.
+  \item \emph{(the real loop: perfect tracking)} With the adaptive prior, the lift of the exact representation of
+    representable sampled weights, with the prior at its atoms and the plant on the reference ($e = 0$), is an
+    invariant set of the real closed loop of Theorem J: $\fhat = f$ on the reference orbit --- the support of the
+    occupation measure $\rho$, which is all the error equation sees at $e = 0$ --- so $e\equiv0$ solves the error
+    equation there (its linear stability also uses $\partial_x\fhat = \partial_xf$ on the orbit, which the exact
+    representation, an identity of functions, supplies: Corollary D$'''$.26(c)), and the adaptive law's gradient term
+    (proportional to $e$), the leak (toward each particle's own position) and the prior's motion (toward its own atom)
+    all vanish: perfect tracking at every representable sample. With a fixed prior the tracking error keeps Theorem
+    J's slaved value $e = (1/k_e)r_{\Theta^*(w)}(x_m) + O(k_e^{-2})$: the leak's bias, divided by the gain.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) The derivation of Theorem D$'''$.23(iii) at the weights $w$: to first order in
+$u_k := \vartheta^*_k(w) - \vartheta^e_k(w)$, the stationarity of $\Theta^*(w)$ reads
+$H_L(w)y + \sigma_0(y - x^0(w)) = 0$ in $y_k := \sqrt{w_k}G^{-1/2}u_k$, and
+$\fhat_{\Theta^*(w)} - f = \sum_kw_k\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^e_k)u_k + O(\norm{u}^2)
+= \hat Jy + O(\norm{u}^2)$. Since $x^0(q) = 0$, the derivative at $q$ keeps only $\partial_wx^0$ (the derivatives of
+$\hat J$, of $H_L$, of the factors $\sqrt{w_k}$ and of the $O(\norm{x^0}^2)$ remainder multiply $x^0(q)$ or
+$u(q) = 0$), so $F$ is exact at $q$; the vectors $\hat Jv_j$ are orthogonal with $\norm{\hat Jv_j}^2 = h_j$, which
+with Proposition D$'''$.9's law gives (B); and $h\sigma_0^2/(h + \sigma_0)^2\le\sigma_0/4$ is
+$(h + \sigma_0)^2\ge4h\sigma_0$, with $h\sigma_0^2/(h + \sigma_0)^2\ge\sigma_0/8$ iff
+$h^2 - 6h\sigma_0 + \sigma_0^2\le0$. (ii) For fixed $Z$ and $\mu$ every coupling of $\mu$ with some
+$\sum_jq'_j\delta_{z_j}$ costs at least $\int\min_j\norm{\vartheta - z_j}^2\dd\mu$, with equality for the
+nearest-atom map, whose image masses are the cell masses; inside the cells
+$\nabla_{z_j}(\sigma_0/2m)\sum_{i:j(i)=j}\norm{\vartheta_i - z_j}^2_{\Ginv} = \sigma_0w_j\Ginv(z_j - \hat T_j)$, and
+$\nabla_{\vartheta_i}\mathcal{J}_\circ$ is Proposition D$'''$.9's. Across a crossing, $\mathcal{J}_\circ$ is the
+minimum over the assignments of smooth functions; a vertex-selection solution follows the gradient flow of an active
+assignment, whose derivative along it is minus the squared norm of the velocity in that assignment's metric and
+bounds the upper Dini derivative of the minimum, so $\mathcal{J}_\circ$ is non-increasing. An empty cell's atom
+feels no force ($w_j = 0$) and does not move. (iii) As Theorem D$'''$.23(i); at $\vartheta^e(w)$ the residual
+vanishes, so $R[\mu](\vartheta) = \langle r\nabla^2_\vartheta\tilde\Phi\rangle_\rho = 0$ and the separation blocks
+$\sigma_0I - R^G$ of Proposition D$'''$.5 are $\sigma_0I$. The parameter level: two replicated measures with the
+weights $w$ and $w'$ and atoms $O(\norm{w - w'})$ apart differ by the mass $\frac12\norm{w - w'}_1$ that a coupling
+must move across inter-cluster distances. The split: $\vartheta^*(w) = \vartheta^e(w) + u(w)$ with
+$\partial_wy = -\sigma_0(H_L + \sigma_0I)^{-1}S^e_y$ at $q$ ($S^e_y$ the whitened weighted $S^e$), so the fixed
+prior's $S_y = S^e_y + \partial_wy = H_L(H_L + \sigma_0I)^{-1}S^e_y$; and $S^e_y = -\partial_wx^0$ by the definition
+of $x^0$. (iv) As Theorem D$'''$.23(ii); the boundary case: with $\varepsilon := a_{\max} - a$ and
+$\alpha - z_\alpha$ slaved, the conservation law
+$\frac{\mathrm{d}}{\mathrm{d}s}[\alpha + (\sigma_0/\eta)z_\alpha]
+= G_\alpha\langle r\varphi_k\rangle\partial a/\partial\alpha$ gives
+$\dd\varepsilon/\dd s = -(\eta/(\sigma_0 + \eta))G_\alpha\langle r\varphi_k\rangle(\partial a/\partial\alpha)^2$, with
+$\langle r\varphi_k\rangle = w_k\varepsilon\langle\varphi_k^2\rangle$ and
+$\partial a/\partial\alpha\approx2\varepsilon/a_{\max}$, so
+$\varepsilon^2\approx a_{\max}^2(\sigma_0 + \eta)/(8\eta G_\alpha w_k\langle\varphi_k^2\rangle s)$ and
+$\langle r^2\rangle = w_k^2\varepsilon^2\langle\varphi_k^2\rangle$. (vi) Substitution into the closed loop; the
+slaved error is Theorem J's Step~2.
+\end{proof}
+\status{(i): $F = \hat J\sigma_0(H_L + \sigma_0I)^{-1}\partial_wx^0$ is exact at $q$, the bias formula at $w\ne q$ is
+first order in $x^0(w)$, and the law (B) is formal --- the delta method, as Proposition D$'''$.9 --- and holds for
+D$'''$.5-admissible samples; its value is the asymptotic one (on the instance the exact floor's expectation is 2.8,
+1.5 and 1.1 times it at $m = 15$, $60$, $240$). (ii) proved inside the cells, and across crossings for
+vertex-selection solutions; (iii) proved for the stationary points, the probability bound by Hoeffding's inequality,
+the convergence to the exact representations numerical; (iv) as Theorem D$'''$.23, the boundary case formal; (v) a
+summary of (i)--(iii) with Proposition D$'''$.12 and Theorem D$'''$.23; (vi) the invariance proved, its attractivity
+in the real loop not proved here (it would follow from (iv) and Theorem D$'''$.18's argument for the joint system, as
+sketched in Theorem D$'''$.23(v)) and checked numerically. The amplitude--mass degeneracy is the homogeneity that the
+conic (Wasserstein--Fisher--Rao) view of mean-field networks exploits \cite{R49}, \cite{R55}; the finite-size
+fluctuations of trained mean-field networks around their mean-field limit are known to scale like $1/m$, with central
+limit theorems for the training dynamics (\cite{R30}, \cite{S51}), and the asymptotic deviation is known to vanish when the
+mean-field dynamics converges to a measure that interpolates the data (Chen--Rotskoff--Bruna--Vanden-Eijnden, \cite{S51}).
+That is the mechanism by which the adaptive prior removes the function-level floor: its replicated stationary points
+are unregularised interpolants, and an exact fit is weight-invariant, so the absence of a function-level floor in
+(iii) follows at once. (i) is the chain rule applied to Theorem D$'''$.23(iii)'s first-order bias at $x^0(q) = 0$, and
+its weight is the squared complement of the Tikhonov filter factor times the mode's visibility $h_j$, bounded by
+$\sigma_0/4$ by the AM--GM bound familiar from ridge regression's filter factors. New are the identification of the
+function-level floor with the weight-derivative of the regulariser's bias at the sampled weights, with its
+mode-by-mode law and the bound's identity with the adaptive prior's coupled-distance law; the split of the weight
+fluctuation between the parameters and the bias (iii); and a leak toward a learned prior as the way to restore the
+interpolation property under regularisation, which also removes the fixed prior's splitting instability. Checked:
+\code{tests/test_adaptive_floor.py} (the nearest-atom adaptive flow against finite differences of $\mathcal{J}_\circ$
+with the cell masses; $\mathcal{J}_\circ$ the minimum of the OT energy over the masses, attained at the cell masses
+and strictly below the energies with masses moved by $\pm1/m$; the bias formula against the finite-difference
+sensitivity, the mode terms summing to the law, the law below the bound, and the weight moving the shares toward
+$h\approx\sigma_0$ against the unweighted ones at a small and a large $\sigma_0$; at the D$'''$.5-admissible sample
+$(5,4,6)/15$ the exact representation, with the amplitudes $A_k/w_k$, stationary for the adaptive prior while the
+fixed prior's stationary point is a strict local minimiser and biased; at the saddle sample $(6,5,4)/15$ the fixed
+prior's splitting margin negative and the exact representation's margins $\sigma_0$; the parameter split;
+$\mathcal{J}_\circ$ decreasing across a cell crossing at $\eta = \sigma_0$ and $\infty$, and an empty cell staying
+empty with its atom frozen).}
+
+% Numerics of Proposition D'''.24 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_floor.md).
+\paragraph{Numerics} (\code{exp_adaptive_floor.py} $\to$ \code{results/chaos/adaptive_floor.md}). The three-bump
+instance at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$ (and $0.05\sigma_{\mathrm{crit}}$, $0.5\sigma_{\mathrm{crit}}$ for
+the law), the matching prior unless stated, the warm clouds of Proposition D$'''$.12's numerics (width 0.02, four
+seeds), $m = 15$, $60$, $240$ against $M = 510$; the checks at the sampled weights from the stored final states.
+\emph{The floor is the bias} (Part A). The function-level sensitivity $F$ of the fixed prior's stationary point, by
+central differences in $w$, equals the bias form $\hat J\sigma_0(H_L + \sigma_0I)^{-1}\partial_wx^0$ to the
+finite-difference error ($1.1\cdot10^{-6}$, $1.9\cdot10^{-7}$, $1.2\cdot10^{-8}$ at
+$\sigma_0/\sigma_{\mathrm{crit}} = 0.05$, $0.15$, $0.5$, with the step $10^{-4}$); the law (B) per unit of
+$1/m - 1/M$ is $1.356\cdot10^{-2}$, $6.166\cdot10^{-2}$, $0.2291$, equal to the sum of its mode terms, at 0.496, 0.753,
+0.839 of the bound, and the bound is $\sigma_0/4$ times the adaptive prior's coupled-distance law 46.32. Modes 2--6
+carry 99.4\%, 99.0\%, 97.9\% of the law, and 97.2\% of the unweighted sum $\sum_jz_j^\T\tilde Cz_j$ --- the
+concentration is mostly the gauge's --- while the weight moves the shares toward $h\approx\sigma_0$: the modes with
+$h_j/\sigma_0\in[1/5,5]$ carry 42\%, 99\%, 90\% of the law against 21\%, 97\%, 78\% unweighted. The law's value at
+$m = 15$, $60$, $240$ is $3.99\cdot10^{-3}$, $9.07\cdot10^{-4}$, $1.36\cdot10^{-4}$. The parameter split
+$S = H_L(H_L + \sigma_0I)^{-1}S^e$ holds to $1.4\cdot10^{-7}$--$2.9\cdot10^{-8}$, and the adaptive prior's
+coupled-distance law is 1.44, 2.17, 5.27 times the fixed prior's. Every sampled weight vector is representable
+(margins $\min_k(w_k - \abs{A_k}/a_{\max}) = 0.025$--$0.10$) except seed 3's at $m = 15$, $(8,4,3)/15$, which lies on
+the boundary ($w_3 = \abs{A_3}/a_{\max}$). But 5 of the 12 sampled $m$-systems are not D$'''$.5-admissible for the
+fixed prior: $(6,5,4)/15$, $(6,3,6)/15$, $(24,15,21)/60$, $(8,4,3)/15$ and $(25,17,18)/60$ have splitting margins
+$-3.48$, $-1.08$, $-2.16$, $-6.14$, $-3.98\cdot10^{-3}$, all at class 1 with $w_1\ge0.4$; the other seven and the four
+references have margins $\ge3.78\cdot10^{-3}$. \emph{Fixed against adaptive priors} (Part B, the nearest-atom leak,
+6000 slow units). Under the fixed prior $\norm{\fhat_m - \fhat_M}^2$ stays at its stationary value,
+$3.0\cdot10^{-4}$--$5.5\cdot10^{-3}$ at $m = 15$, $1.1\cdot10^{-4}$--$9.9\cdot10^{-4}$ at $m = 60$ and
+$4.8\cdot10^{-6}$--$8.2\cdot10^{-5}$ at $m = 240$ over the seeds. At the seven D$'''$.5-admissible samples it equals
+the exact bias at the sampled weights, $\norm{\fhat_{\Theta^*(w^m)} - \fhat_{\Theta^*(w^M)}}^2$, to four digits
+(ratio 1.0000), while the delta method's $\norm{F(w^m - w^M)}^2$ misses it by the factors 0.86--1.72; the five saddle
+systems have split (class diameters 0.64--1.50 at the end, class 1 broken into sub-clusters) and sit at 0.81--1.01 of
+the replicated point's floor. Under the adaptive prior the function-level distance decreases without a floor: at
+$s = 6000$ to $4.6\cdot10^{-9}$--$2.0\cdot10^{-6}$ ($\eta = \sigma_0$) and $1.9\cdot10^{-10}$--$5.4\cdot10^{-8}$
+($\eta = \infty$) at $m = 15$, to $5.4\cdot10^{-10}$--$6.2\cdot10^{-9}$ and $2.4\cdot10^{-10}$--$6.2\cdot10^{-10}$ at
+$m = 60$, and to $2.5\cdot10^{-12}$--$1.9\cdot10^{-8}$ and $7.1\cdot10^{-14}$--$2.2\cdot10^{-9}$ at $m = 240$, every
+adaptive system replicated at the end and the class means converging to the exact representation of the sampled
+weights. \emph{The test of (iii)} at the parameter level: the coupled distance $D$ of the shared particles is
+0.944--1.000 of the replicated $\Theta^*(w)$'s under the fixed prior and 0.951--1.000 of the exact representations'
+under the adaptive ones (both samples representable), and the adaptive prior's is 1.72--4.81 times the fixed prior's,
+sample by sample. $W^2(\mu_m,\mu_M)$ is dominated, under both priors, by the cross-class transport of the mass
+$\frac12\norm{w^m - w^M}_1$ --- 0.82--0.99 of $W^2$ under the fixed prior, 0.67--0.99 under the adaptive ones --- so
+the two priors' $W^2$ differ by the factors 1.00--1.32 only, while their within-class parts differ by 1.71--4.84. On
+the boundary sample the function-level distance decays algebraically ($6000\cdot\norm{\fhat_m - \fhat_M}^2 = 0.88$ at
+$\eta = \sigma_0$ and $0.42$ at $\eta = \infty$, against the predicted 0.8 and 0.4), and its parameters run off
+($D = 6.4$ and $7.8$ at $s = 6000$). The counts are conserved in every run. \emph{The design table} (Part C, the
+misplaced prior, 3000 slow units, seed means at $m = 15$, $60$, $240$). Nearest-atom leak: the fixed prior's fit error
+$6.8\cdot10^{-2}$, $3.1\cdot10^{-2}$, $2.0\cdot10^{-2}$ and floor $2.5\cdot10^{-3}$, $5.1\cdot10^{-4}$,
+$5.9\cdot10^{-5}$ --- the same five samples are saddles at the misplaced prior (margins $-2.87$, $-0.38$, $-1.52$,
+$-5.76$, $-3.41\cdot10^{-3}$), four split by $s = 3000$ and the fifth partly --- against the adaptive prior's
+($\eta = \sigma_0$) $8.9\cdot10^{-3}$, $5.5\cdot10^{-4}$, $6.0\cdot10^{-4}$ and $8.0\cdot10^{-5}$, $1.6\cdot10^{-7}$,
+$1.1\cdot10^{-7}$ (at $m = 15$ one sample is on the boundary). OT leak: the fixed prior's $9.78\cdot10^{-3}$, the bias,
+with no floor (below $3\cdot10^{-21}$), against the adaptive prior's $1.6\cdot10^{-4}$ with the floor below
+$5\cdot10^{-11}$ (settled gate). At the coupling level the OT designs end with the largest $D$, 6.0, 3.5, 1.0 at
+$m = 15$, $60$, $240$ --- the transit moves 7, 14, 26 of the $m$-systems' particles into another cell (over the four
+seeds) --- against the nearest-atom leak's 0.86, 0.25, 0.017 (fixed) and 2.3, 0.48, 0.046 (adaptive), while their
+$W^2$ is at most $2.1\cdot10^{-8}$. The ranking of the fit errors depends on the horizon: until the settled gate opens
+($s = 1211$--$1304$) the OT design toward the adaptive prior is the fixed one, and at $s = 1250$ the ungated
+nearest-atom adaptive prior leads at $m = 60$ and $240$ ($3.8\cdot10^{-3}$ and $2.8\cdot10^{-3}$ against
+$9.2$--$9.8\cdot10^{-3}$), not at $m = 15$ ($1.75\cdot10^{-2}$ in the seed mean); from $s\approx2000$ the OT design
+leads ($4.0$--$4.2\cdot10^{-4}$ against $1.2\cdot10^{-2}$, $1.6\cdot10^{-3}$, $1.4\cdot10^{-3}$). \emph{The real loop}
+(Part D, $k_e = 25$, 3000 time units, seed 0's sampled weights). From the fixed prior's stationary point the rms
+tracking error stays at $1.17$--$1.18\cdot10^{-3}$ ($m = 15$) and $3.43$--$3.44\cdot10^{-4}$ ($m = 60$), at the end
+1.001 and 0.996 times the averaged loop's $(1/k_e)\norm{f - \fhat}_\rho$ at $s = t/k_e$ --- the $m = 15$ run on a
+saddle orbit (Proposition D$'''$.15; margin $-3.48\cdot10^{-3}$), held there by the exact replication of its start;
+with the adaptive prior ($\eta = \infty$) it falls to $3.27\cdot10^{-4}$ and $1.52\cdot10^{-4}$ by $t = 3000$
+($s = 120$), along the averaged loop (ratios 0.987 and 0.992); from the exact representation of the sampled weights
+with the adaptive prior at its atoms it stays at the integrator's level (the five-period rms $9.0\cdot10^{-12}$ at the
+first window, falling to $1.4$--$1.5\cdot10^{-12}$): perfect tracking is invariant in the real loop. \emph{The
+instance's probabilities} (Part E, exact multinomial sums). Outside $W$: 0.361, 0.074, 0.0021 at $m = 15$, $60$,
+$240$, and on its boundary 0.118, 0.053, 0.0012, against Hoeffding's bound 1.87, 0.60, 0.036; a permutation of the
+classes would be representable for 31\%, 87\%, 100\% of the mass outside $W$. The fixed prior's replicated point is a
+saddle with probability 0.369, 0.260, 0.109 --- a failure set comparable to the adaptive prior's (outside $W$ or on its
+boundary: 0.48, 0.13, 0.003) at $m = 15$ and much larger at $m\ge60$. Taking the constrained minimum of the loss on the
+branch of $\vartheta^e(q)$ as the limit outside $W$ (the dynamics from the warm clouds follows the branch; a local
+minimum, the global infimum being 0 wherever a permutation is representable), the adaptive prior's expected limiting
+floor is at least $7.3\cdot10^{-3}$, $2.2\cdot10^{-4}$, $6.6\cdot10^{-7}$: 1.8, 0.24, 0.005 times the fixed prior's law
+and 0.66, 0.16, 0.004 times its Monte Carlo expectation. \emph{The law's accuracy} (Part F, 600 nested samples, the
+exact replicated stationary points). The fixed prior's $\E\norm{\fhat_m - \fhat_M}^2$ is $2.78\pm0.20$,
+$1.53\pm0.11$, $1.11\pm0.07$ times the law ($2.89\pm0.26$, $1.56\pm0.15$, $1.07\pm0.07$ for D$'''$.5-admissible
+pairs): the $o(1/m)$ remainder dominates at $m = 15$, where the gauge's derivative varies fast near the saturation
+(the matching amplitude 3 against $a_{\max} = 4$). The fixed prior's coupled distance follows its law more closely
+($\E D$/law 0.68, 0.93, 0.95); the adaptive prior's (0.53, 1.17, 1.26) has a far heavier tail --- its gauge diverges
+at the boundary of $W$; at $m = 240$ one sample lies at 55.7 times the law, and without it the mean is 1.17 --- so its
+means are not reliable estimates at this sample size; it is 2.9--3.7 times the fixed prior's.
+
+% The planar check of Proposition D'''.24 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_floor_2d.md).
+\paragraph{The planar check} (\code{exp_adaptive_floor_2d.py} $\to$ \code{results/chaos/adaptive_floor_2d.md}). The
+planar plant of \code{exp_ot_2d.py} --- four bumps with vector amplitudes, the Lissajous reference, $p = 5$,
+$G = \operatorname{diag}(1,1,0.25,0.25,0.25)$, $\sigma_0 = 0.05$ --- with the averaged slow loop on $\R^2$ of
+\code{src/core/planar_loop.py}, the matching prior, $m = 16$, $32$, $64$ against $M = 128$, six seeds, 6000 slow units
+($\eta = \infty$: the atoms reset to the cell means at every refresh of the cells, every slow unit, and frozen in
+between --- a lagged prior). The excitation spectrum is $h_j/\sigma_0 = 0.004$--$1.41$ (twenty modes, all below
+$1.5\sigma_0$); $F$ equals the bias form to the finite-difference error ($6.0\cdot10^{-7}$), and the law per unit of
+$1/m - 1/M$ is 0.310, at 0.215 of the bound, spread over the modes (the largest share 0.18). Representability needs
+$w > (0.200,0.150,0.175,0.150)$, whose sum 0.675 leaves little room: 7 of the 18 $m$-systems are representable, with
+the six references. Every sample is D$'''$.5-admissible for the fixed prior (splitting margins $+0.016$ to $+0.047$),
+and the fixed prior's floor equals the exact bias at the sampled weights in all 18 systems (ratio 1.0000):
+$3.2\cdot10^{-4}$--$4.2\cdot10^{-3}$ at the representable systems, $3.0\cdot10^{-3}$--$2.1\cdot10^{-2}$ at the others.
+At the representable systems the adaptive prior's falls without a floor, to $1.0\cdot10^{-7}$--$4.1\cdot10^{-5}$
+($\eta = \sigma_0$) and $1.2\cdot10^{-9}$--$1.0\cdot10^{-5}$ ($\eta = \infty$) at $s = 6000$ --- at most 0.019 and
+0.006 of the fixed prior's, still falling in every system --- and at the others to 0.023--0.64 of the fixed prior's,
+still falling, toward the constrained minimum of the loss at their sampled weights --- a floor of their own
+(Proposition D$'''$.24(iii)) --- not toward zero. The counts are conserved in every run. In the real loop ($k_e = 25$,
+$\mathrm{d}t = 2\cdot10^{-3}$, 2500 time units, seed 0, $m = 64$) the fixed prior's rms tracking error stays at the
+averaged prediction (ratios 0.993--1.009) and the adaptive prior's ($\eta = \infty$) follows the averaged decay
+(0.979--1.009); from the exact representation of the sampled weights with the adaptive prior at its atoms it stays at
+the integrator's level, $2.0$--$4.7\cdot10^{-10}$.
+
+% Remark D'''.25 with its design table (PARADIGM.md section 5d, round-19 version).
+\begin{rmk}{Remark}{D$'''$.25}[the design table of the leak]\phantomsection\label{res:thmDppp:25}%
+Propositions D$'''$.9, D$'''$.12, D$'''$.20, D$'''$.24 and Theorem D$'''$.23 choose, for the averaged loop near a
+replicated configuration, what the leak fixes --- the prior's atoms and its masses --- and what each choice costs.
+With a matching prior unless a misplaced one is named, at commensurate sizes for the OT leaks, and with the weights $w$
+sampled from an i.i.d.\ warm start ($\delta w := w^m - w^M$; Table~\ref{tab:thmDppp:leakdesign}):
+
+\medskip
+\noindent\begin{minipage}{\textwidth}
+\centering\footnotesize
+\captionof{table}[Remark D$'''$.25: the design table of the leak]{Remark D$'''$.25: the design table of the leak for
+the averaged loop near a replicated configuration --- for each leak and prior, the function-level floor, the coupled
+distance $D$ of Proposition D$'''$.5, $W^2$ at the measure level, the bias of a misplaced prior, the transit, the
+collective rates and the a-priori bound.}
+\label{tab:thmDppp:leakdesign}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{@{}>{\hsize=0.7\hsize\raggedright\arraybackslash}X>{\hsize=1.56\hsize\raggedright\arraybackslash}X>{\hsize=0.96\hsize\raggedright\arraybackslash}X>{\hsize=0.8\hsize\raggedright\arraybackslash}X>{\hsize=1.45\hsize\raggedright\arraybackslash}X>{\hsize=0.8\hsize\raggedright\arraybackslash}X>{\hsize=1.12\hsize\raggedright\arraybackslash}X>{\hsize=0.61\hsize\raggedright\arraybackslash}X@{}}
+\toprule
+leak, prior & function-level floor & coupled distance $D$ (Proposition D$'''$.5) & $W^2$ (measure level)
+  & bias of a misplaced prior & transit & collective rates & a-priori bound\\
+\midrule
+nearest atom, fixed (D$'''$.9)
+  & ${(1/m - 1/M)}\allowbreak\sum_jh_j\sigma_0^2/{(h_j + \sigma_0)^2}\allowbreak\,z_j^\T\tilde Cz_j$ at D$'''$.5-admissible $w$ (D$'''$.24(i))
+  & D$'''$.5's law with $H_L(H_L + \sigma_0I)^{-1}S^e$
+  & the transport of $\frac12\norm{\delta w}_1$ between the clusters, plus $O(\norm{\delta w}^2)$
+  & $\sigma_0(H_L + \sigma_0I)^{-1}x^0$
+  & none while no particle crosses a cell boundary (D$'''$.9(i)'s hypothesis)
+  & $h_j + \sigma_0$
+  & yes\\
+nearest atom, adaptive (D$'''$.24)
+  & 0 at representable $w$
+  & D$'''$.5's law with $S^e$ (larger), at representable $w$
+  & likewise, a larger within-class part
+  & 0
+  & none (likewise)
+  & $\lambda_j^-(w) < \min\{h_j(w),\eta\}$
+  & no (yes when projected, D$'''$.27)\\
+OT, fixed (D$'''$.12)
+  & 0
+  & the transit's mismatch
+  & 0
+  & $\sigma_0(H_L + \sigma_0I)^{-1}x^0$
+  & the excess moved by the plan
+  & $h_j + \sigma_0$
+  & yes\\
+OT, adaptive (D$'''$.23)
+  & 0
+  & the transit's mismatch
+  & 0
+  & 0
+  & gated: adapt after the fixed-prior relaxation
+  & $\lambda_j^-(q)$
+  & no (yes when projected, D$'''$.27)\\
+entropic OT, fixed (D$'''$.20)
+  & D$'''$.9's function-level law at $\Theta^*_\varepsilon(q)$ for sampled excesses below $\delta_c(\varepsilon)$
+  & D$'''$.5's law there
+  & ---
+  & that of $\Theta^*_\varepsilon(q)$
+  & equalises the masses down to $\delta_c(\varepsilon)$
+  & ---
+  & yes\\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\medskip
+
+\noindent\emph{Reading.} The finite-size floor has three faces: the function level (the sample's weights acting
+through the leak's bias), the coupling level (the shared particles displaced by the amplitude--mass gauge, or
+relabelled by the transit), and the measure level (the mass $\frac12\norm{\delta w}_1$ that has to move between the
+clusters). The mass constraint removes the function-level and the measure-level floors by fixing the weights; at the
+coupling level it replaces the gauge's displacement by the transit's mismatch, which relabels different particles in
+the two systems. The adaptive prior removes the function-level floor by removing the bias at every representable
+weight, enlarges the coupled distance (the gauge's whole displacement goes into the parameters) and leaves the measure
+level's leading term unchanged; it also removes the fixed prior's splitting instability, every separation relaxing at
+$\sigma_0$ at an exact representation. The bias of a misplaced prior is removed only by an adaptive prior, and every
+adaptive prior pays with the rate --- $\lambda_j^- < h_j$, so a weakly excited collective mode converges at the loss's
+own curvature rather than at the leak's --- and with the leak's a-priori bound on the parameters (Theorem
+D$'''$.23(i); restored by projecting the prior onto a compact convex set, Proposition D$'''$.27, at the price of a
+bias where the limit reaches its boundary). The design without a function-level floor or bias is the OT leak toward an
+adaptive prior started from the fixed-prior stationary point; the floor-free design when the prior is trusted is the
+OT leak toward a fixed one; and when the masses cannot be prescribed (the sample decides them), the nearest-atom leak
+toward an adaptive prior keeps the fitted function exact at the representable samples and leaves the fluctuation in
+the parameters.
+\end{rmk}
+
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
 \paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}). The instance:
 $n = 1$, saturated features with $a_{\max} = 4$, $c_{\max} = 3$, $s\in[0.3,2]$, prior $\vartheta^0 = 0$,
