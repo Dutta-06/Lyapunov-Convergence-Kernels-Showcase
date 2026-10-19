@@ -11,7 +11,8 @@ A. The law, no dynamics: the excitation spectrum h_j at the exact representation
    1/m − 1/M from F and as the sum of the mode terms, against the bound (σ₀/4)tr(∂_wx⁰C̃∂_wx⁰ᵀ); the representable weights W (an exact
    representation at w needs |A_{k,c}|/w_k < a_max for both components).
 B. The nearest-atom leak from the warm clouds of `exp_ot_2d.py` (width 0.02), m = 16, 32, 64 against M = 128 (the first m rows), six seeds,
-   fixed (η = 0) against adaptive priors (η = σ₀ and ∞), S_B slow units, midpoint rule dt = 0.25, the cells every 4 steps: the sampled
+   fixed (η = 0) against adaptive priors (η = σ₀ and ∞; η = ∞: the atoms reset to the cell means at every refresh of the cells and frozen in
+   between, a lagged prior), S_B slow units, midpoint rule dt = 0.25, the cells every 4 steps (one slow unit): the sampled
    weights and their representability margin, ‖f̂_m − f̂_M‖² and the fit error at three times, the class means' distance from the exact
    representation of the sampled weights at the end, W²(μ_m, μ_M) at the end against the W² between the two systems' exact
    representations, the counts.
@@ -322,6 +323,8 @@ def report(A, rows, C=None, t0=None, P=None):
         lines.append(f"| {j + 1} | {A['h'][j] / SIGMA0:.3f} | {A['terms'][j] / tot:.3f} |")
     lines += ["", f"Representable weights (the set W): an exact representation at w needs |A_k,c|/w_k < a_max, i.e. w > ({', '.join(f'{x:.3f}' for x in A['lo'])}).", "",
               f"## B. The nearest-atom leak from the warm clouds: fixed (η = 0) against adaptive priors ({S_B:g} slow units)", "",
+              f"Midpoint rule dt = {DT:g}, the cells every {CELL_EVERY} steps; η = ∞: the atoms reset to the cell means at every refresh of the cells (every "
+              f"{CELL_EVERY * DT:g} slow unit{'' if CELL_EVERY * DT == 1 else 's'}) and frozen in between — a lagged form of the η = ∞ prior.", "",
               "‖f̂_m − f̂_M‖² (the function-level floor) and the fit error at s = " + ", ".join(f"{x:g}" for x in REC_TIMES) + "; the sampled counts and their margin "
               "min_k(w_k − max_c|A_k,c|/a_max) (representable iff positive); at the end the class means' whitened weighted distance from the exact representation of the "
               "sampled weights, and W²(μ_m, μ_M) against the W² between the two systems' exact representations (—: no exact representation); the counts conserved.", "",

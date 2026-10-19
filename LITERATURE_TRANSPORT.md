@@ -69,6 +69,7 @@ found the construction.
 - [S48] A. Blanchet, J. Bolte. *A family of functional inequalities: Łojasiewicz inequalities and displacement convex functions*. J. Funct. Anal. 275(7):1650–1673, 2018 (Łojasiewicz inequalities in Wasserstein space; for displacement-convex functionals they are equivalent to Talagrand-type inequalities and give the convergence of the Wasserstein gradient flow). Also S. Chewi, T. Maunu, P. Rigollet, A. J. Stromme. *Gradient descent algorithms for Bures–Wasserstein barycenters*. COLT 2020 (a PL inequality for the barycentre functional through optimal maps); Q. Mérigot, F. Santambrogio, C. Sarrazin. *Non-asymptotic convergence bounds for Wasserstein approximation using point clouds*. NeurIPS 2021 (a modified PL inequality for ½W² between a uniform point cloud and a density — the capacity-constrained Lloyd case); and the generalised geodesics of L. Ambrosio, N. Gigli, G. Savaré, *Gradient Flows in Metric Spaces and in the Space of Probability Measures*, Birkhäuser 2008, §9.2 (curves built from two plans with a common base, along which ½W²(·, ν) is 1-convex). The Wasserstein PL theory around Theorem D‴.21: its λ-convex form does not apply (the energy is semiconvex along generalised geodesics only with a negative constant), and the theorem's segments are the generalised geodesic based at the prior. (Details from memory; not re-verified here.)
 - [S50] F. Chen, Z. Ren, S. Wang. *Uniform-in-time propagation of chaos for mean field Langevin dynamics*. arXiv:2212.03050, 2022; T. Suzuki, A. Nitanda, D. Wu. *Uniform-in-time propagation of chaos for the mean-field gradient Langevin dynamics*. ICLR 2023 (an O(1/N) error uniform in time under a uniform log-Sobolev inequality, for entropy-regularised mean-field training). The comparison for Remark D‴.22, which gives the coincidence of the long-time limits, not a uniform-in-time estimate. (Details from memory; not re-verified here.)
 - [S51] J. Sirignano, K. Spiliopoulos. *Mean field analysis of neural networks: a central limit theorem*. Stochastic Processes and their Applications 130(3):1820–1852, 2020; Z. Chen, G. M. Rotskoff, J. Bruna, E. Vanden-Eijnden. *A dynamical central limit theorem for shallow neural networks*. NeurIPS 2020 (the fluctuations of trained mean-field networks around their limit, of order m^{−1/2} in the parameters and 1/m in the mean-square function, by central limit theorems for the training dynamics; Chen et al. also show that if the mean-field dynamics converges to a measure that interpolates the training data, the asymptotic deviation eventually vanishes in the CLT scaling — the mechanism by which the adaptive prior of Proposition D‴.24 removes the function-level floor, its replicated stationary points being unregularised interpolants). The context of Proposition D‴.24, which identifies the stationary function-level floor of a regularised adaptive law as the weight-slope of the regulariser's bias, and restores the interpolation property under regularisation with a leak toward a learned prior. (Details from memory and, for the interpolation result, from the abstract as found by the round-18 referee; not re-verified here.)
+- [S52] K. S. Narendra, A. M. Annaswamy. *A new adaptive law for robust adaptation without persistent excitation*. IEEE TAC 32(2):134–145, 1987 (the e-modification: the leak scaled by |e|, vanishing at perfect tracking). P. A. Ioannou. *General robust adaptive law for tuning controllers*. Proc. 25th IEEE CDC, 474–476, 1986 (the switching σ-modification "guarantees robustness without destroying the ideal properties of the adaptive control schemes": quoted from the abstract, read through a web search in referee round 19), and P. A. Ioannou, J. Sun, *Theory and design of robust direct and indirect adaptive-control schemes*, Int. J. Control 47(3):775–813, 1988 (the comparison of the dead-zone, fixed-σ, ε₁- and switching-σ modifications). W. Magnus. *On the exponential solution of differential equations for a linear operator*. Comm. Pure Appl. Math. 7(4):649–673, 1954; S. Blanes, F. Casas, J. A. Oteo, J. Ros. *The Magnus expansion and some of its applications*. Phys. Rep. 470(5–6):151–238, 2009 (the second term of the expansion is a commutator). R. L. Kosut, B. D. O. Anderson, I. M. Y. Mareels. *Stability theory for adaptive systems: method of averaging and persistency of excitation*. IEEE TAC 32(1):26–34, 1987 (the averaging of adaptive loops; the rate set by the averaged regressor's excitation). The precedents of Corollary D‴.26 and Proposition D‴.27 (bibliographic details checked by a web search; the content from memory except where quoted).
 - [S49] R. T. Rockafellar. *Monotone operators and the proximal point algorithm*. SIAM J. Control Optim. 14(5):877–898, 1976 (the proximal point method: a quadratic penalty toward a centre moved to the last iterate — iterated Tikhonov regularisation; the leak toward a moving centre is its continuous-time form; for a maximal monotone operator the iterates are bounded iff a zero exists, the precedent of the adaptive prior's lost a-priori bound). M. Hanke, C. W. Groetsch. *Nonstationary iterated Tikhonov regularization*. J. Optim. Theory Appl. 98(1):37–53, 1998 (iterated Tikhonov regularisation: on a quadratic, each step contracts the error in the eigendirection of curvature h by σ/(h + σ), the complement 1 − h/(h + σ) of the Tikhonov filter factor h/(h + σ), i.e. the residual factor; the bound h/(h + σ)² ≤ 1/(4σ) is ridge regression's AM–GM bound on the filter factors). S. Zhang, A. Choromanska, Y. LeCun. *Deep learning with elastic averaging SGD*. NeurIPS 2015 (workers pulled elastically toward a centre variable that moves toward their average: the coupled pair dynamics of the class means and the prior's atoms; its stability analysis of the worker–centre map on a quadratic, in the learning and the moving rate, is the discrete-time form of the pair matrix). S. J. Nowlan, G. E. Hinton. *Simplifying neural networks by soft weight-sharing*. Neural Computation 4(4):473–493, 1992; K. Ullrich, E. Meeds, M. Welling. *Soft weight-sharing for neural network compression*. ICLR 2017 (a mixture prior on the weights whose centres are learned with them; its hard limit is a K-means quantiser of the weights). The precedents of Theorem D‴.23. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
@@ -359,7 +360,7 @@ found the construction.
   learned, its masses kept: H_L identified as the measure-space excitation spectrum, the separations decoupled at σ₀, and hence the
   trade-off between the fixed prior's bias σ₀/(h_j + σ₀) and the adaptive prior's rate ηh_j/(h_j + σ₀ + η) < λ_j^− < min{h_j, η} uniformly
   in m — the rate half of the classical trade-off between a leak's robustness and persistent excitation, whose robustness half (the
-  leak's a-priori bound) the adaptive prior gives up; and the transit's drag, with the gate that starts the adaptation from the fixed-prior
+  leak's a-priori bound) the adaptive prior gives up (Proposition D‴.27 restores it by projecting the prior); and the transit's drag, with the gate that starts the adaptation from the fixed-prior
   stationary point. The limits of the bias removal are largely the precedents' own properties — the lost a-priori bound is the proximal
   point method's behaviour without a minimiser ([S49]), the K₀-cluster bias the quantisation error of soft weight-sharing's hard limit —
   and specific here only in their particle, mass-constrained form and in the run-off from a fit that the network attains exactly. Numerics:
@@ -376,26 +377,51 @@ found the construction.
   weight, whose bound is σ₀/4 times the adaptive prior's coupled-distance law — the split of the sample's weight fluctuation between the
   parameters (h_j/(h_j + σ₀)) and the bias (σ₀/(h_j + σ₀)), and a leak toward a learned prior (the OT leak with the masses minimised out) as
   the way to restore the interpolation property under regularisation, which also removes the fixed prior's splitting instability; the
-  trade-off is a larger coupled distance of the gauge, the leak's a-priori bound and the collective rate. On the instance the law (B) is
+  trade-off is a larger coupled distance of the gauge, the leak's a-priori bound (restored by projecting the prior, Proposition D‴.27)
+  and the collective rate. On the instance the law (B) is
   asymptotic (the exact floor 2.8 times it at m = 15), and the samples without an exact representation are not rare at small m (0.36 at
   m = 15). Numerics: `exp_adaptive_floor.py`.
   Verdict: classical ingredients (the delta method, the Gauss–Newton spectrum, semi-relaxed transport, the filter-factor bound, the
   interpolation mechanism), new mechanism (the floor as the bias's slope, mode by mode, and its removal by a learned prior under
   regularisation) and a resolution of Remark D‴.10's bias–variance trade-off at the function level, at the price of the collective rate.
-- **Corollary D‴.26 (perfect tracking with an adaptive prior: the Floquet spectrum).** The averaging of a periodic variational
-  equation is classical (Floquet theory; first-order averaging, as in Proposition D‴.15), and asymptotic tracking under exact
-  parameterisation is the textbook goal of adaptive control, which σ-modification gives up for robustness ([S49]'s trade-off). What is
-  specific here is the structure at perfect tracking with an adaptive prior: the separation exponent is σ₀/k_e exactly (the gradient
-  term's curvature vanishes with e), the collective exponents are the weighted K₀-atom loop's for every m, and so a leak — kept for
-  its finite-size and transport properties — coexists with exact tracking at every representable sample. Numerics:
-  `exp_adaptive_floquet.py`. Verdict: classical tools, a new structural statement (an exact, m-independent spectrum).
-- **Proposition D‴.27 (a projected adaptive prior).** Projection of the parameter estimates onto a convex set (Pomet–Praly) and the
-  switching σ-modification are the classical robustness modifications of adaptive laws ([4]); the a-priori bound by a projection
-  inequality and a comparison argument is standard. What is specific here is where the projection acts: on the leak's learned centre, not
-  on the parameters — the learning law keeps its smooth gradient form, the leak alone keeps the parameters within B/σ₀ of the set, and
-  Theorem D‴.23's bias removal is untouched wherever the target is representable inside it; at η = ∞ on collapsed classes the construction
-  reduces to a continuous switching σ-modification with the set as its dead zone. Numerics: `exp_adaptive_prior.py` Part H.
-  Verdict: classical ingredients, a new combination that restores the robustness half of the trade-off which the adaptive prior gave up.
+- **Corollary D‴.26 (perfect tracking with an adaptive prior: the Floquet spectrum).** Floquet theory and the averaging of a periodic
+  variational equation are classical (first- and second-order averaging; the Magnus expansion, whose second term is a commutator, so that
+  for a self-adjoint generator it is skew [S52]); the averaging analysis of adaptive loops, with the rate set by the averaged regressor's
+  persistency of excitation, is Kosut–Anderson–Mareels' and Sastry–Bodson's ([S52], [S9]); asymptotic tracking under exact
+  parameterisation is the textbook goal of adaptive control, which σ-modification gives up for robustness ([3], [4]), and leaks
+  compatible with it are known — the e-modification scales the leak by |e| and vanishes at perfect tracking ([S52]), a centre that follows
+  the parameters has unbiased fixed points ([S49]). (a) and (b) are Corollary D‴.14(ii) and Proposition D‴.15 at zero residual, with the
+  prior's coordinates added. What is specific here is the combination: with the adaptive prior the zero-residual lift exists at every
+  representable sample (not only at w = q under the OT leak), its Floquet spectrum is exactly m-independent with collective rates
+  λ_j^±(w)/k_e, and its expansion in 1/k_e is even — by the skewness of the first correction and the time-reversal symmetry
+  M(t)ᵀ = DM(t)D⁻¹ of the adjoint pair — with an explicit second-order coefficient dominated by the error filter's attenuation, which a
+  derivative mismatch ∂_x(f − f̂) ≠ 0 would spoil at first order. Numerics: `exp_adaptive_floquet.py`. Verdict: classical tools, a new
+  structural statement (an exact, m-independent spectrum at every representable sample, and its even expansion).
+- **Proposition D‴.27 (a projected adaptive prior).** Projection of the parameter estimates onto a convex set (Pomet–Praly), the exterior
+  quadratic penalty and the switching σ-modification are the classical robustness modifications of adaptive laws ([4]), and the switching
+  σ-modification keeps the ideal (unbiased) properties of the law when the true parameter lies in its set ([4], [S52]); the a-priori bound
+  by a projection inequality and a comparison argument is standard. On collapsed classes at η = ∞ the construction is exactly that law,
+  toward the set, with the leak off on it. What is specific here is its transfer to the learned centre of a mass-constrained K₀-atom prior at
+  finite η — a projected adaptive law for the prior's atoms (whose velocity jumps at the faces, while the particles' law keeps its smooth
+  gradient form) — and its compatibility with Theorem D‴.23's bias removal wherever the target is representable inside the set; the
+  convergence at η = ∞ follows from Proposition D‴.17's argument, the box adding only a C^{1,1} semialgebraic penalty. Numerics:
+  `exp_adaptive_prior.py` Part H. Verdict: classical ingredients and, at η = ∞, a classical law; a new transfer (the learned centre of the
+  mass-constrained prior at finite η) that restores the robustness half of the trade-off which the adaptive prior gave up.
+- **Proposition D‴.28 (the floor removal is a gauge property).** The amplitude–mass degeneracy is the positive homogeneity that the conic
+  (Wasserstein–Fisher–Rao) view of mean-field networks exploits ([49], [55]), and rescaling symmetries of network parameters are classical;
+  the implicit-function derivation of the fixed prior's sensitivity is the one of Proposition D‴.24(i). What is specific here is that the
+  gauge, not exact representability, is the mechanism of the adaptive prior's floor removal — so it survives an approximation error, the
+  regime of real plants — together with the exact scaling R_k(G_wϑ) = (q_k/w_k)R_k(ϑ) of the residual curvature at a critical point, which
+  turns the adaptive prior's splitting margins into a closed formula. Numerics: `exp_gauge_floor.py`.
+  Verdict: classical symmetry, a new identification of the mechanism and an exact margin formula.
+- **Proposition D‴.29 (second-order plants).** The sliding-variable (filtered-error) construction is the classical route of adaptive control
+  to higher-order plants, and Gaussian networks with it are Sanner and Slotine's ([1]); singular-perturbation averaging with a stable fast
+  linear subsystem is standard ([S9]). What is specific here is the transfer of the transport leaks of §5d — their finite-size floors, the
+  mass constraint, the adaptive and projected priors and the gauge — to such plants through the occupation measure of the regressor's
+  orbit; the exact filter (d/dt + k_s)⁻¹ in the position-error prediction (the slaved r/k_s drops the attenuation of the residual's
+  harmonics); and the over-parametrisation of isotropic phase-plane kernels on circular orbits (von Mises restrictions) as an excitation
+  defect of the measure-space kind. Numerics: `exp_servo_cogging.py`. Verdict: a classical reduction; new applications of §5d's mechanisms
+  to a standard servo problem.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 

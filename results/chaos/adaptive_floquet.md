@@ -29,4 +29,54 @@ The whitened weighted Gauss–Newton spectrum at ϑ^e(w): h_j(w) = 3.0798e-04, 2
 | 15 | ∞ | 50 | 4.3e-16 | 36, 8.8e-07 | 9, 2.4e-05 |
 | 30 | ∞ | 50 | 5.2e-17 | 81, 1.6e-06 | 9, 9.4e-05 |
 
+## C. The variational equation: the remainder of (c), to k_e = 400
+
+The variational equation along the lift on the collapsed subspace, in the whitened weighted coordinates (δe, y, ζ): δė = −k_eδe − Ĵ(t)y, ẏ = Ĵ(t)ᵀδe − (σ₀/k_e)(y − ζ), ζ̇ = −(η/k_e)(ζ − y) (η = ∞: ζ = y); its monodromy by integrating it (DOP853, rtol 10⁻¹³; no differences), the error channel's exponent by Liouville's formula (the exponents sum to k_e + (σ₀ + η)·9/k_e; η = ∞: k_e). Two references: x_m = 2 sin t, where the first-order averaging correction Ā₁ vanishes identically (in one dimension ⟨ĴᵀĴ̇⟩ is the integral of an exact differential, and the commutator term vanishes by the symmetry t → π − t), and the asymmetric x_m = 2 sin t + 0.8 sin 2t, where it does not.
+
+- 2 sin t, η = 0.00707: ‖Ā₁‖_max = 4.62e-17, its self-adjoint part 5.5e-17 (Ā₁ is skew); the generator against the central differences of the real loop's field at six times: 5.8e-11 (relative); h_j = 3.0798e-04, 2.0149e-03, 3.0884e-03, 1.2820e-02, 2.0512e-02, 3.5144e-02, 9.4012e-02, 1.3952e-01, 1.8336e-01.
+- 2 sin t, η = ∞: ‖Ā₁‖_max = 4.62e-17, its self-adjoint part 5.7e-17 (Ā₁ is skew); the generator against the central differences of the real loop's field at six times: 5.8e-11 (relative); h_j = 3.0798e-04, 2.0149e-03, 3.0884e-03, 1.2820e-02, 2.0512e-02, 3.5144e-02, 9.4012e-02, 1.3952e-01, 1.8336e-01.
+- 2 sin t + 0.8 sin 2t, η = 0.00707: ‖Ā₁‖_max = 5.63e-03, its self-adjoint part 1.4e-16 (Ā₁ is skew); the generator against the central differences of the real loop's field at six times: 1.6e-11 (relative); h_j = 4.3720e-04, 2.6482e-03, 4.0371e-03, 1.0272e-02, 2.0935e-02, 3.7038e-02, 8.4042e-02, 1.1098e-01, 1.8694e-01.
+- 2 sin t + 0.8 sin 2t, η = ∞: ‖Ā₁‖_max = 5.63e-03, its self-adjoint part 1.3e-16 (Ā₁ is skew); the generator against the central differences of the real loop's field at six times: 1.6e-11 (relative); h_j = 4.3720e-04, 2.6482e-03, 4.0371e-03, 1.0272e-02, 2.0935e-02, 3.7038e-02, 8.4042e-02, 1.1098e-01, 1.8694e-01.
+
+Against the finite differences of the first table (x_m = 2 sin t, k_e = 25 and 50, both η) the variational exponents differ by at most 4.1e-05 (relative): the resolution of the differences.
+
+| reference | η | k_e | slowest mode: (actual − first order)/first order | largest over the modes | largest \|actual − second order\|/first order | error channel (Liouville) | k_e − tr H/k_e |
+|---|---|---|---|---|---|---|---|
+| 2 sin t | 0.00707 | 12.5 | -3.7534e-01 | 3.753e-01 | 2.95e-01 | 12.463921 | 12.460737 |
+| 2 sin t | 0.00707 | 25 | -1.3562e-01 | 1.356e-01 | 2.67e-02 | 24.980835 | 24.980369 |
+| 2 sin t | 0.00707 | 50 | -3.8400e-02 | 3.840e-02 | 1.91e-03 | 49.990246 | 49.990184 |
+| 2 sin t | 0.00707 | 100 | -9.9368e-03 | 9.937e-03 | 1.24e-04 | 99.995100 | 99.995092 |
+| 2 sin t | 0.00707 | 200 | -2.5063e-03 | 2.506e-03 | 7.82e-06 | 199.997547 | 199.997546 |
+| 2 sin t | 0.00707 | 400 | -6.2799e-04 | 6.280e-04 | 4.90e-07 | 399.998773 | 399.998773 |
+| 2 sin t | ∞ | 12.5 | -3.7793e-01 | 3.779e-01 | 2.95e-01 | 12.463923 | 12.460737 |
+| 2 sin t | ∞ | 25 | -1.3692e-01 | 1.369e-01 | 2.69e-02 | 24.980835 | 24.980369 |
+| 2 sin t | ∞ | 50 | -3.8810e-02 | 3.881e-02 | 1.93e-03 | 49.990246 | 49.990184 |
+| 2 sin t | ∞ | 100 | -1.0046e-02 | 1.005e-02 | 1.25e-04 | 99.995100 | 99.995092 |
+| 2 sin t | ∞ | 200 | -2.5341e-03 | 2.534e-03 | 7.90e-06 | 199.997547 | 199.997546 |
+| 2 sin t | ∞ | 400 | -6.3497e-04 | 6.350e-04 | 4.95e-07 | 399.998773 | 399.998773 |
+| 2 sin t + 0.8 sin 2t | 0.00707 | 12.5 | -2.9312e-01 | 2.931e-01 | 4.28e-01 | 12.467004 | 12.463413 |
+| 2 sin t + 0.8 sin 2t | 0.00707 | 25 | -1.2305e-01 | 1.231e-01 | 5.17e-02 | 24.982298 | 24.981707 |
+| 2 sin t + 0.8 sin 2t | 0.00707 | 50 | -3.8958e-02 | 3.896e-02 | 4.42e-03 | 49.990936 | 49.990853 |
+| 2 sin t + 0.8 sin 2t | 0.00707 | 100 | -1.0520e-02 | 1.052e-02 | 3.07e-04 | 99.995437 | 99.995427 |
+| 2 sin t + 0.8 sin 2t | 0.00707 | 200 | -2.6859e-03 | 2.686e-03 | 1.98e-05 | 199.997715 | 199.997713 |
+| 2 sin t + 0.8 sin 2t | 0.00707 | 400 | -6.7510e-04 | 6.751e-04 | 1.24e-06 | 399.998857 | 399.998857 |
+| 2 sin t + 0.8 sin 2t | ∞ | 12.5 | -2.9639e-01 | 2.964e-01 | 4.28e-01 | 12.467005 | 12.463413 |
+| 2 sin t + 0.8 sin 2t | ∞ | 25 | -1.2477e-01 | 1.248e-01 | 5.23e-02 | 24.982298 | 24.981707 |
+| 2 sin t + 0.8 sin 2t | ∞ | 50 | -3.9554e-02 | 3.955e-02 | 4.49e-03 | 49.990936 | 49.990853 |
+| 2 sin t + 0.8 sin 2t | ∞ | 100 | -1.0686e-02 | 1.069e-02 | 3.12e-04 | 99.995437 | 99.995427 |
+| 2 sin t + 0.8 sin 2t | ∞ | 200 | -2.7286e-03 | 2.729e-03 | 2.01e-05 | 199.997715 | 199.997713 |
+| 2 sin t + 0.8 sin 2t | ∞ | 400 | -6.8584e-04 | 6.858e-04 | 1.26e-06 | 399.998857 | 399.998857 |
+
+- 2 sin t, η = 0.00707: per doubling of k_e the largest first-order deviation falls by 2.77, 3.53, 3.86, 3.96, 3.99 (→ 4: O(k_e⁻²) relative) and the second-order residual by 11.05, 14.00, 15.41, 15.84, 15.97 (→ 16: O(k_e⁻⁴), the odd orders vanishing); every exponent below its first-order prediction at every k_e: True.
+- 2 sin t, η = ∞: per doubling of k_e the largest first-order deviation falls by 2.76, 3.53, 3.86, 3.96, 3.99 (→ 4: O(k_e⁻²) relative) and the second-order residual by 10.96, 13.96, 15.40, 15.84, 15.96 (→ 16: O(k_e⁻⁴), the odd orders vanishing); every exponent below its first-order prediction at every k_e: True.
+- 2 sin t + 0.8 sin 2t, η = 0.00707: per doubling of k_e the largest first-order deviation falls by 2.38, 3.16, 3.70, 3.92, 3.98 (→ 4: O(k_e⁻²) relative) and the second-order residual by 8.27, 11.68, 14.41, 15.54, 15.87 (→ 16: O(k_e⁻⁴), the odd orders vanishing); every exponent below its first-order prediction at every k_e: True.
+- 2 sin t + 0.8 sin 2t, η = ∞: per doubling of k_e the largest first-order deviation falls by 2.38, 3.15, 3.70, 3.92, 3.98 (→ 4: O(k_e⁻²) relative) and the second-order residual by 8.18, 11.64, 14.39, 15.54, 15.90 (→ 16: O(k_e⁻⁴), the odd orders vanishing); every exponent below its first-order prediction at every k_e: True.
+
+The second-order coefficients (the slow-time rates are λ_j + c_j/k_e² + O(k_e⁻⁴)), c_j/λ_j in the order of λ_j, the error filter's part of the slowest mode's (at η = ∞ minus the Rayleigh quotient v₁ᵀ⟨Ĵ̇ᵀĴ̇⟩v₁/h₁ = Σ_n n²|Ĵ_nv₁|²/Σ_n|Ĵ_nv₁|², the mode's mean squared frequency in the regressor), and the measured (actual·k_e − λ₁)k_e²/λ₁ of the slowest mode at k_e = 100, 200, 400:
+
+- 2 sin t, η = 0.00707: c_j/λ_j = -100.55, -45.38, -37.53, -8.05, -4.98, -1.50, -2.25, -0.47, -0.66, -1.12, -3.70, -5.03, -6.99, -8.38, -5.21, -25.76, -8.31, -15.58; the slowest c₁/λ₁ = -100.55, of which the filter's -102.14 = −ω₁², ω₁ = 10.11 (the slowest mode's root-mean-square frequency in the regressor); measured -99.37, -100.25, -100.48.
+- 2 sin t, η = ∞: c_j/λ_j = -101.67, -49.08, -42.55, -15.04, -13.37, -6.71, -28.00, -8.78, -16.23; the slowest c₁/λ₁ = -101.67, of which the filter's -103.28 = −ω₁², ω₁ = 10.16 (the slowest mode's root-mean-square frequency in the regressor); measured -100.46, -101.37, -101.59.
+- 2 sin t + 0.8 sin 2t, η = 0.00707: c_j/λ_j = -108.21, -53.12, -47.97, -12.35, -6.18, -1.59, -3.08, -1.32, -0.94, -1.72, -5.93, -8.89, -7.86, -10.70, -5.90, -31.07, -18.22, -22.78; the slowest c₁/λ₁ = -108.21, of which the filter's -109.72 = −ω₁², ω₁ = 10.47 (the slowest mode's root-mean-square frequency in the regressor); measured -105.20, -107.44, -108.02.
+- 2 sin t + 0.8 sin 2t, η = ∞: c_j/λ_j = -109.93, -59.05, -56.86, -20.21, -16.87, -7.49, -34.15, -19.54, -23.72; the slowest c₁/λ₁ = -109.93, of which the filter's -111.47 = −ω₁², ω₁ = 10.56 (the slowest mode's root-mean-square frequency in the regressor); measured -106.86, -109.14, -109.73.
+
 Numbers are produced by `experiments/exp_adaptive_floquet.py`; nothing is edited by hand.

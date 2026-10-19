@@ -28,9 +28,10 @@ G. The limits of (i) (`--only-G`): a non-replicated stationary point held by the
    joint flow from the exact split fit; unbounded solutions of the adaptive prior (a target bump beyond the saturation, K₀-atom system,
    LSODA to s = 10⁶) against the fixed prior's bounded one; the exact representation with the prior's atoms permuted.
 H. Proposition D‴.27 (`--only-H`): the projected adaptive prior (the atoms confined to a box in the unconstrained coordinates, amplitudes and
-   centres to 90% of their saturations) on Part G(b)'s target (bounded, convergent, the fit error between the fixed prior's and the
-   unbounded adaptive prior's limit; the a-priori constant B/σ₀), and on Part C's K₀-atom loop at the misplaced prior (the box never
-   reached: the run identical to Part C's).
+   centres to 90% of their saturations) on Part G(b)'s target (bounded, convergent, the a-priori constant B/σ₀; the projected midpoint rule
+   at two steps), on Part C's K₀-atom loop at the misplaced prior (the box never approached: the run identical to Part C's by
+   construction), with the box's amplitude bound varied on Part G(b)'s target, and on Part G(a)'s four-bump target (the box stops the
+   width's run-off).
 
 Output: results/chaos/adaptive_prior.md and adaptive_prior_raw.npz (AP_SEEDS, AP_WORKERS; `--from-raw` regenerates the md).
 """
@@ -435,19 +436,27 @@ def boundary_job():
 
 A_BOUND, C_BOUND, K_BOUND = 0.9, 0.9, 6.0                                  # Part H: the box, amplitudes and centres to 90% of a_max, c_max
 S_H = 1e5                                                                  # Part H: the projected midpoint run at η = σ₀
+DT_H = (0.25, 0.125)                                                       # Part H(a): the projected midpoint rule at two steps
+A_SCAN = (0.7, 0.75, 0.8, 0.9, 0.95, 0.99)                                 # Part H(c): the box's amplitude bound, a fraction of a_max
 
 
-def projected_box(net):
-    lo = np.array([-net.a_max * np.arctanh(A_BOUND), -net.c_max * np.arctanh(C_BOUND), -K_BOUND])
+def projected_box(net, a_bound=A_BOUND):
+    lo = np.array([-net.a_max * np.arctanh(a_bound), -net.c_max * np.arctanh(C_BOUND), -K_BOUND])
     return lo, -lo
 
 
 def projected_job():
     """Part H. (a) Part G(b)'s target B_SAT, the K₀-atom system from the instance's exact atoms with the prior there, the prior projected onto
-    the box: η = ∞ by LSODA (the prior is the projected class mean, a Lipschitz vector field) at the times T_G, η = σ₀ by the projected
-    midpoint rule of AdaptivePriorLoop.run (the projected flow is discontinuous at the boundary) to S_H; with the a-priori constant B/σ₀,
-    B = (max|f| + a_max)·L_ϑ^G (L_ϑ^G the closed-form bound of |G^{1/2}∇_ϑΦ̃|), and the largest distance of the particles from the box. (b) Part C's K₀-atom loop at the misplaced prior
-    (η = σ₀, 6000 slow units) with and without the box: the largest difference of the atoms and of the prior."""
+    the box: η = ∞ by LSODA (the prior is the projected class mean: a Lipschitz vector field, with a kink where an atom meets a face) at the
+    times T_G; η = σ₀ by the projected midpoint rule of AdaptivePriorLoop.run (positions projected inside the step; the projected flow's
+    velocity jumps at the faces) to S_H at the two steps DT_H, the projected flow's drift at the end checked to be ≤ 10⁻¹²; with
+    B = (max|f| + a_max)·L_ϑ^G, L_ϑ^G ≤ the closed-form bound of |G^{1/2}∇_ϑΦ̃| (so B is an upper bound), and the largest distance of the
+    particles from the box. (b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, S_C slow units) with and without the box: the largest
+    difference of the atoms and of the prior, and the smallest margin of the prior and of the particles to a face along the run, relative to
+    the box's width in that coordinate. (c) The box's size: (a)'s η = ∞ system (LSODA to T_G[-1]) for the amplitude bounds A_SCAN. (d) Part
+    G(a)'s four-bump target with the box at η = ∞: the joint flow (m = 6) from the exact split fit for S_G slow units, then the collapsed
+    dynamics with the box (the K₀-atom flow with the leak toward the projection of the atoms, LSODA) to the times T_CONT counted from its end:
+    the merged atom's width coordinate κ and its prior atom's, the fit error, the drift."""
     from scipy.integrate import solve_ivp
     t0 = time.time()
     net = L.SaturatedLiftedNetwork(1, **NET_KW)
@@ -457,52 +466,95 @@ def projected_job():
     gamma = np.eye(3) / 3.0
     LG = float(np.sqrt(G[0] + G[1] * (net.a_max * np.exp(-0.5) / net.s_min) ** 2 + G[2] * (net.a_max * (net.s_max - net.s_min) / (2 * np.e * net.s_min)) ** 2))
     B = (float(np.max(np.abs(loop2.F))) + net.a_max) * LG
-    dist_box = lambda Th: float(np.sqrt(np.max(np.sum((Th - np.clip(Th, box[0][None, :], box[1][None, :])) ** 2 / G[None, :], axis=1))))
-    runs = []
-    # η = ∞: LSODA
-    apl = AP.AdaptivePriorLoop(loop2, np.inf, box=box)
+    dist_box = lambda Th, bx=box: float(np.sqrt(np.max(np.sum((Th - np.clip(Th, bx[0][None, :], bx[1][None, :])) ** 2 / G[None, :], axis=1))))
 
-    def rhs(t, v):
-        Th = v.reshape(3, 3)
-        return apl.drift(Th, Th, gamma)[0].ravel()
-    t_dense = np.concatenate([[0.0], np.geomspace(1.0, T_G[-1], 120)])
-    sol = solve_ivp(rhs, (0.0, T_G[-1]), start.ravel(), method='LSODA', t_eval=np.unique(np.concatenate([t_dense, T_G])), rtol=1e-10, atol=1e-12)
-    rows = []
-    for t in T_G:
-        k = int(np.argmin(np.abs(sol.t - t)))
-        Th = sol.y[:, k].reshape(3, 3); a, c, s_ = net.physical(Th)
-        rows.append(dict(s=float(sol.t[k]), th_a0=float(Th[0, 0]), z_a0=float(apl.project(Th)[0, 0]), a0=float(a[0, 0]), fit=loop2.fit_error(Th),
-                         drift=float(np.abs(rhs(sol.t[k], sol.y[:, k])).max())))
-    runs.append(dict(eta=np.inf, status=int(sol.status), rows=rows, max_dist=max(dist_box(sol.y[:, k].reshape(3, 3)) for k in range(sol.y.shape[1]))))
-    # η = σ₀: the projected midpoint rule
-    apl = AP.AdaptivePriorLoop(loop2, SIGMA0, box=box)
-    rec = dict(s=[], th=[], z=[], fit=[], drift=[], dist=[])
+    def lsoda_inf(bx, T_eval):
+        apl = AP.AdaptivePriorLoop(loop2, np.inf, box=bx)
 
-    def cb(s_, T_, Z_, ad):
-        g_, _ = AP.plan_to(T_, Z_, Q, G)
-        rec['dist'].append(dist_box(T_))
-        if any(abs(s_ - t) < 1e-9 for t in T_G):
-            dT, dZ = apl.drift(T_, Z_, g_)
-            rec['s'].append(s_); rec['th'].append(T_.copy()); rec['z'].append(Z_.copy()); rec['fit'].append(loop2.fit_error(T_))
-            rec['drift'].append(float(max(np.abs(dT).max(), np.abs(dZ).max())))
-    apl.run(start.copy(), start.copy(), S_H, DT, plan_every=PLAN_EVERY, rec_every=int(round(100.0 / DT)), callback=cb)
-    rows = []
-    for k in range(len(rec['s'])):
-        Th = rec['th'][k]; a, c, s_ = net.physical(Th)
-        rows.append(dict(s=rec['s'][k], th_a0=float(Th[0, 0]), z_a0=float(rec['z'][k][0, 0]), a0=float(a[0, 0]), fit=rec['fit'][k], drift=rec['drift'][k]))
-    runs.insert(0, dict(eta=SIGMA0, status=0, rows=rows, max_dist=max(rec['dist'])))
+        def rhs(t, v):
+            Th = v.reshape(3, 3)
+            return apl.drift(Th, Th, gamma)[0].ravel()
+        t_dense = np.concatenate([[0.0], np.geomspace(1.0, T_eval[-1], 120)])
+        sol = solve_ivp(rhs, (0.0, T_eval[-1]), start.ravel(), method='LSODA', t_eval=np.unique(np.concatenate([t_dense, T_eval])), rtol=1e-10, atol=1e-12)
+        rows = []
+        for t in T_eval:
+            k = int(np.argmin(np.abs(sol.t - t)))
+            Th = sol.y[:, k].reshape(3, 3); a, c, s_ = net.physical(Th)
+            rows.append(dict(s=float(sol.t[k]), th_a0=float(Th[0, 0]), z_a0=float(apl.project(Th)[0, 0]), a0=float(a[0, 0]), fit=loop2.fit_error(Th),
+                             drift=float(np.abs(rhs(sol.t[k], sol.y[:, k])).max())))
+        return dict(eta=np.inf, status=int(sol.status), rows=rows, max_dist=max(dist_box(sol.y[:, k].reshape(3, 3), bx) for k in range(sol.y.shape[1])))
+    runs = [lsoda_inf(box, T_G)]
+    # η = σ₀: the projected midpoint rule at two steps
+    ends = []
+    for dt in DT_H:
+        apl = AP.AdaptivePriorLoop(loop2, SIGMA0, box=box)
+        rec = dict(s=[], th=[], z=[], fit=[], drift=[], dist=[])
+
+        def cb(s_, T_, Z_, ad, rec=rec, apl=apl):
+            g_, _ = AP.plan_to(T_, Z_, Q, G)
+            rec['dist'].append(dist_box(T_))
+            if any(abs(s_ - t) < 1e-9 for t in T_G):
+                dT, dZ = apl.drift(T_, Z_, g_)
+                rec['s'].append(s_); rec['th'].append(T_.copy()); rec['z'].append(Z_.copy()); rec['fit'].append(loop2.fit_error(T_))
+                rec['drift'].append(float(max(np.abs(dT).max(), np.abs(dZ).max())))
+        Th_end, Z_end, _ = apl.run(start.copy(), start.copy(), S_H, dt, plan_every=PLAN_EVERY, rec_every=int(round(100.0 / dt)), callback=cb)
+        g_, _ = AP.plan_to(Th_end, Z_end, Q, G)
+        dT, dZ = apl.drift(Th_end, Z_end, g_)
+        end_drift = float(max(np.abs(dT).max(), np.abs(dZ).max()))
+        assert end_drift <= 1e-12, (dt, end_drift)                         # a stall of the prior inside 𝒵 would leave a drift (D3n-2)
+        rows = []
+        for k in range(len(rec['s'])):
+            Th = rec['th'][k]; a, c, s_ = net.physical(Th)
+            rows.append(dict(s=rec['s'][k], th_a0=float(Th[0, 0]), z_a0=float(rec['z'][k][0, 0]), a0=float(a[0, 0]), fit=rec['fit'][k], drift=rec['drift'][k]))
+        ends.append(dict(dt=dt, Th=Th_end, Z=Z_end, drift=end_drift, gap=float(box[1][0] - Z_end[0, 0]), rows=rows, max_dist=max(rec['dist'])))
+    runs.insert(0, dict(eta=SIGMA0, status=0, rows=ends[0]['rows'], max_dist=ends[0]['max_dist']))
+    dt_check = dict(dts=DT_H, diff=float(max(np.abs(ends[0]['Th'] - ends[1]['Th']).max(), np.abs(ends[0]['Z'] - ends[1]['Z']).max())),
+                    drifts=[e['drift'] for e in ends], gaps=[e['gap'] for e in ends], max_dist2=ends[1]['max_dist'])
     # (b) the misplaced prior: the box never reached
     net_, exact, prior, loop = setup()
     star = loop.stationary_atoms(prior)[0]
     out_b = {}
+    width = box[1] - box[0]
+    marg = dict(Z=np.inf, Th=np.inf)
+
+    def cb_m(s_, T_, Z_, ad):
+        marg['Z'] = min(marg['Z'], float(np.min(np.minimum(Z_ - box[0][None, :], box[1][None, :] - Z_) / width[None, :])))
+        marg['Th'] = min(marg['Th'], float(np.min(np.minimum(T_ - box[0][None, :], box[1][None, :] - T_) / width[None, :])))
     for name, bx in (('free', None), ('box', box)):
         apl = AP.AdaptivePriorLoop(loop, SIGMA0, box=bx)
-        Th, Z, _ = apl.run(star.copy(), prior.copy(), S_C, DT, plan_every=PLAN_EVERY, rec_every=10 ** 9)
+        Th, Z, _ = apl.run(star.copy(), prior.copy(), S_C, DT, plan_every=PLAN_EVERY, rec_every=1 if bx is not None else 10 ** 9,
+                           callback=cb_m if bx is not None else None)
         out_b[name] = (Th, Z)
     diff = float(max(np.abs(out_b['free'][0] - out_b['box'][0]).max(), np.abs(out_b['free'][1] - out_b['box'][1]).max()))
     inside = bool(np.all(np.abs(out_b['free'][1]) < box[1][None, :]) and np.all(np.abs(out_b['free'][0]) < box[1][None, :]))
+    # (c) the box's size
+    scan = []
+    for ab in A_SCAN:
+        bx = projected_box(net, ab)
+        r = lsoda_inf(bx, (T_G[-1],))
+        scan.append(dict(a_bound=ab, face=float(bx[1][0]), **{k: r['rows'][-1][k] for k in ('th_a0', 'z_a0', 'fit', 'drift')}, max_dist=r['max_dist'], status=r['status']))
+    # (d) Part G(a)'s four-bump target with the box (η = ∞)
+    m = 6
+    Th0 = net.unconstrained(np.array([[3.0], [3.0], [-2.1], [-2.1], [2.4], [2.4]]), np.array([[-1.5], [-1.5], [0.0], [0.0], [1.3], [2.3]]),
+                            np.array([0.5, 0.5, 0.4, 0.4, 0.4, 0.4]))
+    loop4 = OT.OTPriorLoop(net, _bumps(B4), x_ref, PER, G, SIGMA0, Th0[[0, 2, 4]], n_quad=N_Q)
+    apl4 = AP.AdaptivePriorLoop(loop4, np.inf, box=box)
+    Th, Z, _ = apl4.run(Th0.copy(), Th0[[0, 2, 4]].copy(), S_G, DT, plan_every=PLAN_EVERY, rec_every=10 ** 9)
+    g_, _ = AP.plan_to(Th, Z, Q, G)
+    atoms = AP.barycentres(Th, g_, Q)
+    spread = float(np.sqrt(np.sum((Th - m * (g_ @ atoms)) ** 2 / G[None, :], axis=1)).max())
+    kk = int(np.argmax(net.physical(atoms)[2]))
+    rhs4 = lambda t, v: loop4.drift(v.reshape(3, 3), apl4.project(v.reshape(3, 3))).ravel()
+    sol = solve_ivp(rhs4, (0.0, T_CONT[-1]), atoms.ravel(), method='LSODA', t_eval=np.array(T_CONT), rtol=1e-10, atol=1e-12)
+    cont = []
+    for k in range(len(sol.t)):
+        at = sol.y[:, k].reshape(3, 3)
+        cont.append(dict(s=float(sol.t[k]), kappa=float(at[kk, 2]), kappa_prior=float(apl4.project(at)[kk, 2]), fit=loop4.fit_error(at),
+                         drift=float(np.abs(rhs4(0.0, sol.y[:, k]) / np.tile(np.sqrt(G), 3)).max())))
+    G4 = dict(classes=tuple(int(x) for x in np.argmax(g_, axis=1)), spread=spread, kk=kk, kappa_start=float(atoms[kk, 2]), fit_start=loop4.fit_error(Th), cont=cont,
+              status=int(sol.status), face=float(box[1][2]))
     print(f"[{time.time() - t0:.0f}s] H", flush=True)
-    return dict(box=box, LG=LG, B=B, runs=runs, diff_b=diff, inside_b=inside)
+    return dict(box=box, LG=LG, B=B, runs=runs, dt_check=dt_check, diff_b=diff, inside_b=inside, margin_b=dict(marg), scan=scan, G4=G4)
 
 
 def report(lin, C, D, E=None, t0=None, F=None, Gb=None, H=None):
@@ -778,22 +830,49 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None, H=None):
     if H:
         eta_s = lambda e: '∞' if np.isinf(e) else f'{e:.5f}'
         lo, hi = H['box']
+        dc = H['dt_check']
         lines += ["", "## H. Proposition D‴.27: the projected adaptive prior", "",
                   f"The box 𝒵 for the prior's atoms (unconstrained coordinates): α ∈ [{lo[0]:.4f}, {hi[0]:.4f}], γ ∈ [{lo[1]:.4f}, {hi[1]:.4f}], κ ∈ [{lo[2]:g}, {hi[2]:g}] "
                   f"(amplitudes and centres to {A_BOUND:g} of a_max and c_max). (a) Part G(b)'s target (the first bump's weighted amplitude 4.8 > a_max), the K₀-atom system "
-                  f"from the instance's exact atoms with the prior there, the prior projected onto 𝒵 (η = σ₀: the projected midpoint rule, dt = {DT:g}, to s = {S_H:.0e}; η = ∞: "
-                  "LSODA, rtol 10⁻¹⁰, the prior the projected class mean): the first atom's amplitude coordinate ϑ_a, its prior atom's z_a, the amplitude a, the fit error "
-                  "and the largest drift.", "",
+                  f"from the instance's exact atoms with the prior there, the prior projected onto 𝒵 (η = σ₀: the projected midpoint rule — positions projected inside the "
+                  f"step — at dt = {dc['dts'][0]:g} (the rows) and {dc['dts'][1]:g}, to s = {S_H:.0e}; η = ∞: LSODA, rtol 10⁻¹⁰, the prior the projected class mean): the first "
+                  "atom's amplitude coordinate ϑ_a, its prior atom's z_a, the amplitude a, the fit error and the largest drift (of the projected flow).", "",
                   "| η | s | ϑ_a | z_a | a | fit error | largest drift |", "|---|---|---|---|---|---|---|"]
         for run in H['runs']:
             for r_ in run['rows']:
                 lines.append(f"| {eta_s(run['eta'])} | {r_['s']:.0e} | {r_['th_a0']:.4f} | {r_['z_a0']:.4f} | {r_['a0']:.6f} | {r_['fit']:.4e} | {r_['drift']:.2e} |")
-        lines += ["", "The largest G⁻¹-distance of a particle from 𝒵 along the run: " + "; ".join(f"η = {eta_s(r['eta'])}: {r['max_dist']:.4f}" for r in H['runs'])
-                  + f", against the a-priori bound B/σ₀ = {H['B'] / SIGMA0:.1f} (B = (max|f| + a_max)·L_ϑ^G, L_ϑ^G = {H['LG']:.3f}). "
-                  "Both priors converge to the same bounded stationary point, with the prior's amplitude atom on the boundary of 𝒵; the fit error lies between the "
-                  "fixed prior's and the unbounded adaptive prior's limit (Part G(b)).", "",
+        lines += ["", f"At dt = {dc['dts'][1]:g} the η = σ₀ run ends within {dc['diff']:.1e} of the dt = {dc['dts'][0]:g} run (atoms and prior), with the projected flow's "
+                  f"drift {dc['drifts'][1]:.1e} at s = {S_H:.0e} ({dc['drifts'][0]:.1e} at dt = {dc['dts'][0]:g}) and the prior's amplitude atom on the face (gaps "
+                  + ", ".join(f"{g:.1e}" for g in dc['gaps']) + ").",
+                  "", "The largest G⁻¹-distance of a particle from 𝒵 along the run: " + "; ".join(f"η = {eta_s(r['eta'])}: {r['max_dist']:.4f}" for r in H['runs'])
+                  + f" (η = σ₀ at dt = {dc['dts'][1]:g}: {dc['max_dist2']:.4f}), against the a-priori bound B/σ₀ ≤ {H['B'] / SIGMA0:.1f} (B ≤ {H['B']:.2f} = (max|f| + a_max)·L, "
+                  f"L = {H['LG']:.3f} the closed-form bound of L_ϑ^G; 4.044 by search, `learning_table.md`). Both priors converge to the same bounded stationary point, with "
+                  "the prior's amplitude atom on the boundary of 𝒵; in this run the fit error lies between the fixed prior's and the unprojected adaptive prior's limit "
+                  "(Part G(b)) — (c) shows its dependence on the box.", "",
                   f"(b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, {S_C:g} slow units) with and without 𝒵: the largest difference of the atoms and of the prior "
-                  f"at the end is {H['diff_b']:.1e} (the run stays inside 𝒵: {H['inside_b']}) — near an exact representation inside 𝒵 the projection is inactive."]
+                  f"at the end is {H['diff_b']:.1e} (the run stays inside 𝒵: {H['inside_b']}). The box is never approached — along the run the prior keeps a margin of at least "
+                  f"{H['margin_b']['Z']:.0%} of the box's width to every face, the particles {H['margin_b']['Th']:.0%} — so the two runs coincide by construction (the "
+                  "projection is the identity inside 𝒵).", "",
+                  "(c) The box's size: (a)'s η = ∞ system (LSODA to s = " + f"{T_G[-1]:.0e}" + ") with the amplitude bound of 𝒵 varied (the centre and width bounds as above).", "",
+                  "| amplitude bound (× a_max) | the α-face | ϑ_a | z_a | fit error | largest drift |", "|---|---|---|---|---|---|"]
+        for r_ in H['scan']:
+            lines.append(f"| {r_['a_bound']:g} | {r_['face']:.4f} | {r_['th_a0']:.4f} | {r_['z_a0']:.4f} | {r_['fit']:.4e} | {r_['drift']:.1e} |")
+        if Gb:
+            fx = [r for r in Gb['b']['runs'] if r['eta'] == 0.0][0]['rows'][-1]['fit']
+            un = [r for r in Gb['b']['runs'] if np.isinf(r['eta'])][0]['rows'][-1]['fit']
+            lines += ["", f"The fixed prior's limit is {fx:.4e} and the unprojected adaptive prior's fit error at s = {T_G[-1]:.0e} {un:.4e} (Part G(b)): the box trades the "
+                      "fit error against the parameters' bound, monotonically on this target."]
+        g4 = H['G4']
+        lines += ["", f"(d) Part G(a)'s four-bump target with 𝒵 at η = ∞: the joint flow from the exact split fit ({S_G:g} slow units; plan classes {g4['classes']}, largest "
+                  f"spread {g4['spread']:.1e}, the merged atom's κ = {g4['kappa_start']:.3f}, fit error {g4['fit_start']:.6e}), then the collapsed dynamics with 𝒵 (the "
+                  "leak toward the projection of the atoms; LSODA, rtol 10⁻¹⁰; s counted from the end of the run): the merged atom's width coordinate κ, its prior atom's, "
+                  "the fit error and the largest whitened drift.", "",
+                  "| s | κ | the prior's κ | fit error | largest drift |", "|---|---|---|---|---|"]
+        for r_ in g4['cont']:
+            lines.append(f"| {r_['s']:.0e} | {r_['kappa']:+.6f} | {r_['kappa_prior']:+.4f} | {r_['fit']:.6e} | {r_['drift']:.1e} |")
+        lines += ["", f"Without 𝒵 (Part G(a)) κ grows like ln s and the solution leaves every compact set; with 𝒵 the merged atom's prior stops on the face κ = {g4['face']:g} and "
+                  f"the atom stays within {abs(g4['cont'][-1]['kappa'] - g4['face']):.1e} of it: a bounded stationary point, its fit error within "
+                  + (f"{abs(g4['cont'][-1]['fit'] - Gb['face']['fit']):.1e} of the face minimiser's of Part G(a)." if Gb else "that of Part G(a)'s face minimiser.")]
     lines += ["", "Numbers are produced by `experiments/exp_adaptive_prior.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'adaptive_prior.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")

@@ -267,13 +267,18 @@ def test_a_projected_prior_keeps_the_solutions_bounded_and_is_inactive_inside_it
     sol = solve_ivp(rhs, (0.0, 1e5), start.ravel(), method='LSODA', t_eval=np.geomspace(1.0, 1e5, 60), rtol=1e-10, atol=1e-12)
     Th_t = sol.y.T.reshape(-1, 3, 3)
     dist = np.sqrt(np.sum((Th_t - np.clip(Th_t, lo, -lo)) ** 2 / G[None, None, :], axis=2)).max()
-    assert dist < 2.0 and sol.y[0].max() < 8.0                                       # bounded (the unprojected prior's coordinate passes 11 by s = 10⁴)
-    assert np.abs(rhs(1e5, sol.y[:, -1])).max() < 1e-12                              # and convergent
+    assert dist < 2.0 and sol.y[0].max() < 8.0                                       # bounded …
+    assert np.abs(rhs(1e5, sol.y[:, -1])).max() < 1e-12                              # … and convergent
+    free = AP.AdaptivePriorLoop(loop, np.inf)                                        # without the box the prior's coordinate passes 11 by s = 10⁴
+    sol0 = solve_ivp(lambda t, v: free.drift(v.reshape(3, 3), v.reshape(3, 3), gamma)[0].ravel(), (0.0, 1e4), start.ravel(), method='LSODA',
+                     rtol=1e-10, atol=1e-12)
+    assert sol0.y[0, -1] > 11.0
     apl2 = AP.AdaptivePriorLoop(loop, SIGMA0, box=box)                               # η = σ₀: the projected flow, by the projected midpoint rule
     rec = []
-    apl2.run(start.copy(), start.copy(), 2000.0, 0.25, plan_every=4, rec_every=40,
-             callback=lambda s_, T_, Z_, ad: rec.append((T_[0, 0], Z_.copy(), apl2.energy(T_, Z_))))
-    assert all(np.all((Z_ >= lo - 1e-12) & (Z_ <= -lo + 1e-12)) for _, Z_, _ in rec)  # the prior stays in its box
+    Th2, Z2, _ = apl2.run(start.copy(), start.copy(), 2000.0, 0.125, plan_every=8, rec_every=80,
+                          callback=lambda s_, T_, Z_, ad: rec.append((T_[0, 0], Z_.copy(), apl2.energy(T_, Z_))))
+    assert all(np.all((Z_ >= lo - 1e-12) & (Z_ <= -lo + 1e-12)) for _, Z_, _ in rec)  # the prior stays in its box (the clip) …
+    assert Z2[0, 0] == -lo[0]                       # … and its amplitude atom reaches the face (a velocity projected at the midpoint stalls it inside at this dt)
     assert max(t for t, _, _ in rec) < 8.0 and np.all(np.diff([J for _, _, J in rec]) <= 1e-12)   # the particles bounded, 𝒥 non-increasing
     loop2, exact, prior = _setup()                                                   # the misplaced prior: the box is never reached
     star = loop2.stationary_atoms(prior)[0]

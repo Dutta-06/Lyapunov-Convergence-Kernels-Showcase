@@ -35,6 +35,8 @@ Representable weights (the set W): an exact representation at w needs |A_k,c|/w_
 
 ## B. The nearest-atom leak from the warm clouds: fixed (η = 0) against adaptive priors (6000 slow units)
 
+Midpoint rule dt = 0.25, the cells every 4 steps; η = ∞: the atoms reset to the cell means at every refresh of the cells (every 1 slow unit) and frozen in between — a lagged form of the η = ∞ prior.
+
 ‖f̂_m − f̂_M‖² (the function-level floor) and the fit error at s = 300, 1000, 3000, 6000; the sampled counts and their margin min_k(w_k − max_c|A_k,c|/a_max) (representable iff positive); at the end the class means' whitened weighted distance from the exact representation of the sampled weights, and W²(μ_m, μ_M) against the W² between the two systems' exact representations (—: no exact representation); the counts conserved.
 
 | seed | m | counts (margin) | η | ‖f̂_m − f̂_M‖² at those s | fit error at those s | distance from ϑ^e(w) | W² / exact-representation W² | conserved |

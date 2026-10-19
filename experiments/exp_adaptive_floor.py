@@ -26,7 +26,7 @@ Checks at the sampled weights (`--only P` computes them from the stored finals a
    of the classes, the coupled distance D of the shared particles and W² split into cross- and within-class transport; the exact bias at the
    sampled weights and the delta method's F(w^m − w^M) against the observed floor; Part C's gate and fit errors at s = 1250, 2000.
 E. The instance's probabilities (exact multinomial sums): representability, the fixed prior's saddles, Hoeffding's bound, the adaptive prior's
-   expected limiting floor (the constrained minima outside W).
+   expected limiting floor (the constrained minima on the branch of ϑ^e(q) outside W).
 F. Monte Carlo (AF_NMC = 600 nested samples): the replicated stationary points' floors and coupled distances against the laws.
 
 Output: results/chaos/adaptive_floor.md and adaptive_floor_raw.npz (AF_SEEDS, AF_WORKERS, AF_SB, AF_SC, AF_TREAL, AF_OUT; `--from-raw` regenerates
@@ -462,7 +462,9 @@ def post_checks(B, C, D):
 
 def constrained_floor(loop, w):
     """min ⟨(f − Σ_kw_ka_kφ(·;c_k, s_k))²⟩_ρ over |a_k| ≤ a_max, |c_k| ≤ c_max, s_k ∈ [s_min, s_max] (L-BFGS-B from the bumps, the amplitudes
-    A_k/w_k clipped): at weights outside W the infimum of the unregularised weighted loss, taken as the adaptive prior's limiting error."""
+    A_k/w_k clipped): at weights outside W the constrained minimum of the unregularised weighted loss on the branch of ϑ^e(q), taken as the
+    adaptive prior's limiting error (the dynamics from the warm clouds follows the branch). It is a local minimum, not the infimum: where a
+    permutation of the classes over the bumps is representable the global infimum is 0 (referee round 19, D3n-10)."""
     from scipy.optimize import minimize
     X, F = loop.X, loop.F
     kw = NET_KW
@@ -486,7 +488,8 @@ def constrained_floor(loop, w):
 
 def enumerate_job(m):
     """Every count vector of size m with multinomial probability above P_MIN[m]: its probability, its representability (also with the classes
-    permuted over the bumps), the fixed matching prior's D‴.5 stability of Θ*(w), and outside W the constrained minimum of the loss."""
+    permuted over the bumps), the fixed matching prior's D‴.5 stability of Θ*(w), and outside W the constrained minimum of the loss on the
+    branch."""
     from scipy.stats import multinomial
     from itertools import permutations
     t0 = time.time()
@@ -691,8 +694,9 @@ def report_E(A, P):
              "outside W, but a permutation of the classes over the bumps is representable (an exact representation exists off the branch). Hoeffding: "
              "Σ_kexp(−2m(q_k − |A_k|/a_max)²) bounds P(outside W ∪ boundary). The fixed matching prior's saddle: Θ*(w) not D‴.5-admissible (classes with at least "
              "two particles; a vector with an empty class has no K₀-cluster configuration). The adaptive prior's expected limiting floor: Σ p(w)·min_{|a| ≤ a_max} "
-             "⟨(f − f̂_w)²⟩_ρ over the vectors outside W (the constrained minimum by L-BFGS-B from the bumps, taken as the dynamics' limit; 0 on W and on its boundary, "
-             "the reference taken exact), a lower bound since the sum is truncated; against the fixed prior's law (1/m − 1/M)·tr(FC̃Fᵀ)/N and its Monte Carlo "
+             "⟨(f − f̂_w)²⟩_ρ over the vectors outside W (the constrained minimum on the branch of ϑ^e(q), by L-BFGS-B from the bumps, taken as the dynamics' limit "
+             "— the dynamics from the warm clouds follows the branch; a local minimum, not the infimum, which is 0 where a permutation is representable; 0 on W and on "
+             "its boundary, the reference taken exact), a lower bound on that limit since the sum is truncated; against the fixed prior's law (1/m − 1/M)·tr(FC̃Fᵀ)/N and its Monte Carlo "
              "expectation (Part F).", "",
              "| m | vectors | neglected mass | P(outside W) | P(boundary) | Hoeffding | share of P(outside W) with a permutation | P(fixed-prior saddle) | P(empty class) | Newton failed | expected limiting floor, adaptive | fixed: law | fixed: Monte Carlo | adaptive/law | adaptive/Monte Carlo |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -731,6 +735,16 @@ def report_F(A, P):
         De = np.array([s['D_e'] for s in both]) / (c * sig['D_gauge'])
         rat = np.mean([s['D_e'] for s in both]) / np.mean([s['D_f'] for s in both])
         lines.append(f"| {m} | {msr(h2)} | {msr(h2c)} | {len(h2)}, {len(h2c)} | {msr(Df)} | {msr(De)} | {len(De)} | {rat:.2f} |")
+    tail = []
+    for m in MS:
+        c = 1.0 / m - 1.0 / M_REF
+        Df = np.array([s[m]['D_f'] for s in mc if 'D_f' in s[m]]) / (c * sig['D_fixed'])
+        De = np.sort(np.array([s[m]['D_e'] for s in mc if 'D_e' in s[m] and 'D_f' in s[m]]) / (c * sig['D_gauge']))
+        tail.append((m, Df.max(), De[-1], np.mean(De[:-1])))
+    lines += ["", "The tails (the largest sample's D/law; in parentheses the adaptive prior's mean without that sample): "
+              + "; ".join(f"m = {m}: fixed {a:.2f}, adaptive {b:.1f} ({c:.3f})" for m, a, b, c in tail)
+              + ". The adaptive prior's gauge diverges at the boundary of W, so its coupled distance has a far heavier tail, and its mean over these samples is "
+              "not a reliable estimate of its law."]
     return lines
 
 

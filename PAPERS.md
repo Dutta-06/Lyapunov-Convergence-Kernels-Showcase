@@ -95,17 +95,25 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
 
 - **Claim.** A prior whose atoms are learned removes a misplaced prior's bias mode by mode at the rate of the measure-space excitation,
   uniformly in m; with the masses minimised out (the nearest-atom leak toward an adaptive prior) it removes the function-level floor at
-  every representable sample, and the fixed prior's splitting instability with it; perfect tracking is then a linearly exponentially
-  stable periodic solution of the real loop with an exact, m-independent separation exponent; the transit's drag and its gate; the
-  limits (the K₀-cluster bias, the lost a-priori bound) and the remedy for the second (a projected prior).
+  every representable sample, and the fixed prior's splitting instability with it — a property of the amplitude–mass gauge, so it
+  survives an approximation error; perfect tracking is then an exponentially stable periodic solution of the real loop with an exact,
+  m-independent separation exponent and collective exponents whose expansion in 1/k_e is even, with an explicit second-order term; the
+  transit's drag and its gate; the limits (the K₀-cluster bias, the lost a-priori bound) and the remedy for the second (a projected
+  prior, convergent at η = ∞).
 - **Rests on.** Theorem D‴.23 ((i)–(iii) proved, (iv) formal, (v) sketched, (vi) partly numerical), Proposition D‴.24 ((i) exact at q
   with the law formal, (ii)–(iii), (vi) proved; the convergence numerical; checked in one and two dimensions), Corollary D‴.26 ((a)–(b)
-  exact, (c) by averaging; the basin open), Proposition D‴.27 ((i), (iii) proved, (ii)'s convergence formal).
+  exact, (c) a formal expansion with its structure proved; the basin open), Proposition D‴.27 ((i), (iii) proved, (ii)'s convergence proved
+  at η = ∞ and formal at finite η), Proposition D‴.28 ((i), (iii) exact, (ii) as D‴.24(i); the dynamics numerical).
 - **Novelty (audit).** D‴.23: standard per-mode formulas (proximal point, iterated Tikhonov, elastic averaging), new transfer to the
   mass-constrained particle system uniformly in m, new failure mode with its remedy; D‴.24: see paper 6, and a learned prior as the way to
-  restore the interpolation property under regularisation; D‴.26: classical tools, a new structural statement; D‴.27: classical
-  ingredients (projection, switching σ-modification), the projection put on the leak's centre.
-- **Missing.** The constants of D‴.23(v); the nonlinear basin of D‴.26; the choice of the projection's set as a design input; the
+  restore the interpolation property under regularisation; D‴.26: classical tools (averaging, the Magnus commutator, e-modification), a
+  new structural statement (the exact m-independent spectrum at every representable sample, the even expansion); D‴.27: classical
+  ingredients (projection, the switching σ-modification, which it is at η = ∞), transferred to the learned centre of the mass-constrained
+  prior at finite η; D‴.28: a classical symmetry (the conic view's homogeneity), a new identification of the mechanism and an exact margin
+  formula.
+- **Missing.** The constants of D‴.23(v); the nonlinear basin of D‴.26 and a bound on its O(k_e⁻⁴) remainder; the convergence of D‴.27 at
+  finite η; critical points at infinity for D‴.28 (best approximants on the saturation boundary); the choice of the projection's set as a
+  design input; the
   instance's samples without an exact representation are not rare at small m (0.36 at m = 15), so a paper should treat them (the
   expected limiting floor is then of the fixed prior's order).
 - **Venue.** IEEE Trans. Automatic Control; Automatica.
@@ -139,3 +147,17 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   (the projected prior).
 - **Missing.** Worked examples on a standard benchmark.
 - **Venue.** IEEE Control Systems Magazine; Annual Reviews in Control.
+
+### 11. Adaptive cogging-torque compensation in servos with transport leaks
+
+- **Claim.** For a position servo with an unknown position-dependent disturbance (cogging torque), the sliding-variable controller with
+  adaptive Gaussian kernels on the position reduces to the averaged slow loop of §5d along the position orbit; without an exact
+  representation (the regime of Proposition D‴.28), the adaptive prior removes the finite-size floor of the learned compensation and a
+  misplaced prior's bias, the OT leak removes the floor at fixed masses, the classical σ-modification keeps a large bias, and the real
+  servo's position error follows the exactly filtered prediction (d/dt + λ)⁻¹(d/dt + k_s)⁻¹r to 0.3%.
+- **Rests on.** Proposition D‴.29 ((i), (iv) exact; (ii)–(iii) formal), Propositions D‴.27 and D‴.28, `exp_servo_cogging.py`.
+- **Novelty (audit).** The sliding-variable reduction and Gaussian networks in adaptive control are classical ([1]); new are the transport
+  leaks' floors and priors on a standard servo problem, and the over-parametrisation of phase-plane kernels on circular orbits.
+- **Missing.** A measured cogging profile (hardware or a high-fidelity simulation), measurement noise, input saturation, and
+  velocity-dependent friction (a sharp Stribeck step, whose best approximant lies at infinity) with the projected prior in the real loop.
+- **Venue.** IEEE/ASME Trans. Mechatronics; Control Engineering Practice.

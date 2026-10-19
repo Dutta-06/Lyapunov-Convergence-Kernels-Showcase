@@ -25,18 +25,21 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
     ghost monodromy of Corollary D‴.14 and Proposition D‴.15; `src/core/entropic_leak.py` the entropic plan, the entropic leak and its
     separation blocks of Proposition D‴.20; `src/core/ot_basin.py` the identities along the plan segments, the plan-segment curvatures and the
     Polyak–Łojasiewicz constants of Theorem D‴.21; `src/core/adaptive_prior.py` the adaptive prior (the joint drift and energy, the two
-    gates, the Gauss–Newton block and the pair rates; the nearest-atom option of Proposition D‴.24; the projected prior of Proposition D‴.27) of Theorem D‴.23; `src/core/floor_bias.py`
+    gates, the Gauss–Newton block and the pair rates; the nearest-atom option of Proposition D‴.24; the projected prior of Proposition D‴.27) of Theorem D‴.23 (Proposition D‴.28's gauge in the tests and `exp_gauge_floor.py`); `src/core/floor_bias.py`
     the exact weighted representation, the bias form of the floor law and its decomposition by modes of Proposition D‴.24;
     `src/core/planar_loop.py` the averaged slow loop on ℝⁿ (n ≥ 1) with the nearest-atom leak toward fixed and adaptive priors, the weighted
     stationary point and the Gauss–Newton block, for the planar check of Proposition D‴.24; `src/core/adaptive_floquet.py` the real loop with
-    the adaptive prior in the state, the lift of perfect tracking, its monodromy and the predicted exponents of Corollary D‴.26.
+    the adaptive prior in the state, the lift of perfect tracking, its monodromy and the predicted exponents of Corollary D‴.26, and the
+    variational equation on the collapsed subspace with its monodromy, the error channel by Liouville's formula and the averaged generator to
+    second order in 1/k_e (the coefficients c_j); `src/core/sliding.py` the second-order plant under the sliding-variable controller of
+    Proposition D‴.29 (the phase-plane network, the averaged slow loop along the regressor's orbit, the real servo, the filtered error).
 - **Tests.** `tests/test_transport.py`, `tests/test_langevin.py`, `tests/test_averaging.py`, `tests/test_excitation.py`,
-  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py`, `tests/test_dither.py`, `tests/test_chaos_learning.py`, `tests/test_prior_design.py`, `tests/test_ot_leak.py`, `tests/test_uniform_basin.py`, `tests/test_entropic_leak.py`, `tests/test_ot_basin.py`, `tests/test_adaptive_prior.py`, `tests/test_adaptive_floor.py`, `tests/test_planar_loop.py` and `tests/test_adaptive_floquet.py`. Run them with
+  `tests/test_nonreciprocity.py`, `tests/test_periodic.py`, `tests/test_barycentric.py`, `tests/test_dither.py`, `tests/test_chaos_learning.py`, `tests/test_prior_design.py`, `tests/test_ot_leak.py`, `tests/test_uniform_basin.py`, `tests/test_entropic_leak.py`, `tests/test_ot_basin.py`, `tests/test_adaptive_prior.py`, `tests/test_adaptive_floor.py`, `tests/test_planar_loop.py`, `tests/test_adaptive_floquet.py`, `tests/test_gauge_floor.py` and `tests/test_sliding.py`. Run them with
   `venv\Scripts\python -m pytest tests`.
 - **Experiments.** The scripts are `experiments/exp_transport_*.py`, `exp_ot_sigma_mod.py`, `exp_sigma_mod_transient.py`, `exp_mean_field_m.py`,
   `exp_pe_convergence.py`, `exp_variable_projection.py`, `exp_slow_manifold_slope.py`, `exp_langevin_global.py`,
   `exp_langevin_tradeoff.py`, `exp_gibbs_reference.py`, `exp_orbit_orientation.py`, `exp_explicit_rate.py` and
-  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_chaos_learning.py`, `exp_prior_design.py`, `exp_ot_leak.py`, `exp_ot_real_loop.py`, `exp_lifted_orbit.py`, `exp_ot_2d.py`, `exp_dither_ot.py`, `exp_uniform_basin.py`, `exp_entropic_leak.py`, `exp_ot_basin.py`, `exp_adaptive_prior.py`, `exp_adaptive_floor.py`, `exp_adaptive_floor_2d.py`, `exp_adaptive_floquet.py`, `exp_barycentric_leak.py`,
+  `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_chaos_learning.py`, `exp_prior_design.py`, `exp_ot_leak.py`, `exp_ot_real_loop.py`, `exp_lifted_orbit.py`, `exp_ot_2d.py`, `exp_dither_ot.py`, `exp_uniform_basin.py`, `exp_entropic_leak.py`, `exp_ot_basin.py`, `exp_adaptive_prior.py`, `exp_adaptive_floor.py`, `exp_adaptive_floor_2d.py`, `exp_adaptive_floquet.py`, `exp_gauge_floor.py`, `exp_servo_cogging.py`, `exp_barycentric_leak.py`,
   `exp_dither_stationary.py` and `exp_pe_general.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
   point to `review/LITERATURE_refs.md`, and [S1]–[S51] point to the audit file.
@@ -119,10 +122,12 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | D‴.18 | Theorem J uniformly in m at a replicated configuration: for weights with margins (collective block and separation blocks ≥ λ₀) the real loop's orbit near Θ*_m(w) is the lift of the weighted K₀-atom orbit, unique in the per-particle ball of radius ρ/2 (inside the |||·|||-ball of radius ρ where the period map contracts) and attracting every solution started in it at the rate (1 − κ)min{λ_coll, λ_sep}/k_e, with k₀, ρ, C independent of m; in the unnormalised norm of Theorem J the basin is m-independent too but shrinks per particle like m^{−1/2} and the threshold k₀ grows like √m, and for the nearest-atom leak no mean-square (W₂-type) basin is possible — one particle in another cell changes the weights (Remark D‴.19) | proved as an adaptation of Theorem J's proof in the per-particle norm (three structural facts: the plant sees the class means up to second order in the separations; each particle's drift depends on the others only through the plant; the linearisation is block diagonal with an m-independent spectrum); numerics: the Floquet exponents within 0.56–3.22 % of the averaged prediction and the ghosts' to 3·10⁻⁴; on the matching prior fitted rates 0.95–1.05 of the prediction for m ≥ 15 and constants 1.03–1.29, on a moving orbit 0.96–1.16 and 1.04–1.23, all from radii 31–261 times the proved one; across a cell boundary the nearest-atom leak ends at other weights (two of them inadmissible) while the OT leak restores the masses q | uniform-in-m averaging for an adaptive law with a mean-field interaction: the size of the approximator drops out of the stability constants — new in adaptive control, where Lyapunov and averaging constants usually grow with the number of parameters |
 | D‴.20 | The entropic OT leak (Sinkhorn plan, regularisation ε) is a smooth gradient flow of mL̄ + (σ₀m/2)OT_ε that interpolates between the OT leak (ε → 0) and the σ-modification toward the barycentre of the prior (ε → ∞); at a collapsed configuration the separation block is σ₀(I − (2/ε)Cov^G_k) − R^G_k with Cov^G_k the conditional covariance of the atoms, so where A_k := σ₀I − R^G_k ≻ 0 an over-weighted class is a saddle exactly below the critical regularisation ε_c = 2σ₀λ_max(A_k^{−1/2}Cov^G_kA_k^{−1/2}) (implicit, along the branch Θ*_ε(w)), and a split moves its excess toward an atom its conditional plan charges, which need not reduce it; at fixed ε the masses are equalised only down to a critical excess δ_c(ε) ≈ w_kp_c(ε), and at large m the floor returns as Proposition D‴.5's law at the entropic stationary point | (i)–(iii) proved, the separation block checked entrywise against the finite-difference Hessian; (iv) proved under A_k ≻ 0 (which fails at large excesses and small ε), the conditional plan charging both under-weighted atoms (Cov^G_k of rank two, the rank-one formula 1.22–1.31 times ε_c); (v) formal; numerics: ε_c = 5.1, 13.5, 23.1, 65.0 for excesses 0.02–0.2; at ε = 1 every size equalises; at ε = 4 every system ends, after up to 6000 slow units, at stable weights with residual excesses up to 0.017, of the order of δ_c(4) = 0.012–0.016; at ε = 16 and 64 the stable systems keep their sampled weights, with floors 0.23–0.91 of the nearest-atom leak's | the critical temperature of deterministic annealing is the precedent ([S46]), with the same roles (particles as codevectors, atoms as data), and the ε → 0/∞ interpolation is that of the Sinkhorn divergences ([S45]); new are its role as the threshold of mass equalisation in an adaptive law, where the conditional covariance of a collapsed class is an effect of its excess, and the consequence that on the commensurate sizes only the hard constraint is floor-free for every m |
 | D‴.21 | A measure-level basin for the OT leak: at commensurate sizes two exact identities along the plan segments — the energy, and its gradient paired with the displacement toward the stationary atom of one's own class — give a Polyak–Łojasiewicz inequality ‖∇J‖² ≥ λ·m(𝒥 − 𝒥*) with λ set by the residual-weighted curvature along the segments and independent of m (sharp, 2σ₀, at a matching prior); the excess energy decays exponentially from an m-independent sublevel set (tiny on the instance: none of its configurations has a particle in another cell below m ≈ 2·10⁵), and a posteriori wherever the plan-segment margin is positive, which covers configurations with a fixed fraction of the particles in other cells; under a curvature hypothesis at the stationary residual the replicated configuration is the unique global minimum among the empirical measures for every m, while the nearest-atom energy has a spurious minimum at every admissible count vector (the energy-landscape form of the floor) | (i), (ii), (iv), (v), (vi) proved, (iii) proved for vertex-selection solutions (their existence assumed); the mean-field form and the transfer to the real loop formal (Remark D‴.22); numerics: the identities to 6·10⁻¹³ along 64 runs, the margin positive from s ≤ 300, the observed rate at least λ throughout and λ within 1.5 % of the observed 2σ₀ at the end (matching prior); the nearest-atom runs at admissible counts stop at the energy of the replicated configuration of their sampled weights, at inadmissible ones (5 of 8 per prior at m ≤ 60) they split below it | the Polyak–Łojasiewicz inequality ([S47]), the generalised geodesics of AGS §9.2 and PL inequalities through optimal maps for functionals that are not geodesically convex ([S48]) are known; new is the PL inequality along the generalised geodesic based at the prior, with the loss linearised at the stationary residual and the counts making the constant independent of m |
-| D‴.23 | Adaptive priors: the OT leak toward a prior whose atoms move toward the class barycentres at a rate η > 0 is the gradient flow of L̄ + (σ₀/2)W²(μ_Θ, ν_Z) in a weighted metric; its replicated stationary points carry no leak bias (the critical points of the unregularised K₀-atom loss), its non-replicated ones the K₀-cluster bias, and boundedness becomes a hypothesis (the leak no longer confines the parameters); at an exact representation it linearises, for every m, into the separations (rate σ₀) and 2 × 2 collective pairs whose slower rates satisfy ηh_j/(h_j + σ₀ + η) < λ_j^− < min{h_j, η} (h_j, η > 0), h_j the measure-space excitation spectrum — a learned prior removes the fixed prior's bias σ₀(H_L + σ₀I)⁻¹x⁰ mode by mode, at the rate of the excitation; as η → ∞ a capacity-constrained K₀-means regulariser; the transit drags the prior, so the adaptation should start from the fixed-prior stationary point | (i)–(iii) proved ((i) for bounded solutions), (iv) formal, (v) sketched (the radius stated, its constants not derived), (vi) the monotonicity of 𝒥 proved and the drag numerical; numerics: the K₀-atom modes decay at λ_j^−; from separated starts the m-particle systems depart from the K₀-atom run at second order in the separations, of the same expected size at m = 15 and 510 (five draws); started from the fixed-prior stationary point every size m = 15–510 follows the K₀-atom run (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at η = ∞), with fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵ against the fixed prior's 9.78·10⁻³ | proximal point / iterated Tikhonov regularisation (its per-mode filter factors), elastic averaging (its quadratic analysis) and soft weight-sharing are the precedents ([S49]); new are their transfer to the mass-constrained particle system uniformly in m (H_L as the measure-space excitation spectrum, the separations decoupled at σ₀), and the transit's drag with its gate; the limits (the lost a-priori bound, the K₀-cluster bias) are the precedents' own, specific here in their particle form and in the run-off from an exact fit |
+| D‴.23 | Adaptive priors: the OT leak toward a prior whose atoms move toward the class barycentres at a rate η > 0 is the gradient flow of L̄ + (σ₀/2)W²(μ_Θ, ν_Z) in a weighted metric; its replicated stationary points carry no leak bias (the critical points of the unregularised K₀-atom loss), its non-replicated ones the K₀-cluster bias, and boundedness becomes a hypothesis (the leak no longer confines the parameters); at an exact representation it linearises, for every m, into the separations (rate σ₀) and 2 × 2 collective pairs whose slower rates satisfy ηh_j/(h_j + σ₀ + η) < λ_j^− < min{h_j, η} (h_j, η > 0), h_j the measure-space excitation spectrum — a learned prior removes the fixed prior's bias σ₀(H_L + σ₀I)⁻¹x⁰ mode by mode, at the rate of the excitation; as η → ∞ a capacity-constrained K₀-means regulariser; the transit drags the prior, so the adaptation should start from the fixed-prior stationary point | (i)–(iii) proved ((i) for bounded solutions), (iv) formal, (v) sketched (the radius stated, its constants not derived), (vi) the monotonicity of 𝒥 proved and the drag numerical; numerics: the K₀-atom modes decay at λ_j^−; from separated starts the m-particle systems depart from the K₀-atom run at second order in the separations, consistent with the same expected size at m = 15 and 510 (five draws); started from the fixed-prior stationary point every size m = 15–510 follows the K₀-atom run (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at η = ∞), with fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵ against the fixed prior's 9.78·10⁻³ | proximal point / iterated Tikhonov regularisation (its per-mode filter factors), elastic averaging (its quadratic analysis) and soft weight-sharing are the precedents ([S49]); new are their transfer to the mass-constrained particle system uniformly in m (H_L as the measure-space excitation spectrum, the separations decoupled at σ₀), and the transit's drag with its gate; the limits (the lost a-priori bound, the K₀-cluster bias) are the precedents' own, specific here in their particle form and in the run-off from an exact fit |
 | D‴.24 | The finite-size floor is the leak's bias at the sampled weights: under the nearest-atom leak toward a fixed matching prior the function-level weight-sensitivity is F = Ĵσ₀(H_L + σ₀I)⁻¹∂_wx⁰, the weight-derivative of the bias, and the floor law decomposes on the excitation spectrum with the band-pass weight h_jσ₀²/(h_j + σ₀)² ≤ σ₀/4, centred at h = σ₀ — at the samples where the fixed prior's replicated point is stable (D‴.5-admissible); the nearest-atom leak toward an adaptive prior is the OT leak with the masses minimised out (the cell masses), and its stationary replicated configurations are the critical points of the unregularised weighted loss, the exact representation of the sampled weights among them — no function-level floor at any representable sample, every separation relaxing at σ₀ (no splitting), perfect tracking an invariant set of the real loop — while the coupled distance of the amplitude–mass gauge grows (the sample's weight fluctuation moved from the bias into the parameters) | (i) F exact at q, the bias formula first order, the law (B) formal (the delta method, as D‴.9), (ii) proved inside the cells and across crossings for vertex-selection solutions, (iii) proved for the stationary points, (iv) the boundary case formal, (vi) the invariance proved; numerics: at the stable samples the exact bias at the sampled weights reproduces the observed floor (ratio 1.0000), while 5 of the 12 samples are fixed-prior saddles and split; the law is asymptotic (the exact floor's expectation 2.8, 1.5, 1.1 times it at m = 15, 60, 240); under the adaptive prior the function-level distance decreases without a floor (at s = 6000 at most 2.0·10⁻⁶ at η = σ₀ over the representable samples) and the coupled distance is 1.7–4.8 times the fixed prior's, while W² is the cross-class transport of order ‖δw‖₁ under both priors; the samples outside W have probability 0.36, 0.074, 0.0021 at m = 15, 60, 240; in the real loop the tracking error follows the averaged prediction (ratios 0.987–1.001) | the 1/m fluctuations of mean-field networks and their vanishing at an interpolating limit ([30], [S51]), the delta method and the filter-factor bound of ridge regression are classical; new are the floor as the bias's weight-slope, mode by mode, a leak toward a learned prior as the way to restore the interpolation property under regularisation, and the design table of Remark D‴.25 |
-| D‴.26 | Perfect tracking with an adaptive prior in the real loop: the lift of the exact representation of representable sampled weights, with the prior at its atoms and the plant on the reference, is a T₀-periodic solution whose Floquet exponents are σ₀/k_e exactly on the (m − K₀)p separations — every separation stable, also where the fixed prior's replicated orbit is a saddle — and the weighted K₀-atom loop's on the collapsed subspace for every m, these being (1/k_e)λ_j^±(w) + O(k_e⁻³): the second-order averaging corrections are skew, the slow block being self-adjoint at every t when e ≡ 0; so perfect tracking is linearly exponentially stable at the rate (1/k_e)min{σ₀, λ_1^−(w)}(1 + O(k_e⁻²)) for every m | (a), (b) proved, exactly; (c) by second-order averaging of the variational equation (the structure of the correction proved, the remainder's constant not explicit); the nonlinear basin not proved; numerics: at (6, 5, 4)/15, m = 15 and 30, k_e = 25 and 50, η = σ₀ and ∞: the separations at σ₀/k_e to ≤ 1.7·10⁻⁶, the collective exponents the K₀-atom loop's to ≤ 6.4·10⁻⁴, the K₀-atom loop's slow-time rates within 4.4·10⁻³ and 1.2·10⁻³ of λ_j^±(w) (a factor 3.80, k_e^{−1.93}) | Floquet theory and averaging are classical; new is the exact, m-independent spectrum of perfect tracking with a leak, kept for its finite-size and transport properties, and the vanishing of the first averaging correction by self-adjointness |
-| D‴.27 | A projected adaptive prior restores the leak's a-priori bound: with the prior's atoms confined to a closed convex set 𝒵 (the projected flow; at η = ∞ the projected class barycentres), every particle stays within max{dist(ϑ_i(0), 𝒵), B/σ₀} of 𝒵, B the worst-case learning force, for every m, η and target; 𝒥 is non-increasing and the limits are Clarke-critical points of 𝒥 + ι_𝒵; inside 𝒵 nothing changes (Theorem D‴.23's bias removal and linearisation), outside the prior stops on the boundary and a bounded bias remains; at η = ∞ on collapsed classes the leak is the gradient of (σ₀/2)dist²(ϑ, 𝒵), a continuous switching σ-modification | (i), (iii) proved; (ii) the monotonicity proved, the convergence formal (Proposition D‴.17's argument); (iv) the identification at η = ∞ proved, the bias outside numerical; numerics: beyond the saturation both η converge to the same bounded point (fit error 0.1415, between the fixed prior's 0.1750 and the unprojected limit 0.1050), particles within 0.92 of 𝒵 (bound 3686); at the misplaced prior near the exact representation the projection is inactive | parameter projection and the switching σ-modification are classical; new is projecting the leak's learned centre rather than the parameters, which keeps the smooth learning law and Theorem D‴.23's bias removal inside 𝒵 while restoring the a-priori bound |
+| D‴.26 | Perfect tracking with an adaptive prior in the real loop: the lift of the exact representation of representable sampled weights, with the prior at its atoms and the plant on the reference, is a T₀-periodic solution whose Floquet exponents are σ₀/k_e exactly on the (m − K₀)p separations — every separation stable, also where the fixed prior's replicated orbit is a saddle — and the weighted K₀-atom loop's on the collapsed subspace for every m; where ∂_xf̂ = ∂_xf on the orbit (an exact representation) these are (1/k_e)[λ_j^±(w) + c_j^±(w)/k_e² + O(k_e⁻⁴)] — the odd orders vanish (the first-order correction is skew, the variational equation time-reversal symmetric), and c_j, explicit, contains the error filter's attenuation, which slows every mode; so perfect tracking is exponentially stable (locally, for each m) at the rate (1/k_e)min{σ₀, λ_1^−(w) + c_1^−(w)/k_e² + …} | (a), (b) proved, exactly; (c) a formal expansion (slaving and second-order averaging), its structure proved (the skewness, the parity, c_j explicit), the O(k_e⁻⁴) remainder not bounded; the basin uniform in m not proved; numerics: at (6, 5, 4)/15, m = 15 and 30, k_e = 25 and 50, η = σ₀ and ∞: the separations at σ₀/k_e to ≤ 1.7·10⁻⁶, the collective exponents the K₀-atom loop's to ≤ 6.4·10⁻⁴; by the variational equation to k_e = 400 on two references (one with a non-zero first-order correction): the first-order deviations falling by → 4 per doubling (every exponent below its prediction; 13.6% in the slowest mode at k_e = 25), the second-order residuals by → 16, c₁/λ₁ = −100.6 of which the filter's −102.1 | Floquet theory, averaging and the Magnus expansion's commutator term, the averaging analysis of adaptive loops (the PE level), and leaks compatible with exact tracking (e-modification; a centre that follows the parameters) are classical, and (a)–(b) are Corollary D‴.14(ii) and Proposition D‴.15 at zero residual; new are the zero-residual lift at every representable sample with its exactly m-independent spectrum, and the even expansion in 1/k_e with its explicit second-order coefficient |
+| D‴.27 | A projected adaptive prior restores the leak's a-priori bound: with the prior's atoms started in and confined to a compact convex set 𝒵 (the projected flow; at η = ∞ the projected class barycentres), every particle's distance from 𝒵 is at most B/σ₀ + (d(0) − B/σ₀)₊e^{−σ₀s}, B the worst-case learning force, for every m, η and target; 𝒥 is non-increasing, and at η = ∞ every solution converges to a Clarke-critical point (Proposition D‴.17's argument); inside 𝒵 nothing changes (Theorem D‴.23's bias removal and linearisation), and where the limit has an atom on the boundary — necessarily when no stationary point has its prior inside — a bounded bias remains; at η = ∞ on collapsed classes the leak is the gradient of the exterior penalty (σ₀/2)dist²(ϑ, 𝒵), a switching σ-modification toward 𝒵 | (i), (iii) proved ((iii)'s local convergence as Theorem D‴.23(v), sketched); (ii) the monotonicity proved, the convergence proved at η = ∞ and formal at finite η; (iv) the identification at η = ∞ proved, the boundary atoms and the bias outside numerical; numerics: beyond the saturation both η converge to the same bounded point (fit error 0.1415; the projected midpoint rule at two steps within 3.4·10⁻¹²), particles within 0.92 of 𝒵 (bound ≤ 3686); the box's amplitude bound 0.7–0.99 of a_max trading the fit error 0.1736–0.1101 between the fixed prior's 0.1750 and the unprojected limit 0.1050; on the four-bump target the box stops the width's run-off at its face; at the misplaced prior the box never approached | parameter projection, the exterior quadratic penalty and the switching σ-modification (which keeps the ideal properties inside its set) are classical, and at η = ∞ on collapsed classes the construction is the latter; new is its transfer to the learned centre of a mass-constrained K₀-atom prior at finite η, compatible with Theorem D‴.23's bias removal inside 𝒵 |
+| D‴.28 | The adaptive prior's floor removal is a gauge property: the masses enter the network only through w_ka(α_k), so for any nondegenerate critical point ϑ^b(q) of the unregularised loss — exact or not — its gauge transform G_wϑ^b(q) is a critical point at every sampled weight vector of W_g with the same function: no function-level floor whatever the approximation error; the fixed matching prior's floor is σ₀Ĵ(Ã + σ₀I)⁻¹g̃ with the full Hessian Ã = H_L − R̃; at a critical point the residual curvature has a zero amplitude row and scales exactly by q_k/w_k under the gauge, so the adaptive prior's splitting margins are σ₀ − (q_k/w_k)λ⁺_k | (i), (iii) proved exactly; (ii) as D‴.24(i); the dynamics' convergence numerical; numerics: with a fourth bump that three kernels cannot represent (fit errors 0.4–2.5%), the gauge transform is Newton's critical point to rounding with f̂ unchanged to 10⁻¹⁵, the adaptive prior's sensitivity at the finite-difference level (10⁻¹¹ relative), the fixed prior's equal to the full-Hessian formula to 2·10⁻⁹ (the Gauss–Newton form off by 7·10⁻⁴–3·10⁻³), the margin formula exact to 10⁻¹⁴; the dynamics: under the fixed prior the floor stays and the fit error above the approximant's; under the adaptive priors the floor falls by orders of magnitude and the fit error tends to the approximant's at the samples inside W_g, an error kept outside it | the homogeneity of the conic view ([49], [55]) is classical; new are the gauge as the mechanism of the floor removal, robust to approximation error, and the exact margin formula |
+| D‴.29 | Second-order plants: with the sliding variable s = ė + λe and u = ẍ_m − λė − k_s s − f̂_Θ(z), the error channel is ṡ = −k_s s + r_Θ(z), ė = −λe + s — Theorem J's with s in place of e — so as k_s → ∞ the parameters follow the averaged slow loop along the regressor's orbit z_m(t), every averaged-loop statement of §5d transfers with the occupation measure of z_m, and the position error is the residual filtered by (d/dt + λ)⁻¹(d/dt + k_s)⁻¹; kernels on the coordinate f depends on see the orbit as an interval, while isotropic phase-plane kernels on a circular orbit are over-parametrised (von Mises restrictions: one zero Gauss–Newton eigenvalue per kernel) | (i), (iv) exact; (ii), (iii) formal (Theorem J's argument transferred, not rewritten); numerics: a position servo with a cogging torque that four kernels approximate to 1.46% (Proposition D‴.28's regime): the fixed prior's floor 1.85·10⁻³–4.49·10⁻⁵ (m = 16–128), the adaptive prior's 38–780 times lower with the fit error to the approximant's, the OT leak at the approximant, σ-modification's bias 0.328, a misplaced prior's bias kept by the fixed designs (a D‴.5 saddle, the classes split) and removed by the adaptive one; the real servo's position error at the exactly filtered prediction to 1.0000–1.0029 (the slaved one 0.93–0.996) | the filtered error and Gaussian networks in adaptive control are classical (Sanner–Slotine); new are the transfer of the transport leaks, their floors and the adaptive and projected priors to second-order plants, and the over-parametrisation of phase-plane kernels as a measure-space excitation defect |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | J′ | At finite m with dither τ = τ₀/k_e and leak σ = σ₀/k_e: the closed loop has an invariant law (unique under a smoothness hypothesis) whose parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with the explicit first-order correction ε∫φ g dπ driven by the first-order drift b of Theorem J as a vector field on parameter space (g solves τ₀∇·(πG∇g) = ∇·(πb)); the stationary tracking error is (2/k_e²)π(L̄_m) + O(k_e⁻³); the stationary parameter process is not reversible, with a circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] + O(ε²), where j₁ = π(b − τ₀G∇g) is the first-order stationary current, nonzero exactly when b is not a G-gradient (Proposition J′.2: the finite-m form of Theorem I's reciprocity defect plus a Hessian commutator from second-order averaging; never a gradient for m ≥ 3) | proved (the Poisson-equation expansion of the invariant measure with the fast error and phase eliminated; three standard theorems imported and named); checked on a single-kernel instance: the first-order prediction removes the O(1/k_e) discrepancy between the real loop's stationary means and the Gibbs measure, the orientation-odd part of the means (the dither version of Remark H.7a) matches its prediction, and the current machinery is checked on the first-order averaged SDE | the technique is the Pavliotis–Stuart / Mattingly–Stuart–Tretyakov expansion; new in its object (a hypoelliptic learning loop with a plant) and in the identification of the first-order non-equilibrium current with the reciprocity defect of Theorem I |
@@ -1764,7 +1769,8 @@ shorter; the observed e-folding times of the coupled distance are 3.3 times shor
 at the price of a larger floor at both levels (the stationary atoms have the full amplitudes, to which the weight sensitivity is
 proportional): the classical trade-off between bias and variance, here between the window's margin and the coupling's floor
 (Proposition D‴.24 resolves it at the function level: the floor is the weight-slope of the bias, and an adaptive prior removes both, at the
-price of the collective rate, of the leak's a-priori bound and of a larger parameter-level floor). A
+price of the collective rate, of the leak's a-priori bound — restored by projecting the prior, Proposition D‴.27 — and of a larger
+parameter-level floor). A
 misplaced prior does worse than no structured prior (centres off by 0.6, amplitudes ×1.2 or widths ×0.7 close the window, which the
 σ-modification keeps open with margin 0.0020), and a shrunk prior does better than the matching one (amplitudes ×0.5–0.7: margin above
 σ₀ at the uniform weights, both floors lower, all four tested unbalanced weights admissible — with splitting margins above σ₀ at one of
@@ -2645,7 +2651,7 @@ them while the particles follow the OT leak toward ν_Z := Σ_jq_jδ_{z_j}:
 flow of 𝒥(μ_Θ, Z) := L̄(μ_Θ) + (σ₀/2)W²_{G⁻¹}(μ_Θ, ν_Z) in the metric that weighs ϑ_i by (1/m)G⁻¹ and z_j by (σ₀q_j/η)G⁻¹ — by the envelope
 theorem ∇_{z_j}W² = 2q_jG⁻¹(z_j − T̂_j) — so 𝒥 is non-increasing (under any schedule η(s) ≥ 0: 𝒥 does not involve η), and bounded
 solutions converge to Clarke-critical points (Proposition D‴.17's argument: 𝒥 is a minimum over the vertices of definable smooth functions
-of (Θ, Z)). Boundedness is now a hypothesis (Proposition D‴.27 restores it by projecting the prior). Proposition D‴.17's a-priori bound rested on the fixed prior's support, while the leak toward an
+of (Θ, Z)). Boundedness is now a hypothesis (Proposition D‴.27 restores it by projecting the prior onto a compact convex set). Proposition D‴.17's a-priori bound rested on the fixed prior's support, while the leak toward an
 adaptive prior is an internal force between a class and its atom — with the plan held, the leak cancels from
 d/ds[(1/m)Σ_{i∈π⁻¹(j)}ϑ_i + (σ₀q_j/η)z_j] = (1/m)Σ_{i∈π⁻¹(j)}G⟨r∇Φ̃(ϑ_i)⟩ — and solutions can leave every compact set (numerics, Part G(a) and (b)), even from a fit that the network attains exactly.
 At a stationary point z_j = T̂_j, and each particle satisfies G⟨r∇Φ̃(ϑ_i)⟩ = σ₀(ϑ_i − T̂_{π(i)}): the learning forces cancel over each
@@ -2801,7 +2807,8 @@ are the lower everywhere, and its fit error at η = ∞ and at m ≤ 240 (at η 
 separations of rms 0.02 and 0.1 (m = 15 and 510, ungated, five draws of their direction), ‖ȳ‖ at s = 1750 departs from the K₀-atom run's,
 in the draw means, by +0.13% and +3.1% at η = σ₀ and by +0.77% and +18.5% at η = ∞ for m = 15 (+0.09%, +2.2%, +0.63% and +15.5% for
 m = 510): second order in the separations draw by draw (factors 23.8–25.0 for the factor 5), with a spread across the draws 3.3–6.0 times
-larger at m = 15, and of the same expected size at both m (the draw means differ by 0.9–1.7 combined standard errors) — the prediction of
+larger at m = 15, and consistent with the same expected size at both m (the draw means, higher at m = 15 in all four columns, differ by
++0.9 to +1.7 combined standard errors; five draws) — the prediction of
 Theorem D‴.18's facts (1)–(2) at second order, the departure being linear in the separations' class covariances, whose expectation is the
 same at every m. The starts lie 131–3344 times outside (v)'s ball, so (v) itself asserts nothing there. *The limits of (i)* (Part G). On a four-bump target that six kernels fit exactly with one class split
 (K₀ = 3, m = 6), the joint flow has a stationary saddle with the class split — the pair at G⁻¹-distance 1.64, against the exact fit's
@@ -2893,12 +2900,14 @@ masses fixed by design. Under both OT leaks the coupled distance keeps the trans
 constraint fixes the gauge, and the adaptive prior removes the bias — with it the function-level floor, which is its slope in w. This
 resolves Remark D‴.10's trade-off between the window's margin and the coupling's floor at the function level: at an exact representation
 the separation margin is the maximal σ₀ and both the bias and the function-level floor vanish. The price is the collective rate, λ_j^− in
-place of h_j + σ₀ (Theorem D‴.23(ii)), the leak's a-priori bound, and a larger coupled distance.
+place of h_j + σ₀ (Theorem D‴.23(ii)), the leak's a-priori bound (restored by projecting the prior, Proposition D‴.27), and a larger
+coupled distance.
 
 (vi) *(the real loop: perfect tracking)* With the adaptive prior, the lift of the exact representation of representable sampled weights,
 with the prior at its atoms and the plant on the reference (e = 0), is an invariant set of the real closed loop of Theorem J: f̂ = f on the
-reference orbit — the support of the occupation measure ρ, which is all the error equation sees — so e ≡ 0 solves the error equation
-there, and the adaptive law's gradient term (proportional to e), the leak (toward each particle's own position) and the prior's motion
+reference orbit — the support of the occupation measure ρ, which is all the error equation sees at e = 0 — so e ≡ 0 solves the error
+equation there (its linear stability also uses ∂_xf̂ = ∂_xf on the orbit, which the exact representation, an identity of functions,
+supplies: Corollary D‴.26(c)), and the adaptive law's gradient term (proportional to e), the leak (toward each particle's own position) and the prior's motion
 (toward its own atom) all vanish: perfect tracking at every representable sample. With a fixed prior the tracking error keeps Theorem J's
 slaved value e = (1/k_e)r_{Θ*(w)}(x_m) + O(k_e⁻²): the leak's bias, divided by the gain.
 
@@ -2985,7 +2994,8 @@ adaptive prior's 1.6·10⁻⁴ with the floor below 5·10⁻¹¹ (settled gate).
 against the nearest-atom leak's 0.86, 0.25, 0.017
 (fixed) and 2.3, 0.48, 0.046 (adaptive), while their W² is at most 2.1·10⁻⁸. The ranking of the fit errors depends on the horizon: until the
 settled gate opens (s = 1211–1304) the OT design toward the adaptive prior is the fixed one, and at s = 1250 the ungated nearest-atom
-adaptive prior leads (1.75·10⁻², 3.8·10⁻³, 2.8·10⁻³ against 9.2–9.8·10⁻³); from s ≈ 2000 the OT design leads (4.0–4.2·10⁻⁴ against
+adaptive prior leads at m = 60 and 240 (3.8·10⁻³ and 2.8·10⁻³ against 9.2–9.8·10⁻³), not at m = 15 (1.75·10⁻² in the seed mean); from
+s ≈ 2000 the OT design leads (4.0–4.2·10⁻⁴ against
 1.2·10⁻², 1.6·10⁻³, 1.4·10⁻³). *The real loop* (Part D, k_e = 25, 3000 time units, seed 0's sampled weights). From the fixed prior's
 stationary point the rms tracking error stays at 1.17–1.18·10⁻³ (m = 15) and 3.43–3.44·10⁻⁴ (m = 60), at the end 1.001 and 0.996 times
 the averaged loop's (1/k_e)‖f − f̂‖_ρ at s = t/k_e — the m = 15 run on a saddle orbit (Proposition D‴.15; margin −3.48·10⁻³), held there by
@@ -2995,17 +3005,21 @@ at the integrator's level (the five-period rms 9.0·10⁻¹² at the first windo
 the real loop. *The instance's probabilities* (Part E, exact multinomial sums). Outside W: 0.361, 0.074, 0.0021 at m = 15, 60, 240, and
 on its boundary 0.118, 0.053, 0.0012, against Hoeffding's bound 1.87, 0.60, 0.036; a permutation of the classes would be representable
 for 31%, 87%, 100% of the mass outside W. The fixed prior's replicated point is a saddle with probability 0.369, 0.260, 0.109 — a failure
-set as large as the adaptive prior's. Taking the constrained minimum of the loss as the limit outside W, the adaptive prior's expected
+set comparable to the adaptive prior's (outside W or on its boundary: 0.48, 0.13, 0.003) at m = 15 and much larger at m ≥ 60. Taking the
+constrained minimum of the loss on the branch of ϑ^e(q) as the limit outside W (the dynamics from the warm clouds follows the branch; a
+local minimum, the global infimum being 0 wherever a permutation is representable), the adaptive prior's expected
 limiting floor is at least 7.3·10⁻³, 2.2·10⁻⁴, 6.6·10⁻⁷: 1.8, 0.24, 0.005 times the fixed prior's law and 0.66, 0.16, 0.004 times its
 Monte Carlo expectation. *The law's accuracy* (Part F, 600 nested samples, the exact replicated stationary points). The fixed prior's
 E‖f̂_m − f̂_M‖² is 2.78 ± 0.20, 1.53 ± 0.11, 1.11 ± 0.07 times the law (2.89 ± 0.26, 1.56 ± 0.15, 1.07 ± 0.07 for D‴.5-admissible pairs):
 the o(1/m) remainder dominates at m = 15, where the gauge's derivative varies fast near the saturation (the matching amplitude 3 against
-a_max = 4). The coupled distances follow their laws more closely (E D/law 0.68, 0.93, 0.95 fixed; 0.53, 1.17, 1.26 adaptive), the
-adaptive prior's 2.9–3.7 times the fixed prior's.
+a_max = 4). The fixed prior's coupled distance follows its law more closely (E D/law 0.68, 0.93, 0.95); the adaptive prior's
+(0.53, 1.17, 1.26) has a far heavier tail — its gauge diverges at the boundary of W; at m = 240 one sample lies at 55.7 times the law, and
+without it the mean is 1.17 — so its means are not reliable estimates at this sample size; it is 2.9–3.7 times the fixed prior's.
 
 *The planar check* (`exp_adaptive_floor_2d.py` → `results/chaos/adaptive_floor_2d.md`). The planar plant of `exp_ot_2d.py` — four bumps
 with vector amplitudes, the Lissajous reference, p = 5, G = diag(1, 1, 0.25, 0.25, 0.25), σ₀ = 0.05 — with the averaged slow loop on ℝ² of
-`src/core/planar_loop.py`, the matching prior, m = 16, 32, 64 against M = 128, six seeds, 6000 slow units. The excitation spectrum is
+`src/core/planar_loop.py`, the matching prior, m = 16, 32, 64 against M = 128, six seeds, 6000 slow units (η = ∞: the atoms reset to the
+cell means at every refresh of the cells, every slow unit, and frozen in between — a lagged prior). The excitation spectrum is
 h_j/σ₀ = 0.004–1.41 (twenty modes, all below 1.5σ₀); F equals the bias form to the finite-difference error (6.0·10⁻⁷), and the law per unit
 of 1/m − 1/M is 0.310, at 0.215 of the bound, spread over the modes (the largest share 0.18). Representability needs
 w > (0.200, 0.150, 0.175, 0.150), whose sum 0.675 leaves little room: 7 of the 18 m-systems are representable, with the six references.
@@ -3013,9 +3027,10 @@ Every sample is D‴.5-admissible for the fixed prior (splitting margins +0.016 
 at the sampled weights in all 18 systems (ratio 1.0000): 3.2·10⁻⁴–4.2·10⁻³ at the representable systems, 3.0·10⁻³–2.1·10⁻² at the others.
 At the representable systems the adaptive prior's falls without a floor, to 1.0·10⁻⁷–4.1·10⁻⁵ (η = σ₀) and 1.2·10⁻⁹–1.0·10⁻⁵ (η = ∞) at
 s = 6000 — at most 0.019 and 0.006 of the fixed prior's, still falling in every system — and at the others to 0.023–0.64 of the fixed
-prior's, still falling toward a constrained minimum. The counts are conserved in every run. In the real loop (k_e = 25, dt = 2·10⁻³, 2500
+prior's, still falling, toward the constrained minimum of the loss at their sampled weights — a floor of their own (Proposition
+D‴.24(iii)) — not toward zero. The counts are conserved in every run. In the real loop (k_e = 25, dt = 2·10⁻³, 2500
 time units, seed 0, m = 64) the fixed prior's rms tracking error stays at the averaged prediction (ratios 0.993–1.009) and the adaptive
-prior's follows the averaged decay (0.979–1.009); from the exact representation of the sampled weights with the adaptive prior at its atoms
+prior's (η = ∞) follows the averaged decay (0.979–1.009); from the exact representation of the sampled weights with the adaptive prior at its atoms
 it stays at the integrator's level, 2.0–4.7·10⁻¹⁰.
 
 *Remark D‴.25 (the design table of the leak).* Propositions D‴.9, D‴.12, D‴.20, D‴.24 and Theorem D‴.23 choose, for the averaged loop near a
@@ -3034,11 +3049,13 @@ Reading. The finite-size floor has three faces: the function level (the sample's
 level (the shared particles displaced by the amplitude–mass gauge, or relabelled by the transit), and the measure level (the mass
 ½‖δw‖₁ that has to move between the clusters). The mass constraint removes the function-level and the measure-level floors by fixing the
 weights; at the coupling level it replaces the gauge's displacement by the transit's mismatch, which relabels different particles in the
-two systems. The adaptive prior removes the function-level floor by removing the bias at every weight, enlarges the coupled distance (the
+two systems. The adaptive prior removes the function-level floor by removing the bias at every representable weight, enlarges the
+coupled distance (the
 gauge's whole displacement goes into the parameters) and leaves the measure level's leading term unchanged; it also removes the fixed
 prior's splitting instability, every separation relaxing at σ₀ at an exact representation. The bias of a misplaced prior is removed only
 by an adaptive prior, and every adaptive prior pays with the rate — λ_j^− < h_j, so a weakly excited collective mode converges at the
-loss's own curvature rather than at the leak's — and with the leak's a-priori bound on the parameters (Theorem D‴.23(i)). The design
+loss's own curvature rather than at the leak's — and with the leak's a-priori bound on the parameters (Theorem D‴.23(i); restored by
+projecting the prior onto a compact convex set, Proposition D‴.27, at the price of a bias where the limit reaches its boundary). The design
 without a function-level floor or bias is the OT leak toward an adaptive prior started from the fixed-prior stationary point; the
 floor-free design when the prior is trusted is the OT leak toward a fixed one; and when the masses cannot be prescribed (the sample
 decides them), the nearest-atom leak toward an adaptive prior keeps the fitted function exact at the representable samples and leaves the
@@ -3047,114 +3064,329 @@ fluctuation in the parameters.
 **Corollary D‴.26 (perfect tracking with an adaptive prior in the real loop: the Floquet spectrum, uniformly in m).** Let (CL) be the
 real closed loop of Theorem J with the nearest-atom leak toward an adaptive prior — the particles leak at σ = σ₀/k_e toward the atom of
 their class, and the atoms follow the class means at the rate η/k_e, ż_j = −(η/k_e)(z_j − ϑ̄_j), 0 < η ≤ ∞ (η = ∞: z_j = ϑ̄_j) — and let
-w = N/m be representable sampled weights (w ∈ W, Proposition D‴.24) with the exact representation ϑ^e(w). Let Γ_w be the lift of ϑ^e(w) by the classes, with Z = ϑ^e(w)
-and the plant on the reference: a T₀-periodic solution with e ≡ 0 (Proposition D‴.24(vi)). Its Floquet exponents (the rates −log|λ|/T₀ of
-its monodromy) are:
+w = N/m be representable sampled weights (w ∈ W, Proposition D‴.24) with the exact representation ϑ^e(w). Let Γ_w be the lift of ϑ^e(w)
+by the classes, with Z = ϑ^e(w) and the plant on the reference: a T₀-periodic solution with e ≡ 0 (Proposition D‴.24(vi)). Its Floquet
+exponents (the rates −log|λ|/T₀ of its monodromy) are:
 
 (a) σ₀/k_e exactly, with multiplicity (m − K₀)p, on the separation subspaces of the classes;
 
-(b) on the collapsed subspace, the exponents of the weighted K₀-atom loop's periodic solution at ϑ^e(w) — the same for every m;
+(b) on the collapsed subspace, the exponents of the weighted K₀-atom loop's periodic solution at ϑ^e(w) — the same for every m with these
+weights;
 
-(c) and these are those of the error channel (≈ k_e) and (1/k_e)λ_j^±(w) + O(k_e⁻³) for the K₀p collective pairs, λ_j^±(w) the rates of
-Theorem D‴.23(ii) at the weights w (η = ∞: h_j(w)/k_e) — the first-order averaging correction moves none of them.
+(c) if moreover ∂_xf̂_{ϑ^e(w)} = ∂_xf on the reference orbit (f̂ = f on a neighbourhood of it — on the instances everywhere, the exact
+representation being an identity of functions): n exponents k_e + O(1/k_e) of the error channel, summing to nk_e − tr H_L(w)/k_e +
+O(k_e⁻³), and for the K₀p collective pairs
 
-Hence, for k_e above a threshold, perfect tracking is a linearly exponentially stable periodic solution of the real loop at every
-representable sample and for every m, with the rate (1/k_e)min{σ₀, λ_1^−(w)}(1 + O(k_e⁻²)); the same holds for the OT leak toward an adaptive prior (Theorem
-D‴.23) at a commensurate m, with w = q and the diagonal plan.
+    (1/k_e)[λ_j^±(w) + c_j^±(w)/k_e² + O(k_e⁻⁴)],
 
-*Proof.* Along Γ_w the linearisation of (CL) reads δė = −k_eδe − Df̂[δΘ](x_m(t)), δϑ̇_i = G∇_ϑΦ̃(x_m(t); ϑ^e_{π(i)})ᵀδe −
-(σ₀/k_e)(δϑ_i − δz_{π(i)}), δż_j = −(η/k_e)(δz_j − δϑ̄_j): the second-derivative term G∇²_ϑ(eᵀΦ̃)δϑ_i vanishes because e ≡ 0. (a) A
-separation (zero class means, δz = 0, δe = 0) does not move f̂ at first order — Df̂[δΘ] = Σ_k(1/m)∇_ϑΦ̃(·; ϑ^e_k)Σ_{i∈π⁻¹(k)}δϑ_i = 0 —
-so it stays a separation with δϑ̇_i = −(σ₀/k_e)δϑ_i: the subspace is invariant and the exponent is σ₀/k_e. (b) The collapsed subspace is
-invariant (Corollary D‴.14) and the loop on it is the weighted K₀-atom loop with its prior. (c) Proposition D‴.15's averaging of the
-variational equation: the error channel is slaved at the rate ≈ k_e, δe = −(1/k_e)Φ′(t)δΘ̄ + (1/k_e²)(d/dt)(Φ′(t)δΘ̄) + …, Φ′(t) :=
-[w_k∇_ϑΦ̃(x_m(t); ϑ^e_k)]_k, and the slow block is δΘ̄˙ = (1/k_e)M(t)δΘ̄ + (1/k_e²)N(t)δΘ̄ + … with M(t) = −GΦ′(t)ᵀΦ′(t) − (the leak and the
-prior's constant part) and N(t) = GΦ′(t)ᵀΦ̇′(t). Its average ⟨M⟩ is the averaged loop's linearisation at the replicated configuration,
-Theorem D‴.23(ii)'s at the weights w (Proposition D‴.24(iv)). In the whitened weighted coordinates and the metric of Theorem D‴.23(i), M(t)
-is self-adjoint at every t — at e ≡ 0 its time-dependent part is a Gram matrix — so both second-order corrections are skew: the commutator
-term (1/2T₀)∫∫_{τ<t}[M(t), M(τ)] of the second-order averaging, and ⟨N⟩, whose symmetric part is ½⟨(d/dt)(Φ′ᵀΦ′)⟩ = 0. A skew
-perturbation of a self-adjoint matrix moves no eigenvalue at first order (vᵀSv = 0, and on a degenerate eigenspace it splits the
-eigenvalue into a conjugate pair of unchanged real part), so the slow exponents are (1/k_e)(λ_j^±(w) + O(k_e⁻²)). ∎
+λ_j^±(w) the rates of Theorem D‴.23(ii) at the weights w (η = ∞: h_j(w)) and c_j^±(w) the explicit coefficients of the proof. The odd
+orders vanish — the first because the first-order averaging correction is skew, all of them because the variational equation is
+symmetric under time reversal — and c_j contains the error filter's attenuation −v_jᵀ⟨Ĵ̇ᵀĴ̇⟩v_j ≤ 0, which slows every mode (at η = ∞
+it is −h_jω_j², ω_j² = Σ_nn²|Ĵ_nv_j|²/Σ_n|Ĵ_nv_j|² the mode's mean squared frequency in the regressor, by Parseval: the averaged rate of a
+mode holds when k_e ≫ ω_j).
 
-*Status.* (a) and (b) proved, exactly (no averaging); (c) by second-order averaging of the variational equation (the structure of the
-correction proved; the O(k_e⁻³) remainder standard, its constant not made explicit); the nonlinear basin — uniform in m in the per-particle norm — would follow from Theorem D‴.18's contraction
-argument for the joint system, as sketched in Theorem D‴.23(v), and is not proved here. With a fixed prior the lift of ϑ^e(w) is a solution only when
-the prior sits at ϑ^e(w) — at a matching prior, w = q; at the other sampled weights the leak's bias keeps e = O(1/k_e) (Theorem J) — so
-perfect tracking at every representable sample, with this spectrum, is specific to the adaptive prior. (a) does not depend on the fixed
-prior's splitting margin at w: at (6, 5, 4)/15, where the fixed prior's replicated orbit is a saddle orbit (Proposition D‴.24's
-numerics), every separation of perfect tracking decays at σ₀/k_e. Checked: `tests/test_adaptive_floquet.py`
-(at the matching weights, m = 6: the return of one period; the nine separation exponents at σ₀/k_e; the collective exponents equal to the
-weighted K₀-atom loop's; the latter within the averaging correction of the prediction).
+Hence, for k_e above a threshold, perfect tracking is exponentially stable (locally, for each m) at every representable sample, with the
+rate (1/k_e)min{σ₀, λ_1^−(w) + c_1^−(w)/k_e² + O(k_e⁻⁴)}; the same holds for the OT leak toward an adaptive prior (Theorem D‴.23) at a
+commensurate m, with w = q and the diagonal plan (locally constant at the lift). Without the derivative condition the mismatch
+a(t) := ∂_x(f − f̂)(x_m(t)) enters the error equation and moves the collective rates at first order in 1/k_e (the proof).
+
+*Proof.* Along Γ_w the linearisation of (CL) reads δė = (a(t) − k_e)δe − Df̂[δΘ](x_m(t)), δϑ̇_i = G∇_ϑΦ̃(x_m(t); ϑ^e_{π(i)})ᵀδe −
+(σ₀/k_e)(δϑ_i − δz_{π(i)}), δż_j = −(η/k_e)(δz_j − δϑ̄_j), with a ≡ 0 under the derivative condition: the second-derivative term
+G∇²_ϑ(eᵀΦ̃)δϑ_i and the x-derivative of the learning law vanish because e ≡ 0. (a) A separation (zero class means, δz = 0, δe = 0) does
+not move f̂ at first order — Df̂[δΘ] = Σ_k(1/m)∇_ϑΦ̃(·; ϑ^e_k)Σ_{i∈π⁻¹(k)}δϑ_i = 0 — so it stays a separation with δϑ̇_i = −(σ₀/k_e)δϑ_i: the
+subspace is invariant and the exponent is σ₀/k_e, whatever a. (b) The collapsed subspace is invariant (Corollary D‴.14(i), with the
+prior's equation: the class atoms and their prior atoms follow the weighted K₀-atom equations), and the loop on it is the weighted K₀-atom
+loop with its prior. (c) In the whitened weighted coordinates y_k = √w_k G^{−1/2}δϑ_k (and ζ_k likewise for δz_k) the collapsed
+variational equation is the adjoint pair δė = (a − k_e)δe − Ĵ(t)y, ẏ = Ĵ(t)ᵀδe − (σ₀/k_e)(y − ζ), ζ̇ = −(η/k_e)(ζ − y), with
+Ĵ(t) = [√w_k(G^{1/2}∇_ϑΦ̃(x_m(t); ϑ^e_k))ᵀ]_k (η = ∞: ζ = y, and the leak vanishes on the collapsed subspace). Let ε = 1/k_e, Y = (y, ζ),
+J̄ = Ĵ on the y block and C the leak and the prior's constant block in slow time. The error channel is slaved: the linear periodic system
+has the invariant subspace δe = L(t)Y, L = εL₁ + ε²L₂ + ε³L₃ + …, with L₁ = −J̄, L₂ = J̄̇ − aJ̄ and, for a ≡ 0, L₃ = −J̄̈ + J̄C − J̄J̄ᵀJ̄
+(the Chang transformation, [S9]: Kokotović–Khalil–O'Reilly). This leaves, in slow time s = εt, the slow block
+dY/ds = (B₀ + εB₁ + ε²B₂ + …)Y with B₀ = C − J̄ᵀJ̄, B₁ = J̄ᵀ(J̄̇ − aJ̄) and, for a ≡ 0, B₂ = −J̄ᵀJ̄̈ + J̄ᵀJ̄C − (J̄ᵀJ̄)², a system of fast
+period εT₀. Its near-identity averaging gives the averaged generator Ā = Ā₀ + εĀ₁ + ε²Ā₂ + …, whose eigenvalues are the slow-time
+exponents: Ā₀ = ⟨B₀⟩ = C − ⟨J̄ᵀJ̄⟩, the averaged loop's linearisation at the replicated configuration (Theorem D‴.23(ii) at the weights w,
+Proposition D‴.24(iv)), self-adjoint in the metric diag(I, (σ₀/η)I) of Theorem D‴.23(i); Ā₁ = ⟨B₁⟩ + ⟨B̃₀U₁⟩ with U₁′ = B̃₀ (zero means);
+Ā₂ = ⟨B₂⟩ + ⟨B₁U₁⟩ + ⟨B₀U₂⟩ with U₂′ = B₁ + B₀U₁ − U₁Ā₀ − Ā₁. With a ≡ 0, Ā₁ is skew: the self-adjoint parts of ⟨J̄ᵀJ̄̇⟩ and ⟨B̃₀U₁⟩ are
+½⟨(J̄ᵀJ̄)˙⟩ = 0 and ½⟨(U₁²)′⟩ = 0, and a skew perturbation moves no simple eigenvalue of a self-adjoint matrix at first order (vᵀKv = 0;
+on a degenerate eigenspace it splits the eigenvalue into a pair of unchanged real part). All odd orders vanish: the variational matrix
+M(t) satisfies M(t)ᵀ = DM(t)D⁻¹ with D = diag(−I_n, I, (σ₀/η)I), so the system with its coefficients reversed in time, M(−t), has the
+same Floquet multipliers (its monodromy is conjugate to the inverse of the adjoint system's, which is the inverse transpose of the
+original's); reversing time changes the sign of every fast-time derivative and antiderivative, and a term of Ā_k carries a number of
+them of the parity of k (ε is a time, Ĵ and d/dt are rates, C a rate in slow time), so Ā_k ↦ (−1)^kĀ_k, and the exponents, being
+unchanged, are even in ε. Perturbation theory gives c_j = −ℓ_jĀ₂r_j − Σ_{i≠j}(ℓ_jĀ₁r_i)(ℓ_iĀ₁r_j)/(λ_i − λ_j) (r_j, ℓ_j the right and
+left eigenvectors of −Ā₀, ℓ_jr_j = 1), and ⟨B₂⟩ contains −⟨J̄ᵀJ̄̈⟩ = ⟨J̄̇ᵀJ̄̇⟩: the error filter k_e/(k_e + iω) attenuates the
+regressor's harmonics, H_L − ε²⟨Ĵ̇ᵀĴ̇⟩ + O(ε⁴) in place of H_L. The error channel's exponents are k_e + O(ε), and by Liouville's
+formula all the exponents sum to −⟨tr M⟩ = nk_e + (σ₀ + η)K₀p/k_e (η = ∞: nk_e), the collective ones to
+(1/k_e)tr(−Ā₀) + O(k_e⁻³). With a ≢ 0 the term −⟨J̄ᵀaJ̄⟩ of Ā₁ is self-adjoint and moves the rates at first order, and a — a rate that
+does not change sign under time reversal — breaks the parity. ∎
+
+*Status.* (a) and (b) proved, exactly (no averaging); (c) by the slaving and the second-order averaging of the variational equation: a
+formal asymptotic expansion whose structure is proved (the skewness of Ā₁, the parity, c_j explicit) and whose O(k_e⁻⁴) remainder is not
+bounded; the stability consequence local, for each m (the nearest-atom cells are constant near the lift, the particles lying inside
+their cells, so the field is smooth there and the multipliers decide). (a) and (b) are Corollary D‴.14(ii) and Proposition D‴.15 at zero residual with the
+prior's coordinates added; what the adaptive prior brings is the zero-residual lift at every representable w, not only at w = q under the
+OT leak. The basin uniform in m in the per-particle norm would follow from Theorem D‴.18's contraction argument for the joint system, as
+sketched in Theorem D‴.23(v), and is not proved here. With a fixed prior the lift of ϑ^e(w) is a solution only when the prior sits at
+ϑ^e(w) — at a matching prior, w = q; at the other sampled weights the leak's bias keeps e = O(1/k_e) (Theorem J) — so perfect tracking at
+every representable sample, with this spectrum, is specific to the adaptive prior. (a) does not depend on the fixed prior's splitting
+margin at w: at (6, 5, 4)/15, where the fixed prior's replicated orbit is a saddle orbit (Proposition D‴.24's numerics), every separation
+of perfect tracking decays at σ₀/k_e. Checked: `tests/test_adaptive_floquet.py` (at the matching weights, η = ∞, m = 6: the return of one
+period, the nine separation exponents at σ₀/k_e, the collective exponents the K₀-atom loop's, within the averaging correction of the
+prediction; at the weights (2, 1, 1)/4 with the prior in the state, η = σ₀, m = 4: the real loop's Jacobian at the lift mapping the
+separations to −(σ₀/k_e) times themselves and the collapsed subspace into itself as the collapsed variational equation, the monodromy's
+3 separation exponents at σ₀/k_e and its 18 collective ones the variational ones, within the second-order prediction and below the
+first-order one; on an asymmetric reference: Ā₁ non-zero and skew, the residual of the second-order prediction falling like k_e⁻⁴, the
+measured second-order coefficient the explicit c₁, the error channel by Liouville's formula).
 
 *Numerics* (`exp_adaptive_floquet.py` → `results/chaos/adaptive_floquet.md`). The three-bump instance at σ₀ = 0.15σ_crit, x_m = 2 sin t,
 the sampled weights w = (6, 5, 4)/15 (the amplitudes A_k/w_k = 2.5, −2.1, 3.0; representable, and a saddle of the fixed prior, splitting
-margin −3.48·10⁻³), η = σ₀ and ∞, k_e = 25 and 50; the
-monodromy by central differences of the period map (step 10⁻⁵ relative, DOP853 at rtol 10⁻¹³). Every lift returns after one period to
-≤ 1.7·10⁻¹⁵. (a) At m = 15 and 30 the (m − 3)·3 = 36 and 81 separation exponents equal σ₀/k_e to ≤ 1.7·10⁻⁶ (relative). (b) The other 18
-(η = σ₀) or 9 (η = ∞) exponents equal the weighted K₀-atom loop's to 1.4·10⁻⁵–6.4·10⁻⁴ (relative, the resolution of the differences for
-the slowest of them). (c) The K₀-atom loop's slow-time rates (exponent × k_e) deviate from λ_j^±(w) by at most 4.4·10⁻³ at k_e = 25 and
-1.2·10⁻³ at k_e = 50 — a factor 3.80, i.e. k_e^{−1.93}: second order in 1/k_e, as (c) says — largest in relative terms in the slowest mode
-(13.6% and 3.8%).
+margin −3.48·10⁻³), η = σ₀ and ∞, k_e = 25 and 50; the monodromy by central differences of the period map (step 10⁻⁵ relative, DOP853 at
+rtol 10⁻¹³). Every lift returns after one period to ≤ 1.7·10⁻¹⁵. (a) At m = 15 and 30 the (m − 3)·3 = 36 and 81 separation exponents equal
+σ₀/k_e to ≤ 1.7·10⁻⁶ (relative). (b) The other 18 (η = σ₀) or 9 (η = ∞) exponents equal the weighted K₀-atom loop's to 1.4·10⁻⁵–6.4·10⁻⁴
+(relative, the resolution of the differences for the slowest of them). (c) Part C integrates the variational equation on the collapsed
+subspace over a period (its generator equals the central differences of the real loop's field to ≤ 5.8·10⁻¹¹ relative, its exponents the
+differences' to ≤ 4.1·10⁻⁵) at k_e = 12.5, 25, …, 400. At η = σ₀ the slowest exponent lies 37.5%, 13.6%, 3.84%, 0.99%, 0.25% and 0.063%
+below λ_1^−(w)/k_e — every exponent lies below its first-order prediction at every k_e — and the largest deviation falls by 2.77, 3.53,
+3.86, 3.96, 3.99 per doubling of k_e (→ 4), while the residual of the second-order prediction falls by 11.1, 14.0, 15.4, 15.8, 16.0
+(→ 16: O(k_e⁻⁴); 4.9·10⁻⁷ at k_e = 400). Every c_j is negative here (c_j/λ_j from −0.47 to −100.6); the slowest mode's c₁/λ₁ = −100.6
+(−101.7 at η = ∞), of which the error filter's part is −102.1 = −ω₁², ω₁ = 10.1 the slowest mode's root-mean-square frequency in the
+regressor — the weakest-excited mode is carried by the regressor's high harmonics, which the error filter attenuates unless k_e ≫ ω₁ —
+and the measured (k_eμ₁ − λ₁)k_e²/λ₁ approaches it (−99.4, −100.3, −100.5 at k_e = 100, 200, 400; μ₁ the slowest exponent). On x_m = 2 sin t the first-order correction vanishes identically (in one dimension
+⟨ĴᵀĴ̇⟩ is the integral of an exact differential, and the commutator term vanishes by the symmetry t → π − t), so this reference alone
+could not test the mechanism; on the asymmetric x_m = 2 sin t + 0.8 sin 2t it does not vanish (‖Ā₁‖ = 5.6·10⁻³, its self-adjoint part
+1.4·10⁻¹⁶), and the deviations still fall by → 4 per doubling and the second-order residuals by → 16 (15.5 and 15.9 at the last two
+doublings), with c₁/λ₁ = −108.2 (the filter's part −109.7). The error channel's exponent by Liouville's formula is within O(k_e⁻³) of
+k_e − tr H_L(w)/k_e (24.98084 against 24.98037 at k_e = 25).
 
-**Proposition D‴.27 (a projected adaptive prior restores the leak's a-priori bound).** Let 𝒵 ⊂ ℝ^p be a closed convex set — on the
-instance a box in the unconstrained coordinates — and let the prior's atoms of Theorem D‴.23 (or of Proposition D‴.24(ii)) be confined to
-it: dz_j/ds = Π_{T_𝒵(z_j)}(−η(z_j − T̂_j)), the velocity projected onto the tangent cone of 𝒵 at z_j in the metric G⁻¹ (for a box and
-diagonal G: the outward components set to zero on the active faces); at η = ∞, z_j = Π_𝒵(T̂_j), the G⁻¹-projection of the class
-barycentre. Let B := sup_ϑ‖G⟨r∇_ϑΦ̃(·;ϑ)⟩_ρ‖_{G⁻¹} ≤ (max_ρ|f| + a_max)·L_ϑ^G, with L_ϑ^G := sup_{x,ϑ}‖G^{1/2}∇_ϑΦ̃(x;ϑ)‖ (|f̂| ≤ a_max for the
-saturated network).
+**Proposition D‴.27 (a projected adaptive prior restores the leak's a-priori bound).** Let 𝒵 ⊂ ℝ^p be a compact convex set — on the
+instance a bounded box in the unconstrained coordinates — and let the prior's atoms of Theorem D‴.23 (or of Proposition D‴.24(ii)) start
+in it, Z(0) ∈ 𝒵^{K₀}, and be confined to it: dz_j/ds = Π_{T_𝒵(z_j)}(−η(z_j − T̂_j)), the velocity projected onto the tangent cone of 𝒵 at
+z_j in the metric G⁻¹ (for a box and diagonal G: the outward components set to zero on the active faces); at η = ∞, z_j = Π_𝒵(T̂_j), the
+G⁻¹-projection of the class barycentre. Let B := sup_{Θ,ϑ}‖G⟨r_Θ∇_ϑΦ̃(·;ϑ)⟩_ρ‖_{G⁻¹} ≤ (max_ρ|f| + a_max)·L_ϑ^G, with
+L_ϑ^G := sup_{x,ϑ}‖G^{1/2}∇_ϑΦ̃(x;ϑ)‖ (|f̂| ≤ a_max for the saturated network).
 
-(i) *(the a-priori bound)* Every particle satisfies dist_{G⁻¹}(ϑ_i(s), 𝒵) ≤ max{dist_{G⁻¹}(ϑ_i(0), 𝒵), B/σ₀} for all s ≥ 0, and the prior
-stays in 𝒵: every solution is bounded, for every m, every η ∈ (0, ∞] and every target.
+(i) *(the a-priori bound)* Every particle satisfies dist_{G⁻¹}(ϑ_i(s), 𝒵) ≤ B/σ₀ + (dist_{G⁻¹}(ϑ_i(0), 𝒵) − B/σ₀)₊e^{−σ₀s}, at most
+max{dist_{G⁻¹}(ϑ_i(0), 𝒵), B/σ₀}, for all s ≥ 0, and the prior stays in 𝒵; 𝒵 being bounded, every solution is bounded, for every m,
+every η ∈ (0, ∞] and every target. (For an unbounded 𝒵 the distance bound still holds but bounds nothing: 𝒵 = ℝ^p is Theorem D‴.23's
+prior, which runs off.)
 
-(ii) *(the energy)* 𝒥 = L̄ + (σ₀/2)W² is non-increasing along the projected flow (at η = ∞ along its reduced form, min_{Z∈𝒵}𝒥), which
-is the vertex-selection gradient flow of 𝒥 + ι_𝒵^{K₀}(Z) in the metric of Theorem D‴.23(i); every solution converges to a Clarke-critical
-point of it — a stationary point of Theorem D‴.23(i) if the prior is interior, and otherwise one at which each boundary atom z_j satisfies
-the Karush–Kuhn–Tucker condition z_j = Π_𝒵(T̂_j) with T̂_j − z_j in the normal cone of 𝒵 at z_j.
+(ii) *(the energy)* 𝒥 = L̄ + (σ₀/2)W² — for the nearest-atom prior of Proposition D‴.24(ii) its energy 𝒥_∘, with the cell masses — is
+non-increasing along the projected flow (at η = ∞ along its reduced form, min_{Z∈𝒵^{K₀}}𝒥), which is the vertex-selection gradient flow
+of 𝒥 + ι_{𝒵^{K₀}}(Z) in the metric of Theorem D‴.23(i) (for 𝒥_∘ with the cell masses). At η = ∞ every solution converges to a
+Clarke-critical point of the reduced energy; at finite η the solutions are expected to converge to Clarke-critical points of 𝒥 + ι. At a
+critical point with a unique plan the prior is a stationary point of Theorem D‴.23(i) where it is interior, and each boundary atom
+satisfies the Karush–Kuhn–Tucker condition z_j = Π_𝒵(T̂_j), T̂_j − z_j in the normal cone of 𝒵 at z_j; at a tie of plans the condition
+holds for a convex combination of the active pieces, as in Proposition D‴.17(iii).
 
 (iii) *(nothing changes inside)* As long as the prior stays in the interior of 𝒵 the projected flow is Theorem D‴.23's. In particular, at
 an exact representation whose atoms lie in int 𝒵 the stationary point and its linearisation are Theorem D‴.23(i)–(ii)'s, and the bias
 removal of (iii) and the local convergence of (v) hold unchanged for starts close enough that the prior stays in int 𝒵.
 
-(iv) *(the price outside)* Where the target has no exact representation with atoms in 𝒵, the projected prior stops on the boundary of 𝒵 and
-the particles leak toward it: the limit keeps a bias, bounded by (i), in place of the unprojected prior's run-off. At η = ∞ on a collapsed
-class the leak is −σ₀(ϑ − Π_𝒵ϑ), the gradient of (σ₀/2)dist²_{G⁻¹}(ϑ, 𝒵) — zero inside 𝒵 and linear outside: a continuous form of the
-switching σ-modification [4], whose dead zone is 𝒵.
+(iv) *(the price outside)* If the limit has an atom on ∂𝒵 — necessarily so when no stationary point of Theorem D‴.23(i) has its prior in
+int 𝒵 — the particles of that class leak toward the face, and the limit keeps a bias, bounded by (i), in place of the unprojected prior's
+run-off. At η = ∞ on a collapsed class the leak is −σ₀(ϑ − Π_𝒵ϑ), the gradient of the exterior quadratic penalty
+(σ₀/2)dist²_{G⁻¹}(ϑ, 𝒵) — zero on 𝒵 and growing linearly outside: a switching σ-modification toward 𝒵, the leak off on 𝒵 ([4], [S52]).
 
-*Proof.* (i) z_{π(i)} ∈ 𝒵 at all times. With Π := Π_𝒵 and d := dist_{G⁻¹}(ϑ_i, 𝒵), ½d² is C¹ with gradient ϑ − Πϑ in the metric G⁻¹, so
-(d/ds)½d² = ⟨ϑ_i − Πϑ_i, G⟨r∇Φ̃(ϑ_i)⟩⟩_{G⁻¹} − σ₀⟨ϑ_i − Πϑ_i, ϑ_i − z_{π(i)}⟩_{G⁻¹}. The projection inequality ⟨ϑ − Πϑ, z − Πϑ⟩_{G⁻¹} ≤ 0
-for z ∈ 𝒵 gives ⟨ϑ_i − Πϑ_i, ϑ_i − z⟩_{G⁻¹} ≥ d², so (d/ds)½d² ≤ Bd − σ₀d², i.e. d′ ≤ B − σ₀d where d > 0, and the comparison principle
-gives the bound. The bound on B: ‖G⟨r∇Φ̃⟩‖_{G⁻¹} = ‖⟨rG^{1/2}∇Φ̃⟩‖ ≤ sup|r|·L_ϑ^G and |r| ≤ |f| + |f̂|. (ii) The particles' part of d𝒥/ds is
-Theorem D‴.23(i)'s, minus the squared norm of their velocity; the prior's is ⟨∇_Z𝒥, Π_T(−c∇_Z𝒥)⟩ = −‖Π_T(−c∇_Z𝒥)‖²/c (c the metric's
-factor; Moreau's decomposition of −c∇_Z𝒥 into its tangent-cone and normal-cone parts, which are orthogonal), so 𝒥 is non-increasing; at
-η = ∞ the prior minimises the W² part over 𝒵 for the current plan, which is the projection of the barycentres. 𝒥 + ι_𝒵 is a minimum of
-definable functions plus the indicator of a definable convex set, so Proposition D‴.17's Kurdyka–Łojasiewicz argument should apply to
-the bounded solutions of (i) (we have not rechecked its steps with the indicator added); at a critical point the projected velocity of every atom vanishes, which is the stated condition. (iii) The
-projection is inactive in int 𝒵, and Theorem D‴.23(v)'s ball keeps the prior within ρ(η/(σ₀q_k))^{1/2} of the atoms. (iv) At η = ∞ with a
-class collapsed at ϑ, T̂ = ϑ and z = Π_𝒵ϑ. ∎
+*Proof.* (i) z_{π(i)} ∈ 𝒵 at all times, and so is the leak target mΣ_jγ_{ij}z_j of a split row (incommensurate m), a convex combination.
+With Π := Π_𝒵 and d := dist_{G⁻¹}(ϑ_i, 𝒵), ½d² is C¹ with gradient ϑ − Πϑ in the metric G⁻¹, so
+(d/ds)½d² = ⟨ϑ_i − Πϑ_i, G⟨r∇Φ̃(ϑ_i)⟩⟩_{G⁻¹} − σ₀⟨ϑ_i − Πϑ_i, ϑ_i − z⟩_{G⁻¹}, z the leak target. The projection inequality
+⟨ϑ − Πϑ, z − Πϑ⟩_{G⁻¹} ≤ 0 for z ∈ 𝒵 gives ⟨ϑ_i − Πϑ_i, ϑ_i − z⟩_{G⁻¹} ≥ d², so (d/ds)½d² ≤ Bd − σ₀d², i.e. d′ ≤ B − σ₀d where d > 0,
+and the comparison principle gives the bound; boundedness follows from that of 𝒵. The bound on B: ‖G⟨r∇Φ̃⟩‖_{G⁻¹} = ‖⟨rG^{1/2}∇Φ̃⟩‖ ≤
+sup|r|·L_ϑ^G and |r| ≤ |f| + |f̂|. (ii) The particles' part of d𝒥/ds is Theorem D‴.23(i)'s, minus the squared norm of their velocity; the
+prior's is ⟨∇_Z𝒥, Π_T(−c∇_Z𝒥)⟩ = −‖Π_T(−c∇_Z𝒥)‖²/c (c the metric's factor; Moreau's decomposition of −c∇_Z𝒥 into its tangent-cone and
+normal-cone parts, which are orthogonal), so 𝒥 is non-increasing. At η = ∞ the prior minimises the W² part over 𝒵 for the current plan:
+for each plan γ, min_Z 𝒥 = L̄ + (σ₀/2)Σ_j[Σ_iγ_{ij}‖ϑ_i − T̂_j‖²_{G⁻¹} + q_j dist²_{G⁻¹}(T̂_j, 𝒵)] (minimising
+Σ_iγ_{ij}‖ϑ_i − z‖² = q_j‖z − T̂_j‖² + const over z ∈ 𝒵), each piece C^{1,1} and definable (the squared distance to a box is piecewise
+quadratic), and its gradient in ϑ_i is the learning term and the leak toward Π_𝒵T̂_j (the derivative of q_j dist²(T̂_j, 𝒵) adds
+γ_{ij}(T̂_j − Π_𝒵T̂_j) to the within-class term): the particles follow the vertex-selection subgradient flow of a minimum of finitely many
+C^{1,1} definable functions, so Proposition D‴.17(i)–(ii) apply as they stand, and every solution, bounded by (i), has finite length and
+converges to a Clarke-critical point. At finite η the joint energy carries the indicator of 𝒵^{K₀}, and the Kurdyka–Łojasiewicz argument
+with it is not carried out here. At a critical point the projected velocity of every atom vanishes, which is the stated condition.
+(iii) The projection is inactive in int 𝒵, and Theorem D‴.23(v)'s ball keeps the prior within ρ(η/(σ₀q_k))^{1/2} of the atoms.
+(iv) If no stationary point of Theorem D‴.23(i) has its prior in int 𝒵, a critical point of (ii) has an atom on ∂𝒵. At η = ∞ with a class
+collapsed at ϑ, T̂ = ϑ and z = Π_𝒵ϑ. ∎
 
-*Status.* (i) proved; (ii) the monotonicity and the characterisation of the critical points proved, the convergence formal (Proposition
-D‴.17's argument, not rechecked with the indicator); (iii) proved;
-(iv) the switching σ-modification identified at η = ∞ on collapsed classes, the bias outside numerical. The bound of (i) is crude (it
-uses the worst-case force), and its content is qualitative: boundedness is no longer a hypothesis. Projection of the parameter estimates
-onto a convex set and the switching σ-modification are classical robustness modifications of adaptive laws ([4]); here the projection acts on the learned centre of the leak, not on the parameters, so the learning law keeps its smooth
-gradient form and the leak alone keeps the parameters within B/σ₀ of 𝒵 — the confinement of Proposition D‴.17 with the box in place of
-the fixed prior's support — while the bias removal of Theorem D‴.23 is untouched wherever the target is representable inside 𝒵. New is
-this combination: the adaptive prior keeps the robustness half of the classical trade-off that Theorem D‴.23(i) gave up. Checked:
-`tests/test_adaptive_prior.py` (beyond the saturation, the projected prior at η = ∞ (LSODA) keeps the particles within 2 of the box and
-converges, while the unprojected prior's coordinate passes 11 by s = 10⁴; at η = σ₀ the projected midpoint rule keeps the prior in the box,
-the particles bounded and 𝒥 non-increasing; at the misplaced prior near the exact representation the projected and unprojected runs are
-identical).
+*Status.* (i) proved; (ii) the monotonicity and the characterisation of the critical points proved, the convergence proved at η = ∞
+(Proposition D‴.17's argument) and formal at finite η; (iii) proved, its local convergence as Theorem D‴.23(v) (sketched); (iv) the
+identification at η = ∞ on collapsed classes proved, the boundary atoms and the bias outside numerical. The bound of (i) is crude (it uses
+the worst-case force; L_ϑ^G ≤ 4.658 is the closed-form bound, 4.044 by search), and its content is qualitative: boundedness is no longer a
+hypothesis. Parameter projection onto a convex set, the exterior quadratic penalty and the switching σ-modification are classical
+robustness modifications of adaptive laws, and the switching σ-modification keeps the ideal (unbiased) properties of the adaptive law
+when the true parameter lies in its set ([4], [S52]); on collapsed classes at η = ∞ the construction is that law. New is its transfer to
+the learned centre of a mass-constrained K₀-atom prior at finite η — a projected adaptive law for the prior's atoms, whose velocity jumps
+at the faces while the particles' law keeps its smooth gradient form — and its compatibility with Theorem D‴.23's bias removal wherever
+the target is representable inside 𝒵. Checked: `tests/test_adaptive_prior.py` (beyond the saturation, the projected prior at η = ∞
+(LSODA) keeps the particles within 2 of the box and converges, while without the box the prior's coordinate passes 11 by s = 10⁴; at
+η = σ₀ the projected midpoint rule at dt = 0.125 keeps the prior in the box, brings its amplitude atom onto the face, keeps the particles
+bounded and 𝒥 non-increasing; at the misplaced prior near the exact representation the projected and unprojected runs are identical).
 
 *Numerics* (`exp_adaptive_prior.py` Part H → `results/chaos/adaptive_prior.md`). The box 𝒵 holds the amplitudes and centres to 0.9 of
 a_max and c_max (α ∈ [−5.889, 5.889], γ ∈ [−4.417, 4.417]) and the width coordinate in [−6, 6]; the instance's exact atoms are inside.
 (a) Part G(b)'s saturated target (a weighted amplitude 4.8 > a_max), the K₀-atom system from the exact atoms with the prior there: under
-the projected prior both η = σ₀ (the projected midpoint rule, dt = 0.25, to s = 10⁵) and η = ∞ (LSODA, rtol 10⁻¹⁰) converge to the same
-bounded stationary point (largest drift 1.8·10⁻¹⁵ and 1.2·10⁻¹⁶), the first prior atom's amplitude coordinate on the face of 𝒵
-(z_a = 5.889) and the particle's at 6.728 (amplitude 3.7325), with the fit error 0.1415 — between the fixed prior's 0.1750 and the
-unprojected adaptive prior's 0.1050, which that prior approaches only as its amplitude coordinate runs off. The particles' largest
-G⁻¹-distance from 𝒵 along the run is 0.92 (η = σ₀) and 0.89 (η = ∞), against the bound B/σ₀ = 3686 (B = 26.08, L_ϑ^G = 4.658). (b) Part
-C's K₀-atom loop at the misplaced prior (η = σ₀, 6000 slow units) is identical with and without 𝒵 (largest difference 0.0): the run stays
-in 𝒵, and the projection is inactive.
+the projected prior both η = σ₀ (the projected midpoint rule — positions projected inside the step — at dt = 0.25 and 0.125, to s = 10⁵)
+and η = ∞ (LSODA, rtol 10⁻¹⁰) converge to the same bounded stationary point (largest drift 1.8·10⁻¹⁵, 3.5·10⁻¹⁵ and 1.2·10⁻¹⁶; the two
+steps' end states within 3.4·10⁻¹²), the first prior atom's amplitude coordinate on the face of 𝒵 (z_a = 5.889) and the particle's at
+6.728 (amplitude 3.7325), with the fit error 0.1415. The particles' largest G⁻¹-distance from 𝒵 along the run is 0.92 (η = σ₀) and 0.89
+(η = ∞), against the bound B/σ₀ ≤ 3686 (B ≤ 26.08 with the closed-form L_ϑ^G). (b) Part C's K₀-atom loop at the misplaced prior (η = σ₀,
+6000 slow units) is identical with and without 𝒵 (largest difference 0.0): the box is never approached — the prior and the particles keep
+at least 17% of the box's width to every face — so the two runs coincide by construction. (c) The box trades the fit error against the
+parameters' bound: with the amplitude bound 0.7, 0.75, 0.8, 0.9, 0.95, 0.99 of a_max the limit's fit error is 0.1736, 0.1676, 0.1611,
+0.1415, 0.1268, 0.1101, monotonically between the fixed prior's 0.1750 and the unprojected adaptive prior's 0.1050 at s = 10⁶ (which that
+prior approaches only as its amplitude coordinate runs off), the prior's amplitude atom on the face in every case. (d) On Part G(a)'s
+four-bump target, where without the box the merged atom's width coordinate grows like ln s and the solution leaves every compact set, the
+box stops it: from the exact split fit at η = ∞ (the joint flow for 40000 slow units, then the collapsed dynamics) κ passes 2.159, 3.843,
+5.529 at s = 10⁶, 10⁷, 10⁸ as before and stays at the face κ = 6 from s = 10⁹ (the atom within 6.6·10⁻⁷ of it, drift 5.3·10⁻¹⁷), with
+the fit error 1.943376·10⁻², within 9.3·10⁻⁷ of the minimiser's on the face s = s_max that the unprojected solution approaches only as
+s → ∞.
+
+**Proposition D‴.28 (the adaptive prior's floor removal is a gauge property: it survives an approximation error).** Let ϑ^b(q) be a
+nondegenerate critical point of the unregularised weighted loss L_q(Θ) := ½⟨|f − Σ_kq_kΦ̃(·;ϑ_k)|²⟩_ρ — not necessarily an exact
+representation: r_b := f − f̂_b may be non-zero — and let the masses enter the network only through the products w_ka(α_k), as they do for the
+saturated network. The amplitude–mass gauge G_w: α_k ↦ a⁻¹(q_ka(α_k)/w_k), the other coordinates unchanged, is defined on
+W_g := {w : q_k|a^b_k| < w_ka_max for every k} and satisfies f̂_w∘G_w = f̂_q, hence L_w∘G_w = L_q.
+
+(i) *(no function-level floor)* For every w ∈ W_g, ϑ^b(w) := G_wϑ^b(q) is a nondegenerate critical point of L_w with the same function
+f̂_b and the same residual r_b. With the prior at its atoms it is a stationary replicated configuration of the nearest-atom leak toward an
+adaptive prior (Proposition D‴.24(iii)), so the function-level distance between two systems at their approximants vanishes whatever the
+approximation error, and the fit error is ‖r_b‖_ρ at every sample of W_g. (At an exact representation W_g is Proposition D‴.24's W.)
+
+(ii) *(the fixed prior's floor)* At the matching prior ϑ⁰ = ϑ^b(q) the function-level weight-sensitivity of the fixed prior's stationary
+point is
+
+    F = σ₀Ĵ(Ã + σ₀I)⁻¹g̃,    Ã := H_L − R̃,
+
+Ã the whitened weighted Hessian of L_q at ϑ^b(q) (R̃ the whitened weighted residual curvature) and g̃ the whitened gauge displacement, the
+direct effect of the weights on f̂ being Ĵg̃: Proposition D‴.24(i) with the full Hessian in place of the Gauss–Newton block. Along the same
+derivation the adaptive prior's sensitivity is F(σ) at σ = 0, which vanishes, as (i) says.
+
+(iii) *(the splitting margins under the adaptive prior)* At a critical point the residual curvature R_k = ⟨r∇²_ϑΦ̃(·;ϑ_k)⟩_ρ has a zero
+amplitude row and column, and its block in the centre and width coordinates is a(α_k) times a function of those coordinates alone. Hence
+R_k(ϑ^b(w)) = (q_k/w_k)R_k(ϑ^b(q)) exactly, and Proposition D‴.5's splitting margins at the adaptive prior's replicated stationary point are
+
+    σ₀ − (q_k/w_k)λ⁺_k,    λ⁺_k := λ_max(G^{1/2}R_k(ϑ^b(q))G^{1/2}) ≥ 0:
+
+a class sampled below q_kλ⁺_k/σ₀ can split. At an exact representation λ⁺ = 0 and every margin is σ₀ (Proposition D‴.24(iii)); with an
+approximation error the adaptive prior's admissible set is {w ∈ W_g : w_k > q_kλ⁺_k/σ₀}.
+
+*Proof.* (i) G_w is a diffeomorphism from {α : |q_ka(α)/w_k| < a_max} onto its image with f̂_w(G_wΘ) = f̂_q(Θ), so L_w∘G_w = L_q, and it maps
+critical points to critical points with the same Hessian signature; the function and the residual are unchanged by construction. The
+leak toward an adaptive prior at its atoms vanishes (Theorem D‴.23(i), Proposition D‴.24(ii)). (ii) Let u := ∂_w(G_wϑ^b(q)) at w = q, D :=
+diag(q_kG⁻¹), A := ∇²L_q(ϑ^b), B := ∂_w∇_ΘL_w at fixed Θ, J := ∂_Θf̂, Φ := ∂_wf̂ at fixed Θ. Differentiating f̂_w(G_wΘ) = f̂_q(Θ) gives
+Φ = −Ju, and differentiating ∇L_w(G_wϑ^b) = 0 gives B = −Au. The fixed prior's stationarity ∇L_w(Θ) + σ₀D(Θ − ϑ⁰) = 0, linearised at
+(q, ϑ^b), reads (A + σ₀D)δΘ = −Bδw = Auδw, so δf̂ = Φδw + JδΘ = −J(A + σ₀D)⁻¹[(A + σ₀D) − A]uδw = −σ₀J(A + σ₀D)⁻¹Duδw; in the whitened
+coordinates (Ĵ = JD^{−1/2}, Ã = D^{−1/2}AD^{−1/2}, g̃ := −D^{1/2}u) this is σ₀Ĵ(Ã + σ₀I)⁻¹g̃. With σ₀ = 0, δΘ = uδw and δf̂ = 0. At an exact
+representation R̃ = 0, Ã = H_L and g̃ = ∂_wx⁰. (iii) With Ψ(γ, κ) := ⟨rφ(·; c(γ), s(κ))⟩_ρ, ⟨rΦ̃(·;ϑ)⟩_ρ = a(α)Ψ, whose gradient is
+(a′Ψ, aΨ_γ, aΨ_κ) and whose Hessian is [[a″Ψ, a′Ψ_γ, a′Ψ_κ], [a′Ψ_γ, aΨ_γγ, aΨ_γκ], [a′Ψ_κ, aΨ_γκ, aΨ_κκ]]. At a critical point the gradient
+vanishes, so Ψ = Ψ_γ = Ψ_κ = 0 (a′ > 0, a ≠ 0) and only the block aΨ_{(γ,κ)} remains; r and Ψ are unchanged by the gauge and a scales by
+q_k/w_k. The α-direction contributes the eigenvalue 0, so λ⁺_k ≥ 0. ∎
+
+*Status.* (i) and (iii) proved, exactly (no linearisation in w: the gauge maps critical points to critical points); (ii) as Proposition
+D‴.24(i) — exact at q, first order in w; the convergence of the dynamics to the gauge transform numerical. The amplitude–mass degeneracy
+is the homogeneity of the conic view [49], [55]; what is new is that it, not exact representability, is the mechanism of Proposition
+D‴.24's floor removal — so the adaptive prior keeps the fitted function independent of the sampled weights for real plants, where no exact
+representation exists — and the exact scaling of the residual curvature under the gauge, which gives the adaptive prior's splitting
+margins in closed form. Its hypothesis is a critical point in the interior: targets whose best approximant lies on the saturation
+boundary (a sharp friction step fitted by a dipole of two kernels; Proposition D‴.27's beyond-the-saturation example) are outside it.
+Checked: `tests/test_gauge_floor.py` (at ε = 0.3, a critical point with a 1.7% fit error: the gauge transform a critical point at two
+sampled weight vectors with the same function; the adaptive prior's sensitivity below 10⁻⁸ of the fixed prior's, the fixed prior's equal
+to σ₀Ĵ(Ã + σ₀I)⁻¹g̃ to 10⁻⁶ and not to the Gauss–Newton form; the residual curvature's zero amplitude row, its scaling (q_k/w_k) and the
+margins σ₀ − (q_k/w_k)λ⁺_k; an adaptive-prior run converging to the gauge transform, 1.2 away from ϑ^b(q), with the approximant's function).
+
+*Numerics* (`exp_gauge_floor.py` → `results/chaos/gauge_floor.md`). The three-bump instance with a fourth bump ε·exp(−(x − 0.8)²/(2·0.3²))
+that K₀ = 3 kernels cannot represent, ε = 0–0.5, the masses q = 1/3, σ₀ = 0.15σ_crit; ϑ^b(q) the best weighted approximant, a critical
+point of the unregularised loss continued in ε (relative fit error 3.6·10⁻³, 6.8·10⁻³, 1.2·10⁻², 1.7·10⁻², 2.5·10⁻² at ε = 0.05, 0.1, 0.2,
+0.3, 0.5; gradient residual ≤ 1.6·10⁻¹⁵; nondegenerate, the smallest eigenvalue of Ã 4.6·10⁻⁵–3.1·10⁻⁴). (i) At six weight vectors of
+W_g Newton's method started at G_wϑ^b(q) stays there (distance 0.0) with f̂ unchanged to ≤ 7.8·10⁻¹⁶, and the adaptive prior's
+function-level sensitivity is ≤ 2.3·10⁻¹¹ of the fixed prior's (the finite-difference level). (ii) The fixed matching prior's
+sensitivity equals σ₀Ĵ(Ã + σ₀I)⁻¹g̃ to ≤ 2.2·10⁻⁹ and misses Proposition D‴.24's Gauss–Newton form by 7.0·10⁻⁴–5.6·10⁻³, growing with ε as
+‖R̃‖/‖H_L‖ does (5.3·10⁻⁴–2.8·10⁻³); its floor law per unit of 1/m − 1/M rises from 6.17·10⁻² (ε = 0) to 8.52·10⁻² (ε = 0.5). (iii) The
+residual curvature's amplitude row is ≤ 7.4·10⁻¹⁴ (its largest entry 2.6·10⁻⁴–2.9·10⁻³), λ⁺_k ≤ 7.2·10⁻⁴ (at most 0.11σ₀), and over every
+count vector of m = 15 and 60 in W_g the adaptive prior's splitting margins equal σ₀ − (q_k/w_k)λ⁺_k to ≤ 2.1·10⁻¹⁴, none negative (the
+smallest +6.23·10⁻³). *The dynamics* (Part B: warm clouds of width 0.02 around ϑ^b(q), m = 15, 60, 240 against M = 510, four seeds, 6000
+slow units, ε = 0.1 and 0.3, the nearest-atom leak). Under the fixed prior ‖f̂_m − f̂_M‖² stays at its value from s = 600 on (at ε = 0.1:
+3.1·10⁻⁴–5.9·10⁻³, 1.1·10⁻⁴–1.0·10⁻³ and 5.0·10⁻⁶–8.2·10⁻⁵ at m = 15, 60, 240) and the fit error above the approximant's
+(9.0·10⁻³–1.2·10⁻¹ against 6.84·10⁻³), the classes splitting at the samples where the fixed prior's point is a saddle (diameters up to
+1.6). Under the adaptive priors the classes stay replicated, their means approach the gauge transform G_wϑ^b(q), ‖f̂_m − f̂_M‖² falls (at
+m = 60, ε = 0.1, from 6.9·10⁻⁶–1.2·10⁻⁴ at s = 600 to 1.0·10⁻⁹–1.4·10⁻⁸ at η = σ₀ and to 3.2·10⁻¹¹–3.8·10⁻⁹ at η = ∞ by s = 6000), and
+the fit error tends to the approximant's: at the samples at least 0.02 inside W_g it exceeds it at s = 6000 by a median 1.2·10⁻⁴,
+1.2·10⁻⁴, 1.6·10⁻⁵ (relative; at most 1.1·10⁻¹, 1.2·10⁻², 1.3·10⁻³) at m = 15, 60, 240. At the m = 15 sample (0.533, 0.267, 0.200),
+outside W_g (margins −0.0016 and −0.0097 at ε = 0.1 and 0.3), no gauge transform exists and the adaptive priors keep an error (fit errors
+2.2·10⁻² and 1.6·10⁻² at ε = 0.1, against 6.84·10⁻³); at (0.400, 0.200, 0.400), 6·10⁻⁴ inside W_g at ε = 0.3, the gauge transform's
+amplitude lies near the saturation and the approach is slow (2.8–3.1 from it at s = 6000), as at the boundary of Proposition D‴.24's W.
+
+**Proposition D‴.29 (second-order plants: the sliding-variable reduction).** Let the plant be ẍ = f(x, ẋ) + u, x_m a T₀-periodic C³
+reference, e := x − x_m, s := ė + λe (λ > 0), and let the controller and the adaptive law be
+
+    u = ẍ_m − λė − k_s s − f̂_Θ(z),    ϑ̇_i = G∇_ϑ(sΦ̃(z; ϑ_i)) − (σ₀/k_s)(ϑ_i − T_i),
+
+z the coordinates of (x, ẋ) on which f depends and T_i any of the leak targets of §5d (a fixed prior, the nearest-atom or the OT plan, an
+adaptive or a projected prior).
+
+(i) *(the error channel)* ṡ = −k_s s + r_Θ(z) and ė = −λe + s, with z = z_m + (e, ė) the regressor at the plant's state: Theorem J's error
+channel with s in place of e.
+
+(ii) *(the averaged slow loop)* As k_s → ∞ at fixed λ, s and e are slaved — s = (d/dt + k_s)⁻¹[r_Θ(z_m)] + O(k_s⁻²) = r_Θ(z_m)/k_s +
+O(k_s⁻²) and e = (d/dt + λ)⁻¹s, the periodic solutions of the two filters — and in the slow time τ = t/k_s the parameters follow Theorem
+J's averaged slow loop along the regressor's orbit z_m(t),
+
+    dϑ_i/dτ = G⟨r_Θ∇_ϑΦ̃(·; ϑ_i)⟩_ρ − σ₀(ϑ_i − T_i),    ρ the occupation measure of z_m over one period,
+
+up to O(1/k_s). The exact filter (d/dt + k_s)⁻¹ keeps the error filter's attenuation of the residual's harmonics, which the slaved value
+r/k_s drops at relative order n²/(2k_s²) in the rms of the n-th harmonic.
+
+(iii) *(the transfer)* Every statement of §5d about the averaged slow loop holds for the second-order plant with this ρ — Theorems D‴, D‴.21
+and D‴.23, Propositions D‴.5, D‴.9, D‴.12, D‴.17, D‴.24, D‴.27 and D‴.28 — and the tracking error of the position is the filtered residual
+of (ii).
+
+(iv) *(where the kernels live)* When f depends on one coordinate (a cogging torque on the position, a friction law on the velocity), kernels
+on that coordinate see the orbit as an interval, and the instance is §5d's one-dimensional one with another target. Isotropic Gaussian
+kernels on the phase plane over a circular orbit are over-parametrised: on the circle z = R(sin θ, cos θ) a kernel restricts to
+a·e^{−(R² + |c|²)/(2s²)}·e^{(R|c|/s²)cos(θ − θ_c)}, a von Mises function of three effective parameters for four, so the Gauss–Newton block has a
+zero eigenvalue for every kernel — a direction that the fixed prior's leak pins at the rate σ₀, that an adaptive prior leaves neutral
+(λ^− = 0, Theorem D‴.23(ii)), and that a projected prior keeps bounded (Proposition D‴.27).
+
+*Proof.* (i) ë = f + u − ẍ_m = r_Θ(z) − λė − k_s s, so ṡ = ë + λė = −k_s s + r_Θ(z), and ė = s − λe by the definition of s. (ii) The error
+subsystem (s, e) is linear, exponentially stable (eigenvalues −k_s and −λ) and driven by r_Θ(z), while the parameters move at the rate
+O(1/k_s) (their velocity is G∇_ϑ(sΦ̃) with s = O(1/k_s)); Theorem J's averaging uses only the exponential stability of the error channel
+and the smoothness of the regressor, and it carries over with the fast variable (s, e), the separation being between λ and the parameters'
+rate. At the slaved state z = z_m + O(1/k_s), and the period average of G∇_ϑ(sΦ̃(z_m; ϑ_i)) with s = r_Θ(z_m)/k_s is (1/k_s) times the averaged
+learning term. For the n-th harmonic of r, (d/dt + k_s)⁻¹ has the gain (k_s² + n²ω₀²)^{−1/2} = (1/k_s)(1 − n²ω₀²/(2k_s²) + …). (iii) The
+statements of §5d use the averaged loop only through ρ, the target on its support and the network. (iv) |z − c|² = R² + |c|² −
+2R|c|cos(θ − θ_c) on the circle; the map (a, |c|, θ_c, s) ↦ (a e^{−(R²+|c|²)/(2s²)}, R|c|/s², θ_c) has a one-dimensional fibre, along which the
+kernel's restriction, and hence f̂ on ρ's support, is constant. ∎
+
+*Status.* (i) and (iv) exact; (ii) and (iii) formal — Theorem J's argument transferred to the fast variable (s, e), not rewritten; (iii)
+covers the statements about the averaged loop, not the real-loop ones (Corollaries D‴.14 and D‴.26 would need the variational equation
+of (i)). The filtered error is the classical construction of adaptive control for higher-order plants, used with Gaussian networks by
+Sanner and Slotine ([1]); what is added is the transfer of the transport leaks, their floors and the adaptive and projected priors to such
+plants, and the over-parametrisation of phase-plane kernels on circular orbits as an excitation defect of the measure-space kind. Checked:
+`tests/test_sliding.py` (the phase-plane loop as the gradient flow of L̄; on a circular orbit exactly one zero Gauss–Newton eigenvalue per
+kernel, the next at least 10⁴ times larger relative to the largest; the servo's parameter displacement over ten periods within 3% of the
+averaged loop's at k_s = 25 and closer at k_s = 50, and its position error within 1% of both predictions of (ii) at k_s = 50).
+
+*Numerics* (`exp_servo_cogging.py` → `results/servo/servo_cogging.md`). The servo ẍ = −τ_cog(x) + u with the cogging torque
+τ_cog(x) = 0.4 sin(3x + 0.3) + 0.1 sin 7x, x_m = sin t, λ = 5; K₀ = 4 saturated Gaussian kernels on the position (a_max = 4, c_max = 1.6,
+widths in [0.05, 1]), masses 1/4, σ₀ = 0.01. (A) The best weighted approximant ϑ^b(q) is a nondegenerate critical point with the relative fit
+error 1.46·10⁻² — no exact representation, so Proposition D‴.28 is the analysis: the whitened unregularised Hessian Ã spans
+2.9·10⁻⁴σ₀–30σ₀ (two modes far below σ₀: the adaptive prior's slowest rates 1.4·10⁻⁴σ₀ at η = σ₀ and 2.9·10⁻⁴σ₀ at η = ∞, against the
+fixed prior's ≈ σ₀), the residual curvature's λ⁺_k ≤ 0.0098σ₀ (the adaptive prior's margins positive on all of
+W_g = {w > (0.061, 0.085, 0.119, 0.008)}), the fixed matching prior's floor law 1.29·10⁻² per unit of 1/m − 1/M and its margin
++9.9·10⁻³ at w = q. A misplaced prior — the approximant of the cogging model with the phase 0.5 in place of 0.3, its own fit error 0.200 —
+has a replicated stationary point (the same from its atoms and from ϑ^b(q)) with the fit error 5.45·10⁻² and the splitting margin
+−3.97·10⁻³: a D‴.5 saddle. (B) The averaged loop from warm clouds around ϑ^b(q) (m = 16, 64, 128 against M = 256, three seeds, 2000 slow
+units): with the matching prior the fixed prior's nearest-atom leak keeps a finite-size floor (‖f̂_m − f̂_M‖² 1.85·10⁻³, 2.24·10⁻⁴,
+4.49·10⁻⁵; fit error 0.174, 0.066, 0.038 against the approximant's 0.0146); the adaptive prior's floor is 38–780 times lower (η = ∞:
+4.85·10⁻⁵, 2.88·10⁻⁷, 6.36·10⁻⁸), with the fit error 0.0298, 0.0148, 0.0147 (the classes replicated at m = 64 and 128; at m = 16 not yet at
+s = 2000); the OT leak toward the matching prior sits at the approximant (fit error 0.01462, no floor); the classical σ-modification
+(ϑ⁰ = 0) keeps a large bias (fit error 0.328). With the misplaced prior the fixed designs keep a bias — their m-systems leave the saddle by
+splitting their classes (diameters 0.32–1.07) and end at 0.048 (OT; the nearest atom 0.10, 0.060, 0.048), below the replicated point's
+0.0545 — while the adaptive prior at η = ∞ is unaffected (the prior's initial position enters only through the first cells: the runs are
+the matching ones) and at η = σ₀ removes the bias more slowly (0.035, 0.020, 0.019 at s = 2000). (C) The real servo (k_s = 25, RK4 at
+dt = 2·10⁻³, 1000 time units, m = 16 and 64) from the averaged designs' end states: the position error's rms is 1.7–2.1·10⁻⁵ for the
+adaptive designs and the matching OT design, 7.8·10⁻⁵ for the misplaced OT design, 9.2·10⁻⁵–1.8·10⁻⁴ for the fixed nearest-atom prior and
+5.5·10⁻⁴ for the σ-modification, and it equals the prediction of (ii) with the exact filter to 1.0000–1.0029 in every design; with the
+slaved s = r/k_s the ratios are 0.93–0.996, the deficit largest for the adaptive designs, whose residual is the approximation error's fine
+scale (the harmonics n ≈ 7 of sin 7x, n²/(2k_s²) ≈ 4%).
 
 *Numerics* (`exp_chaos_learning.py` → `results/chaos/learning_table.md`). The instance: n = 1, saturated features with a_max = 4,
 c_max = 3, s ∈ [0.3, 2], prior ϑ⁰ = 0, G = diag(1, 0.25, 0.25); a plant of three Gaussian bumps, (A, C, S) = (1, −1.5, 0.5),
@@ -5583,10 +5815,12 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | D‴.18 | the real loop at k_e = 25, 8000 time units, sizes 3–240: the 3-atom orbit's Floquet exponents within 0.56–3.22 % of λ_j(H_q)/k_e and the ghosts' equal to (σ₀ − λ_j(R^G_k))/k_e to 3·10⁻⁴ (matching and shifted priors); inside the cells the per-particle distance to the lift decays at 2.69–2.97·10⁻⁴ for m ≥ 15 (prediction 2.83·10⁻⁴) with constants 1.03–1.29 under both leaks, the m = 3 runs mixtures of collective modes; across a cell boundary (ρ = 4.5) the nearest-atom leak ends at other counts (W² 1.9–12.3, that of the lifts of the realised weights; two of them inadmissible) and the OT leak at q (W² 0.010–0.23, falling at 2σ₀); one particle across a boundary: W² grows to 0.79, 0.20 (nearest) and falls to 3.0·10⁻³, 8.2·10⁻⁴ (OT); on a moving orbit (shifted prior) 2.18–2.63·10⁻⁴ against 2.27·10⁻⁴, constants 1.04–1.23; the proof's radius at most 0.019 | `exp_uniform_basin.py` → `results/chaos/uniform_basin.md`; `tests/test_uniform_basin.py` (at the shifted prior: the remainder constant and the exact N_a + N_b/m structure of the per-particle term, the separation response (GR_k − σ₀I)v, the contraction at μ = min{λ_coll, λ_sep} with one constant, the same for every m) |
 | D‴.20 | the critical excess by continuation in ε (Newton residuals ≤ 8.7·10⁻¹³): ε_c = 5.11, 13.5, 23.1, 65.0 for δ = 0.02–0.2 (the exact threshold equal to ε_c; the rank-one formula 1.22–1.31 and 0.70–1.22 times ε_c with the two atoms), 6.99, 14.6, 24.3 for an excess taken from one atom; δ_c(ε) = 0.0042–0.20 for ε = 1–64; dynamics for m = 15–510 at ε = 1, 4, 16, 64 over 600 slow units, continued to 6000: equalised at ε = 1; at ε = 4 stable end weights with residual excesses up to 1/60, 3/240, 7/510; at ε = 16 and 64 the stable systems keep their sampled weights and the four unstable ones move (one moving its excess to an atom that was at q); floors 0.55 and 0.74 of the nearest-atom law, 0.23–0.84 and 0.47–0.91 of the observed nearest-atom floors; fit errors 0.12–0.14 at ε = 64 | `exp_entropic_leak.py` → `results/chaos/entropic_leak.md`; `tests/test_entropic_leak.py` (the solvers, the gradient flow, the limits at their rates, the separation block entrywise with the invariance of the subspace, the critical regularisation by continuation in ε with A ≻ 0 checked and every residual below 10⁻⁹) |
 | D‴.21 | the averaged loop from the warm clouds (m = 15–510, four seeds, matching and shifted priors, both leaks, 600 slow units): (E), (P) to 6·10⁻¹³; under the OT leak no relabelling, α > 0 from s ≤ 300, ratio/λ ≥ 1.00 (matching) and ≥ 1.61 (shifted), E from 4.1·10⁻³–4.0·10⁻² to 8.3·10⁻⁷–8.1·10⁻⁶ below the a-posteriori bound, the end rate 0.01416–0.01417 against 2σ₀ = 0.01415 and λ = 0.0140–0.0141, at the shifted prior the curvature's cost 0.802 and (ii)'s slack 0.683; the nearest-atom E at the spurious minima's energy at the 22 admissible count vectors (within 0.24 %), split and still falling 0.5–16.5 % below it at the 10 inadmissible ones (m ≤ 60); (H*) on the whole space at the shifted prior (κ = 4.7·10⁻⁴, E₀ = 9.1·10⁻¹⁰), the a-priori basins holding no particle in another cell below m ≈ 1.7·10⁵ (matching) and 2.3·10⁶ (shifted); the margin +0.0023 with 1/30 of the particles moved into another cell, negative from 1/15 | `exp_ot_basin.py` → `results/chaos/ot_basin.md`; `tests/test_ot_basin.py` (the identities for every assignment with the counts and their exact defects at other counts, the PL chain and its sharp constant, the decay from a particle in another cell below the a-posteriori bound with a positive margin, the admissible nearest-atom spurious minimum) |
-| D‴.23 | the linear theory at the exact representation (h_j = 3.06·10⁻⁴–0.195; λ_1^− = 2.68·10⁻⁵–3.06·10⁻⁴ for η = σ₀/10 … ∞; (v)'s radius at most 2.0·10⁻⁵–2.2·10⁻⁴, 94–6·10⁴ times below the K₀-atom runs' starts, 2.2·10⁴–3.6·10⁵ below the warm clouds'); the fixed prior's bias within 4.8% of the first-order formula in norm (0.85 and 0.73 of it in modes 1 and 3, the error first order in the shift); the K₀-atom loop: every mode above 10⁻⁶ decays at λ_j^− (log-slopes 0.981–1.003 of it), fit error 9.78·10⁻³ → 1.8·10⁻⁵ (η = σ₀) and 6.7·10⁻⁶ (η = ∞) by s = 6000; separated starts (five draws): departures from the K₀-atom run second order in the separations, of the same expected size at m = 15 and 510; m = 15–510 from the warm clouds: ungated the prior is dragged by the transit (‖ȳ‖ 0.032–0.71 at s = 500) and one m = 15 system at η = ∞ is carried onto a plateau of the unregularised loss (Hessian eigenvalues −1.8·10⁻⁵, 7.2·10⁻⁵; still there at s = 23000, crossed by the gradient flow, below 10⁻¹² after 7.97·10⁴ more slow units); the transit gate leaves a residue in the weak modes (‖ȳ‖ 4.9·10⁻³–3.7·10⁻² against 1.3·10⁻³, η = σ₀); the settled gate (t_open = 1211–1304) opens replicated and follows the K₀-atom run for every m (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at η = ∞), fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵ against 9.78·10⁻³; the limits of (i): a non-replicated saddle held by the leak, and unbounded adaptive solutions, beyond the saturation and from an exact six-kernel fit (the width coordinate running off toward a Karush–Kuhn–Tucker point of the box-constrained loss) | `exp_adaptive_prior.py` → `results/chaos/adaptive_prior.md`; `tests/test_adaptive_prior.py` (the gradient structure, stationarity, the linearisation's rates and its self-adjointness in the gradient-flow metric, the first-order bias, the two gates, the limits of (i)) |
-| D‴.24 | the floor as the bias: F equal to the bias form to the finite-difference error (1.1·10⁻⁶–1.2·10⁻⁸); the law (B) 1.36·10⁻², 6.17·10⁻², 0.229 per unit of 1/m − 1/M at σ₀/σ_crit = 0.05, 0.15, 0.5 (0.50–0.84 of the bound, which is σ₀/4 times the adaptive prior's coupled-distance law 46.3), modes 2–6 carrying 98–99% of it and 97% unweighted, the weight moving the shares toward h ≈ σ₀; the parameter split to 1.4·10⁻⁷, the adaptive prior's coupled-distance law 1.4–5.3 times the fixed prior's; 5 of the 12 sampled m-systems are fixed-prior saddles (class 1, w₁ ≥ 0.4) and split (floors 0.81–1.01 of the replicated point's), the exact bias at the sampled weights reproduces the floor at the other seven (ratio 1.0000), the delta method misses it by 0.86–1.72; the nearest-atom leak over 6000 slow units: the fixed prior's floor stays, the adaptive prior's decreases without a floor (at most 2.0·10⁻⁶ at η = σ₀ and 5.4·10⁻⁸ at η = ∞ over the representable samples at s = 6000); D 0.94–1.00 of the replicated stationary points' under both priors, the adaptive prior's 1.72–4.81 times the fixed prior's; W² the cross-class transport (0.67–0.99 of it), the two priors' W² within 1.00–1.32; the boundary sample (8, 4, 3)/15 decays like 1/s (6000·‖f̂_m − f̂_M‖² = 0.88 and 0.42 against 0.8 and 0.4); the design table at the misplaced prior (the fit error and the floor of the four designs; the OT designs' D the largest, 6.0–1.0, the transit's mismatch; the ranking at s = 1250 and 2000); the real loop: the fixed prior at the averaged floor (ratios 0.996–1.001; the m = 15 run on a saddle orbit), the adaptive prior along the averaged decay (0.987–0.992), the exact representation invariant (five-period rms ≤ 9.0·10⁻¹²); the instance's probabilities (outside W 0.361, 0.074, 0.0021; Hoeffding 1.87, 0.60, 0.036; the fixed prior's saddles 0.369, 0.260, 0.109) and the adaptive prior's expected limiting floor (≥ 7.3·10⁻³, 2.2·10⁻⁴, 6.6·10⁻⁷: 1.8, 0.24, 0.005 times the fixed prior's law); Monte Carlo (600 nested samples): the exact floor 2.78, 1.53, 1.11 times the law; in two dimensions (four kernels, p = 5, σ₀ = 0.05, six seeds): every sample D‴.5-admissible and the fixed prior's floor the exact bias at the sampled weights (ratio 1.0000 in all 18 systems), the adaptive prior's at most 0.019 (η = σ₀) and 0.006 (η = ∞) of it at the 7 representable systems and still falling, the real loop along the averaged prediction (0.979–1.009) and invariant from the exact representation (≤ 4.7·10⁻¹⁰) | `exp_adaptive_floor.py` → `results/chaos/adaptive_floor.md`; `tests/test_adaptive_floor.py` (the nearest-atom adaptive flow as a gradient flow, the free-mass energy as the minimum of the OT energy over the masses, also against masses moved by ±1/m, the floor law as the bias derivative with the weight's band-pass against the unweighted shares, the exact representation of a D‴.5-admissible sample stationary under the adaptive prior and the margins σ₀ at a fixed-prior saddle, the parameter split, the energy across a cell crossing and an empty cell) |
-| D‴.26 | the three-bump instance, w = (6, 5, 4)/15 (representable; a fixed-prior saddle), the real loop with the adaptive prior in the state, η = σ₀ and ∞, k_e = 25 and 50, the monodromy by central differences (step 10⁻⁵, DOP853 at rtol 10⁻¹³): return residuals ≤ 1.7·10⁻¹⁵; at m = 15 and 30 the 36 and 81 separation exponents at σ₀/k_e to ≤ 1.7·10⁻⁶ (relative), the other 18 (η = σ₀) or 9 (η = ∞) equal to the weighted K₀-atom loop's to 1.4·10⁻⁵–6.4·10⁻⁴; the K₀-atom loop's slow-time rates within 4.4·10⁻³ (k_e = 25) and 1.2·10⁻³ (k_e = 50) of λ_j^±(w), a factor 3.80 (k_e^{−1.93}) | `exp_adaptive_floquet.py` → `results/chaos/adaptive_floquet.md`; `tests/test_adaptive_floquet.py` (the return of one period at m = 6, the nine separation exponents at σ₀/k_e, the collective exponents the K₀-atom loop's, the latter within the averaging correction of the prediction) |
-| D‴.27 | the box 𝒵 (amplitudes and centres to 0.9 of a_max, c_max; the width coordinate in [−6, 6]): beyond the saturation (Part G(b)'s target) the projected prior converges at η = σ₀ (projected midpoint rule to s = 10⁵) and η = ∞ (LSODA) to the same bounded stationary point (drift ≤ 1.8·10⁻¹⁵), the prior's amplitude atom on the face, fit error 0.1415 against the fixed prior's 0.1750 and the unprojected limit 0.1050; the particles' largest distance from 𝒵 0.92 and 0.89 against B/σ₀ = 3686; the misplaced-prior run identical with and without 𝒵 | `exp_adaptive_prior.py` Part H → `results/chaos/adaptive_prior.md`; `tests/test_adaptive_prior.py` (the projected prior bounded and convergent at η = ∞, in its box with the particles bounded and 𝒥 non-increasing at η = σ₀, inactive near the exact representation) |
+| D‴.23 | the linear theory at the exact representation (h_j = 3.06·10⁻⁴–0.195; λ_1^− = 2.68·10⁻⁵–3.06·10⁻⁴ for η = σ₀/10 … ∞; (v)'s radius at most 2.0·10⁻⁵–2.2·10⁻⁴, 94–6·10⁴ times below the K₀-atom runs' starts, 2.2·10⁴–3.6·10⁵ below the warm clouds'); the fixed prior's bias within 4.8% of the first-order formula in norm (0.85 and 0.73 of it in modes 1 and 3, the error first order in the shift); the K₀-atom loop: every mode above 10⁻⁶ decays at λ_j^− (log-slopes 0.981–1.003 of it), fit error 9.78·10⁻³ → 1.8·10⁻⁵ (η = σ₀) and 6.7·10⁻⁶ (η = ∞) by s = 6000; separated starts (five draws): departures from the K₀-atom run second order in the separations, consistent with the same expected size at m = 15 and 510; m = 15–510 from the warm clouds: ungated the prior is dragged by the transit (‖ȳ‖ 0.032–0.71 at s = 500) and one m = 15 system at η = ∞ is carried onto a plateau of the unregularised loss (Hessian eigenvalues −1.8·10⁻⁵, 7.2·10⁻⁵; still there at s = 23000, crossed by the gradient flow, below 10⁻¹² after 7.97·10⁴ more slow units); the transit gate leaves a residue in the weak modes (‖ȳ‖ 4.9·10⁻³–3.7·10⁻² against 1.3·10⁻³, η = σ₀); the settled gate (t_open = 1211–1304) opens replicated and follows the K₀-atom run for every m (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at η = ∞), fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵ against 9.78·10⁻³; the limits of (i): a non-replicated saddle held by the leak, and unbounded adaptive solutions, beyond the saturation and from an exact six-kernel fit (the width coordinate running off toward a Karush–Kuhn–Tucker point of the box-constrained loss) | `exp_adaptive_prior.py` → `results/chaos/adaptive_prior.md`; `tests/test_adaptive_prior.py` (the gradient structure, stationarity, the linearisation's rates and its self-adjointness in the gradient-flow metric, the first-order bias, the two gates, the limits of (i)) |
+| D‴.24 | the floor as the bias: F equal to the bias form to the finite-difference error (1.1·10⁻⁶–1.2·10⁻⁸); the law (B) 1.36·10⁻², 6.17·10⁻², 0.229 per unit of 1/m − 1/M at σ₀/σ_crit = 0.05, 0.15, 0.5 (0.50–0.84 of the bound, which is σ₀/4 times the adaptive prior's coupled-distance law 46.3), modes 2–6 carrying 98–99% of it and 97% unweighted, the weight moving the shares toward h ≈ σ₀; the parameter split to 1.4·10⁻⁷, the adaptive prior's coupled-distance law 1.4–5.3 times the fixed prior's; 5 of the 12 sampled m-systems are fixed-prior saddles (class 1, w₁ ≥ 0.4) and split (floors 0.81–1.01 of the replicated point's), the exact bias at the sampled weights reproduces the floor at the other seven (ratio 1.0000), the delta method misses it by 0.86–1.72; the nearest-atom leak over 6000 slow units: the fixed prior's floor stays, the adaptive prior's decreases without a floor (at most 2.0·10⁻⁶ at η = σ₀ and 5.4·10⁻⁸ at η = ∞ over the representable samples at s = 6000); D 0.94–1.00 of the replicated stationary points' under both priors, the adaptive prior's 1.72–4.81 times the fixed prior's; W² the cross-class transport (0.67–0.99 of it), the two priors' W² within 1.00–1.32; the boundary sample (8, 4, 3)/15 decays like 1/s (6000·‖f̂_m − f̂_M‖² = 0.88 and 0.42 against 0.8 and 0.4); the design table at the misplaced prior (the fit error and the floor of the four designs; the OT designs' D the largest, 6.0–1.0, the transit's mismatch; the ranking at s = 1250 and 2000); the real loop: the fixed prior at the averaged floor (ratios 0.996–1.001; the m = 15 run on a saddle orbit), the adaptive prior along the averaged decay (0.987–0.992), the exact representation invariant (five-period rms ≤ 9.0·10⁻¹²); the instance's probabilities (outside W 0.361, 0.074, 0.0021; Hoeffding 1.87, 0.60, 0.036; the fixed prior's saddles 0.369, 0.260, 0.109) and the adaptive prior's expected limiting floor (≥ 7.3·10⁻³, 2.2·10⁻⁴, 6.6·10⁻⁷: 1.8, 0.24, 0.005 times the fixed prior's law); Monte Carlo (600 nested samples): the exact floor 2.78, 1.53, 1.11 times the law; in two dimensions (four bumps, p = 5, σ₀ = 0.05, six seeds): every sample D‴.5-admissible and the fixed prior's floor the exact bias at the sampled weights (ratio 1.0000 in all 18 systems), the adaptive prior's at most 0.019 (η = σ₀) and 0.006 (η = ∞, the atoms reset every slow unit) of it at the 7 representable systems and still falling, the real loop (η = ∞) along the averaged prediction (0.979–1.009) and invariant from the exact representation (≤ 4.7·10⁻¹⁰) | `exp_adaptive_floor.py` → `results/chaos/adaptive_floor.md`; `tests/test_adaptive_floor.py` (the nearest-atom adaptive flow as a gradient flow, the free-mass energy as the minimum of the OT energy over the masses, also against masses moved by ±1/m, the floor law as the bias derivative with the weight's band-pass against the unweighted shares, the exact representation of a D‴.5-admissible sample stationary under the adaptive prior and the margins σ₀ at a fixed-prior saddle, the parameter split, the energy across a cell crossing and an empty cell) |
+| D‴.26 | the three-bump instance, w = (6, 5, 4)/15 (representable; a fixed-prior saddle), the real loop with the adaptive prior in the state, η = σ₀ and ∞, k_e = 25 and 50, the monodromy by central differences (step 10⁻⁵, DOP853 at rtol 10⁻¹³): return residuals ≤ 1.7·10⁻¹⁵; at m = 15 and 30 the 36 and 81 separation exponents at σ₀/k_e to ≤ 1.7·10⁻⁶ (relative), the other 18 (η = σ₀) or 9 (η = ∞) equal to the weighted K₀-atom loop's to 1.4·10⁻⁵–6.4·10⁻⁴; the collapsed variational equation (its generator the real loop's linearisation to 5.8·10⁻¹¹, its exponents the differences' to 4.1·10⁻⁵) at k_e = 12.5–400 for x_m = 2 sin t and 2 sin t + 0.8 sin 2t (‖Ā₁‖ = 0 and 5.6·10⁻³, skew): the first-order deviations falling by → 4 per doubling (the slowest mode 13.6% and 3.84% below at k_e = 25, 50; every mode below), the second-order residuals by → 16 (4.9·10⁻⁷ at k_e = 400), c₁/λ₁ = −100.6 (the filter's part −102.1), measured −100.5 at k_e = 400; the error channel by Liouville's formula within O(k_e⁻³) of k_e − tr H_L(w)/k_e | `exp_adaptive_floquet.py` (Part C: `--only-C`) → `results/chaos/adaptive_floquet.md`; `tests/test_adaptive_floquet.py` (at w = q, η = ∞, m = 6: the return of one period, the nine separation exponents, the K₀-atom loop's spectrum within the averaging correction; at (2, 1, 1)/4, η = σ₀, m = 4, the prior in the state: the real loop's Jacobian splitting into the separations and the collapsed variational equation, the monodromy's 3 separation and 18 collective exponents, the second-order prediction; on an asymmetric reference: Ā₁ skew, the residual O(k_e⁻⁴), c₁ measured, Liouville's formula) |
+| D‴.27 | the box 𝒵 (amplitudes and centres to 0.9 of a_max, c_max; the width coordinate in [−6, 6]): beyond the saturation (Part G(b)'s target) the projected prior converges at η = σ₀ (the projected midpoint rule, positions projected, dt = 0.25 and 0.125, to s = 10⁵; end states within 3.4·10⁻¹²) and η = ∞ (LSODA) to the same bounded stationary point (drift ≤ 3.5·10⁻¹⁵), the prior's amplitude atom on the face, fit error 0.1415; the particles' largest distance from 𝒵 0.92 and 0.89 against B/σ₀ ≤ 3686; the amplitude bound 0.7, 0.75, 0.8, 0.9, 0.95, 0.99 of a_max: fit errors 0.1736–0.1101, between the fixed prior's 0.1750 and the unprojected 0.1050; on Part G(a)'s four-bump target the width coordinate stopped at the face κ = 6 from s = 10⁹ (fit error within 9.3·10⁻⁷ of the face minimiser's); the misplaced-prior run identical with and without 𝒵, the box never approached (margins ≥ 17% of its width) | `exp_adaptive_prior.py` Part H → `results/chaos/adaptive_prior.md`; `tests/test_adaptive_prior.py` (the projected prior bounded and convergent at η = ∞, while the unprojected coordinate passes 11 by s = 10⁴; at η = σ₀ and dt = 0.125 the prior in its box with its amplitude atom on the face, the particles bounded and 𝒥 non-increasing; inactive near the exact representation) |
+| D‴.28 | the three-bump instance plus ε·exp(−(x − 0.8)²/(2·0.3²)), ε = 0–0.5: the approximant's fit error 3.6·10⁻³–2.5·10⁻² (ε = 0.05–0.5), the gauge check (Newton's critical point at the gauge transform to 0.0, f̂ to ≤ 7.8·10⁻¹⁶), the adaptive prior's sensitivity ≤ 2.3·10⁻¹¹ of the fixed prior's, the fixed prior's within 2·10⁻⁹ of σ₀Ĵ(Ã + σ₀I)⁻¹g̃ and 7·10⁻⁴–3·10⁻³ of the Gauss–Newton form, the margins σ₀ − (q_k/w_k)λ⁺_k exact to 10⁻¹⁴ over all count vectors of m = 15, 60 (none negative: λ⁺ ≤ 0.04σ₀ at ε ≤ 0.3, ≤ 0.11σ₀ at ε = 0.5); the dynamics (m = 15, 60, 240 against 510, four seeds, ε = 0.1 and 0.3, 6000 slow units): the fixed prior's floor constant from s = 600 (3.1·10⁻⁴–5.9·10⁻³ at m = 15, ε = 0.1) and its fit error above the approximant's, the adaptive priors' floor falling (m = 60, ε = 0.1: to 1.0·10⁻⁹–1.4·10⁻⁸ at η = σ₀, 3.2·10⁻¹¹–3.8·10⁻⁹ at η = ∞) and the fit error to the approximant's (median excess 1.2·10⁻⁴, 1.2·10⁻⁴, 1.6·10⁻⁵ at m = 15, 60, 240 for the samples 0.02 inside W_g), an error kept at the sample outside W_g | `exp_gauge_floor.py` → `results/chaos/gauge_floor.md`; `tests/test_gauge_floor.py` (the gauge's critical points and function, the two sensitivities, the residual curvature's structure and the margins, the adaptive prior's convergence to the gauge transform) |
+| D‴.29 | the servo ẍ = −τ_cog(x) + u, τ_cog = 0.4 sin(3x + 0.3) + 0.1 sin 7x, x_m = sin t, λ = 5, K₀ = 4 kernels on the position, σ₀ = 0.01: the approximant's fit error 1.46·10⁻², Ã spanning 2.9·10⁻⁴σ₀–30σ₀, λ⁺_k ≤ 0.0098σ₀, W_g = {w > (0.061, 0.085, 0.119, 0.008)}, the floor law 1.29·10⁻²; the misplaced prior's replicated point a saddle (margin −3.97·10⁻³, fit error 0.0545); the averaged loop (m = 16, 64, 128 against 256, three seeds, 2000 slow units): fixed nearest atom floor 1.85·10⁻³, 2.24·10⁻⁴, 4.49·10⁻⁵ and fit error 0.174–0.038, adaptive (η = ∞) 4.85·10⁻⁵, 2.88·10⁻⁷, 6.36·10⁻⁸ and 0.0298–0.0147, OT 0.01462 with no floor, σ-modification 0.328; misplaced: the fixed designs split and end at 0.048–0.10, the adaptive prior unaffected at η = ∞; the real servo (k_s = 25, 1000 time units): position-error rms 1.7–2.1·10⁻⁵ (adaptive, OT), 9.2·10⁻⁵–1.8·10⁻⁴ (fixed), 5.5·10⁻⁴ (σ-modification), at the exactly filtered prediction to 1.0000–1.0029 | `exp_servo_cogging.py` (`--only-A` recomputes Part A) → `results/servo/servo_cogging.md`; `tests/test_sliding.py` (the phase-plane loop as the gradient flow of L̄, the zero Gauss–Newton eigenvalue per kernel on a circular orbit, the servo following the averaged loop with the position error at both predictions) |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -5786,7 +6020,7 @@ Each branch states what is proved, what is open, and the first concrete step.
      Gauss–Newton spectrum of the K₀-atom loss — sets both a fixed prior's bias, the fraction σ₀/(h_j + σ₀) of its error kept in mode j,
      and an adaptive prior's rates λ_j^− < min{h_j, η} (h_j, η > 0): removing the leak's bias costs the excitation of every collective
      mode, and the leak's a-priori bound on the parameters (the leak toward an adaptive prior is an internal force, and the solutions can
-     run off where no exact representation exists; projecting the prior onto a convex set restores the bound, Proposition D‴.27) — the measure-space form of the classical trade-off between a leak's robustness and
+     run off where no exact representation exists; projecting the prior onto a compact convex set restores the bound, Proposition D‴.27) — the measure-space form of the classical trade-off between a leak's robustness and
      persistent excitation (an unexcited mode, h_j = 0, drifts with the prior).
    - *Done (Proposition D‴.24(i)):* the same spectrum sets the finite-size floor of a fixed prior, each mode weighted by the band-pass
      h_jσ₀²/(h_j + σ₀)² ≤ σ₀/4, centred at h = σ₀ — the floor sits in the modes that carry the gauge's displacement, re-weighted toward the
@@ -5829,15 +6063,30 @@ Each branch states what is proved, what is open, and the first concrete step.
      adaptation starts from the fixed-prior stationary point (a gate). *Open:* the real loop with an adaptive prior over the adaptation's own
      time scale beyond the linearisation (Corollary D‴.26); the plateaus of the unregularised loss that the fast limit exposes; the
      constants of (v).
-   - *Done (Corollary D‴.26):* perfect tracking with an adaptive prior is a linearly exponentially stable periodic solution of the real
-     loop at every representable sample: its Floquet exponents are σ₀/k_e exactly on the separations and the weighted K₀-atom loop's on the
-     collapsed subspace, for every m, and the latter are (1/k_e)λ_j^±(w) + O(k_e⁻²). *Open:* its basin uniformly in m (Theorem D‴.18's
-     contraction for the joint system).
-   - *Done (Proposition D‴.27):* the a-priori bound restored. Confining the adaptive prior's atoms to a closed convex set keeps every
-     particle within B/σ₀ of it whatever the target, the energy non-increasing; inside the set the bias removal of Theorem D‴.23 is
-     unchanged, outside a bounded bias remains; at η = ∞ on collapsed classes it is a continuous switching σ-modification. *Open:* the
-     choice of the set as a design input (how large a box keeps every representable target inside), and a sharper bound than the
-     worst-case force B.
+   - *Done (Corollary D‴.26):* perfect tracking with an adaptive prior is an exponentially stable periodic solution of the real loop
+     (locally, for each m) at every representable sample: its Floquet exponents are σ₀/k_e exactly on the separations and the weighted
+     K₀-atom loop's on the collapsed subspace, for every m, and the latter are (1/k_e)[λ_j^±(w) + c_j^±(w)/k_e² + O(k_e⁻⁴)] — the odd orders
+     vanish (skewness, time-reversal symmetry), c_j explicit, the error filter slowing every mode. *Open:* its basin uniformly in m (Theorem
+     D‴.18's contraction for the joint system); a bound on the O(k_e⁻⁴) remainder.
+   - *Done (Proposition D‴.28):* the adaptive prior's floor removal is a property of the amplitude–mass gauge, not of exact
+     representability: at any nondegenerate critical point of the unregularised loss the gauge transform is the critical point at the
+     sampled weights, with the same function, so the function-level floor vanishes on the gauge set W_g whatever the approximation error;
+     the fixed prior's floor is the bias formula with the full Hessian; the residual curvature scales exactly by q_k/w_k under the gauge, so
+     the adaptive prior's splitting margins are σ₀ − (q_k/w_k)λ⁺_k. *Open:* critical points at infinity (the best approximant on the
+     saturation boundary, as for a sharp friction step or a cogging function that two kernels fit as a dipole), where only the projected
+     prior keeps the parameters bounded.
+   - *Done (Proposition D‴.29):* second-order plants. With the sliding variable s = ė + λe the error channel is Theorem J's with s in
+     place of e, so the averaged slow loop — and with it every averaged-loop statement of §5d — holds along the regressor's orbit, the
+     position error being the residual filtered by (d/dt + λ)⁻¹(d/dt + k_s)⁻¹; on a cogging-torque servo whose torque four kernels cannot
+     represent, the adaptive prior removes the fixed prior's floor and a misplaced prior's bias, and the real servo follows the filtered
+     prediction to 0.3%. *Open:* the real-loop statements (Corollaries D‴.14, D‴.26) for second-order plants; velocity-dependent friction,
+     whose best approximant by a few kernels lies at infinity, with the projected prior in the real loop; measurement noise.
+   - *Done (Proposition D‴.27):* the a-priori bound restored. Confining the adaptive prior's atoms to a compact convex set keeps every
+     particle within B/σ₀ of it (eventually) whatever the target, the energy non-increasing and, at η = ∞, every solution convergent; inside
+     the set the bias removal of Theorem D‴.23 is unchanged, and where the limit has an atom on the boundary a bounded bias remains — the box
+     trading the fit error against the parameters' bound; at η = ∞ on collapsed classes it is a switching σ-modification toward the set.
+     *Open:* the convergence at finite η (the Kurdyka–Łojasiewicz argument with the indicator), the choice of the set as a design input
+     (how large a box keeps every representable target inside), and a sharper bound than the worst-case force B.
    - *Done (Proposition D‴.24):* the masses minimised out of the leak's own energy are the cell masses (min_q W²(μ, ν_{Z,q}) is the
      nearest-atom distortion), so the nearest-atom leak toward an adaptive prior is the OT leak with free masses — and the function-level
      floor does not return at the representable samples (those outside W, of probability exponentially small in m but 0.36 at m = 15 on the

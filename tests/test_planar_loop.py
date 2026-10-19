@@ -1,6 +1,6 @@
 """The averaged slow loop on ℝⁿ (src/core/planar_loop.py) and Proposition D‴.24 in two dimensions. For n = 1 the loop is the scalar one of
 chaos_learning; for n = 2 its learning term is minus m times the gradient of L̄ (finite differences) and the average over the orbit of the
-real loop's gradient law at the error r(x); the exact representation of admissible sampled weights, lifted with the adaptive prior at its
+real loop's gradient law at the error r(x); the exact representation of representable sampled weights, lifted with the adaptive prior at its
 atoms, is stationary for the nearest-atom adaptive dynamics while the fixed prior's weighted stationary point there is biased; and the
 function-level weight-sensitivity of the fixed prior is the weight-derivative of its bias, F = Ĵσ₀(H_L + σ₀I)⁻¹∂_wx⁰, with the mode terms
 summing to the law and the law below the bound (σ₀/4)tr(∂_wx⁰C̃∂_wx⁰ᵀ)."""
@@ -66,9 +66,9 @@ def test_the_learning_term_is_the_loss_gradient_and_the_orbit_average_of_the_rea
     assert np.abs(lrn - avg).max() < 1e-14
 
 
-def test_the_exact_representation_of_admissible_sampled_weights_is_stationary_for_the_adaptive_prior():
+def test_the_exact_representation_of_representable_sampled_weights_is_stationary_for_the_adaptive_prior():
     net, loop, exact = _planar()
-    counts = np.array([6, 4, 5, 5]); w = counts / counts.sum()                   # admissible: w > (0.2, 0.15, 0.175, 0.15)
+    counts = np.array([6, 4, 5, 5]); w = counts / counts.sum()                   # representable: w > (0.2, 0.15, 0.175, 0.15)
     assert np.all(w > np.abs(A2).max(axis=1) / net.a_max)
     e = exact(w)
     Th = e[np.repeat(np.arange(4), counts)]
@@ -105,3 +105,26 @@ def test_the_floor_is_the_weight_derivative_of_the_leaks_bias_in_two_dimensions(
     terms = hs * SIGMA0 ** 2 / (hs + SIGMA0) ** 2 * np.einsum('jk,kl,jl->j', z, Ct, z)
     assert abs(np.sum(terms) / law - 1) < 1e-3                                    # the mode terms sum to the law …
     assert law < 0.25 * SIGMA0 * np.trace(dx0 @ Ct @ dx0.T)                       # … which is below the bound
+
+
+def test_the_finite_eta_branch_of_run_is_a_second_order_scheme_of_the_frozen_cell_flow():
+    """run() with a finite η (the prior in the state) against DOP853 on the same flow with the cells frozen: errors falling by 4 per halving
+    of dt."""
+    from scipy.integrate import solve_ivp
+    net, loop, exact = _planar(n_quad=96)
+    counts = np.array([6, 4, 5, 5]); w = counts / counts.sum()
+    rng = np.random.default_rng(3)
+    Th0 = exact(w)[np.repeat(np.arange(4), counts)] + 0.05 * rng.standard_normal((20, 5))
+    Z0 = exact(Q4) + 0.05 * rng.standard_normal((4, 5))
+    eta, S = 10 * SIGMA0, 20.0
+    lab = PL.cells(Th0, Z0, G2)
+
+    def f(s, v):
+        Th, Z = v[:100].reshape(20, 5), v[100:].reshape(4, 5)
+        return np.concatenate([loop.drift(Th, Z[lab]).ravel(), (-eta * (Z - PL.cell_means(Th, lab, Z))).ravel()])
+    ref = solve_ivp(f, (0.0, S), np.concatenate([Th0.ravel(), Z0.ravel()]), method='DOP853', rtol=1e-12, atol=1e-14).y[:, -1]
+    errs = []
+    for dt in (0.5, 0.25):
+        Th, Z = PL.run(loop, Th0, Z0, S, dt, eta=eta, cell_every=10 ** 9)
+        errs.append(np.abs(np.concatenate([Th.ravel(), Z.ravel()]) - ref).max())
+    assert errs[1] < 1e-4 and 3.5 < errs[0] / errs[1] < 4.5                            # second order

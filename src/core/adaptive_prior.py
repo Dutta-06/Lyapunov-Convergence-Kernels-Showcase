@@ -103,13 +103,15 @@ class AdaptivePriorLoop:
         out[nz] = (gamma.T @ Th)[nz] / w[nz, None]
         return out
 
-    def drift(self, Th, Z, gamma):
-        """(dΘ/ds, dZ/ds) for the plan γ (finite η); for η = ∞ the prior is replaced by the barycentres and dZ/ds is not used."""
+    def drift(self, Th, Z, gamma, tangent=True):
+        """(dΘ/ds, dZ/ds) for the plan γ (finite η: with a box, the prior's velocity projected onto the tangent cone of the box at Z — the
+        projected flow — unless tangent=False); for η = ∞ the prior is replaced by the barycentres and dZ/ds is not used."""
         m = Th.shape[0]
         if np.isinf(self.eta):
             Zb = self.project(self.bary(Th, gamma, Z))
             return self.loop.drift(Th, m * (gamma @ Zb)), np.zeros_like(Z)
-        return self.loop.drift(Th, m * (gamma @ Z)), self.tangent(Z, -self.eta * (Z - self.bary(Th, gamma, Z)))
+        V = -self.eta * (Z - self.bary(Th, gamma, Z))
+        return self.loop.drift(Th, m * (gamma @ Z)), (self.tangent(Z, V) if tangent else V)
 
     def energy(self, Th, Z):
         """𝒥(μ_Θ, Z) = L̄(μ_Θ) + (σ₀/2)W²(μ_Θ, ν_Z) with an optimal plan (for η = ∞ evaluate it at Z = the barycentres of an optimal plan)."""
@@ -134,7 +136,11 @@ class AdaptivePriorLoop:
         gate = True (or 'transit') freezes the prior while mass is in transit (checked at every plan refresh): the class barycentres of the
         plan then contain particles of other clusters, and an adaptive prior would be dragged toward them. gate = 'settled' also waits, the
         first time, until the fixed-prior drift is below settle_tol, so that the adaptation starts from the fixed-prior stationary point.
-        `callback(s, Th, Z, adapting)` at the records. Returns (Θ, Z, the first time the prior adapted)."""
+        `callback(s, Th, Z, adapting)` at the records. With a box (Proposition D‴.27) the step projects positions, not velocities:
+        Z_mid = Π(Z + (dt/2)v(Z)), Z_new = Π(Z + dt·v(Z_mid)), v the unprojected velocity of the prior; its fixed points on a face are the
+        projected flow's stationary points. (Projecting the velocity onto the tangent cone at Z_mid instead stalls the prior just inside a
+        face whenever the midpoint lies past it: referee round 19, D3n-2.) Without a box the step is the plain midpoint rule. Returns
+        (Θ, Z, the first time the prior adapted)."""
         Th = np.array(Th, float); Z = np.array(Z, float)
         n = int(round(S_end / dt))
         gamma, adapting, t_open = None, True, float('nan')
@@ -158,8 +164,8 @@ class AdaptivePriorLoop:
                 break
             self.eta = eta if adapting else 0.0
             if adapting or not np.isinf(eta):
-                k1T, k1Z = self.drift(Th, Z, gamma)
-                k2T, k2Z = self.drift(Th + 0.5 * dt * k1T, Z + 0.5 * dt * k1Z, gamma)
+                k1T, k1Z = self.drift(Th, Z, gamma, tangent=False)
+                k2T, k2Z = self.drift(Th + 0.5 * dt * k1T, self.project(Z + 0.5 * dt * k1Z), gamma, tangent=False)
             else:                                                          # η = ∞ but gated: the fixed-prior OT leak
                 m = Th.shape[0]
                 k1T = self.loop.drift(Th, m * (gamma @ Z)); k1Z = np.zeros_like(Z)

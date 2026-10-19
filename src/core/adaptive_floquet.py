@@ -10,8 +10,16 @@ the atom z_{π(i)} of their class, and the atoms move toward the class means at 
 ϑ̄_j the mean of class j (η = ∞: z_j = ϑ̄_j, eliminated). The classes are frozen: exact near a replicated configuration whose particles lie
 inside their cells. With Θ the lift of an exact representation ϑ^e(w) of the sampled weights and Z = ϑ^e(w), the plant on the reference is
 a T₀-periodic solution with e ≡ 0 (Proposition D‴.24(vi)); this module gives the loop with the prior in the state, the lift, and the
-predicted slow Floquet exponents (1/k_e)·{σ₀ on the separations, λ_j^±(w) on the collective pairs} of Theorem D‴.23(ii) at the weights w.
-`lifted_orbit.monodromy_fd` and `periodic.floquet_exponents` compute the actual ones.
+predicted slow Floquet exponents (1/k_e)·{σ₀ on the separations, λ_j^±(w) on the collective pairs} of Theorem D‴.23(ii) at the weights w;
+`monodromy` (central differences of the period map) and `periodic.floquet_exponents` compute the actual ones.
+
+`CollapsedVariational` is the variational equation along the lift restricted to the collapsed subspace (the weighted K₀-atom loop's
+linearisation) in the whitened weighted coordinates, where it is the adjoint pair δė = −k_eδe − Ĵ(t)y, ẏ = Ĵ(t)ᵀδe − (σ₀/k_e)(y − ζ),
+ζ̇ = −(η/k_e)(ζ − y): its monodromy by integrating the variational equation (no differences), the error channel's exponent by Liouville's
+formula, and the averaged generator of the slow block to second order in 1/k_e (Corollary D‴.26(c)): after the slaving of δe,
+dY/ds = (B₀ + εB₁ + ε²B₂)Y in slow time (ε = 1/k_e), B₀ = C − J̄ᵀJ̄, B₁ = J̄ᵀJ̄̇, B₂ = −J̄ᵀJ̄̈ + J̄ᵀJ̄C − (J̄ᵀJ̄)² (J̄ = Ĵ on the y block, C the
+leak and the prior), and the near-identity averaging gives Ā₀ = ⟨B₀⟩, Ā₁ = ⟨B₁⟩ + ⟨B̃₀U₁⟩ (skew in the metric diag(I, (σ₀/η)I)), Ā₂ =
+⟨B₂⟩ + ⟨B₁U₁⟩ + ⟨B₀U₂⟩ (U₁′ = B̃₀, U₂′ = B₁ + B₀U₁ − U₁Ā₀ − Ā₁, zero means).
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -102,3 +110,138 @@ def monodromy(cl, z_p, m, fd=1e-5, rtol=1e-13, atol=1e-15):
         DP[:, j] = (period_map(cl, z_p + e, m, rtol, atol) - period_map(cl, z_p - e, m, rtol, atol)) / (2 * h)
     return DP
 
+
+
+# ---------------------------------------------------------------------- the variational equation on the collapsed subspace
+def whitened_jacobian(net, x, atoms, w, G):
+    """Ĵ(x), (n, K₀p): the whitened weighted Jacobian of f̂ on the collapsed subspace at the K₀-atom configuration `atoms` (K₀, p) with the
+    weights w, Ĵ[r, (k, l)] = √w_k √G_l ∂_{ϑ_kl}Φ̃_r(x; ϑ_k). With y_k = √w_k G^{−1/2}δϑ_k the linearised error injection is Ĵy and the
+    learning law's linearisation at e = 0 is ẏ = Ĵᵀδe: the two are exactly adjoint."""
+    x = np.atleast_1d(np.asarray(x, float))
+    n = net.n
+    atoms = np.asarray(atoms, float)
+    sc = np.sqrt(np.asarray(w, float))[:, None] * np.sqrt(np.asarray(G, float))[None, :]
+    out = np.empty((n, atoms.size))
+    for r in range(n):
+        e = np.zeros(n); e[r] = 1.0
+        out[r] = (sc * net.grad_g(x, e, atoms)).ravel()
+    return out
+
+
+class CollapsedVariational:
+    """The variational equation of (CL) along the lift of an exact representation ϑ^e(w) (perfect tracking, e ≡ 0, the prior at its atoms),
+    restricted to the collapsed subspace — the weighted K₀-atom loop's linearisation — in the whitened weighted coordinates (δe, y, ζ):
+
+        δė = −k_eδe − Ĵ(t)y,   ẏ = Ĵ(t)ᵀδe − (σ₀/k_e)(y − ζ),   ζ̇ = −(η/k_e)(ζ − y)      (η = ∞: ζ = y and the leak vanishes),
+
+    Ĵ(t) = whitened_jacobian at x_m(t). It assumes ∂_xf̂ = ∂_xf on the orbit (f̂ = f as functions at an exact representation); otherwise the
+    error equation also carries ∂_x(f − f̂)(x_m(t))δe. `x_ref` returns x_m(t) as an array of shape (n,)."""
+
+    def __init__(self, net, x_ref, period, G, sigma0, eta, atoms, w):
+        self.net, self.xr, self.T0 = net, x_ref, float(period)
+        self.G = np.asarray(G, float)
+        self.sigma0, self.eta = float(sigma0), float(eta)
+        self.atoms = np.asarray(atoms, float)
+        self.w = np.asarray(w, float)
+        self.n = net.n
+        self.d = self.atoms.size
+
+    def J(self, t):
+        return whitened_jacobian(self.net, self.xr(t), self.atoms, self.w, self.G)
+
+    @property
+    def dim(self):
+        return self.n + (self.d if np.isinf(self.eta) else 2 * self.d)
+
+    def generator(self, t, ke):
+        """The matrix of the variational equation at time t (real time)."""
+        n, d = self.n, self.d
+        Jt = self.J(t)
+        M = np.zeros((self.dim, self.dim))
+        M[:n, :n] = -ke * np.eye(n)
+        M[:n, n:n + d] = -Jt
+        M[n:n + d, :n] = Jt.T
+        if not np.isinf(self.eta):
+            I = np.eye(d)
+            M[n:n + d, n:n + d] = -(self.sigma0 / ke) * I
+            M[n:n + d, n + d:] = (self.sigma0 / ke) * I
+            M[n + d:, n:n + d] = (self.eta / ke) * I
+            M[n + d:, n + d:] = -(self.eta / ke) * I
+        return M
+
+    def monodromy(self, ke, rtol=1e-13, atol=1e-16):
+        """Ψ(T₀) of Ψ̇ = M(t)Ψ, Ψ(0) = I (DOP853)."""
+        D = self.dim
+        f = lambda t, y: (self.generator(t, ke) @ y.reshape(D, D)).ravel()
+        sol = solve_ivp(f, (0.0, self.T0), np.eye(D).ravel(), method='DOP853', rtol=rtol, atol=atol)
+        if not sol.success:
+            raise RuntimeError(sol.message)
+        return sol.y[:, -1].reshape(D, D)
+
+    def exponents(self, ke, **kw):
+        """(the slow Floquet exponents — rates per unit time, ascending — and the error channel's): the slow ones from the multipliers of the
+        monodromy (all but the n smallest, ≈ e^{−k_eT₀}, below the resolution), the error channel's by Liouville's formula, the exponents
+        summing to −⟨tr M⟩ = n·k_e + (σ₀ + η)d/k_e (η = ∞: n·k_e)."""
+        lam = np.linalg.eigvals(self.monodromy(ke, **kw))
+        lam = lam[np.argsort(-np.abs(lam))][:self.dim - self.n]
+        slow = np.sort(-np.log(np.abs(lam)) / self.T0)
+        total = self.n * ke + (0.0 if np.isinf(self.eta) else (self.sigma0 + self.eta) * self.d / ke)
+        return slow, (total - slow.sum()) / self.n
+
+    def averaged(self, N=1024):
+        """(Ā₀, Ā₁, Ā₂, H, the filter matrix ⟨Ĵ̇ᵀĴ̇⟩) of the slow block in slow time, from N samples of Ĵ over a period (spectral
+        derivatives and antiderivatives; Ĵ is analytic and periodic). H = ⟨ĴᵀĴ⟩ is the whitened weighted Gauss–Newton matrix h_j(w)."""
+        T0, d, n = self.T0, self.d, self.n
+        t = np.arange(N) * T0 / N
+        J = np.array([self.J(s) for s in t])                                  # (N, n, d)
+        k = np.fft.fftfreq(N, d=1.0 / N) * (2 * np.pi / T0)                   # angular frequencies
+
+        def deriv(X, order):
+            return np.real(np.fft.ifft(((1j * k) ** order)[:, None, None] * np.fft.fft(X, axis=0), axis=0))
+
+        def antider(X):                                                       # the zero-mean antiderivative of a zero-mean array
+            kk = k.copy(); kk[0] = 1.0
+            Xf = np.fft.fft(X, axis=0) / (1j * kk)[:, None, None]; Xf[0] = 0.0
+            return np.real(np.fft.ifft(Xf, axis=0))
+        Jd, Jdd = deriv(J, 1), deriv(J, 2)
+        if np.isinf(self.eta):
+            E = np.eye(d); C = np.zeros((d, d))
+        else:
+            I = np.eye(d)
+            E = np.hstack([I, np.zeros((d, d))]); C = np.block([[-self.sigma0 * I, self.sigma0 * I], [self.eta * I, -self.eta * I]])
+        Jb, Jbd, Jbdd = J @ E, Jd @ E, Jdd @ E
+        JtJ = np.einsum('nri,nrj->nij', Jb, Jb)
+        B0 = C[None] - JtJ
+        B1 = np.einsum('nri,nrj->nij', Jb, Jbd)
+        B2 = -np.einsum('nri,nrj->nij', Jb, Jbdd) + JtJ @ C[None] - JtJ @ JtJ
+        A0 = B0.mean(axis=0)
+        U1 = antider(B0 - A0[None])
+        A1 = B1.mean(axis=0) + (B0 @ U1).mean(axis=0)
+        U2 = antider(B1 + B0 @ U1 - U1 @ A0[None] - A1[None])
+        A2 = B2.mean(axis=0) + (B1 @ U1).mean(axis=0) + (B0 @ U2).mean(axis=0)
+        H = np.einsum('nri,nrj->nij', J, J).mean(axis=0)
+        filt = np.einsum('nri,nrj->nij', Jd, Jd).mean(axis=0)
+        return A0, A1, A2, H, filt
+
+    def predicted(self, ke, order=2, N=1024, gens=None):
+        """The collective exponents (rates per unit time, ascending) predicted by the averaged generator to the given order in 1/k_e:
+        order 1: eig(−Ā₀)/k_e (= λ_j^±(w)/k_e); order 2: eig(−(Ā₀ + Ā₁/k_e + Ā₂/k_e²))/k_e."""
+        A0, A1, A2 = (gens or self.averaged(N))[:3]
+        A = A0 if order == 1 else A0 + A1 / ke + A2 / ke ** 2
+        return np.sort(np.linalg.eigvals(-A).real) / ke
+
+    def second_order(self, N=1024, gens=None):
+        """(λ_j, c_j, the filter part of c_j): the slow-time rates are λ_j + c_j/k_e² + O(k_e⁻⁴) (Corollary D‴.26(c)), with
+        c_j = −ℓ_jĀ₂r_j − Σ_{i≠j}(ℓ_jĀ₁r_i)(ℓ_iĀ₁r_j)/(λ_i − λ_j) (r_j, ℓ_j the right and left eigenvectors of −Ā₀, ℓ_jr_j = 1), and the error
+        filter's part −ℓ_jE^T⟨Ĵ̇ᵀĴ̇⟩Er_j ≤ 0 (the attenuation of the regressor's harmonics by the error channel, k_e/(k_e + iω))."""
+        A0, A1, A2, H, filt = gens or self.averaged(N)
+        mu, R = np.linalg.eig(-A0)
+        o = np.argsort(mu.real); lam = mu.real[o]; R = R[:, o].real
+        Lm = np.linalg.inv(R)
+        K = Lm @ A1 @ R; Q = Lm @ A2 @ R
+        D = len(lam)
+        c = np.array([-Q[j, j] - sum(K[j, i] * K[i, j] / (lam[i] - lam[j]) for i in range(D) if i != j) for j in range(D)])
+        d = self.d
+        E = np.eye(d) if np.isinf(self.eta) else np.hstack([np.eye(d), np.zeros((d, d))])
+        F = Lm @ (E.T @ filt @ E) @ R
+        return lam, c, -np.diag(F).real
