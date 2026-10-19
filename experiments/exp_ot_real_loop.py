@@ -97,6 +97,8 @@ def real_run(net, loop, systems, leak, T):
     for k in out:
         out[k] = {kk: np.array(v) for kk, v in out[k].items()}
         out[k]['Th'] = st[k]['Th']
+        keep = out[k]['t'] > T - N_PER * PER                               # f̂ on the orbit grid is kept on the statistics window only (raw-file size)
+        out[k]['fh'] = out[k]['fh'][keep].astype(np.float32); out[k]['t_fh'] = out[k]['t'][keep]      # float32: 10⁻⁷ relative, below the printed digits
     return out
 
 
@@ -138,12 +140,12 @@ def last_mask(t):
 
 
 def fdist(o1, o2):
-    msk = last_mask(o1['t'])
+    msk = last_mask(o1['t_fh'])
     return float(np.mean(np.mean((o1['fh'][msk] - o2['fh'][msk]) ** 2, axis=1)))
 
 
 def fit_orbit(o):
-    msk = last_mask(o['t'])
+    msk = last_mask(o['t_fh'])
     return float(np.sqrt(np.mean(np.mean((o['fh'][msk] - F_ORB[None, :]) ** 2, axis=1)) / np.mean(F_ORB ** 2)))
 
 
