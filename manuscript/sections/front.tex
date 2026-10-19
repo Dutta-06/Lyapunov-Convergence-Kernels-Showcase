@@ -77,7 +77,10 @@ In Part~I, every step of the stability argument is either proved or verified num
     stationary law of the dithered finite-size loop with its non-equilibrium current (Theorem J$'$,
     Proposition J$'$.2) --- through a sixth, and the third increment --- the explicit stationary parameter spread of
     the dithered linearised loop (Corollary E.0$'$.3) and the slow-regime Lyapunov function for non-periodic
-    persistently exciting regressors (Lemma E.0$''$) --- through a seventh. Every confirmed issue and its fix is
+    persistently exciting regressors (Lemma E.0$''$) and uniform-in-time propagation of chaos in the learning
+    regime for the averaged slow loop (Theorem D$'''$, with the finite-$m$ weight-sensitivity law of
+    Proposition D$'''$.5) --- through a seventh (the first two) and an eighth (the third). Every confirmed issue
+    and its fix is
     logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--7 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
@@ -209,6 +212,36 @@ $\tau = 0$; $-0.46 \pm 0.05$ with dither) and like $(1/m - 1/M)^{0.94 \pm 0.08}$
 coupling
 & the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that
 the plant is in the loop, with constants in control quantities\\
+\addlinespace[0.5pt]
+D$'''$ & Uniform-in-time propagation of chaos \emph{in the learning regime} for the averaged slow loop
+$(\mathfrak{A}_m)$ at $\tau = 0$ (Theorem J$'$'s leading order): under the synchronous coupling with the mean-field
+characteristic flow, the interaction term of the coupling identity is
+$-\norm{\fhat_\Theta - \fhat_{\bar\Theta}}^2_{L^2(\rho)} + O(D^2)$ --- flat convexity of the loss makes it contract
+whatever the gains --- and only the residual-weighted feature curvature
+$R[\mu](\vartheta) = \langle r_\mu\nabla^2_\vartheta\tilde\Phi\rangle_\rho$ (Proposition K's $R_2$) can expand; if
+along the mean-field flow $\sigma_0I - G^{1/2}RG^{1/2}\succeq\kappa I$ on a neighbourhood of the support from a time
+$s_1$ on (the strict second-order optimality condition of the fitted configuration, compatible with
+$\sigma_0 < \sigma_{\mathrm{crit}}$), then
+$\sup_s\E\frac1m\sum\norm{\vartheta_i - \bar\vartheta_i}^2_{\Ginv}\le4e^{2\Lambda_1}(L_\vartheta^G)^2K_\Phi^2/(\kappa^2m)$
+plus a tail exponentially small in $m$ (uniformly in time under exponential convergence of the flow, over horizons
+$e^{cm}$ without it), no particle changes basin, and the learned function converges at $m^{-1/2}$ uniformly in time
+while the network learns; the window $\kappa_R[\mu_\infty] < \sigma_0 < \sigma_{\mathrm{crit}}$ is where learning
+and uniformity coexist; at finite $m$ the stationary coupled distance follows the weight-sensitivity law
+$\E D_\infty = (1/m - 1/M)\sum_k\bar w_k\tr(\tilde S_k\tilde C\tilde S_k^\T)$, $S = \partial\Theta^*/\partial w$ the
+sensitivity of the stationary atoms to the cluster weights (Proposition D$'''$.5, the sharp form of the theorem's
+constant)
+& proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle
+distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow;
+it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the
+coupling carries a floor; the real loop at finite $k_e$: settled on a warm start by Corollary D$'''$.7 through
+Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D$'''$.5's up to $O(1/k_e)$),
+open for a cold start (Remark D$'''$.4); dither: the entropy method of \cite{S5} (imported); the theorem's regime
+$m\ge m_0$ is asymptotic ($m_0\sim10^{23}$ on the instance) and Proposition D$'''$.5 is formal; numerics:
+\textbf{[D3 NUMERICS PENDING]}
+& the two ingredients --- the sign of the interaction from flat convexity, and the curvature at the actual rather
+than the worst-case residual --- are new in propagation of chaos for adaptive control; the decomposition
+Gram + residual$\times$curvature is the one of the interpolation literature (\cite{S39}); the window between
+Proposition K's collapsed instability and the fitted configuration's stability is new\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance

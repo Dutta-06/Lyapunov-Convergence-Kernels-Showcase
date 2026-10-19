@@ -1,0 +1,589 @@
+% Theorem D''': uniform-in-time propagation of chaos in the learning regime (the averaged slow loop)
+% (PARADIGM.md, section 5d). First pass: the Numerics paragraph and two readings are placeholders marked
+% [D3 NUMERICS PENDING] / [REAL-LOOP READING], to be filled in the second pass.
+\section{Theorem D\texorpdfstring{$'''$}{'''}: uniform-in-time propagation of chaos in the learning regime (the
+averaged slow loop)}\label{sec:thmDppp}
+
+Theorem D$''$ ends where the leak stops dominating the loop gain: in the learning regime its small-gain argument has
+nothing to say, and the long-horizon run of \code{exp_chaos_uniform.py} showed the coupled distance growing over the
+horizon. This section isolates the structure that the small-gain argument throws away. Under the synchronous coupling
+the interaction between the particles enters through the fitted function $\fhat_\Theta$, which is linear in the
+empirical measure; the loss $\bar L$ is a convex quadratic of it (flat convexity, Theorem H(i)); and the interaction
+term of the coupling identity is therefore the negative of a squared $L^2(\rho)$-norm at linear order --- it
+contracts, whatever the gains. What remains and can expand is the self term, whose curvature is the Hessian of the
+first-variation potential, $\sigma_0\Ginv - R[\mu](\vartheta)$ with $R$ the \emph{residual-weighted} curvature of the
+features --- the same object as Proposition K's $R_2$ at a collapsed configuration. Proposition K says that the
+collapsed configuration is unstable when this curvature exceeds the leak \emph{with the collapsed residual}; at a
+fitted configuration the residual is the approximation error, and the second-order optimality condition of the limit
+measure says that the curvature is \emph{below} the leak at every atom. The theorem below turns this into a
+uniform-in-time statement for the averaged slow loop at $\tau = 0$, with explicit constants, in the regime in which
+the network learns.
+
+\paragraph{Setting.} The averaged slow dynamics of Section~\ref{sec:thmJprime} at $\tau_0 = 0$ (Theorem J$'$'s
+leading order $\bar L_0$ without dither; slow time $s = t/k_e$, leak $\sigma_0 = k_e\sigma$, $f = f(x)$ continuous,
+$\rho$ the occupation measure of the $T_0$-periodic reference, $F_\rho := \sup_{\supp\rho}\norm{f}$, saturated
+features, $K_\Phi := \sup\norm{\tilde\Phi}$), written as the $G$-preconditioned gradient flow of
+$J_m(\Theta) = m\bar L(\mu_\Theta) + \frac{\sigma_0}2\sum_i\norm{\vartheta_i - \vartheta^0}^2_{\Ginv}$:
+\begin{gather}
+  \frac{\dd\vartheta_i}{\dd s} = -G\nabla_{\vartheta_i}J_m(\Theta) = -G\nabla_\vartheta\mathcal{V}[\mu_\Theta](\vartheta_i),\qquad
+  i = 1..m,
+  \tag{$\mathfrak{A}_m$}\\
+  \mathcal{V}[\mu](\vartheta) := V_L[\mu](\vartheta) + \frac{\sigma_0}2\norm{\vartheta - \vartheta^0}^2_{\Ginv},\notag
+\end{gather}
+with $V_L[\mu](\vartheta) = -\langle r_\mu^\T\tilde\Phi(\cdot\,;\vartheta)\rangle_\rho$ and $r_\mu = f - \fhat[\mu]$,
+$\fhat[\mu] := \int\tilde\Phi(\cdot\,;\vartheta')\dd\mu(\vartheta')$, as in Section~\ref{sec:thmH}. Its mean-field
+equation is the Wasserstein gradient flow $\Aavg$ of Section~\ref{sec:thmH} at $\tau = 0$ in slow time,
+$\partial_s\mu_s = \nabla\cdot(\mu_sG\nabla\mathcal{V}[\mu_s])$, solved by the characteristic flow
+\begin{equation}
+  \frac{\dd X_s(\vartheta)}{\dd s} = -G\nabla\mathcal{V}[\mu_s](X_s(\vartheta)),\qquad X_0 = \mathrm{id},\qquad
+  \mu_s = (X_s)_\#\mu_0
+  \tag{$\mathfrak{A}_0$}
+\end{equation}
+(a McKean--Vlasov equation without noise whose vector field has linear growth through the leak, is Lipschitz in
+$\vartheta$ and, through $r_\mu$, Lipschitz in $\mu$ for $W_1$; existence, uniqueness and the representation by
+characteristics follow from Dobrushin's argument~\cite{S35} --- the synchronous-coupling proof of Theorem D$'$(b)
+with the plant removed --- and the velocity is bounded on the invariant ball of Step~0). The constants are taken in
+the $\Ginv$ metric on parameters (``whitened''):
+\[
+  L_\vartheta^G := \sup_{x,\vartheta}\norm{\nabla_\vartheta\tilde\Phi(x;\vartheta)G^{1/2}},\qquad
+  L_2^G := \sup_{x,\vartheta,\norm{u}=1}\norm{G^{1/2}\nabla^2_\vartheta\bigl(u^\T\tilde\Phi(x;\vartheta)\bigr)G^{1/2}},
+\]
+so that $\norm{\tilde\Phi(x;\vartheta) - \tilde\Phi(x;\vartheta')}\le L_\vartheta^G\norm{\vartheta - \vartheta'}_{\Ginv}$,
+$\norm{\nabla_\vartheta\tilde\Phi(x;\vartheta)v}\le L_\vartheta^G\norm{v}_{\Ginv}$ and
+$\norm{(\nabla_\vartheta\tilde\Phi(x;\vartheta) - \nabla_\vartheta\tilde\Phi(x;\vartheta'))v}
+\le L_2^G\norm{\vartheta - \vartheta'}_{\Ginv}\norm{v}_{\Ginv}$ ($L_\vartheta^G\le\lambda_G^{1/2}L_\vartheta$ and
+$L_2^G\le\lambda_GL_2$ in the constants of Section~\ref{sec:thmDprime};
+\code{chaos_learning.whitened_lipschitz_constants} computes the suprema by search, with closed-form bounds). The
+\emph{residual-weighted curvature} of $\mu$ at $\vartheta$ is the symmetric matrix
+\begin{gather*}
+  R[\mu](\vartheta) := \Bigl\langle\sum_kr_\mu^k(x)\nabla^2_\vartheta\tilde\Phi^k(x;\vartheta)\Bigr\rangle_\rho
+  = -\nabla^2_\vartheta V_L[\mu](\vartheta),\qquad R^G := G^{1/2}RG^{1/2},\\
+  \kappa_R[\mu](A) := \sup_{\vartheta\in A}\lambda_{\max}\bigl(R^G[\mu](\vartheta)\bigr),
+\end{gather*}
+so that $G^{1/2}\nabla^2_\vartheta\mathcal{V}[\mu](\vartheta)G^{1/2} = \sigma_0I - R^G[\mu](\vartheta)$; for
+$\mu = \delta_{\bar\vartheta}$ and $\vartheta = \bar\vartheta$ it is Proposition K's $R_2$ and
+$\sigma_{\mathrm{crit}}(\bar\vartheta) = \kappa_R[\delta_{\bar\vartheta}](\{\bar\vartheta\})$. It satisfies
+$\norm{R^G[\mu](\vartheta)}\le L_2^G\langle\norm{r_\mu}\rangle_\rho\le L_2^G(F_\rho + K_\Phi)$ and
+$\norm{R^G[\mu](\vartheta) - R^G[\nu](\vartheta)}\le L_2^G\norm{\fhat[\mu] - \fhat[\nu]}_{L^1(\rho)}$.
+$N_\varrho(A) := \{\vartheta : \operatorname{dist}_{\Ginv}(\vartheta,A)\le\varrho\}$.
+
+\smallskip
+\noindent\emph{The coupling.} $\vartheta_i(0)$, $i = 1..m$, i.i.d.\ with law $\mu_0$ of compact support,
+$R_0 := \sup_{\supp\mu_0}\norm{\vartheta - \vartheta^0}_{\Ginv}$; $\Theta(s)$ solves \textup{($\mathfrak{A}_m$)} and
+the reference particles are $\bar\vartheta_i(s) := X_s(\vartheta_i(0))$, i.i.d.\ with law $\mu_s$ and
+$\bar\vartheta_i(s)\in\supp\mu_s$. Let $\delta_i := \vartheta_i - \bar\vartheta_i$,
+\[
+  D(s) := \frac1m\sum_i\norm{\delta_i(s)}^2_{\Ginv},\qquad
+  Y(s) := \norm{\fhat_{\bar\Theta(s)} - \fhat[\mu_s]}_{L^2(\rho)},
+\]
+$Y$ being the sampling fluctuation of the reference's fitted function
+($\E Y(s)^2 = \frac1m\langle\operatorname{Var}_{\mu_s}\tilde\Phi(x;\cdot)\rangle_\rho\le K_\Phi^2/m$). A priori
+(Step~0 below) every particle of either system stays in the ball
+$\norm{\vartheta - \vartheta^0}_{\Ginv}\le R_\Theta := \max\{R_0,\ L_\vartheta^G(F_\rho + K_\Phi)/\sigma_0\}$, so
+$D\le D_{\max} := 4R_\Theta^2$, and the characteristics move at speed at most
+$V_{\max} := L_\vartheta^G(F_\rho + K_\Phi) + \sigma_0R_\Theta$.
+
+\begin{thm}{Theorem}{D$'''$}[uniform-in-time propagation of chaos in the learning regime, $\tau = 0$]
+Assume
+\begin{itemize}[leftmargin=3em]
+  \item[\textup{(H)}] \emph{(non-degenerate stability along the mean-field flow)} there are $s_1\ge0$, $\kappa > 0$
+    and $\varrho' > 0$ such that
+    \[
+      \kappa_R[\mu_s]\bigl(N_{\varrho'}(\supp\mu_s)\bigr)\le\sigma_0 - \kappa\qquad\text{for every }s\ge s_1,
+    \]
+\end{itemize}
+and put $a(s) := \sigma_0 - \kappa_R[\mu_s](N_{\varrho'}(\supp\mu_s))$ (so $a\ge\kappa$ on $[s_1,\infty)$ and
+$a\ge\sigma_0 - L_2^G(F_\rho + K_\Phi)$ everywhere) and $\Lambda_1 := \int_0^{s_1}(\kappa - a(s))_+\dd s < \infty$.
+Define
+\begin{gather*}
+  \varrho := \min\bigl\{(2\kappa)^{1/2}/L_2^G,\ \varrho'\kappa e^{-\Lambda_1}/(4(L_\vartheta^G)^2)\bigr\},\\
+  \theta := \min\bigl\{\kappa/(8L_2^G),\ \varrho\kappa e^{-\Lambda_1}/(4L_\vartheta^G),\ \varrho'\kappa e^{-\Lambda_1}/(4L_\vartheta^G)\bigr\},\\
+  \Delta := \theta/(4L_\vartheta^GV_{\max}),\qquad C_1 := 4e^{2\Lambda_1}(L_\vartheta^G)^2K_\Phi^2/\kappa^2,\qquad
+  m_0 := 16K_\Phi^2/\theta^2.
+\end{gather*}
+Then for every $m\ge m_0$:
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item \emph{(exponentially long horizons)} for every $S > 0$ and every $s\in[0,S]$,
+    \[
+      \E D(s)\le C_1/m + 4R_\Theta^2(S/\Delta + 2)\exp\bigl(-m\theta^2/(32K_\Phi^2)\bigr);
+    \]
+    in particular $\sup_{s\le S}\E D(s)\le(C_1 + 12R_\Theta^2)/m$ for all $S\le\Delta e^{m\theta^2/(64K_\Phi^2)}$ and
+    $m\ge m_0$ with $e^{m\theta^2/(64K_\Phi^2)}\ge m$.
+  \item \emph{(uniform in time)} if moreover \textup{(H$'$)} the characteristic flow converges exponentially on the
+    support of $\mu_0$, $\sup_{\vartheta\in\supp\mu_0}\norm{X_s(\vartheta) - X_\infty(\vartheta)}_{\Ginv}\le C_2e^{-\kappa_2s}$
+    for all $s\ge0$, then for every $s\ge0$
+    \[
+      \E D(s)\le C_1/m + 4R_\Theta^2(R_{\mathrm{eff}}/\Delta + 3)\exp\bigl(-m\theta^2/(32K_\Phi^2)\bigr),\qquad
+      R_{\mathrm{eff}} := \kappa_2^{-1}\bigl(\log(8L_\vartheta^GC_2/\theta)\bigr)_+.
+    \]
+  \item \emph{(the learned function and the particles)} in either case, with the same right-hand side $B(s)$ for
+    $\E D(s)$,
+    \begin{gather*}
+      \E\norm{\fhat_{\Theta(s)} - \fhat[\mu_s]}^2_{L^2(\rho)}\le2(L_\vartheta^G)^2B(s) + 2K_\Phi^2/m,\\
+      \E W_2(\mu_{\Theta(s)},\mu_s)\le B(s)^{1/2} + \E W_2(\mu_{\bar\Theta(s)},\mu_s),
+    \end{gather*}
+    and on the event $\mathcal{G}_S := \{\sup_{s\le S}Y(s)\le\theta\}$ (case \textup{(a)}; $\mathcal{G}_\infty$ in
+    case \textup{(b)}), whose complement is the tail above, every particle stays within $3\varrho'/4$ of its reference
+    up to time $S$: $\max_i\sup_{s\le S}\norm{\delta_i(s)}_{\Ginv}\le3\varrho'/4$ --- no particle changes basin.
+\end{enumerate}
+The constants depend on $(\kappa,\varrho',\Lambda_1,L_\vartheta^G,L_2^G,K_\Phi,F_\rho,\sigma_0,R_0)$ and not on $m$,
+$s$ or $S$.
+\end{thm}
+\status{Proved (synchronous coupling with the three-term identity of Step~1, a bootstrap on the mean square and the
+per-particle distance, and McDiarmid's inequality~\cite{S36} for the reference's sampling fluctuation; the
+finite-horizon part of the transient is Theorem D$'$'s mechanism and appears in $\Lambda_1$). Hypothesis (H) is a
+property of the deterministic mean-field flow and can be computed; it is the strict second-order optimality condition
+of the limit configuration with a margin and a neighbourhood (Remark D$'''$.1), and it is compatible with the learning
+regime $\sigma_0 < \sigma_{\mathrm{crit}}$ of Proposition K. It requires the support of $\mu_s$ to stay away from the
+ridges of $\mathcal{V}[\mu_s]$ for $s\ge s_1$: for an initial cloud whose support is a union of pieces each flowing
+into one basin (a warm start, or a cluster per bump) this holds; for a connected cold start whose mass splits between
+several basins it fails for every $s$ (Remark D$'''$.2), and the numerics below show what the coupling does there.
+Numerics: \code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md} (below). The theorem is about the
+averaged slow dynamics; its transfer to the real loop at finite $k_e$ is open (Remark D$'''$.4). Its constants are
+worst-case and its regime is asymptotic: on the instance below $m_0$ is of order $10^{23}$ (Remark D$'''$.6), and the
+finite-$m$ behaviour is described sharply by Proposition D$'''$.5. Referee round 8
+(\code{review/REVIEW_round8_Dppp.md}) re-derived every constant of Steps 0--9, found no counterexample to (2.1),
+(3.1), (4.1) on an adversarial search, and corrected the wording of Remarks D$'''$.1--D$'''$.2, the good event per
+horizon and the well-posedness sentence (all applied). Novelty (literature audit): the technique (synchronous
+coupling + bootstrap + bounded differences) is standard; the sign structure of the interaction and the local,
+residual-weighted hypothesis --- and with them a uniform-in-time statement in a regime where the network learns ---
+are new in propagation of chaos for adaptive control; the theorem's regime is asymptotic in $m$ and the finite-$m$ law
+is a delta-method statement, new in its object.}
+
+\paragraph{Literature audit} (\code{LITERATURE_TRANSPORT.md}, D$'''$).
+\begin{itemize}
+  \item \emph{Prior.} Uniform-in-time propagation of chaos by synchronous coupling under \emph{global} convexity of
+    the confinement and convexity of the interaction is Malrieu's~\cite{S37}; non-convex confinements with
+    \emph{small} Lipschitz interactions are handled by reflection coupling~\cite{S38}; flat-convex energies with dither
+    by the entropy method~\cite{S5}. The Hessian decomposition ``Gram + residual-weighted feature curvature'' is the
+    standard tool of the interpolation\,/\,PL-condition literature~\cite{S39} and of lazy-training analyses, where the
+    second term vanishes at interpolation.
+  \item \emph{Distinction.} (i) The interaction of the fitted network is neither small nor convex in the particle
+    coordinates; its sign comes from the flat convexity of $\bar L$ ($\fhat$ linear in the measure), which makes
+    $-\norm{\fhat_\Theta - \fhat_{\bar\Theta}}^2$ the leading interaction term under the coupling --- the finite-$m$,
+    two-measure version of \cite{S39}'s decomposition. (ii) The convexity needed is local:
+    $\sigma_0I - G^{1/2}R[\mu_s]G^{1/2}\succeq\kappa I$ on a neighbourhood of the support of the mean-field flow,
+    i.e.\ the strict second-order optimality condition of the fitted configuration, evaluated at the actual residual
+    --- not a global convexity (which would force the collapsed configuration to be stable and the network not to
+    learn, Theorem D$''$). (iii) The window $\kappa_R[\mu_\infty] < \sigma_0 < \sigma_{\mathrm{crit}}$ between the
+    collapsed instability (Proposition K) and the fitted stability is a design statement about the leak that has no
+    counterpart in the cited work. (iv) The limits are stated with the result: a connected initial support that splits
+    between basins violates the hypothesis for all times (the characteristic flow is a homeomorphism), and the
+    coupling then has a floor of pairs in different basins; the real loop at finite $k_e$ is not covered.
+  \item \emph{Proposition D$'''$.5 (the weight-sensitivity law).} At finite $m$ the stationary coupled distance is the
+    multinomial fluctuation of the cluster weights propagated through the implicit function $w\mapsto\Theta^*(w)$: a
+    delta-method statement (the Gaussian limit of a smooth function of a multinomial), standard in statistics; what is
+    specific is its object (the shared-particle coupling of a particle approximation to a stationary $K$-atom measure,
+    with the covariance $(1/m - 1/M)(\operatorname{diag}\bar w - \bar w\bar w^\T)$) and its role as the sharp form of
+    the theorem's constant (stiffness$^{-1}$ $\times$ feature correlations against $\kappa^{-1}L_\vartheta^GK_\Phi$).
+\end{itemize}
+
+\begin{proof}
+\emph{Step 0 (a priori bounds).} For either system,
+$\frac{\dd}{\dd s}\norm{\vartheta - \vartheta^0}^2_{\Ginv}
+= 2\ip{\vartheta - \vartheta^0}{\langle\nabla_\vartheta(r^\T\tilde\Phi(\cdot\,;\vartheta))\rangle_\rho}
+- 2\sigma_0\norm{\vartheta - \vartheta^0}^2_{\Ginv}$ with
+$\abs{\ip{\vartheta - \vartheta^0}{\langle\nabla_\vartheta(r^\T\tilde\Phi)\rangle_\rho}}
+= \abs{\langle r^\T\nabla_\vartheta\tilde\Phi(\vartheta - \vartheta^0)\rangle_\rho}
+\le\langle\norm{r}\rangle_\rho L_\vartheta^G\norm{\vartheta - \vartheta^0}_{\Ginv}
+\le(F_\rho + K_\Phi)L_\vartheta^G\norm{\vartheta - \vartheta^0}_{\Ginv}$, so
+$D^+\norm{\vartheta - \vartheta^0}_{\Ginv}\le L_\vartheta^G(F_\rho + K_\Phi) - \sigma_0\norm{\vartheta - \vartheta^0}_{\Ginv}$
+and $\norm{\vartheta(s) - \vartheta^0}_{\Ginv}\le R_\Theta$; hence $\norm{\delta_i}_{\Ginv}\le2R_\Theta$,
+$D\le D_{\max}$, and
+$\norm{\dd\vartheta/\dd s}_{\Ginv} = \norm{G^{1/2}\langle\nabla_\vartheta(r^\T\tilde\Phi)\rangle_\rho - \sigma_0G^{-1/2}(\vartheta - \vartheta^0)}\le V_{\max}$.
+Two Lipschitz facts: for $\Theta$, $\bar\Theta$ with rows $\vartheta_j$, $\bar\vartheta_j$ and
+$A_j(x) := \int_0^1\nabla_\vartheta\tilde\Phi(x;\bar\vartheta_j + t\delta_j)\dd t$,
+\begin{gather}
+  \fhat_\Theta - \fhat_{\bar\Theta} = \frac1m\sum_jA_j\delta_j =: h,\qquad
+  \norm{h}_{L^2(\rho)}\le L_\vartheta^G\frac1m\sum_j\norm{\delta_j}_{\Ginv}\le L_\vartheta^GD^{1/2},
+  \tag{0.1}\\
+  \begin{split}
+  &\norm{R^G[\mu_{\bar\Theta}](\vartheta) - R^G[\mu_s](\vartheta)}\le L_2^G\norm{r_{\bar\Theta} - r_{\mu_s}}_{L^1(\rho)}\le L_2^GY,\\
+  &\norm{(\nabla_\vartheta\tilde\Phi(x;\vartheta_i) - A_i(x))v}\le\frac{L_2^G}2\norm{\delta_i}_{\Ginv}\norm{v}_{\Ginv}.
+  \end{split}
+  \tag{0.2}
+\end{gather}
+
+\smallskip
+\emph{Step 1 (the identity).} Since $\dd\delta_i/\dd s = -G[\nabla\mathcal{V}[\mu_\Theta](\vartheta_i)
+- \nabla\mathcal{V}[\mu_s](\bar\vartheta_i)]$ and $\ip{\delta}{Gv}_{\Ginv} = \ip{\delta}{v}$,
+\begin{gather*}
+  \tfrac12\frac{\dd D}{\dd s} = -\frac1m\sum_i\ip{\delta_i}{\nabla\mathcal{V}[\mu_\Theta](\vartheta_i) - \nabla\mathcal{V}[\mu_s](\bar\vartheta_i)}
+  = T_A + T_B + T_C,\\
+  T_A := -\frac1m\sum_i\ip{\delta_i}{\nabla\mathcal{V}[\mu_{\bar\Theta}](\vartheta_i) - \nabla\mathcal{V}[\mu_{\bar\Theta}](\bar\vartheta_i)},\\
+  T_B := -\frac1m\sum_i\ip{\delta_i}{\nabla V_L[\mu_\Theta](\vartheta_i) - \nabla V_L[\mu_{\bar\Theta}](\vartheta_i)},\\
+  T_C := -\frac1m\sum_i\ip{\delta_i}{\nabla V_L[\mu_{\bar\Theta}](\bar\vartheta_i) - \nabla V_L[\mu_s](\bar\vartheta_i)}
+\end{gather*}
+(the leak is linear and sits in $T_A$; the three brackets telescope to
+$\nabla\mathcal{V}[\mu_\Theta](\vartheta_i) - \nabla\mathcal{V}[\mu_s](\bar\vartheta_i)$). The self term $T_A$
+compares the \emph{reference's} potential at the two points; the interaction term $T_B$ compares the two empirical
+measures at the $m$-system's point; $T_C$ is the reference's sampling error.
+\code{chaos_learning.AveragedSlowLoop.decomposition} evaluates the three terms and checks the identity to rounding.
+
+\smallskip
+\emph{Step 2 (the self term is local convexity).}
+$\nabla\mathcal{V}[\mu_{\bar\Theta}](\vartheta_i) - \nabla\mathcal{V}[\mu_{\bar\Theta}](\bar\vartheta_i)
+= \int_0^1\nabla^2\mathcal{V}[\mu_{\bar\Theta}](\bar\vartheta_i + t\delta_i)\dd t\cdot\delta_i
+= \sigma_0\Ginv\delta_i - \bar R_i\delta_i$ with $\bar R_i := \int_0^1R[\mu_{\bar\Theta}](\bar\vartheta_i + t\delta_i)\dd t$,
+so $T_A = -\sigma_0D + \frac1m\sum_i\ip{\delta_i}{\bar R_i\delta_i}$ and
+$\ip{\delta}{R\delta}\le\lambda_{\max}(R^G)\norm{\delta}^2_{\Ginv}$. If $\norm{\delta_i}_{\Ginv}\le\varrho'$ the
+segment lies in $N_{\varrho'}(\supp\mu_s)$ ($\bar\vartheta_i\in\supp\mu_s$), and by (0.2)
+$\lambda_{\max}(R^G[\mu_{\bar\Theta}])\le\kappa_R[\mu_s](N_{\varrho'}(\supp\mu_s)) + L_2^GY$ there. Hence, as long
+as $\max_i\norm{\delta_i}_{\Ginv}\le\varrho'$,
+\begin{equation}
+  T_A\le-\bigl(a(s) - L_2^GY(s)\bigr)D.
+  \tag{2.1}
+\end{equation}
+
+\smallskip
+\emph{Step 3 (the interaction term is a negative square at linear order).}
+\[
+  \nabla V_L[\mu_\Theta](\vartheta_i) - \nabla V_L[\mu_{\bar\Theta}](\vartheta_i)
+  = \langle\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)^\T(\fhat_\Theta - \fhat_{\bar\Theta})\rangle_\rho
+  = \langle\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)^\T h\rangle_\rho,
+\]
+so, with the $L^2(\rho;\R^n)$ inner product $\langle\langle\cdot,\cdot\rangle\rangle$,
+\begin{equation}
+  \begin{split}
+  T_B &= -\Bigl\langle\Bigl\langle\frac1m\sum_i\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)\delta_i,\,h\Bigr\rangle\Bigr\rangle
+  = -\norm{h}^2 - \Bigl\langle\Bigl\langle\frac1m\sum_i(\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i) - A_i)\delta_i,\,h\Bigr\rangle\Bigr\rangle\\
+  &\le-\norm{h}^2 + \norm{h}\frac{L_2^G}2D\le\frac{(L_2^G)^2D^2}{16}
+  \end{split}
+  \tag{3.1}
+\end{equation}
+by (0.2) and $\max_x(-x^2 + cx) = c^2/4$. The leading part
+$-\norm{h}^2 = -\norm{\fhat_\Theta - \fhat_{\bar\Theta}}^2_{L^2(\rho)}$ is the flat convexity of $\bar L$: the
+interaction contracts, and only the Taylor remainder of the features, quadratic in $D$, is charged. This is the step
+that Theorem D$''$'s small-gain bound replaces by $+L_\vartheta^2D$-type terms.
+
+\smallskip
+\emph{Step 4 (the sampling term).}
+$\nabla V_L[\mu_{\bar\Theta}](\bar\vartheta_i) - \nabla V_L[\mu_s](\bar\vartheta_i)
+= \langle\nabla_\vartheta\tilde\Phi(\cdot\,;\bar\vartheta_i)^\T(\fhat_{\bar\Theta} - \fhat[\mu_s])\rangle_\rho$, so
+$\abs{\ip{\delta_i}{\cdot}}\le L_\vartheta^G\norm{\delta_i}_{\Ginv}Y$ and
+\begin{equation}
+  T_C\le L_\vartheta^GD^{1/2}Y.
+  \tag{4.1}
+\end{equation}
+
+\smallskip
+\emph{Step 5 (the differential inequalities).} While $\max_i\norm{\delta_i}_{\Ginv}\le\varrho'$,
+\begin{equation}
+  \tfrac12\frac{\dd D}{\dd s}\le-(a - L_2^GY)D + \frac{(L_2^G)^2D^2}{16} + L_\vartheta^GD^{1/2}Y,
+  \tag{5.1}
+\end{equation}
+and per particle, from the same three brackets with
+$\abs{T_{B,i}}\le\norm{\delta_i}L_\vartheta^G\norm{h}\le\norm{\delta_i}(L_\vartheta^G)^2D^{1/2}$ by (0.1) and
+$\abs{T_{C,i}}\le\norm{\delta_i}L_\vartheta^GY$,
+\begin{equation}
+  D^+\norm{\delta_i}_{\Ginv}\le-(a - L_2^GY)\norm{\delta_i}_{\Ginv} + (L_\vartheta^G)^2D^{1/2} + L_\vartheta^GY.
+  \tag{5.2}
+\end{equation}
+
+\smallskip
+\emph{Step 6 (the bootstrap on the good event).} Fix a horizon $S\le\infty$, let
+$\mathcal{G}_S := \{\sup_{s\le S}Y(s)\le\theta\}$ and
+$T^* := \inf\{s\le S : D(s)\ge\varrho^2\text{ or }\max_i\norm{\delta_i(s)}_{\Ginv}\ge\varrho'\}$ ($T^* > 0$ since
+$\delta(0) = 0$; everything below is on $[0,S]$). On $\mathcal{G}_S$ and $[0,T^*)$: $L_2^GY\le\kappa/8$,
+$(L_2^G)^2D/16\le(L_2^G)^2\varrho^2/16\le\kappa/8$, and
+$L_\vartheta^GD^{1/2}Y\le(\kappa/8)D + (2(L_\vartheta^G)^2/\kappa)Y^2$ (Young), so (5.1) gives
+$\dd D/\dd s\le-2(a - 3\kappa/8)D + (4(L_\vartheta^G)^2/\kappa)Y^2$. Since
+$a - 3\kappa/8\ge\kappa/2 - (\kappa - a)_+$, $\int_r^s(a - 3\kappa/8)\ge(\kappa/2)(s - r) - \Lambda_1$ for $r\le s$,
+and Gr\"onwall gives
+\begin{equation}
+  \begin{split}
+  D(s)\le Z(s) &:= 4e^{2\Lambda_1}(L_\vartheta^G)^2\kappa^{-1}\int_0^se^{-\kappa(s-r)}Y(r)^2\dd r\\
+  &\le4e^{2\Lambda_1}(L_\vartheta^G)^2\kappa^{-2}\theta^2\le\varrho^2/4\qquad\text{on }\mathcal{G}_S\cap[0,T^*)
+  \end{split}
+  \tag{6.1}
+\end{equation}
+by the second constraint on $\theta$. Per particle, (5.2) with $D^{1/2}\le\varrho/2$ and $Y\le\theta$, and
+$\int_r^s(a - \kappa/8)\ge(\kappa/2)(s - r) - \Lambda_1$, gives
+$\norm{\delta_i(s)}_{\Ginv}\le2e^{\Lambda_1}\kappa^{-1}[(L_\vartheta^G)^2\varrho/2 + L_\vartheta^G\theta]
+\le\varrho'/4 + \varrho'/2 = 3\varrho'/4$ by the second constraint on $\varrho$ and the third on $\theta$. Both
+thresholds are therefore strict on $[0,T^*)$, so $T^* = S$ on $\mathcal{G}_S$ by continuity: $D\le Z$ and
+$\max_i\norm{\delta_i}\le3\varrho'/4$ on $[0,S]$ on $\mathcal{G}_S$. $Z$ does not involve the $m$-system.
+
+\smallskip
+\emph{Step 7 (expectation).} For $s\le S$,
+\begin{multline*}
+  \E D(s)\le\E[Z(s)] + D_{\max}\mathbb{P}(\mathcal{G}_S^c)
+  \le4e^{2\Lambda_1}(L_\vartheta^G)^2\kappa^{-1}\int_0^se^{-\kappa(s-r)}\E Y(r)^2\dd r + D_{\max}\mathbb{P}(\mathcal{G}_S^c)\\
+  \le C_1/m + 4R_\Theta^2\mathbb{P}(\mathcal{G}_S^c),
+\end{multline*}
+using $\E Y(r)^2\le K_\Phi^2/m$.
+
+\smallskip
+\emph{Step 8 (the good event).} $Y(s)$ is a function of the i.i.d.\ sample $(\vartheta_j(0))_{j\le m}$:
+$Y(s) = \norm{\frac1m\sum_j[\tilde\Phi(\cdot\,;X_s(\vartheta_j(0))) - \int\tilde\Phi(\cdot\,;X_s(\vartheta))\dd\mu_0]}_{L^2(\rho)}$.
+Changing one $\vartheta_j(0)$ changes it by at most $2K_\Phi/m$ (bounded differences), and
+$\E Y(s)\le(\E Y^2)^{1/2}\le K_\Phi/m^{1/2}$; McDiarmid's inequality~\cite{S36} gives
+$\mathbb{P}(Y(s)\ge K_\Phi/m^{1/2} + t)\le\exp(-mt^2/(2K_\Phi^2))$, so for $m\ge m_0 = 16K_\Phi^2/\theta^2$
+($K_\Phi/m^{1/2}\le\theta/4$, $t = \theta/4$)
+\begin{equation}
+  \mathbb{P}(Y(s)\ge\theta/2)\le\exp\bigl(-m\theta^2/(32K_\Phi^2)\bigr)\qquad\text{for every fixed }s.
+  \tag{8.1}
+\end{equation}
+In time, $\abs{Y(s) - Y(s')}\le2L_\vartheta^GV_{\max}\abs{s - s'}$ (each $X_s(\vartheta)$ moves at speed
+$\le V_{\max}$ and $\tilde\Phi$ is $L_\vartheta^G$-Lipschitz, for the sample and for the mean), so on a grid of step
+$\Delta = \theta/(4L_\vartheta^GV_{\max})$, $Y\le\theta$ on $[s_k,s_k + \Delta]$ whenever $Y(s_k)\le\theta/2$. (a) The
+grid $\{k\Delta : k\Delta\le S\}\cup\{S\}$ has at most $S/\Delta + 2$ points, and a union bound with (8.1) gives
+$\mathbb{P}(\mathcal{G}_S^c) = \mathbb{P}(\sup_{s\le S}Y > \theta)\le(S/\Delta + 2)\exp(-m\theta^2/(32K_\Phi^2))$;
+with Step~7 this is (a). For $S\le\Delta e^{m\theta^2/(64K_\Phi^2)}$,
+$(S/\Delta + 2)e^{-m\theta^2/(32K_\Phi^2)}\le3e^{-m\theta^2/(64K_\Phi^2)}\le3/m$ when
+$e^{m\theta^2/(64K_\Phi^2)}\ge m$. (b) Under (H$'$), for $s\ge R_{\mathrm{eff}}$ every $X_s(\vartheta)$ is within
+$\theta/(8L_\vartheta^G)$ of $X_\infty(\vartheta)$ on $\supp\mu_0$, so $Y(s)\le Y(\infty) + \theta/4$ with
+$Y(\infty) := \norm{\frac1m\sum_j[\tilde\Phi(\cdot\,;X_\infty(\vartheta_j(0))) - \int\tilde\Phi(\cdot\,;X_\infty)\dd\mu_0]}$,
+another bounded-differences statistic with $\E Y(\infty)\le K_\Phi/m^{1/2}$; the grid on $[0,R_{\mathrm{eff}}]$ plus
+the point at infinity has at most $R_{\mathrm{eff}}/\Delta + 3$ points, and
+$\mathbb{P}(\mathcal{G}_\infty^c) = \mathbb{P}(\sup_{s\ge0}Y > \theta)\le(R_{\mathrm{eff}}/\Delta + 3)\exp(-m\theta^2/(32K_\Phi^2))$.
+
+\smallskip
+\emph{Step 9 (the learned function and the measures).}
+$\norm{\fhat_\Theta - \fhat[\mu_s]}\le\norm{h} + Y\le L_\vartheta^GD^{1/2} + Y$ by (0.1), so
+$\E\norm{\cdot}^2\le2(L_\vartheta^G)^2\E D + 2K_\Phi^2/m$. The coupling $(\vartheta_i,\bar\vartheta_i)$ is a coupling
+of $\mu_\Theta$ and $\mu_{\bar\Theta}$, so $W_2^2(\mu_\Theta,\mu_{\bar\Theta})\le D$ ($\Ginv$ metric), and the
+triangle inequality gives (c). The per-particle statement is Step~6.
+\end{proof}
+
+\begin{rmk}{Remark}{D$'''$.1}[what the hypothesis says, and the window]
+(H) at $s = \infty$ reads: on a neighbourhood of every atom of the limit measure,
+$G^{1/2}\nabla^2\mathcal{V}[\mu_\infty]G^{1/2} = \sigma_0I - R^G[\mu_\infty]\succeq\kappa I$ --- each atom is a
+non-degenerate local minimiser of the first-variation potential $\mathcal{V}[\mu_\infty]$, with margin $\kappa$: the
+strict form of the second-order optimality condition for measures (the local Chizat--Bach condition, as in
+Proposition K(ii)). Its non-strict form, $\sigma_0\Ginv - R[\mu_\infty](\vartheta^*)\succeq0$ at every atom
+$\vartheta^*$ of positive mass, is necessary for an atomic stationary measure to be a local minimiser of $\mathcal{G}$
+in the Wasserstein sense: splitting an atom of mass $w$ along a direction of negative curvature of
+$\mathcal{V}[\mu_\infty]$ lowers $\mathcal{G}$ at second order (Proposition K(i)--(ii) with the atom's own residual).
+Along the flow, (H) asks for this with the \emph{current} residual $r_{\mu_s}$ from the time $s_1$ on. It does not
+mention the collapsed configuration: $\sigma_{\mathrm{crit}} = \kappa_R[\delta_{\bar\vartheta}](\{\bar\vartheta\})$
+is the same curvature \emph{with the collapsed residual}, which is the residual of the best single kernel and is
+large when the plant needs several. The learning regime $\sigma_0 < \sigma_{\mathrm{crit}}$ (the kernels separate)
+and the uniform regime (H) ($\kappa_R[\mu_\infty]\le\sigma_0 - \kappa$ at the fitted configuration) therefore coexist
+exactly when the fitted configuration is non-degenerately stable while the collapsed one is not --- the window
+\[
+  \kappa_R[\mu_\infty]\bigl(N_{\varrho'}(\supp\mu_\infty)\bigr) < \sigma_0 < \sigma_{\mathrm{crit}}(\bar\vartheta)
+\]
+of leaks in which the network learns \emph{and} propagation of chaos is uniform in time. Theorem D$''$'s condition,
+by contrast, asks the leak to dominate the worst-case residual curvature $\lambda_GL_2(F_\rho + K_\Phi)$ \emph{and}
+the interaction's Lipschitz constant $L_\vartheta^2$-type terms, which forces $\sigma_0\ge\sigma_{\mathrm{crit}}$.
+The two ingredients that remove the horizon here are (i) the sign of the interaction, which is the flat convexity of
+$\bar L$ (Step~3), and (ii) the residual-weighted curvature evaluated at the actual residual rather than at the worst
+case (Step~2). Both are properties of the lifted linear parametrisation $\fhat = \int\tilde\Phi\dd\mu$, not of the
+particular features.
+\end{rmk}
+
+\begin{rmk}{Remark}{D$'''$.2}[the transient, the support, and the floor of the coupling]
+Two things limit the theorem, and both are visible in the numerics. (i) The constant carries $e^{2\Lambda_1}$, the
+finite-horizon amplification of Theorem D$'$ over the time the flow needs to enter the non-degenerate regime: for a
+warm start $\Lambda_1 = 0$ and $C_1 = 4(L_\vartheta^G)^2K_\Phi^2/\kappa^2$; for a cold start the expanding phase
+($a(s) < \kappa$ while the residual is large) lasts a time of order $1/\sigma_0$ and $\Lambda_1$ is of order
+$\sigma_0^{-1}\cdot\sup(\kappa_R - \sigma_0)$ --- the bound is uniform but quantitatively void, as D$'$'s $e^{\Lambda T}$
+is. (ii) (H) is a statement about the $\varrho'$-neighbourhood of the \emph{support} of $\mu_s$. The characteristic
+flow is a homeomorphism, so a connected support stays connected: if the mass of a connected cold start splits between
+several basins of $\mathcal{V}[\mu_\infty]$, the support of $\mu_s$ threads through the ridges between them for every
+$s$, and the filament's points converge to the saddles of $\mathcal{V}[\mu_\infty]$ on those ridges, where
+$\mathcal{V}$ has a direction of negative curvature and $\kappa_R > \sigma_0$ --- (H) fails for every $s_1$
+(asymptotically in $s$; pointwise the filament may well lie in a locally convex region for a while, referee round 8,
+D3-11), however little mass the filament carries. The theorem then says nothing, and the coupling can indeed carry a
+floor: a particle whose reference lies near a separatrix can be pushed to the other side by the $O(m^{-1/2})$
+difference between the two drifts, after which the pair sits in different basins for ever, at a distance of the order
+of the basin separation. A fraction $p_m$ of such pairs contributes $p_m\cdot O(R_\Theta^2)$ to $D$, so $D$ follows
+the law of $p_m$ (the $\mu_0$-mass of a boundary layer of width $O(m^{-1/2})$ around the separatrices' preimage, hence
+$p_m = O(m^{-1/2})$ when $\mu_0$ has a bounded density there), not $1/m$; the learned function is less sensitive,
+$\norm{\fhat_\Theta - \fhat_{\bar\Theta}}\le L_\vartheta^G\frac1m\sum\norm{\delta_i}_{\Ginv}
+\le L_\vartheta^G(p_m\cdot2R_\Theta + D_{\mathrm{good}}^{1/2})$, which is still $O(m^{-1/2})$. The measure-weighted
+form of (H) --- a bad set of small $\mu_s$-mass, with the per-particle bootstrap run on the good particles only and
+the interaction split as in Step~3 --- is the natural extension and is listed in Section~\ref{sec:program}; what the
+present theorem shows is where the clean statement holds (supports inside basins) and why the cold start of Theorem
+D$''$'s experiment was outside it on two counts (the transient and the connected support).
+\end{rmk}
+
+\begin{rmk}{Remark}{D$'''$.3}[dither]
+At $\tau_0 > 0$ the synchronous coupling cancels the noise and the identity of Step~1 holds pathwise with the same
+three terms, but the reference law has full support and the particles visit the ridges of $\mathcal{V}$ with the
+Gibbs weight of the ridge, so (H) fails in the sense of (ii) above and the coupling carries a floor of that order.
+Uniform-in-time propagation of chaos at $\tau_0 > 0$ is the province of the entropy method: with dither,
+\textup{($\mathfrak{A}_m$)} is the $m$-particle mean-field Langevin dynamics of the free energy $F_\tau$ of Theorem H
+in the $\Ginv$ metric (Corollary J$'$.3 is its stationary statement), and \cite{S5} proves uniform-in-time
+propagation of chaos for mean-field Langevin dynamics under flat convexity, regularity of the first variation and a
+uniform log-Sobolev inequality for the proximal Gibbs measures --- the three hypotheses that Theorem H(i)--(ii)
+verifies for $F_\tau$, with the constant $\rho_\tau$ of H(ii). That result is imported here, not re-derived; its
+constants are those of Theorem H and are exponentially small in $1/\tau_0$, where the constants of Theorem D$'''$
+are those of the leak and the residual curvature. The leak-dominated regime is covered for the real loop and every
+$\tau\ge0$ by Theorem D$''$.
+\end{rmk}
+
+\begin{rmk}{Remark}{D$'''$.4}[the real loop]
+Theorem D$'''$ is a statement about the averaged slow dynamics \textup{($\mathfrak{A}_m$)}. Theorems J and J$'$
+identify \textup{($\mathfrak{A}_m$)} as the leading order of the real loop's slow dynamics, with the corrections
+$\varepsilon\cdot b$ (Theorem J$'$'s $b$, not a gradient: Proposition J$'$.2) and the fast error eliminated at
+$O(\varepsilon^2)$; the transfer of a uniform-in-time statement through these corrections --- a near-identity change
+of variables that is uniform in time --- is the open item of Section~\ref{sec:program}, branch 1; on a warm start it
+is settled by Corollary D$'''$.7 below through Theorem J. What the theorem settles is the mechanism: in the learning
+regime the uniformity rests on the fitted configuration's non-degenerate stability and on the flat convexity of the
+loss, not on a dominant leak; the real-loop run on a warm start (numerics, table [X]) shows the coupled distance
+saturating at the same $k_e$, $G$ and horizon at which Theorem D$''$'s cold start grew.
+\end{rmk}
+
+\begin{thm}{Proposition}{D$'''$.5}[the stationary coupled distance at finite $m$: the weight-sensitivity law]
+Let $\mu^* = \sum_{k=1}^K\bar w_k\delta_{\vartheta^*_k}$ be a $K$-atom stationary measure of
+\textup{($\mathfrak{A}_0$)} (each $\vartheta^*_k$ a critical point of $\mathcal{V}[\mu^*]$), and for weights
+$w\in(0,\infty)^K$ let $\mathcal{G}_w(\Theta) := \frac12\langle\norm{f - \sum_kw_k\tilde\Phi(\cdot\,;\vartheta_k)}^2\rangle_\rho
++ \frac{\sigma_0}2\sum_kw_k\norm{\vartheta_k - \vartheta^0}^2_{\Ginv}$ be the mean-field energy of
+$\mu_w := \sum_kw_k\delta_{\vartheta_k}$, so that $\nabla_{\vartheta_k}\mathcal{G}_w(\Theta) = w_k\nabla_\vartheta\mathcal{V}[\mu_w](\vartheta_k)$.
+Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is invertible. Then:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the weighted stationary point and its replication)} there is a smooth map $w\mapsto\Theta^*(w)$ on a
+    neighbourhood of $\bar w$ with $\Theta^*(\bar w) = \Theta^*$ and
+    $\nabla_\vartheta\mathcal{V}[\mu_{\Theta^*(w)}](\vartheta^*_k(w)) = 0$ for every $k$ (implicit function theorem);
+    $S := \partial\Theta^*/\partial w$ ($S_k := \partial\vartheta^*_k/\partial w\in\R^{p\times K}$) is given by
+    $S = -[\nabla^2_\Theta\mathcal{G}_w]^{-1}\partial_w\nabla_\Theta\mathcal{G}_w$ at $(\Theta^*(w),w)$. For $m$
+    particles with $n_k$ of them in cluster $k$ ($w^m_k := n_k/m$), the configuration with $n_k$ copies of
+    $\vartheta^*_k(w^m)$ is a critical point of $J_m$ ($\mu_\Theta = \mu_{w^m}$ there), and a strict local minimiser
+    of $J_m$ when in addition the splitting condition $\sigma_0\Ginv - R[\mu_{w^m}](\vartheta^*_k(w^m))\succ0$ holds
+    at every cluster (Proposition K(i): the Hessian of $J_m$ at a configuration with coinciding particles splits into
+    the collective block $\nabla^2\mathcal{G}_{w^m}$ and the separation blocks of each cluster).
+  \item \emph{(the stationary distance)} Under the shared-particle coupling of Theorem D$'''$ with i.i.d.\ cluster
+    labels of law $\bar w$ (the $m$ particles are the first $m$ of the $M$ reference particles), suppose the
+    $m$-system converges to the configuration of \textup{(i)} with its weights $w^m$ and the reference to the one
+    with $w^M$. Then the coupling distance converges to
+    \[
+      D_\infty = \sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}
+      = \sum_kw^m_k\norm{S_k(w^m - w^M)}^2_{\Ginv} + O(\norm{w^m - w^M}^3),
+    \]
+    and since $\E[(w^m - w^M)(w^m - w^M)^\T] = (1/m - 1/M)\tilde C$ with
+    $\tilde C := \operatorname{diag}(\bar w) - \bar w\bar w^\T$ (multinomial counts of the shared labels),
+    \[
+      \E D_\infty = (1/m - 1/M)\cdot\sum_k\bar w_k\tr\bigl(G^{-1/2}S_k\tilde CS_k^\T G^{-1/2}\bigr) + O(m^{-3/2}):
+    \]
+    the $1/m$ law with an explicit constant, and the $(1/m - 1/M)$ law of the shared-particle coupling observed in
+    Theorem D$'$'s numerics.
+  \item \emph{(the fluctuations)} As $M\to\infty$ ($w^M\to\bar w$) and then $m\to\infty$,
+    $\sqrt m(w^m - \bar w)\to\mathcal{N}(0,\tilde C)$ and $\sqrt m\cdot(\vartheta_i - \bar\vartheta_i)\to S_{k(i)}\xi$
+    with $\xi\sim\mathcal{N}(0,\tilde C)$ for every particle $i$ of cluster $k(i)$: the fluctuations of the coupling
+    are Gaussian, carried entirely by the cluster weights, and all particles of a cluster are displaced by the same
+    vector.
+\end{enumerate}
+\end{thm}
+\status{Formal: (i) and the algebra of (ii)--(iii) are exact (implicit function theorem; the multinomial covariance
+of shared labels), the convergence of both systems to the stated configurations is assumed (it is what Theorem
+D$'''$ proves for $m\ge m_0$ and what the numerics show for $m = 16$--$256$). Checked:
+\code{weighted_stationary_atoms}, \code{weight_sensitivity}, \code{predicted_stationary_D} in
+\code{chaos_learning.py}; on the instance below the replicated weighted stationary point is a critical point of
+$J_{16}$ to $10^{-10}$, the linearisation $\vartheta^*(\bar w + \mathrm{d}w) - \vartheta^* = S\cdot\mathrm{d}w$ has a
+second-order remainder, and the per-cluster displacements of the coupled run point along $S_k(w^m - w^M)$ (test and
+table below). The proposition is the sharp form of Theorem D$'''$'s constant:
+$S = -H_w^{-1}\partial_w\nabla\mathcal{G}_w$ has the structure (stiffness)$^{-1}$ $\times$ (feature correlations), of
+which $C_1 = 4e^{2\Lambda_1}(L_\vartheta^G)^2K_\Phi^2/\kappa^2$ is the worst-case envelope ($\kappa^{-1}$ for the
+stiffness, $L_\vartheta^GK_\Phi$ for the correlations).}
+
+\begin{rmk}{Remark}{D$'''$.6}[the regime of the theorem, and what the numerics test]
+The sample size $m_0 = 16K_\Phi^2/\theta^2$ from which the theorem's tail is in force is astronomically large on
+realistic instances ($10^{23}$ below): $\theta$ carries $\varrho'\kappa^2e^{-2\Lambda_1}/(L_\vartheta^G)^3$ from the
+per-particle bootstrap of Step~6, because the interaction's effect on one particle is bounded by
+$(L_\vartheta^G)^2D^{1/2}$ and divided by the stiffness $\kappa$. This is not an artefact of the proof's constants
+only: Proposition D$'''$.5 says the particles of a cluster are displaced by $S_k(w^m - w^M)$, of order
+$\norm{S}m^{-1/2}$ with $\norm{S}\sim(\text{stiffness})^{-1}$, which exceeds any fixed $\varrho'$ for $m$ below
+$(\norm{S}/\varrho')^2$ --- on the instance below the $m = 16$ particles sit $0.4$--$1.4$ whitened units from their
+reference copies, outside the neighbourhood $N_{\varrho'}$ in which $\mathcal{V}[\mu_{\bar\Theta}]$ is convex, at a
+stable stationary point of their own $J_{16}$. Hypothesis (H) is nevertheless the right object: it is the condition
+under which the reference configuration is stable to splitting, and the $m$-system's configuration is the same
+configuration with perturbed weights. What the numerics test is therefore (a) hypothesis (H) at the stationary
+measure and along the flow, (b) the mechanism --- the coupled distance saturates (no growth) and follows the $1/m$
+law --- and (c) the sharp constant of Proposition D$'''$.5; the theorem's own constant $C_1$ is reported for the
+record.
+\end{rmk}
+
+\begin{thm}{Corollary}{D$'''$.7}[the real loop on a warm start: uniform in time through Theorem J]
+Let $\mu^* = \sum_k\bar w_k\delta_{\vartheta^*_k}$ be a $K$-atom stationary measure as in Proposition D$'''$.5,
+satisfying the splitting condition $\sigma_0\Ginv - R[\mu^*](\vartheta^*_k)\succ0$ at every atom and the
+non-degeneracy of the $K$-atom Hessian, and let $w\mapsto\Theta^*(w)$ be the weighted stationary point of
+D$'''$.5(i). Fix $m\le M$ and cluster weights $w^m$, $w^M$ in the neighbourhood of $\bar w$ on which $\Theta^*(\cdot)$
+is defined and the splitting condition persists, and let $\Theta^*_m :=$ the configuration with $n_k = mw^m_k$ copies
+of $\vartheta^*_k(w^m)$ (likewise $\Theta^*_M$). Both are non-degenerate local minimisers of $J_m$ and $J_M$
+(Proposition D$'''$.5(i)), hence hyperbolic critical points, and Theorem J applies to each loop: there are $k_0$,
+$\rho_0$, $C$ (depending on $\Theta^*_m$ and $\Theta^*_M$, hence on $m$, $M$ and the weights) such that for
+$k_e\ge k_0$ the real closed loop \textup{(CL)} with $m$ kernels started at
+$\norm{\Theta(0) - \Theta^*_m}_{\Ginv}\le\rho_0$, $\norm{e(0)}\le R$ converges to its $T_0$-periodic orbit
+$\Theta_p^m$, and likewise the $M$-kernel loop to $\Theta_p^M$. Under the shared-particle coupling (the $m$ kernels
+are the first $m$ of the $M$, the plants are driven by the same reference) the coupled distance
+$D(t) := \frac1m\sum_i\norm{\vartheta_i(t) - \bar\vartheta_i(t)}^2_{\Ginv}$ satisfies, for all $t\ge0$,
+\begin{multline*}
+  D(t)^{1/2}\le D_{\mathrm{orb}}^{1/2} + Ce^{-\mu t}\bigl(\norm{\Theta(0) - \Theta_p^m(0)}_{\Ginv} + \norm{x(0) - x_p^m(0)}\bigr)\\
+  + Ce^{-\mu t}\bigl(\norm{\bar\Theta(0) - \Theta_p^M(0)}_{\Ginv} + \norm{\bar x(0) - x_p^M(0)}\bigr),
+\end{multline*}
+with $\mu = (\lambda_*/k_e)(1 - \kappa)$ the rate of Theorem J(c) (the smaller of the two loops' rates) and
+\begin{align*}
+  D_{\mathrm{orb}} &:= \sup_t\frac1m\sum_i\norm{\Theta_p^m(t)_i - \Theta_p^M(t)_i}^2_{\Ginv}\\
+  &= \sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv} + O(1/k_e)\\
+  &= \sum_kw^m_k\norm{S_k(w^m - w^M)}^2_{\Ginv} + O(\norm{w^m - w^M}^3) + O(1/k_e):
+\end{align*}
+the coupled distance of the real loop is bounded uniformly in time, converges to the distance between the two
+periodic orbits, and that distance is Proposition D$'''$.5's stationary distance up to the $O(1/k_e)$ offsets of
+Theorem J(a),(d) (which differ between the two loops by $O(k_e^{-1}\norm{w^m - w^M})$, the offset being a smooth
+function of the configuration). In particular, for cluster labels i.i.d.\ of law $\bar w$ and conditionally on both
+starts lying in their basins,
+$\E D_{\mathrm{orb}} = (1/m - 1/M)\sum_k\bar w_k\tr(\tilde S_k\tilde C\tilde S_k^\T) + O(m^{-3/2}) + O(1/k_e)$.
+\end{thm}
+\status{Proved as stated (Theorem J(a),(c),(d) applied to each loop, the triangle inequality in the $\Ginv$ metric,
+and Proposition D$'''$.5(ii) for the distance between the critical points), under Theorem J's hypotheses for both
+configurations: the constants $k_0$, $\rho_0$, $C$, $\mu$ are those of Theorem J at $\Theta^*_m$ and $\Theta^*_M$,
+and the corollary does not assert their uniformity in $m$ or $M$ (Remark D$'''$.8). It is the statement of Remark
+D$'''$.4 for a warm start: the real loop's coupled distance saturates, at a value set by the cluster weights. Checked
+on the instance of this section's numerics (table 5: the real loop at $k_e = 25$ from the jittered mixture; the window
+maxima \textbf{[REAL-LOOP READING]}).}
+
+\begin{proof}
+Theorem J(c) for the $m$-kernel loop gives
+$\norm{\Theta(t) - \Theta_p^m(t)}_{\Ginv}\le Ce^{-\mu t}(\norm{\Theta(0) - \Theta_p^m(0)}_{\Ginv} + \norm{x(0) - x_p^m(0)})$
+and the same for the $M$-kernel loop; the first $m$ rows of the $M$-loop are the reference particles
+$\bar\vartheta_i$. For the $(m\times p)$-row norm
+$\frac1m\sum_i\norm{\cdot}^2_{\Ginv}\le\norm{\cdot}^2_{\Ginv}/m\le\norm{\cdot}^2_{\Ginv}$ (the full configuration
+norm dominates the mean square over the first $m$ rows), so by the triangle inequality
+$D(t)^{1/2}\le[\frac1m\sum_i\norm{\Theta_p^m(t)_i - \Theta_p^M(t)_i}^2]^{1/2} + (\text{the two transients})$.
+Theorem J(a) places each orbit within $C/k_e$ of its critical point, uniformly in $t$, so the first term is
+$\sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}$ up to $O(1/k_e)$ (the two offsets are
+$O(1/k_e)$ each; their difference is $O(k_e^{-1}\norm{\Theta^*_m - \Theta^*_M})$ because
+$\Theta\mapsto J^{-1}(b_{\mathrm{frozen}} + b_{\mathrm{osc}})(\Theta)$ is smooth, which sharpens the $O(1/k_e)$ to
+$O(k_e^{-1}\norm{w^m - w^M})$), and Proposition D$'''$.5(ii) expands it in $w^m - w^M$. The expectation statement is
+D$'''$.5(ii)'s.
+\end{proof}
+
+\begin{rmk}{Remark}{D$'''$.8}[what the corollary does and does not say]
+It transfers the uniform-in-time statement to the real loop in the regime where Theorem J applies to both loops ---
+a warm start in the basins of two hyperbolic minimisers at a gain $k_e$ above both thresholds. Theorem J's constants
+at a replicated configuration are controlled by the $K$-atom data (the Hessian of $J_m$ there is the collective block
+$\nabla^2\mathcal{G}_{w^m}\oplus{}$the separation blocks $\sigma_0\Ginv - R_k$ of Proposition K(i), both independent
+of $m$ beyond the weights), so the threshold and the basin are expected to be uniform in $m$ for configurations with
+the same weights; the corollary does not prove this, and the cold start --- where the coupled distance of the real
+loop grew in Theorem D$''$'s experiment --- is outside it on the same two counts as in Remark D$'''$.2.
+\end{rmk}
+
+% [D3 NUMERICS PENDING] second pass: replace the placeholder paragraph below with the tables of
+% results/chaos/learning_table.md and the final Numerics paragraph of PARADIGM.md section 5d.
+\paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}).
+\textbf{[D3 NUMERICS PENDING]} --- the tables and the reading of the experiment are filled in the second pass.
+
+\checkedby{\code{tests/test_chaos_learning.py}: \textup{($\mathfrak{A}_m$)}'s drift equals $-G\nabla J_m$ of
+\code{periodic.ClosedLoop} to machine precision (\code{test_averaged_slow_loop_is_the_G_gradient_flow_of_J_m}); the
+three-term identity of Step~1 holds to rounding on random configurations with a mean-field stand-in, the interaction
+term equals $-\norm{\fhat_\Theta - \fhat_{\bar\Theta}}^2$ up to a relative $O(D^{1/2})$ correction (ratio
+$0.98\to0.9999$ as $\delta$ is scaled by $1\to0.01$) and obeys (3.1) at every scale\newline
+(\code{test_coupling_identity_three_terms_and_the_sign_of_the_interaction}); $\kappa_R$ at the atoms of a collapsed
+configuration with the collapsed residual equals Proposition K's $\lambda_{\max}(G^{1/2}R_2G^{1/2})$, which equals
+$\sigma_0$ at $\sigma_0 = \sigma_{\mathrm{crit}}$, the collapsed critical point has zero drift, and the deterministic
+neighbourhood search over the sphere of radius $\varrho$ reproduces the first-order expansion
+$\lambda_{\max} + \varrho\norm{G^{1/2}\nabla\lambda_{\max}}$ with a relative error $O(\varrho)$
+(\code{test_residual_curvature_}\dots); the searched whitened constants reproduce the document's values and lie below
+their closed forms, \code{theorem_constants} satisfies the four constraints the bootstrap needs, and $\Lambda_1$
+integrates exactly to $s_1$ (\code{test_whitened_constants_}\dots); at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$ the
+three-atom critical point of $J_3$ has zero drift and (H) holds at it with $\varrho' = 0.1$ inside the learning
+regime, the replicated weighted stationary point is a critical point of $J_{16}$ to $10^{-10}$, the linearisation in
+the weights has a second-order remainder, and on a coupled run from the jittered mixture ($m = 16$, $64$ against
+$M = 512$, 60 slow units) $\kappa_R[\mu^*]$ over the neighbourhood of the reference's support stays below $\sigma_0$,
+the two curvature statistics differ by at most the bound ($0.2$), the per-cluster displacements point along
+$S_k(w^m - w^M)$ (cosine $\ge0.8$) with $D$ within a factor 2 of $\sum_kw^m_k\norm{S_k(w^m - w^M)}^2$,
+$\norm{\fhat_\Theta - \fhat_{\bar\Theta}}\le L_\vartheta^G\cdot\operatorname{mean}\norm{\delta_i}$, $D_{64} < D_{16}$
+and the (vacuous) bound $C_1/m$ holds\newline
+(\code{test_hypothesis_H_at_the_three_atom_stationary_measure_and_the_weight_sensitivity_law}).}
