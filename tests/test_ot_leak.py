@@ -238,3 +238,44 @@ def test_transverse_spectrum_of_the_lifted_orbit_is_the_ghost_spectrum_and_the_c
     lamc, exc, dc = LO.compression_spectrum(DP6, LO.collective_basis(labels, 1, 3), PER)
     exK = np.sort(-np.log(np.abs(np.linalg.eigvals(DPK))) / PER)
     assert dc < 1e-6 and np.abs(exc[:-1] - exK[:-1]).max() < 1e-6              # the parameter exponents (the error channel's is at the FD floor)
+
+
+# ---------------------------------------------------------------------- Proposition D‴.17: J_m^{OT} is a Lyapunov function of the OT dynamics
+def test_J_OT_is_a_Lyapunov_function_of_the_OT_dynamics_and_decreases_from_a_tie_along_either_active_plan():
+    """Proposition D‴.17: (𝔄_m^{OT}) is the G-gradient flow of J_m^{OT} wherever the plan is unique (the energy decreases at the rate −‖drift‖²_{G⁻¹})
+    and J_m^{OT} is non-increasing along a run; at a tie between two optimal plans — a configuration built by symmetry — J_m^{OT} is the minimum
+    over the plans (equal for both) and decreases to first order along the drift of either active plan (the Clarke-subgradient inclusion)."""
+    net = _net()
+    exact = _exact(net)
+    rng = np.random.default_rng(11)
+    loop = OT.OTPriorLoop(net, F_VEC, X_REF, PER, G, 10 * SIGMA0, exact, n_quad=96)
+    Th = CL.mixture_start(exact, 15, rng, 0.3, G)                                          # unbalanced classes: the plan reassigns particles
+    dt = 0.05
+    J_prev = loop.J(Th)
+    for k in range(300):
+        gamma, _ = loop.plan(Th); T = loop.leak_target(Th, gamma)
+        k1 = loop.drift(Th, T); k2 = loop.drift(Th + 0.5 * dt * k1, T)
+        Th = Th + dt * k2
+        J_new = loop.J(Th)
+        assert J_new <= J_prev + 1e-9 * max(1.0, abs(J_prev))                              # non-increasing (up to the step's discretisation error)
+        J_prev = J_new
+    gamma, _ = loop.plan(Th); T = loop.leak_target(Th, gamma)
+    d = loop.drift(Th, T); h = 1e-6
+    dJ = (loop.J(Th + h * d) - loop.J(Th - h * d)) / (2 * h)
+    n2 = float(np.sum(d ** 2 / G[None, :]))
+    assert abs(dJ + n2) < 1e-6 * max(1.0, n2)                                               # dJ/ds = −‖drift‖²_{G⁻¹} where the plan is unique
+    # a tie: m = 6 with classes (2, 2, 2) to fill; three particles at atom 1 (two of them mirror images across the plane through atom 1
+    # orthogonal, in the G⁻¹ metric, to atom 3 − atom 1), two at atom 2, one at atom 3: the plan must send one of the two mirror images to atom 3
+    v = (exact[2] - exact[0]) / G                                                            # ⟨u, ϑ⁰₃ − ϑ⁰₁⟩_{G⁻¹} = u·v: the tie needs u·v = 0
+    u = np.array([0.0, 1.0, 0.0]); u = u - (u @ v) / (v @ v) * v                              # a displacement G⁻¹-orthogonal to ϑ⁰₃ − ϑ⁰₁ (equal distances to atoms 1 and 3)
+    u = 0.4 * u / np.sqrt(u @ (u / G))
+    Th6 = np.vstack([exact[0] + u, exact[0] - u, exact[0] + np.array([0.3, 0.0, 0.0]), exact[1], exact[1] + np.array([0.0, 0.05, 0.0]), exact[2]])
+    C = loop.cost_matrix(Th6)
+    assert abs(C[0, 2] - C[1, 2]) < 1e-12 and abs(C[0, 0] - C[1, 0]) < 1e-12               # the tie
+    pi_a = np.array([0, 2, 0, 1, 1, 2]); pi_b = np.array([2, 0, 0, 1, 1, 2])                # the two optimal integral plans
+    J_pi = lambda pi: 6 * loop.L_bar(Th6) + 0.5 * loop.sigma0 * float(np.sum((Th6 - exact[pi]) ** 2 / G[None, :]))
+    assert abs(J_pi(pi_a) - J_pi(pi_b)) < 1e-12 and abs(loop.J(Th6) - J_pi(pi_a)) < 1e-10  # J^{OT} is the minimum, attained by both
+    for pi in (pi_a, pi_b):
+        d_pi = loop.drift(Th6, exact[pi])                                                   # the drift of the frozen plan π
+        eps = 1e-4
+        assert loop.J(Th6 + eps * d_pi) < loop.J(Th6) - 0.5 * eps * float(np.sum(d_pi ** 2 / G[None, :]))   # decreases along either active plan's drift
