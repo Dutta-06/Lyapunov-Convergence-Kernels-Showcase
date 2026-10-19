@@ -117,13 +117,18 @@ Each branch states what is proved, what is open, and the first concrete step.
       one basin radius $\rho$ and one rate for every size; for $k_e\ge k_0$ the proviso of Corollary D$'''$.14(ii) is
       replaced by this $m$-uniform statement. In the mean-square norm no $m$-independent basin exists for the
       nearest-atom leak (Remark D$'''$.19).
-      % The Open clause below is PARADIGM's text of this bullet through referee round 14 (commit ebd4c03), with the
-      % round-13 wording of the dithered loop; at HEAD it closes the Done (Theorem D'''.21) bullet, a later part.
-      \emph{Open:} the measure-level ($W_2$) basin of the OT leak, which the numerics suggest (the plan restores the
-      masses after a particle crosses a cell); the dithered real loop with the OT leak (Remark D$'''$.16, checked on
-      the averaged loop: under the OT leak a ridge crossing is reversible --- the particle stays assigned to its own
-      atom --- while under the nearest-atom leak dither equalises the masses only on the Arrhenius time scale) ---
-      Theorem J$'$'s numerics with the two leaks.
+    \item \emph{Done (Theorem D$'''$.21):} the measure-level basin of the OT leak, for the averaged loop. The OT
+      energy satisfies a Polyak--{\L}ojasiewicz inequality whose constant is set by the residual-weighted curvature
+      along the plan segments and does not depend on $m$ (sharp, $2\sigma_0$, at a matching prior); the excess energy
+      decays exponentially from an $m$-independent sublevel set (tiny on the instance) and a posteriori wherever the
+      plan-segment margin is positive, which covers configurations with a fixed fraction of the particles in other
+      cells; under a curvature hypothesis at the stationary residual the replicated configuration is the unique
+      global minimum among the empirical measures, while the nearest-atom energy has a spurious minimum at every
+      admissible count vector. \emph{Open:} the transit of the real loop (averaging with plan switches) and the
+      existence of the mean-field OT flow (Remark D$'''$.22); the dithered real loop with the OT leak (Remark
+      D$'''$.16, checked on the averaged loop: under the OT leak a ridge crossing is reversible --- the particle stays
+      assigned to its own atom --- while under the nearest-atom leak dither equalises the masses only on the
+      Arrhenius time scale) --- Theorem J$'$'s numerics with the two leaks.
     \item \emph{Open:} the measure-weighted form of hypothesis (H) (a bad set of small $\mu_s$-mass, the bootstrap on
       the good particles, the flip fraction $p_m$ and its $m$-law); the transfer to the real loop at finite $k_e$
       through Theorem J$'$'s $O(\varepsilon)$ corrections, uniformly in time; dither (the entropy method
@@ -201,6 +206,9 @@ Each branch states what is proved, what is open, and the first concrete step.
       measure inherits Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 inside the Voronoi cells; the
       prior is a design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window
       closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes).
+    % PARADIGM's text at b76b3b9 through the D'''.20 and D'''.21 clauses; its Theorem D'''.23 wording (the closing
+    % "adaptive priors with learned masses", "its atoms, Theorem D'''.23" in the Open (in part) bullet, and the
+    % Done (Theorem D'''.23) bullet) belongs to a later part.
     \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
       fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
       Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
@@ -210,10 +218,13 @@ Each branch states what is proved, what is open, and the first concrete step.
       particles; for an atomic prior the mean-field form of the barycentric leak is the Laguerre-cell leak.
       \emph{Open:} a coupling theorem for the OT dynamics from an i.i.d.\ start (Theorem D$'''$'s synchronous
       coupling needs a balanced sample, of probability $\approx0.83/m$, and otherwise keeps the transit's mismatch
-      for ever; a coupling that follows the plan is the natural candidate; the convergence of every trajectory to a
-      Clarke-critical point is Proposition D$'''$.17, without a rate); a soft (entropic or penalised) mass
-      constraint interpolating between the two leaks; the mean-field form for a general prior $\nu$ (the
-      barycentric projection as the superdifferential of
+      for ever; the convergence of every trajectory to a Clarke-critical point is Proposition D$'''$.17, without a
+      rate; Theorem D$'''$.21 gives the rate in an $m$-independent energy basin, with the plan as the test direction,
+      and formally (Remark D$'''$.22) propagation of chaos with no floor there; smallness in $m$ during the transit
+      from an i.i.d.\ start remains open); a penalised (unbalanced) mass constraint --- the entropic one is
+      Proposition D$'''$.20, which equalises the masses only down to a critical excess and conserves smaller ones, so
+      that its floor returns at large $m$ (Proposition D$'''$.5's law at the entropic stationary point); the
+      mean-field form for a general prior $\nu$ (the barycentric projection as the superdifferential of
       $\frac12W^2(\cdot,\nu)$, Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}) and adaptive priors ($\nu$,
       and its masses, learned).
     \item Transfer: transporting a learned measure to a new plant.

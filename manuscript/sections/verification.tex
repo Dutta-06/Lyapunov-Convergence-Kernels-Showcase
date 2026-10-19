@@ -171,6 +171,33 @@ D$'''$.18 & the real loop at $k_e=25$, 8000 time units, sizes 3--240: the 3-atom
     the shifted prior: the remainder constant and the exact $N_a+N_b/m$ structure of the per-particle term, the
     separation response $(GR_k-\sigma_0I)v$, the contraction at
     $\mu=\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}$ with one constant, the same for every $m$)\\
+D$'''$.20 & the critical excess by continuation in $\varepsilon$ (Newton residuals $\le8.7\cdot10^{-13}$):
+  $\varepsilon_c=5.11$, $13.5$, $23.1$, $65.0$ for $\delta=0.02$--$0.2$ (the exact threshold equal to
+  $\varepsilon_c$; the rank-one formula 1.22--1.31 and 0.70--1.22 times $\varepsilon_c$ with the two atoms), 6.99,
+  14.6, 24.3 for an excess taken from one atom; $\delta_c(\varepsilon)=0.0042$--$0.20$ for $\varepsilon=1$--$64$;
+  dynamics for $m=15$--$510$ at $\varepsilon=1$, $4$, $16$, $64$ over 600 slow units, continued to 6000: equalised
+  at $\varepsilon=1$; at $\varepsilon=4$ stable end weights with residual excesses up to $1/60$, $3/240$, $7/510$; at
+  $\varepsilon=16$ and $64$ the stable systems keep their sampled weights and the four unstable ones move (one
+  moving its excess to an atom that was at $q$); floors 0.55 and 0.74 of the nearest-atom law, 0.23--0.84 and
+  0.47--0.91 of the observed nearest-atom floors; fit errors 0.12--0.14 at $\varepsilon=64$
+  & \code{exp_entropic_leak.py} $\to$ \code{results/chaos/entropic_leak.md}; \code{tests/test_entropic_leak.py} (the
+    solvers, the gradient flow, the limits at their rates, the separation block entrywise with the invariance of the
+    subspace, the critical regularisation by continuation in $\varepsilon$ with $A\succ0$ checked and every residual
+    below $10^{-9}$)\\
+D$'''$.21 & the averaged loop from the warm clouds ($m=15$--$510$, four seeds, matching and shifted priors, both
+  leaks, 600 slow units): (E), (P) to $6\cdot10^{-13}$; under the OT leak no relabelling, $\alpha>0$ from $s\le300$,
+  ratio$/\lambda\ge1.00$ (matching) and $\ge1.61$ (shifted), $E$ from $4.1\cdot10^{-3}$--$4.0\cdot10^{-2}$ to
+  $8.3\cdot10^{-7}$--$8.1\cdot10^{-6}$ below the a-posteriori bound, the end rate 0.01416--0.01417 against
+  $2\sigma_0=0.01415$ and $\lambda=0.0140$--$0.0141$, at the shifted prior the curvature's cost 0.802 and (ii)'s
+  slack 0.683; the nearest-atom $E$ at the spurious minima's energy at the 22 admissible count vectors (within
+  0.24\%), split and still falling 0.5--16.5\% below it at the 10 inadmissible ones ($m\le60$); (H$^*$) on the whole
+  space at the shifted prior ($\kappa=4.7\cdot10^{-4}$, $E_0=9.1\cdot10^{-10}$), the a-priori basins holding no
+  particle in another cell below $m\approx1.7\cdot10^5$ (matching) and $2.3\cdot10^6$ (shifted); the margin
+  $+0.0023$ with $1/30$ of the particles moved into another cell, negative from $1/15$
+  & \code{exp_ot_basin.py} $\to$ \code{results/chaos/ot_basin.md}; \code{tests/test_ot_basin.py} (the identities for
+    every assignment with the counts and their exact defects at other counts, the PL chain and its sharp constant,
+    the decay from a particle in another cell below the a-posteriori bound with a positive margin, the admissible
+    nearest-atom spurious minimum)\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid

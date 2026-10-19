@@ -207,6 +207,38 @@ is a delta-method statement, new in its object.}
     Verdict: imported tool, routine verification; the content is that the mass-constrained law converges without a
     rate, which separates the qualitative question (settled) from Theorem D$'''$'s quantitative one (open for the OT
     dynamics).
+  \item \emph{Proposition D$'''$.20 (the entropic OT leak).} Entropic OT, Sinkhorn's algorithm and barycentric
+    mappings of entropic plans are standard (\cite{S45}), and so is the interpolation of the entropic cost between
+    optimal transport and a kernel (MMD-type) discrepancy as $\varepsilon$ runs from 0 to $\infty$ (Sinkhorn
+    divergences, \cite{S45}); size-constrained soft assignment by Sinkhorn (equipartition) is related prior art for a
+    soft mass constraint. A critical temperature equal to twice the largest eigenvalue of a conditional covariance is
+    deterministic annealing's (\cite{S46}), with the same roles --- the particles as the codevectors, the prior's
+    atoms as the data; here the curvature of the fit enters, and the threshold is the largest generalised eigenvalue
+    of the conditional covariance relative to $I - R^G/\sigma_0$. What is new is the soft mass constraint as an
+    adaptive law's leak --- a smooth gradient flow between the OT leak and the $\sigma$-modification toward the
+    prior's barycentre --- in which the conditional covariance of a collapsed class is an effect of its mass excess,
+    and its consequence for propagation of chaos: the masses equalise only down to a critical excess, so the
+    finite-size floor returns at large $m$ for every positive regularisation. Verdict: standard ingredients, new
+    object and new consequence (on the commensurate sizes only the hard constraint is floor-free for every $m$).
+  \item \emph{Theorem D$'''$.21 (a measure-level basin for the OT leak).} The Polyak--{\L}ojasiewicz inequality and
+    its linear convergence are classical (\cite{S47}); in Wasserstein space {\L}ojasiewicz inequalities are known for
+    $\lambda$-convex and displacement-convex functionals, and PL inequalities through optimal maps for some that are
+    not geodesically convex --- barycentre functionals, the distance of uniform point clouds to a density
+    (\cite{S48}); the leak alone, $\frac12W^2(\cdot,\nu)$, satisfies one with constant 2 (its metric slope is
+    $W(\cdot,\nu)$; AGS~\cite[\S10.4]{ags2008}). The theorem's plan segments are the generalised geodesic from
+    $\mu^*$ to $\mu_\Theta$ based at the prior (AGS~\cite[\S9.2]{ags2008}), along which $\frac12W^2(\cdot,\nu)$ is
+    1-convex, and turning convexity along such a curve into a slope bound is AGS's device. The adaptive law's energy
+    is semiconvex along generalised geodesics only with a negative constant (the loss's curvature at the actual
+    residual), so a global argument is unavailable. What is new is the PL inequality along that geodesic for this
+    energy --- the loss linearised exactly in the fitted function with the curvature taken at the stationary
+    residual, where the fixed counts of the mass constraint make the geodesic a particle interpolation and the
+    fitted function's increment the average of the per-particle increments: its constant is set by the
+    residual-weighted curvature along the segments and does not depend on $m$ (sharp, $2\sigma_0$, at a matching
+    prior); an $m$-independent energy basin, and uniqueness of the global minimum among empirical measures under a
+    curvature hypothesis at the stationary residual; and the converse for the nearest-atom leak, whose energy has a
+    spurious minimum at every admissible count vector --- the energy-landscape form of the finite-size floor.
+    Numerics: \code{exp_ot_basin.py}. Verdict: classical inequality and geometry (the generalised geodesic), new
+    mechanism for a new energy (the counts as the source of uniformity in $m$).
 \end{itemize}
 
 \begin{proof}
@@ -1464,8 +1496,8 @@ commensurate ones). With the fit, cold starts on the instance switch the plan in
 6 at $m = 16$ at the experiments' $\sigma_0$, and in none at ten times that leak --- the test's run, which is
 therefore a smooth gradient flow; the nonsmooth part of (i) is tested at the static tie.}
 
-% Theorem D'''.18 with its proof, Remark D'''.19, Status and numerics (PARADIGM.md section 5d, round-14 version; the
-% numbers are PARADIGM's copies of results/chaos/uniform_basin.md).
+% Theorem D'''.18 with its proof, Remark D'''.19, Status and numerics (PARADIGM.md section 5d, round-14 version,
+% Remark D'''.19's last sentence round 16; the numbers are PARADIGM's copies of results/chaos/uniform_basin.md).
 \begin{thm}{Theorem}{D$'''$.18}[Theorem J uniformly in $m$ at a replicated configuration]
 Let \textup{(CL)} be the real closed loop of Theorem J with a leak whose targets are class-constant and locally
 constant near the configurations considered (the $\sigma$-modification; the nearest-atom leak with every class atom
@@ -1578,7 +1610,6 @@ per-particle ball of radius $(1 + w_{\min}^{-1/2})\rho$, which is what the margi
 D$'''$.15 with its averaging argument, the ghost matrices $A_k$ being $m$-independent.
 \end{proof}
 
-% Remark D'''.19's last sentence cites Theorem D'''.21, which is transcribed in a later part (plain text, no \ref).
 \begin{rmk}{Remark}{D$'''$.19}[which norm]
 In the unnormalised norm $\norm{\cdot}_{G_m^{-1}}$ of Theorem J the basin radius $\rho_0$ is $m$-independent too ---
 the Hessian of $J_m$ has the $m$-independent spectrum of (3) and its Lipschitz constant in that norm is $O(1)$ --- but
@@ -1594,8 +1625,10 @@ small its mean-square displacement --- for $m$ large enough that the shifted wei
 they need not be (at $m = 15$ on the matching prior, one particle moved out of a class of five gives the weights
 $(6,5,4)/15$, whose lift is a saddle, numerics below); the solution then splits instead, and either way it does not
 converge to $\Gamma_q$. Under the OT leak the plan restores the masses (a transit, Proposition D$'''$.12(v)), and the
-basin at the level of the empirical measure is larger: for the averaged loop Theorem D$'''$.21 below proves an
-$m$-independent energy basin, which contains configurations with a fixed fraction of the particles in other cells.
+basin at the level of the empirical measure is of a different shape: for the averaged loop
+\hyperref[res:thmDppp:21]{Theorem D$'''$.21} below proves an $m$-independent energy basin, and its a-posteriori form
+covers configurations with a fixed fraction of the particles in other cells (the two sets are not nested, and
+D$'''$.18 concerns the real loop).
 \end{rmk}
 \status{Proved as an adaptation of Theorem J's proof, at Theorem J's level of detail: Steps 1--3 and 5 carry over
 with $m$-independent constants by the structural facts (1)--(2), and Steps 4 and 6 are rerun in the norm
@@ -1668,6 +1701,403 @@ separation modes whose gaps exceed the fit window; they are consistent with
 $(1 - \kappa)\min\{\lambda_{\mathrm{coll}},\lambda_{\mathrm{sep}}\}/k_e$, and the Floquet exponents above are the
 test of the rate. $C(8000) = 1.04$--$1.23$ (still growing at the horizon at $m = 15$, $\rho = 0.3$), and every
 $m$-system's tracking error is $2.55$--$2.56\cdot10^{-4}$ at the end.
+
+% Proposition D'''.20 with its Status and numerics (PARADIGM.md section 5d, round-15 version; the numbers are
+% PARADIGM's copies of results/chaos/entropic_leak.md).
+\begin{thm}{Proposition}{D$'''$.20}[the entropic OT leak: a soft mass constraint with a critical excess]
+Let $\nu = \sum_jq_j\delta_{\vartheta^0_j}$, $\varepsilon > 0$, let $\pi^\varepsilon(\Theta)$ be the entropic plan
+from $\mu_\Theta$ to $\nu$ for the cost $\norm{\cdot}^2_{\Ginv}$ --- the unique minimiser of
+$\langle C,\pi\rangle + \varepsilon\KL(\pi\mid\mu_\Theta\otimes\nu)$ over the plans with marginals $(1/m,q)$ --- and
+$T^\varepsilon_i := m\sum_j\pi^\varepsilon_{ij}\vartheta^0_j$ its barycentric projection, and consider
+\begin{equation}
+  \frac{\dd\vartheta_i}{\dd s} = G\langle\nabla_\vartheta(r_\Theta\tilde\Phi(\cdot\,;\vartheta_i))\rangle_\rho
+  - \sigma_0(\vartheta_i - T^\varepsilon_i).
+  \tag{$\mathfrak{A}_m^\varepsilon$}
+\end{equation}
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(a smooth gradient flow between two leaks)} \textup{($\mathfrak{A}_m^\varepsilon$)} is the
+    $G$-gradient flow of
+    $J^\varepsilon_m := m\bar L(\mu_\Theta) + (\sigma_0m/2)\mathrm{OT}_\varepsilon(\mu_\Theta,\nu)$ --- by the
+    envelope theorem $\partial\mathrm{OT}_\varepsilon/\partial\vartheta_i = (2/m)\Ginv(\vartheta_i - T^\varepsilon_i)$
+    --- and $J^\varepsilon_m$ is real-analytic in $\Theta$ (the dual potentials are analytic in the cost: the
+    semi-dual is strictly concave once the gauge $g_1 = 0$ is fixed, and the implicit function theorem applies), so
+    there are no plan switches and {\L}ojasiewicz's theorem gives the convergence of every trajectory --- all are
+    bounded, $T^\varepsilon_i$ lying in $\operatorname{conv}\supp\nu$ and the fit's force being bounded --- without
+    the nonsmooth machinery of Proposition D$'''$.17. As $\varepsilon\to0$, $T^\varepsilon\to\bar T$ wherever the OT
+    plan is unique (Proposition D$'''$.12); as $\varepsilon\to\infty$, $\pi^\varepsilon\to\mu_\Theta\otimes\nu$ and
+    $T^\varepsilon_i\to\sum_jq_j\vartheta^0_j$: the leak becomes the $\sigma$-modification toward the barycentre of
+    $\nu$.
+  \item \emph{(collapsed configurations)} At a configuration collapsed by class with weights $w$ the entropic plan is
+    class-symmetric, $\pi^\varepsilon_{ij} = \pi^K_{\pi_0(i)j}/n_{\pi_0(i)}$ with $\pi^K$ the $K\times K_0$ entropic
+    plan from $\sum_kw_k\delta_{\vartheta_k}$ to $\nu$, so every particle of class $k$ has the class target
+    $T_k = \sum_j(\pi^K_{kj}/w_k)\vartheta^0_j$, and the replicated configuration is a critical point of
+    $J^\varepsilon_m$ iff its atoms are a critical point of the weighted $K$-atom energy with the leak
+    $(\sigma_0/2)\mathrm{OT}_\varepsilon(\sum_kw_k\delta_{\vartheta_k},\nu)$.
+  \item \emph{(the separation block)} The Hessian of $J^\varepsilon_m$ at such a configuration splits as in
+    Proposition D$'''$.5(i), with separation blocks
+    \[
+      S^\varepsilon_k = \sigma_0\bigl(I - (2/\varepsilon)\operatorname{Cov}^G_k\bigr) - R^G_k,\qquad
+      \operatorname{Cov}^G_k := G^{-1/2}\operatorname{Cov}_{\pi^K(\cdot\mid k)}(\vartheta^0)G^{-1/2},
+    \]
+    each of multiplicity $n_k - 1$: a zero-sum perturbation of a class leaves the column marginals, hence the dual
+    potentials, stationary to first order, and the conditional plan of a particle responds to its own displacement
+    through its softmax, which moves its barycentric target by
+    $(2/\varepsilon)\operatorname{Cov}_{\pi^K(\cdot\mid k)}(\vartheta^0)\Ginv$ --- a positive feedback against the
+    leak's restoring $\sigma_0I$.
+  \item \emph{(the critical excess)} When $w = q$ and $\varepsilon\ll\Delta_\nu^2$, the conditional plans charge the
+    other atoms with exponentially small mass and $S^\varepsilon_k$ is the OT leak's $\sigma_0I - R^G_k$ up to
+    exponentially small terms. Let class $k$ carry an excess, and assume $A_k := \sigma_0I - R^G_k\succ0$ at
+    $\Theta^*_\varepsilon(w)$ --- the splitting condition of Proposition D$'''$.5, which fails at large excesses and
+    small $\varepsilon$, where the class is a saddle for the fit's own reason. Then
+    $S^\varepsilon_k = A_k - (2\sigma_0/\varepsilon)\operatorname{Cov}^G_k$ has a negative eigenvalue iff
+    \[
+      \varepsilon < 2\sigma_0\lambda_{\max}\bigl(A_k^{-1/2}\operatorname{Cov}^G_kA_k^{-1/2}\bigr),
+    \]
+    twice $\sigma_0$ times the largest generalised eigenvalue of the conditional covariance relative to $A_k$. $A_k$
+    and $\operatorname{Cov}^G_k$ depend on $\varepsilon$ through $\Theta^*_\varepsilon(w)$ and its plan, so the
+    critical regularisation $\varepsilon_c$ is the root of $\lambda_{\min}(S^\varepsilon_k) = 0$ along the branch
+    $\Theta^*_\varepsilon(w)$. When the conditional plan sends a fraction $p$ to one atom $j$ and $1 - p$ to its own,
+    $\operatorname{Cov}^G_k = p(1 - p)\hat\Delta\hat\Delta^\T$ with
+    $\hat\Delta := G^{-1/2}(\vartheta^0_j - \vartheta^0_k)$, and the criterion is the rank-one
+    $\varepsilon < 2\sigma_0p(1 - p)\hat\Delta^\T A_k^{-1}\hat\Delta$. Below $\varepsilon_c$ the over-weighted
+    collapsed class is a saddle and splits; its split-off particles leave toward an atom its conditional plan
+    charges, which need not be an under-weighted one, so a split moves the excess but need not reduce it. Above
+    $\varepsilon_c$ the class's separation block is positive, and the replicated configuration is a local minimum
+    when the collective block and the other classes' blocks are positive as well; the excess is then absorbed by a
+    bias of the class atom toward $T_k$.
+  \item \emph{(the floor at large $m$)} For fixed $\varepsilon$ the critical excess $\delta_c(\varepsilon)$ is
+    positive. At small $\varepsilon$ and $R\approx0$ the critical conditional fraction is
+    $p_c(\varepsilon)\approx\varepsilon/(2\norm{\hat\Delta}^2)$, and the plan then sends away exactly the excess, so
+    $\delta_c\approx w_kp_c$. The sampled excess of an i.i.d.\ warm start has the standard deviation
+    $(q_k(1 - q_k)/m)^{1/2}$, so the entropic leak equalises the cluster masses only down to the critical excess, and
+    for $m\gg((1 - q_k)/q_k)(2\norm{\hat\Delta}^2/\varepsilon)^2$ it does not equalise them at all. The masses are
+    then conserved, as under the nearest-atom leak, and partly absorbed by the class biases: the stationary measure
+    depends on the sample again, and the floor returns as Proposition D$'''$.5's law at the entropic stationary
+    point. Only the hard constraint $\varepsilon\to0$ removes the floor --- on the commensurate sizes; on the others
+    its $K_0 - 1$ bridge particles leave a floor of order $m^{-2}$ (Proposition D$'''$.12's numerics).
+\end{enumerate}
+\end{thm}
+\status{(i) proved (the envelope theorem; the analyticity of the entropic potentials; the limits are the convergence
+of the entropic plan to an optimal plan as $\varepsilon\to0$ --- the optimal plan of maximal entropy where it is not
+unique~\cite{S45} --- and the product-measure limit as $\varepsilon\to\infty$). (ii) proved (uniqueness of the
+entropic plan and the class symmetry). (iii) proved (the first-order stationarity of the potentials under zero-sum
+class perturbations and the derivative of the conditional softmax); checked against the finite-difference Hessian of
+$J^\varepsilon_m$ at $m = 15$ in \code{tests/test_entropic_leak.py}. (iv) proved under the hypothesis $A_k\succ0$
+(the generalised-eigenvalue criterion and its rank-one form); the reading of a split as a transport of the excess is
+not part of it. (v) formal (the scaling of the sampled excess and the identification of the dynamics' end state);
+numerical below. The structure is that of the critical temperature of deterministic annealing~\cite{S46}, with the
+same roles --- the particles as the codevectors, the prior's atoms as the data, $\varepsilon$ as the temperature ---
+and twice the largest eigenvalue of the conditional covariance when $R = 0$. New are the two-sided mass constraint,
+under which the conditional covariance of a collapsed class is an effect of its mass excess rather than of a data
+spread, and the fit's curvature in $A_k$. Checked: \code{tests/test_entropic_leak.py} (the semi-dual Newton plan's
+marginals and its agreement with log-domain Sinkhorn; the gradient of $J^\varepsilon_m$ against finite differences;
+the two limits at their rates; the replicated configuration critical with a class-symmetric plan, and the
+finite-difference Hessian leaving each class's separation subspace invariant and acting there as
+$I\otimes(\sigma_0(I - (2/\varepsilon)\operatorname{Cov}^G_k) - R^G_k)$, entrywise; the over-weighted class of
+$(6,5,4)/15$, with $A_1\succ0$ checked, unstable at $\varepsilon = 16$, $17$ and stable at $\varepsilon = 18$, $20$,
+$64$; every weighted stationary point to a Newton residual of $10^{-9}$).}
+
+% Numerics of Proposition D'''.20 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/entropic_leak.md).
+\paragraph{Numerics} (\code{exp_entropic_leak.py} $\to$ \code{results/chaos/entropic_leak.md}). The instance with
+the matching prior (masses $1/3$) at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$; the entropic plan by Newton's method on
+the semi-dual; every weighted stationary point continued from a converged neighbour and checked to a residual of
+$10^{-9}$. \emph{The critical excess.} For $w_\delta = q + \delta(1.5e_1 - 0.5)$ (the excess of class 1 taken from
+both other atoms) the branch $\Theta^*_\varepsilon(w_\delta)$, continued in $\varepsilon$ from 256 down to 1
+(residuals $\le8.7\cdot10^{-13}$), changes the sign of the over-weighted class's margin once, at
+$\varepsilon_c = 5.11$, $13.5$, $23.1$, $65.0$ for $\delta = 0.02$, $0.05$, $0.1$, $0.2$. There $A_1\succ0$
+($\lambda_{\min}$ 0.0054, 0.0050, 0.0051, 0.0020), the collective block is positive (0.0073--0.0078) and so are the
+other classes' margins: above $\varepsilon_c$ the replicated configuration is a local minimum. At $\varepsilon_c$ the
+class sends the fraction $p = 0.057$, $0.15$, $0.33$, $0.57$ of its mass away, about equally to the two
+under-weighted atoms (conditional plans $(0.9434,0.0277,0.0289)$, $(0.8485,0.0764,0.0751)$,
+$(0.6655,0.1850,0.1496)$, $(0.4257,0.3074,0.2669)$), so $\operatorname{Cov}^G_1$ has rank two; the exact threshold
+$2\sigma_0\lambda_{\max}(A_1^{-1/2}\operatorname{Cov}^G_1A_1^{-1/2})$ equals $\varepsilon_c$ to the printed digits,
+and the rank-one formula with all of $p$ sent to one atom gives 1.22--1.31 times $\varepsilon_c$ with atom 2 and
+0.70--1.22 with atom 3. With the excess taken from atom 3 alone ($w'_\delta = q + \delta(e_1 - e_3)$)
+$\varepsilon_c = 6.99$, $14.6$, $24.3$ for $\delta = 0.02$, $0.05$, $0.1$. At fixed $\varepsilon$ the critical
+excess is $\delta_c = 0.0042$, $0.0083$, $0.016$, $0.030$, $0.062$, $0.14$, $0.20$ at $\varepsilon = 1$, $2$, $4$,
+$8$, $16$, $32$, $64$ ($w_\delta$; 0.0035--0.18 for $w'_\delta$). Up to $\varepsilon = 8$ it equals $w_1p_c$, with
+$p_c$ within 12\% ($w_\delta$) and 26\% ($w'_\delta$) of the small-$\varepsilon$ scale
+$\varepsilon/(2\norm{\hat\Delta}^2)$, as (v) says; from $\varepsilon = 16$ on the plan no longer sends away exactly
+the excess. \emph{Dynamics.} $m = 15$, $60$, $240$ against $M = 510$ from the warm clouds of Proposition
+D$'''$.12's numerics, four seeds, $\varepsilon = 1$, $4$, $16$, $64$, 600 slow units, and the $\varepsilon = 4$,
+$16$, $64$ runs continued to 6000 slow units. At $\varepsilon = 1$ every system equalises its masses (all sixteen at
+$q$ by $s = 600$; fit errors $1.7$--$3.0\cdot10^{-4}$; function-level distances to the reference
+$3.7\cdot10^{-9}$--$1.6\cdot10^{-6}$ per seed on $(450,600]$, values at the stopping time, still falling): the OT
+leak's behaviour. At $\varepsilon = 4$ the masses move toward $q$ slowly: at $s = 600$ five of the twelve larger
+systems sit at unstable weights (margins $-0.00035$ to $-0.00146$ at $\Theta^*_4(w)$, e-folding times
+$1/\abs{\text{margin}}$ of 700--2900 slow units, longer than the run). Continued, every system ends at stable
+weights (positive margins at its $s = 6000$ weights), the larger ones with residual excesses up to $1/60$, $3/240$
+and $7/510$ ($\norm{w - q}_\infty = 0.0167$, $0.0125$, $0.0137$), of the order of the critical excess at
+$\varepsilon = 4$ (0.016 for an excess taken from both other atoms, 0.012 from one). At $\varepsilon = 16$ the
+over-weighted $(8,4,3)/15$ reaches $(6,6,3)$ within 600 slow units, and in the continuation the three systems at
+unstable weights move: $(6,5,4)/15$ to $(5,6,4)$ at $s\approx3700$ --- the split-off particle joins atom 2, which
+was at $q$, so the excess is moved, not reduced --- $(6,6,3)/15$ to $(5,6,4)$ as well, and $(25,17,18)/60$ to
+$(23,19,18)$; every other system keeps its sampled weights, which are stable. At $\varepsilon = 64$ only
+$(8,4,3)/15$ moves (to $(7,5,3)$, at $s\approx1400$). The floors return as Proposition D$'''$.5's law at the
+entropic stationary point $\Theta^*_\varepsilon(q)$, 0.55 ($\varepsilon = 16$) and 0.74 ($\varepsilon = 64$) of the
+nearest-atom leak's law; the observed floors on the same clouds are 0.23--0.84 ($\varepsilon = 16$) and 0.47--0.91
+($\varepsilon = 64$) of the nearest-atom leak's, per seed; at $\varepsilon = 64$ the bias toward the barycentre of
+$\nu$ dominates the fit (fit errors 0.12--0.14). The soft constraint thus interpolates in two ways at once: in
+$\varepsilon$ between the OT leak and the $\sigma$-modification toward the barycentre, and in $m$ between
+equalisation (small $m$, large sampled excesses) and conserved sampled masses with a floor of the nearest-atom kind,
+smaller by the factor of the law (large $m$).
+
+% Theorem D'''.21 with its proof, Remark D'''.22, Status and numerics (PARADIGM.md section 5d, round-16 version; the
+% numbers are PARADIGM's copies of results/chaos/ot_basin.md). The anchor res:thmDppp:21 is the target of the
+% \hyperref in Remark D'''.19 (results carry fixed names and no counters, so a plain \ref would print a wrong number).
+\begin{thm}{Theorem}{D$'''$.21}[a measure-level basin for the OT leak: a Polyak--{\L}ojasiewicz inequality uniform
+in $m$]\phantomsection\label{res:thmDppp:21}%
+Let $\nu = \sum_jq_j\delta_{\vartheta^0_j}$ and let $\mu^* = \sum_jq_j\delta_{\vartheta^*_j}$ be a replicated
+stationary measure of \textup{($\mathfrak{A}_m^{\mathrm{OT}}$)} --- every atom critical for its class potential,
+$\nabla V_L[\mu^*](\vartheta^*_j) + \sigma_0\Ginv(\vartheta^*_j - \vartheta^0_j) = 0$, and the diagonal plan optimal
+($\varepsilon < \Delta_\nu/2$ suffices, Proposition D$'''$.12(iii)) --- with residual $r^*$. Put
+$\mathcal{J}(\mu) := \bar L(\mu) + (\sigma_0/2)W^2_{\Ginv}(\mu,\nu)$, so that
+$J_m^{\mathrm{OT}}(\Theta) = m\mathcal{J}(\mu_\Theta)$, and $\mathcal{J}^* := \mathcal{J}(\mu^*)$. Let $m$ be
+commensurate; every vertex optimal plan is then an assignment $\pi$ with $\abs{\pi^{-1}(j)} = mq_j$ (Proposition
+D$'''$.12(ii)), $J_m^{\mathrm{OT}} = \min_\pi J^\pi_m$ over these assignments with
+$J^\pi_m(\Theta) := m\bar L(\mu_\Theta) + (\sigma_0/2)\sum_i\norm{\vartheta_i - \vartheta^0_{\pi(i)}}^2_{\Ginv}$, and
+for a configuration $\Theta$ and such a $\pi$ write
+\[
+  u_i := \vartheta_i - \vartheta^*_{\pi(i)},\qquad D_\pi := \frac1m\sum_i\norm{u_i}^2_{\Ginv},\qquad
+  \Delta\fhat := \fhat_\Theta - \fhat[\mu^*],\qquad E := \mathcal{J}(\mu_\Theta) - \mathcal{J}^*,
+\]
+and, along the plan segments $S_i := \{\vartheta^*_{\pi(i)} + tu_i : t\in[0,1]\}$,
+\[
+  \kappa^* := \max_i\sup_{S_i}\lambda_{\max}R^G[\mu^*],\quad
+  \kappa^*_- := \max_i\sup_{S_i}\bigl(-\lambda_{\min}R^G[\mu^*]\bigr)_+,\quad
+  \kappa^\Theta := \max_i\sup_{S_i}\lambda_{\max}R^G[\mu_\Theta].
+\]
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(two identities along the plan segments)} For every assignment $\pi$ with the counts $mq$, optimal or
+    not,
+    \begin{align}
+      J^\pi_m(\Theta)/m - \mathcal{J}^* &= \tfrac12\norm{\Delta\fhat}^2 + (\sigma_0/2)D_\pi
+      \notag\\
+      &\quad- \frac1m\sum_i\int_0^1(1 - t)u_i^\T R[\mu^*](\vartheta^*_{\pi(i)} + tu_i)u_i\dd t,
+      \tag{E}\\
+      \frac1m\sum_i\langle\nabla_{\vartheta_i}J^\pi_m(\Theta),u_i\rangle &= \norm{\Delta\fhat}^2 + \sigma_0D_\pi
+      \notag\\
+      &\quad- \frac1m\sum_i\int_0^1u_i^\T\bigl[(1 - t)R[\mu^*] + tR[\mu_\Theta]\bigr](\vartheta^*_{\pi(i)}
+      + tu_i)u_i\dd t,
+      \tag{P}
+    \end{align}
+    the norms in $L^2(\rho)$. The counts enter through
+    $\Delta\fhat = (1/m)\sum_i[\tilde\Phi(\cdot\,;\vartheta_i) - \tilde\Phi(\cdot\,;\vartheta^*_{\pi(i)})]$, which
+    holds because $\abs{\pi^{-1}(j)} = mq_j$, and through the constant term of the leak. \textup{(E)} holds for every
+    coupling of $\mu_\Theta$ with the column masses $q$, fractional plans included ($(1/m)\sum_i$ replaced by
+    $\sum_{ij}\gamma_{ij}$); \textup{(P)}, with one test direction per particle, needs an assignment. With counts
+    $N\ne mq$ both acquire a defect ---
+    $\sum_k(N_k/m - q_k)\bigl(-\langle r^*,\tilde\Phi(\cdot\,;\vartheta^*_k)\rangle
+    + (\sigma_0/2)\norm{\vartheta^*_k - \vartheta^0_k}^2_{\Ginv}\bigr)$ in \textup{(E)} and
+    $-\langle\Delta\fhat,\fhat[\mu_N] - \fhat[\mu^*]\rangle$ in \textup{(P)},
+    $\mu_N := \sum_k(N_k/m)\delta_{\vartheta^*_k}$ --- and at incommensurate $m$ no PL inequality relative to
+    $\mathcal{J}^*$ can hold: the stationary configurations of Proposition D$'''$.12(iv), with their bridge
+    particles, are critical at a positive excess energy.
+  \item \emph{(the Polyak--{\L}ojasiewicz inequality)} For every assignment $\pi$ with the counts $mq$,
+    $\frac12\norm{\Delta\fhat}^2 + ((\sigma_0 - \kappa^*)/2)D_\pi\le J^\pi_m(\Theta)/m - \mathcal{J}^*
+    \le\frac12\norm{\Delta\fhat}^2 + ((\sigma_0 + \kappa^*_-)/2)D_\pi$ (the lower bound is informative when
+    $\kappa^*\le\sigma_0$). If $\pi$ is optimal at $\Theta$, so that the middle term is $E$, and the plan-segment
+    margin $\alpha := \sigma_0 - (\kappa^* + \kappa^\Theta)/2$ is positive, then
+    \[
+      \norm{\nabla J^\pi_m(\Theta)}^2_{G_m}\ge\lambda\cdot mE,\qquad
+      \lambda := \alpha\cdot\min\{2, 2\alpha/(\sigma_0 + \kappa^*_-)\}.
+    \]
+  \item \emph{(a-posteriori decay)} Along every vertex-selection solution of
+    \textup{($\mathfrak{A}_m^{\mathrm{OT}}$)} (Section~\ref{sec:thmCprime}, Proposition D$'''$.17(i): an absolutely
+    continuous solution that follows an optimal integral plan $\pi(s)$ for almost every $s$; their existence is
+    assumed, as in Section~\ref{sec:thmCprime}), $E$ is non-increasing and
+    \[
+      E(s)\le E(0)\exp\Bigl(-\int_0^s\lambda(\sigma)_+\dd\sigma\Bigr),
+    \]
+    with $\lambda(\sigma)$ computed at $\Theta(\sigma)$ with its plan ($\lambda_+ := 0$ where $\alpha\le0$); where
+    $\kappa^* < \sigma_0$, moreover $W^2(\mu_{\Theta(s)},\mu^*)\le D_{\pi(s)}\le2E(s)/(\sigma_0 - \kappa^*)$ and
+    $\norm{\fhat_{\Theta(s)} - \fhat[\mu^*]}^2\le2E(s)$.
+  \item \emph{(an a-priori basin, uniform in $m$)} Assume \textup{(H$^*$)}: $\kappa_R[\mu^*](B)\le\sigma_0 - \kappa$
+    for some $\kappa > 0$ on a convex set $B$, forward-invariant for \textup{($\mathfrak{A}_m^{\mathrm{OT}}$)} and
+    containing the stationary atoms --- for instance the whole parameter space, or the a-priori invariant set
+    $N_{R_\Theta}(\operatorname{conv}\supp\nu)$ of Proposition D$'''$.17 ($\bar T_i\in\operatorname{conv}\supp\nu$
+    and the fit's force is bounded). Then for every commensurate $m$, $J_m^{\mathrm{OT}}\ge m\mathcal{J}^*$ on
+    $B^m$, with equality exactly at the replicated configurations ($\mu^*$ is the unique global minimiser among the
+    $m$-point empirical measures in $B$, up to the labelling); and every vertex-selection solution from $B$ with
+    $E(0)\le E_0 := \kappa^2/(2(L_2^G)^2)$ satisfies $E(s)\le E(0)e^{-\lambda_0s}$,
+    $\lambda_0 := (\kappa/2)\min\{2,\kappa/(\sigma_0 + \sup_B\norm{R^G[\mu^*]})\}$. The constants depend on
+    $\kappa$, $\sigma_0$, $L_2^G$ and $r^*$ --- not on $m$.
+  \item \emph{(the matching prior; sharpness)} At the matching prior ($r^* = 0$ on $\supp\rho$, $\mu^* = \nu$),
+    $R[\mu^*]\equiv0$, \textup{(H$^*$)} holds on the whole parameter space with $\kappa = \sigma_0$,
+    $E = \bar L(\mu_\Theta) + (\sigma_0/2)W^2(\mu_\Theta,\nu)$, $\alpha = \sigma_0 - \kappa^\Theta/2$ and
+    $\lambda = \alpha\cdot\min\{2, 2\alpha/\sigma_0\}$, which tends to $2\sigma_0$ as $\kappa^\Theta\to0$. The
+    constant $2\sigma_0$ is attained by the separations (each particle's displacement within its class decays at
+    $\sigma_0$, the separation blocks of Theorem D$'''$.18), so (ii) is sharp there.
+  \item \emph{(what the mass constraint removes)} For the nearest-atom leak the assignment is the Voronoi one,
+    $j(\cdot)$, whose counts $N$ are conserved inside the cells (Proposition D$'''$.12(i)) and differ from $mq$ in
+    general. The derivation of \textup{(E)}--\textup{(P)} breaks at the counts:
+    $(1/m)\sum_i\tilde\Phi(\cdot\,;\vartheta^*_{j(\vartheta_i)}) = \fhat[\mu_N]$ with
+    $\mu_N := \sum_k(N_k/m)\delta_{\vartheta^*_k}$, not $\fhat[\mu^*]$. And the nearest-atom energy has a critical
+    point at the replicated configuration of the weights $N/m$ --- a strict local minimum when they are admissible,
+    a saddle when a separation margin is negative --- for every count vector $N$ in the domain of the weighted
+    stationary point $w\mapsto\Theta^*(w)$ (a neighbourhood of $q$, Proposition D$'''$.5(i)) whose atoms lie in
+    their own cells, at a positive excess energy when $N\ne mq$ (under \textup{(H$^*$)}, by (iv)). These spurious
+    minima carry the floor of Proposition D$'''$.5. Under the mass constraint they are not critical points; under
+    \textup{(H$^*$)} $\mu^*$ is the unique global minimiser in $B$ and the only critical point where $\alpha > 0$ (in
+    particular in $\{E\le E_0\}$). Local minima of $J_m^{\mathrm{OT}}$ at a positive excess energy are not excluded:
+    by (ii) they need $\kappa^\Theta\ge2\sigma_0 - \kappa^*$ on their segments.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) The stationarity of the atoms reads
+$\sigma_0\Ginv(\vartheta^*_j - \vartheta^0_j) = \langle\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^*_j)^\T r^*\rangle_\rho$.
+In $J^\pi_m/m - \mathcal{J}^*$ the loss contributes $-\langle r^*,\Delta\fhat\rangle + \frac12\norm{\Delta\fhat}^2$
+and the leak
+$(\sigma_0/2)D_\pi + (\sigma_0/m)\sum_i\langle u_i,\vartheta^*_{\pi(i)} - \vartheta^0_{\pi(i)}\rangle_{\Ginv}
+= (\sigma_0/2)D_\pi + \langle r^*,(1/m)\sum_i\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^*_{\pi(i)})u_i\rangle$.
+With the counts, $\Delta\fhat = (1/m)\sum_i[\tilde\Phi(\vartheta_i) - \tilde\Phi(\vartheta^*_{\pi(i)})]$, and Taylor's
+formula with integral remainder along $S_i$ turns the two $r^*$-terms into
+$-(1/m)\sum_i\int_0^1(1 - t)u_i^\T R[\mu^*](\vartheta^*_{\pi(i)} + tu_i)u_i\dd t$: this is (E). For (P),
+$\nabla_{\vartheta_i}J^\pi_m = -\langle\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)^\T r_\Theta\rangle
++ \sigma_0\Ginv(\vartheta_i - \vartheta^0_{\pi(i)})$ with $r_\Theta = r^* - \Delta\fhat$, and the stationarity gives
+$\langle\nabla_{\vartheta_i}J^\pi_m,u_i\rangle = \sigma_0\norm{u_i}^2_{\Ginv}
+- \langle r^{*\T}(\nabla\tilde\Phi(\vartheta_i) - \nabla\tilde\Phi(\vartheta^*_{\pi(i)}))u_i\rangle
++ \langle\Delta\fhat^\T\nabla\tilde\Phi(\vartheta_i)u_i\rangle$. The second term is
+$-\int_0^1u_i^\T R[\mu^*](\vartheta^*_{\pi(i)} + tu_i)u_i\dd t$. Averaged over $i$, the third is
+$\norm{\Delta\fhat}^2$ plus, by Taylor's formula for $\tilde\Phi(\vartheta^*_{\pi(i)})$ around $\vartheta_i$,
+$(1/m)\sum_i\int_0^1t\cdot u_i^\T R_{\Delta\fhat}(\vartheta^*_{\pi(i)} + tu_i)u_i\dd t$, where
+$R_g := \langle\sum_kg^k\nabla^2\tilde\Phi^k\rangle$ and $R_{\Delta\fhat} = R[\mu^*] - R[\mu_\Theta]$ because $R$ is
+linear in the residual. Collecting the $R[\mu^*]$-terms gives (P).
+
+(ii) The $t$-weights $1 - t$ and $t$ integrate to $\frac12$ each. By (E), $E = J^\pi_m/m - \mathcal{J}^*$ lies
+between $\frac12\norm{\Delta\fhat}^2 + ((\sigma_0 - \kappa^*)/2)D_\pi$ and
+$\frac12\norm{\Delta\fhat}^2 + ((\sigma_0 + \kappa^*_-)/2)D_\pi$, and by (P),
+$Q := (1/m)\sum_i\langle\nabla_{\vartheta_i}J^\pi_m,u_i\rangle\ge\norm{\Delta\fhat}^2 + \alpha D_\pi$. Hence
+$Q\ge cE$ with $c := \min\{2, 2\alpha/(\sigma_0 + \kappa^*_-)\}$, and $Q\ge\alpha D_\pi$. Cauchy--Schwarz in the
+duality of $G$ and $\Ginv$, $mQ\le\norm{\nabla J^\pi_m}_{G_m}(mD_\pi)^{1/2}$, gives
+$\norm{\nabla J^\pi_m}^2_{G_m}\ge mQ^2/D_\pi\ge m\alpha Q\ge m\alpha cE$.
+
+(iii) $J_m^{\mathrm{OT}} = \min_{\pi'}J^{\pi'}_m\le J^{\pi(s)}_m$ with equality at $\Theta(s)$. At every $s$ where
+$\Theta(\cdot)$ and $s\mapsto J_m^{\mathrm{OT}}(\Theta(s))$ are differentiable --- almost every $s$,
+$J_m^{\mathrm{OT}}$ being locally Lipschitz ---
+$\dd J_m^{\mathrm{OT}}(\Theta(s))/\dd s\le\langle\nabla J^{\pi(s)}_m,\dot\Theta(s)\rangle
+= -\norm{\nabla J^{\pi(s)}_m}^2_{G_m}\le-m\lambda(s)_+E(s)$, and Gr\"onwall's lemma applies. The distance bounds
+are (E)'s lower bound and $W^2\le D_\pi$, the assignment being a coupling of $\mu_\Theta$ and $\mu^*$.
+
+(iv) The segments lie in $B$ by convexity, so $\kappa^*\le\sigma_0 - \kappa$, and (E) gives
+$E\ge\frac12\norm{\Delta\fhat}^2 + (\kappa/2)D_\pi\ge0$, with equality iff $D_\pi = 0$. Since
+$\norm{R^G[\mu_\Theta](\vartheta) - R^G[\mu^*](\vartheta)}\le L_2^G\norm{\Delta\fhat}_{L^1(\rho)}
+\le L_2^G(2E)^{1/2}$, $\kappa^\Theta\le\kappa^* + L_2^G(2E)^{1/2}$, and
+$\alpha\ge\kappa - L_2^G(E/2)^{1/2}\ge\kappa/2$ when $E\le E_0$; $E$ is non-increasing and the solution stays in
+$B$ (forward invariance), so this persists, and (iii) gives the rate.
+
+(v) $R[\mu^*] = \langle r^*\nabla^2\tilde\Phi\rangle = 0$. For a separation $u$ at $\mu^*$ (zero class means),
+$\Delta\fhat = O(\norm{u}^2)$, $\nabla_{\vartheta_i}J^\pi_m = \sigma_0\Ginv u_i + O(\norm{u}^2)$ and
+$E = (\sigma_0/2)D_\pi + O(\norm{u}^3)$, so $\norm{\nabla J^\pi_m}^2_{G_m}/(mE)\to2\sigma_0$.
+
+(vi) With counts $N$ the identity behind $\Delta\fhat$ becomes
+$(1/m)\sum_i\tilde\Phi(\vartheta^*_{j(\vartheta_i)}) = \fhat[\mu_N]$; the replicated configuration of the weights
+$N/m$ is critical for the nearest-atom energy by Proposition D$'''$.9, a strict local minimum when the weights are
+admissible and a saddle when a separation margin is negative (Proposition D$'''$.5), and its excess energy is
+positive unless $N = mq$. Under \textup{(H$^*$)} a critical point with $E > 0$ has $\alpha\le0$ by (ii), that is
+$\kappa^* + \kappa^\Theta\ge2\sigma_0$.
+\end{proof}
+
+\begin{rmk}{Remark}{D$'''$.22}[the mean-field form, propagation of chaos, and the real loop]
+The identities and their proof hold verbatim for a probability measure $\mu$ whose optimal plan to $\nu$ is induced by
+a map $\pi$ (for instance an absolutely continuous $\mu$: the Laguerre map of Proposition D$'''$.12), with
+$(1/m)\sum_i$ replaced by $\int\dd\mu$. So formally the Laguerre-cell flow \textup{($\mathfrak{A}_0^{\mathrm{OT}}$)}
+has the same PL inequality, and in the basin both the particle system and the mean-field flow converge to $\mu^*$
+exponentially in $W_2$, at the same $m$-independent rate, so
+$W_2(\mu_{\Theta(s)},\mu_s)\le W_2(\mu_{\Theta(s)},\mu^*) + W_2(\mu_s,\mu^*)\to0$: for every commensurate $m$ the
+particle system and the mean-field flow have the same limit --- no floor, where Theorem D$'''$'s synchronous coupling
+kept the transit's mismatch for ever (Proposition D$'''$.12(v)). This is not propagation of chaos uniform in time,
+which needs $\sup_s\E W_2(\mu_{\Theta(s)},\mu_s)\to0$ as $m\to\infty$: the bound is not small in $m$ at any fixed
+time (an i.i.d.\ warm start lies in the a-priori basin only at astronomically large $m$, numerics below), and
+smallness in $m$ during the transit is not claimed; uniform-in-time statements of that kind are known for
+entropy-regularised mean-field dynamics under a uniform log-Sobolev inequality~\cite{S50}. The existence of the
+mean-field OT flow and its chain rule are not established here. For the real loop: once
+$E(s)\le(\sigma_0 - \kappa^*)(\rho/2)^2/(2m)$, every particle is within $\rho/2$ of its atom
+($\max_i\norm{u_i}^2\le mD_\pi$), and Theorem D$'''$.18 takes over; on the averaged dynamics this happens after a
+time $O(\lambda^{-1}\log m)$. The transit of the real loop is covered only on finite horizons, by averaging with plan
+switches (formal).
+\end{rmk}
+\status{(i), (ii), (iv), (v) proved. (iii) proved for vertex-selection solutions, whose existence is assumed
+(Section~\ref{sec:thmCprime}); for this leak a two-particle tie is never attracting --- with
+$h := \langle\vartheta_i - \vartheta_{i'},\vartheta^0_k - \vartheta^0_j\rangle_{\Ginv}$,
+$J^{\pi_1} - J^{\pi_2} = \sigma_0h$, and on the two sides of the tie
+$\dd h/\dd s = \ell - \sigma_0\norm{\vartheta^0_k - \vartheta^0_j}^2_{\Ginv}$ and
+$\ell + \sigma_0\norm{\vartheta^0_k - \vartheta^0_j}^2_{\Ginv}$ with the same loss term $\ell$, so no solution
+slides along it --- while multi-way ties are not analysed; a Clarke solution in the sense of Proposition D$'''$.17
+may stop at a kink-type Clarke-critical point where the active plans' gradients cancel (two particles at one point
+between two atoms), which a selection solution leaves. (vi) proved for the critical point; its minimality is
+Proposition D$'''$.5's admissibility. Remark D$'''$.22 is formal. The classical case is the leak alone: the metric
+slope of $\frac12W^2(\cdot,\nu)$ is $W(\cdot,\nu)$ at every $\mu$, so it satisfies a PL inequality with constant 2
+(AGS~\cite[\S10.4]{ags2008}, \cite{S47}); a particle velocity field realises the slope where the optimal plan is a
+map. The plan segments are the generalised geodesic from $\mu^*$ to $\mu_\Theta$ based at $\nu$
+(AGS~\cite[\S9.2]{ags2008}): the diagonal plan $\nu\to\mu^*$ and the assignment $\nu\to\mu_\Theta$ make
+$(1 - t)\vartheta^*_{\pi(i)} + t\vartheta_i$ that curve, along which $\frac12W^2(\cdot,\nu)$ is 1-convex --- the
+$(\sigma_0/2)D_\pi$ of (E) --- and the passage from convexity along a curve ending at a point to a slope bound is
+AGS's. PL inequalities in Wasserstein space through optimal maps are known for functionals that are not
+geodesically convex (barycentre functionals; the distance of uniform point clouds to a density)~\cite{S48}. Here
+$\mathcal{J}$ is semiconvex along generalised geodesics only with a negative constant (the loss contributes
+$-L_2^G\sup\langle\abs{r}\rangle$), so a global {\L}ojasiewicz argument, as for the $\lambda$-convex functionals
+of~\cite{S48}, is unavailable. What is specific is the loss linearised exactly in $\fhat$ with the curvature taken at
+the stationary residual, the explicit local constants, and the counts, which make the generalised geodesic a particle
+interpolation and the constant independent of $m$. (ii) is sharp at a matching prior and not in general: it bounds
+$E$ with $\sigma_0 + \kappa^*_-$ and $Q$ with $(\kappa^* + \kappa^\Theta)/2$ separately (numerics below). Checked:
+\code{tests/test_ot_basin.py} ((E) and (P) to $10^{-12}$ relative for random assignments with the counts $mq$ at
+both priors, and with other counts the two defects exactly; the PL chain
+$\norm{\nabla J}^2/(mE)\ge Q^2/(D_\pi E)\ge\lambda$; the constant $2\sigma_0$ attained by a separation to
+$10^{-4}$; from the lift with one particle moved into another cell the margin positive, the particle kept in its
+class, $E$ below the a-posteriori bound and decaying at $2\sigma_0$ at the end, while the nearest-atom leak keeps the
+floor; the nearest-atom spurious minimum at $(11,9,10)/30$, admissible --- its separation margins and its $K$-atom
+Hessian positive --- critical for that leak, not critical for the OT leak, with the PL inequality holding there).}
+
+% Numerics of Theorem D'''.21 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/ot_basin.md).
+\paragraph{Numerics} (\code{exp_ot_basin.py} $\to$ \code{results/chaos/ot_basin.md}). The averaged slow loop at
+$\sigma_0 = 0.15\sigma_{\mathrm{crit}}$ from the warm clouds of Proposition D$'''$.12's numerics: sizes $m = 15$,
+$60$, $240$, $510$, four seeds, 600 slow units, under both leaks, at the matching prior and at the prior with
+centres shifted by $+0.15$. The identities (E) and (P) hold along every run to $6\cdot10^{-13}$ relative. Under the
+OT leak the initial optimal plan is never changed (no particle is relabelled between records), and the margin
+$\alpha$ is positive from $s_+\le300$ on --- from $s\le25$ in 19 of the 32 runs. From then on the observed ratio
+$\norm{\nabla J}^2/(mE)$ is at least $\lambda$ at every record (the smallest ratio$/\lambda$ is 1.00 at the matching
+prior and 1.61--1.72 at the shifted one, $Q^2/(D_\pi E)/\lambda$ 1.58--1.69), and $E$ falls from
+$4.1\cdot10^{-3}$--$4.0\cdot10^{-2}$ to $8.3\cdot10^{-7}$--$8.1\cdot10^{-6}$ (means over the seeds;
+$W^2(\mu_\Theta,\mu^*)$ from 0.99--5.25 to $2.3\cdot10^{-4}$--$2.3\cdot10^{-3}$), below the a-posteriori bound in
+every run. At the end the observed ratio is 0.01416--0.01417 at the matching prior, against $2\sigma_0 = 0.01415$ and
+the theorem's $\lambda = 0.0140$--$0.0141$: the inequality is sharp. At the shifted prior
+$\lambda = 0.0077$--$0.0078$ against an observed 0.0137--0.0139. The local PL constant there is
+$2\min\{\lambda_{\mathrm{sep}},\lambda_{\mathrm{coll}}\} = 0.01135$ ($\lambda_{\mathrm{sep}} = 0.00567$), so the
+curvature itself costs a factor 0.802 against $2\sigma_0$ and the inequality (ii) another 0.683 (its slack: the
+theorem's late $\lambda$ is 0.548 of $2\sigma_0$); the window still mixes the separation modes. \emph{The
+nearest-atom contrast.} Under the nearest-atom leak no particle changes cell. At the 22 admissible count vectors
+(every run at $m = 240$ and $510$, and $(5,4,6)/15$, $(19,21,20)/60$, $(19,18,23)/60$ at both priors) the runs sit at
+the replicated configuration of the sampled weights --- $E(600)$ is 0.02--0.24\% below its energy and still rising
+toward it, the classes collapsed (spreads $\le0.006$) --- and that configuration is a critical point of the
+nearest-atom energy (drift $\le6\cdot10^{-14}$) and not of the OT energy (drift $2.3$--$4.4\cdot10^{-2}$): the floor
+is a spurious minimum. At the other 10, five per prior at $m\le60$ --- $(6,5,4)$, $(6,3,6)$, $(8,4,3)/15$ and
+$(24,15,21)$, $(25,17,18)/60$ --- the weights are inadmissible (class-0 separation margins $-0.0004$ to $-0.0061$):
+the replicated configuration is a saddle, class 0 splits (spreads 0.04--0.62), and $E$ ends 0.5--16.5\% below it,
+still falling. \emph{The a-priori basin.} At the matching prior $\kappa = \sigma_0$ on the whole space and
+$E_0 = 2.0\cdot10^{-7}$. At the shifted prior the supremum of $\lambda_{\max}R^G[\mu^*]$ over the whole parameter
+space is $6.60\cdot10^{-3} < \sigma_0$, approached at a saturation corner ($a\to a_{\max}$, $s\to s_{\min}$):
+\textup{(H$^*$)} holds on the whole space with $\kappa = 4.7\cdot10^{-4}$ --- $\mu^*$ is the unique global
+minimiser among all $m$-point empirical measures for every commensurate $m$ --- and $E_0 = 9.1\cdot10^{-10}$ (over
+the box of the runs' end configurations, which is not forward-invariant, the supremum is $4.39\cdot10^{-3}$ and
+$E_0 = 2.9\cdot10^{-8}$). These basins are tiny: a particle outside its cell is at $\Ginv$-distance at least 3.13
+(matching) and 2.95 (shifted) from its class atom, so $\{E\le E_0\}$ holds a fraction $p\le5.8\cdot10^{-6}$
+(matching) and $4.4\cdot10^{-7}$ (shifted) of the particles in other cells --- none below $m\approx1.7\cdot10^5$ and
+$2.3\cdot10^6$. The runs start at $E(0) = 4.1\cdot10^{-3}$--$4.0\cdot10^{-2}$, far outside, reach the region
+$\alpha > 0$ by themselves, and are covered from there a posteriori by (iii). \emph{The measure-level basin.} With a
+fraction $p$ of all the particles, taken from class 0, moved 0.6 of the way into cell 1, the plan keeps them in their
+class, and $\kappa^\Theta = 0.0096$, $0.019$, $0.029$, $0.048$ for $p = 1/30$, $1/15$, $1/10$, $1/6$ (segment
+suprema on 129 points): the margin is $+0.0023$ at $p = 1/30$ and negative from $p = 1/15$ on, the same at $m = 30$
+and $m = 300$, which are the same measures. With one particle moved, $E$ decays from $3.3\cdot10^{-3}$ to
+$2.5\cdot10^{-5}$ ($m = 30$) and from $2.3\cdot10^{-4}$ to $3.1\cdot10^{-6}$ ($m = 300$), at the rate $2\sigma_0$ at
+the end and below $E(0)\exp(-\int\lambda_+)$ with $\lambda$ evaluated at every step ($9.9\cdot10^{-5}$ and
+$3.7\cdot10^{-6}$; $\lambda\ge0.00148$ throughout), and the particle returns to its own cell. Under the nearest-atom
+leak it stays in cell 1, and $E$ rises toward the spurious minimum of the counts $(9,11,10)/30$ and
+$(99,101,100)/300$, both admissible: $5.72\cdot10^{-3}$ and $5.56\cdot10^{-4}$ at $s = 300$, $6.304\cdot10^{-3}$ and
+$6.128\cdot10^{-4}$ at $s = 1000$, and the minimum's $6.3126\cdot10^{-3}$ and $6.1328\cdot10^{-4}$ at $s = 3000$.
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
 \paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}). The instance:
