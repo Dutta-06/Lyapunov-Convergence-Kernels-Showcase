@@ -64,7 +64,7 @@ class AdaptivePriorLoop:
     the nearest-atom leak toward the adaptive prior — the cell plan, the cell masses in place of q (an empty cell keeps its atom), no transit —
     the gradient flow of L̄ + (σ₀/2)(1/m)Σ_i min_j‖ϑ_i − z_j‖²_{G⁻¹} = min over the masses of the OT energy."""
 
-    def __init__(self, ot_loop, eta, plan='ot'):
+    def __init__(self, ot_loop, eta, plan='ot', box=None):
         assert plan in ('ot', 'nearest')
         self.loop = ot_loop
         self.eta = float(eta)
@@ -72,6 +72,24 @@ class AdaptivePriorLoop:
         self.G = ot_loop.G
         self.sigma0 = ot_loop.sigma0
         self.plan_kind = plan
+        # Proposition D‴.27: the prior's atoms confined to the box 𝒵 = [lo, hi] (unconstrained coordinates, the same for every atom); the
+        # prior's flow is then the projected gradient flow of 𝒥 on Θ × 𝒵^{K₀} (its velocity projected onto the tangent cone of the box), and at
+        # η = ∞ the prior is the projection of the class barycentres onto the box (the minimiser of W² over 𝒵 for the plan, G being diagonal).
+        self.box = None if box is None else (np.asarray(box[0], float), np.asarray(box[1], float))
+
+    def project(self, Z):
+        """Z clipped to the box (unchanged without a box)."""
+        return Z if self.box is None else np.clip(Z, self.box[0][None, :], self.box[1][None, :])
+
+    def tangent(self, Z, V):
+        """The velocity V of the atoms projected onto the tangent cone of the box at Z (unchanged without a box)."""
+        if self.box is None:
+            return V
+        lo, hi = self.box
+        V = np.array(V, float)
+        V[(Z <= lo[None, :] + 1e-14) & (V < 0)] = 0.0
+        V[(Z >= hi[None, :] - 1e-14) & (V > 0)] = 0.0
+        return V
 
     def plan(self, Th, Z):
         """(γ, the transport cost): the optimal plan to ν_Z with the masses q (OT) or the cell plan (nearest)."""
@@ -89,9 +107,9 @@ class AdaptivePriorLoop:
         """(dΘ/ds, dZ/ds) for the plan γ (finite η); for η = ∞ the prior is replaced by the barycentres and dZ/ds is not used."""
         m = Th.shape[0]
         if np.isinf(self.eta):
-            Zb = self.bary(Th, gamma, Z)
+            Zb = self.project(self.bary(Th, gamma, Z))
             return self.loop.drift(Th, m * (gamma @ Zb)), np.zeros_like(Z)
-        return self.loop.drift(Th, m * (gamma @ Z)), -self.eta * (Z - self.bary(Th, gamma, Z))
+        return self.loop.drift(Th, m * (gamma @ Z)), self.tangent(Z, -self.eta * (Z - self.bary(Th, gamma, Z)))
 
     def energy(self, Th, Z):
         """𝒥(μ_Θ, Z) = L̄(μ_Θ) + (σ₀/2)W²(μ_Θ, ν_Z) with an optimal plan (for η = ∞ evaluate it at Z = the barycentres of an optimal plan)."""
@@ -132,7 +150,7 @@ class AdaptivePriorLoop:
                 if adapting and not np.isfinite(t_open):
                     t_open = k * dt
                 if adapting and np.isinf(eta):
-                    Z = self.bary(Th, gamma, Z)
+                    Z = self.project(self.bary(Th, gamma, Z))
                     gamma, _ = self.plan(Th, Z)
             if callback is not None and k % rec_every == 0:
                 callback(k * dt, Th, Z, adapting)
@@ -147,9 +165,9 @@ class AdaptivePriorLoop:
                 k1T = self.loop.drift(Th, m * (gamma @ Z)); k1Z = np.zeros_like(Z)
                 k2T = self.loop.drift(Th + 0.5 * dt * k1T, m * (gamma @ Z)); k2Z = np.zeros_like(Z)
             self.eta = eta
-            Th, Z = Th + dt * k2T, Z + dt * k2Z
+            Th, Z = Th + dt * k2T, self.project(Z + dt * k2Z)
             if adapting and np.isinf(eta):
-                Z = self.bary(Th, gamma, Z)
+                Z = self.project(self.bary(Th, gamma, Z))
         return Th, Z, t_open
 
 

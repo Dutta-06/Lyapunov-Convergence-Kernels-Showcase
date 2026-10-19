@@ -519,55 +519,122 @@ nearest-atom energy, admissible (separation margins and K-atom Hessian positive)
   class barycentres at the rate η.
 - Linear theory at the exact representation: h_j = 3.06·10⁻⁴ … 0.195; a fixed prior keeps σ₀/(h_j + σ₀) = 0.959 … 0.035 of its error and
   relaxes at h_j + σ₀ ≥ 7.38·10⁻³; the adaptive prior's slowest rate λ_1^− = 2.68·10⁻⁵, 1.51·10⁻⁴, 2.78·10⁻⁴, 3.06·10⁻⁴ for η = σ₀/10,
-  σ₀, 10σ₀, ∞. (v)'s radius: C_N ≥ 0.341 (sampled), so ρ ≤ 2.0·10⁻⁵, 1.1·10⁻⁴, 2.0·10⁻⁴, 2.2·10⁻⁴, while the runs start 94–6·10⁴ times
-  outside. The fixed prior's bias: fit error 9.78·10⁻³, within 4.8% of the first-order formula in norm, 0.85 and 0.73 of it in the weak
+  σ₀, 10σ₀, ∞. (v)'s radius: C_N ≥ 0.341 (sampled), so ρ ≤ 2.0·10⁻⁵, 1.1·10⁻⁴, 2.0·10⁻⁴, 2.2·10⁻⁴, while the K₀-atom runs start 94–6·10⁴
+  times outside, the warm clouds 2.2·10⁴–3.6·10⁵ times and the separated starts 131–3344 times. The fixed prior's bias: fit error 9.78·10⁻³, within 4.8% of the first-order formula in norm, 0.85 and 0.73 of it in the weak
   modes 1 and 3; the error is first order in the shift (0.58% in norm, 0.98 and 0.97 in modes 1 and 3, at 1/8 of the shift).
 - K₀-atom loop from Θ*(q), 6000 slow units: every mode above 10⁻⁶ (13 of 36) decays at λ_j^− (log-slopes 0.981–1.003 of it; ratios to the
   pair solutions 0.82–1.12, constant to 1.04% from s = 1000 on for η ≥ σ₀); fit error 9.78·10⁻³ → 3.6·10⁻⁴, 1.8·10⁻⁵, 8.0·10⁻⁶, 6.7·10⁻⁶.
 - m = 15, 60, 240, 510 from the warm clouds, four seeds, 3000 slow units. Fixed prior: the lift of Θ*(q) (‖ȳ‖ = 2.10·10⁻², W² = 4.4·10⁻⁴).
   Ungated: the prior dragged by the transit (‖ȳ‖ 0.032–0.32 at η = σ₀, 0.048–0.71 at η = ∞, at s = 500); one m = 15 system at η = ∞
   on a plateau of the unregularised loss (Hessian eigenvalues −1.8·10⁻⁵, 7.2·10⁻⁵; fit error 3.46·10⁻² at s = 23000), which the
-  unregularised gradient flow crosses to the exact representation in 8.0·10⁴ more slow units. Transit gate (opens at s = 88–149): ‖ȳ‖
+  unregularised gradient flow crosses to the exact representation (below 0.9 of the plateau's loss after 4.16·10⁴, half at 4.78·10⁴, below
+  10⁻¹² at 7.97·10⁴ more slow units, the crossings located as events). Transit gate (opens at s = 88–149): ‖ȳ‖
   4.9·10⁻³–3.7·10⁻² at η = σ₀ against the K₀-atom run's 1.3·10⁻³. Settled gate (opens at s = 1211–1304, the systems replicated: rms
   separations ≤ 7.9·10⁻⁴): ‖ȳ‖ and the fit error equal to the K₀-atom run's at s − t_open for every m (per-seed ratios 0.995–1.000 at
   η = σ₀, 0.968–1.001 at η = ∞: the invariance of the replicated configurations); fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵, W² 6.7–7.2·10⁻⁶
-  and 9.3–9.9·10⁻⁷; at η = σ₀ and m = 510 the transit gate's fit error is the lower (1.55·10⁻⁴ against 1.64·10⁻⁴).
-- Separated starts (the test of (v)): ‖ȳ‖ at s = 1750 departs from the K₀-atom run's by +0.07–0.08% (rms separation 0.02) and +1.8–2.1%
-  (0.1) at η = σ₀, +0.44–0.59% and +10.9–14.5% at η = ∞, at m = 15 and 510: second order in the separations, of the same size at both m.
-- The limits of (i): a non-replicated stationary saddle on a four-bump target (one class split, held by a leak force 5.8·10⁻³; from the
-  exact split fit the flow collapses the class, fit error 1.94·10⁻² on the saturation boundary); beyond the saturation (weighted amplitude
-  4.8 > a_max) the fixed prior's solution converges while the adaptive prior's amplitude coordinate grows like 2 ln s; a permuted prior is
-  stationary at the exact representation.
+  and 9.3–9.9·10⁻⁷; in the seed means the settled gate is the lower except the fit error at η = σ₀ and m = 510 (1.64·10⁻⁴ against the
+  transit gate's 1.55·10⁻⁴), and system by system the transit gate ends lower in all three of ‖ȳ‖, W² and the fit error in 6 of 32.
+- Separated starts (the structure behind (v), beyond its ball; five draws): ‖ȳ‖ at s = 1750 departs from the K₀-atom run's by +0.13% and
+  +3.1% (rms separation 0.02 and 0.1) at η = σ₀ and +0.77% and +18.5% at η = ∞ for m = 15 in the draw means (m = 510: +0.09%, +2.2%,
+  +0.63%, +15.5%): second order in the separations draw by draw (factors 23.8–25.0), of the same expected size at both m (the means
+  within 0.9–1.7 combined standard errors), the spread 3.3–6.0 times larger at m = 15.
+- The limits of (i): a non-replicated stationary saddle on a four-bump target (one class split, held by a leak force 5.8·10⁻³); from the
+  exact split fit the flow collapses the class (width 1.05, fit error 2.23·10⁻² at s = 4·10⁴), and the merged width coordinate then runs off
+  like ln s, the width tending to s_max like 1/s: the solution is unbounded, its physical image approaching the minimiser of the loss on the
+  face s = s_max (fit error 1.943·10⁻², a Karush–Kuhn–Tucker point with ∂L/∂s = −1.3·10⁻⁶); beyond the saturation (weighted amplitude
+  4.8 > a_max) the fixed prior's solution converges while the adaptive prior's amplitude coordinate grows like 2 ln s; a prior permuted among
+  atoms of equal mass is stationary at the exact representation.
 
 Tests (`tests/test_adaptive_prior.py`): the joint drift is the gradient flow of 𝒥 in the stated metric (finite differences); the exact
 representation stationary, the fixed prior's stationary point not; the linearisation's spectrum (σ₀ and the pair rates λ_j^±) and its
 self-adjointness in the gradient-flow metric; the first-order bias; the transit gate and the settled gate, with 𝒥 non-increasing; the
-non-replicated saddle, the permuted prior and the unbounded adaptive solution.
+non-replicated saddle, the permuted prior and the adaptive prior's run-off (the force on the amplitude tending to the positive multiplier of
+the loss's face minimum, and the run-off law (a_max − a)s → a_max²(σ₀ + η)/(4ηG_αF_∞)).
 
 ## Proposition D‴.24 — the floor is the leak's bias; an adaptive prior without a mass constraint (`exp_adaptive_floor.py` → `chaos/adaptive_floor.md`)
 
 - Averaged slow loop on the three-bump instance at σ₀ = 0.15σ_crit (0.05σ_crit and 0.5σ_crit for the law), the nearest-atom leak toward the
-  matching prior unless stated; the warm clouds (four seeds), m = 15, 60, 240 against M = 510.
-- The floor as the bias (no dynamics): F equals Ĵσ₀(H_L + σ₀I)⁻¹∂_wx⁰ to 1.1·10⁻⁶, 1.9·10⁻⁷, 1.2·10⁻⁸; the law (B) per unit of 1/m − 1/M is
-  1.356·10⁻², 6.166·10⁻², 0.2291, the sum of its mode terms, at 0.496, 0.753, 0.839 of the bound (σ₀/4)tr(∂_wx⁰C̃∂_wx⁰ᵀ); 99% of it in the
-  modes with h_j/σ₀ = 0.28–4.6 at 0.15σ_crit. The parameter split S = H_L(H_L + σ₀I)⁻¹S^e holds to ≤ 1.4·10⁻⁷; the adaptive prior's
-  coupled-distance law is 1.44, 2.17, 5.27 times the fixed prior's. Admissible weights (w > (0.25, 0.175, 0.2)): every sample but one,
-  (8, 4, 3)/15, which is on the boundary.
+  matching prior unless stated; the warm clouds (four seeds), m = 15, 60, 240 against M = 510; the checks at the sampled weights from the
+  stored final states.
+- The floor as the bias (no dynamics): F equals Ĵσ₀(H_L + σ₀I)⁻¹∂_wx⁰ to the finite-difference error (1.1·10⁻⁶, 1.9·10⁻⁷, 1.2·10⁻⁸; exact
+  at q); the law (B) per unit of 1/m − 1/M is 1.356·10⁻², 6.166·10⁻², 0.2291, the sum of its mode terms, at 0.496, 0.753, 0.839 of the
+  bound (σ₀/4)tr(∂_wx⁰C̃∂_wx⁰ᵀ), itself σ₀/4 times the adaptive prior's coupled-distance law 46.32. Modes 2–6 carry 99.4%, 99.0%, 97.9% of
+  the law and 97.2% unweighted; the weight (a band-pass centred at h = σ₀) moves the shares of the modes with h_j/σ₀ ∈ [1/5, 5] from 21%,
+  97%, 78% to 42%, 99%, 90%. The law's value at m = 15, 60, 240: 3.99·10⁻³, 9.07·10⁻⁴, 1.36·10⁻⁴. The parameter split
+  S = H_L(H_L + σ₀I)⁻¹S^e holds to ≤ 1.4·10⁻⁷; the adaptive prior's coupled-distance law is 1.44, 2.17, 5.27 times the fixed prior's.
+- Two notions of admissibility. Representable (w > (0.25, 0.175, 0.2)): every sample but (8, 4, 3)/15, on the boundary. D‴.5-admissible
+  for the fixed prior: 7 of the 12 m-systems; (6, 5, 4)/15, (6, 3, 6)/15, (24, 15, 21)/60, (8, 4, 3)/15, (25, 17, 18)/60 are saddles
+  (margins −3.48, −1.08, −2.16, −6.14, −3.98·10⁻³, class 1, w₁ ≥ 0.4); the references and the others ≥ 3.78·10⁻³.
 - Fixed against adaptive priors, 6000 slow units: the fixed prior's ‖f̂_m − f̂_M‖² stays (3.0·10⁻⁴–5.5·10⁻³, 1.1·10⁻⁴–9.9·10⁻⁴,
-  4.8·10⁻⁶–8.2·10⁻⁵ at m = 15, 60, 240); the adaptive prior's decreases without a floor (at s = 6000 at most 2.0·10⁻⁶ at η = σ₀ and
-  5.4·10⁻⁸ at η = ∞ over the admissible samples), with W²(μ_m, μ_M) at the exact representations' (the gauge's floor, above the fixed
-  prior's: 5.92 against 4.48 at seed 0, m = 15); the boundary sample decays algebraically; the counts are conserved.
+  4.8·10⁻⁶–8.2·10⁻⁵ at m = 15, 60, 240); at the seven D‴.5-admissible samples it is the exact bias at the sampled weights (ratio 1.0000),
+  the delta method missing it by 0.86–1.72; the five saddles have split (class diameters 0.64–1.50) at 0.81–1.01 of the replicated
+  floor. The adaptive prior's decreases without a floor (at s = 6000 at most 2.0·10⁻⁶ at η = σ₀ and 5.4·10⁻⁸ at η = ∞ over the
+  representable samples); the boundary sample decays like 1/s (6000·‖f̂_m − f̂_M‖² = 0.88 and 0.42 against the predicted 0.8 and 0.4); the
+  counts are conserved.
+- The parameter level: the coupled distance D is 0.944–1.000 of the replicated stationary points' (fixed: Θ*(w); adaptive: ϑ^e(w)), and
+  1.72–4.81 times larger under the adaptive prior; W² is dominated by the cross-class transport of ½‖w^m − w^M‖₁ (0.82–0.99 of it fixed,
+  0.67–0.99 adaptive), so the two priors' W² differ by 1.00–1.32 and their within-class parts by 1.71–4.84.
 - The design table (the misplaced prior, 3000 slow units, m = 15, 60, 240): nearest atom and fixed, fit error 6.8·10⁻²–2.0·10⁻² and floor
-  2.5·10⁻³–5.9·10⁻⁵; nearest atom and adaptive, 8.9·10⁻³–5.5·10⁻⁴ and 8.0·10⁻⁵–1.1·10⁻⁷; OT and fixed, 9.78·10⁻³ and no floor; OT and
-  adaptive (settled gate), 1.6·10⁻⁴ and below 5·10⁻¹¹.
-- The real loop (k_e = 25, 3000 time units, seed 0's weights): the fixed prior's rms tracking error 1.17–1.18·10⁻³ (m = 15) and
-  3.43–3.44·10⁻⁴ (m = 60), at the averaged prediction (ratios 1.001, 0.996 at the end); the adaptive prior's (η = ∞) 1.16·10⁻³ → 3.27·10⁻⁴
-  and 3.40·10⁻⁴ → 1.52·10⁻⁴ along the averaged loop (0.987, 0.992); from the exact representation at most 9·10⁻¹².
+  2.5·10⁻³–5.9·10⁻⁵ (the same five samples saddles, margins −0.38 to −5.76·10⁻³); nearest atom and adaptive, 8.9·10⁻³–5.5·10⁻⁴ and
+  8.0·10⁻⁵–1.1·10⁻⁷; OT and fixed, 9.78·10⁻³ and no floor; OT and adaptive (settled gate), 1.6·10⁻⁴ and below 5·10⁻¹¹. The OT designs'
+  coupled distance is the largest (6.0, 3.5, 1.0: the transit's mismatch) with W² ≤ 2.1·10⁻⁸. At s = 1250, before the settled gate's
+  effect, the nearest-atom adaptive prior leads (fit error 1.75·10⁻²–2.8·10⁻³ against 9.2–9.8·10⁻³); from s ≈ 2000 the OT design leads.
+- The real loop (k_e = 25, 3000 time units, seed 0's weights): the fixed prior's rms tracking error 1.17–1.18·10⁻³ (m = 15, a saddle
+  orbit) and 3.43–3.44·10⁻⁴ (m = 60), at the averaged prediction (ratios 1.001, 0.996 at the end); the adaptive prior's (η = ∞)
+  1.16·10⁻³ → 3.27·10⁻⁴ and 3.40·10⁻⁴ → 1.52·10⁻⁴ along the averaged loop (0.987, 0.992); from the exact representation the five-period
+  rms is at most 9.0·10⁻¹².
+- The instance's probabilities (exact): outside W 0.361, 0.074, 0.0021 and on its boundary 0.118, 0.053, 0.0012 at m = 15, 60, 240, against
+  Hoeffding's 1.87, 0.60, 0.036; a permutation of the classes representable for 31%, 87%, 100% of the mass outside W; the fixed prior's
+  saddles 0.369, 0.260, 0.109. The adaptive prior's expected limiting floor (constrained minima outside W) ≥ 7.3·10⁻³, 2.2·10⁻⁴,
+  6.6·10⁻⁷: 1.8, 0.24, 0.005 times the fixed prior's law.
+- Monte Carlo (600 nested samples, the exact replicated stationary points): the fixed prior's floor is 2.78 ± 0.20, 1.53 ± 0.11,
+  1.11 ± 0.07 times the law (2.89, 1.56, 1.07 for D‴.5-admissible pairs); E D/law 0.68, 0.93, 0.95 (fixed) and 0.53, 1.17, 1.26
+  (adaptive), the adaptive prior's 2.9–3.7 times the fixed prior's.
+- In two dimensions (`exp_adaptive_floor_2d.py` → `chaos/adaptive_floor_2d.md`; four bumps with vector amplitudes, p = 5, σ₀ = 0.05,
+  m = 16, 32, 64 against M = 128, six seeds): F equals the bias form to 6.0·10⁻⁷, the law 0.310 per unit of 1/m − 1/M at 0.215 of the bound;
+  every sample D‴.5-admissible (margins +0.016 to +0.047) and the fixed prior's floor equal to the exact bias at the sampled weights in all
+  18 systems (ratio 1.0000); 7 of the 18 systems representable (w > (0.200, 0.150, 0.175, 0.150)), where the adaptive prior's floor falls to
+  1.0·10⁻⁷–4.1·10⁻⁵ (η = σ₀) and 1.2·10⁻⁹–1.0·10⁻⁵ (η = ∞), at most 0.019 and 0.006 of the fixed prior's, elsewhere to 0.023–0.64 of it;
+  the real loop (k_e = 25, m = 64) at the averaged prediction (ratios 0.979–1.009) and invariant from the exact representation
+  (2.0–4.7·10⁻¹⁰).
 
 Tests (`tests/test_adaptive_floor.py`): the nearest-atom adaptive flow is the gradient flow of 𝒥_∘ with the cell masses (finite
-differences); 𝒥_∘ is the minimum of the OT energy over the masses; the floor law as the bias derivative, carried by the modes near σ₀ and
-below the bound; the exact representation of the sampled weights (6, 5, 4)/15 stationary under the adaptive prior, the fixed prior's
-stationary point there biased; the parameter split.
+differences); 𝒥_∘ is the minimum of the OT energy over the masses, strictly below the energies with masses moved by ±1/m; the floor law
+as the bias derivative, below the bound, the weight moving the shares toward h ≈ σ₀ against the unweighted ones at two σ₀; at the
+D‴.5-admissible sample (5, 4, 6)/15 the exact representation stationary under the adaptive prior and the fixed prior's stationary point a
+strict local minimiser, biased; at the saddle (6, 5, 4)/15 the exact representation's margins σ₀; the parameter split; 𝒥_∘ decreasing
+across a cell crossing; an empty cell staying empty with its atom frozen. `tests/test_planar_loop.py`: the planar averaged loop (the scalar
+one at n = 1; the learning term against finite differences of L̄ and the orbit average of the real law), the exact representation of
+admissible weights stationary for the adaptive prior, the floor law as the bias derivative in two dimensions.
+
+## Corollary D‴.26 — perfect tracking with an adaptive prior in the real loop (`exp_adaptive_floquet.py` → `chaos/adaptive_floquet.md`)
+
+- The three-bump instance at σ₀ = 0.15σ_crit, x_m = 2 sin t, the sampled weights w = (6, 5, 4)/15 (amplitudes A_k/w_k = 2.5, −2.1, 3.0;
+  representable, and a saddle of the fixed prior), the nearest-atom leak toward an adaptive prior in the real loop with the prior in the
+  state; η = σ₀ and ∞, k_e = 25 and 50; the monodromy by central differences of the period map (step 10⁻⁵, DOP853 at rtol 10⁻¹³).
+- Every lift returns after one period to ≤ 1.7·10⁻¹⁵. Separations: at m = 15 and 30 the 36 and 81 exponents equal σ₀/k_e to ≤ 1.7·10⁻⁶
+  (relative). Collective exponents: the other 18 (η = σ₀) or 9 (η = ∞) equal the weighted K₀-atom loop's to 1.4·10⁻⁵–6.4·10⁻⁴.
+- The K₀-atom loop against the averaged prediction: slow-time rates within 4.4·10⁻³ (k_e = 25) and 1.2·10⁻³ (k_e = 50) of λ_j^±(w), a
+  factor 3.80 (k_e^{−1.93}): the correction is of second order, the largest relative one in the slowest mode (14% and 3.9%).
+
+Tests (`tests/test_adaptive_floquet.py`): at the matching weights, m = 6: the return of one period; the nine separation exponents at
+σ₀/k_e; the collective exponents equal to the weighted K₀-atom loop's; the latter within the averaging correction of the prediction.
+
+## Proposition D‴.27 — a projected adaptive prior (`exp_adaptive_prior.py` Part H → `chaos/adaptive_prior.md`)
+
+- The box 𝒵 (unconstrained coordinates): α ∈ [−5.889, 5.889], γ ∈ [−4.417, 4.417] (amplitudes and centres to 0.9 of a_max and c_max),
+  κ ∈ [−6, 6]; the instance's exact atoms inside.
+- Beyond the saturation (Part G(b)'s target, weighted amplitude 4.8 > a_max; the K₀-atom system from the exact atoms with the prior there):
+  the projected prior converges at η = σ₀ (projected midpoint rule, dt = 0.25, to s = 10⁵) and at η = ∞ (LSODA) to the same bounded
+  stationary point (drift ≤ 1.8·10⁻¹⁵): the prior's amplitude atom on the face (5.889), the particle's at 6.728, the fit error 0.1415,
+  between the fixed prior's 0.1750 and the unprojected adaptive prior's limit 0.1050 (reached only as its coordinate runs off).
+- The particles' largest G⁻¹-distance from 𝒵 along the run: 0.92 (η = σ₀), 0.89 (η = ∞), against the a-priori bound B/σ₀ = 3686
+  (B = 26.08, L_ϑ^G = 4.658).
+- Part C's K₀-atom loop at the misplaced prior (η = σ₀, 6000 slow units) is identical with and without 𝒵: the projection is inactive.
+
+Tests (`tests/test_adaptive_prior.py`): beyond the saturation the projected prior at η = ∞ keeps the particles within 2 of the box and
+converges (the unprojected coordinate passes 11 by s = 10⁴); at η = σ₀ the prior stays in the box, the particles bounded and 𝒥
+non-increasing; at the misplaced prior near the exact representation the projected and unprojected runs are identical.
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 

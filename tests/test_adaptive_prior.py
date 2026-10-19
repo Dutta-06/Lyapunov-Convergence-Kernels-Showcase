@@ -214,10 +214,26 @@ def test_a_non_replicated_stationary_point_is_held_by_the_leak_and_a_permuted_pr
 
 
 def test_the_adaptive_prior_gives_up_the_leaks_a_priori_bound():
+    """No exact representation (3·1.6 > a_max). The fixed prior converges at finite parameters. Under the adaptive prior (η = σ₀) the force on
+    the first amplitude, F = ⟨rφ₁⟩, tends to the positive Karush–Kuhn–Tucker multiplier F_∞ of the loss's minimum on the face a₁ = a_max — a
+    bounded limit would be a critical point, where F = 0 — and the amplitude follows the run-off law (a_max − a)s → a_max²(σ₀ + η)/(4ηG_αF_∞)
+    of the conservation law d/ds[α + (σ₀/η)z_α] = G_αF∂a/∂α with α − z_α slaved, so α grows like (a_max/2) ln s: the solution is unbounded."""
     from scipy.integrate import solve_ivp
+    from scipy.optimize import minimize
     net = L.SaturatedLiftedNetwork(1, a_max=4.0, c_max=3.0, s_min=0.3, s_max=2.0)
     start = net.unconstrained(np.array([[3 * A] for A, C, S in BUMPS]), np.array([[C] for A, C, S in BUMPS]), np.array([S for A, C, S in BUMPS]))
     loop = OT.OTPriorLoop(net, _bumps([(1.6, -1.5, 0.5), (-0.7, 0.0, 0.4), (0.8, 1.5, 0.5)]), X_REF, PER, G, SIGMA0, start, n_quad=96)   # 3·1.6 > a_max
+    q = np.ones(3) / 3
+
+    def res_phi(a, c, s):
+        phi = np.exp(-(loop.X[:, None] - c[None, :]) ** 2 / (2 * s[None, :] ** 2))
+        return loop.F - phi @ (q * a), phi
+    face = lambda v: 0.5 * float(np.mean(res_phi(np.concatenate([[net.a_max], v[:2]]), v[2:5], v[5:])[0] ** 2))
+    v = minimize(face, [-2.1, 2.4, -1.5, 0.0, 1.5, 0.5, 0.4, 0.5], method='L-BFGS-B', bounds=[(-4, 4)] * 2 + [(-3, 3)] * 3 + [(0.3, 2.0)] * 3,
+                 options=dict(ftol=1e-15, gtol=1e-12, maxiter=5000)).x
+    r, phi = res_phi(np.concatenate([[net.a_max], v[:2]]), v[2:5], v[5:])
+    F_inf = float(np.mean(r * phi[:, 0]))
+    assert F_inf > 0.02                                                            # the loss still decreases outward on the face: a KKT point
     gamma = np.eye(3) / 3.0
     out = {}
     for eta in (0.0, SIGMA0):
@@ -226,9 +242,40 @@ def test_the_adaptive_prior_gives_up_the_leaks_a_priori_bound():
         def rhs(t, v, apl=apl):
             dT, dZ = apl.drift(v[:9].reshape(3, 3), v[9:].reshape(3, 3), gamma)
             return np.concatenate([dT.ravel(), dZ.ravel()])
-        sol = solve_ivp(rhs, (0.0, 1e4), np.concatenate([start.ravel(), start.ravel()]), method='LSODA', t_eval=[1e3, 1e4], rtol=1e-10, atol=1e-12)
-        out[eta] = (sol.y[0], np.abs(rhs(1e4, sol.y[:, -1])).max(), net.physical(sol.y[:9, -1].reshape(3, 3))[0][0, 0])
-    th, drift, a = out[0.0]
+        S_end = 1e4 if eta == 0.0 else 1e5
+        sol = solve_ivp(rhs, (0.0, S_end), np.concatenate([start.ravel(), start.ravel()]), method='LSODA', t_eval=[S_end / 10, S_end], rtol=1e-10, atol=1e-12)
+        a, c, s_ = net.physical(sol.y[:9].T.reshape(-1, 3, 3)[-1])
+        out[eta] = (sol.y[0], np.abs(rhs(S_end, sol.y[:, -1])).max(), a[0, 0], float(np.mean(res_phi(a[:, 0], c[:, 0], s_)[0] * res_phi(a[:, 0], c[:, 0], s_)[1][:, 0])))
+    th, drift, a, F = out[0.0]
     assert abs(th[1] - th[0]) < 1e-6 and drift < 1e-12 and a < 3.7               # the fixed prior: converged at finite parameters
-    th, drift, a = out[SIGMA0]
-    assert th[1] - th[0] > 3.0 and drift > 1e-5 and a > 3.97                     # the adaptive prior: the amplitude coordinate runs off (≈ 2 ln s)
+    th, drift, a, F = out[SIGMA0]
+    assert abs(F / F_inf - 1) < 0.02                                               # the force tends to the face's multiplier, not to 0
+    law = net.a_max ** 2 * (SIGMA0 + SIGMA0) / (4 * SIGMA0 * G[0] * F_inf)
+    assert abs((net.a_max - a) * 1e5 / law - 1) < 0.03                             # the run-off law: a_max − a ~ 1/s
+    assert (th[1] - th[0]) / np.log(10.0) > 0.45 * net.a_max                       # and α grows like (a_max/2) ln s
+
+
+def test_a_projected_prior_keeps_the_solutions_bounded_and_is_inactive_inside_its_box():
+    from scipy.integrate import solve_ivp
+    net = L.SaturatedLiftedNetwork(1, a_max=4.0, c_max=3.0, s_min=0.3, s_max=2.0)
+    lo = np.array([-net.a_max * np.arctanh(0.9), -net.c_max * np.arctanh(0.9), -6.0]); box = (lo, -lo)
+    start = net.unconstrained(np.array([[3 * A] for A, C, S in BUMPS]), np.array([[C] for A, C, S in BUMPS]), np.array([S for A, C, S in BUMPS]))
+    loop = OT.OTPriorLoop(net, _bumps([(1.6, -1.5, 0.5), (-0.7, 0.0, 0.4), (0.8, 1.5, 0.5)]), X_REF, PER, G, SIGMA0, start, n_quad=96)  # 3·1.6 > a_max
+    gamma = np.eye(3) / 3.0
+    apl = AP.AdaptivePriorLoop(loop, np.inf, box=box)                                # η = ∞: the leak toward the projected class mean
+    rhs = lambda t, v: apl.drift(v.reshape(3, 3), v.reshape(3, 3), gamma)[0].ravel()
+    sol = solve_ivp(rhs, (0.0, 1e5), start.ravel(), method='LSODA', t_eval=np.geomspace(1.0, 1e5, 60), rtol=1e-10, atol=1e-12)
+    Th_t = sol.y.T.reshape(-1, 3, 3)
+    dist = np.sqrt(np.sum((Th_t - np.clip(Th_t, lo, -lo)) ** 2 / G[None, None, :], axis=2)).max()
+    assert dist < 2.0 and sol.y[0].max() < 8.0                                       # bounded (the unprojected prior's coordinate passes 11 by s = 10⁴)
+    assert np.abs(rhs(1e5, sol.y[:, -1])).max() < 1e-12                              # and convergent
+    apl2 = AP.AdaptivePriorLoop(loop, SIGMA0, box=box)                               # η = σ₀: the projected flow, by the projected midpoint rule
+    rec = []
+    apl2.run(start.copy(), start.copy(), 2000.0, 0.25, plan_every=4, rec_every=40,
+             callback=lambda s_, T_, Z_, ad: rec.append((T_[0, 0], Z_.copy(), apl2.energy(T_, Z_))))
+    assert all(np.all((Z_ >= lo - 1e-12) & (Z_ <= -lo + 1e-12)) for _, Z_, _ in rec)  # the prior stays in its box
+    assert max(t for t, _, _ in rec) < 8.0 and np.all(np.diff([J for _, _, J in rec]) <= 1e-12)   # the particles bounded, 𝒥 non-increasing
+    loop2, exact, prior = _setup()                                                   # the misplaced prior: the box is never reached
+    star = loop2.stationary_atoms(prior)[0]
+    runs = [AP.AdaptivePriorLoop(loop2, SIGMA0, box=bx).run(star.copy(), prior.copy(), 300.0, 0.25, plan_every=4, rec_every=10 ** 9)[:2] for bx in (None, box)]
+    assert np.array_equal(runs[0][0], runs[1][0]) and np.array_equal(runs[0][1], runs[1][1])

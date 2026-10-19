@@ -29,7 +29,7 @@ A fixed prior's collective rates are h_j + σ₀ = 7.3803e-03–2.0229e-01.
 | 0.07074 | 2.780e-04 | 0.0393 | 2.04e-04 | 1.191e-01 | 584 |
 | ∞ | 3.059e-04 | 0.0432 | 2.24e-04 | 2.102e-02 | 94 |
 
-The runs of Parts C–F start outside the ball that the proof of (v) covers, by these factors: they probe the dynamics beyond it.
+The runs start outside the ball that the proof of (v) covers: Part C's start by the factors of the table; Part D's warm clouds (largest separations of order 5 at s = 0) by 2.5e+05–3.6e+05 at η = 0.00071; 4.5e+04–6.4e+04 at η = 0.00707; 2.4e+04–3.5e+04 at η = 0.07074; 2.2e+04–3.2e+04 at η = ∞; Part F's separated starts by 3344 at η = 0.00707; 131–1127 at η = ∞. They probe the dynamics beyond it.
 
 ## B. The fixed prior's bias (shifted prior)
 
@@ -140,7 +140,9 @@ Sizes m = 15, 60, 240 and M = 510, 4 seeds, 3000 slow units, plan every 4 steps.
 
 The settled gate against the K₀-atom run of Part C: per seed, ‖ȳ‖ and the fit error at s = 3000 over the K₀-atom run's at s = 3000 − t_open (min–max over the seeds): η = 0.00707, m = 15: ‖ȳ‖ 0.995–0.999, fit error 0.998–1.000; η = 0.00707, m = 60: ‖ȳ‖ 0.999–1.000, fit error 1.000–1.000; η = 0.00707, m = 240: ‖ȳ‖ 1.000–1.000, fit error 1.000–1.000; η = 0.00707, m = 510: ‖ȳ‖ 1.000–1.000, fit error 1.000–1.000; η = ∞, m = 15: ‖ȳ‖ 0.968–0.995, fit error 0.979–0.997; η = ∞, m = 60: ‖ȳ‖ 0.991–1.000, fit error 0.995–1.000; η = ∞, m = 240: ‖ȳ‖ 0.996–0.999, fit error 0.998–1.000; η = ∞, m = 510: ‖ȳ‖ 0.997–1.001, fit error 0.999–1.000.
 
-The settled systems open replicated: at the last record before the opening (32 runs) the rms separation is 1.2e-04–7.9e-04 and the class means lie 7.4e-07–6.7e-05 from Θ*(q) (‖y*(q)‖ = 2.102e-02). Each system is then the K₀-atom system started from its own class means, so the ratios above measure the invariance of the replicated configurations and the opening offset in the weakest modes, not the uniformity of (v); Part F tests (v) from separated starts.
+The settled systems open replicated: at the last record before the opening (32 runs) the rms separation is 1.2e-04–7.9e-04 and the class means lie 7.4e-07–6.7e-05 from Θ*(q) (‖y*(q)‖ = 2.102e-02). Each system is then the K₀-atom system started from its own class means, so the ratios above measure the invariance of the replicated configurations and the opening offset in the weakest modes, not the uniformity of (v); Part F puts the separations in at the start.
+
+System by system at s = 3000 the transit gate ends lower than the settled one in all three of ‖ȳ‖, W² and the fit error in 6 of the 32 systems: the comparison of the table's seed means does not hold for every system.
 
 ## E. The ungated η = ∞ system with the largest ‖ȳ‖ at s = 3000, continued
 
@@ -160,35 +162,48 @@ Seed 3, m = 15 (‖ȳ‖ = 2.124 at s = 3000), re-run from its seed (fit error a
 
 At s = 23000 the classes are collapsed onto the atoms a = (+3.133, -2.808, +3.037), c = (-1.415, +0.188, +1.224), s = (0.583, 0.694, 0.692) (exact representation: a = (+3.000, -2.100, +2.400), c = (-1.500, +0.000, +1.500), s = (0.500, 0.400, 0.500)); the unregularised weighted loss there is 2.5220e-04, the eigenvalues of its Hessian (whitened, weighted) are -1.84e-05, 7.16e-05, 9.46e-04 (smallest three) — a plateau, not a minimum — and a BFGS minimisation of the unregularised loss from those atoms ends at 1.7e-17 with a = (+3.000, -2.100, +2.400), c = (-1.500, -0.000, +1.500), s = (0.500, 0.400, 0.500).
 
-The collapsed η = ∞ dynamics from the same atoms, the unregularised K₀-atom gradient flow (LSODA, rtol 10⁻¹⁰, flow time counted from the s = 23000 state, crossings read on 200 logarithmically spaced times from 10² to 2e+05): the loss stays above 0.9 of its 2.5220e-04 until 4.18e+04, halves by 4.87e+04, falls below 10⁻¹² by 8.00e+04 and ends at 7.8e-31 with a = (+3.000, -2.100, +2.400), c = (-1.500, +0.000, +1.500), s = (0.500, 0.400, 0.500): the same basin, crossed on the time scale of the negative curvature (1/1.84e-05 = 5.43e+04).
+The collapsed η = ∞ dynamics from the same atoms, the unregularised K₀-atom gradient flow (LSODA, rtol 10⁻¹⁰, flow time counted from the s = 23000 state, the crossings located as events): the loss stays above 0.9 of its 2.5220e-04 until 4.1565e+04, halves at 4.7797e+04, falls below 10⁻¹² at 7.9714e+04 and ends at 7.8e-31 with a = (+3.000, -2.100, +2.400), c = (-1.500, +0.000, +1.500), s = (0.500, 0.400, 0.500): the same basin, crossed on the time scale of the negative curvature (1/1.84e-05 = 5.43e+04).
 
-## F. The test of (v): separated starts
+## F. Separated starts: the structure behind (v) beyond its ball
 
-From the lift of Θ*(q) plus zero-mean per-particle separations (rms in the G⁻¹ norm), the prior at the shifted centres, ungated, 1750 slow units: ‖ȳ‖ at the end over the K₀-atom run's at the same time (Part C) − 1. The settled gate's agreement of Part D tests the invariance of the replicated configurations (the systems open collapsed), not (v); here the separations are at the start, and (v) and Theorem D‴.18's facts (1)–(2) predict a departure of second order in the separations and uniform in m.
+From the lift of Θ*(q) plus zero-mean per-particle separations (rms in the G⁻¹ norm; 5 draws of their direction, the same for both rms), the prior at the shifted centres, ungated, 1750 slow units: ‖ȳ‖ at the end over the K₀-atom run's at the same time (Part C) − 1, the mean over the draws and their range. A zero-separation system is the K₀-atom system by the invariance of the replicated configurations, so the departure is the separations' second-order effect, which Theorem D‴.18's facts (1)–(2) bound uniformly in m; the starts lie outside (v)'s ball (Part A), so (v) itself asserts nothing here.
 
 | η | rms 0.02, m = 15 | rms 0.02, m = 510 | rms 0.1, m = 15 | rms 0.1, m = 510 |
 |---|---|---|---|---|
-| 0.00707 | +0.0008 | +0.0007 | +0.0209 | +0.0177 |
-| ∞ | +0.0044 | +0.0059 | +0.1093 | +0.1446 |
+| 0.00707 | +0.0013 (+0.0007 to +0.0018) | +0.0009 (+0.0007 to +0.0011) | +0.0307 (+0.0175 to +0.0438) | +0.0224 (+0.0177 to +0.0268) |
+| ∞ | +0.0077 (+0.0038 to +0.0107) | +0.0063 (+0.0058 to +0.0071) | +0.1852 (+0.0953 to +0.2556) | +0.1552 (+0.1436 to +0.1750) |
 
-From rms 0.02 to 0.1 the departure grows by the factors 24.6–25.0 (the square of the ratio of the rms, 25, for a second-order effect), and at each rms it is of the same size at both m (the separations' class covariances, not their number, enter at second order).
+From rms 0.02 to 0.1 the departure grows, draw by draw, by the factors 23.77–25.03 (the square of the ratio of the rms, 25, for a second-order effect). At second order it is linear in the separations' class covariances, whose expectation after the normalisation is the same at every m (classes of equal size, isotropic whitened directions): the prediction is a departure of the same expected size at both m, with a spread that shrinks as the covariances concentrate. Across the draws the standard deviation at m = 15 is 3.3–6.0 times that at m = 510, and the means at the two sizes differ by +0.9 to +1.7 combined standard errors (5 draws; the four columns share their draws, so these are not independent tests). The starts' norms |||·|||_η: 0.029–0.371.
 
 ## G. The limits of (i)
 
 (a) A non-replicated stationary point. The four-bump target (A, C, S) = (1, -1.5, 0.5), (-0.7, 0, 0.4), (0.4, 1.3, 0.4), (0.4, 2.3, 0.4), which six kernels of weight 1/6 fit exactly with the third class split over the last two bumps (fit error 1.7e-16, G⁻¹-distance of the split pair 3.2892; K₀ = 3, q = 1/3, m = 6). The stationary point of the η = ∞ form (the leak toward the class barycentres) by least squares from that fit (residual 8.7e-17): the split pair at distance 1.6401, the leak force σ₀‖ϑ_i − T̂_π(i)‖ on its particles 0.0058, 0.0058 (largest on the others 3.1e-18), the unregularised gradient there 5.80e-03 (at the exact fit 5.4e-17), fit error 4.246e-02. With the prior at the class barycentres it is stationary for the joint flow — η = 0.00707: the plan the classes True, drift 4.4e-17 (Θ) and 0.0e+00 (Z), largest real part of the joint Jacobian +3.66e-05; η = 0.07074: the plan the classes True, drift 4.4e-17 (Θ) and 0.0e+00 (Z), largest real part of the joint Jacobian +6.64e-05 — a saddle: the leak holds the split class against the loss.
 
-The joint flow from the exact split fit (40000 slow units), and at the end the stationary point refined by least squares with the final plan:
+The joint flow from the exact split fit (40000 slow units): the split distance and the fit error at the records; at the end the classes' largest spread, the merged atom (the widest) — its width coordinate κ and width s — and the largest whitened unregularised drift at the class atoms:
 
-| η | split distance at s = 0, 4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000, 36000, 40000 | fit error at the same s | refined: residual, split distance, largest leak force, unregularised gradient, fit error | largest real part of the joint Jacobian (η = σ₀, 10σ₀) |
+| η | split distance at s = 0, 4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000, 36000, 40000 | fit error at the same s | at the end: spread, κ, s, drift |
+|---|---|---|---|
+| ∞ | 3.2892, 0.0076, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 | 1.730e-16, 4.362e-02, 2.964e-02, 2.621e-02, 2.476e-02, 2.394e-02, 2.340e-02, 2.301e-02, 2.271e-02, 2.247e-02, 2.227e-02 | 4.4e-16, -0.245, 1.046, 2.8e-05 |
+| 0.00707 | 3.2892, 0.9801, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 | 1.730e-16, 6.012e-02, 3.928e-02, 3.218e-02, 2.891e-02, 2.709e-02, 2.595e-02, 2.518e-02, 2.462e-02, 2.419e-02, 2.385e-02 | 8.9e-16, -0.610, 0.898, 5.4e-05 |
+
+The collapsed η = ∞ dynamics continued from the end state (the unregularised K₀-atom gradient flow, LSODA, rtol 10⁻¹⁰; s counted from the end of the run): the merged atom's width coordinate κ, the gap s_max − s of its width, the fit error.
+
+| η | s | κ | s_max − s | fit error |
 |---|---|---|---|---|
-| ∞ | 3.2892, 0.0076, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 | 1.730e-16, 4.362e-02, 2.964e-02, 2.621e-02, 2.476e-02, 2.394e-02, 2.340e-02, 2.301e-02, 2.271e-02, 2.247e-02, 2.227e-02 | 5.6e-10, 6.3e-16, 7.2e-18, 5.6e-10, 1.9433e-02 | -1.4e-10, -2.5e-10 |
-| 0.00707 | 3.2892, 0.9801, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 | 1.730e-16, 6.012e-02, 3.928e-02, 3.218e-02, 2.891e-02, 2.709e-02, 2.595e-02, 2.518e-02, 2.462e-02, 2.419e-02, 2.385e-02 | 4.8e-10, 1.3e-15, 1.5e-17, 4.8e-10, 1.9433e-02 | -1.3e-10, -2.3e-10 |
+| ∞ | 1e+06 | +2.159 | 1.76e-01 | 1.955537e-02 |
+| ∞ | 1e+07 | +3.843 | 3.57e-02 | 1.944406e-02 |
+| ∞ | 1e+08 | +5.529 | 6.72e-03 | 1.943437e-02 |
+| ∞ | 1e+09 | +7.528 | 9.14e-04 | 1.943302e-02 |
+| ∞ | 1e+10 | +9.751 | 9.90e-05 | 1.943285e-02 |
+| 0.00707 | 1e+06 | +2.144 | 1.78e-01 | 1.955824e-02 |
+| 0.00707 | 1e+07 | +3.842 | 3.57e-02 | 1.944408e-02 |
+| 0.00707 | 1e+08 | +5.529 | 6.72e-03 | 1.943437e-02 |
+| 0.00707 | 1e+09 | +7.528 | 9.14e-04 | 1.943302e-02 |
+| 0.00707 | 1e+10 | +9.751 | 9.90e-05 | 1.943285e-02 |
 
-η = ∞: the refined class atoms a = (+2.260, -3.364, +1.381), c = (-1.518, +0.035, +0.655), s = (0.446, 0.502, 2.000) (largest unconstrained coordinate 8.72); the eigenvalues of the unregularised weighted K₀-atom Hessian there (whitened), smallest three: 2.81e-10, 3.11e-05, 9.46e-04.
+The increments of κ per decade over ln 10: η = ∞: 0.73, 0.73, 0.87, 0.97; η = 0.00707: 0.74, 0.73, 0.87, 0.97 — κ grows like ln s (the logistic saturation of the width) and s tends to s_max like 1/s: the solution leaves every compact set, as in (b). Its physical image approaches the minimiser of the loss on the face where the merged atom's width is s_max (BFGS over the other parameters: fit error 1.943283e-02, gradient 6.5e-10, inside the other bounds: True), where the loss still decreases outward (∂L/∂s = -1.326e-06): a Karush–Kuhn–Tucker point of the box-constrained loss, not a critical point, reached only as s → ∞.
 
-η = 0.00707: the refined class atoms a = (+2.260, -3.365, +1.381), c = (-1.518, +0.035, +0.655), s = (0.446, 0.502, 2.000) (largest unconstrained coordinate 8.86); the eigenvalues of the unregularised weighted K₀-atom Hessian there (whitened), smallest three: 2.43e-10, 3.11e-05, 9.46e-04.
-
-The exact six-kernel fit is not stationary: the joint flow collapses the split class onto a replicated configuration, whose merged atom then widens toward the saturation bound s_max — a critical point of the unregularised weighted K₀-atom loss on the boundary, flat in that direction, with a larger fit error than the exact fit's: the K₀-cluster bias of (iv)'s regulariser.
+The exact six-kernel fit is not stationary: the joint flow collapses the split class onto a replicated configuration with a larger fit error and then runs off — the K₀-cluster bias of (iv)'s regulariser, and a second instance of the lost a-priori bound, at a target the network fits exactly.
 
 (b) Unbounded solutions. The target (A, C, S) = (1.6, -1.5, 0.5), (-0.7, 0, 0.4), (0.8, 1.5, 0.5): the first bump's weighted amplitude 3·1.6 = 4.8 exceeds a_max = 4, so no exact representation with q = 1/3 exists. The K₀-atom system from the instance's exact atoms with the prior there (LSODA, rtol 10⁻¹⁰): the first atom's amplitude coordinate ϑ_a and its prior atom's z_a (unconstrained), its amplitude a, the fit error and the largest drift.
 
@@ -216,5 +231,27 @@ The exact six-kernel fit is not stationary: the joint flow collapses the split c
 The increments of ϑ_a per decade of s over ln 10, from s = 10³ on: η = 0.00707: 1.650, 1.934, 1.990; η = ∞: 1.738, 1.951, 1.993 — ϑ_a grows like 2 ln s, and a approaches a_max like 1/s: under an adaptive prior the solution leaves every compact set, while the fixed prior's converges.
 
 (c) The relabelling. The exact representation (m = 6) with the prior's atoms permuted cyclically (largest offset 6.225, unconstrained coordinates): the plan maps the classes to the atoms (2, 2, 0, 0, 1, 1), W² = 0.0e+00, drift 1.1e-17 (Θ) and 3.1e-18 (Z) — stationary, with z_σ(k) = ϑ_k for the plan's bijection σ.
+
+## H. Proposition D‴.27: the projected adaptive prior
+
+The box 𝒵 for the prior's atoms (unconstrained coordinates): α ∈ [-5.8889, 5.8889], γ ∈ [-4.4167, 4.4167], κ ∈ [-6, 6] (amplitudes and centres to 0.9 of a_max and c_max). (a) Part G(b)'s target (the first bump's weighted amplitude 4.8 > a_max), the K₀-atom system from the instance's exact atoms with the prior there, the prior projected onto 𝒵 (η = σ₀: the projected midpoint rule, dt = 0.25, to s = 1e+05; η = ∞: LSODA, rtol 10⁻¹⁰, the prior the projected class mean): the first atom's amplitude coordinate ϑ_a, its prior atom's z_a, the amplitude a, the fit error and the largest drift.
+
+| η | s | ϑ_a | z_a | a | fit error | largest drift |
+|---|---|---|---|---|---|---|
+| 0.00707 | 0e+00 | 3.8918 | 3.8918 | 3.000000 | 3.2951e-01 | 6.18e-02 |
+| 0.00707 | 1e+02 | 5.7753 | 4.5893 | 3.577870 | 1.7971e-01 | 8.39e-03 |
+| 0.00707 | 1e+03 | 6.7842 | 5.8889 | 3.739660 | 1.4197e-01 | 4.28e-04 |
+| 0.00707 | 1e+04 | 6.7290 | 5.8889 | 3.732612 | 1.4152e-01 | 7.86e-06 |
+| 0.00707 | 1e+05 | 6.7278 | 5.8889 | 3.732452 | 1.4155e-01 | 1.75e-15 |
+| ∞ | 0e+00 | 3.8918 | 3.8918 | 3.000000 | 3.2951e-01 | 6.18e-02 |
+| ∞ | 1e+02 | 6.1736 | 5.8889 | 3.650755 | 1.6330e-01 | 8.82e-03 |
+| ∞ | 1e+03 | 6.7547 | 5.8889 | 3.735912 | 1.4141e-01 | 3.37e-04 |
+| ∞ | 1e+04 | 6.7278 | 5.8889 | 3.732457 | 1.4154e-01 | 4.03e-07 |
+| ∞ | 1e+05 | 6.7278 | 5.8889 | 3.732452 | 1.4155e-01 | 1.18e-16 |
+| ∞ | 1e+06 | 6.7278 | 5.8889 | 3.732452 | 1.4155e-01 | 2.50e-17 |
+
+The largest G⁻¹-distance of a particle from 𝒵 along the run: η = 0.00707: 0.9165; η = ∞: 0.8880, against the a-priori bound B/σ₀ = 3686.3 (B = (max|f| + a_max)·L_ϑ^G, L_ϑ^G = 4.658). Both priors converge to the same bounded stationary point, with the prior's amplitude atom on the boundary of 𝒵; the fit error lies between the fixed prior's and the unbounded adaptive prior's limit (Part G(b)).
+
+(b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, 6000 slow units) with and without 𝒵: the largest difference of the atoms and of the prior at the end is 0.0e+00 (the run stays inside 𝒵: True) — near an exact representation inside 𝒵 the projection is inactive.
 
 Numbers are produced by `experiments/exp_adaptive_prior.py`; nothing is edited by hand.

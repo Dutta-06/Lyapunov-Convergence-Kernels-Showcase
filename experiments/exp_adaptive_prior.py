@@ -27,6 +27,10 @@ F. The test of (v): from the lift of Θ*(q) plus zero-mean per-particle separati
 G. The limits of (i) (`--only-G`): a non-replicated stationary point held by the leak (a four-bump target, m = 6, one class split), and the
    joint flow from the exact split fit; unbounded solutions of the adaptive prior (a target bump beyond the saturation, K₀-atom system,
    LSODA to s = 10⁶) against the fixed prior's bounded one; the exact representation with the prior's atoms permuted.
+H. Proposition D‴.27 (`--only-H`): the projected adaptive prior (the atoms confined to a box in the unconstrained coordinates, amplitudes and
+   centres to 90% of their saturations) on Part G(b)'s target (bounded, convergent, the fit error between the fixed prior's and the
+   unbounded adaptive prior's limit; the a-priori constant B/σ₀), and on Part C's K₀-atom loop at the misplaced prior (the box never
+   reached: the run identical to Part C's).
 
 Output: results/chaos/adaptive_prior.md and adaptive_prior_raw.npz (AP_SEEDS, AP_WORKERS; `--from-raw` regenerates the md).
 """
@@ -143,10 +147,13 @@ def radius_bookkeeping(loop, exact, star, h, HL, y0, ya):
             pts.append(exact + y.reshape(3, 3) * np.sqrt(G)[None, :] / np.sqrt(Q)[:, None])
     C = max(np.linalg.norm(collective_jacobian(loop, P) - J0, 2) / np.linalg.norm(AP.whitened(P - exact, Q, G)) for P in pts)
     rows = []
+    prior = representation(loop.net, SHIFT)
+    clouds = [CL.mixture_start(exact, M_REF, np.random.default_rng(seed), JITTER, G) for seed in range(N_SEEDS)]
     for eta in ETAS:
         lam1 = AP.pair_rates(h, SIGMA0, eta)[0][0]; lam0 = min(SIGMA0, lam1)
         start = float(np.linalg.norm(ya)) if np.isinf(eta) else float(np.sqrt(np.sum(ya ** 2) + (SIGMA0 / eta) * np.sum(y0 ** 2)))
-        rows.append(dict(eta=eta, lam1=lam1, lam0=lam0, rho=lam0 / (4 * C), start=start))
+        d_starts = [start_norm(cl[:m], prior, exact, eta) for cl in clouds for m in list(MS) + [M_REF]]   # Part D's warm clouds
+        rows.append(dict(eta=eta, lam1=lam1, lam0=lam0, rho=lam0 / (4 * C), start=start, d_min=min(d_starts), d_max=max(d_starts)))
     return dict(C=C, n_pts=len(pts), J0_err=float(np.linalg.norm(J0 + HL, 2) / np.linalg.norm(HL, 2)), rows=rows)
 
 
@@ -227,31 +234,51 @@ def trapped_job(D):
         at = v.reshape(3, 3); a_, c_, s__, d_, phi = loop.features(at)
         return (-G[None, :] * loop.grad_V_L(loop.F - phi @ (Q * a_), at)).ravel()
     t_eval = np.concatenate([[0.0], np.minimum(np.geomspace(1e2, 2e5, 200), 2e5)])
-    sol = solve_ivp(rhs, (0.0, 2e5), atoms.ravel(), method='LSODA', rtol=1e-10, atol=1e-12, t_eval=t_eval)
+    L0 = L(atoms.ravel())
+    levels = (0.9 * L0, 0.5 * L0, 1e-12)
+    events = []
+    for lev in levels:                                                     # the crossings located by events, not read off the grid
+        evf = (lambda t, v, lev=lev: L(v) - lev); evf.terminal = False; evf.direction = -1
+        events.append(evf)
+    sol = solve_ivp(rhs, (0.0, 2e5), atoms.ravel(), method='LSODA', rtol=1e-10, atol=1e-12, t_eval=t_eval, events=events)
     Ls = np.array([L(sol.y[:, k]) for k in range(sol.y.shape[1])])
-    L0 = Ls[0]
-    cross = lambda level: float(sol.t[np.argmax(Ls < level)]) if np.any(Ls < level) else float('nan')
-    flow = dict(t=sol.t, L=Ls, t_half=cross(0.5 * L0), t_exact=cross(1e-12), L_end=float(Ls[-1]), atoms_end=tuple(np.asarray(x) for x in loop.features(sol.y[:, -1].reshape(3, 3))[:3]),
-                plateau_until=float(sol.t[np.argmax(Ls < 0.9 * L0)]) if np.any(Ls < 0.9 * L0) else float('nan'))
+    first = lambda te: float(te[0]) if len(te) else float('nan')
+    flow = dict(t=sol.t, L=Ls, plateau_until=first(sol.t_events[0]), t_half=first(sol.t_events[1]), t_exact=first(sol.t_events[2]), L_end=float(Ls[-1]),
+                atoms_end=tuple(np.asarray(x) for x in loop.features(sol.y[:, -1].reshape(3, 3))[:3]))
     stored_fit = d['rec'][m]['fit'][int(np.argmin(np.abs(d['rec'][m]['s'] - 3000.0)))]
     feat = lambda at: tuple(np.asarray(x) for x in loop.features(at)[:3])
     return dict(seed=seed, m=m, ybar3000=yb, stored_fit3000=stored_fit, rec={k: np.array(v) for k, v in rec.items()}, atoms=feat(atoms),
                 L_atoms=L(atoms.ravel()), hess_ev=ev, bfgs_L=float(res.fun), bfgs_atoms=feat(res.x.reshape(3, 3)), exact=feat(exact), flow=flow)
 
 
-S_F, F_RMS, F_MS = 1750.0, (0.02, 0.1), (15, 510)
-F_JOBS = [(m, eta, r) for eta in (SIGMA0, np.inf) for r in F_RMS for m in F_MS]
+S_F, F_RMS, F_MS, F_DRAWS = 1750.0, (0.02, 0.1), (15, 510), 5
+F_JOBS = [(m, eta, r, dr) for eta in (SIGMA0, np.inf) for r in F_RMS for m in F_MS for dr in range(F_DRAWS)]
+
+
+def triple_norm(u_bar, u_perp, zeta, q, eta):
+    """|||(u, ζ)|||_η = max{(Σ_kq_k(‖ū_k‖² + (σ₀/η)‖ζ_k‖²))^{1/2}, max_i‖u_i^⊥‖} (G⁻¹ norms; η = ∞: no ζ part)."""
+    n2 = lambda X: np.sum(np.asarray(X) ** 2 / G[None, :], axis=1)
+    coll = np.sum(q * n2(u_bar)) + (0.0 if np.isinf(eta) else (SIGMA0 / eta) * np.sum(q * n2(zeta)))
+    return float(max(np.sqrt(coll), np.sqrt(n2(u_perp).max()) if len(u_perp) else 0.0))
+
+
+def start_norm(Th, Z, exact, eta):
+    """The norm |||·|||_η of a start (Θ, Z) around the exact representation, classes by the plan to ν_Z."""
+    gamma, _ = AP.plan_to(Th, Z, Q, G); lab = np.argmax(gamma, axis=1)
+    means = np.array([Th[lab == k].mean(axis=0) for k in range(3)])
+    return triple_norm(means - exact, Th - means[lab], Z - exact, Q, eta)
 
 
 def sep_job(args):
-    """Part F, the test of (v): from the lift of Θ*(q) plus zero-mean per-particle separations of the given rms (G⁻¹ norm), the prior at the
-    shifted centres, ungated, S_F slow units: ‖ȳ‖ and the fit error at the end, to be compared with the K₀-atom run of Part C at S_F."""
-    m, eta, rms = args
+    """Part F, the structure behind (v) beyond its ball: from the lift of Θ*(q) plus zero-mean per-particle separations of the given rms (G⁻¹
+    norm; the draw `dr` fixes their direction, the same for both rms), the prior at the shifted centres, ungated, S_F slow units: ‖ȳ‖ and the
+    fit error at the end, to be compared with the K₀-atom run of Part C at S_F; the start's norm |||·|||_η."""
+    m, eta, rms, dr = args
     t0 = time.time()
     net, exact, prior, loop = setup()
     star = loop.stationary_atoms(prior)[0]
     lab = np.repeat(np.arange(3), m // 3)
-    rng = np.random.default_rng(7)
+    rng = np.random.default_rng(7 + dr)
     u = rng.standard_normal((m, 3)) * np.sqrt(G)[None, :]
     for k in range(3):
         u[lab == k] -= u[lab == k].mean(axis=0)
@@ -261,14 +288,15 @@ def sep_job(args):
     Th, Z, _ = apl.run(Th0, prior.copy(), S_F, DT, plan_every=PLAN_EVERY, rec_every=10 ** 9, gate=False)
     gamma, _ = AP.plan_to(Th, Z, Q, G)
     yb = float(np.linalg.norm(AP.whitened(class_means(Th, gamma, Q) - exact, Q, G)))
-    print(f"[{time.time() - t0:.0f}s] F m {m} eta {eta:g} rms {rms:g}", flush=True)
-    return dict(m=m, eta=eta, rms=rms, ybar=yb, fit=loop.fit_error(Th))
+    print(f"[{time.time() - t0:.0f}s] F m {m} eta {eta:g} rms {rms:g} draw {dr}", flush=True)
+    return dict(m=m, eta=eta, rms=rms, draw=dr, ybar=yb, fit=loop.fit_error(Th), start=start_norm(Th0, prior, exact, eta))
 
 
 # ---------------------------------------------------------------------------- G: the limits of (i)
 B4 = [(1.0, -1.5, 0.5), (-0.7, 0.0, 0.4), (0.4, 1.3, 0.4), (0.4, 2.3, 0.4)]    # four bumps: six kernels fit them exactly with one class split
 B_SAT = [(1.6, -1.5, 0.5), (-0.7, 0.0, 0.4), (0.8, 1.5, 0.5)]                   # the first bump's weighted amplitude 3·1.6 = 4.8 > a_max = 4
 S_G = 40000.0
+T_CONT = (1e6, 1e7, 1e8, 1e9, 1e10)                                        # Part G(a): the collapsed flow continued
 T_G = (0.0, 1e2, 1e3, 1e4, 1e5, 1e6)
 
 
@@ -289,8 +317,9 @@ def boundary_job():
     bumps. The stationary point of the η = ∞ form (the leak toward the class barycentres, the plan the class partition) by least squares from
     the exact six-kernel fit; checked for η = σ₀, 10σ₀ as a stationary point of the joint flow with the prior at the barycentres (the drift, the
     plan's optimality), with its leak force, the unregularised gradient there and the largest real part of the joint Jacobian (plan frozen,
-    central differences). Then the joint flow from the exact split fit (η = ∞, σ₀; S_G slow units), refined at the end by least squares with
-    the final plan. (b) Unbounded solutions: the target B_SAT, the K₀-atom system (m = 3) from the instance's exact atoms with the prior there,
+    central differences). Then the joint flow from the exact split fit (η = ∞, σ₀; S_G slow units): its state at S_G, the collapsed η = ∞
+    dynamics (the unregularised K₀-atom gradient flow, LSODA) continued from it to the times T_CONT, and the minimiser of the loss on the face
+    where the merged atom's width is s_max, with the loss's outward slope there. (b) Unbounded solutions: the target B_SAT, the K₀-atom system (m = 3) from the instance's exact atoms with the prior there,
     η = 0, σ₀, ∞, LSODA at the times T_G. (c) The exact representation, m = 6, with the prior's atoms permuted cyclically."""
     from scipy.optimize import least_squares
     from scipy.integrate import solve_ivp
@@ -338,13 +367,41 @@ def boundary_job():
             rec['s'].append(s_); rec['fit'].append(loop4.fit_error(T_)); rec['J'].append(apl.energy(T_, Z_)); rec['split'].append(split(T_))
         Th, Z, _ = apl.run(Th0.copy(), Th0[[0, 2, 4]].copy(), S_G, DT, plan_every=PLAN_EVERY, rec_every=16000, callback=cb)
         g_, _ = AP.plan_to(Th, Z, Q, G)
-        sol2 = least_squares(lambda v: F_inf(v, g_), Th.ravel(), xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=5000)
-        Tr = sol2.x.reshape(m, 3); atoms = AP.barycentres(Tr, g_, Q)
-        hev = AP.gauss_newton_block(loop4, atoms, Q)[1]                      # the unregularised weighted K₀-atom Hessian at the class atoms
-        flows.append(dict(eta=eta, rec={k: np.array(v) for k, v in rec.items()}, res=float(np.abs(F_inf(sol2.x, g_)).max()),
-                          classes=tuple(int(x) for x in np.argmax(g_, axis=1)), refined=examine(Tr, g_),
-                          atoms=tuple(np.asarray(x) for x in net.physical(atoms)), atoms_unc=atoms, hess_ev=hev, end_fit=loop4.fit_error(Th)))
+        atoms = AP.barycentres(Th, g_, Q)
+        spread = float(np.sqrt(np.sum((Th - m * (g_ @ atoms)) ** 2 / G[None, :], axis=1)).max())
+        kk = int(np.argmax(net.physical(atoms)[2]))                          # the merged atom: the widest
+        # the collapsed η = ∞ dynamics continued: the unregularised K₀-atom gradient flow from the class atoms (three particles of weight 1/3)
+        rhs = lambda t, v: loop4.drift(v.reshape(3, 3), v.reshape(3, 3)).ravel()
+        sol = solve_ivp(rhs, (0.0, T_CONT[-1]), atoms.ravel(), method='LSODA', t_eval=np.array(T_CONT), rtol=1e-10, atol=1e-12)
+        cont = []
+        for k in range(len(sol.t)):
+            at = sol.y[:, k].reshape(3, 3)
+            cont.append(dict(s=float(sol.t[k]), kappa=float(at[kk, 2]), gap=float(net.s_max - net.physical(at)[2][kk]), fit=loop4.fit_error(at)))
+        flows.append(dict(eta=eta, rec={k: np.array(v) for k, v in rec.items()}, classes=tuple(int(x) for x in np.argmax(g_, axis=1)), spread=spread, kk=kk,
+                          atoms=tuple(np.asarray(x) for x in net.physical(atoms)), kappa_end=float(atoms[kk, 2]), fit_end=loop4.fit_error(Th),
+                          drift_end=float(np.abs(rhs(0.0, atoms.ravel()) / np.tile(np.sqrt(G), 3)).max()), cont=cont, status=int(sol.status)))
     out['a_flow'] = flows
+    # the minimiser of the K₀-atom loss on the face where the merged atom's width is s_max (physical coordinates, BFGS), and the outward slope there
+    from scipy.optimize import minimize
+    kk = flows[0]['kk']
+    a0, c0, s0 = (np.asarray(x, float).ravel() for x in flows[0]['atoms'])
+    X_ = loop4.X; F_ = loop4.F
+
+    def L_phys(a, c, sw):
+        fh = (np.exp(-(X_[:, None] - c[None, :]) ** 2 / (2 * sw[None, :] ** 2)) @ a) / 3.0
+        return 0.5 * float(np.mean((F_ - fh) ** 2))
+    free = [k for k in range(3) if k != kk]
+
+    def L_face(v):
+        a, c = v[:3], v[3:6]; sw = np.empty(3); sw[kk] = net.s_max; sw[free] = v[6:]
+        return L_phys(a, c, sw)
+    res = minimize(L_face, np.concatenate([a0, c0, s0[free]]), method='BFGS', options=dict(gtol=1e-12, maxiter=20000))
+    a, c = res.x[:3], res.x[3:6]; sw = np.empty(3); sw[kk] = net.s_max; sw[free] = res.x[6:]
+    hh = 1e-6; sp, sm_ = sw.copy(), sw.copy(); sp[kk] += hh; sm_[kk] -= hh
+    slope = (L_phys(a, c, sp) - L_phys(a, c, sm_)) / (2 * hh)
+    fit_face = float(np.sqrt(2 * L_phys(a, c, sw) / np.mean(F_ ** 2)))
+    out['face'] = dict(fit=fit_face, slope=float(slope), grad=float(np.abs(res.jac).max()), a=a, c=c, s=sw,
+                       inside=bool(np.all(np.abs(a) < net.a_max) and np.all(np.abs(c) < net.c_max) and np.all(sw[free] > net.s_min) and np.all(sw[free] < net.s_max)))
     # (b)
     loop2 = OT.OTPriorLoop(net, _bumps(B_SAT), x_ref, PER, G, SIGMA0, representation(net, 0.0), n_quad=N_Q)
     start = representation(net, 0.0); gamma = np.eye(3) / 3.0
@@ -376,7 +433,79 @@ def boundary_job():
     return out
 
 
-def report(lin, C, D, E=None, t0=None, F=None, Gb=None):
+A_BOUND, C_BOUND, K_BOUND = 0.9, 0.9, 6.0                                  # Part H: the box, amplitudes and centres to 90% of a_max, c_max
+S_H = 1e5                                                                  # Part H: the projected midpoint run at η = σ₀
+
+
+def projected_box(net):
+    lo = np.array([-net.a_max * np.arctanh(A_BOUND), -net.c_max * np.arctanh(C_BOUND), -K_BOUND])
+    return lo, -lo
+
+
+def projected_job():
+    """Part H. (a) Part G(b)'s target B_SAT, the K₀-atom system from the instance's exact atoms with the prior there, the prior projected onto
+    the box: η = ∞ by LSODA (the prior is the projected class mean, a Lipschitz vector field) at the times T_G, η = σ₀ by the projected
+    midpoint rule of AdaptivePriorLoop.run (the projected flow is discontinuous at the boundary) to S_H; with the a-priori constant B/σ₀,
+    B = (max|f| + a_max)·L_ϑ^G (L_ϑ^G the closed-form bound of |G^{1/2}∇_ϑΦ̃|), and the largest distance of the particles from the box. (b) Part C's K₀-atom loop at the misplaced prior
+    (η = σ₀, 6000 slow units) with and without the box: the largest difference of the atoms and of the prior."""
+    from scipy.integrate import solve_ivp
+    t0 = time.time()
+    net = L.SaturatedLiftedNetwork(1, **NET_KW)
+    box = projected_box(net)
+    start = representation(net, 0.0)
+    loop2 = OT.OTPriorLoop(net, _bumps(B_SAT), x_ref, PER, G, SIGMA0, start, n_quad=N_Q)
+    gamma = np.eye(3) / 3.0
+    LG = float(np.sqrt(G[0] + G[1] * (net.a_max * np.exp(-0.5) / net.s_min) ** 2 + G[2] * (net.a_max * (net.s_max - net.s_min) / (2 * np.e * net.s_min)) ** 2))
+    B = (float(np.max(np.abs(loop2.F))) + net.a_max) * LG
+    dist_box = lambda Th: float(np.sqrt(np.max(np.sum((Th - np.clip(Th, box[0][None, :], box[1][None, :])) ** 2 / G[None, :], axis=1))))
+    runs = []
+    # η = ∞: LSODA
+    apl = AP.AdaptivePriorLoop(loop2, np.inf, box=box)
+
+    def rhs(t, v):
+        Th = v.reshape(3, 3)
+        return apl.drift(Th, Th, gamma)[0].ravel()
+    t_dense = np.concatenate([[0.0], np.geomspace(1.0, T_G[-1], 120)])
+    sol = solve_ivp(rhs, (0.0, T_G[-1]), start.ravel(), method='LSODA', t_eval=np.unique(np.concatenate([t_dense, T_G])), rtol=1e-10, atol=1e-12)
+    rows = []
+    for t in T_G:
+        k = int(np.argmin(np.abs(sol.t - t)))
+        Th = sol.y[:, k].reshape(3, 3); a, c, s_ = net.physical(Th)
+        rows.append(dict(s=float(sol.t[k]), th_a0=float(Th[0, 0]), z_a0=float(apl.project(Th)[0, 0]), a0=float(a[0, 0]), fit=loop2.fit_error(Th),
+                         drift=float(np.abs(rhs(sol.t[k], sol.y[:, k])).max())))
+    runs.append(dict(eta=np.inf, status=int(sol.status), rows=rows, max_dist=max(dist_box(sol.y[:, k].reshape(3, 3)) for k in range(sol.y.shape[1]))))
+    # η = σ₀: the projected midpoint rule
+    apl = AP.AdaptivePriorLoop(loop2, SIGMA0, box=box)
+    rec = dict(s=[], th=[], z=[], fit=[], drift=[], dist=[])
+
+    def cb(s_, T_, Z_, ad):
+        g_, _ = AP.plan_to(T_, Z_, Q, G)
+        rec['dist'].append(dist_box(T_))
+        if any(abs(s_ - t) < 1e-9 for t in T_G):
+            dT, dZ = apl.drift(T_, Z_, g_)
+            rec['s'].append(s_); rec['th'].append(T_.copy()); rec['z'].append(Z_.copy()); rec['fit'].append(loop2.fit_error(T_))
+            rec['drift'].append(float(max(np.abs(dT).max(), np.abs(dZ).max())))
+    apl.run(start.copy(), start.copy(), S_H, DT, plan_every=PLAN_EVERY, rec_every=int(round(100.0 / DT)), callback=cb)
+    rows = []
+    for k in range(len(rec['s'])):
+        Th = rec['th'][k]; a, c, s_ = net.physical(Th)
+        rows.append(dict(s=rec['s'][k], th_a0=float(Th[0, 0]), z_a0=float(rec['z'][k][0, 0]), a0=float(a[0, 0]), fit=rec['fit'][k], drift=rec['drift'][k]))
+    runs.insert(0, dict(eta=SIGMA0, status=0, rows=rows, max_dist=max(rec['dist'])))
+    # (b) the misplaced prior: the box never reached
+    net_, exact, prior, loop = setup()
+    star = loop.stationary_atoms(prior)[0]
+    out_b = {}
+    for name, bx in (('free', None), ('box', box)):
+        apl = AP.AdaptivePriorLoop(loop, SIGMA0, box=bx)
+        Th, Z, _ = apl.run(star.copy(), prior.copy(), S_C, DT, plan_every=PLAN_EVERY, rec_every=10 ** 9)
+        out_b[name] = (Th, Z)
+    diff = float(max(np.abs(out_b['free'][0] - out_b['box'][0]).max(), np.abs(out_b['free'][1] - out_b['box'][1]).max()))
+    inside = bool(np.all(np.abs(out_b['free'][1]) < box[1][None, :]) and np.all(np.abs(out_b['free'][0]) < box[1][None, :]))
+    print(f"[{time.time() - t0:.0f}s] H", flush=True)
+    return dict(box=box, LG=LG, B=B, runs=runs, diff_b=diff, inside_b=inside)
+
+
+def report(lin, C, D, E=None, t0=None, F=None, Gb=None, H=None):
     h, V = lin['h'], lin['V']
     lines = ["# Theorem D‴.23: adaptive priors — a learned prior removes the leak's bias (`exp_adaptive_prior.py`)", "",
              f"The averaged slow loop on the three-bump instance at σ₀ = 0.15σ_crit = {SIGMA0:.5f}; the OT leak toward the prior with centres shifted by +{SHIFT:g} (masses 1/3); "
@@ -399,7 +528,17 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None):
         for r in rb['rows']:
             en = '∞' if np.isinf(r['eta']) else f"{r['eta']:.5f}"
             lines.append(f"| {en} | {r['lam1']:.3e} | {r['lam0'] / SIGMA0:.4f} | {r['rho']:.2e} | {r['start']:.3e} | {r['start'] / r['rho']:.0f} |")
-        lines += ["", "The runs of Parts C–F start outside the ball that the proof of (v) covers, by these factors: they probe the dynamics beyond it."]
+        en_ = lambda e: '∞' if np.isinf(e) else f"{e:.5f}"
+        dd = [f"{r['d_min'] / r['rho']:.1e}–{r['d_max'] / r['rho']:.1e} at η = {en_(r['eta'])}" for r in rb['rows'] if 'd_min' in r]
+        ff = []
+        if F:
+            for r in rb['rows']:
+                st = [x['start'] for x in F if x['eta'] == r['eta'] and 'start' in x]
+                if st:
+                    lo, hi = f"{min(st) / r['rho']:.0f}", f"{max(st) / r['rho']:.0f}"
+                    ff.append((lo if lo == hi else f"{lo}–{hi}") + f" at η = {en_(r['eta'])}")
+        lines += ["", "The runs start outside the ball that the proof of (v) covers: Part C's start by the factors of the table; Part D's warm clouds (largest separations "
+                  "of order 5 at s = 0) by " + "; ".join(dd) + (("; Part F's separated starts by " + "; ".join(ff)) if ff else "") + ". They probe the dynamics beyond it."]
     lines += ["",
               "## B. The fixed prior's bias (shifted prior)", "",
               f"Θ*(q) by Newton (residual {lin['newton_res']:.1e}; diagonal plan ε = {lin['diag'][0]:.3f} < Δ_ν/2 = {lin['diag'][1]:.3f}); fit error at Θ*(q) {lin['fit_star']:.4e} (0 at the exact representation). "
@@ -512,7 +651,21 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None):
         lines += ["", f"The settled systems open replicated: at the last record before the opening ({len(sep)} runs) the rms separation is {min(sep):.1e}–{max(sep):.1e} and the class "
                   f"means lie {min(off):.1e}–{max(off):.1e} from Θ*(q) (‖y*(q)‖ = {np.linalg.norm(lin['ya']):.3e}). Each system is then the K₀-atom system started from its own class "
                   "means, so the ratios above measure the invariance of the replicated configurations and the opening offset in the weakest modes, not the uniformity of (v); "
-                  "Part F tests (v) from separated starts."]
+                  "Part F puts the separations in at the start."]
+        # the two gates system by system at s = 3000
+        cnt = dict(all3=0, total=0)
+        for eta in (SIGMA0, np.inf):
+            for d_s in [d for d in D if d['eta'] == eta and d.get('gate', False) == 'settled']:
+                d_t = next((d for d in D if d['eta'] == eta and d.get('gate', False) is True and d['seed'] == d_s['seed']), None)
+                if d_t is None:
+                    continue
+                for m in list(MS) + [M_REF]:
+                    rs, rt = d_s['rec'][m], d_t['rec'][m]
+                    i3s, i3t = int(np.argmin(np.abs(rs['s'] - 3000.0))), int(np.argmin(np.abs(rt['s'] - 3000.0)))
+                    lower = [np.linalg.norm(rt['ybar'][i3t]) < np.linalg.norm(rs['ybar'][i3s]), rt['W2ex'][i3t] < rs['W2ex'][i3s], rt['fit'][i3t] < rs['fit'][i3s]]
+                    cnt['total'] += 1; cnt['all3'] += int(all(lower))
+        lines += ["", f"System by system at s = 3000 the transit gate ends lower than the settled one in all three of ‖ȳ‖, W² and the fit error in {cnt['all3']} of the "
+                  f"{cnt['total']} systems: the comparison of the table's seed means does not hold for every system."]
     if E:
         r = E['rec']
         i3 = int(np.flatnonzero(r['s'] == 3000.0)[0])
@@ -530,31 +683,41 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None):
         if 'flow' in E:
             fl = E['flow']
             lines += ["", f"The collapsed η = ∞ dynamics from the same atoms, the unregularised K₀-atom gradient flow (LSODA, rtol 10⁻¹⁰, flow time counted from the "
-                      f"s = {S_E:g} state, crossings read on {len(fl['t']) - 1} logarithmically spaced times from 10² to {fl['t'][-1]:.0e}): the loss stays above 0.9 of its "
-                      f"{fl['L'][0]:.4e} until {fl['plateau_until']:.2e}, halves by {fl['t_half']:.2e}, falls below 10⁻¹² by {fl['t_exact']:.2e} and "
+                      f"s = {S_E:g} state, the crossings located as events): the loss stays above 0.9 of its "
+                      f"{fl['L'][0]:.4e} until {fl['plateau_until']:.4e}, halves at {fl['t_half']:.4e}, falls below 10⁻¹² at {fl['t_exact']:.4e} and "
                       f"ends at {fl['L_end']:.1e} with {fa(fl['atoms_end'])}: the same basin, crossed on the time scale of the negative curvature "
                       f"(1/{abs(E['hess_ev'][0]):.2e} = {1.0 / abs(E['hess_ev'][0]):.2e})."]
     if F:
         Cmap2 = {c['eta']: c for c in C}
-        lines += ["", f"## F. The test of (v): separated starts", "",
-                  f"From the lift of Θ*(q) plus zero-mean per-particle separations (rms in the G⁻¹ norm), the prior at the shifted centres, ungated, {S_F:g} slow units: ‖ȳ‖ at the end "
-                  "over the K₀-atom run's at the same time (Part C) − 1. The settled gate's agreement of Part D tests the invariance of the replicated configurations (the systems open "
-                  "collapsed), not (v); here the separations are at the start, and (v) and Theorem D‴.18's facts (1)–(2) predict a departure of second order in the separations and "
-                  "uniform in m.", "",
+        draws = sorted(set(x.get('draw', 0) for x in F))
+        lines += ["", f"## F. Separated starts: the structure behind (v) beyond its ball", "",
+                  f"From the lift of Θ*(q) plus zero-mean per-particle separations (rms in the G⁻¹ norm; {len(draws)} draws of their direction, the same for both rms), the "
+                  f"prior at the shifted centres, ungated, {S_F:g} slow units: ‖ȳ‖ at the end over the K₀-atom run's at the same time (Part C) − 1, the mean over the draws "
+                  "and their range. A zero-separation system is the K₀-atom system by the invariance of the replicated configurations, so the departure is the separations' "
+                  "second-order effect, which Theorem D‴.18's facts (1)–(2) bound uniformly in m; the starts lie outside (v)'s ball (Part A), so (v) itself asserts nothing here.", "",
                   "| η | " + " | ".join(f"rms {r:g}, m = {m}" for r in F_RMS for m in F_MS) + " |", "|---|" + "---|" * (len(F_RMS) * len(F_MS))]
-        growth = []
+        growth, zs, sds = [], [], []
         for eta in (SIGMA0, np.inf):
             c = Cmap2[eta]; ref = float(np.linalg.norm(c['y'][int(np.argmin(np.abs(c['s'] - S_F)))]))
             cells, dep = [], {}
             for r in F_RMS:
                 for m in F_MS:
-                    d = next(x for x in F if x['eta'] == eta and x['rms'] == r and x['m'] == m)
-                    dep[(r, m)] = d['ybar'] / ref - 1
-                    cells.append(f"{dep[(r, m)]:+.4f}")
+                    v = np.array([x['ybar'] / ref - 1 for x in sorted([x for x in F if x['eta'] == eta and x['rms'] == r and x['m'] == m], key=lambda x: x.get('draw', 0))])
+                    dep[(r, m)] = v
+                    cells.append(f"{v.mean():+.4f} ({v.min():+.4f} to {v.max():+.4f})")
             lines.append(f"| {'∞' if np.isinf(eta) else f'{eta:.5f}'} | " + " | ".join(cells) + " |")
-            growth += [dep[(F_RMS[1], m)] / dep[(F_RMS[0], m)] for m in F_MS]
-        lines += ["", f"From rms {F_RMS[0]:g} to {F_RMS[1]:g} the departure grows by the factors {min(growth):.1f}–{max(growth):.1f} (the square of the ratio of the rms, {(F_RMS[1] / F_RMS[0]) ** 2:.0f}, "
-                  "for a second-order effect), and at each rms it is of the same size at both m (the separations' class covariances, not their number, enter at second order)."]
+            growth += [float(a / b) for m in F_MS for a, b in zip(dep[(F_RMS[1], m)], dep[(F_RMS[0], m)])]
+            for r in F_RMS:
+                a, b = dep[(r, F_MS[0])], dep[(r, F_MS[1])]
+                se = lambda v: float(np.std(v, ddof=1) / np.sqrt(len(v)))
+                zs.append(float((a.mean() - b.mean()) / np.hypot(se(a), se(b)))); sds.append(float(np.std(a, ddof=1) / np.std(b, ddof=1)))
+        st = [x['start'] for x in F if 'start' in x]
+        lines += ["", f"From rms {F_RMS[0]:g} to {F_RMS[1]:g} the departure grows, draw by draw, by the factors {min(growth):.2f}–{max(growth):.2f} (the square of the ratio "
+                  f"of the rms, {(F_RMS[1] / F_RMS[0]) ** 2:.0f}, for a second-order effect). At second order it is linear in the separations' class covariances, whose "
+                  "expectation after the normalisation is the same at every m (classes of equal size, isotropic whitened directions): the prediction is a departure of the "
+                  f"same expected size at both m, with a spread that shrinks as the covariances concentrate. Across the draws the standard deviation at m = {F_MS[0]} is "
+                  f"{min(sds):.1f}–{max(sds):.1f} times that at m = {F_MS[1]}, and the means at the two sizes differ by {min(zs):+.1f} to {max(zs):+.1f} combined standard errors "
+                  f"({len(draws)} draws; the four columns share their draws, so these are not independent tests)." + (f" The starts' norms |||·|||_η: {min(st):.3f}–{max(st):.3f}." if st else "")]
     if Gb:
         A_, P_ = Gb['a'], Gb['a']['point']
         fb = lambda B: ", ".join(f"({A:g}, {C_:g}, {S_:g})" for A, C_, S_ in B)
@@ -568,21 +731,32 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None):
                   f"σ₀‖ϑ_i − T̂_π(i)‖ on its particles {P_['leak'][4]:.4f}, {P_['leak'][5]:.4f} (largest on the others {max(P_['leak'][:4]):.1e}), the unregularised gradient there "
                   f"{P_['unreg']:.2e} (at the exact fit {A_['exact_unreg']:.1e}), fit error {P_['fit']:.3e}. With the prior at the class barycentres it is stationary for the joint "
                   f"flow — {pe(P_)} — a saddle: the leak holds the split class against the loss.", "",
-                  f"The joint flow from the exact split fit ({S_G:g} slow units), and at the end the stationary point refined by least squares with the final plan:", "",
-                  "| η | split distance at s = " + ", ".join(f"{x:g}" for x in Gb['a_flow'][0]['rec']['s']) + " | fit error at the same s | refined: residual, split distance, largest leak "
-                  "force, unregularised gradient, fit error | largest real part of the joint Jacobian (η = σ₀, 10σ₀) |", "|---|---|---|---|---|"]
+                  f"The joint flow from the exact split fit ({S_G:g} slow units): the split distance and the fit error at the records; at the end the classes' largest "
+                  "spread, the merged atom (the widest) — its width coordinate κ and width s — and the largest whitened unregularised drift at the class atoms:", "",
+                  "| η | split distance at s = " + ", ".join(f"{x:g}" for x in Gb['a_flow'][0]['rec']['s']) + " | fit error at the same s | at the end: spread, κ, s, drift |",
+                  "|---|---|---|---|"]
         for fl in Gb['a_flow']:
-            r_, P2 = fl['rec'], fl['refined']
-            lines.append(f"| {eta_s(fl['eta'])} | " + ", ".join(f"{x:.4f}" for x in r_['split']) + " | " + ", ".join(f"{x:.3e}" for x in r_['fit']) + f" | {fl['res']:.1e}, {P2['split']:.1e}, "
-                         f"{P2['leak'].max():.1e}, {P2['unreg']:.1e}, {P2['fit']:.4e} | " + ", ".join(f"{d['max_re']:+.1e}" for d in P2['per_eta']) + " |")
-        fa3 = lambda t: "a = (" + ", ".join(f"{x:+.3f}" for x in np.ravel(t[0])) + "), c = (" + ", ".join(f"{x:+.3f}" for x in np.ravel(t[1])) + "), s = (" + ", ".join(f"{x:.3f}" for x in np.ravel(t[2])) + ")"
+            r_ = fl['rec']; sw_end = float(np.ravel(fl['atoms'][2])[fl['kk']])
+            lines.append(f"| {eta_s(fl['eta'])} | " + ", ".join(f"{x:.4f}" for x in r_['split']) + " | " + ", ".join(f"{x:.3e}" for x in r_['fit'])
+                         + f" | {fl['spread']:.1e}, {fl['kappa_end']:+.3f}, {sw_end:.3f}, {fl['drift_end']:.1e} |")
+        lines += ["", f"The collapsed η = ∞ dynamics continued from the end state (the unregularised K₀-atom gradient flow, LSODA, rtol 10⁻¹⁰; s counted from the end of the "
+                  "run): the merged atom's width coordinate κ, the gap s_max − s of its width, the fit error.", "",
+                  "| η | s | κ | s_max − s | fit error |", "|---|---|---|---|---|"]
         for fl in Gb['a_flow']:
-            if 'atoms' in fl:
-                lines += ["", f"η = {eta_s(fl['eta'])}: the refined class atoms {fa3(fl['atoms'])} (largest unconstrained coordinate {np.abs(fl['atoms_unc']).max():.2f}); the eigenvalues "
-                          "of the unregularised weighted K₀-atom Hessian there (whitened), smallest three: " + ", ".join(f"{x:.2e}" for x in fl['hess_ev'][:3]) + "."]
-        lines += ["", "The exact six-kernel fit is not stationary: the joint flow collapses the split class onto a replicated configuration, whose merged atom then widens toward "
-                  "the saturation bound s_max — a critical point of the unregularised weighted K₀-atom loss on the boundary, flat in that direction, with a larger fit error than the "
-                  "exact fit's: the K₀-cluster bias of (iv)'s regulariser.", "",
+            for c_ in fl['cont']:
+                lines.append(f"| {eta_s(fl['eta'])} | {c_['s']:.0e} | {c_['kappa']:+.3f} | {c_['gap']:.2e} | {c_['fit']:.6e} |")
+        incs = []
+        for fl in Gb['a_flow']:
+            kap = [c_['kappa'] for c_ in fl['cont']]
+            incs.append(f"η = {eta_s(fl['eta'])}: " + ", ".join(f"{(kap[k + 1] - kap[k]) / np.log(10):.2f}" for k in range(len(kap) - 1)))
+        fc = Gb['face']
+        lines += ["", "The increments of κ per decade over ln 10: " + "; ".join(incs) + " — κ grows like ln s (the logistic saturation of the width) and s tends to "
+                  "s_max like 1/s: the solution leaves every compact set, as in (b). Its physical image approaches the minimiser of the loss on the face where the merged "
+                  f"atom's width is s_max (BFGS over the other parameters: fit error {fc['fit']:.6e}, gradient {fc['grad']:.1e}, inside the other bounds: {fc['inside']}), "
+                  f"where the loss still decreases outward (∂L/∂s = {fc['slope']:.3e}): a Karush–Kuhn–Tucker point of the box-constrained loss, not a critical point, "
+                  "reached only as s → ∞.", "",
+                  "The exact six-kernel fit is not stationary: the joint flow collapses the split class onto a replicated configuration with a larger fit error and then "
+                  "runs off — the K₀-cluster bias of (iv)'s regulariser, and a second instance of the lost a-priori bound, at a target the network fits exactly.", "",
                   f"(b) Unbounded solutions. The target (A, C, S) = {fb(B_SAT)}: the first bump's weighted amplitude 3·{B_SAT[0][0]:g} = {3 * B_SAT[0][0]:g} exceeds a_max = "
                   f"{Gb['b']['a_max']:g}, so no exact representation with q = 1/3 exists. The K₀-atom system from the instance's exact atoms with the prior there (LSODA, rtol 10⁻¹⁰): the "
                   "first atom's amplitude coordinate ϑ_a and its prior atom's z_a (unconstrained), its amplitude a, the fit error and the largest drift.", "",
@@ -601,12 +775,38 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None):
                   f"(c) The relabelling. The exact representation (m = 6) with the prior's atoms permuted cyclically (largest offset {Gb['c']['offset']:.3f}, unconstrained "
                   f"coordinates): the plan maps the classes to the atoms {Gb['c']['classes']}, W² = {Gb['c']['W2']:.1e}, drift {Gb['c']['dT']:.1e} (Θ) and {Gb['c']['dZ']:.1e} (Z) — "
                   "stationary, with z_σ(k) = ϑ_k for the plan's bijection σ."]
+    if H:
+        eta_s = lambda e: '∞' if np.isinf(e) else f'{e:.5f}'
+        lo, hi = H['box']
+        lines += ["", "## H. Proposition D‴.27: the projected adaptive prior", "",
+                  f"The box 𝒵 for the prior's atoms (unconstrained coordinates): α ∈ [{lo[0]:.4f}, {hi[0]:.4f}], γ ∈ [{lo[1]:.4f}, {hi[1]:.4f}], κ ∈ [{lo[2]:g}, {hi[2]:g}] "
+                  f"(amplitudes and centres to {A_BOUND:g} of a_max and c_max). (a) Part G(b)'s target (the first bump's weighted amplitude 4.8 > a_max), the K₀-atom system "
+                  f"from the instance's exact atoms with the prior there, the prior projected onto 𝒵 (η = σ₀: the projected midpoint rule, dt = {DT:g}, to s = {S_H:.0e}; η = ∞: "
+                  "LSODA, rtol 10⁻¹⁰, the prior the projected class mean): the first atom's amplitude coordinate ϑ_a, its prior atom's z_a, the amplitude a, the fit error "
+                  "and the largest drift.", "",
+                  "| η | s | ϑ_a | z_a | a | fit error | largest drift |", "|---|---|---|---|---|---|---|"]
+        for run in H['runs']:
+            for r_ in run['rows']:
+                lines.append(f"| {eta_s(run['eta'])} | {r_['s']:.0e} | {r_['th_a0']:.4f} | {r_['z_a0']:.4f} | {r_['a0']:.6f} | {r_['fit']:.4e} | {r_['drift']:.2e} |")
+        lines += ["", "The largest G⁻¹-distance of a particle from 𝒵 along the run: " + "; ".join(f"η = {eta_s(r['eta'])}: {r['max_dist']:.4f}" for r in H['runs'])
+                  + f", against the a-priori bound B/σ₀ = {H['B'] / SIGMA0:.1f} (B = (max|f| + a_max)·L_ϑ^G, L_ϑ^G = {H['LG']:.3f}). "
+                  "Both priors converge to the same bounded stationary point, with the prior's amplitude atom on the boundary of 𝒵; the fit error lies between the "
+                  "fixed prior's and the unbounded adaptive prior's limit (Part G(b)).", "",
+                  f"(b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, {S_C:g} slow units) with and without 𝒵: the largest difference of the atoms and of the prior "
+                  f"at the end is {H['diff_b']:.1e} (the run stays inside 𝒵: {H['inside_b']}) — near an exact representation inside 𝒵 the projection is inactive."]
     lines += ["", "Numbers are produced by `experiments/exp_adaptive_prior.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'adaptive_prior.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")
     print("\n".join(lines))
     if t0 is not None:
         print(f"[{time.time() - t0:.0f}s]")
+
+
+def save_raw(raw, **arrays):
+    """np.savez to a temporary file, then an atomic rename: a crash while pickling cannot truncate the stored results."""
+    tmp = raw[:-4] + '.tmp.npz'
+    np.savez(tmp, **arrays)
+    os.replace(tmp, raw)
 
 
 def main():
@@ -616,14 +816,23 @@ def main():
     if '--from-raw' in sys.argv:
         z = np.load(raw, allow_pickle=True)
         report(z['lin'].item(), list(z['C']), list(z['D']), z['E'].item() if 'E' in z.files else None, t0, list(z['F']) if 'F' in z.files else None,
-               z['G'].item() if 'G' in z.files else None)
+               z['G'].item() if 'G' in z.files else None, z['H'].item() if 'H' in z.files else None)
+        return
+    if '--only-H' in sys.argv:
+        with np.load(raw, allow_pickle=True) as z:
+            save = {k: z[k] for k in z.files}
+        save['H'] = np.array(projected_job(), dtype=object)
+        save_raw(raw, **save)
+        report(save['lin'].item(), list(save['C']), list(save['D']), save['E'].item() if 'E' in save else None, t0, list(save['F']) if 'F' in save else None,
+               save['G'].item() if 'G' in save else None, save['H'].item())
         return
     if '--only-G' in sys.argv:
         with np.load(raw, allow_pickle=True) as z:
             save = {k: z[k] for k in z.files}
         save['G'] = np.array(boundary_job(), dtype=object)
-        np.savez(raw, **save)
-        report(save['lin'].item(), list(save['C']), list(save['D']), save['E'].item() if 'E' in save else None, t0, list(save['F']) if 'F' in save else None, save['G'].item())
+        save_raw(raw, **save)
+        report(save['lin'].item(), list(save['C']), list(save['D']), save['E'].item() if 'E' in save else None, t0, list(save['F']) if 'F' in save else None, save['G'].item(),
+               save['H'].item() if 'H' in save else None)
         return
     if '--only-F' in sys.argv or '--only-lin' in sys.argv:
         with np.load(raw, allow_pickle=True) as z:
@@ -634,17 +843,17 @@ def main():
             with mp.Pool(N_WORKERS) as pool:
                 Fr = pool.map(sep_job, F_JOBS, chunksize=1)
             save['F'] = np.array(Fr, dtype=object)
-        np.savez(raw, **save)
+        save_raw(raw, **save)
         report(save['lin'].item(), list(save['C']), list(save['D']), save['E'].item() if 'E' in save else None, t0, list(save['F']) if 'F' in save else None,
-               save['G'].item() if 'G' in save else None)
+               save['G'].item() if 'G' in save else None, save['H'].item() if 'H' in save else None)
         return
     if '--only-E' in sys.argv:
         with np.load(raw, allow_pickle=True) as z:
             save = {k: z[k] for k in z.files}
         E = trapped_job(list(save['D']))
         save['E'] = np.array(E, dtype=object)
-        np.savez(raw, **save)
-        report(save['lin'].item(), list(save['C']), list(save['D']), E, t0, list(save['F']) if 'F' in save else None, save['G'].item() if 'G' in save else None)
+        save_raw(raw, **save)
+        report(save['lin'].item(), list(save['C']), list(save['D']), E, t0, list(save['F']) if 'F' in save else None, save['G'].item() if 'G' in save else None, save['H'].item() if 'H' in save else None)
         return
     if '--only-gated' in sys.argv:
         which = sys.argv[sys.argv.index('--only-gated') + 1] if len(sys.argv) > sys.argv.index('--only-gated') + 1 else 'transit'
@@ -655,9 +864,9 @@ def main():
         with mp.Pool(N_WORKERS) as pool:
             D += pool.map(m_job, [(seed, eta, gate) for seed in range(N_SEEDS) for eta in ETAS_D if eta > 0])
         save['D'] = np.array(D, dtype=object)
-        np.savez(raw, **save)
+        save_raw(raw, **save)
         report(save['lin'].item(), list(save['C']), D, save['E'].item() if 'E' in save else None, t0, list(save['F']) if 'F' in save else None,
-               save['G'].item() if 'G' in save else None)
+               save['G'].item() if 'G' in save else None, save['H'].item() if 'H' in save else None)
         return
     lin = linear_parts()
     with mp.Pool(N_WORKERS) as pool:
@@ -666,9 +875,10 @@ def main():
         F = pool.map(sep_job, F_JOBS, chunksize=1)
     E = trapped_job(D)
     Gb = boundary_job()
-    np.savez(raw, lin=np.array(lin, dtype=object), C=np.array(C, dtype=object), D=np.array(D, dtype=object), E=np.array(E, dtype=object), F=np.array(F, dtype=object),
-             G=np.array(Gb, dtype=object))
-    report(lin, C, D, E, t0, F, Gb)
+    H = projected_job()
+    save_raw(raw, lin=np.array(lin, dtype=object), C=np.array(C, dtype=object), D=np.array(D, dtype=object), E=np.array(E, dtype=object), F=np.array(F, dtype=object),
+             G=np.array(Gb, dtype=object), H=np.array(H, dtype=object))
+    report(lin, C, D, E, t0, F, Gb, H)
 
 
 if __name__ == '__main__':

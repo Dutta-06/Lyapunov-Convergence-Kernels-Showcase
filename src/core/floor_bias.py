@@ -78,7 +78,8 @@ def whitened_jacobian(loop, w, atoms):
 
 
 def bias_floor_law(loop, q, atoms, sigma0, h=1e-5, directions=None):
-    """At a matching prior (atoms = ϑ^e(q) = the prior): ∂_wϑ^e along zero-sum directions (default e_j − e_K), ∂_wx⁰, H_L = ĴᵀĴ/N with its
+    """At a matching prior (atoms = ϑ^e(q) = the prior): ∂_wϑ^e along zero-sum directions spanning the zero-sum plane (default e_j − e_K; the
+    covariance of the coordinates is Vd⁺C̃Vd⁺ᵀ, so the law does not depend on the basis), ∂_wx⁰, H_L = ĴᵀĴ/N with its
     eigenpairs, the bias formula F_bias = Ĵσ₀(H_L + σ₀I)⁻¹∂_wx⁰ (N, K − 1), the floor's per-mode terms h_jσ₀²/(h_j + σ₀)²z_jᵀC̃z_j (the law per
     unit of 1/m − 1/M, with C̃ the multinomial covariance restricted to the directions) and the bound (σ₀/4)tr(∂_wx⁰C̃∂_wx⁰ᵀ)."""
     q = np.asarray(q, float); K = q.size; G = loop.G
@@ -96,7 +97,8 @@ def bias_floor_law(loop, q, atoms, sigma0, h=1e-5, directions=None):
     hs, V = np.linalg.eigh(0.5 * (HL + HL.T))
     F_bias = Jh @ (sigma0 * np.linalg.solve(HL + sigma0 * np.eye(HL.shape[0]), dx0))
     Ct = np.diag(q) - np.outer(q, q)
-    C2 = Vd.T @ Ct @ Vd if directions is not None else Ct[:K - 1, :K - 1]
+    Vp = np.linalg.pinv(Vd)                                    # δw = Vd·c on the zero-sum plane: c = Vd⁺δw, Cov(c) = Vd⁺C̃Vd⁺ᵀ (any spanning basis;
+    C2 = Vp @ Ct @ Vp.T                                        # for the default e_j − e_K it is C̃ restricted to (w₁, …, w_{K−1}))
     z = V.T @ dx0
     terms = hs * (sigma0 / (hs + sigma0)) ** 2 * np.einsum('ja,ab,jb->j', z, C2, z)
     bound = 0.25 * sigma0 * float(np.trace(dx0 @ C2 @ dx0.T))
