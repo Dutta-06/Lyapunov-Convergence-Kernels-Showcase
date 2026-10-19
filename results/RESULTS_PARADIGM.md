@@ -499,6 +499,27 @@ the over-weighted class of (6, 5, 4)/15 unstable at ε = 4, 16 and stable at 20,
 Tests (`tests/test_ot_basin.py`): (E) and (P) to 10⁻¹² for random assignments with the counts mq at both priors; the PL chain; the constant
 2σ₀ attained by a separation to 10⁻⁴; the decay from a particle in another cell below the a-posteriori bound, at 2σ₀ at the end, against the
 nearest-atom floor; the spurious minimum (11, 9, 10)/30 of the nearest-atom energy, not critical for the OT leak.
+
+## Theorem D‴.23 — adaptive priors (`exp_adaptive_prior.py` → `chaos/adaptive_prior.md`)
+
+- Averaged slow loop at σ₀ = 0.15σ_crit, the OT leak toward the prior with centres +0.15 (masses 1/3); the prior's atoms move toward the
+  class barycentres at the rate η.
+- Linear theory at the exact representation: h_j = 3.06·10⁻⁴ … 0.195; a fixed prior keeps σ₀/(h_j + σ₀) = 0.959 … 0.035 of its error and
+  relaxes at h_j + σ₀ ≥ 7.38·10⁻³; the adaptive prior's slowest rate λ_1^− = 2.68·10⁻⁵, 1.51·10⁻⁴, 2.78·10⁻⁴, 3.06·10⁻⁴ for η = σ₀/10,
+  σ₀, 10σ₀, ∞. The fixed prior's bias: fit error 9.78·10⁻³, within 4.8% of the first-order formula.
+- K₀-atom loop from Θ*(q), 6000 slow units: every mode above 10⁻⁶ decays at λ_j^− (log-slopes 0.981–1.002 of it; ratios to the pair
+  solutions 0.82–1.12, constant to about 1% from s = 1000 on for η ≥ σ₀); fit error 9.78·10⁻³ → 3.6·10⁻⁴, 1.8·10⁻⁵, 8.0·10⁻⁶, 6.7·10⁻⁶.
+- m = 15, 60, 240, 510 from the warm clouds, four seeds, 3000 slow units. Fixed prior: the lift of Θ*(q) (‖ȳ‖ = 2.10·10⁻², W² = 4.4·10⁻⁴).
+  Ungated: the prior dragged by the transit (‖ȳ‖ 0.032–0.32 at η = σ₀, 0.048–0.71 at η = ∞, at s = 500); one m = 15 system at η = ∞
+  on a plateau of the unregularised loss (Hessian eigenvalues −1.8·10⁻⁵, 7.2·10⁻⁵; fit error 3.46·10⁻² at s = 23000). Transit gate
+  (opens at s = 88–149): ‖ȳ‖ 4.9·10⁻³–3.7·10⁻² at η = σ₀ against the K₀-atom run's 1.3·10⁻³. Settled gate (opens at s = 1211–1304):
+  ‖ȳ‖ and the fit error equal to the K₀-atom run's at s − t_open for every m (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at
+  η = ∞); fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵, W² 6.7–7.2·10⁻⁶ and 9.3–9.9·10⁻⁷.
+
+Tests (`tests/test_adaptive_prior.py`): the joint drift is the gradient flow of 𝒥 in the stated metric (finite differences); the exact
+representation stationary, the fixed prior's stationary point not; the linearisation's spectrum (σ₀ and the pair rates λ_j^±) and its
+self-adjointness in the gradient-flow metric; the first-order bias; the transit gate and the settled gate, with 𝒥 non-increasing.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

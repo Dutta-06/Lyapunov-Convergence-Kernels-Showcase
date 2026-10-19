@@ -67,6 +67,7 @@ found the construction.
 - [S46] K. Rose, E. Gurewitz, G. C. Fox. *Statistical mechanics and phase transitions in clustering*. Phys. Rev. Lett. 65(8):945–948, 1990; K. Rose. *Deterministic annealing for clustering, compression, classification, regression, and related optimization problems*. Proc. IEEE 86(11):2210–2239, 1998 (a cluster's codevector splits when the temperature falls below twice the largest eigenvalue of the conditional covariance of its data). The precedent of the critical regularisation of Proposition D‴.20. (Details from memory; not re-verified here.)
 - [S47] B. T. Polyak. *Gradient methods for minimizing functionals*. Zh. Vychisl. Mat. Mat. Fiz. 3(4):643–653, 1963 (the gradient-dominance inequality ‖∇f‖² ≥ 2μ(f − f*) and the linear convergence of gradient descent under it); H. Karimi, J. Nutini, M. Schmidt. *Linear convergence of gradient and proximal-gradient methods under the Polyak–Łojasiewicz condition*. ECML PKDD 2016 (its place among the conditions weaker than strong convexity). The form of the inequality of Theorem D‴.21. (Details from memory; not re-verified here.)
 - [S48] A. Blanchet, J. Bolte. *A family of functional inequalities: Łojasiewicz inequalities and displacement convex functions*. J. Funct. Anal. 275(7):1650–1673, 2018 (Łojasiewicz inequalities in Wasserstein space; for displacement-convex functionals they are equivalent to Talagrand-type inequalities and give the convergence of the Wasserstein gradient flow). The Wasserstein PL theory that Theorem D‴.21 cannot use, the loss being flat-convex but not displacement-convex. (Details from memory; not re-verified here.)
+- [S49] R. T. Rockafellar. *Monotone operators and the proximal point algorithm*. SIAM J. Control Optim. 14(5):877–898, 1976 (the proximal point method: a quadratic penalty toward a centre moved to the last iterate — iterated Tikhonov regularisation; the leak toward a moving centre is its continuous-time form). S. Zhang, A. Choromanska, Y. LeCun. *Deep learning with elastic averaging SGD*. NeurIPS 2015 (workers pulled elastically toward a centre variable that moves toward their average: the coupled pair dynamics of the class means and the prior's atoms). S. J. Nowlan, G. E. Hinton. *Simplifying neural networks by soft weight-sharing*. Neural Computation 4(4):473–493, 1992; K. Ullrich, E. Meeds, M. Welling. *Soft weight-sharing for neural network compression*. ICLR 2017 (a mixture prior on the weights whose centres are learned with them; its hard limit is a K-means quantiser of the weights). The precedents of Theorem D‴.23. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
 
@@ -336,6 +337,17 @@ found the construction.
   every admissible count vector — the energy-landscape form of the finite-size floor. Numerics: `exp_ot_basin.py`.
   Verdict: classical inequality, new mechanism (the plan as the test direction, the counts as the source of uniformity in m).
   Verdict: standard ingredients, new object and new consequence (only the hard constraint is floor-free for every m).
+- **Theorem D‴.23 (adaptive priors).** A quadratic penalty toward a centre that is moved toward the iterate is the proximal point method
+  (iterated Tikhonov regularisation) and, in continuous time with a centre drawn to the mean of several coupled variables, elastic
+  averaging ([S49]); a learned mixture prior on the weights is soft weight-sharing, whose hard limit is a K-means regulariser ([S49]),
+  and the capacity-constrained form of that limit is [S19]'s. What is new is the combination with the mass constraint of the OT leak —
+  the prior's atoms learned, its masses kept — and its exact linear theory at an exact representation: for every m the separations
+  keep the rate σ₀ and the collective modes pair with the prior's offsets, with rates ηh_j/(h_j + σ₀ + η) ≤ λ_j^− < min{h_j, η} set by
+  the measure-space excitation spectrum h_j, so that a learned prior trades the fixed prior's bias σ₀/(h_j + σ₀) for the excitation of
+  each mode — the measure-space form of the classical trade-off between a leak's robustness and persistent excitation; and the
+  transit's drag, with the gate that starts the adaptation from the fixed-prior stationary point. Numerics: `exp_adaptive_prior.py`.
+  Verdict: standard ingredients (proximal point, elastic averaging, soft weight-sharing), new mechanism (the bias–excitation trade-off
+  per mode, uniform in m) and a new failure mode with its remedy (the transit's drag and the gate).
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 
