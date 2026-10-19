@@ -175,3 +175,15 @@ def predicted_stationary_function_D(F, wbar, m, M):
     wbar = np.asarray(wbar, float)
     Ct = np.diag(wbar) - np.outer(wbar, wbar)
     return (1.0 / m - 1.0 / M) * float(np.trace(F @ Ct @ F.T)) / F.shape[0]
+
+
+def splitting_margin_prior(loop, w, atoms, wbar=None, n_cont=4):
+    """The splitting margin σ₀ − max_k κ_R of the replicated weighted stationary configuration under the nearest-atom leak (the
+    analogue of chaos_learning.splitting_margin); Θ*(w) by continuation from wbar.  Returns (margin, Θ*(w), κ_R at the atoms)."""
+    K = atoms.shape[0]
+    wbar = np.ones(K) / K if wbar is None else np.asarray(wbar, float)
+    Tw, res = weighted_stationary_atoms_prior(loop, w, atoms, w0=wbar, n_cont=n_cont)
+    a, c, s, diff, phi = loop.features(Tw)
+    r = loop.F - phi @ (np.asarray(w, float) * a)
+    k = loop.kappa_R(r, Tw)
+    return float(loop.sigma0 - k.max()), Tw, k

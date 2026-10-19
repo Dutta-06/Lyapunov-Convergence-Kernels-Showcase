@@ -140,13 +140,7 @@ def fmt(x, se=None, p=3):
     return f"{x:.{p}e}" if se is None or not np.isfinite(se) else f"{x:.{p}e} ± {se:.1e}"
 
 
-def main():
-    import multiprocessing as mp
-    os.makedirs(OUT, exist_ok=True)
-    t0 = time.time()
-    rows = [design_row(n, c) for n, c in CASES]
-    with mp.Pool(N_WORKERS) as pool:
-        runs = pool.map(coupled_run, range(N_SEEDS))
+def report(rows, runs, t0=None):
     net = make_net()
     exact = exact_representation(net)
     mix = make_loop(net, dict())
@@ -175,11 +169,40 @@ def main():
               f"the weights grows with the amplitudes, which the σ-modification had biased down — bias against variance. Misplacing the prior brings the residual curvature back: "
               + ("the window closes (margin ≤ 0) for " + "; ".join(closed) if closed else "no misplacement in the table closes the window")
               + f"; the largest margin in the table is {best['margin']:.5f} ({best['name']})."]
+    # ---- admissibility of unbalanced weights under three priors, and at the realised weights of the matching-prior runs
+    W_TEST = [np.array([7, 5, 4]) / 16.0, np.array([9, 4, 3]) / 16.0, np.array([10, 3, 3]) / 16.0, np.array([0.5, 0.3, 0.2])]
+    priors3 = [("σ-modification, ϑ⁰ = 0", dict(single=True)), ("mixture prior at the exact representation", dict()), ("amplitudes ×0.7", dict(a_scale=0.7))]
+    lines += ["", "## 2. Admissible weights: the splitting margin σ₀ − max_k κ_R of the replicated weighted stationary configuration Θ*(w) (Proposition D‴.5(i), (iv)) under three priors", "",
+              "| weights w | " + " | ".join(n for n, c in priors3) + " |", "|---|" + "---|" * len(priors3)]
+    adm = {}
+    for w in W_TEST:
+        cells = []
+        for n, c in priors3:
+            lp = make_loop(net, c)
+            mg, Tw, k = PD.splitting_margin_prior(lp, w, exact)
+            adm[(tuple(np.round(w, 4)), n)] = (mg, k)
+            cells.append(f"{mg:+.5f} (κ_R at the atoms {', '.join(f'{x:+.4f}' for x in k)})")
+        lines.append(f"| ({', '.join(f'{x:.4f}' for x in w)}) | " + " | ".join(cells) + " |")
+    lines += ["", "Reading: the sign of the residual at a cluster decides the sign of its splitting curvature. A cluster that overshoots the plant (too much weight, or a prior "
+              "with too large an amplitude) has a residual of the sign opposite to its kernel at the centre, where ∂²_{cc}Φ̃ = −aφ/s², so R > 0 and the cluster can split; one that "
+              "undershoots has R < 0 and is stabilised. The matching prior puts the stationary configuration exactly on the plant, so any excess weight overshoots: its admissible set "
+              "is the smallest of the three; the σ-modification undershoots the amplitudes and tolerates (7, 5, 4)/16 but not (9, 4, 3)/16; the shrunk prior (amplitudes ×0.7) "
+              "undershoots at every cluster and keeps all four weight vectors admissible with margins at or above σ₀ — a shrinkage prior enlarges the admissible set, lowers both floors "
+              "and keeps the window's margin maximal, at the price of a fit error of 0.06."]
+    # realised weights of the matching-prior coupled runs
+    mgs = []
+    for r in runs:
+        for m in MS:
+            mg, _, _ = PD.splitting_margin_prior(mix, r[f'w{m}'], exact)
+            mgs.append((m, r['seed'], mg, r[f'w{m}']))
+    lines += ["", "Splitting margins at the realised cluster weights of the matching-prior coupled runs of section 3: " + "; ".join(f"m = {m}, seed {sd}: {mg:+.5f} (w = ({', '.join(f'{x:.4f}' for x in w)}))" for m, sd, mg, w in mgs) + "."]
+    inadm_runs = [(m, sd) for m, sd, mg, w in mgs if mg <= 0]
+
     # ---- coupled runs with the matching prior
     s_grid = runs[0]['s']
     kR_fx = np.mean([r['kR_ref_nbhd_fixed'] for r in runs], axis=0); kR_own = np.mean([r['kR_ref_nbhd'] for r in runs], axis=0)
     dr = np.mean([r['drift_rms'] for r in runs], axis=0); fit = np.mean([r['fit'] for r in runs], axis=0)
-    lines += ["", f"## 2. Coupled runs with the matching prior (m = {', '.join(str(m) for m in MS)} against M = {M_REF}; warm start = the mixture of Gaussians of width {JITTER:g} around the exact representation; {S_END:g} slow units = {S_END * row_m['margin']:.1f} relaxation times; {N_SEEDS} seeds)", "",
+    lines += ["", f"## 3. Coupled runs with the matching prior (m = {', '.join(str(m) for m in MS)} against M = {M_REF}; warm start = the mixture of Gaussians of width {JITTER:g} around the exact representation; {S_END:g} slow units = {S_END * row_m['margin']:.1f} relaxation times; {N_SEEDS} seeds)", "",
               f"Hypothesis along the run (κ_R over the spheres of radius ϱ′ around 256 reference particles, with the stationary residual r* = 0 and with the reference's own residual): "
               f"max_s κ_R(r*) = {kR_fx.max():.5f}, max_s κ_R(r_ref) = {kR_own.max():.5f} (σ₀ = {SIGMA0:.5f}); the reference's rms drift {dr[0]:.1e} → {dr[-1]:.1e}, fit error {fit[0]:.4f} → {fit[-1]:.4f}.", "",
               "| m | " + " | ".join(f"max D_m on ({a:g}, {b:g}]" for a, b in WINDOWS) + f" | mean D_m on ({WINDOWS[-1][0]:g}, {WINDOWS[-1][1]:g}] | mean ‖f̂_Θ − f̂_ref‖ on the last window | predicted E D_∞ | predicted E‖f̂_m − f̂_M‖² |",
@@ -209,6 +232,7 @@ def main():
             if D_pred > 0 and f_pred > 0:
                 agree_D.append(float(r[f'D{m}'][-1] / D_pred)); agree_f.append(h_meas / f_pred)
             per_lines.append(f"m = {m}, seed {r['seed']}: D {D_pred:.3e} → {r[f'D{m}'][-1]:.3e}; ‖f̂_Θ − f̂_ref‖² {f_pred:.3e} → {h_meas:.3e}")
+    lines += ["", ("No realised weight vector of these runs is inadmissible." if not inadm_runs else "Inadmissible realised weights (saddles): " + ", ".join(f"m = {m}, seed {sd}" for m, sd in inadm_runs) + " — their plateaus are saddles' and would be left on a longer horizon (Proposition D‴.5(iv)).")]
     lines += ["", f"Per seed at s = {S_END:g}, predicted from the realised cluster weights → measured (parameter level Σ_k w^m_k‖S̃_k(w^m − w^M)‖², function level ‖F(w^m − w^M)‖²_{{L²(ρ)}}): "
               + "; ".join(per_lines) + f". Ratios measured/predicted: parameter level {', '.join(f'{x:.2f}' for x in agree_D)}; function level {', '.join(f'{x:.2f}' for x in agree_f)}."]
     # ---- the function-level law against the σ-modification's measured distances
@@ -216,7 +240,7 @@ def main():
     if os.path.exists(raw):
         z = np.load(raw, allow_pickle=True)
         warm = list(z['warm']); M0 = 2048
-        lines += ["", f"## 3. The function-level law for the σ-modification against `exp_chaos_learning.py`'s warm runs (M = {M0}, last window)", "",
+        lines += ["", f"## 4. The function-level law for the σ-modification against `exp_chaos_learning.py`'s warm runs (M = {M0}, last window)", "",
                   "| m | predicted RMS (1/m − 1/M)^{1/2}(tr FC̃Fᵀ/N)^{1/2} | measured mean ‖f̂_Θ − f̂_ref‖ on (450, 900] | ratio |", "|---|---|---|---|"]
         for m in MS:
             pred = np.sqrt(PD.predicted_stationary_function_D(row_s['F'], W_BAR, m, M0))
@@ -227,9 +251,24 @@ def main():
     lines += ["", "Numbers are produced by `experiments/exp_prior_design.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'prior_design.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")
-    np.savez(os.path.join(OUT, 'prior_design_raw.npz'), rows=np.array(rows, dtype=object), runs=np.array(runs, dtype=object), allow_pickle=True)
     print("\n".join(lines))
-    print(f"[{time.time() - t0:.0f}s]")
+    if t0 is not None:
+        print(f"[{time.time() - t0:.0f}s]")
+
+
+def main():
+    import multiprocessing as mp
+    os.makedirs(OUT, exist_ok=True)
+    t0 = time.time()
+    if '--from-raw' in sys.argv:
+        z = np.load(os.path.join(OUT, 'prior_design_raw.npz'), allow_pickle=True)
+        report(list(z['rows']), list(z['runs']), t0)
+        return
+    rows = [design_row(n, c) for n, c in CASES]
+    with mp.Pool(N_WORKERS) as pool:
+        runs = pool.map(coupled_run, range(N_SEEDS))
+    np.savez(os.path.join(OUT, 'prior_design_raw.npz'), rows=np.array(rows, dtype=object), runs=np.array(runs, dtype=object), allow_pickle=True)
+    report(rows, runs, t0)
 
 
 if __name__ == '__main__':

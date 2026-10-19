@@ -40,7 +40,9 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   of the dithered linearised loop (Corollary E.0′.3) and the slow-regime Lyapunov function for non-periodic persistently
   exciting regressors (Lemma E.0″), and uniform-in-time propagation of chaos in the learning regime for the averaged
   slow loop (Theorem D‴: the flat convexity of the loss makes the particle interaction contract, and the fitted
-  configuration's second-order optimality replaces the dominant leak); round 7 covers the first two, round 8 the third.
+  configuration's second-order optimality replaces the dominant leak), with the finite-size weight-sensitivity law (Proposition D‴.5),
+  the real loop on a warm start (Corollary D‴.7) and the leak's prior as a design input of the window (Proposition D‴.9); rounds 7, 8 and 9
+  of the review log cover them.
 
 ---
 

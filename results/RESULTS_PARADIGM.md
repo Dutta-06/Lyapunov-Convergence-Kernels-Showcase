@@ -351,6 +351,23 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
   follows its averaged slow dynamics to within 0.7% (Corollary D‴.7); two of the three m = 16 clouds have inadmissible or marginal
   weights (margins −0.0021, −0.00001).
 
+## Proposition D‴.9 — measure-valued priors and the design of the window (`exp_prior_design.py` → `chaos/prior_design.md`)
+
+- Same instance and leak as Theorem D‴'s numerics (σ₀ = 0.15σ_crit = 0.00707), nearest-atom leak toward three prior atoms. Matching prior
+  (exact representation): fit error 0, κ_R = 0, margin σ₀ = 0.00707 against the σ-modification's 0.00196 (relaxation 141 against 511 slow
+  units); ‖S_k‖ = 13.01, 6.18, 8.91 against 8.38, 4.66, 8.32; E D_∞(m = 64) 0.323 against 0.201 (1.61×); function-level floor 9.33·10⁻⁴
+  against 4.29·10⁻⁴ (2.18×).
+- Misplaced priors: centres +0.15/+0.3/+0.45/+0.6 → margins +0.0055/+0.0037/+0.0017/−0.0006; amplitudes ×0.5/×0.7/×1.2 → +0.0074/+0.0073/−0.0317;
+  widths ×0.7/×1.5/×2 → −0.0261/+0.0058/+0.0040; the shrunk priors (×0.5, ×0.7) have the largest margins and lower floors (E D_∞ 0.199, 0.230;
+  function level 7.1·10⁻⁴, 7.7·10⁻⁴) at fit errors 0.09, 0.06.
+- Admissible weights (splitting margin of Θ*(w)): (7,5,4)/16: +0.0026 / −0.0054 / +0.0073; (9,4,3)/16: −0.0022 / −0.0058 / +0.0057;
+  (10,3,3)/16: −0.0038 / −0.0042 / +0.0054; (0.5,0.3,0.2): −0.0006 / −0.0065 / +0.0066 (σ-modification / matching / amplitudes ×0.7).
+- Matching-prior coupled runs (m = 16, 64, 256 vs M = 2048, 300 slow units, 3 seeds): D saturates (last/previous 1.04–1.05), slope −1.23 ± 0.40;
+  per-seed law ratios 0.81–1.11 (parameter level) and 0.61–1.69 (function level); two of nine realised weight vectors are saddles
+  (margins −0.0005, −0.0030).
+- Function-level law for the σ-modification against Theorem D‴'s warm runs: predicted RMS 0.0419, 0.0207, 0.0098 vs measured means
+  0.0307 ± 0.0097, 0.0154 ± 0.0033, 0.0047 ± 0.0012 (ratios 0.73, 0.74, 0.48).
+
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 
 | experiment | result |
