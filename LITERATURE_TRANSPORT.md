@@ -288,6 +288,13 @@ found the construction.
   interaction and the local, residual-weighted hypothesis — and with them a uniform-in-time statement in a regime where the
   network learns — are new in propagation of chaos for adaptive control; the theorem's regime is asymptotic in m and the
   finite-m law is a delta-method statement, new in its object.** Numerics: `exp_chaos_learning.py`.
+- **Proposition D‴.9 (measure-valued priors).** Leaks toward a single prior (σ-modification, Ioannou–Kokotović) are the standard of
+  robust adaptive control; regularisation toward the nearest of several centres is standard in machine learning (mixture priors,
+  prototype regularisers) and the paradigm's own Theorem C′ leaks toward a prior *measure* through an optimal plan. The nearest-atom
+  leak is the simplest measure-valued prior; what is new is its role in the window of Theorem D‴ — the prior's placement sets the
+  stationary residual, hence the lower end of the window and the relaxation rate — and the finding that removing the bias raises
+  the coupling's floors (the weight sensitivity grows with the amplitudes): a bias–variance trade-off stated for the particle system.
+  Verdict: standard object, new design statement; the function-level sensitivity law is the delta method once more.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 
