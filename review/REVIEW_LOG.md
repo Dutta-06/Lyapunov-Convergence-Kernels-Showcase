@@ -501,3 +501,37 @@ at a stable stationary point of their own J_m: the theorem's per-particle locali
 the weights — Proposition D‴.5, whose prediction the per-cluster displacements of the run follow (cosine ≥ 0.8, norms within a
 factor 2 at s = 60 ≪ 1/κ). The theorem's constants are reported as worst-case envelopes; what the numerics test is the hypothesis,
 the mechanism (saturation, 1/m) and the sharp constant.
+
+## Round 9 (research continuation and adversarial review, 2026-10-19)
+
+**Design.** After round 8 the Theorem D‴ block gained Proposition D‴.5 (the weight-sensitivity law of the stationary coupled distance
+at finite m), Remark D‴.6 (the theorem's regime), Corollary D‴.7 (the real loop on a warm start through Theorem J), Remark D‴.8, the
+numerics of `exp_chaos_learning.py` and the readings. One referee was run on these (proofs, the experiment script, the new functions
+of `chaos_learning.py`, the fifth test, every number and every reading against the raw data; `review/REVIEW_round9_D3b.md`). The
+confirmed issues and their fixes follow.
+
+**Verdicts.** Proposition D‴.5 holds with fixes: the algebra was confirmed independently (∇_{ϑ_k}𝒢_w = w_k∇𝒱 to 2·10⁻¹¹; the replicated
+weighted stationary point a critical point of J_m to 10⁻¹⁶, also at weights far from uniform; the Hessian block splitting — separation
+blocks σ₀I − R^G_k with multiplicity n_k − 1 and the whitened, weighted K-atom collective block — reproduces all 30 eigenvalues of J₁₀
+to 8·10⁻¹²; S by the implicit function theorem against central differences to 3·10⁻⁷; the multinomial covariance (1/m − 1/M)C̃ by
+simulation), and the exact first equality of (ii) holds on the data to 0.1–2.3% in all 12 (seed, m) pairs. Corollary D‴.7 and Remark
+D‴.8 hold with fixes (Theorem J used correctly; the two plant states handled correctly). Numerics and readings hold with fixes for
+m = 64 and 256; at m = 16 one of four warm seeds sits on a saddle (the major issue below). The experiment script and the new code hold
+with minor fixes; the fifth test passes and tests what it says, with two near-vacuous assertions and one tautology.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3b-1 | **major** (reading) | at seed 3, m = 16 the realised weights (9, 4, 3)/16 make the replicated configuration a saddle of J₁₆ (the splitting condition fails at atom 1: κ_R = 0.00927 > σ₀ = 0.00707; eigenvalue −0.00219 with multiplicity 8); the m-system sits on it at s = 900 (D = 1.2917 against the saddle's exact stationary distance 1.2916) and leaves it later (the referee continued the autonomous run: D = 1.95, 4.70, 5.13 at s = 1800, 2700, 3600 as two particles migrated and the weights re-sorted to (7, 5, 4)/16); the reported m = 16 "saturation" is, in that seed, a transient plateau; Remark D‴.6's "at a stable stationary point of their own J₁₆" was false for it; generically the splitting condition fails at ‖w − w̄‖ ≈ 0.06–0.36 against a root-mean-square weight fluctuation 0.20 (m = 16) and 0.10 (m = 64): admissible in ≈ 52% of multinomial draws at m = 16 and 76% at m = 64 | Proposition D‴.5(i) states the admissible set W_adm and the saddle alternative, (ii) is conditional on admissibility, new (iv) bounds P(w^m ∉ W_adm) by Hoeffding; Remark D‴.6 corrected; Remark D‴.2(iii) names the saddle mechanism; the experiment reports the splitting margin of Θ*(w^m) and the exact stationary distance per seed (new columns), and the reading says which seed is inadmissible; the test checks the margins of (7,5,4)/16 and (9,4,3)/16 |
+| D3b-2 | minor | "invertible" K-atom Hessian; the minimiser claims need positive definite | stated |
+| D3b-3 | minor | the O(‖dw‖³) remainder holds with S at w^M; with S at w̄ (as coded) there is an O(‖dw‖²‖w^M − w̄‖) term | (ii) written with S(w^M), the replacement by S(w̄) priced |
+| D3b-4 | minor | the corollary's smoothness argument compared maps on ℝ^{mp} and ℝ^{Mp}; the O(k_e⁻²) remainders were dropped; κ clashed with Theorem J's | argument via permutation equivariance and the block splitting (the offset depends on the K-atom data); remainders kept; κ_J |
+| D3b-5 | minor | the expectation statement needs conditioning on admissible weights (probability ≈ ½ at m = 16) | conditioned |
+| D3b-6 | cosmetic | "Checked on the instance" overstated: the corollary's saturation is not checked | "Consistent with …; not checked" |
+| D3b-7 | cosmetic | "−0.196 at s = 1" is the first record (s = 0.02); at s = 1 the margin is −0.179 | "from the first record" |
+| D3b-8 | cosmetic | "seven to eight orders of magnitude" → 8.4–8.8 | corrected |
+| D3b-9 | minor (reading) | the flip fraction and the medians decay like m^{−0.64±0.08} (threshold 3: −0.73), not "the m^{−1/2} law"; the cold learned-function slope −0.66 ± 0.06 is 2.3 s.e. from −0.5 | the experiment fits the exponents; the texts say "steeper than m^{−1/2}" |
+| D3b-10 | minor (support) | the real-loop claim compared different clouds (ratios 0.78–2.58); on the same clouds D_real(t)/D_avg(t/k_e) ∈ [0.985, 1.016] for all seeds and m | the experiment reproduces the real loop's clouds, runs the averaged flow on them and reports the per-seed ratios |
+| D3b-11 | minor (code) | `weighted_stationary_atoms` without continuation jumps branches at weights far from w̄ (seed 3's weights gave D = 19 instead of 1.29; 77 of 300 plain solves in a multinomial sample) | the margin and the exact distance use continuation from w̄ (`splitting_margin`, `stationary_distance_exact`); `weight_sensitivity` (small steps) is unaffected |
+| D3b-12 | cosmetic | κ halved without a stated reason; S̃_k undefined; "within 5–20%" → 0.8–20%; "0.245 throughout" → 0.245–0.248; the heavy-tail explanation does not fit m = 256 | fixed in the texts |
+| D3b-13 | cosmetic (test) | the (0.2) and (0.1) assertions have slack ≥ 10²; `sigma0 < SIGMA_CRIT` a tautology; a docstring mismatch | tautology removed, slack stated, docstring corrected, a splitting-margin check added |
+| D3b-14 | minor (code) | the recorded κ_R at the m-particles used the reference's residual and cannot see the m-system's own instability (0.0053 against 0.0101 with its own residual) | `coupled_run` records both (future runs) |

@@ -34,7 +34,7 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
   `review/REVIEW_round6_Dpp.md` and `review/REVIEW_round6_Jprime.md`, for round 7 `review/REVIEW_round7_E0p3_E0dp.md` and for
-  round 8 `review/REVIEW_round8_Dppp.md`.
+  round 8 `review/REVIEW_round8_Dppp.md` and for round 9 `review/REVIEW_round9_D3b.md`.
 
 ---
 
@@ -1412,7 +1412,9 @@ dynamics; its transfer to the real loop at finite k_e is open (Remark D‴.4). I
 asymptotic: on the instance below m₀ is of order 10²³ (Remark D‴.6), and the finite-m behaviour is described sharply by
 Proposition D‴.5. Referee round 8 (`review/REVIEW_round8_Dppp.md`) re-derived every constant of Steps 0–9, found no counterexample
 to (2.1), (3.1), (4.1) on an adversarial search, and corrected the wording of Remarks D‴.1–D‴.2, the good event per horizon and the
-well-posedness sentence (all applied).
+well-posedness sentence (all applied). Referee round 9 (`review/REVIEW_round9_D3b.md`) reviewed Proposition D‴.5, Corollary D‴.7 and the
+numerics: all hold with fixes, the main one being that the finite-m replicated configuration is a minimiser only for admissible weights
+(Proposition D‴.5(iv)) — one of the four m = 16 warm seeds sits on a saddle, which the numerics paragraph now says.
 
 *Proof.* Step 0 (a priori bounds). For either system, d/ds‖ϑ − ϑ⁰‖²_{G⁻¹} = 2⟨ϑ − ϑ⁰, ⟨∇_ϑ(rᵀΦ̃(·;ϑ))⟩_ρ⟩ − 2σ₀‖ϑ − ϑ⁰‖²_{G⁻¹} with
 |⟨ϑ − ϑ⁰, ⟨∇_ϑ(rᵀΦ̃)⟩_ρ⟩| = |⟨rᵀ∇_ϑΦ̃(ϑ − ϑ⁰)⟩_ρ| ≤ ⟨‖r‖⟩_ρL_ϑ^G‖ϑ − ϑ⁰‖_{G⁻¹} ≤ (F_ρ + K_Φ)L_ϑ^G‖ϑ − ϑ⁰‖_{G⁻¹}, so
@@ -1537,7 +1539,10 @@ preimage, hence p_m = O(m^{−1/2}) when μ₀ has a bounded density there), not
 (H) — a bad set of small μ_s-mass, with the per-particle bootstrap run on the good particles only and the interaction
 split as in Step 3 — is the natural extension and is listed in §8; what the present theorem shows is where the clean
 statement holds (supports inside basins) and why the cold start of Theorem D″'s experiment was outside it on two counts
-(the transient and the connected support).
+(the transient and the connected support). (iii) The floor has a second source at small m, on a warm start: when the realised
+cluster weights fall outside the admissible set of Proposition D‴.5(iv) the replicated configuration is a saddle of J_m, the m-system
+lingers on it and then splits a cluster, so that pairs end in different basins although the mean-field flow satisfies (H); its
+probability is exponentially small in m but appreciable at m = 16 on the instance below.
 
 *Remark D‴.3 (dither).* At τ₀ > 0 the synchronous coupling cancels the noise and the identity of Step 1 holds pathwise with
 the same three terms, but the reference law has full support and the particles visit the ridges of 𝒱 with the Gibbs weight
@@ -1561,24 +1566,32 @@ table 5) tracks the averaged slow dynamics over the horizon run, at the same k_e
 **Proposition D‴.5 (the stationary coupled distance at finite m: the weight-sensitivity law).** Let μ* = Σ_{k=1}^K w̄_kδ_{ϑ*_k} be a
 K-atom stationary measure of (𝔄₀) (each ϑ*_k a critical point of 𝒱[μ*]), and for weights w ∈ (0, ∞)^K let 𝒢_w(Θ) := ½⟨‖f −
 Σ_kw_kΦ̃(·;ϑ_k)‖²⟩_ρ + (σ₀/2)Σ_kw_k‖ϑ_k − ϑ⁰‖²_{G⁻¹} be the mean-field energy of μ_w := Σ_kw_kδ_{ϑ_k}, so that ∇_{ϑ_k}𝒢_w(Θ) =
-w_k∇_ϑ𝒱[μ_w](ϑ_k). Assume the K-atom Hessian ∇²_Θ𝒢_{w̄}(Θ*) is invertible. Then:
+w_k∇_ϑ𝒱[μ_w](ϑ_k). Assume the K-atom Hessian ∇²_Θ𝒢_{w̄}(Θ*) is positive definite. Then:
 
 (i) *(the weighted stationary point and its replication)* there is a smooth map w ↦ Θ*(w) on a neighbourhood of w̄ with Θ*(w̄) = Θ*
-and ∇_ϑ𝒱[μ_{Θ*(w)}](ϑ*_k(w)) = 0 for every k (implicit function theorem); S := ∂Θ*/∂w (S_k := ∂ϑ*_k/∂w ∈ ℝ^{p×K}) is given by
-S = −[∇²_Θ𝒢_w]⁻¹∂_w∇_Θ𝒢_w at (Θ*(w), w). For m particles with n_k of them in cluster k (w^m_k := n_k/m), the configuration with n_k
-copies of ϑ*_k(w^m) is a critical point of J_m (μ_Θ = μ_{w^m} there), and a strict local minimiser of J_m when in addition the
-splitting condition σ₀G⁻¹ − R[μ_{w^m}](ϑ*_k(w^m)) ≻ 0 holds at every cluster (Proposition K(i): the Hessian of J_m at a configuration
-with coinciding particles splits into the collective block ∇²𝒢_{w^m} and the separation blocks of each cluster).
+and ∇_ϑ𝒱[μ_{Θ*(w)}](ϑ*_k(w)) = 0 for every k (implicit function theorem); S(w) := ∂Θ*/∂w (S_k := ∂ϑ*_k/∂w ∈ ℝ^{p×K}) is given by
+S = −[∇²_Θ𝒢_w]⁻¹∂_w∇_Θ𝒢_w at (Θ*(w), w). For m particles with n_k of them in cluster k (w^m_k := n_k/m), the configuration Θ*_m(w^m)
+with n_k copies of ϑ*_k(w^m) is a critical point of J_m (μ_Θ = μ_{w^m} there). Its whitened Hessian splits (Proposition K(i), applied
+cluster by cluster) into the separation blocks σ₀I − R^G[μ_{w^m}](ϑ*_k(w^m)), each with multiplicity n_k − 1, and the collective block
+diag(w^m)^{−1/2}·G_K^{1/2}∇²_Θ𝒢_{w^m}G_K^{1/2}·diag(w^m)^{−1/2} (the K-atom Hessian, whitened and weighted). Hence Θ*_m(w^m) is a strict
+local minimiser of J_m exactly when w^m lies in the *admissible set*
+
+    W_adm := {w : σ₀G⁻¹ − R[μ_{Θ*(w)}](ϑ*_k(w)) ≻ 0 for every k and ∇²𝒢_w(Θ*(w)) ≻ 0},
+
+a neighbourhood of w̄ (both conditions are open and hold at w̄ by (H) and the assumption), and a saddle when the splitting
+condition fails at some cluster: a cluster can then split, and the m-system leaves the configuration by migrating particles
+between basins.
 
 (ii) *(the stationary distance)* Under the shared-particle coupling of Theorem D‴ with i.i.d. cluster labels of law w̄ (the m
-particles are the first m of the M reference particles), suppose the m-system converges to the configuration of (i) with its
-weights w^m and the reference to the one with w^M. Then the coupling distance converges to
+particles are the first m of the M reference particles), suppose w^m, w^M ∈ W_adm and that the m-system converges to Θ*_m(w^m) and
+the reference to Θ*_M(w^M). Then the coupling distance converges to
 
-    D_∞ = Σ_kw^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹} = Σ_kw^m_k‖S_k(w^m − w^M)‖²_{G⁻¹} + O(‖w^m − w^M‖³),
+    D_∞ = Σ_kw^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹} = Σ_kw^m_k‖S_k(w^M)(w^m − w^M)‖²_{G⁻¹} + O(‖w^m − w^M‖³),
 
-and since E[(w^m − w^M)(w^m − w^M)ᵀ] = (1/m − 1/M)C̃ with C̃ := diag(w̄) − w̄w̄ᵀ (multinomial counts of the shared labels),
+and, with S̃_k := G^{−1/2}S_k(w̄) (replacing S(w^M) by S(w̄) costs a relative O(‖w^M − w̄‖)) and E[(w^m − w^M)(w^m − w^M)ᵀ] =
+(1/m − 1/M)C̃, C̃ := diag(w̄) − w̄w̄ᵀ (multinomial counts of the shared labels), conditionally on the admissibility of both weights,
 
-    E D_∞ = (1/m − 1/M)·Σ_kw̄_k tr(G^{−1/2}S_kC̃S_kᵀG^{−1/2}) + O(m^{−3/2}):
+    E[D_∞ | w^m, w^M ∈ W_adm] = (1/m − 1/M)·Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ) + O(m^{−3/2}) + O(m^{−1}M^{−1/2}):
 
 the 1/m law with an explicit constant, and the (1/m − 1/M) law of the shared-particle coupling observed in Theorem D′'s numerics.
 
@@ -1586,9 +1599,16 @@ the 1/m law with an explicit constant, and the (1/m − 1/M) law of the shared-p
 for every particle i of cluster k(i): the fluctuations of the coupling are Gaussian, carried entirely by the cluster weights, and
 all particles of a cluster are displaced by the same vector.
 
-*Status.* Formal: (i) and the algebra of (ii)–(iii) are exact (implicit function theorem; the multinomial covariance of shared
-labels), the convergence of both systems to the stated configurations is assumed (it is what Theorem D‴ proves for m ≥ m₀ and what
-the numerics show for m = 16–256). Checked: `weighted_stationary_atoms`, `weight_sensitivity`, `predicted_stationary_D` in
+(iv) *(admissibility)* Let δ_w := sup{δ : ‖w − w̄‖_∞ ≤ δ ⇒ w ∈ W_adm} > 0. By Hoeffding's inequality for each multinomial coordinate,
+P(w^m ∉ W_adm) ≤ 2K exp(−2mδ_w²): the finite-m configuration is a strict local minimiser with probability exponentially close to
+one, the exceptional event being the one on which Remark D‴.2's floor appears on a warm start — a cluster of the m-system splits
+and particles migrate to other basins, because the realised weights make the replicated configuration a saddle.
+
+*Status.* Formal: (i) and the algebra of (ii)–(iv) are exact (the block splitting is Proposition K(i) cluster by cluster, confirmed
+on J₁₀ to 8·10⁻¹² in referee round 9; implicit function theorem; the multinomial covariance of shared labels; Hoeffding), the
+convergence of both systems to the stated configurations is assumed (it is what Theorem D‴ proves for m ≥ m₀ and what the numerics
+show for m = 16–256 at admissible weights; at inadmissible weights the m-system sits on the saddle for a long time and then leaves
+it, numerics below). Checked: `weighted_stationary_atoms`, `weight_sensitivity`, `predicted_stationary_D` in
 `chaos_learning.py`; on the instance below the replicated weighted stationary point is a critical point of J₁₆ to 10⁻¹⁰, the
 linearisation ϑ*(w̄ + dw) − ϑ* = S·dw has a second-order remainder, and the per-cluster displacements of the coupled run point
 along S_k(w^m − w^M) (test and table below). The proposition is the sharp form of Theorem D‴'s constant: S = −H_w⁻¹∂_w∇𝒢_w
@@ -1601,7 +1621,8 @@ bootstrap of Step 6, because the interaction's effect on one particle is bounded
 This is not an artefact of the proof's constants only: Proposition D‴.5 says the particles of a cluster are displaced by
 S_k(w^m − w^M), of order ‖S‖m^{−1/2} with ‖S‖ ~ (stiffness)⁻¹, which exceeds any fixed ϱ′ for m below (‖S‖/ϱ′)² — on the
 instance below the m = 16 particles sit 0.4–1.4 whitened units from their reference copies, outside the neighbourhood N_ϱ′ in
-which 𝒱[μ_Θ̄] is convex, at a stable stationary point of their own J₁₆. Hypothesis (H) is nevertheless the right object: it is the
+which 𝒱[μ_Θ̄] is convex, at the replicated stationary configuration Θ*₁₆(w^m) of their own J₁₆ — a strict local minimiser when
+w^m ∈ W_adm and a saddle otherwise (Proposition D‴.5(i), (iv); one of the four m = 16 seeds below). Hypothesis (H) is nevertheless the right object: it is the
 condition under which the reference configuration is stable to splitting, and the m-system's configuration is the same
 configuration with perturbed weights. What the numerics test is therefore (a) hypothesis (H) at the stationary measure and
 along the flow, (b) the mechanism — the coupled distance saturates (no growth) and follows the 1/m law — and (c) the sharp
@@ -1610,7 +1631,7 @@ constant of Proposition D‴.5; the theorem's own constant C₁ is reported for 
 **Corollary D‴.7 (the real loop on a warm start: uniform in time through Theorem J).** Let μ* = Σ_kw̄_kδ_{ϑ*_k} be a K-atom
 stationary measure as in Proposition D‴.5, satisfying the splitting condition σ₀G⁻¹ − R[μ*](ϑ*_k) ≻ 0 at every atom and the
 non-degeneracy of the K-atom Hessian, and let w ↦ Θ*(w) be the weighted stationary point of D‴.5(i). Fix m ≤ M and cluster
-weights w^m, w^M in the neighbourhood of w̄ on which Θ*(·) is defined and the splitting condition persists, and let Θ*_m :=
+weights w^m, w^M ∈ W_adm (Proposition D‴.5(i)), and let Θ*_m :=
 the configuration with n_k = mw^m_k copies of ϑ*_k(w^m) (likewise Θ*_M). Both are non-degenerate local minimisers of J_m and J_M
 (Proposition D‴.5(i)), hence hyperbolic critical points, and Theorem J applies to each loop: there are k₀, ρ₀, C (depending on
 Θ*_m and Θ*_M, hence on m, M and the weights) such that for k_e ≥ k₀ the real closed loop (CL) with m kernels started at
@@ -1620,32 +1641,35 @@ D(t) := (1/m)Σ_i‖ϑ_i(t) − ϑ̄_i(t)‖²_{G⁻¹} satisfies, for all t ≥
 
     D(t)^{1/2} ≤ D_orb^{1/2} + Ce^{−μt}(‖Θ(0) − Θ_p^m(0)‖_{G⁻¹} + ‖x(0) − x_p^m(0)‖) + Ce^{−μt}(‖Θ̄(0) − Θ_p^M(0)‖_{G⁻¹} + ‖x̄(0) − x_p^M(0)‖),
 
-with μ = (λ_*/k_e)(1 − κ) the rate of Theorem J(c) (the smaller of the two loops' rates) and
+with μ = (λ_*/k_e)(1 − κ_J) the rate of Theorem J(c) (κ_J its small parameter; the smaller of the two loops' rates) and
 
     D_orb := sup_t (1/m)Σ_i‖Θ_p^m(t)_i − Θ_p^M(t)_i‖²_{G⁻¹} = Σ_kw^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹} + O(1/k_e)
            = Σ_kw^m_k‖S_k(w^m − w^M)‖²_{G⁻¹} + O(‖w^m − w^M‖³) + O(1/k_e):
 
 the coupled distance of the real loop is bounded uniformly in time, converges to the distance between the two periodic orbits,
 and that distance is Proposition D‴.5's stationary distance up to the O(1/k_e) offsets of Theorem J(a),(d) (which differ between
-the two loops by O(k_e⁻¹‖w^m − w^M‖), the offset being a smooth function of the configuration). In particular, for cluster labels
-i.i.d. of law w̄ and conditionally on both starts lying in their basins, E D_orb = (1/m − 1/M)Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ) + O(m^{−3/2}) + O(1/k_e).
+the two loops by O(k_e⁻¹‖w^m − w^M‖) + O(k_e⁻²), the first-order offset of a replicated configuration being a smooth function of the
+K-atom data (Θ*(w), w) by permutation equivariance). In particular, for cluster labels i.i.d. of law w̄ and conditionally on both
+weights being admissible and both starts lying in their basins, E D_orb = (1/m − 1/M)Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ) + O(m^{−3/2}) + O(1/k_e).
 
 *Status.* Proved as stated (Theorem J(a),(c),(d) applied to each loop, the triangle inequality in the G⁻¹ metric, and Proposition
 D‴.5(ii) for the distance between the critical points), under Theorem J's hypotheses for both configurations: the constants k₀,
 ρ₀, C, μ are those of Theorem J at Θ*_m and Θ*_M, and the corollary does not assert their uniformity in m or M (Remark D‴.8). It
 is the statement of Remark D‴.4 for a warm start: the real loop's coupled distance saturates, at a value set by the cluster weights.
-Checked on the instance of §5d's numerics (table 5: the real loop at k_e = 25 from the jittered mixture over 80 slow units, a sixth of the
-relaxation time 1/κ: its window maxima grow by 1.5–1.8, as the averaged runs' do over the same slow times, and agree with them within the
-seed-to-seed spread, ratios 0.8–2.6 against relative standard errors of 30–60%; the saturation at the orbit distance lies beyond the horizon run).
+Consistent with the instance of §5d's numerics (table 5: the real loop at k_e = 25 from the jittered mixture over 80 slow units, a sixth
+of the relaxation time 1/κ, follows its averaged slow dynamics on the same initial clouds to within a few percent at every window end;
+the saturation at the orbit distance lies beyond the horizon run and is not checked).
 
 *Proof.* Theorem J(c) for the m-kernel loop gives ‖Θ(t) − Θ_p^m(t)‖_{G⁻¹} ≤ Ce^{−μt}(‖Θ(0) − Θ_p^m(0)‖_{G⁻¹} + ‖x(0) − x_p^m(0)‖) and the
 same for the M-kernel loop; the first m rows of the M-loop are the reference particles ϑ̄_i. For the (m×p)-row norm
 (1/m)Σ_i‖·‖²_{G⁻¹} ≤ ‖·‖²_{G⁻¹}/m ≤ ‖·‖²_{G⁻¹} (the full configuration norm dominates the mean square over the first m rows), so by
 the triangle inequality D(t)^{1/2} ≤ [(1/m)Σ_i‖Θ_p^m(t)_i − Θ_p^M(t)_i‖²]^{1/2} + (the two transients). Theorem J(a) places each
 orbit within C/k_e of its critical point, uniformly in t, so the first term is Σ_kw^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹} up to O(1/k_e)
-(the two offsets are O(1/k_e) each; their difference is O(k_e⁻¹‖Θ*_m − Θ*_M‖) because Θ ↦ J⁻¹(b_frozen + b_osc)(Θ) is smooth, which
-sharpens the O(1/k_e) to O(k_e⁻¹‖w^m − w^M‖)), and Proposition D‴.5(ii) expands it in w^m − w^M. The expectation statement is
-D‴.5(ii)'s. ∎
+(the two offsets are O(1/k_e) each, with O(k_e⁻²) remainders; at a replicated configuration the first-order offset is the same vector
+for all particles of a cluster and depends smoothly on the K-atom data (Θ*(w), w), by the permutation equivariance of (CL) and the block
+splitting of Proposition D‴.5(i), so the two loops' offsets differ by O(k_e⁻¹‖w^m − w^M‖) + O(k_e⁻²) — the two loops live on ℝ^{mp} and
+ℝ^{Mp}, and it is this reduction to the K-atom data that makes them comparable), and Proposition D‴.5(ii) expands the distance between the
+critical points in w^m − w^M. The expectation statement is D‴.5(ii)'s. ∎
 
 *Remark D‴.8 (what the corollary does and does not say).* It transfers the uniform-in-time statement to the real loop in the regime
 where Theorem J applies to both loops — a warm start in the basins of two hyperbolic minimisers at a gain k_e above both thresholds.

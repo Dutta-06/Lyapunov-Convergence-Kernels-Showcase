@@ -293,6 +293,11 @@ def report(K, sigma0, ST, ST3, warm, cold, res_real, t0=None):
         out += ["", f"Slope of the last-window maximum of D_m against m (per-seed fits, mean ± s.e.): {sl:.2f} ± {se:.2f} (Theorem D‴: −1 for the mean square; "
                 f"the function-level distance ‖f̂_Θ − f̂_ref‖ has slope {sl_h:.2f} ± {se_h:.2f}, m^{{−1/2}} being −0.5). Ratio of the last to the first window maxima: "
                 + ", ".join(f"{r:.2f}" for r in ratios) + "; last to the one before: " + ", ".join(f"{r:.2f}" for r in ratios2) + " (uniform in time means no growth)."]
+        if all(min(P[m]) > 0 for m in MS):
+            slp, sep = slope_se(P)
+            MD = {m: [float(np.median(r[f'devfinal{m}'])) for r in rs] for m in MS}
+            slmd, semd = slope_se(MD)
+            out += [f"Slope against m of the fraction of pairs more than one whitened unit apart: {slp:.2f} ± {sep:.2f}; of the median per-particle deviation: {slmd:.2f} ± {semd:.2f} (m^{{−1/2}}: −0.5)."]
         return out, W, H, P
     S_w = CL.weight_sensitivity(loop, np.ones(3) / 3, atoms)
     b_w, W_w, H_w, P_w = block(f"3. Warm start near the stationary measure (μ₀ = the mixture of Gaussians of width {JITTER:g} around the atoms; (H) from s = 0)", warm)
@@ -301,8 +306,9 @@ def report(K, sigma0, ST, ST3, warm, cold, res_real, t0=None):
             f"(central differences of the weighted stationary point, whitened norms): ‖S_k‖ = " + ", ".join(f"{np.linalg.norm(S_w[k] / np.sqrt(G)[:, None]):.3f}" for k in range(3))
             + f". Predicted mean-square stationary distance E D_∞ = (1/m − 1/M)·Σ_k w̄_k tr(S̃_k C̃ S̃_kᵀ), measured D_m on the last window, and the per-seed prediction "
             f"Σ_k w^m_k‖S̃_k(w^m − w^M)‖² from the realised cluster weights against the measured D_m at s = {S_END:g}:", "",
-            "| m | predicted E D_∞ | measured time average on the last window | ratio measured/predicted | per-seed: predicted from w^m − w^M → measured at the end |",
+            "| m | predicted E D_∞ | measured time average on the last window | ratio measured/predicted | per seed: linearised prediction Σ_k w^m_k‖S̃_k(w^m − w^M)‖² → exact stationary distance Σ_k w^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖² → measured D_m at the end [splitting margin of Θ*(w^m)] |",
             "|---|---|---|---|---|"]
+    margins = {}
     for m in MS:
         pred = CL.predicted_stationary_D(S_w, np.ones(3) / 3, m, M_REF, G)
         meas = [w[len(WINDOWS)] for w in W_w[m]]
@@ -311,8 +317,11 @@ def report(K, sigma0, ST, ST3, warm, cold, res_real, t0=None):
         for r in warm:
             dw = r[f'w{m}'] - r['w_ref']
             pv = np.einsum('kij,j->ki', S_w, dw) / np.sqrt(G)[None, :]
-            per.append((float(np.sum(r[f'w{m}'] * np.sum(pv ** 2, axis=1))), float(r[f'D{m}'][-1])))
-        b_w.append(f"| {m} | {pred:.3e} | {fmt(mu, se)} | {mu / pred:.2f} | " + "; ".join(f"{a:.3e} → {b:.3e}" for a, b in per) + " |")
+            exact, _ = CL.stationary_distance_exact(loop, r[f'w{m}'], r['w_ref'], atoms, G)
+            mg, _, _ = CL.splitting_margin(loop, r[f'w{m}'], atoms)
+            margins[(m, r['seed'])] = (mg, exact, float(r[f'D{m}'][-1]))
+            per.append((float(np.sum(r[f'w{m}'] * np.sum(pv ** 2, axis=1))), exact, float(r[f'D{m}'][-1]), mg))
+        b_w.append(f"| {m} | {pred:.3e} | {fmt(mu, se)} | {mu / pred:.2f} | " + "; ".join(f"{a:.3e} → {e:.3e} → {b:.3e} [{mg:+.5f}]" for a, e, b, mg in per) + " |")
     agree = []
     for m in MS:
         for r in warm:
@@ -321,10 +330,18 @@ def report(K, sigma0, ST, ST3, warm, cold, res_real, t0=None):
             agree.append((float(r[f'D{m}'][-1] / np.sum(r[f'w{m}'] * np.sum(pv ** 2, axis=1))), float(np.linalg.norm(dw)), m, r['seed']))
     within = sum(1 for a in agree if 0.8 <= a[0] <= 1.25)
     worst = max(agree, key=lambda a: abs(np.log(a[0])))
-    b_w += ["", f"Per seed, the measured D_m at s = {S_END:g} is within 25% of the prediction from the realised weights in {within} of the {len(agree)} (seed, m) pairs; "
+    ex_dev = [abs(v[2] / v[1] - 1) for v in margins.values()]
+    inadm = [(m, sd) for (m, sd), v in margins.items() if v[0] <= 0]
+    b_w += ["", f"Per seed, the measured D_m at s = {S_END:g} is within 25% of the linearised prediction from the realised weights in {within} of the {len(agree)} (seed, m) pairs; "
             f"the largest deviation is the ratio {worst[0]:.2f} at m = {worst[2]}, seed {worst[3]}, the pair with the largest weight fluctuation |w^m − w^M| = {worst[1]:.3f} "
-            f"(the linearisation's O(|w^m − w^M|³) remainder and the saturation a ≤ a_max). The multinomial expectation E D_∞ is compared with a mean over {len(warm)} seeds, "
-            f"whose standard error is that of a heavy-tailed quantity (E|w^m − w^M|² is dominated by the rare large fluctuations); the per-seed comparison is the sharp test."]
+            f"(the linearisation's remainder and the saturation a ≤ a_max). The exact stationary distance Σ_k w^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖² (the first equality of Proposition D‴.5(ii), "
+            f"with the weighted stationary points themselves) reproduces the measured D_m within {100 * max(ex_dev):.1f}% in all {len(ex_dev)} pairs: the m-systems sit at the replicated "
+            f"weighted stationary configurations. The splitting margin of Θ*(w^m) (σ₀ − max_k κ_R at its atoms with the weighted residual; Proposition D‴.5(i)) is positive in "
+            f"{len(margins) - len(inadm)} of the {len(margins)} pairs"
+            + (": the configuration is a strict local minimiser of J_m there. It is negative for " + ", ".join(f"m = {m}, seed {sd} (w^m = ({', '.join(f'{x:.4f}' for x in [r[f'w{m}'] for r in warm if r['seed'] == sd][0])}), margin {margins[(m, sd)][0]:+.5f})" for m, sd in inadm)
+               + ": there the replicated configuration is a saddle of J_m (a cluster can split), the m-system's plateau at s = %g is the saddle's, and the system leaves it later by migrating particles between basins (referee round 9 continued the run to s = 3600: D grew from 1.29 to 5.13 as two particles changed basins and the weights re-sorted). With weight fluctuations of root-mean-square (Σ_k w̄_k(1 − w̄_k)/m)^{1/2} = %s the admissible region of Proposition D‴.5(iv) is left with appreciable probability at m = 16." % (S_END, ", ".join(f"{np.sqrt(np.sum(np.ones(3) / 3 * (1 - np.ones(3) / 3)) / m):.3f} (m = {m})" for m in MS)) if inadm else ": every replicated configuration is a strict local minimiser of J_m.")
+            + f" The multinomial expectation E D_∞ is compared with a mean over {len(warm)} seeds, whose standard error is that of a heavy-tailed quantity (E|w^m − w^M|² is dominated by the rare large "
+            f"fluctuations; for m = 256 the four realised fluctuations are simply small); the per-seed comparison is the sharp test."]
     r0 = warm[0]
     b_w += ["", f"Per-cluster check on seed {r0['seed']} (whitened mean deviation of the m-system's particles of cluster k from their reference copies at s = {S_END:g}, against S_k(w^m − w^M)):"]
     for m in MS:
@@ -379,6 +396,26 @@ def report(K, sigma0, ST, ST3, warm, cold, res_real, t0=None):
         cr = [mean_se([w[j] for w in WR[m]]) for j in range(len(W_SLOW))]
         ratio_real_avg[m] = cr[-1][0] / ca[-1][0]
         lines.append(f"| {m} | " + " | ".join(fmt(mu, se) for mu, se in ca) + " | " + " | ".join(fmt(mu, se) for mu, se in cr) + f" | {ratio_real_avg[m]:.2f} |")
+    # the same clouds: the averaged flow from the real loop's own initial clouds (reproduced from their seeds), per-seed ratios at the window ends
+    same = {m: [] for m in MS}
+    real_margins = []
+    for r in res_real:
+        rng = np.random.default_rng(1000 + r['seed'])
+        Th_all = CL.mixture_start(atoms, M_REF, rng, JITTER, G)
+        rec = loop.coupled_run(Th_all, MS, T_REAL / KE, DT_S, rec_every=REC, rho_nbhd=None, rng=rng, record_final=False)
+        for m in MS:
+            lab, wm = CL.cluster_weights(Th_all[:m], atoms, G)
+            labM, wM = CL.cluster_weights(Th_all, atoms, G)
+            mg, _, _ = CL.splitting_margin(loop, wm, atoms)
+            real_margins.append((m, r['seed'], mg))
+            for a, b in W_SLOW:
+                i_avg = int(np.argmin(np.abs(rec['s'] - b)))
+                i_real = int(np.argmin(np.abs(r['t'] - b * KE)))
+                same[m].append(float(r['D'][m][i_real] / rec['D'][m][i_avg]))
+    lines += ["", f"On the SAME clouds (the averaged flow started from the real loop's own initial clouds, reproduced from their seeds), the ratio D_real(t)/D_averaged(t/{KE:g}) at the window ends "
+              f"s = {', '.join(f'{b:g}' for a, b in W_SLOW)}: " + "; ".join(f"m = {m}: {min(same[m]):.3f}–{max(same[m]):.3f}" for m in MS)
+              + f" (over the {N_SEEDS_REAL} seeds): the real loop at k_e = {KE:g} follows its averaged slow dynamics to within {100 * max(abs(x - 1) for m in MS for x in same[m]):.1f}%. "
+              "Splitting margins of the replicated configurations at the real-loop clouds' initial weights: " + "; ".join(f"m = {m}, seed {sd}: {mg:+.5f}" for m, sd, mg in real_margins) + "."]
 
     # ---- Reading (data-aware)
     def grew(ratios):
@@ -393,15 +430,18 @@ def report(K, sigma0, ST, ST3, warm, cold, res_real, t0=None):
               + (f"on the warm start near the stationary measure the hypothesis {'holds' if a_prof.min() > 0 else 'does not hold'} along the whole run (min a(s) = {a_prof.min():+.4f}); the per-particle localisation of part (c) "
                  f"is {'' if all(max(float(r[f'devfinal{m}'].max()) for r in warm) < 0.75 * RHO_PRIME for m in MS) else 'not '}in force at these m (max_i‖δ_i‖_{{G⁻¹}} = "
                  + ", ".join(f"{max(float(r[f'devfinal{m}'].max()) for r in warm):.2f}" for m in MS) + f" against 3ϱ′/4 = {0.75 * RHO_PRIME:g}; Remark D‴.6: the particles of a cluster are displaced together by the "
-                 f"weight fluctuation); the window maxima of D_m {'do not grow' if not grew(r_w) else 'grow'} "
+                 f"weight fluctuation); the window maxima of D_m {'do not grow' if not grew(r_w) else 'grow'} over the horizon run"
+                 + (f" — for the inadmissible weights ({', '.join(f'm = {m}, seed {sd}' for m, sd in inadm)}) this is a saddle's plateau, left later by particle migration (Proposition D‴.5(iv)) — " if inadm else " ")
+                 + f""
                  f"(last/first {', '.join(f'{r:.2f}' for r in r_w)}), the m-law of the mean square has slope {sl_w:.2f} (theorem: −1), and the measured values lie "
                  f"{'below' if below else 'NOT below'} the bound C₁/m" + (f" (which carries no transient factor here, Λ₁ = {Lambda1:.2g})" if C else "") + ". ")
               + (f"On the cold start the support threads the ridges and (H) fails along the run (min a = {a_prof_c.min():+.4f}); the coupled distance "
                  f"{'grows' if grew(r_c) else 'does not grow'} over the horizon (last/first {', '.join(f'{r:.2f}' for r in r_c)}), its m-law has slope {sl_c:.2f}, and at the end a fraction "
                  f"{', '.join(f'{p:.3f}' for p in flips_c)} (m = 16, 64, 256) of the pairs sit more than one whitened unit apart: pairs in different basins, the floor of "
-                 f"Remark D‴.2" + (", whose fraction decreases with m" if flips_c[0] > flips_c[-1] else "") + ". ")
-              + (f"The real loop on the warm start is consistent with the averaged system at equal slow times within the seed-to-seed spread (last-window ratios real/averaged "
-                 f"{', '.join(f'{ratio_real_avg[m]:.2f}' for m in MS)} for m = {', '.join(str(m) for m in MS)}, against relative standard errors of 30–60% on both sides): its growth over t ≤ {T_REAL:g} (last/first {', '.join(f'{r:.2f}' for r in ratios_r)}; "
+                 f"Remark D‴.2" + (", whose fraction decreases with m (exponent in the cold-start block)" if flips_c[0] > flips_c[-1] else "") + ". ")
+              + (f"The real loop on the warm start follows its averaged slow dynamics: on the same initial clouds D_real(t)/D_averaged(t/k_e) stays within "
+                 f"{100 * max(abs(x - 1) for m in MS for x in same[m]):.1f}% of one at every window end for every seed and m (across different clouds the last-window ratios are "
+                 f"{', '.join(f'{ratio_real_avg[m]:.2f}' for m in MS)}, within the seed-to-seed spread): its growth over t ≤ {T_REAL:g} (last/first {', '.join(f'{r:.2f}' for r in ratios_r)}; "
                  f"{T_REAL / KE:g} slow units, {T_REAL / KE * kappa_star:.2f} relaxation times) is the early transient of the averaged dynamics, which saturates by s ≈ {WINDOWS[-1][0]:g} "
                  f"(Corollary D‴.7); Theorem D″'s cold start at the same k_e grew threefold over 1000 s and the cold start here grows and carries the floor.")]
     lines += ["", "Numbers are produced by `experiments/exp_chaos_learning.py`; nothing is edited by hand."]

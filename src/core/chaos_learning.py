@@ -180,7 +180,8 @@ class AveragedSlowLoop:
         r_fixed (a residual on the grid, e.g. that of a stationary measure μ*) the same two statistics with that frozen residual
         (kR_ref_fixed, kR_ref_nbhd_fixed: κ_R[μ*] over the neighbourhood of the reference's current support, a proxy for the
         mean-field flow's (H) free of the reference's sampling fluctuation) and ‖r_ref − r_fixed‖_{L¹(ρ)} (resid_dev_L1),
-        κ_R at the m-particles (max), the function-level distances ‖f̂_Θ − f̂_Θ̄‖_{L²(ρ)} (the same m particles; bounded by
+        κ_R at the m-particles (max; with the reference's residual, and with the m-system's own residual, which sees the m-system's own
+        stability), the function-level distances ‖f̂_Θ − f̂_Θ̄‖_{L²(ρ)} (the same m particles; bounded by
         L_ϑ^G·mean‖δ_i‖) and ‖f̂_Θ − f̂_ref‖_{L²(ρ)} (against the M-reference, the stand-in for f̂[μ_s]), and the mean of ‖δ_i‖_{G⁻¹}.
         """
         rng = np.random.default_rng(0) if rng is None else rng
@@ -190,7 +191,7 @@ class AveragedSlowLoop:
         sys_ = {m: Th_all[:m].copy() for m in m_list + [M]}
         n_steps = int(round(S_end / dt))
         rec = dict(s=[], fit=[], spread=[], drift_rms=[], kR_ref=[], kR_ref_nbhd=[], kR_ref_fixed=[], kR_ref_nbhd_fixed=[], resid_dev_L1=[],
-                   D={m: [] for m in m_list}, kR_m={m: [] for m in m_list}, hnorm={m: [] for m in m_list},
+                   D={m: [] for m in m_list}, kR_m={m: [] for m in m_list}, kR_m_own={m: [] for m in m_list}, hnorm={m: [] for m in m_list},
                    hnorm_mf={m: [] for m in m_list}, dev1={m: [] for m in m_list})
         for k in range(n_steps):
             new = {}
@@ -222,12 +223,13 @@ class AveragedSlowLoop:
                     rec['D'][m].append(float(np.mean(dn ** 2)))
                     rec['dev1'][m].append(float(np.mean(dn)))
                     rec['kR_m'][m].append(float(self.kappa_R(r_ref, sys_[m]).max()))
+                    rec['kR_m_own'][m].append(float(self.kappa_R(self.residual(sys_[m]), sys_[m]).max()))     # the m-system's own residual (its own stability)
                     fh_m = self.f_hat(sys_[m])
                     rec['hnorm'][m].append(float(np.sqrt(np.mean((fh_m - self.f_hat(ref[:m])) ** 2))))      # ‖f̂_Θ − f̂_Θ̄‖ (same m particles)
                     rec['hnorm_mf'][m].append(float(np.sqrt(np.mean((fh_m - fh_ref) ** 2))))              # ‖f̂_Θ − f̂_ref‖ (the M-reference as f̂[μ_s])
         for key in ('s', 'fit', 'spread', 'drift_rms', 'kR_ref', 'kR_ref_nbhd', 'kR_ref_fixed', 'kR_ref_nbhd_fixed', 'resid_dev_L1'):
             rec[key] = np.array(rec[key])
-        for key in ('D', 'kR_m', 'hnorm', 'hnorm_mf', 'dev1'):
+        for key in ('D', 'kR_m', 'kR_m_own', 'hnorm', 'hnorm_mf', 'dev1'):
             rec[key] = {m: np.array(v) for m, v in rec[key].items()}
         if record_final:
             ref = sys_[M]
@@ -451,3 +453,29 @@ def cluster_weights(Th, atoms, G):
     lab = np.argmin(d2, axis=1)
     K = atoms.shape[0]
     return lab, np.array([np.mean(lab == k) for k in range(K)])
+
+
+def splitting_margin(loop, w, atoms, wbar=None, n_cont=4):
+    """
+    The splitting (separation) margin of the replicated weighted stationary configuration Θ*(w) (Proposition D‴.5(i), Proposition
+    K(i)): σ₀ − max_k λ_max(G^{1/2}R[μ_{w}](ϑ*_k(w))G^{1/2}) with the weighted residual r_w = f − Σ_k w_kΦ̃(·;ϑ*_k(w)).  Positive
+    iff the configuration with n_k = mw_k copies of ϑ*_k(w) is a strict local minimiser of J_m; negative: a saddle (a cluster can
+    split).  Θ*(w) is reached by continuation from wbar (default: uniform weights) to avoid branch jumps.  Returns
+    (margin, Θ*(w), κ_R at the atoms).
+    """
+    K = atoms.shape[0]
+    wbar = np.ones(K) / K if wbar is None else np.asarray(wbar, float)
+    Tw, res = weighted_stationary_atoms(loop, w, atoms, w0=wbar, n_cont=n_cont)
+    a, c, s, diff, phi = loop.features(Tw)
+    r = loop.F - phi @ (np.asarray(w, float) * a)
+    k = loop.kappa_R(r, Tw)
+    return float(loop.sigma0 - k.max()), Tw, k
+
+
+def stationary_distance_exact(loop, w_m, w_M, atoms, G, wbar=None, n_cont=4):
+    """D_∞ = Σ_k w^m_k‖ϑ*_k(w^m) − ϑ*_k(w^M)‖²_{G⁻¹} with the weighted stationary points (the exact first equality of Proposition D‴.5(ii))."""
+    K = atoms.shape[0]
+    wbar = np.ones(K) / K if wbar is None else np.asarray(wbar, float)
+    Tm, rm = weighted_stationary_atoms(loop, w_m, atoms, w0=wbar, n_cont=n_cont)
+    TM, rM = weighted_stationary_atoms(loop, w_M, atoms, w0=wbar, n_cont=n_cont)
+    return float(np.sum(np.asarray(w_m, float) * np.sum((Tm - TM) ** 2 / np.asarray(G, float)[None, :], axis=1))), max(rm, rM)

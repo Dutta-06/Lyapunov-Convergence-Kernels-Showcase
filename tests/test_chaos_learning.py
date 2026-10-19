@@ -119,8 +119,9 @@ def test_hypothesis_H_at_the_three_atom_stationary_measure_and_the_weight_sensit
     jittered mixture μ₀, κ_R[μ*] over the neighbourhood of the reference's support stays below σ₀ (hypothesis (H) with Λ₁ = 0),
     the two curvature statistics differ by at most the proof's bound (0.2) L₂^G‖r_ref − r*‖_{L¹(ρ)}, D₆₄ < D₁₆, the function-level
     distance obeys ‖f̂_Θ − f̂_Θ̄‖ ≤ L_ϑ^G·mean‖δ_i‖, and the (vacuous) bound C₁/m holds.  Proposition D‴.5: the weighted K-atom
-    stationary point ϑ*(w) replicated with multiplicities n_k = m·w_k is a critical point of J_m; its linearisation in the
-    weights predicts the exact ϑ*(w^m) − ϑ*(w^M) to second order; and on the run the per-cluster mean deviations of the
+    stationary point ϑ*(w) replicated with multiplicities n_k = m·w_k is a critical point of J_m; the linearisation ϑ*(w̄ + dw) −
+    ϑ*(w̄) = S·dw has a remainder of order |dw|² (checked at two scales); the splitting margin separates admissible weights
+    (a strict local minimiser) from a saddle; and on the run the per-cluster mean deviations of the
     m-system from its reference point along the predicted vectors S(w^m − w^M) (cosine ≥ 0.8) with D within a factor 2 of
     Σ_k w_k‖S_k(w^m − w^M)‖²_{G⁻¹}, although at s = 60 ≪ 1/κ the systems are still relaxing toward their stationary points."""
     sigma0 = 0.15 * SIGMA_CRIT
@@ -132,7 +133,7 @@ def test_hypothesis_H_at_the_three_atom_stationary_measure_and_the_weight_sensit
     rho_p = 0.1
     k_nb = loop.kappa_R_neighbourhood(r_star, atoms, rho_p, n_dirs=200, radii=(1.0, 0.5))
     kappa = sigma0 - k_nb
-    assert kappa > 0 and sigma0 < SIGMA_CRIT                                 # (H) at μ*, inside the learning regime
+    assert kappa > 0                                                         # (H) at μ* (σ₀ = 0.15σ_crit is inside the learning regime by construction)
     # Proposition D‴.5, structural part: the weighted stationary point and its replication
     wbar = np.ones(3) / 3
     A3, res3 = CL.weighted_stationary_atoms(loop, wbar, atoms)
@@ -142,6 +143,9 @@ def test_hypothesis_H_at_the_three_atom_stationary_measure_and_the_weight_sensit
     Th16 = np.repeat(A16, [6, 7, 3], axis=0)                                 # 16 particles with multiplicities n_k
     assert res16 < 1e-12 and np.abs(loop.grad_J(Th16)).max() < 1e-10         # a critical point of J₁₆
     S = CL.weight_sensitivity(loop, wbar, atoms)
+    mg_ok, _, _ = CL.splitting_margin(loop, np.array([7, 5, 4]) / 16.0, atoms)
+    mg_bad, _, _ = CL.splitting_margin(loop, np.array([9, 4, 3]) / 16.0, atoms)
+    assert mg_ok > 0 > mg_bad                                                # (7,5,4)/16 admissible, (9,4,3)/16 a saddle (referee round 9, D3b-1)
     for eps in (0.05, 0.025):
         dw = eps * np.array([1.0, -0.5, -0.5])
         Aw, _ = CL.weighted_stationary_atoms(loop, wbar + dw, atoms)
@@ -157,7 +161,7 @@ def test_hypothesis_H_at_the_three_atom_stationary_measure_and_the_weight_sensit
     rec = loop.coupled_run(Th_all, [16, 64], S_end=60.0, dt=0.02, rec_every=50, rho_nbhd=rho_p, n_dirs=16, rng=rng, nb_rows_max=128,
                            r_fixed=r_star)
     assert rec['kR_ref_nbhd_fixed'].max() < sigma0                           # (H) along the run with the stationary residual (lower estimate of the sup)
-    assert np.all(np.abs(rec['kR_ref_nbhd'] - rec['kR_ref_nbhd_fixed']) <= LC['L_2_G'] * rec['resid_dev_L1'] * (1 + 1e-9))   # (0.2)
+    assert np.all(np.abs(rec['kR_ref_nbhd'] - rec['kR_ref_nbhd_fixed']) <= LC['L_2_G'] * rec['resid_dev_L1'] * (1 + 1e-9))   # (0.2) (a loose bound: slack ≥ 10², referee round 9)
     kappa_run = min(kappa, sigma0 - rec['kR_ref_nbhd_fixed'].max())
     c = CL.theorem_constants(loop, LC['L_th_G'], LC['L_2_G'], R0=float(np.sqrt(np.sum(Th_all ** 2 / G[None, :], axis=1)).max()),
                              kappa=kappa_run, Lambda1=0.0, rho_prime=rho_p)
