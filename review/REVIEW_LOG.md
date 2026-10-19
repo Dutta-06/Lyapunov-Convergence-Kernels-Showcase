@@ -458,3 +458,46 @@ step. No major issue; fifteen minor and cosmetic ones, all fixed.
 | R7-13 | minor (code) | `ExpAverageLyapunov.constants` docstring stated p₂ = ‖M − M̄‖ + T‖F̄ − F̂‖ for explicit=True; the code uses the looser Ψ_M² + T(sup‖F̄‖ + ‖F̂‖) (valid) | docstring corrected |
 | R7-14 | cosmetic (code) | `exact_stationary_covariance`: stray "Ẅ := Ẇ" in the docstring; the returned C0 is the end-of-period covariance | docstring fixed; the key C_end added (C0 kept) |
 | R7-15 | minor (experiment; fixed during the review) | `exp_pe_general.py` as first read integrated the Lorenz orbit only to Lorenz time 101 while the padded grid for T = 20 reaches 108, so the spline extrapolated and the T = 20 constants were garbage (Λ = 2233, p₂ = 9·10¹⁴, all conditions failing); fixed before the published table was produced (its T = 20 row reproduces exactly) | `CubicSpline(..., extrapolate=False)` and a range assertion in `Psi`, `Psid` |
+
+## Round 8 (research continuation and adversarial review, 2026-10-19)
+
+**Design.** The fourth research increment adds Theorem D‴ (uniform-in-time propagation of chaos in the learning regime for the
+averaged slow loop at τ = 0, §5d) with Proposition D‴.5 (the weight-sensitivity law of the stationary coupled distance at
+finite m), `src/core/chaos_learning.py`, `tests/test_chaos_learning.py` and `experiments/exp_chaos_learning.py`. One referee was
+run on the theorem's statement, proof and remarks, the code and the tests before the numerics existed
+(`review/REVIEW_round8_Dppp.md`). The confirmed issues and their fixes follow; the numerics were designed after the report.
+
+**Verdicts.** Theorem D‴ holds: every constant of Steps 0–9 was re-derived (the two Lipschitz facts with the ½ Taylor factor,
+the telescoping identity, (2.1) with the segment inside the neighbourhood and Weyl's inequality, (3.1) with c²/4, (4.1), the
+κ/8 split and the Young constant, the Grönwall exponents, the two thresholds, McDiarmid with c_j = 2K_Φ/m for the vector-valued
+L²(ρ) statistic, the grid counts), an adversarial search over 3000 configurations found no violation of (2.1), (3.1), (4.1)
+(the interaction term reaches 2% of its bound), and an independent brute-force implementation (m = 2, one quadrature point)
+confirmed the three-term identity to 10⁻¹¹. The code holds (drift = −G∇J_m to 5·10⁻¹¹; the residual-weighted curvature is the
+frozen-residual Hessian, differing from the full Hessian block by exactly M₂/m; the searched constants L_ϑ^G = 4.0435, L₂^G =
+11.1111 are the true suprema on a 10⁸-point grid). Three test assertions were vacuous and the fifth test's premise was wrong
+(a transient, not a stationary state; the hypothesis violated at its own ϱ′): the tests were rewritten and the numerics were
+redesigned around a verified instance (a three-atom stationary measure at which (H) holds with ϱ′ = 0.1).
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3-1 | minor (premise) | (H) fails for the ϱ′ = 0.3 of the first warm-start test: the supremum of κ_R over N_ϱ′ exceeds σ₀ (0.0145 > 0.014); (H) holds there only for ϱ′ ≲ 0.27 | instance changed to σ₀ = 0.15σ_crit, where (H) holds at the three-atom stationary measure with ϱ′ = 0.1 and margin 0.0020 |
+| D3-2 | minor (code) | `kappa_R_neighbourhood` was a Monte Carlo lower estimate (0.0125 against the dense 0.0145), unable to certify (H); the supremum sits on the boundary sphere | deterministic Fibonacci-sphere search on the boundary (and an inner shell), labelled a lower estimate; the test checks it against the first-order expansion λ_max + ϱ‖∇λ_max‖ |
+| D3-3 | minor (tests) | `D.max() < C₁/m` compared 0.22 with 3·10⁶ (vacuous: C₁ = 5·10⁷, m₀ = 8·10¹⁸); D was increasing over the whole run; the (c)-check used K_Φ²(1/m + 1/M) where the shared-particle law is ⟨Var⟩(1/m − 1/M) | the vacuous assertions are kept only as sanity checks and labelled as such; the saturation and 1/m statements moved to the experiment (horizon 900 ≫ 1/κ); the (1/m − 1/M) law is now Proposition D‴.5(ii) |
+| D3-4, D3-5 | cosmetic (tests) | `kappa_R_neighbourhood(...) ≥ λ − 10⁻¹²` true by construction; the C₁ check a tautology | replaced by the first-order-expansion check of the search and by the four constraints of the bootstrap (constants) |
+| D3-6 | minor (code, anti-conservative) | `Lambda1_from_profile` integrated only to the last grid point ≤ s₁ (0.050 for 0.055); Λ₁ enters as e^{2Λ₁} | the integral runs to s₁ with a linearly interpolated value; tested |
+| D3-7 | cosmetic | the closed form L₂^G ≤ λ_G a_max/s_min² is loose by λ_G/G_c (44.4 against the true 11.11 = G_c a_max/s_min²) | stated in the docstring and the table |
+| D3-8 | cosmetic | the module docstring's T_A bound omitted the L₂^GY term | fixed |
+| D3-9 | cosmetic (block) | the good event was defined with sup_{s≥0} while (a) bounds a horizon S; (c)'s "for all time" | 𝒢_S per horizon in Steps 6–8 and in (c); (R_eff)₊ |
+| D3-10 | cosmetic (block) | "bounded vector field" is false (linear leak); a garbled fragment in the definition of R | well-posedness sentence rewritten (linear growth, Lipschitz; bounded on the invariant ball); fragment fixed |
+| D3-11 | minor (Remark D‴.2) | "on a ridge 𝒱 has negative curvature, so (H) fails for every s" is false pointwise (counterexample 𝒱 = (x² − 1)² + y² + 10x²y²: the invariant separatrix {x = 0} is convex for |y| > 0.45); the filament's points converge to saddles, so (H) fails for every s₁ asymptotically | remark rewritten |
+| D3-12 | cosmetic (Remark D‴.1) | the "non-strict form for every Wasserstein-stable stationary measure" needs atoms of positive mass and yields non-minimality of 𝒢; the term was undefined | stated for atomic measures with the splitting argument (Proposition K) |
+| D3-13 | minor (premise) | the first test's warm start was a transient (fit error 0.037 → 0.26 over s ≤ 40): "κ_R < σ₀ along the run" said nothing about (H) for s ≥ s₁; no instance with (H) verified at a near-stationary state existed | the three-atom stationary measure of J₃ (zero drift) is computed, (H) is checked there by the sphere search for ϱ′ ∈ {0.05, 0.1, 0.2, 0.3}, and the warm start is the jittered mixture around its atoms; the hypothesis is tracked along the run with the stationary residual (the proof's bound (0.2) separates the reference's sampling fluctuation, which is asserted in the test) |
+| D3-14 | cosmetic (test) | `T_B < 0` is configuration-specific (T_B = +1.67 found at D = 3.9, m = 1, consistent with (3.1)) | the test asserts T_B/(−‖h‖²) → 1 as δ → 0 and (3.1) at every scale |
+
+**A finding of the redesign (recorded here because the referee's D3-3 pointed at it).** At m = 16–256 the particles of the
+m-system sit 0.4–1.4 whitened units from their reference copies, outside the ϱ′-neighbourhood in which 𝒱[μ_Θ̄] is convex,
+at a stable stationary point of their own J_m: the theorem's per-particle localisation is in force only for m ≥ m₀ = 16K_Φ²/θ²
+(10²³ on the instance), and the finite-m distance is set by the clusters' weight fluctuation times the atoms' sensitivity to
+the weights — Proposition D‴.5, whose prediction the per-cluster displacements of the run follow (cosine ≥ 0.8, norms within a
+factor 2 at s = 60 ≪ 1/κ). The theorem's constants are reported as worst-case envelopes; what the numerics test is the hypothesis,
+the mechanism (saturation, 1/m) and the sharp constant.

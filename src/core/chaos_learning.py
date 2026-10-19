@@ -12,7 +12,7 @@ gradient flow (𝔄) of §6c at τ = 0.  Under the synchronous coupling with i.i
 (X_s the characteristic flow of the mean-field equation), the mean-square distance D := (1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} obeys
 
     ½ dD/ds = T_A + T_B + T_C,
-    T_A := −(1/m)Σ⟨δ_i, ∇𝒱[μ_Θ̄](ϑ_i) − ∇𝒱[μ_Θ̄](ϑ̄_i)⟩ ≤ −(σ₀ − κ_R)D         (self term; residual-weighted curvature),
+    T_A := −(1/m)Σ⟨δ_i, ∇𝒱[μ_Θ̄](ϑ_i) − ∇𝒱[μ_Θ̄](ϑ̄_i)⟩ ≤ −(σ₀ − κ_R − L₂^G Y)D   (self term; residual-weighted curvature),
     T_B := −(1/m)Σ⟨δ_i, ∇V_L[μ_Θ](ϑ_i) − ∇V_L[μ_Θ̄](ϑ_i)⟩ = −‖h‖² + O(D²)    (interaction; flat convexity makes it ≤ 0 at
                                                                             linear order; h := f̂_Θ − f̂_Θ̄),
     T_C := −(1/m)Σ⟨δ_i, ∇V_L[μ_Θ̄](ϑ̄_i) − ∇V_L[μ_s](ϑ̄_i)⟩ ≤ L_ϑ^G √D · Y    (the reference's sampling fluctuation Y).
@@ -123,16 +123,20 @@ class AveragedSlowLoop:
         Rw = self.sqG[None, :, None] * R * self.sqG[None, None, :]
         return np.linalg.eigvalsh(Rw)[:, -1]
 
-    def kappa_R_neighbourhood(self, r, Th, rho, n_dirs=8, rng=None, h=1e-5):
-        """sup of λ_max(G^{1/2}RG^{1/2}) over the rows of Th and over n_dirs random points of the G⁻¹-ball of radius rho
-        around each row (a Monte Carlo estimate of κ_R[μ](N_ρ(supp μ_Θ)) from below; the maximum over the rows is exact)."""
-        rng = np.random.default_rng(0) if rng is None else rng
-        best = float(self.kappa_R(r, Th, h).max())
-        for _ in range(n_dirs):
-            u = rng.standard_normal(Th.shape)
-            u /= np.linalg.norm(u, axis=1, keepdims=True)
-            rad = rho * rng.uniform(0, 1, (Th.shape[0], 1)) ** (1.0 / 3.0)
-            best = max(best, float(self.kappa_R(r, Th + rad * u * self.sqG[None, :], h).max()))
+    def kappa_R_neighbourhood(self, r, Th, rho, n_dirs=64, radii=(1.0, 0.5), h=1e-5, rows=None):
+        """
+        κ_R[μ](N_ρ(supp μ_Θ)) estimated from below by a deterministic search: the maximum of λ_max(G^{1/2}R[μ]G^{1/2}) over the
+        rows of Th (exact at the atoms) and over the points ϑ_i + ρ·rad·G^{1/2}u for the n_dirs Fibonacci-sphere directions u
+        and the radii in `radii` (the G⁻¹-ball of radius ρ; the supremum sits on the boundary sphere in every instance checked,
+        referee round 8).  `rows` restricts the atoms to a subset (indices).  The value increases to the supremum over the
+        sampled shells as n_dirs grows; it is a lower estimate of the supremum over the ball.
+        """
+        T = Th if rows is None else Th[rows]
+        best = float(self.kappa_R(r, T, h).max())
+        U = fibonacci_sphere(n_dirs)
+        for rad in radii:
+            for u in U:
+                best = max(best, float(self.kappa_R(r, T + rad * rho * u[None, :] * self.sqG[None, :], h).max()))
         return best
 
     # ------------------------------------------------------------------ the three terms of the coupling identity
@@ -165,21 +169,27 @@ class AveragedSlowLoop:
                     h_norm=float(np.sqrt(np.mean(h ** 2))), bound_B_coeff=1.0 / 16.0)
 
     # ------------------------------------------------------------------ the coupled run
-    def coupled_run(self, Th_all, m_list, S_end, dt, rec_every=25, rho_nbhd=None, n_dirs=4, rng=None, record_final=True):
+    def coupled_run(self, Th_all, m_list, S_end, dt, rec_every=25, rho_nbhd=None, n_dirs=24, rng=None, record_final=True, nb_rows_max=512,
+                    r_fixed=None):
         """
         The m-systems (first m rows of Th_all) coupled synchronously to the M-row reference (M = Th_all.shape[0], the
         mean-field flow's stand-in, as in Theorems D′/D″), integrated by the midpoint rule in slow time.  Records, every
         rec_every steps: s, D_m (mean square, G⁻¹ metric), the reference's fit error, physical rms spread and rms drift,
-        κ_R at the reference particles (max) and, with rho_nbhd, over their G⁻¹-neighbourhood of that radius (Monte Carlo),
+        κ_R at the reference particles (max) and, with rho_nbhd, over the boundary sphere of their G⁻¹-neighbourhood of that
+        radius (deterministic search with n_dirs directions on at most nb_rows_max randomly chosen reference particles); with
+        r_fixed (a residual on the grid, e.g. that of a stationary measure μ*) the same two statistics with that frozen residual
+        (kR_ref_fixed, kR_ref_nbhd_fixed: κ_R[μ*] over the neighbourhood of the reference's current support, a proxy for the
+        mean-field flow's (H) free of the reference's sampling fluctuation) and ‖r_ref − r_fixed‖_{L¹(ρ)} (resid_dev_L1),
         κ_R at the m-particles (max), the function-level distances ‖f̂_Θ − f̂_Θ̄‖_{L²(ρ)} (the same m particles; bounded by
         L_ϑ^G·mean‖δ_i‖) and ‖f̂_Θ − f̂_ref‖_{L²(ρ)} (against the M-reference, the stand-in for f̂[μ_s]), and the mean of ‖δ_i‖_{G⁻¹}.
         """
         rng = np.random.default_rng(0) if rng is None else rng
         M = Th_all.shape[0]
+        nb_rows = None if nb_rows_max is None or M <= nb_rows_max else rng.choice(M, nb_rows_max, replace=False)
         m_list = [int(m) for m in m_list]
         sys_ = {m: Th_all[:m].copy() for m in m_list + [M]}
         n_steps = int(round(S_end / dt))
-        rec = dict(s=[], fit=[], spread=[], drift_rms=[], kR_ref=[], kR_ref_nbhd=[],
+        rec = dict(s=[], fit=[], spread=[], drift_rms=[], kR_ref=[], kR_ref_nbhd=[], kR_ref_fixed=[], kR_ref_nbhd_fixed=[], resid_dev_L1=[],
                    D={m: [] for m in m_list}, kR_m={m: [] for m in m_list}, hnorm={m: [] for m in m_list},
                    hnorm_mf={m: [] for m in m_list}, dev1={m: [] for m in m_list})
         for k in range(n_steps):
@@ -200,7 +210,11 @@ class AveragedSlowLoop:
                 rec['drift_rms'].append(float(np.sqrt(np.mean(np.sum(self.drift(ref) ** 2 / self.G[None, :], axis=1)))))
                 kr = self.kappa_R(r_ref, ref)
                 rec['kR_ref'].append(float(kr.max()))
-                rec['kR_ref_nbhd'].append(self.kappa_R_neighbourhood(r_ref, ref, rho_nbhd, n_dirs, rng) if rho_nbhd else float('nan'))
+                rec['kR_ref_nbhd'].append(self.kappa_R_neighbourhood(r_ref, ref, rho_nbhd, n_dirs, radii=(1.0,), rows=nb_rows) if rho_nbhd else float('nan'))
+                if r_fixed is not None:
+                    rec['kR_ref_fixed'].append(float(self.kappa_R(r_fixed, ref).max()))
+                    rec['kR_ref_nbhd_fixed'].append(self.kappa_R_neighbourhood(r_fixed, ref, rho_nbhd, n_dirs, radii=(1.0,), rows=nb_rows) if rho_nbhd else float('nan'))
+                    rec['resid_dev_L1'].append(float(np.mean(np.abs(r_ref - r_fixed))))
                 fh_ref = self.f_hat(ref)
                 for m in m_list:
                     d = sys_[m] - ref[:m]
@@ -211,7 +225,7 @@ class AveragedSlowLoop:
                     fh_m = self.f_hat(sys_[m])
                     rec['hnorm'][m].append(float(np.sqrt(np.mean((fh_m - self.f_hat(ref[:m])) ** 2))))      # ‖f̂_Θ − f̂_Θ̄‖ (same m particles)
                     rec['hnorm_mf'][m].append(float(np.sqrt(np.mean((fh_m - fh_ref) ** 2))))              # ‖f̂_Θ − f̂_ref‖ (the M-reference as f̂[μ_s])
-        for key in ('s', 'fit', 'spread', 'drift_rms', 'kR_ref', 'kR_ref_nbhd'):
+        for key in ('s', 'fit', 'spread', 'drift_rms', 'kR_ref', 'kR_ref_nbhd', 'kR_ref_fixed', 'kR_ref_nbhd_fixed', 'resid_dev_L1'):
             rec[key] = np.array(rec[key])
         for key in ('D', 'kR_m', 'hnorm', 'hnorm_mf', 'dev1'):
             rec[key] = {m: np.array(v) for m, v in rec[key].items()}
@@ -229,7 +243,8 @@ def whitened_lipschitz_constants(net, G, x_box, n_samples=60000, seed=0, h=1e-5)
     by a search over sampled ϑ (physical and unconstrained) and a grid in |x| ≤ x_box with a Nelder–Mead polish, together
     with closed-form upper bounds: L_ϑ^G ≤ (G_a + G_c(a_max e^{−1/2}/s_min)² + G_s(a_max e^{−1}(s_max − s_min)/(2s_min))²)^{1/2}
     (per-coordinate suprema |∂_αΦ̃| ≤ 1, |∂_γΦ̃| ≤ a_max e^{−1/2}/s_min, |∂_κΦ̃| ≤ a_max·2e^{−1}/s_min·(s_max − s_min)/4) and
-    L₂^G ≤ λ_G·a_max/s_min² (the closed form of `exp_chaos_uniform.lipschitz_constants_exact`).
+    L₂^G ≤ λ_G·a_max/s_min² (the closed form of `exp_chaos_uniform.lipschitz_constants_exact`; loose by λ_G/G_c when the
+    supremum sits in the centre coordinate, where it equals G_c·a_max/s_min²: referee round 8, D3-7).
     """
     from scipy.optimize import minimize
     G = np.asarray(G, float); sqG = np.sqrt(G)
@@ -292,12 +307,60 @@ def theorem_constants(loop, L_th_G, L_2_G, R0, kappa, Lambda1, rho_prime):
 
 
 def Lambda1_from_profile(s, a, kappa, s1):
-    """Λ₁ := ∫₀^{s₁}(κ − a(s))₊ ds from a sampled profile a(s) (trapezoid)."""
+    """Λ₁ := ∫₀^{s₁}(κ − a(s))₊ ds from a sampled profile a(s): trapezoid on the grid points ≤ s₁ together with the point s₁
+    itself (a linearly interpolated there), so that the integral runs exactly to s₁ (referee round 8, D3-6)."""
     s = np.asarray(s, float); a = np.asarray(a, float)
-    mask = s <= s1
-    if mask.sum() < 2:
+    if s1 <= s[0]:
         return 0.0
-    return float(np.trapezoid(np.maximum(kappa - a[mask], 0.0), s[mask]))
+    grid = np.concatenate([[0.0], s[(s > 0.0) & (s < s1)], [s1]])
+    vals = np.interp(grid, s, a)
+    return float(np.trapezoid(np.maximum(kappa - vals, 0.0), grid))
+
+
+def fibonacci_sphere(n):
+    """n nearly uniformly spread unit vectors in ℝ³ (Fibonacci lattice on the sphere)."""
+    i = np.arange(n) + 0.5
+    phi = np.arccos(1 - 2 * i / n)
+    th = np.pi * (1 + 5 ** 0.5) * i
+    return np.column_stack([np.cos(th) * np.sin(phi), np.sin(th) * np.sin(phi), np.cos(phi)])
+
+
+def stationary_atoms(loop, Th0, newton_iters=40, h=1e-6):
+    """
+    A critical point of J_K (K = Th0.shape[0] atoms, each of weight 1/K) by L-BFGS on J_K with the analytic gradient followed
+    by a Newton polish with the finite-difference Hessian; as a K-atom measure it is a stationary measure of the mean-field
+    flow (𝔄₀) (its atoms are critical points of 𝒱[μ*]).  Returns (Θ*, ∇J_K(Θ*) sup-norm, whitened Hessian eigenvalues).
+    """
+    from scipy.optimize import minimize
+    K = Th0.shape[0]
+    fun = lambda v: K * loop.L_bar(v.reshape(K, 3)) + 0.5 * loop.sigma0 * float(np.sum((v.reshape(K, 3) - loop.theta0[None, :]) ** 2 / loop.G[None, :]))
+    jac = lambda v: loop.grad_J(v.reshape(K, 3)).ravel()
+    res = minimize(fun, Th0.ravel(), jac=jac, method='L-BFGS-B', options=dict(maxiter=20000, gtol=1e-12, ftol=1e-16))
+    v = res.x
+    d = 3 * K
+
+    def hess(v):
+        H = np.zeros((d, d))
+        for j in range(d):
+            e = np.zeros(d); e[j] = h
+            H[:, j] = (jac(v + e) - jac(v - e)) / (2 * h)
+        return 0.5 * (H + H.T)
+    for _ in range(newton_iters):
+        g = jac(v)
+        if np.linalg.norm(g) < 1e-14:
+            break
+        v = v - np.linalg.solve(hess(v), g)
+    W = np.kron(np.eye(K), np.diag(loop.sqG))
+    return v.reshape(K, 3), float(np.abs(jac(v)).max()), np.linalg.eigvalsh(W @ hess(v) @ W)
+
+
+def mixture_start(atoms, M, rng, jitter, G):
+    """An i.i.d. cloud from the mixture μ₀ = (1/K)Σ_k N(ϑ*_k, jitter²·G) in the unconstrained coordinates (a Gaussian of
+    standard deviation `jitter` in the G⁻¹ metric around each atom, atoms chosen uniformly): the warm start of Theorem D‴'s
+    numerics, close to the stationary K-atom measure."""
+    K = atoms.shape[0]
+    kk = rng.integers(0, K, M)
+    return atoms[kk] + jitter * rng.standard_normal((M, 3)) * np.sqrt(np.asarray(G, float))[None, :]
 
 
 # ---------------------------------------------------------------------- initial clouds
@@ -315,3 +378,76 @@ def warm_start(net, bumps, M, rng, a_sd=0.15, c_sd=0.1, s_logsd=0.1):
     A = np.array([b[0] for b in bumps]); C = np.array([b[1] for b in bumps]); S = np.array([b[2] for b in bumps])
     a0 = K * A[kk] + rng.normal(0, a_sd, M); c0 = C[kk] + rng.normal(0, c_sd, M); s0 = S[kk] * np.exp(rng.normal(0, s_logsd, M))
     return net.unconstrained(a0[:, None], c0[:, None], s0)
+
+
+# ---------------------------------------------------------------------- Proposition D‴.5: the weight-sensitivity law at finite m
+def weighted_energy_grad(loop, w, Th):
+    """∇_{ϑ_k} of the mean-field energy of μ_w = Σ_k w_k δ_{ϑ_k} (weights w ≥ 0, not necessarily normalised):
+    𝒢_w(Θ) = ½⟨(f − Σ_k w_kΦ̃(·;ϑ_k))²⟩_ρ + (σ₀/2)Σ_k w_k‖ϑ_k − ϑ⁰‖²_{G⁻¹}, so ∇_{ϑ_k}𝒢_w = w_k∇_ϑ𝒱[μ_w](ϑ_k); returns the (K,3) array
+    of ∇_ϑ𝒱[μ_w](ϑ_k) (the weights divided out), whose zeros are the stationary K-atom measures with weights w."""
+    a, c, s, diff, phi = loop.features(Th)
+    r = loop.F - phi @ (np.asarray(w, float) * a)
+    return loop.grad_V_L(r, Th) + loop.sigma0 * (Th - loop.theta0[None, :]) / loop.G[None, :]
+
+
+def weighted_stationary_atoms(loop, w, Th0, iters=100, h=1e-6, tol=1e-13, w0=None, n_cont=1):
+    """Newton's method (finite-difference Jacobian, backtracking on the residual norm) on ∇_ϑ𝒱[μ_w](ϑ_k) = 0, k = 1..K, from Th0;
+    with w0 the weights are moved from w0 to w in n_cont continuation steps (Newton at each).  Returns (Θ*(w), sup-norm residual)."""
+    K = Th0.shape[0]; d = 3 * K
+    v = Th0.ravel().copy()
+    w = np.asarray(w, float)
+    path = [w] if w0 is None else [np.asarray(w0, float) + (w - np.asarray(w0, float)) * (j + 1) / n_cont for j in range(n_cont)]
+    for wj in path:
+        F = lambda v, wj=wj: weighted_energy_grad(loop, wj, v.reshape(K, 3)).ravel()
+        for _ in range(iters):
+            g = F(v)
+            gn = np.abs(g).max()
+            if gn < tol:
+                break
+            J = np.zeros((d, d))
+            for j in range(d):
+                e = np.zeros(d); e[j] = h
+                J[:, j] = (F(v + e) - F(v - e)) / (2 * h)
+            step = np.linalg.solve(J, g)
+            lam = 1.0
+            while lam > 1e-6:
+                vn = v - lam * step
+                if np.abs(F(vn)).max() < gn:
+                    break
+                lam *= 0.5
+            v = vn
+    return v.reshape(K, 3), float(np.abs(weighted_energy_grad(loop, w, v.reshape(K, 3))).max())
+
+
+def weight_sensitivity(loop, w, atoms, h=1e-4):
+    """S[k, :, j] = ∂ϑ*_k/∂w_j (unconstrained coordinates) by central differences of the weighted stationary point, (K,3,K)."""
+    K = atoms.shape[0]
+    S = np.zeros((K, 3, K))
+    for j in range(K):
+        wp = np.array(w, float); wp[j] += h
+        wm = np.array(w, float); wm[j] -= h
+        Tp, rp = weighted_stationary_atoms(loop, wp, atoms)
+        Tm, rm = weighted_stationary_atoms(loop, wm, atoms)
+        assert rp < 1e-9 and rm < 1e-9
+        S[:, :, j] = (Tp - Tm) / (2 * h)
+    return S
+
+
+def predicted_stationary_D(S, wbar, m, M, G):
+    """E D_∞ ≈ (1/m − 1/M)·Σ_k w̄_k tr(G^{−1/2} S_k C̃ S_kᵀ G^{−1/2}), C̃ := diag(w̄) − w̄w̄ᵀ: the mean-square stationary distance of the
+    shared-particle coupling at leading order in the weight fluctuation w^m − w^M (Proposition D‴.5)."""
+    wbar = np.asarray(wbar, float); G = np.asarray(G, float)
+    Ct = np.diag(wbar) - np.outer(wbar, wbar)
+    tot = 0.0
+    for k in range(S.shape[0]):
+        Sk = S[k] / np.sqrt(G)[:, None]                                    # whitened rows
+        tot += wbar[k] * float(np.trace(Sk @ Ct @ Sk.T))
+    return (1.0 / m - 1.0 / M) * tot
+
+
+def cluster_weights(Th, atoms, G):
+    """Assign each row of Th to the nearest atom (G⁻¹ metric); returns (labels, weights n_k/m)."""
+    d2 = np.sum((Th[:, None, :] - atoms[None, :, :]) ** 2 / np.asarray(G, float)[None, None, :], axis=2)
+    lab = np.argmin(d2, axis=1)
+    K = atoms.shape[0]
+    return lab, np.array([np.mean(lab == k) for k in range(K)])

@@ -279,9 +279,15 @@ found the construction.
   the leak that has no counterpart in the cited work. (iv) The limits are stated with the result: a connected initial
   support that splits between basins violates the hypothesis for all times (the characteristic flow is a homeomorphism),
   and the coupling then has a floor of pairs in different basins; the real loop at finite k_e is not covered.
+- **Proposition D‴.5 (the weight-sensitivity law).** At finite m the stationary coupled distance is the multinomial fluctuation
+  of the cluster weights propagated through the implicit function w ↦ Θ*(w): a delta-method statement (the Gaussian limit of a
+  smooth function of a multinomial), standard in statistics; what is specific is its object (the shared-particle coupling of a
+  particle approximation to a stationary K-atom measure, with the covariance (1/m − 1/M)(diag w̄ − w̄w̄ᵀ)) and its role as the
+  sharp form of the theorem's constant (stiffness⁻¹ × feature correlations against κ⁻¹L_ϑ^GK_Φ).
 - **Verdict: the technique (synchronous coupling + bootstrap + bounded differences) is standard; the sign structure of the
   interaction and the local, residual-weighted hypothesis — and with them a uniform-in-time statement in a regime where the
-  network learns — are new in propagation of chaos for adaptive control.** Numerics: `exp_chaos_learning.py`.
+  network learns — are new in propagation of chaos for adaptive control; the theorem's regime is asymptotic in m and the
+  finite-m law is a delta-method statement, new in its object.** Numerics: `exp_chaos_learning.py`.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 
