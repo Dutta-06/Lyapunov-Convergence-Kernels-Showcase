@@ -209,3 +209,31 @@ def test_the_lifted_orbit_measure_does_not_depend_on_m():
         Thb, xb = _real_step(net, Thb, xb, t, loop.nearest.leak_target)
         t += 1e-3
     assert OT.W2_empirical(Tha, Thb, G) > 1e-3                                              # the weights' cross-cluster transport
+
+
+# ---------------------------------------------------------------------- Proposition D‴.15: the transverse spectrum of a lifted orbit
+def test_transverse_spectrum_of_the_lifted_orbit_is_the_ghost_spectrum_and_the_collective_block_is_the_K_atom_loop():
+    """Proposition D‴.15 on the matching masses: the lift of the 3-atom orbit to m = 6 is a periodic orbit; each class's separation
+    subspace is invariant under its monodromy and carries the ghost particle's monodromy (exponents σ₀/k_e + O(k_e⁻²) at zero residual);
+    the complement carries the 3-atom loop's monodromy."""
+    from src.core import lifted_orbit as LO
+    net = _net()
+    exact = _exact(net)
+    KE = 25.0
+    x_ref_dot = lambda t: np.array([2.0 * np.cos(t)])
+    clK = LO.ClassLeakLoop(net, F_VEC, X_REF, x_ref_dot, PER, KE, G, SIGMA0, exact)
+    zK, DPK, res = clK.shoot(np.concatenate([X_REF(0.0), exact.ravel()]), 3, max_iter=6, tol=1e-10)
+    assert res < 1e-10                                                        # the exact representation with e = 0 is the 3-atom orbit
+    labels = np.array([0, 0, 1, 1, 2, 2])
+    cl6 = LO.ClassLeakLoop(net, F_VEC, X_REF, x_ref_dot, PER, KE, G, SIGMA0, exact[labels])
+    z6 = LO.lift(zK, labels, 1, 3)
+    assert np.linalg.norm(cl6.poincare(z6, 6) - z6) < 1e-10                    # the lift is a periodic orbit of the 6-loop
+    DP6 = LO.monodromy_fd(cl6, z6, 6)
+    for k, B in LO.class_separation_bases(labels, 1, 3).items():
+        lam, ex, defect = LO.compression_spectrum(DP6, B, PER)
+        M, exg, resg = LO.ghost_monodromy(clK, zK, 3, k, exact[k])
+        assert defect < 1e-6 and resg < 1e-9
+        assert np.abs(ex - exg).max() < 1e-6 and np.abs(ex - SIGMA0 / KE).max() < 1e-5   # σ₀/k_e = 2.83·10⁻⁴ at zero residual
+    lamc, exc, dc = LO.compression_spectrum(DP6, LO.collective_basis(labels, 1, 3), PER)
+    exK = np.sort(-np.log(np.abs(np.linalg.eigvals(DPK))) / PER)
+    assert dc < 1e-6 and np.abs(exc[:-1] - exK[:-1]).max() < 1e-6              # the parameter exponents (the error channel's is at the FD floor)

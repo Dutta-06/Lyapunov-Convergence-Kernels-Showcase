@@ -42,8 +42,9 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   slow loop (Theorem D‴: the flat convexity of the loss makes the particle interaction contract, and the fitted
   configuration's second-order optimality replaces the dominant leak), with the finite-size weight-sensitivity law (Proposition D‴.5),
   the real loop on a warm start (Corollary D‴.7), the leak's prior as a design input of the window (Proposition D‴.9) and the
-  barycentric OT leak's mass constraint, which removes the finite-size floor (Proposition D‴.12); rounds 7–10 of the review log cover
-  the first three, and Proposition D‴.12's review follows.
+  barycentric OT leak's mass constraint, which removes the finite-size floor (Proposition D‴.12) — in the real loop too, where the
+  collapsed subspace carries one K₀-atom orbit for every commensurate size (Corollary D‴.14, Proposition D‴.15); rounds 7–10 of the
+  review log cover the first three, and the review of the last three follows.
 
 ---
 
@@ -150,9 +151,9 @@ n = 3 and NTK results contradict them.
 | [LITERATURE_TRANSPORT.md](LITERATURE_TRANSPORT.md) | claim-by-claim literature and novelty audit |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5–10, archived version 2 of the theory |
-| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `ot_leak.py` (Proposition D‴.12), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
+| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `ot_leak.py` (Proposition D‴.12), `lifted_orbit.py` (Corollary D‴.14, Proposition D‴.15), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 93 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 96 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -161,7 +162,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 93 tests, about 20 minutes
+python -m pytest tests                          # 96 tests, about 22 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 
