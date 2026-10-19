@@ -173,15 +173,26 @@ Each branch states what is proved, what is open, and the first concrete step.
     \item \emph{Done (Theorem C$'$, Section~\ref{sec:thmCprime}):} the OT leak toward priors with a different number
       of atoms, using optimal plans with barycentric projection; it is Lloyd's algorithm in continuous time, and its
       bias is the centroid defect of the ideal.
-    \item \emph{Open:} its mean-field form (a general prior $\nu$ and a general $\mu$, where the barycentric
-      projection is the superdifferential of $\frac12W^2(\cdot,\nu)$; Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}),
-      and adaptive priors ($\nu$ itself learned).
-    \item \emph{Done (Proposition D$'''$.9, Section~\ref{sec:thmDppp}):} the nearest-atom leak toward a prior measure
-      inherits Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 inside the Voronoi cells; the prior is a
-      design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window closing as the
-      prior is misplaced) and of the floors (which grow with the stationary amplitudes). \emph{Open:} the
-      barycentric OT leak's mass constraint against the weight fluctuation (equal-mass Lloyd dynamics with the fit
-      term).
+    \item \emph{Open (in part):} its mean-field form --- done for an atomic prior (the Laguerre-cell leak,
+      Proposition D$'''$.12), open for a general prior $\nu$ and a general $\mu$ (where the barycentric projection
+      is the superdifferential of $\frac12W^2(\cdot,\nu)$; Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008})
+      --- and adaptive priors ($\nu$ itself learned).
+    \item \emph{Done (Proposition D$'''$.9, Section~\ref{sec:thmDppp}):} the nearest-atom leak toward a prior
+      measure inherits Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 inside the Voronoi cells; the
+      prior is a design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window
+      closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes).
+    \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
+      fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
+      Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
+      the masses to the prior's, so on the sizes commensurate with the masses the finite-$m$ stationary measure is
+      the mean-field one exactly (the replicated weighted configuration is a critical point for every such $m$, by
+      total unimodularity and $c$-cyclical monotonicity), and otherwise differs from it by at most $K_0 - 1$ split
+      particles; for an atomic prior the mean-field form of the barycentric leak is the Laguerre-cell leak.
+      \emph{Open:} the uniform-in-time coupling through the transit (the $m$-system is no longer an i.i.d.\ sample
+      after the mass transfer); a soft (entropic or penalised) mass constraint interpolating between the two leaks;
+      the mean-field form for a general prior $\nu$ (the barycentric projection as the superdifferential of
+      $\frac12W^2(\cdot,\nu)$, Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}) and adaptive priors ($\nu$,
+      and its masses, learned).
     \item Transfer: transporting a learned measure to a new plant.
   \end{itemize}
 

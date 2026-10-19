@@ -187,6 +187,19 @@ is a delta-method statement, new in its object.}
     the bias raises the coupling's floors (on the instance the weight sensitivity rises with the amplitudes): a
     bias--variance trade-off stated for the particle system. Verdict: standard object, new design statement; the
     function-level sensitivity law is the delta method once more.
+  \item \emph{Proposition D$'''$.12 (the mass constraint).} Capacity-constrained and equal-mass quantisation
+    through optimal plans, and semi-discrete optimal transport with its Laguerre cells, are classical
+    (\cite{S19,S42}); the integrality of the transportation polytope and the forest structure of its vertices are
+    textbook (\cite{S40}); $c$-cyclical monotonicity is the standard optimality criterion (\cite{S41}). What is
+    new is the observation that the finite-$m$ floor of the mean-field limit of an adaptive law is carried by a
+    conservation law of its leak (the cluster masses under the nearest-atom leak), and that a design of the leak
+    --- the mass constraint of the OT plan --- breaks it: on the commensurate sizes the stationary measure of the
+    particle system coincides with the mean-field one, and the finite-$m$ fluctuation of the plan is counted (at
+    most $K_0 - 1$ split particles) rather than estimated. Propagation of chaos with an exactly $m$-independent
+    stationary law is not in the literature we know of; the mean-field form of the barycentric leak for an atomic
+    prior (the Laguerre-cell leak) was Section~\ref{sec:program}'s open item. Numerics: \code{exp_ot_leak.py}.
+    Verdict: textbook ingredients, new mechanism and new object (a conservation law of the leak as the source of
+    the finite-size floor, broken by the plan's mass constraint).
 \end{itemize}
 
 \begin{proof}
@@ -832,7 +845,7 @@ $m = 64$), unlike the $\sigma$-modification's seed of round 9, which migrated be
 \smallskip
 \noindent\emph{The function-level law for the $\sigma$-modification (table 4).} Against the warm runs of Theorem
 D$'''$'s numerics ($M = 2048$, last window): the predicted root-mean-square
-$(1/m - 1/M)^{1/2}(\tr F\tilde CF^\T/N)^{1/2}$ is $0.0419$, $0.0207$, $0.00984$ against the measured means
+$(1/m - 1/M)^{1/2}\allowbreak(\tr F\tilde CF^\T/N)^{1/2}$ is $0.0419$, $0.0207$, $0.00984$ against the measured means
 $0.0307\pm0.0097$, $0.0154\pm0.0033$, $0.00467\pm0.0012$ (ratios $0.73$, $0.74$, $0.48$; a mean of norms over four
 seeds lies below the root-mean-square).
 
