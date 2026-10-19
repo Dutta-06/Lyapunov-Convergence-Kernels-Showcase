@@ -138,7 +138,8 @@ def count_stats(labs):
     counts = np.array([[int(np.sum(l == k)) for k in range(3)] for l in labs])
     hops = int(np.sum(np.any(np.diff(labs.astype(int), axis=0) != 0, axis=1)))
     frac = {}
-    for c in map(tuple, counts):
+    for c in counts:
+        c = tuple(int(x) for x in c)
         frac[c] = frac.get(c, 0) + 1
     frac = {k: v / len(counts) for k, v in frac.items()}
     return counts, hops, frac
@@ -155,9 +156,10 @@ def report(res, table, t0=None):
     arr = {}
     for tau0 in TAUS:
         pred = gibbs_prediction(table, tau0); pred0 = gibbs_prediction(table, tau0, with_hessian=False)
-        top = sorted(pred.items(), key=lambda kv: -kv[1])[:5]
+        top = sorted(pred0.items(), key=lambda kv: -kv[1])[:5]; topH = sorted(pred.items(), key=lambda kv: -kv[1])[:3]
         lines += [f"## τ₀ = {tau0} (horizon {S_END[tau0]:g} slow units; the OT leak's barrier per misplaced particle σ₀Δ_ν²/2 = {0.5 * SIGMA0 * 6.263 ** 2:.3f} = {0.5 * SIGMA0 * 6.263 ** 2 / tau0:.0f}τ₀)", "",
-                  "Gibbs (Laplace) prediction for the nearest-atom leak, P(n): " + ", ".join(f"{n}: {p:.3f}" for n, p in top) + f"; without the Hessian factors P(5, 5, 5) = {pred0[(5, 5, 5)]:.3f}.", "",
+                  "Gibbs prediction for the nearest-atom leak at leading order (entropy × energy, multinomial(n)·exp(−m𝒢*_n/τ₀)), P(n): " + ", ".join(f"{n}: {p:.3f}" for n, p in top)
+                  + "; with the Laplace determinant factors: " + ", ".join(f"{n}: {p:.3f}" for n, p in topH) + " — the determinant factors over-weight the count vectors whose over-weighted class has a nearly flat separation block (a soft mode, where the quadratic approximation fails; Remark D‴.11), and are not used in the reading.", "",
                   "| leak | seed | hop records / records | time fraction by counts (top four) | mean |w − q|₁ | final counts |", "|---|---|---|---|---|---|"]
         for leak in ('nearest', 'ot'):
             for r in [r for r in res if r['tau0'] == tau0 and r['leak'] == leak]:
@@ -172,10 +174,10 @@ def report(res, table, t0=None):
     for ta, tb in ((0.01, 0.02), (0.005, 0.01)):
         if rates[ta] > 0 and rates[tb] > 0:
             est.append((ta, tb, float(np.log(rates[tb] / rates[ta]) / (1 / ta - 1 / tb))))
-    bal = {tau0: (np.mean([arr[('nearest', tau0, s)][3] for s in SEEDS]), np.mean([arr[('ot', tau0, s)][3] for s in SEEDS]), gibbs_prediction(table, tau0)[(5, 5, 5)]) for tau0 in TAUS}
+    bal = {tau0: (np.mean([arr[('nearest', tau0, s)][3] for s in SEEDS]), np.mean([arr[('ot', tau0, s)][3] for s in SEEDS]), gibbs_prediction(table, tau0, with_hessian=False)[(5, 5, 5)]) for tau0 in TAUS}
     lines += ["## Reading", "",
               "Nearest-atom leak: hop rates " + ", ".join(f"{rates[t]:.2e} per slow unit at τ₀ = {t}" for t in TAUS) + (" — Arrhenius barriers ΔV = " + ", ".join(f"{e:.3f} from τ₀ = {a}, {b}" for a, b, e in est) + f" against the leak's ridge height σ₀Δ_ν²/8 = {SIGMA0 * 6.263 ** 2 / 8:.3f}" if est else "") + ". "
-              + "Time fraction at the balanced counts (5, 5, 5), nearest-atom leak against the OT leak against the Gibbs prediction: " + "; ".join(f"τ₀ = {t}: {bal[t][0]:.3f} / {bal[t][1]:.3f} / {bal[t][2]:.3f}" for t in TAUS) + ". "
+              + "Time fraction at the balanced counts (5, 5, 5), nearest-atom leak against the OT leak against the leading-order Gibbs prediction: " + "; ".join(f"τ₀ = {t}: {bal[t][0]:.3f} / {bal[t][1]:.3f} / {bal[t][2]:.3f}" for t in TAUS) + ". "
               + "At the lowest temperature the nearest-atom leak's masses do not move within the horizon (the hop time exceeds it) while the OT leak holds the balanced counts; at the highest the nearest-atom "
               "leak samples its Gibbs law over the count vectors by rare hops and the OT leak still holds the balanced counts most of the time, the excursions being the transits that follow a swap of assignments: "
               "dither does on the Arrhenius time scale, and only in distribution, what the mass constraint does deterministically in ln 2/σ₀.", "",

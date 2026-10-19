@@ -427,6 +427,15 @@ carry the ghost spectrum (Proposition D‴.15, m = 6).
   ghosts to 2·10⁻⁵ relative, = (σ₀ − λ_j(R^G_k))/k_e within 0.2–4.1% (defects ≤ 5.7·10⁻⁸); the saddle's class 0 exponent −9.13·10⁻⁵ (predicted
   −8.77·10⁻⁵, multiplicity 8); period-start offsets from Θ*(w) 1.1·10⁻², 1.6·10⁻² (Theorem J(a)).
 
+## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
+
+- Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
+  σ₀ = 0.15σ_crit; τ₀ = 0.005, 0.01, 0.02 over 50 000, 200 000, 50 000 slow units; two seeds.
+- Nearest-atom leak: hop rates 1.0·10⁻⁵, 5.1·10⁻⁴, 5.6·10⁻³ per slow unit (Arrhenius barriers 0.039–0.048; ridge estimate σ₀Δ_ν²/8 = 0.035);
+  time at the balanced counts 0.00, 0.54, 0.25 against the leading-order Gibbs law 0.86, 0.58, 0.33 (the Laplace determinant factors
+  over-weight soft separation modes and are not used).
+- OT leak: balanced counts 99.6%, 99.2%, 88% of the time; label changes 1–364 per run (swaps followed by transits); the plan's masses stay q.
+
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)
 
 | experiment | result |
