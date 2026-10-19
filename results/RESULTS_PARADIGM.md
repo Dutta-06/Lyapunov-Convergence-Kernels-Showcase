@@ -402,13 +402,15 @@ replication against the transportation LP.
 
 ## Corollary D‴.14 — the real loop with the OT leak (`exp_ot_real_loop.py` → `chaos/ot_real_loop.md`)
 
-- Real loop at k_e = 25 (σ = σ₀/k_e, dt = 10⁻³, 100 time units = 16 periods) from the contracted clouds of Proposition D‴.12's averaged runs
-  (seeds 0, 1; m = 15, 60, M = 510) and from the collapsed lifts; last five periods on the reference orbit.
+- Real loop at k_e = 25 (σ = σ₀/k_e, RK4 plant with the control and the reference evaluated at the stages, Euler parameters, dt = 10⁻³,
+  100 time units = 16 periods) from the contracted clouds of Proposition D‴.12's averaged runs (seeds 0, 1; m = 15, 60, M = 510) and from
+  the collapsed lifts; last five periods on the reference orbit.
 - OT leak: ‖f̂_m − f̂_M‖²_{L²(orbit)} = 7.5·10⁻⁹–2.7·10⁻⁸, against the 3-atom lift 5.2·10⁻¹⁰–3.6·10⁻⁸; fit error along the orbit
-  2.1–3.7·10⁻⁴; rms tracking error 3.9–4.0·10⁻⁵ for every size; W²(μ_m, μ_M) 3.3·10⁻⁴–1.4·10⁻³.
-- Nearest-atom leak: ‖f̂_m − f̂_M‖² = 1.1·10⁻⁴–2.5·10⁻³ = the distance between the lifted orbits of the conserved weights (ratio
-  0.960–1.000; each m-system within 3.3·10⁻⁶ of its own lift); fit errors 0.0125–0.075; rms tracking errors 3.0·10⁻⁴–1.9·10⁻³;
-  W²(μ_m, μ_M) 1.6–5.5.
+  3.5·10⁻⁵–2.9·10⁻⁴; rms tracking error 0.9·10⁻⁶–7.3·10⁻⁶ (the lift 8·10⁻¹²); W²(μ_m, μ_M) 3.3·10⁻⁴–1.4·10⁻³; within-class spreads 0.013–0.033.
+- Nearest-atom leak: ‖f̂_m − f̂_M‖² = 1.1·10⁻⁴–2.5·10⁻³; fit errors 0.012–0.075; rms tracking errors 3.2·10⁻⁴–1.9·10⁻³; W²(μ_m, μ_M) 1.6–5.5.
+  Three of six systems have inadmissible realised weights (margins −0.0035, −0.0011, −0.0022): their lifts are saddle orbits and the systems
+  have split (spread 0.04–0.11; lift-to-lift ratios 0.960, 0.998, 0.961); at the one pair with both weights admissible the disagreement is
+  the lifted orbits' distance to 1.0003, the admissible systems within 2.5·10⁻¹¹ of their lifts (spread 0.0006–0.0013).
 
 Tests (`tests/test_ot_leak.py`): the collapsed 15-system and the 3-atom loop integrate identically under the OT leak at masses q (10⁻¹²
 over 300 steps); the collapsed system with weights (6, 5, 4)/15 stays collapsed under the nearest-atom leak and loses a particle under the
