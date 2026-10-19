@@ -463,10 +463,10 @@ Assume the $K$-atom Hessian $\nabla^2_\Theta\mathcal{G}_{\bar w}(\Theta^*)$ is p
     labels of law $\bar w$ (the $m$ particles are the first $m$ of the $M$ reference particles), suppose
     $w^m, w^M\in W_{\mathrm{adm}}$ and that the $m$-system converges to $\Theta^*_m(w^m)$ and the reference to
     $\Theta^*_M(w^M)$. Then the coupling distance converges to
-    \[
-      D_\infty = \sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}
-      = \sum_kw^m_k\norm{S_k(w^M)(w^m - w^M)}^2_{\Ginv} + O(\norm{w^m - w^M}^3),
-    \]
+    \begin{align*}
+      D_\infty &= \sum_kw^m_k\norm{\vartheta^*_k(w^m) - \vartheta^*_k(w^M)}^2_{\Ginv}\\
+      &= \sum_kw^m_k\norm{S_k(w^M)(w^m - w^M)}^2_{\Ginv} + O(\norm{w^m - w^M}^3),
+    \end{align*}
     and, with $\tilde S_k := G^{-1/2}S_k(\bar w)$ (replacing $S(w^M)$ by $S(\bar w)$ costs a relative
     $O(\norm{w^M - \bar w})$) and $\E[(w^m - w^M)(w^m - w^M)^\T] = (1/m - 1/M)\tilde C$,
     $\tilde C := \operatorname{diag}(\bar w) - \bar w\bar w^\T$ (multinomial counts of the shared labels),
