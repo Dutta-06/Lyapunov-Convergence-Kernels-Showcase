@@ -267,3 +267,28 @@ def bridge_report(loop, Th, gamma):
         out.append(dict(i=int(i), weights=m * gamma[i], dist_nearest_over_Delta=float(d_atoms.min() / loop.Delta_nu),
                         dist_target=float(np.sqrt(np.sum((Th[i] - T[i]) ** 2 / loop.G)))))
     return out
+
+
+# ---------------------------------------------------------------------- dimension-agnostic leak targets (the real loop in any n)
+def barycentric_targets(Th, prior, q, G):
+    """T̄ = mγ·prior for a vertex optimal plan γ from the uniform empirical measure of the rows of Th (m, p) to ν = Σ_j q_jδ_{prior_j}
+    (K₀, p), cost ‖·‖²_{G⁻¹}; the assignment route when mq_j ∈ ℕ, the transportation LP otherwise.  Returns (T̄ (m, p), γ (m, K₀))."""
+    Th = np.asarray(Th, float); prior = np.atleast_2d(np.asarray(prior, float)); q = np.asarray(q, float) / np.sum(q)
+    m, K0 = Th.shape[0], prior.shape[0]
+    C = _cost_matrix(Th, prior, G)
+    counts = m * q
+    if np.allclose(counts, np.round(counts), atol=1e-9):
+        n = np.round(counts).astype(int)
+        rep = np.repeat(np.arange(K0), n)
+        rows, cols = linear_sum_assignment(C[:, rep])
+        gamma = np.zeros((m, K0)); gamma[rows, rep[cols]] = 1.0 / m
+    else:
+        gamma = transport_plan(C, np.full(m, 1.0 / m), q)
+    return m * (gamma @ prior), gamma
+
+
+def nearest_targets(Th, prior, G):
+    """The nearest-atom targets prior[j(ϑ_i)] in the G⁻¹ metric, (m, p), and the labels."""
+    C = _cost_matrix(np.asarray(Th, float), np.atleast_2d(np.asarray(prior, float)), G)
+    lab = np.argmin(C, axis=1)
+    return np.atleast_2d(prior)[lab], lab
