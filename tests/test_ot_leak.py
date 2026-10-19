@@ -55,7 +55,9 @@ def test_plan_is_a_vertex_with_the_prescribed_masses_and_the_single_atom_prior_i
         else:
             assert 1 <= n_split <= loop.K0 - 1                                                     # a vertex: at most K₀ − 1 split rows
         assert np.allclose(loop.leak_target(Th, gamma), m * gamma @ exact)
-        assert abs(W2 - np.sum(gamma * loop.cost_matrix(Th))) < 1e-12
+        # the plan's cost equals the transportation LP's optimum (total unimodularity: the assignment route loses nothing)
+        lp = OT.transport_plan(loop.cost_matrix(Th), np.full(m, 1.0 / m), loop.q)
+        assert abs(W2 - float(np.sum(lp * loop.cost_matrix(Th)))) < 1e-9
     # a single-atom prior: the OT leak is the σ-modification toward that atom
     single = CL.AveragedSlowLoop(net, F_VEC, X_REF, PER, G, SIGMA0, theta0=exact[0], n_quad=200)
     one = OT.OTPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact[:1], n_quad=200)
@@ -71,7 +73,7 @@ def test_the_OT_leak_is_the_G_gradient_flow_of_J_OT_for_commensurate_and_incomme
     for m in (10, 7):                                                     # 10q = (5, 3, 2) commensurate; 7q is not
         Th = CL.mixture_start(exact, m, rng, 0.4, G)
         g = loop.grad_J(Th)
-        assert np.abs(g - _fd_grad(loop, Th)).max() < 1e-6 * max(1.0, np.abs(g).max())   # Danskin: the plan is locally constant
+        assert np.abs(g - _fd_grad(loop, Th)).max() < 1e-8 * max(1.0, np.abs(g).max())   # Danskin: the plan is locally constant (error ~10⁻¹⁰)
         assert np.abs(loop.drift(Th) + G[None, :] * g).max() < 1e-13
         assert loop.commensurate(m) == (m == 10)
 
@@ -135,7 +137,6 @@ def test_forest_bound_and_the_exact_W2_between_empirical_measures():
     A = CL.cold_start(net, 6, rng); B = CL.cold_start(net, 12, rng); C = CL.cold_start(net, 9, rng)
     assert OT.W2_empirical(A, A, G) < 1e-12 and OT.W2_empirical(A, np.repeat(A, 3, axis=0), G) < 1e-12
     # the replication route (6 | 12) agrees with the transportation LP, and W² is symmetric
-    CAB = OT._cost_matrix(np.repeat(A, 2, axis=0), B, G)
     lp = OT.transport_plan(OT._cost_matrix(A, B, G), np.full(6, 1 / 6), np.full(12, 1 / 12))
     assert abs(OT.W2_empirical(A, B, G) - float(np.sum(lp * OT._cost_matrix(A, B, G)))) < 1e-10
     assert abs(OT.W2_empirical(A, C, G) - OT.W2_empirical(C, A, G)) < 1e-10          # 6 ∤ 9: the LP route

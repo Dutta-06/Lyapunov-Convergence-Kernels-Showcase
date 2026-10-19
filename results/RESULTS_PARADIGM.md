@@ -377,16 +377,20 @@ Full table in `results/chaos/table.md` (raw per-seed values in `raw_sup_D.npz`).
   and the barycentric OT leak on the same warm clouds, 600 slow units (4.2/σ₀), 4 seeds; m = 15, 60, 240 vs M = 510 (commensurate) and
   m = 16, 64, 256 vs M = 512 (incommensurate).
 - Cluster weights: conserved exactly under the nearest-atom leak (max deviation 0 in 32 systems); under the OT leak the mass in transit
-  ½|w(0) − q|₁ = 0.117, 0.058, 0.027, 0.024 reaches zero and the weights equal q from s_eq = 93–164 slow units (ln 2/σ₀ = 98). Fit error at
-  the end: 0.067, 0.029, 0.017, 0.012 (nearest) → 2.8·10⁻⁴, 1.2·10⁻⁴, 1.2·10⁻⁴, 0.8·10⁻⁴ (OT).
+  ½|w(0) − q|₁ = 0.117, 0.058, 0.027, 0.024 (seed means; 1–21 particles per system) reaches zero and the weights equal q from s_eq = 93–164
+  slow units (ln 2/σ₀ = 98). Fit error at the end (seed means): 0.067, 0.029, 0.017, 0.012 (nearest) → 2.8·10⁻⁴, 1.2·10⁻⁴, 1.2·10⁻⁴,
+  0.8·10⁻⁴ (OT; the migrated particles still 0.06–0.16 from their atoms, the OT finals not yet stationary).
 - Commensurate sizes, last window: function-level distance² 2.5·10⁻³, 5.2·10⁻⁴, 5.9·10⁻⁵ (nearest; law predicts 4.0·10⁻³, 9.1·10⁻⁴,
   1.4·10⁻⁴) vs 4.9·10⁻⁷, 4.9·10⁻⁸, 7.5·10⁻⁹ (OT, still falling ×0.02–0.035 per 150 slow units); W² 5.1, 2.7, 0.81 (nearest; cross-cluster
   transport ½|w^m − w^M|₁Δ_ν² = 4.9, 2.5, 0.70; slope −0.67 ± 0.13) vs 7.9·10⁻³, 2.3·10⁻³, 6.9·10⁻⁴ (OT, ×0.12 per 150 slow units);
-  synchronous D 0.87, 0.25, 0.017 (nearest) vs 5.8, 3.3, 0.94 (OT: the reassigned particles).
-- Incommensurate sizes: one or two split (bridge) particles per system at 0.28–0.58 Δ_ν from the nearest atom; stationary floors OT
-  3.4·10⁻⁴, 3.1·10⁻⁵, 1.1·10⁻⁶ (function level, slope −2.07 ± 0.05) and 1.16, 0.29, 0.041 (W², slope −1.21 ± 0.04; bound (K₀ − 1)Δ_ν²/m =
-  4.9, 1.2, 0.31) vs nearest 2.5·10⁻³, 5.0·10⁻⁴, 4.4·10⁻⁵ (−1.59 ± 0.27) and 4.8, 2.7, 0.69 (−0.79 ± 0.12); fit error OT 0.028, 0.0093,
-  0.0023, 0.0011 vs nearest 0.061, 0.035, 0.013, 0.012.
+  synchronous D 0.87, 0.25, 0.017 (nearest) vs 5.8, 3.3, 0.94 (OT: the reassigned particles; at 0.95–0.96 of the mismatch plateau and
+  still rising). Exact K × K transport between the weighted stationary measures at the realised weights: 0.997–0.999 of the measured W² at
+  the seven admissible pairs.
+- Incommensurate sizes: one or two split (bridge) particles per system at 0.28–0.58 Δ_ν from the nearest atom; against ν (the mean-field
+  stationary measure): W²(μ_m, ν) = 1.21, 0.33, 0.079, 0.038, m·W² = 19.4–21.0 (slope −0.98 ± 0.03), fit error 0.028, 0.0093, 0.0023, 0.0011,
+  m·fit = 0.45–0.60 (squared slope −1.81 ± 0.05); against the M = 512 reference (two bridge particles of its own) OT 3.4·10⁻⁴, 3.1·10⁻⁵,
+  1.1·10⁻⁶ (function level; m = 16 still relaxing, plateau 2.8·10⁻⁴ in round 11's continued run) and 1.16, 0.29, 0.041 (W²) vs nearest
+  2.5·10⁻³, 5.0·10⁻⁴, 4.4·10⁻⁵ and 4.8, 2.7, 0.69; nearest fit errors 0.061, 0.035, 0.013, 0.012.
 - Masses as a design input: q_δ = (1/3 + δ, 1/3 − δ/2, 1/3 − δ/2) gives fit error 0.0069–0.049 for δ = 0.01–0.1, splitting margin +0.0048,
   +0.0028, +0.0011, −0.0015, −0.0049 (inadmissible between δ = 0.03 and 0.05), diagonal plan unique at every row (ε ≤ 1.04 < 3.13).
 
@@ -416,9 +420,9 @@ carry the ghost spectrum (Proposition D‴.15, m = 6).
 - Real loop at k_e = 25; monodromies by central differences (DOP853, rtol 10⁻¹¹). OT leak at the matching masses: the 3-atom orbit (the exact
   representation, zero tracking error) lifted to m = 6, 9, 15 — return residuals ≤ 1.7·10⁻¹⁵; separation exponents σ₀/k_e = 2.830·10⁻⁴ in
   every class (= ghosts; invariance defects ≤ 1.8·10⁻⁸); collective exponents 2.935·10⁻⁴ … 7.934·10⁻³ identical across m to four digits,
-  Theorem J(b)'s prediction 2.952·10⁻⁴ … 8.091·10⁻³ (0.6–2.4%).
+  Theorem J(b)'s prediction 2.952·10⁻⁴ … 8.091·10⁻³ (0.6–3.2%).
 - σ-modification at (7, 5, 4)/16 (margin +0.00257) and (9, 4, 3)/16 (−0.00219), lifts to m = 16 (residuals ≤ 4.9·10⁻¹⁴): separation exponents =
-  ghosts to four digits, = (σ₀ − λ_j(R^G_k))/k_e within 0.3–3% (defects ≤ 5.7·10⁻⁸); the saddle's class 0 exponent −9.13·10⁻⁵ (predicted
+  ghosts to 2·10⁻⁵ relative, = (σ₀ − λ_j(R^G_k))/k_e within 0.2–4.1% (defects ≤ 5.7·10⁻⁸); the saddle's class 0 exponent −9.13·10⁻⁵ (predicted
   −8.77·10⁻⁵, multiplicity 8); period-start offsets from Θ*(w) 1.1·10⁻², 1.6·10⁻² (Theorem J(a)).
 
 ## Theorem C′ — the barycentric OT leak (`exp_barycentric_leak.py` → `barycentric_leak/`)

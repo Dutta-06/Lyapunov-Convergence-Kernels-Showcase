@@ -6,8 +6,9 @@ The mechanism of Propositions D‴.12 and Corollary D‴.14 is dimension-free: a
 bumps with vector amplitudes, a Lissajous reference x_m(t) = (2 sin t, 1.5 sin 2t), a saturated network with p = 2n + 1 = 5 parameters per
 kernel, and the matching prior (four atoms at the exact representation, masses 1/4). The real loop (k_e = 25, σ = σ₀/k_e, RK4 plant with the
 control held over the step, Euler parameters, dt = 2·10⁻³) runs from the same jittered warm clouds under the nearest-atom leak and under the
-barycentric OT leak (plan recomputed every 100 steps), for 2500 time units = 100 slow units (the transit of the OT leak takes
-about ln 2/σ₀ ≈ 100 slow units): sizes m = 8, 32 and M = 128 (commensurate with the masses). Records: the cluster weights by nearest atom
+barycentric OT leak (plan recomputed every 100 steps), for 2500 time units = 100 slow units = 5/σ₀ at σ₀ = 0.05 (the leak is a design input;
+the transit of the OT leak takes about ln 2/σ₀ ≈ 14 slow units, the within-class contraction 1/σ₀ = 20): sizes m = 8, 32 and M = 128
+(commensurate with the masses). Records: the cluster weights by nearest atom
 (conserved against equalised), the rms tracking error over the last ten periods, the fit error along the reference orbit at the end, the
 distance ‖f̂_m − f̂_M‖²_{L²(orbit)} between sizes and W²_{G⁻¹}(μ_m, μ_M).
 
@@ -34,7 +35,7 @@ G = np.array([1.0, 1.0, 0.25, 0.25, 0.25])
 BUMPS = [(np.array([0.8, 0.3]), np.array([-1.2, 0.8]), 0.7), (np.array([-0.5, 0.6]), np.array([1.0, 1.0]), 0.6),
          (np.array([0.4, -0.7]), np.array([0.8, -1.1]), 0.6), (np.array([-0.6, -0.4]), np.array([-1.0, -0.9]), 0.7)]
 PER = 2 * np.pi
-SIGMA0 = 0.00707
+SIGMA0 = 0.05
 KE = 25.0
 SIG = SIGMA0 / KE
 DT = 2e-3
@@ -98,8 +99,8 @@ def real_run(net, exact, systems, leak, T):
         for k, S in st.items():
             x, Th = S['x'], S['Th']
             e = x - xr
-            u = xrd - KE * e - net.f_hat(x, Th)
-            k1 = f_vec(x)[0] + u; k2 = f_vec(x + 0.5 * DT * k1)[0] + u; k3 = f_vec(x + 0.5 * DT * k2)[0] + u; k4 = f_vec(x + DT * k3)[0] + u
+            xdot = lambda y, tau: f_vec(y)[0] + x_ref_dot(tau) - KE * (y - x_ref(tau)) - net.f_hat(y, Th)   # the closed-loop plant, Θ frozen over the step
+            k1 = xdot(x, t); k2 = xdot(x + 0.5 * DT * k1, t + 0.5 * DT); k3 = xdot(x + 0.5 * DT * k2, t + 0.5 * DT); k4 = xdot(x + DT * k3, t + DT)
             drift = G[None, :] * net.grad_g(x, e, Th) - SIG * (Th - tgt[k])
             S['x'] = x + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4); S['Th'] = Th + DT * drift
             if i % REC_E == 0:
@@ -131,6 +132,15 @@ def e_rms(o):
     return float(np.sqrt(np.mean(o['e2'][msk])))
 
 
+def class_spread(Th, atoms):
+    lab = OT.nearest_targets(Th, atoms, G)[1]
+    d2 = []
+    for k in np.unique(lab):
+        P = Th[lab == k]
+        d2 += list(np.sum((P - P.mean(axis=0)) ** 2 / G[None, :], axis=1))
+    return float(np.sqrt(np.mean(d2)))
+
+
 def fit_orbit(o):
     return float(np.sqrt(np.mean(np.sum((o['fh'] - F_ORB) ** 2, axis=1)) / np.mean(np.sum(F_ORB ** 2, axis=1))))
 
@@ -143,17 +153,18 @@ def report(res, t0=None):
     lines = ["# Corollary D‴.14 in two dimensions: the real closed loop with the OT leak on a planar plant (`exp_ot_2d.py`)", "",
              f"Plant ẋ = f(x) + u on ℝ², f the sum of four Gaussian bumps with vector amplitudes (A_k, C_k, S_k) = {[(tuple(A), tuple(C), S) for A, C, S in BUMPS]}, reference x_m(t) = (2 sin t, 1.5 sin 2t), "
              f"saturated network with n = 2 (a_max = {NET_KW['a_max']}, c_max = {NET_KW['c_max']}, s ∈ [{NET_KW['s_min']}, {NET_KW['s_max']}]), G = diag{tuple(float(g) for g in G)}, matching prior = the exact representation "
-             f"(four atoms with amplitudes 4A_k, masses q = 1/4). Real loop at k_e = {KE:g}, σ = σ₀/k_e with σ₀ = {SIGMA0:g}, dt = {DT:g}, {T_END:g} time units = {T_END / KE:.0f} slow units = {T_END / PER:.0f} periods; "
+             f"(four atoms with amplitudes 4A_k, masses q = 1/4). Real loop at k_e = {KE:g}, σ = σ₀/k_e with σ₀ = {SIGMA0:g} (ln 2/σ₀ = {np.log(2) / SIGMA0:.0f} slow units), RK4 plant with the control and the reference evaluated at the stages and the parameters frozen over the step, Euler parameters, dt = {DT:g}, {T_END:g} time units = {T_END / KE:.0f} slow units = {T_END * SIGMA0 / KE:.1f}/σ₀ = {T_END / PER:.0f} periods; "
              f"warm start = the mixture of Gaussians of width {JITTER:g} (G⁻¹ metric) around the exact representation with random class labels; the same clouds under the nearest-atom leak and under the OT leak "
              f"(plan every {PLAN_EVERY} steps); sizes m = {', '.join(str(m) for m in MS)} and M = {M_REF}; seeds {', '.join(str(r['seed']) for r in res)}; statistics over the last {N_PER} periods.", "",
-             "| seed | leak | m | cluster weights at the start → at the end | rms tracking error (last 10 periods) | fit error along the orbit (end) | ‖f̂_m − f̂_M‖²_{L²(orbit)} (end) | W²_{G⁻¹}(μ_m, μ_M) (end) |",
-             "|---|---|---|---|---|---|---|---|"]
+             "| seed | leak | m | cluster weights at the start → at the end | within-class spread at the end (rms, whitened) | rms tracking error (last 10 periods) | fit error along the orbit (end) | ‖f̂_m − f̂_M‖²_{L²(orbit)} (end) | W²_{G⁻¹}(μ_m, μ_M) (end) |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    net = make_net(); exact = exact_representation(net)
     for r in res:
         for leak in ('ot', 'nearest'):
             R = r[leak]
             for m in MS + (M_REF,):
                 o = R[m]
-                lines.append(f"| {r['seed']} | {leak} | {m} | ({', '.join(f'{x:.3f}' for x in o['w'][0])}) → ({', '.join(f'{x:.3f}' for x in o['w'][-1])}) | {e_rms(o):.3e} | {fit_orbit(o):.3e} | "
+                lines.append(f"| {r['seed']} | {leak} | {m} | ({', '.join(f'{x:.3f}' for x in o['w'][0])}) → ({', '.join(f'{x:.3f}' for x in o['w'][-1])}) | {class_spread(o['Th'], exact):.1e} | {e_rms(o):.3e} | {fit_orbit(o):.3e} | "
                              f"{fdist(o, R[M_REF]):.3e} | {OT.W2_empirical(o['Th'], R[M_REF]['Th'], G):.3e} |")
     # the transit: first weight record from which the OT weights equal q within half a particle
     eq = []

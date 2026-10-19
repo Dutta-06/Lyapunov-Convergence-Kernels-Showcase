@@ -37,7 +37,8 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
   `review/REVIEW_round6_Dpp.md` and `review/REVIEW_round6_Jprime.md`, for round 7 `review/REVIEW_round7_E0p3_E0dp.md` and for
-  round 8 `review/REVIEW_round8_Dppp.md`, for round 9 `review/REVIEW_round9_D3b.md` and for round 10 `review/REVIEW_round10_D3c.md`.
+  round 8 `review/REVIEW_round8_Dppp.md`, for round 9 `review/REVIEW_round9_D3b.md`, for round 10 `review/REVIEW_round10_D3c.md`, for
+  round 11 `review/REVIEW_round11_D3d.md` and for round 12 `review/REVIEW_round12_D3e.md`.
 
 ---
 
@@ -105,7 +106,7 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | H.7 | At a frozen measure, the exactly averaged loop is (𝔄) plus an explicit O(1/k_e) correction: a semi-gradient term, whose performative defect is present for every n, and an orbit-area circulation kernel (n ≥ 2). Along the real loop, a second-order averaging term is added (Remark H.7a). | Frozen-measure part proved. Stokes identity and parity hold to machine precision. The expansion is checked through its O(1/k_e) convergence. Non-reciprocity of the exact second variation is checked to 3% (asserted; 1–1.5% measured) and characterised by Theorem I. The full first-order theory predicts the orientation dependence of the learned kernels in the real closed loop to 3% in size and 11% as a vector (cosine 0.994, k_e = 40). | no precedent found (targeted search, round 3); ingredients known (higher-order averaging; performative prediction [S14]; semi-gradient TD [S10], [S11]) |
 | I | Reciprocity at order k_e⁻² is a pairwise property: the antisymmetric kernel A_even + 2K is a coboundary iff it vanishes. For n = 1, A_μ ≡ 0 iff the residual vanishes on the orbit, and the performative non-reciprocity is bounded by the residual. For n ≥ 2 at perfect fit, A_μ ≡ 0 iff the oriented orbit carries no circulation (n = 2: zero winding function) and the residual's Jacobian is symmetric along the orbit; A_μ = 2K when the residual vanishes near the orbit. A_even is the curl of the residual paired with the features plus the residual paired with the Lie bracket of the feature fields. No open set of measures is reciprocal, for any n: the averaged loop is nowhere a gradient flow at order k_e⁻². | proved; every formula checked against the generic second-variation code and, by the round-5 referee, against the exact second variation; the characterisations checked on perfect-fit, curl and zero-current instances | new; the analytic tools (injectivity of Gaussian convolution; Stokes with winding numbers) are classical |
 | D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > L_b′L_ϑ) the bound is uniform in time (Theorem D″), a leak-dominated regime in which the network does not learn (at τ = 0 it collapses to one kernel; at τ > 0 it stays in the dither cloud of the prior) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
-| D‴ | Uniform-in-time propagation of chaos *in the learning regime* for the averaged slow loop (𝔄_m) at τ = 0 (Theorem J′'s leading order): under the synchronous coupling with the mean-field characteristic flow, the interaction term of the coupling identity is −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} + O(D²) — flat convexity of the loss makes it contract whatever the gains — and only the residual-weighted feature curvature R[μ](ϑ) = ⟨r_μ∇²_ϑΦ̃⟩_ρ (Proposition K's R₂) can expand; if along the mean-field flow σ₀I − G^{1/2}RG^{1/2} ⪰ κI on a neighbourhood of the support from a time s₁ on — the strict second-order optimality condition of the fitted configuration, compatible with σ₀ < σ_crit — then sup_s E(1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} ≤ 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) plus a tail exponentially small in m (uniformly in time under exponential convergence of the flow, over horizons e^{cm} without it), no particle changes basin, and the learned function converges at m^{−1/2} uniformly in time while the network learns; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and uniformity coexist; at finite m the stationary coupled distance follows the weight-sensitivity law E D_∞ = (1/m − 1/M)Σ_k w̄_k tr(S̃_kC̃S̃_kᵀ), S = ∂Θ*/∂w the sensitivity of the stationary atoms to the cluster weights (Proposition D‴.5, the sharp form of the theorem's constant); the leak's prior is a design input of the window: with a measure-valued prior (nearest-atom leak) placed on the plant's structure the stationary residual vanishes and the margin is maximal, κ = σ₀, while the floors at parameter and function level rise (1.6–2.2× on the instance, with the amplitudes), and the sign of the residual at a cluster sets its admissible weights — overshoot splits, undershoot stabilises, so a shrunk prior enlarges the admissible set (Proposition D‴.9, Remark D‴.11); the barycentric OT leak of Theorem C′ toward the same prior constrains the cluster masses to the prior's — the nearest-atom leak conserves them, and the floor is the memory of the initial cloud that this conservation law carries — so on the sizes commensurate with the masses the finite-m stationary measure is the mean-field one exactly, both floors vanish and the fit loses the weight bias, while on other sizes at most K₀ − 1 split particles bridge the clusters, with floors O(1/m²) at function level and O(1/m) in W₂ (Proposition D‴.12); in the real loop the collapsed-by-class subspace is invariant and carries the weighted K₀-atom loop, so with the OT leak the lift of one K₀-atom periodic orbit is a periodic orbit of every commensurate size — the same orbit measure, learned function and tracking error exactly, the real loop's finite-size floor being zero — while with the nearest-atom leak it is the lift of the orbit of the realised weights, whose distance between sizes is Corollary D‴.7's floor (Corollary D‴.14); the Floquet spectrum of a lifted orbit is the K₀-atom orbit's together with each class's ghost spectrum of multiplicity n_k − 1, independent of m (Proposition D‴.15) | proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow; it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the coupling carries a floor; the real loop at finite k_e: settled on a warm start by Corollary D‴.7 through Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D‴.5's up to O(1/k_e)), open for a cold start (Remark D‴.4); dither: the entropy method of [S5] (imported); the theorem's regime m ≥ m₀ is asymptotic (m₀ ~ 10²³ on the instance) and Proposition D‴.5 is formal; numerics: on a three-bump instance at σ₀ = 0.15σ_crit the window is realised (κ_R[μ*](N_{0.1}) = 0.0051 < σ₀ = 0.0071 < σ_crit = 0.047) and (H) holds along a warm-start run; the coupled distance saturates (window maxima within 15% over 900 slow units) with slope −1.28 ± 0.30 in m, and the per-seed weight-sensitivity law predicts it within 25% in 9 of 12 cases with per-cluster cosines 0.92–1.00; the exact stationary distance of the replicated weighted configuration reproduces the measured one within 2.3% in all pairs, one m = 16 seed with inadmissible weights sitting on a saddle; a connected cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 (m = 16, 64, 256) decays like m^{−0.64±0.08}; the real loop at k_e = 25 follows its averaged slow dynamics on the same clouds to within 0.7%; for the OT leak the frozen-plan and stationary statements are proved (total unimodularity, c-cyclical monotonicity, the Hessian of D‴.5), the quantisation bounds formal and the uniform-in-time coupling through the transit open; numerics on the same clouds under the two leaks: cluster weights conserved exactly against equalised by s ≈ 100 slow units (ln 2/σ₀ = 98), function-level and W₂ distances at 10⁻⁴ and 10⁻³ of the nearest-atom leak's after 4.2/σ₀ and still falling on the commensurate sizes, slopes −2.07 ± 0.05 (function level) and −1.21 ± 0.04 (W²) on the incommensurate ones, the reference's fit error 0.012 → 8·10⁻⁵; the real loop at k_e = 25 on the same clouds: learned functions of m = 15, 60, 510 within 10⁻⁸ of each other under the OT leak against 10⁻⁴–10⁻³ under the nearest-atom leak (the lifted orbits' distance to a ratio 0.96–1.00), rms tracking error 4·10⁻⁵ for every size against 3·10⁻⁴–1.9·10⁻³; the lifted orbit's transverse spectrum equals the ghosts' and the collective block the K₀-atom loop's (invariance defects ≤ 10⁻⁶) | the two ingredients — the sign of the interaction from flat convexity, and the curvature at the actual rather than the worst-case residual — are new in propagation of chaos for adaptive control; the decomposition Gram + residual×curvature is the one of the interpolation literature ([S39]); the window between Proposition K's collapsed instability and the fitted configuration's stability is new; the finite-size floor as a conservation law of the leak, broken by the plan's mass constraint so that the particle system's stationary measure is exactly the mean-field one, is new; the lift of a weighted K₀-atom orbit as the exact periodic orbit of every commensurate size, with an m-independent Floquet spectrum (the orbit-level form of Proposition K's block structure), is new in adaptive control, where the size of the approximator is usually a nuisance parameter |
+| D‴ | Uniform-in-time propagation of chaos *in the learning regime* for the averaged slow loop (𝔄_m) at τ = 0 (Theorem J′'s leading order): under the synchronous coupling with the mean-field characteristic flow, the interaction term of the coupling identity is −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} + O(D²) — flat convexity of the loss makes it contract whatever the gains — and only the residual-weighted feature curvature R[μ](ϑ) = ⟨r_μ∇²_ϑΦ̃⟩_ρ (Proposition K's R₂) can expand; if along the mean-field flow σ₀I − G^{1/2}RG^{1/2} ⪰ κI on a neighbourhood of the support from a time s₁ on — the strict second-order optimality condition of the fitted configuration, compatible with σ₀ < σ_crit — then sup_s E(1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} ≤ 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) plus a tail exponentially small in m (uniformly in time under exponential convergence of the flow, over horizons e^{cm} without it), no particle changes basin, and the learned function converges at m^{−1/2} uniformly in time while the network learns; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and uniformity coexist; at finite m the stationary coupled distance follows the weight-sensitivity law E D_∞ = (1/m − 1/M)Σ_k w̄_k tr(S̃_kC̃S̃_kᵀ), S = ∂Θ*/∂w the sensitivity of the stationary atoms to the cluster weights (Proposition D‴.5, the sharp form of the theorem's constant); the leak's prior is a design input of the window: with a measure-valued prior (nearest-atom leak) placed on the plant's structure the stationary residual vanishes and the margin is maximal, κ = σ₀, while the floors at parameter and function level rise (1.6–2.2× on the instance, with the amplitudes), and the sign of the residual at a cluster sets its admissible weights — overshoot splits, undershoot stabilises, so a shrunk prior enlarges the admissible set (Proposition D‴.9, Remark D‴.11); the barycentric OT leak of Theorem C′ toward the same prior constrains the cluster masses to the prior's — the nearest-atom leak conserves them, and the floor is the memory of the initial cloud that this conservation law carries — so on the sizes commensurate with the masses the finite-m stationary measure is the mean-field one exactly, both floors vanish and the fit loses the weight bias, while on other sizes at most K₀ − 1 split particles bridge the clusters, with floors O(1/m²) at function level and O(1/m) in W² against the nearest-atom leak's 1/m and m^{−1/2} (Proposition D‴.12); in the real loop the collapsed-by-class subspace is invariant and carries the weighted K₀-atom loop, so with the OT leak the lift of one K₀-atom periodic orbit is a periodic orbit of every commensurate size — the same orbit measure, learned function and tracking error exactly, the real loop's finite-size floor being zero — while with the nearest-atom leak it is the lift of the orbit of the realised weights, whose distance between sizes is Corollary D‴.7's floor (Corollary D‴.14); the Floquet spectrum of a lifted orbit is the K₀-atom orbit's together with each class's ghost spectrum of multiplicity n_k − 1, independent of m (Proposition D‴.15) | proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow; it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the coupling carries a floor; the real loop at finite k_e: settled on a warm start by Corollary D‴.7 through Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D‴.5's up to O(1/k_e)), open for a cold start (Remark D‴.4); dither: the entropy method of [S5] (imported); the theorem's regime m ≥ m₀ is asymptotic (m₀ ~ 10²³ on the instance) and Proposition D‴.5 is formal; numerics: on a three-bump instance at σ₀ = 0.15σ_crit the window is realised (κ_R[μ*](N_{0.1}) = 0.0051 < σ₀ = 0.0071 < σ_crit = 0.047) and (H) holds along a warm-start run; the coupled distance saturates (window maxima within 15% over 900 slow units) with slope −1.28 ± 0.30 in m, and the per-seed weight-sensitivity law predicts it within 25% in 9 of 12 cases with per-cluster cosines 0.92–1.00; the exact stationary distance of the replicated weighted configuration reproduces the measured one within 2.3% in all pairs, one m = 16 seed with inadmissible weights sitting on a saddle; a connected cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 (m = 16, 64, 256) decays like m^{−0.64±0.08}; the real loop at k_e = 25 follows its averaged slow dynamics on the same clouds to within 0.7%; for the OT leak the frozen-plan equivalence and the stationary statement are proved (total unimodularity, c-cyclical monotonicity, the Hessian of D‴.5), the quantisation bounds formal, and Theorem D‴'s coupling applies only to a balanced sample (probability ≈ 0.83/m under an i.i.d. start, and even there formal: Step 8 is written for i.i.d. particles) — for a generic sample the shared-particle coupling keeps the transit's mismatch for ever and a coupling theorem for the OT dynamics is open; numerics on the same clouds under the two leaks: cluster weights conserved exactly against equalised by s ≈ 100 slow units (ln 2/σ₀ = 98), function-level and W² distances at 10⁻⁴ and 10⁻³ of the nearest-atom leak's after 4.2/σ₀ and still falling on the commensurate sizes while the synchronous D sits at 0.95 of its mismatch plateau, the quantisation laws m·W²(μ_m, ν) ≈ 20 (slope −0.98 ± 0.03) and m·fit ≈ 0.55 (squared slope −1.81 ± 0.05) on the incommensurate ones, the reference's fit error 0.012 → 8·10⁻⁵; the real loop at k_e = 25 on the same clouds: learned functions of m = 15, 60, 510 within 10⁻⁸ of each other under the OT leak against 10⁻⁴–10⁻³ under the nearest-atom leak (the lifted orbits' distance to a ratio 0.96–1.00), rms tracking error 4·10⁻⁵ for every size against 3·10⁻⁴–1.9·10⁻³; the lifted orbit's transverse spectrum equals the ghosts' and the collective block the K₀-atom loop's (invariance defects ≤ 10⁻⁶) | the two ingredients — the sign of the interaction from flat convexity, and the curvature at the actual rather than the worst-case residual — are new in propagation of chaos for adaptive control; the decomposition Gram + residual×curvature is the one of the interpolation literature ([S39]); the window between Proposition K's collapsed instability and the fitted configuration's stability is new; the finite-size floor as a conservation law of the leak, broken by the plan's mass constraint so that the particle system's stationary measure is exactly the mean-field one, is new; the lift of a weighted K₀-atom orbit as the exact periodic orbit of every commensurate size, with an m-independent Floquet spectrum (the orbit-level form of Proposition K's block structure), is new in adaptive control, where the size of the approximator is usually a nuisance parameter |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | J′ | At finite m with dither τ = τ₀/k_e and leak σ = σ₀/k_e: the closed loop has an invariant law (unique under a smoothness hypothesis) whose parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with the explicit first-order correction ε∫φ g dπ driven by the first-order drift b of Theorem J as a vector field on parameter space (g solves τ₀∇·(πG∇g) = ∇·(πb)); the stationary tracking error is (2/k_e²)π(L̄_m) + O(k_e⁻³); the stationary parameter process is not reversible, with a circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] + O(ε²), where j₁ = π(b − τ₀G∇g) is the first-order stationary current, nonzero exactly when b is not a G-gradient (Proposition J′.2: the finite-m form of Theorem I's reciprocity defect plus a Hessian commutator from second-order averaging; never a gradient for m ≥ 3) | proved (the Poisson-equation expansion of the invariant measure with the fast error and phase eliminated; three standard theorems imported and named); checked on a single-kernel instance: the first-order prediction removes the O(1/k_e) discrepancy between the real loop's stationary means and the Gibbs measure, the orientation-odd part of the means (the dither version of Remark H.7a) matches its prediction, and the current machinery is checked on the first-order averaged SDE | the technique is the Pavliotis–Stuart / Mattingly–Stuart–Tretyakov expansion; new in its object (a hypoelliptic learning loop with a plant) and in the identification of the first-order non-equilibrium current with the reciprocity defect of Theorem I |
@@ -1852,9 +1853,10 @@ T̄_i := mΣ_jγ_{ij}ϑ⁰_j its barycentric projection,
 the G-gradient flow of J_m^{OT}(Θ) := mL̄(μ_Θ) + (σ₀m/2)W²_{G⁻¹}(μ_Θ, ν) wherever the optimal plan is unique (Danskin's theorem, as in
 Theorem C′(i)), with the vertex-selection solutions of §4b where it is not. Its mean-field form is the *Laguerre-cell leak*: for μ giving
 no mass to their boundaries, the optimal plan from μ to the atomic ν is induced by the map T_μ(ϑ) = ϑ⁰_j on the Laguerre cell
-L_j[μ] := {ϑ : ‖ϑ − ϑ⁰_j‖²_{G⁻¹} − ψ_j ≤ ‖ϑ − ϑ⁰_k‖²_{G⁻¹} − ψ_k for all k}, the dual weights ψ being fixed by μ(L_j[μ]) = q_j (semi-discrete
-optimal transport [S42]), and (𝔄₀^{OT}) is (𝔄₀) with the leak −σ₀(ϑ − T_{μ_s}(ϑ)): the nearest-atom leak of Proposition D‴.9 with the
-Voronoi cells replaced by cells of prescribed masses. Call m *commensurate* with ν if mq_j ∈ ℕ for every j.
+L_j[μ] := {ϑ : ‖ϑ − ϑ⁰_j‖²_{G⁻¹} − ψ_j ≤ ‖ϑ − ϑ⁰_k‖²_{G⁻¹} − ψ_k for all k}, the dual weights ψ fixed by μ(L_j[μ]) = q_j (semi-discrete optimal
+transport [S42]; for a disconnected support the boundaries in the gaps are not unique, but T_μ is unique on supp μ), and (𝔄₀^{OT}) is (𝔄₀)
+with the leak −σ₀(ϑ − T_{μ_s}(ϑ)): the nearest-atom leak of Proposition D‴.9 with the Voronoi cells replaced by cells of prescribed
+masses. Call m *commensurate* with ν if mq_j ∈ ℕ for every j.
 
 (i) *(conservation against constraint)* Along (𝔄_m^ν) on the good event 𝒢_S of Theorem D‴ (Proposition D‴.9(i)) no particle changes
 cell, so the cluster masses w_k(Θ_s) := (1/m)#{i : j(ϑ_i(s)) = k} are conserved: w^m(s) = w^m(0), the multinomial sample of the initial
@@ -1863,10 +1865,16 @@ cloud, and the stationary floor of Proposition D‴.5 is the memory of the initi
 
 (ii) *(the frozen plan)* If m is commensurate, every vertex of the transportation polytope is integral — γ_{ij} ∈ {0, 1/m}: each particle
 is assigned to one atom π(i) and atom j receives exactly mq_j particles — so T̄_i = ϑ⁰_{π(i)} and (𝔄_m^{OT}) is (𝔄_m^ν) with the Voronoi
-assignment j(·) replaced by the plan's assignment π, locally constant in Θ wherever the optimal plan is unique. There J_m^{OT} is C² with
-the leak's Hessian σ₀G⁻¹ ⊗ I, and Theorem D‴, Proposition D‴.5 and Corollary D‴.7 hold for (𝔄_m^{OT}) with the same constants under the
-hypothesis of Proposition D‴.9(i) read with the plan: for every s ≥ 0 the plan assigns each particle to the atom of its reference's
-Laguerre cell L_{·}[μ_s], and N_{ϱ′}(supp μ_s) meets no Laguerre boundary.
+assignment j(·) replaced by the plan's assignment π, locally constant in Θ wherever the optimal plan is unique; there J_m^{OT} is C² with
+the leak's Hessian σ₀G⁻¹ ⊗ I. Theorem D‴'s synchronous coupling applies to (𝔄_m^{OT}) only under the hypothesis of Proposition D‴.9(i)
+read with the plan — for every s ≥ 0 the plan assigns each particle to the atom of its reference's Laguerre cell L_·[μ_s], and
+N_{ϱ′}(supp μ_s) meets no Laguerre boundary — and at s = 0 this requires the sample to be *balanced*, w^m(0) = q (the mean-field flow of
+the mixture start has masses q from the start): an event of probability of order m^{−(K₀−1)/2} under an i.i.d. start — 0.053, 0.014,
+0.0034, 0.0016 at m = 15, 60, 240, 510 on the instance, ≈ 0.83/m. On that event Theorem D‴, Proposition D‴.5 and Corollary D‴.7 go through
+with the same constants except for Step 8, whose McDiarmid bound for the reference's sampling term is written for i.i.d. particles and
+would have to be redone for the stratified sample (mq_k particles i.i.d. within each class). For a generic sample the plan reassigns at
+least ½‖w^m(0) − q‖₁ of the mass at s = 0 and the shared-particle coupling carries that mismatch for ever ((v)); what is proved about the
+OT dynamics in general is the local equivalence above and the stationary statement (iii).
 
 (iii) *(the stationary measure does not depend on m)* Let Θ*(q) = (ϑ*_1, …, ϑ*_{K₀}) be the weighted stationary point of 𝒢_q with the
 prior atoms (Proposition D‴.5 with w = q, each class k leaking toward ϑ⁰_k as in Proposition D‴.9) and ε := max_k‖ϑ*_k − ϑ⁰_k‖_{G⁻¹}. If
@@ -1878,8 +1886,8 @@ learned function f̂*(q) = Σ_kq_kΦ̃(·;ϑ*_k) are therefore the same for ever
     W_{G⁻¹}(μ*_m, μ*_M) = 0,    ‖f̂*_m − f̂*_M‖_{L²(ρ)} = 0    for all commensurate m, M,
 
 against E[D_∞ | adm] = (1/m − 1/M)Σ_kw̄_k tr(S̃_kC̃S̃_kᵀ) and (1/m − 1/M)tr(FC̃Fᵀ)/N under the nearest-atom leak (Propositions D‴.5 and
-D‴.9(iii)), whose stationary measures are moreover at W₂-distance ½‖w^m − w^M‖₁·O(Δ_ν²) = O(Δ_ν²m^{−1/2}) from each other — the
-cross-cluster transport of the weight mismatch, which the shared-particle distance D does not see. The price is the bias of the masses: the
+D‴.9(iii)), whose stationary measures are moreover at squared W₂-distance ½‖w^m − w^M‖₁·O(Δ_ν²) = O(Δ_ν²m^{−1/2}) from each other (W₂
+itself O(Δ_νm^{−1/4})) — the cross-cluster transport of the weight mismatch, which the shared-particle distance D does not see. The price is the bias of the masses: the
 stationary residual r*(q) = f − Σ_kq_kΦ̃(·;ϑ*_k) vanishes iff ν carries an exact representation of the plant *with its masses*,
 Σ_kq_kΦ̃(·;ϑ⁰_k) = f on supp ρ; for masses q_δ displaced from those of the exact representation the residual is O(δ) and the window's margin
 decreases with δ (Proposition D‴.9(ii) with the masses as the parameter), and the designed masses must themselves be admissible, q ∈ W_adm:
@@ -1894,33 +1902,42 @@ T̄_i ∈ conv{ϑ⁰_j : γ_{ij} > 0} — a *bridge particle* between the cluste
 
     W²_{G⁻¹}(μ*_m, μ*(q)) ≤ 4(K₀ − 1)R_Θ²/m + O(K₀²‖S‖²/m²),    ‖f̂*_m − f̂*(q)‖_{L²(ρ)} ≤ 2(K₀ − 1)K_Φ/m + O(K₀(K_Φ + L_ϑ^G‖S‖)/m),
 
-R_Θ the a priori radius of Step 0: the function-level floor is O(K₀²/m²) in square — one order in m below the (1/m − 1/M) law — and the
-W₂ floor keeps the order 1/m, with a deterministic quantisation constant in place of the fluctuation's.
+R_Θ the a priori radius of Step 0 (with the hull of supp ν). The orders are the content, not the constants — on the instance R_Θ = 2865
+makes the first bound 4·10⁶ against a measured 1.0–1.4 at m = 16, and the second 1.00 against 0.018: the function-level floor is O(1/m²)
+in square, one order in m below the (1/m − 1/M) law, and the W² floor is O(1/m) against the nearest-atom leak's O(m^{−1/2}) of (iii) —
+half an order gained in W², a full order at function level — with deterministic constants set by the plan's split pattern (measured
+m·W²(μ*_m, ν) ≈ 20 = 0.5Δ_ν² and m·‖f̂*_m − f‖/‖f‖ ≈ 0.55).
 
-(v) *(the transit)* From a cloud with cluster masses w^m ≠ q the plan assigns a mass ½‖w^m − q‖₁ (up to the split particles) of the
-over-weighted clusters to under-weighted atoms, and these particles migrate between the clusters against the fit force at the leak's rate —
-for the pure leak a migrating particle crosses the Voronoi midpoint at s = ln 2/σ₀. During the transit the synchronous coupling of Theorem D‴
-sees the mass migrating in one system and not in the other at a distance of order Δ_ν, D = O(Δ_ν²‖w^m − w^M‖₁) — it is not a coupling the
-OT leak respects — W²_{G⁻¹}(μ_m, μ_M) is of the same order O(Δ_ν²m^{−1/2}), the sampling term of the cluster masses, and the function-level
-distance is O(K_Φ‖w^m − w^M‖₁) = O(m^{−1/2}); after the transit all three vanish on the commensurate sizes ((iii)). The mean-field flow has
-the same transit: when the clusters of μ₀ have masses w ≠ q the Laguerre boundaries cut the over-weighted clusters, and the mass ½‖w − q‖₁
-migrates.
+(v) *(the transit)* From a cloud with cluster masses w^m ≠ q the plan assigns at least ½‖w^m − q‖₁ of the mass (up to the split
+particles) of the over-weighted clusters to under-weighted atoms, and these particles migrate between the clusters against the fit force
+at the leak's rate — for the pure leak a migrating particle crosses the Voronoi midpoint at s = ln 2/σ₀. During the transit the
+synchronous coupling of Theorem D‴ sees the mass migrating in one system and not in the other at a distance of order Δ_ν,
+D = O(Δ_ν²‖w^m − w^M‖₁) — it is not a coupling the OT leak respects — W²_{G⁻¹}(μ_m, μ_M) is of the same order O(Δ_ν²m^{−1/2}), the
+sampling term of the cluster masses, and the function-level distance is O(K_Φ‖w^m − w^M‖₁) = O(m^{−1/2}). After the transit the two
+measure-level distances vanish on the commensurate sizes ((iii)), while the synchronous D converges from below to the plateau
+Σ_{k≠k′}p_{kk′}Δ²_{kk′} of the mass reassigned in one system and not in the other (0.95–0.96 of it at s = 600 on the instance): the
+memory of the initial masses, erased from the stationary measure, is kept by the shared-particle coupling. A mean-field flow whose
+clusters start with masses w ≠ q has the same transit — the Laguerre boundaries cut the over-weighted clusters and the mass ½‖w − q‖₁
+migrates — but the mixture start of the numerics has mean-field masses q, so there the M-references transit only as finite samples and
+are poor stand-ins for the mean-field flow during the transit.
 
 *Status.* (i) proved on 𝒢_S (Theorem D‴'s per-particle bound keeps every particle within 3ϱ′/4 of its reference, whose cell has margin
-ϱ′). (ii) proved (the transportation constraints are the incidence matrix of a bipartite graph, totally unimodular, so with integral
-right-hand sides every vertex is integral — Hoffman–Kruskal [S40]; a unique optimal vertex of a linear program stays optimal under small
-perturbations of its cost; the proofs of Theorem D‴ and Proposition D‴.5 use the leak only through its Hessian and its a priori bound, as
-in Proposition D‴.9(i), the constancy of the plan being needed for every s ≥ 0 as referee round 10 showed for the Voronoi assignment; the
-Laguerre form of the mean-field leak is semi-discrete optimal transport [S42]). (iii) proved (c-cyclical monotonicity [S41]: for ε < Δ_ν/2
+ϱ′). (ii) the local equivalence proved (the transportation constraints are the incidence matrix of a bipartite graph, totally unimodular, so
+with integral right-hand sides every vertex is integral — Hoffman–Kruskal [S40]; a unique optimal vertex of a linear program stays optimal
+under small perturbations of its cost; the Laguerre form of the mean-field leak is semi-discrete optimal transport [S42]); the coupling
+statement formal — the proofs of Theorem D‴ and Proposition D‴.5 use the leak only through its Hessian and its a priori bound, as in
+Proposition D‴.9(i), the constancy of the plan being needed for every s ≥ 0 (referee round 10), which at s = 0 is the balanced-sample
+event of probability ≈ 0.83/m, and on it Step 8 would have to be redone for the stratified sample (referee round 11). (iii) proved (c-cyclical monotonicity [S41]: for ε < Δ_ν/2
 every off-diagonal pair costs at least ½(Δ_ν − ε)² > ½ε² ≥ every diagonal pair, so along any cycle the diagonal plan is strictly cheaper;
 the diagonal plan is therefore optimal, and every other plan, which differs from it by a nonnegative combination of cycle flows, costs
 strictly more; the Hessian is Proposition D‴.5(i)'s block splitting with the plan frozen; the bias statements are Proposition D‴.9(ii)'s
 implicit-function argument with the masses as the parameter). (iv) the count proved (the vertices of the transportation polytope are the
 plans supported on spanning forests, Klee–Witzgall [S40]); the two bounds formal (they assume the stationary configuration's structure).
-(v) formal; the transit and the three distances are numerical (`exp_ot_leak.py` → `results/chaos/ot_leak.md`, below). Open: the
-uniform-in-time coupling *through* the transit — Theorem D‴'s proof starts from i.i.d. particles, and after the transit the m-system is no
-longer an i.i.d. sample of μ_s (a random subset of its particles has moved) — so what is proved about the dynamics is the frozen-plan
-statement (ii) and the stationary statement (iii). Checked: `tests/test_ot_leak.py` (the plan is a vertex with the prescribed masses,
+(v) formal; the transit and the three distances are numerical (`exp_ot_leak.py` → `results/chaos/ot_leak.md`, below). Open: a
+coupling theorem for the OT dynamics from an i.i.d. start — Theorem D‴'s synchronous coupling needs a balanced sample and otherwise
+carries the transit's mismatch for ever (the plan reassigns O(√m) particles at s = 0, which the shared-particle pairing never re-matches);
+the natural candidate follows the plan, pairing a particle with its assigned atom's mean-field mass — so what is proved about the OT
+dynamics is the local equivalence (ii) and the stationary statement (iii). Checked: `tests/test_ot_leak.py` (the plan is a vertex with the prescribed masses,
 integral when m is commensurate and with at most K₀ − 1 split rows otherwise, and the single-atom prior gives the σ-modification; the leak is
 the G-gradient flow of J_m^{OT} against finite differences, for commensurate and incommensurate m; the replicated weighted configuration is
 stationary for three commensurate sizes with the diagonal plan and the same learned function — for the matching masses and for mismatched
@@ -1931,8 +1948,9 @@ against the transportation LP).
 
 *Remark D‴.13 (conservation, constraint, and what the mean-field limit forgets).* Theorem D‴ bounds the coupled distance uniformly in time,
 and Proposition D‴.5 says what the bound's constant is made of: the m-system's memory of its initial cluster masses, which the nearest-atom
-leak conserves. The OT leak replaces the conservation law by a constraint and the memory is erased — the finite-m stationary measure *is*
-the mean-field one on the commensurate sizes, and within (K₀ − 1)/m of mass of it otherwise. This is a statement about the design of the
+leak conserves. The OT leak replaces the conservation law by a constraint and the memory is erased from the stationary measure — the finite-m
+stationary measure *is* the mean-field one on the commensurate sizes, and within (K₀ − 1)/m of mass of it otherwise — though not from
+the shared-particle coupling, whose synchronous distance keeps the plateau of the reassigned particles ((v)). This is a statement about the design of the
 leak, not about m: the same clouds under the nearest-atom leak keep their floors. Three consequences. (a) The masses join the atoms as
 design inputs of the leak's prior — both are read from the plant's structure (Proposition D‴.9(ii)) — and the admissible set W_adm of
 Proposition D‴.5, a probability statement about the realised weights under the nearest-atom leak, becomes a condition on the design,
@@ -1949,43 +1967,50 @@ warm clouds (the jittered mixture of width 0.02), 600 slow units = 4.2/σ₀, fo
 and incommensurate sizes m = 16, 64, 256 against M = 512.
 
 *Conservation against constraint (table 1).* Under the nearest-atom leak no cluster weight changes along any run (max_s|w(s) − w(0)|_∞ = 0
-in all 32 systems). Under the OT leak the mass in transit at s = 0 is ½‖w(0) − q‖₁ = 0.117, 0.058, 0.027, 0.024 (m = 15, 60, 240, 510: one
-to twelve particles), it reaches zero, and the weights by nearest atom equal q exactly from s_eq = 93–164 slow units on (median about 100,
-against the pure leak's midpoint crossing ln 2/σ₀ = 98); no plan is split. The fit error at the end falls from 0.067, 0.029, 0.017, 0.012
-under the nearest-atom leak — the bias of the realised weights — to 2.8·10⁻⁴, 1.2·10⁻⁴, 1.2·10⁻⁴, 0.8·10⁻⁴, the residual within-class
-spread (0.02·e^{−σ₀·600} ≈ 3·10⁻⁴).
+in all 32 systems). Under the OT leak the mass in transit at s = 0 is ½‖w(0) − q‖₁ = 0.117, 0.058, 0.027, 0.024 (seed means for m = 15, 60, 240,
+510; per system 1–3, 1–5, 2–13 and 3–21 particles), it reaches zero, and the weights by nearest atom equal q exactly from s_eq = 93–164
+slow units on (median 104, against the pure leak's midpoint crossing ln 2/σ₀ = 98); no plan is split. The fit error at the end falls
+from 0.067, 0.029, 0.017, 0.012 under the nearest-atom leak — the bias of the realised weights — to 2.8·10⁻⁴, 1.2·10⁻⁴, 1.2·10⁻⁴,
+0.8·10⁻⁴ (seed means); the migrated particles are still 0.06–0.16 whitened units from their new atoms at s = 600 — the pure leak's
+remaining approach Δ_{kk′}e^{−σ₀·600} = 0.09–0.10 — and the fit force cancels their first-order effect on f̂, so the OT finals are not yet
+stationary (maximal whitened drift 5–8·10⁻⁴, against ≤ 10⁻³ and mostly ≤ 10⁻⁴ under the nearest-atom leak).
 
 *The three distances on the commensurate sizes (table 2, last window (450, 600]).* Function level ‖f̂_m − f̂_M‖²_{L²(ρ)}: nearest-atom
 2.5·10⁻³, 5.2·10⁻⁴, 5.9·10⁻⁵ (stationary, last/previous window 0.97–1.00; the law (1/m − 1/M)tr(FC̃Fᵀ)/N predicts 4.0·10⁻³, 9.1·10⁻⁴,
 1.4·10⁻⁴) against OT 4.9·10⁻⁷, 4.9·10⁻⁸, 7.5·10⁻⁹ — ratios 2·10⁻⁴, 9·10⁻⁵, 1.3·10⁻⁴ — still falling by a factor 0.02–0.035 per 150 slow
-units (e^{−4σ₀·150} = 0.014: second order in the within-class spread, the class means agreeing to first order) toward the zero of (iii).
-W²_{G⁻¹}(μ_m, μ_M): nearest-atom 5.1, 2.7, 0.81 — the cross-cluster transport of the weight mismatch, ½‖w^m − w^M‖₁Δ_ν² = 4.9, 2.5,
-0.70, within 5–14%; slope −0.67 ± 0.13 in m, the sampling term of the cluster masses — against OT 7.9·10⁻³, 2.3·10⁻³, 6.9·10⁻⁴ (ratios
+units (a rate of 3.0–3.8σ₀: the displaced particles' first-order effect cancels, the class means agreeing to first order) toward the zero
+of (iii). W²_{G⁻¹}(μ_m, μ_M): nearest-atom 5.1, 2.7, 0.81 — the cross-cluster transport of the weight mismatch: the exact K × K transport
+between the weighted stationary measures at the realised weights reproduces it to 0.997–0.999 at the seven admissible pairs (0.85–0.99 at
+the five pairs with saddle weights, where the m-system is not at the replicated configuration), the formula ½‖w^m − w^M‖₁Δ_ν² = 4.9, 2.5,
+0.70 to −7% to +28%; slope −0.67 ± 0.13 in m, the sampling term of the cluster masses — against OT 7.9·10⁻³, 2.3·10⁻³, 6.9·10⁻⁴ (ratios
 1.5·10⁻³, 0.9·10⁻³, 0.9·10⁻³), falling by 0.12 per 150 slow units (e^{−2σ₀·150} = 0.12, the square of the spread's contraction at the
-margin σ₀). The synchronous D is the one distance the OT leak does not improve: 5.8, 3.3, 0.94 against 0.87, 0.25, 0.017 — the particles
-reassigned in one system and not in the other, ½‖w^m − w^M‖₁ = 0.12, 0.06, 0.02 of the mass at a distance Δ_ν (0.12·Δ_ν² = 4.9), as
-(v) says: it is not a coupling the plan respects.
+margin σ₀). The synchronous D is the one distance the OT leak does not improve: 5.8, 3.3, 0.94 against 0.87, 0.25, 0.017, still rising
+(last/previous 1.08–1.10) toward the plateau Σ_{mismatched}Δ²_{kk′}/m of the pairs reassigned in one system and not in the other
+(0.95–0.96 of it at s = 600), as (v) says: the coupling keeps the memory that the measure loses.
 
 *The incommensurate sizes (table 3).* Every plan has one or two split particles (≤ K₀ − 1 = 2); the weights by nearest atom differ from q
-by the split particle's share, 0.042, 0.010, 0.0026, 0.0013 = (2/3)/m; the unsplit particles finish their transit by s_tr = 84–113 slow
-units (m ≥ 64; at m = 16 the two or three particles to move are the split ones). At the end the split particles sit between the clusters,
-at 0.28–0.58 Δ_ν from the nearest atom and within 0.03–0.6 (G⁻¹ metric) of their barycentric target T̄_i — the bridge particles of (iv).
-The stationary distances (last/previous window 0.82–1.00): function level OT 3.4·10⁻⁴, 3.1·10⁻⁵, 1.1·10⁻⁶ with slope −2.07 ± 0.05 in m —
-the O(1/m²) of (iv) — against nearest-atom 2.5·10⁻³, 5.0·10⁻⁴, 4.4·10⁻⁵ (slope −1.59 ± 0.27), ratios 0.14, 0.063, 0.025; W² OT 1.16,
-0.29, 0.041 with slope −1.21 ± 0.04 — the order 1/m of (iv), at 13–24% of the worst case (K₀ − 1)Δ_ν²/m = 4.9, 1.2, 0.31 — against
-nearest-atom 4.8, 2.7, 0.69 (slope −0.79 ± 0.12), ratios 0.24, 0.10, 0.059. The bridge particles also set the OT leak's fit error here:
-0.028, 0.0093, 0.0023, 0.0011 (about 2/m of the mass misplaced) against the nearest-atom leak's 0.061, 0.035, 0.013, 0.012.
+by the split particle's share, 0.042, 0.010, 0.0026, 0.0013 = (2/3)/m; the unsplit particles in transit at s = 0 (0–2 at m = 16, 1–4 at 64, 2–11 at 256, 1–19 at 512) all
+arrive by the end. At the end the split particles sit between the clusters, at 0.28–0.58 Δ_ν from the nearest atom and within 0.03–0.6
+(G⁻¹ metric) of their barycentric target T̄_i — the bridge particles of (iv). Against the M = 512 reference, which carries its own two
+bridge particles: function level OT 3.4·10⁻⁴, 3.1·10⁻⁵, 1.1·10⁻⁶ (the m = 16 value still relaxing, 0.82 per window — continued to
+s = 2400 by referee round 11 it settles at 2.8·10⁻⁴, and m = 64 at 2.9·10⁻⁵, with slope −2.00) against nearest-atom 2.5·10⁻³, 5.0·10⁻⁴,
+4.4·10⁻⁵, ratios 0.11–0.14, 0.063, 0.025; W² OT 1.16, 0.29, 0.041 (stationary) against nearest-atom 4.8, 2.7, 0.69, ratios 0.24, 0.10,
+0.059. The quantisation laws of (iv) are read against the mean-field stationary measure μ*(q), here ν itself: W²(μ_m, ν) = 1.21, 0.33,
+0.079, 0.038 for m = 16, 64, 256, 512, i.e. m·W² = 19.4, 21.0, 20.1, 19.5 ≈ 0.5Δ_ν² with slope −0.98 ± 0.03, and the fit error 0.028,
+0.0093, 0.0023, 0.0011, i.e. m·fit = 0.45–0.60 with squared slope −1.81 ± 0.05 — the orders 1/m and 1/m² of (iv), with constants set by
+the plan's split pattern (seeds with the same pattern reach identical plateaus, referee round 11) far below the worst case (K₀ − 1)Δ_ν²
+= 78; against the nearest-atom leak's fit errors 0.061, 0.035, 0.013, 0.012.
 
 *The masses as a design input (table 4).* For q_δ = (1/3 + δ, 1/3 − δ/2, 1/3 − δ/2) the weighted stationary point has fit error 0.0069,
-0.013, 0.019, 0.029, 0.049 at δ = 0.01, 0.02, 0.03, 0.05, 0.1 — the bias of the mass constraint, about 0.5δ — κ_R at the over-weighted atom
+0.013, 0.019, 0.029, 0.049 at δ = 0.01, 0.02, 0.03, 0.05, 0.1 — the bias of the mass constraint, 0.69δ to 0.49δ, decreasing with δ — κ_R at the over-weighted atom
 +0.0023, +0.0043, +0.0060, +0.0086, +0.0119, margin κ +0.0047, +0.0026, +0.0008, −0.0019, −0.0054 and splitting margin +0.0048, +0.0028,
 +0.0011, −0.0015, −0.0049: the designed masses leave the admissible set between δ = 0.03 and 0.05 — the asymmetry of the matching prior's
 admissible set in Proposition D‴.9's numerics (an excess of 0.04 on the largest bump is inadmissible) — while the diagonal plan stays the
 unique optimal plan at every row (ε ≤ 1.04 < Δ_ν/2 = 3.13).
 
 *Reading.* The two leaks start from the same clouds and end in different worlds. The nearest-atom leak keeps the clusters' sampled masses
-for ever, and its stationary distances are what Propositions D‴.5 and D‴.9 say: a function-level floor of order 1/m, and a W₂ floor of
-order m^{−1/2} set by the cross-cluster transport of the weight mismatch. The OT leak moves one to twelve particles across in about
+for ever, and its stationary distances are what Propositions D‴.5 and D‴.9 say: a function-level floor of order 1/m, and a W² floor of
+order m^{−1/2} set by the cross-cluster transport of the weight mismatch. The OT leak moves one to 21 particles across in about
 ln 2/σ₀ slow units and then settles on the mean-field stationary measure: on the commensurate sizes every distance but the synchronous one
 decays to zero (three to four orders of magnitude below the nearest-atom leak's floors after 4.2/σ₀), and the fit loses the weight bias;
 on the incommensurate sizes the floors are the one or two bridge particles — O(1/m²) at function level, O(1/m) in W² — whose position
@@ -2000,32 +2025,37 @@ K₀-atom loop* (CL_w) be (CL) with f̂ = Σ_kw_kΦ̃(·;ϑ_k), the K₀ paramet
 
 (i) *(invariance)* 𝒞_m(π₀) is invariant under (CL) with the nearest-atom leak as long as every class atom ϑ_k stays in the Voronoi cell
 of ϑ⁰_k, and under (CL) with the OT leak as long as w = q and max_k‖ϑ_k − ϑ⁰_k‖_{G⁻¹} < Δ_ν/2; on it (CL) is (CL_w). With the OT leak and
-w ≠ q the subspace is not invariant: the plan assigns ½‖w − q‖₁ of the mass of the over-weighted classes to other atoms, and those particles
-leave their class.
+w ≠ q the subspace is not invariant: the plan assigns at least ½‖w − q‖₁ of the mass of the over-weighted classes to other atoms, and those
+particles leave their class.
 
 (ii) *(one orbit for every commensurate size)* Let q ∈ W_adm and let Γ_q be the T₀-periodic orbit of (CL_q) near Θ*(q) given by Theorem J,
-whose proof applies to (CL_w) verbatim (f̂ enters through its bounds and through the averaged gradient structure −G∇𝒢_w of Proposition
-D‴.5). For every commensurate m the lift of Γ_q to 𝒞_m(π₀) is a T₀-periodic orbit of (CL) with the OT leak. It is exponentially stable iff
-Γ_q is and the ghost monodromies of the classes contract (Proposition D‴.15 below) — at the matching masses, where the residual vanishes,
-the ghosts' exponents are σ₀/k_e + O(k_e⁻²) > 0 — and it is Theorem J's orbit Γ_m at Θ*_m(q), with the basin (c) of that theorem, whenever
-it lies in Theorem J's uniqueness ball ‖Θ − Θ*_m(q)‖_{G_m⁻¹} ≤ ρ₀(m), in particular for k_e ≥ max{k₀(m), √m·sup_t‖Θ^q_p(t) − Θ*(q)‖_w/ρ₀(m)}
-(the lift's G_m⁻¹-distance to Θ*_m(q) is √m times the weighted K₀-atom distance ‖·‖_w). Along the lift the orbit measure
+whose proof applies to (CL_w) verbatim (its averaged drift is −(1/k_e)(diag(w)⁻¹ ⊗ G)∇𝒢_w, the gradient of 𝒢_w in the metric diag(w) ⊗ G⁻¹,
+which is all its Steps 4–6 use), and assume Γ_q stays inside the cells, max_k‖ϑ^Γ_k(t) − ϑ⁰_k‖_{G⁻¹} < Δ_ν/2 — the cell condition of (i),
+which W_adm does not contain. For every commensurate m the lift of Γ_q to 𝒞_m(π₀) is a T₀-periodic orbit of (CL) with the OT leak. It is
+exponentially stable iff Γ_q is and the ghost monodromies of the classes contract (Proposition D‴.15 below) — at the matching masses, where
+the residual vanishes, the ghosts' exponent is exactly σ₀/k_e > 0 — and it is Theorem J's orbit Γ_m at Θ*_m(q), with the basin (c) of that
+theorem, whenever it lies in Theorem J's uniqueness ball ‖Θ − Θ*_m(q)‖_{G_m⁻¹} ≤ ρ₀(m): with ‖Θ‖²_w := Σ_kq_k‖ϑ_k‖²_{G⁻¹} the lift's
+G_m⁻¹-distance to Θ*_m(q) is √m times the weighted distance, so the condition is √m·sup_t‖Θ^q_p(t) − Θ*(q)‖_w ≤ ρ₀(m), satisfied for
+k_e ≥ max{k₀(m), √m C_q/ρ₀(m)} by Theorem J(a)'s sup_t‖Θ^q_p(t) − Θ*(q)‖_w ≤ C_q/k_e. Along the lift the orbit measure
 (1/m)Σ_iδ_{ϑ_i(t)} = Σ_kq_kδ_{ϑ_k(t)}, the learned function Σ_kq_kΦ̃(·;ϑ_k(t)), the plant's orbit x_p(t) and the tracking error e(t) are the
 same for every commensurate m at every t — exactly, not up to O(1/k_e): the finite-size floor of the real loop (Corollary D‴.7) is zero.
 
-(iii) *(Corollary D‴.7 sharpened)* With the nearest-atom or the σ-modification leak the same argument lifts Γ_{w^m}, the orbit of (CL_{w^m})
-with the realised weights: Theorem J's orbit near Θ*_m(w^m) is the lift of Γ_{w^m} under the same proviso, so the real loop's coupled
-distance between two sizes is exactly the distance between two weighted K₀-atom orbits,
+(iii) *(Corollary D‴.7 sharpened)* With the nearest-atom or the σ-modification leak and both realised weight vectors admissible,
+w^m, w^M ∈ W_adm (Corollary D‴.7's hypothesis: the replicated configurations are hyperbolic minima), the same argument lifts Γ_{w^m}, the
+orbit of (CL_{w^m}) with the realised weights: Theorem J's orbit near Θ*_m(w^m) is the lift of Γ_{w^m} under the same proviso, so the real
+loop's coupled distance between two sizes is exactly the distance between two weighted K₀-atom orbits,
 
     D_orb(t) = Σ_kw^m_k‖ϑ^Γ_k(t; w^m) − ϑ^Γ_k(t; w^M)‖²_{G⁻¹},
 
 Corollary D‴.7's O(1/k_e) terms being the k_e-dependence of w ↦ Γ_w and nothing else; and the tracking error along the orbit is that of
-(CL_{w^m}) — the weight bias of the fit is a tracking error, which the mass constraint removes for every size at once.
+(CL_{w^m}) — the weight bias of the fit is a tracking error, which the mass constraint removes for every size at once. When w^m ∉ W_adm the
+lift is a saddle orbit (a ghost exponent is negative, Proposition D‴.15) and the m-system leaves it by splitting its over-weighted class, as
+three of the six nearest-atom systems of the numerics below do.
 
 *Status.* (i) proved (the particle law depends on i only through ϑ_i and its target; on 𝒞_m(π₀) the targets agree within a class — by the
 cell condition for the nearest-atom leak, by the lemma of Proposition D‴.12(iii) for the OT leak — so the vector field is tangent to
 𝒞_m(π₀) and coincides there with (CL_w)'s, and solutions are unique away from the cell boundaries and the plan switches). (ii), (iii) proved
-from (i), Proposition D‴.15 and Theorem J under the stated proviso; the m-uniformity of Theorem J's thresholds k₀(m), ρ₀(m) at the
+from (i), Proposition D‴.15 and Theorem J under the stated proviso and hypotheses (the cell condition along Γ_q; admissible weights in (iii)); the m-uniformity of Theorem J's thresholds k₀(m), ρ₀(m) at the
 replicated configuration is the open point of Corollary D‴.7 — its spectral part is settled by Proposition D‴.15 (the Floquet spectrum of
 the lift does not depend on m), the basin radius in the mean norm remains formal; without the proviso the lift is still a periodic orbit of
 (CL) for every commensurate m, with the stability Proposition D‴.15 gives it, and only its identification with Theorem J's orbit is
@@ -2048,7 +2078,7 @@ m = 60 and 510 within 3·10⁻¹¹), with fit errors 0.0125–0.075 and rms trac
 error, 8–50 times the OT leak's — and W²(μ_m, μ_M) = 1.6–5.5, the cross-cluster transport of the weight mismatch.
 
 **Proposition D‴.15 (the transverse spectrum of a lifted orbit).** Let Γ = (x_p, Θ_p) be a T₀-periodic orbit of (CL) — with any leak
-whose targets are constant along Γ within each class — lying in the collapsed subspace 𝒞_m(π₀) with classes of sizes n_k, and let
+whose targets are locally constant near Γ and equal within each class — lying in the collapsed subspace 𝒞_m(π₀) with classes of sizes n_k, and let
 Γ_K = (x_p, (ϑ_{p,k})_k) be the K₀-atom orbit it lifts. For each class k let
 
     S_k := {δ ∈ ℝ^{n+mp} : δx = 0, δ_i = 0 for i ∉ π₀⁻¹(k), Σ_{i∈π₀⁻¹(k)}δ_i = 0}    (dimension (n_k − 1)p),
@@ -2058,7 +2088,7 @@ and let M_k be the monodromy over one period of the *ghost equation* δ̇ = A_k(
 leaves every S_k invariant, with 𝕄|_{S_k} = M_k ⊗ I_{n_k−1}, and on the complementary invariant subspace — the plant coordinates and the
 class means — it is the monodromy 𝕄_K of Γ_K as an orbit of the weighted K₀-atom loop (CL_w). Hence the Floquet spectrum of Γ is that of Γ_K
 together with the spectrum of each M_k with multiplicity n_k − 1, independent of m; Γ is exponentially stable iff Γ_K is and every M_k is
-contracting; and when Γ is Theorem J's orbit at Θ*_m(w), the exponents of M_k are (1/k_e)λ_j(σ₀I − R^G_k) + O(k_e⁻²), j = 1..p, with
+contracting; and when Γ_K is Theorem J's orbit of (CL_w) at Θ*(w), the exponents of M_k are (1/k_e)λ_j(σ₀I − R^G_k) + O(k_e⁻²), j = 1..p, with
 R^G_k = G^{1/2}R[μ_{Θ*(w)}](ϑ*_k)G^{1/2} — Proposition K's separation condition and the splitting blocks of Proposition D‴.5(i), read along
 the orbit.
 
@@ -2070,12 +2100,17 @@ and δ̇_i = (∂_xF + ∂_eF)δx + (∂_ϑF − σI)|_{ϑ_i}δ_i (e = x − x_m
 equation on every component, whence 𝕄|_{S_k} = M_k ⊗ I_{n_k−1}. The class-constant perturbations {δ_i = u_{π₀(i)}} together with δx form the
 complementary subspace; it is invariant because particles of one class have identical right-hand sides when their perturbations coincide,
 and there the variation of f̂ is Σ_k(n_k/m)∂_ϑΦ̃(x_p;ϑ_{p,k})u_k = Σ_kw_k∂_ϑΦ̃u_k — the linearisation of (CL_w) along Γ_K. The spectral
-statements follow; the last one is Theorem J(b) at Θ*_m(w) (exponents (1/k_e)ν_j + O(k_e⁻²), ν_j the eigenvalues of
-G_m^{1/2}∇²J_m(Θ*_m(w))G_m^{1/2}), whose separation eigenvalues are those of σ₀I − R^G_k with multiplicity n_k − 1 (Proposition D‴.5(i)) and
-must therefore be the exponents of M_k. ∎
+statements follow. For the last one, along Theorem J's orbit of (CL_w) the tracking error is e_p(t) = r_{Θ*(w)}(x_m(t))/k_e + O(k_e⁻²)
+and ϑ_{p,k}(t) = ϑ*_k(w) + O(1/k_e) (Theorem J(a) with the error equation), so the ghost matrix is A_k(t) = (1/k_e)[G∂²_ϑ(r_{Θ*(w)}(x_m(t))
+Φ̃(x_m(t);ϑ*_k)) − σ₀I] + O(k_e⁻²): a T₀-periodic matrix of size O(1/k_e) whose period mean is (1/k_e)(GR_k − σ₀I) + O(k_e⁻²), with
+R_k = R[μ_{Θ*(w)}](ϑ*_k) the residual-weighted curvature of Theorem D‴. First-order averaging of this linear periodic equation gives
+M_k = exp(T₀(1/k_e)(GR_k − σ₀I)) + O(k_e⁻²), and GR_k − σ₀I is similar to G^{1/2}R_kG^{1/2} − σ₀I = −(σ₀I − R^G_k): the exponents are
+(1/k_e)λ_j(σ₀I − R^G_k) + O(k_e⁻²), with no condition on m. ∎
 
-*Status.* Proved (linear algebra along the orbit); the identification of M_k's exponents with (σ₀I − R^G_k)/k_e holds when the lift is
-Theorem J's orbit (Corollary D‴.14(ii)'s proviso) and is formal otherwise. The m-uniformity of the Floquet spectrum settles the spectral part
+*Status.* Proved (linear algebra along the orbit; first-order averaging of the ghost equation for the last claim, which needs only that
+Γ_K is Theorem J's orbit of (CL_w) — referee round 12 confirmed the finite-difference ghost monodromy against the matrix ODE to 3·10⁻⁹ and
+against exp(T₀Ā_k) to 7·10⁻⁹, the prediction's remaining error being R at Θ*(w) against R along Θ_p(t), falling 6–12 times from k_e = 25
+to 50). The m-uniformity of the Floquet spectrum settles the spectral part
 of Corollary D‴.7's open point: the stability type and the rates of Theorem J(b)–(c) at a replicated configuration do not depend on m.
 Checked: `tests/test_ot_leak.py` (the lift of the 3-atom orbit to m = 6 at the matching masses is a fixed point of the Poincaré map to
 10⁻¹⁰; each class's separation subspace is invariant under its monodromy to 10⁻⁶ and carries the ghost's exponents, σ₀/k_e = 2.83·10⁻⁴, to
@@ -2085,15 +2120,15 @@ Checked: `tests/test_ot_leak.py` (the lift of the 3-atom orbit to m = 6 at the m
 central differences of the Poincaré map (DOP853, rtol 10⁻¹¹). (A) The OT leak at the matching masses: the 3-atom orbit is the exact
 representation with zero tracking error, and its lifts to m = 6, 9, 15 are fixed points of the Poincaré map to 10⁻¹⁵; every class's
 separation subspace is invariant to 2·10⁻⁸ and carries the exponent σ₀/k_e = 2.830·10⁻⁴ with multiplicity n_k − 1 — the ghosts' exponent to
-four digits — and the collective exponents 2.935·10⁻⁴, 3.558·10⁻⁴, 3.999·10⁻⁴, 8.73·10⁻⁴, 1.109·10⁻³, 1.573·10⁻³, 3.704·10⁻³, 5.523·10⁻³,
-7.934·10⁻³ are the same for m = 3, 6, 9 and 15 to four digits, within 0.6–2.4% of Theorem J(b)'s λ_j(G^{1/2}∇²𝒢_qG^{1/2})/k_e = 2.952·10⁻⁴,
-…, 8.091·10⁻³. (B) The σ-modification at w = (7, 5, 4)/16 (admissible, splitting margin +0.00257) and (9, 4, 3)/16 (a saddle, −0.00219): the
+4·10⁻⁵ relative — and the collective exponents 2.935·10⁻⁴, 3.558·10⁻⁴, 3.999·10⁻⁴, 8.73·10⁻⁴, 1.109·10⁻³, 1.573·10⁻³, 3.704·10⁻³, 5.523·10⁻³,
+7.934·10⁻³ are the same for m = 3, 6, 9 and 15 to 10⁻⁴ relative, within 0.6–3.2% of Theorem J(b)'s λ_j(H_q)/k_e = 2.952·10⁻⁴, …,
+8.091·10⁻³, H_q the whitened, weighted collective block of Proposition D‴.5(i). (B) The σ-modification at w = (7, 5, 4)/16 (admissible, splitting margin +0.00257) and (9, 4, 3)/16 (a saddle, −0.00219): the
 weighted 3-atom orbits by shooting (residuals 10⁻¹⁴, period-start offsets from Θ*(w) of 1.1·10⁻² and 1.6·10⁻² — Theorem J(a)'s O(1/k_e)), and
-their lifts to m = 16 fixed points to 5·10⁻¹⁴. The separation exponents of each class equal the ghost's to four digits (invariance defects
-≤ 6·10⁻⁸) and the prediction (σ₀ − λ_j(R^G_k))/k_e within 0.3–3% (class 0 at (7, 5, 4)/16: 9.989·10⁻⁵, 4.553·10⁻⁴, 1.267·10⁻³ against
+their lifts to m = 16 fixed points to 5·10⁻¹⁴. The separation exponents of each class equal the ghost's to 2·10⁻⁵ relative (invariance defects
+≤ 6·10⁻⁸) and the prediction (σ₀ − λ_j(R^G_k))/k_e within 0.2–4.1% (class 0 at (7, 5, 4)/16: 9.989·10⁻⁵, 4.553·10⁻⁴, 1.267·10⁻³ against
 1.029·10⁻⁴, 4.572·10⁻⁴, 1.275·10⁻³); at (9, 4, 3)/16 the over-weighted class carries the negative exponent −9.13·10⁻⁵ (predicted −8.77·10⁻⁵)
 with multiplicity 8 — the saddle orbit of Theorem D‴'s inadmissible seed, Proposition K's split at the orbit level — while the collective
-exponents (2.131·10⁻⁴, …, 9.985·10⁻³) are the weighted 3-atom orbit's to four digits.
+exponents (2.131·10⁻⁴, …, 9.985·10⁻³) are the weighted 3-atom orbit's to 2·10⁻⁵ relative.
 
 *Remark D‴.16 (dither and the mass constraint).* With dither (Theorem J′: τ = τ₀/k_e, σ = σ₀/k_e) the leading-order stationary law of
 the slow variables is the Gibbs measure π ∝ exp(−J_m/τ₀), and the cluster masses are no longer conserved under the nearest-atom leak: a
@@ -4526,9 +4561,9 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | D″ | with exact Lipschitz constants and the a-priori tube, σ_cert = 4.04 against Proposition K's σ_K = 0.00144; at 1.2σ_cert with dither the coupled distance is of order m^{−1/2} (slope −0.51 ± 0.02), bounded in time and 700× below the bound, with the network at its prior (fit error 1.000); without dither the reference collapses (spread 10⁻¹⁴) and the distance is zero; at σ_cert/8 it decays to 10⁻¹¹; in the learning regime (σ_K/3, 1000 s) the network stays spread and fits the plant (fit error 0.63) and the distance follows m^{−1/2} (−0.62 ± 0.16) but grows threefold between the windows (100, 200] and (500, 1000] | `exp_chaos_uniform.py` → `results/chaos/uniform_table.md` |
 | D‴, D‴.5, D‴.7 | the window realised at σ₀ = 0.15σ_crit (κ_R[μ*](N_{0.1}) = 0.0051 < 0.0071 < 0.047), (H) along the warm run (margin ≥ 0.0014), saturation of the coupled distance (last/first window ratios 1.13–1.15 over 900 slow units), slope −1.28 ± 0.30 in m; the weight-sensitivity law per seed within 25% in 9 of 12 pairs, per-cluster cosines 0.92–1.00; the exact stationary distance of Proposition D‴.5(ii) within 2.3% in all 12 pairs, splitting margins positive in 11 (one m = 16 seed a saddle); cold start: growth (2.9–7.8×) and the floor's fraction 0.20, 0.08, 0.04 decaying like m^{−0.64±0.08}; real loop at k_e = 25 within 0.7% of its averaged slow dynamics on the same clouds; not the constants C₁, m₀ (vacuous: 2·10⁹, 10²³) nor the saturation of Corollary D‴.7 | `exp_chaos_learning.py` → `results/chaos/learning_table.md` |
 | D‴.9, D‴.11 | the matching prior: zero residual, κ_R = 0, margin σ₀ = 0.00707 against the σ-modification's 0.00196, floors 1.61× and 2.18× higher; misplacement closes the window (centres +0.6, amplitudes ×1.2, widths ×0.7); shrunk amplitudes ×0.5–0.7 give margins above σ₀ at the uniform weights and lower floors; admissible-weight table under three priors (overshoot splits, undershoot stabilises; the shrunk prior keeps all four tested weights admissible, +0.0054 to +0.0073); matching-prior coupled runs saturate within 2.1 of the theorem's relaxation times (observed e-folding 48–84 slow units against 107–306 for the σ-modification) with per-seed linearised-law ratios 0.81–1.11 (parameter) and 0.61–1.69 (function) and the exact law within 0.987–0.998 in all nine pairs; the two saddles among them are left by a local split with the coupled distance on its plateau; the function-level law for the σ-modification within ratios 0.48–0.74 of the measured means (RMS over seeds 0.52–0.84; per-seed law from the realised weights 0.60–1.57) | `exp_prior_design.py` → `results/chaos/prior_design.md` |
-| D‴.12 | the same clouds under the nearest-atom and the OT leak: cluster weights conserved (max deviation 0 in 32 systems) against equalised (s_eq = 93–164 slow units; ln 2/σ₀ = 98); commensurate sizes: function-level distance² 4.9·10⁻⁷–7.5·10⁻⁹ against 2.5·10⁻³–5.9·10⁻⁵ and W² 7.9·10⁻³–6.9·10⁻⁴ against 5.1–0.81 (the cross-cluster transport ½‖w^m − w^M‖₁Δ_ν² = 4.9–0.70 within 5–14%), both OT distances still falling (0.02–0.035 and 0.12 per 150 slow units); incommensurate sizes: one or two bridge particles at 0.28–0.58 Δ_ν from the atoms, slopes −2.07 ± 0.05 (function level) and −1.21 ± 0.04 (W²) against −1.59 ± 0.27 and −0.79 ± 0.12; fit error of the reference 0.012 → 8·10⁻⁵; the designed masses inadmissible between δ = 0.03 and 0.05 | `exp_ot_leak.py` → `results/chaos/ot_leak.md`; `tests/test_ot_leak.py` (the vertex plan, the gradient flow, the m-independent stationary configuration, conservation against constraint, the forest bound, the exact W²) |
+| D‴.12 | the same clouds under the nearest-atom and the OT leak: cluster weights conserved (max deviation 0 in 32 systems) against equalised (s_eq = 93–164 slow units; ln 2/σ₀ = 98; 1–21 particles moved); commensurate sizes: function-level distance² 4.9·10⁻⁷–7.5·10⁻⁹ against 2.5·10⁻³–5.9·10⁻⁵ and W² 7.9·10⁻³–6.9·10⁻⁴ against 5.1–0.81 (the exact K × K transport between the weighted stationary measures within 0.997–0.999 at admissible weights; the formula ½‖w^m − w^M‖₁Δ_ν² within −7% to +28%), both OT distances still falling (0.02–0.035 and 0.12 per 150 slow units) while the synchronous D rises to 0.95–0.96 of its mismatch plateau; incommensurate sizes: one or two bridge particles at 0.28–0.58 Δ_ν from the atoms; against ν: m·W² = 19.4–21.0 (slope −0.98 ± 0.03) and m·fit = 0.45–0.60 (squared slope −1.81 ± 0.05); against the M = 512 reference slopes −2.07 ± 0.05 and −1.21 ± 0.04 (the reference carries its own bridge particles; the m = 16 value still relaxing); fit error of the reference 0.012 → 8·10⁻⁵; the designed masses inadmissible between δ = 0.03 and 0.05 | `exp_ot_leak.py` → `results/chaos/ot_leak.md`; `tests/test_ot_leak.py` (the vertex plan, the gradient flow, the m-independent stationary configuration, conservation against constraint, the forest bound, the exact W²) |
 | D‴.14 | the real loop at k_e = 25 from the contracted clouds of `exp_ot_leak.py` and from the collapsed lifts: under the OT leak ‖f̂_m − f̂_M‖²_{L²(orbit)} = 7.5·10⁻⁹–2.7·10⁻⁸ (m = 15, 60 against 510) and 5.2·10⁻¹⁰–3.6·10⁻⁸ against the 3-atom lift, rms tracking error 3.9–4.0·10⁻⁵ for every size; under the nearest-atom leak 1.1·10⁻⁴–2.5·10⁻³, equal to the distance between the lifted orbits of the conserved weights to a ratio 0.960–1.000 (each m-system within 3.3·10⁻⁶ of its own lift), tracking errors 3.0·10⁻⁴–1.9·10⁻³ | `exp_ot_real_loop.py` → `results/chaos/ot_real_loop.md`; `tests/test_ot_leak.py` (the collapsed subspace's invariance, the lifts' equality) |
-| D‴.15 | lifts of the 3-atom orbit to m = 6, 9, 15 (OT leak, matching masses) and to m = 16 (σ-modification at (7, 5, 4)/16 and (9, 4, 3)/16): fixed points of the Poincaré map to 10⁻¹⁴–10⁻¹⁵; class separation subspaces invariant to ≤ 6·10⁻⁸; separation exponents equal to the ghosts' to four digits and to (σ₀ − λ_j(R^G_k))/k_e within 0.3–3%; collective exponents equal to the K₀-atom orbit's to four digits for every m and to Theorem J(b)'s prediction within 0.6–2.4%; the saddle's exponent −9.13·10⁻⁵ (multiplicity 8) at (9, 4, 3)/16 | `exp_lifted_orbit.py` → `results/chaos/lifted_orbit.md`; `tests/test_ot_leak.py` (the m = 6 lift against the ghosts and the 3-atom loop) |
+| D‴.15 | lifts of the 3-atom orbit to m = 6, 9, 15 (OT leak, matching masses) and to m = 16 (σ-modification at (7, 5, 4)/16 and (9, 4, 3)/16): fixed points of the Poincaré map to 10⁻¹⁴–10⁻¹⁵; class separation subspaces invariant to ≤ 6·10⁻⁸; separation exponents equal to the ghosts' to 2·10⁻⁵ relative and to (σ₀ − λ_j(R^G_k))/k_e within 0.2–4.1%; collective exponents equal to the K₀-atom orbit's to 10⁻⁴ relative for every m and to Theorem J(b)'s prediction within 0.6–3.2%; the saddle's exponent −9.13·10⁻⁵ (multiplicity 8) at (9, 4, 3)/16 | `exp_lifted_orbit.py` → `results/chaos/lifted_orbit.md`; `tests/test_ot_leak.py` (the m = 6 lift against the ghosts and the 3-atom loop) |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -4667,7 +4702,7 @@ Each branch states what is proved, what is open, and the first concrete step.
      stationary coupled distance is the weight-sensitivity law of Proposition D‴.5, and Corollary D‴.7 carries the uniform statement
      to the real loop on a warm start through Theorem J.
    - *Done (Corollary D‴.14, Proposition D‴.15):* in the real loop the collapsed-by-class subspace is invariant and carries the weighted
-     K₀-atom loop, so Theorem J's orbit at a replicated configuration is the lift of one K₀-atom orbit — with the OT leak the same orbit
+     K₀-atom loop, so Theorem J's orbit at a replicated configuration is, under its uniqueness-ball proviso, the lift of one K₀-atom orbit — with the OT leak the same orbit
      for every commensurate size (the real loop's finite-size floor is zero), with the nearest-atom leak the orbit of the realised weights
      (Corollary D‴.7's floor is exactly the distance between two weighted K₀-atom orbits); the Floquet spectrum of a lifted orbit is the
      K₀-atom orbit's together with each class's single-particle (ghost) spectrum of multiplicity n_k − 1, independent of m — the spectral
@@ -4735,8 +4770,9 @@ Each branch states what is proved, what is open, and the first concrete step.
      OT leak constrains the masses to the prior's, so on the sizes commensurate with the masses the finite-m stationary measure is the
      mean-field one exactly (the replicated weighted configuration is a critical point for every such m, by total unimodularity and
      c-cyclical monotonicity), and otherwise differs from it by at most K₀ − 1 split particles; for an atomic prior the mean-field form of
-     the barycentric leak is the Laguerre-cell leak. *Open:* the uniform-in-time coupling through the transit (the m-system is no longer an
-     i.i.d. sample after the mass transfer); a soft (entropic or penalised) mass constraint interpolating between the two leaks; the
+     the barycentric leak is the Laguerre-cell leak. *Open:* a coupling theorem for the OT dynamics from an i.i.d. start (Theorem D‴'s synchronous coupling needs a
+     balanced sample, of probability ≈ 0.83/m, and otherwise keeps the transit's mismatch for ever; a coupling that follows the plan is the
+     natural candidate); a soft (entropic or penalised) mass constraint interpolating between the two leaks; the
      mean-field form for a general prior ν (the barycentric projection as the superdifferential of ½W²(·, ν), AGS Thm 10.4.12) and adaptive
      priors (ν, and its masses, learned).
    - Transfer: transporting a learned measure to a new plant.

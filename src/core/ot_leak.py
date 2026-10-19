@@ -134,8 +134,10 @@ class OTPriorLoop(MixturePriorLoop):
         return (gamma > 1e-6 / Th.shape[0]).sum(axis=1) >= 2
 
     def transit_mask(self, Th, gamma=None):
-        """Particles whose assigned atom is not their nearest atom: the mass in transit between the clusters."""
-        return self.assignment(Th, gamma) != self.nearest.assignment(Th)
+        """Unsplit particles whose assigned atom is not their nearest atom: the mass in transit between the clusters (a split row has no
+        single assigned atom and is excluded — referee round 11)."""
+        gamma = self.plan(Th)[0] if gamma is None else gamma
+        return (self.assignment(Th, gamma) != self.nearest.assignment(Th)) & ~self.split_mask(Th, gamma)
 
     def W2(self, Th):
         """W²_{G⁻¹}(μ_Θ, ν)."""

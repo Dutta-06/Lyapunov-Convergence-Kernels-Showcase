@@ -3,7 +3,8 @@ Corollary D‴.14: the real closed loop with the OT leak — the periodic orbit 
 commensurate size
 ====================================================================================================================================
 
-The real closed loop of Theorem J (k_e = 25, σ = σ₀/k_e, RK4 plant with the control held over the step, Euler parameters, dt = 10⁻³) on the
+The real closed loop of Theorem J (k_e = 25, σ = σ₀/k_e, RK4 plant with the control and the reference evaluated at the stages and the
+parameters frozen over the step, Euler parameters, dt = 10⁻³) on the
 three-bump instance, with the nearest-atom leak and with the barycentric OT leak toward the matching prior (plan recomputed every 100 steps),
 started from the contracted clouds at the end of the averaged runs of `exp_ot_leak.py` (commensurate set: m = 15, 60 and M = 510; the OT
 runs' clouds have the prior's masses, the nearest-atom runs' clouds their conserved sampled weights) and from the collapsed lifts — the
@@ -86,8 +87,8 @@ def real_run(net, loop, systems, leak, T):
         for k, S in st.items():
             x, Th = S['x'], S['Th']
             e = x - xr
-            u = xrd - KE * e - net.f_hat(x, Th)
-            k1 = f_vec(x) + u; k2 = f_vec(x + 0.5 * DT * k1) + u; k3 = f_vec(x + 0.5 * DT * k2) + u; k4 = f_vec(x + DT * k3) + u
+            xdot = lambda y, tau: f_vec(y) + x_ref_dot(tau) - KE * (y - x_ref(tau)) - net.f_hat(y, Th)   # the closed-loop plant, Θ frozen over the step
+            k1 = xdot(x, t); k2 = xdot(x + 0.5 * DT * k1, t + 0.5 * DT); k3 = xdot(x + 0.5 * DT * k2, t + 0.5 * DT); k4 = xdot(x + DT * k3, t + DT)
             drift = G[None, :] * net.grad_g(x, e, Th) - SIG * (Th - tgt[k])
             S['x'] = x + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4); S['Th'] = Th + DT * drift
             if i % REC_EVERY == 0:
@@ -154,32 +155,48 @@ def e_rms(o):
     return float(np.sqrt(np.mean(o['e2'][msk])))
 
 
+def class_spread(Th, exact):
+    """rms whitened distance of the particles to their class mean (classes by nearest prior atom): the within-class spread."""
+    lab = CL.cluster_weights(Th, exact, G)[0]
+    d2 = []
+    for k in np.unique(lab):
+        P = Th[lab == k]
+        d2 += list(np.sum((P - P.mean(axis=0)) ** 2 / G[None, :], axis=1))
+    return float(np.sqrt(np.mean(d2)))
+
+
 def report(res, t0=None):
+    net = make_net()
+    exact = exact_representation(net)
+    loop = OT.OTPriorLoop(net, f_vec, x_ref, PER, G, SIGMA0, exact, n_quad=N_Q)
     lines = ["# Corollary D‴.14: the real closed loop with the OT leak — the orbit is the lift of the weighted K₀-atom loop's, the same for every commensurate size (`exp_ot_real_loop.py`)", "",
-             f"The real closed loop of Theorem J on the three-bump instance (k_e = {KE:g}, σ = σ₀/k_e with σ₀ = 0.15σ_crit = {SIGMA0:.5f}, RK4 plant with the control held over the step, Euler parameters, dt = {DT:g}), "
+             f"The real closed loop of Theorem J on the three-bump instance (k_e = {KE:g}, σ = σ₀/k_e with σ₀ = 0.15σ_crit = {SIGMA0:.5f}, RK4 plant with the control and the reference evaluated at the stages and the parameters frozen over the step, Euler parameters, dt = {DT:g}), "
              f"{T_END:g} time units = {T_END / PER:.1f} periods = {T_END / KE:.1f} slow units; statistics over the last {N_PER} periods on the 400-point grid of the reference orbit. "
              f"Starts: the contracted clouds at the end of `exp_ot_leak.py`'s averaged runs (commensurate set, m = {', '.join(str(m) for m in MS)}, M = {M_REF}; the OT runs' clouds carry the prior's masses q = (1/3, 1/3, 1/3), "
              f"the nearest-atom runs' clouds their conserved sampled weights), and the collapsed lifts: the three atoms of the exact representation for the OT leak (the weighted 3-atom loop with weights q, "
              f"itself the m = 3 loop), and the replicated weighted stationary configurations Θ*(w^m) for the nearest-atom leak. Seeds {', '.join(str(r['seed']) for r in res)}; the leak target (the nearest atom, or the barycentric "
              f"projection of the vertex plan) recomputed every {PLAN_EVERY} steps.", ""]
     lines += ["## 1. The OT leak: every size on the same orbit", "",
-              "| seed | system | cluster weights at the start | ‖f̂_m − f̂_M‖²_{L²(orbit)} (M = 510) | ‖f̂_m − f̂_lift‖² | fit error along the orbit | rms tracking error | W²_{G⁻¹}(μ_m, μ_M) at the end | W² to the lift |",
-              "|---|---|---|---|---|---|---|---|---|"]
+              "| seed | system | cluster weights at the start | within-class spread at the end (rms, whitened) | ‖f̂_m − f̂_M‖²_{L²(orbit)} (M = 510) | ‖f̂_m − f̂_lift‖² | fit error along the orbit | rms tracking error | W²_{G⁻¹}(μ_m, μ_M) at the end | W² to the lift |",
+              "|---|---|---|---|---|---|---|---|---|---|"]
     for r in res:
         A = r['ot']
         for k in [f'm{m}' for m in MS + (M_REF,)] + ['lift']:
             m = int(k[1:]) if k != 'lift' else 3
             w = r['ot_w0'][m] if k != 'lift' else Q
-            lines.append(f"| {r['seed']} | {k if k != 'lift' else 'lift (m = 3)'} | ({', '.join(f'{x:.4f}' for x in w)}) | {fdist(A[k], A[f'm{M_REF}']):.3e} | {fdist(A[k], A['lift']):.3e} | {fit_orbit(A[k]):.3e} | {e_rms(A[k]):.3e} | "
+            lines.append(f"| {r['seed']} | {k if k != 'lift' else 'lift (m = 3)'} | ({', '.join(f'{x:.4f}' for x in w)}) | {class_spread(A[k]['Th'], exact):.1e} | {fdist(A[k], A[f'm{M_REF}']):.3e} | {fdist(A[k], A['lift']):.3e} | {fit_orbit(A[k]):.3e} | {e_rms(A[k]):.3e} | "
                          f"{OT.W2_empirical(A[k]['Th'], A[f'm{M_REF}']['Th'], G):.3e} | {OT.W2_empirical(A[k]['Th'], A['lift']['Th'], G):.3e} |")
     lines += ["", "## 2. The nearest-atom leak: every size on the orbit of its own weights", "",
-              "| seed | m | conserved weights w^m | ‖f̂_m − f̂_M‖² | ‖f̂_m − f̂_{lift(w^m)}‖² | ‖f̂_{lift(w^m)} − f̂_{lift(w^M)}‖² | fit error along the orbit (m-system / its lift) | rms tracking error (m-system / its lift) | W²(μ_m, μ_M) | W² to its lift |",
-              "|---|---|---|---|---|---|---|---|---|---|"]
+              "| seed | m | conserved weights w^m | splitting margin σ₀ − max κ_R at w^m (Proposition D‴.5(i); ≤ 0: the lift is a saddle orbit) | within-class spread at the end (rms, whitened) | ‖f̂_m − f̂_M‖² | ‖f̂_m − f̂_{lift(w^m)}‖² | ‖f̂_{lift(w^m)} − f̂_{lift(w^M)}‖² | fit error along the orbit (m-system / its lift) | rms tracking error (m-system / its lift) | W²(μ_m, μ_M) | W² to its lift |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    margins = {}
     for r in res:
         B = r['nearest']
         for m in MS + (M_REF,):
             k, lk = f'm{m}', f'lift{m}'
-            lines.append(f"| {r['seed']} | {m} | ({', '.join(f'{x:.4f}' for x in r['nearest_lifts'][m]['w'])}) | {fdist(B[k], B[f'm{M_REF}']):.3e} | {fdist(B[k], B[lk]):.3e} | {fdist(B[lk], B[f'lift{M_REF}']):.3e} | "
+            mg = PD.splitting_margin_prior(loop.nearest, r['nearest_lifts'][m]['w'], exact)[0]
+            margins[(r['seed'], m)] = mg
+            lines.append(f"| {r['seed']} | {m} | ({', '.join(f'{x:.4f}' for x in r['nearest_lifts'][m]['w'])}) | {mg:+.5f}{' (saddle)' if mg <= 0 else ''} | {class_spread(B[k]['Th'], exact):.1e} | {fdist(B[k], B[f'm{M_REF}']):.3e} | {fdist(B[k], B[lk]):.3e} | {fdist(B[lk], B[f'lift{M_REF}']):.3e} | "
                          f"{fit_orbit(B[k]):.3e} / {fit_orbit(B[lk]):.3e} | {e_rms(B[k]):.3e} / {e_rms(B[lk]):.3e} | {OT.W2_empirical(B[k]['Th'], B[f'm{M_REF}']['Th'], G):.3e} | {OT.W2_empirical(B[k]['Th'], B[lk]['Th'], G):.3e} |")
     # summary numbers
     ot_mM = [fdist(r['ot'][f'm{m}'], r['ot'][f'm{M_REF}']) for r in res for m in MS]
@@ -189,10 +206,20 @@ def report(res, t0=None):
     ot_ml = [fdist(r['ot'][f'm{m}'], r['ot']['lift']) for r in res for m in MS + (M_REF,)]
     e_ot = [e_rms(r['ot'][f'm{m}']) for r in res for m in MS + (M_REF,)]; e_nr = [e_rms(r['nearest'][f'm{m}']) for r in res for m in MS + (M_REF,)]
     ratio_ll = [a / b for a, b in zip(nr_mM, nr_ll)]
+    adm = [(r['seed'], m) for r in res for m in MS if margins[(r['seed'], m)] > 0 and margins[(r['seed'], M_REF)] > 0]
+    sad = [(r['seed'], m) for r in res for m in MS + (M_REF,) if margins[(r['seed'], m)] <= 0]
+    ratio_adm = [fdist(r['nearest'][f'm{m}'], r['nearest'][f'm{M_REF}']) / fdist(r['nearest'][f'lift{m}'], r['nearest'][f'lift{M_REF}']) for r in res for m in MS if (r['seed'], m) in adm]
+    ml_adm = [fdist(r['nearest'][f'm{m}'], r['nearest'][f'lift{m}']) for r in res for m in MS + (M_REF,) if (r['seed'], m) not in sad]
+    ml_sad = [fdist(r['nearest'][f'm{m}'], r['nearest'][f'lift{m}']) for r in res for m in MS + (M_REF,) if (r['seed'], m) in sad]
+    sp_sad = [class_spread(r['nearest'][f'm{m}']['Th'], exact) for r in res for m in MS + (M_REF,) if (r['seed'], m) in sad]
+    sp_adm = [class_spread(r['nearest'][f'm{m}']['Th'], exact) for r in res for m in MS + (M_REF,) if (r['seed'], m) not in sad]
     lines += ["", f"Reading. Under the OT leak the learned functions of m = 15, 60 and M = 510 agree along the orbit to ‖f̂_m − f̂_M‖² = {min(ot_mM):.1e}–{max(ot_mM):.1e} and with the 3-atom lift to {min(ot_ml):.1e}–{max(ot_ml):.1e} "
-              f"(the within-class spread of the clouds, second order); under the nearest-atom leak they disagree by {min(nr_mM):.1e}–{max(nr_mM):.1e}, and this disagreement is the distance between the lifted orbits of their "
-              f"conserved weights to a ratio of {min(ratio_ll):.3f}–{max(ratio_ll):.3f} (each m-system within {max(nr_ml):.1e} of its own lift). The rms tracking error is {min(e_ot):.1e}–{max(e_ot):.1e} under the OT leak for every size "
-              f"against {min(e_nr):.1e}–{max(e_nr):.1e} under the nearest-atom leak — the weight bias of the fit is a tracking error, and the mass constraint removes it for every size at once.", "",
+              f"(the within-class spread of the clouds, second order); under the nearest-atom leak they disagree by {min(nr_mM):.1e}–{max(nr_mM):.1e}. Where both realised weight vectors are admissible this disagreement is the distance "
+              f"between the lifted orbits of the conserved weights to a ratio of {min(ratio_adm):.4f}–{max(ratio_adm):.4f} ({len(ratio_adm)} pairs), and each admissible m-system is within {max(ml_adm):.1e} of its own lift (within-class spread {min(sp_adm):.1e}–{max(sp_adm):.1e}); "
+              + (f"the {len(sad)} systems with inadmissible realised weights — " + ", ".join(f"seed {s}, m = {m} (margin {margins[(s, m)]:+.5f})" for s, m in sad) + f" — are not on their lifts, which are saddle orbits: their over-weighted class is split (within-class spread {min(sp_sad):.1e}–{max(sp_sad):.1e}), "
+                 f"the distance to the lift {min(ml_sad):.1e}–{max(ml_sad):.1e} being the split's second-order effect on f̂, and the lift-to-lift ratio at those pairs is {', '.join(f'{a / b:.3f}' for a, b, (s, m) in [(fdist(r['nearest'][f'm{m}'], r['nearest'][f'm{M_REF}']), fdist(r['nearest'][f'lift{m}'], r['nearest'][f'lift{M_REF}']), (r['seed'], m)) for r in res for m in MS] if (s, m) not in adm)}. " if sad else "all realised weights are admissible. ")
+              + f"The rms tracking error is {min(e_ot):.1e}–{max(e_ot):.1e} under the OT leak (the m-systems' remaining fit error over k_e; the collapsed lift tracks to {e_rms(res[0]['ot']['lift']):.1e}, the scheme's floor) "
+              f"against {min(e_nr):.1e}–{max(e_nr):.1e} under the nearest-atom leak — the weight bias of the fit is a tracking error, which the mass constraint removes for every size at once.", "",
               "Numbers are produced by `experiments/exp_ot_real_loop.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'ot_real_loop.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")

@@ -142,6 +142,25 @@ def fmt_ex(v):
     return ", ".join(f"{x:.3e}" for x in v)
 
 
+def grouped(ex, tol=1e-7):
+    """The distinct values of a list of exponents (consecutive sorted values within tol are one group), each printed as the group mean."""
+    ex = np.sort(np.asarray(ex, float))
+    groups, cur = [], [ex[0]]
+    for x in ex[1:]:
+        if x - cur[-1] < tol:
+            cur.append(x)
+        else:
+            groups.append(np.mean(cur)); cur = [x]
+    groups.append(np.mean(cur))
+    return np.array(groups)
+
+
+def rel_err(a, b):
+    """Relative errors |a − b|/|b| of two sorted lists of equal length."""
+    a, b = np.sort(np.asarray(a, float)), np.sort(np.asarray(b, float))
+    return np.abs(a - b) / np.abs(b)
+
+
 def report(A, B, t0=None):
     lines = ["# Proposition D‴.15: the transverse spectrum of a lifted periodic orbit of the real closed loop (`exp_lifted_orbit.py`)", "",
              f"The real closed loop (CL) of Theorem J on the three-bump instance at k_e = {KE:g}, σ = σ₀/k_e with σ₀ = 0.15σ_crit = {SIGMA0:.5f}; monodromy matrices by central differences of the "
@@ -150,14 +169,18 @@ def report(A, B, t0=None):
              "leaking toward the class target.", "",
              "## A. The OT leak at the matching masses (prior = exact representation, q = (1/3, 1/3, 1/3))", "",
              f"The 3-atom loop's periodic orbit is the exact representation with zero tracking error (shooting residual {A['resK']:.1e}); its parameter Floquet exponents are "
-             f"{fmt_ex(A['exK'][:-1])}, against Theorem J(b)'s prediction λ_j(G^{{1/2}}∇²𝒢_qG^{{1/2}})/k_e = {fmt_ex(A['pred_collective'])}. The ghosts' exponents: "
+             f"{fmt_ex(A['exK'][:-1])}, against Theorem J(b)'s prediction λ_j(H_q)/k_e = {fmt_ex(A['pred_collective'])} with H_q the whitened, weighted collective block of Proposition D‴.5(i) "
+             f"(relative errors {rel_err(A['exK'][:-1], A['pred_collective']).min() * 100:.2f}–{rel_err(A['exK'][:-1], A['pred_collective']).max() * 100:.2f}%, the O(k_e⁻²) of Theorem J(b)). The ghosts' exponents: "
              + "; ".join(f"class {k}: {fmt_ex(g[0])} (return residual {g[1]:.1e})" for k, g in A['ghosts'].items()) + f" — σ₀/k_e = {SIGMA0 / KE:.3e} at zero residual.", "",
              "| m | classes | return residual of the lift | separation exponents per class (distinct values, rounded to 10⁻⁷; each of multiplicity n_k − 1) | invariance defects | collective exponents (parameters) | collective defect |",
              "|---|---|---|---|---|---|---|"]
     for lf in A['lifts']:
-        lines.append(f"| {lf['m']} | {tuple(lf['counts'])} | {lf['residual']:.1e} | " + "; ".join(f"class {k}: {fmt_ex(np.unique(np.round(c['ex'], 7)))} ×{c['mult']}" for k, c in lf['classes'].items())
+        lines.append(f"| {lf['m']} | {tuple(lf['counts'])} | {lf['residual']:.1e} | " + "; ".join(f"class {k}: {fmt_ex(grouped(c['ex']))} ×{c['mult']}" for k, c in lf['classes'].items())
                      + " | " + ", ".join(f"{c['defect']:.1e}" for c in lf['classes'].values()) + f" | {fmt_ex(lf['collective'][:-1])} | {lf['collective_defect']:.1e} |")
-    lines += ["", "## B. The σ-modification (ϑ⁰ = 0) at unequal weights: the weighted 3-atom orbit, its lift to m = 16, and the saddle", ""]
+    errsA = np.concatenate([rel_err(lf['collective'][:-1], A['exK'][:-1]) for lf in A['lifts']])
+    errgA = np.concatenate([np.abs(grouped(c['ex']) - A['ghosts'][k][0][0]) / A['ghosts'][k][0][0] for lf in A['lifts'] for k, c in lf['classes'].items()])
+    lines += ["", f"Relative errors over the three lifts: collective exponents against the 3-atom orbit's {errsA.max() * 100:.4f}% at most; separation exponents against the ghosts' σ₀/k_e {errgA.max() * 100:.3f}% at most.",
+              "", "## B. The σ-modification (ϑ⁰ = 0) at unequal weights: the weighted 3-atom orbit, its lift to m = 16, and the saddle", ""]
     for b in B:
         counts = tuple(int(round(16 * x)) for x in b['w'])
         lines += [f"### w = ({', '.join(f'{x:.4f}' for x in b['w'])}), classes {counts}: splitting margin σ₀ − max κ_R = {b['margin']:+.5f} ({'admissible' if b['margin'] > 0 else 'a saddle'})", "",
@@ -166,7 +189,11 @@ def report(A, B, t0=None):
                   "| class k | n_k − 1 | separation exponents of the lift | ghost exponents | prediction (σ₀ − λ_j(R^G_k))/k_e | κ_R at the atom | defect |", "|---|---|---|---|---|---|---|"]
         for k in range(3):
             c = b['lift']['classes'][k]; g = b['ghosts'][k]
-            lines.append(f"| {k} | {c['mult']} | {fmt_ex(np.unique(np.round(c['ex'], 7)))} (each ×{c['mult']}) | {fmt_ex(g[0])} | {fmt_ex(b['pred_sep'][k])} | {b['kR'][k]:+.5f} | {c['defect']:.1e} |")
+            lines.append(f"| {k} | {c['mult']} | {fmt_ex(grouped(c['ex']))} (each ×{c['mult']}) | {fmt_ex(g[0])} | {fmt_ex(b['pred_sep'][k])} | {b['kR'][k]:+.5f} | {c['defect']:.1e} |")
+        errs = np.concatenate([rel_err(grouped(b['lift']['classes'][k]['ex']), b['pred_sep'][k]) for k in range(3)])
+        errg = np.concatenate([np.abs(grouped(b['lift']['classes'][k]['ex']) - b['ghosts'][k][0]) / np.abs(b['ghosts'][k][0]) for k in range(3)])
+        errc = rel_err(b['lift']['collective'][:-1], b['exK'][:-1])
+        lines.append(f"Relative errors: separation exponents of the lift against the ghosts' {errg.max() * 100:.3f}% at most, against the prediction (σ₀ − λ_j(R^G_k))/k_e {errs.min() * 100:.2f}–{errs.max() * 100:.2f}%; collective exponents of the lift against the weighted 3-atom orbit's {errc.max() * 100:.4f}% at most.")
         lines.append("")
     neg = [(b['w'], k, float(b['lift']['classes'][k]['ex'].min())) for b in B for k in range(3) if b['lift']['classes'][k]['ex'].min() < 0]
     lines += ["Reading. The lift of the K₀-atom orbit is a periodic orbit of the m-loop for every size tried (return residuals at the integration tolerance), its monodromy leaves every class's "

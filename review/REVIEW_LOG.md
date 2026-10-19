@@ -570,3 +570,74 @@ pairs (0.987–0.998, not yet reported), and the saddles' fate.
 **Lesson.** A hypothesis imposed "from s₁ on" must be checked against every step of the proof that uses it, including the transient
 estimates feeding Λ₁; and the convention of a diagnostic (`decomposition`'s same-cell leak) is not the identity it stands in for once its
 hypothesis fails — the true derivative should be recorded alongside.
+
+## Round 11 (adversarial review of Proposition D‴.12, 2026-10-19)
+
+**Design.** One referee on Proposition D‴.12 (i)–(v), its Status, Remark D‴.13, the D‴.12 numerics block, the §0/§7/§8 clauses, the RESULTS
+and LITERATURE entries, `src/core/ot_leak.py`, `experiments/exp_ot_leak.py` → `results/chaos/ot_leak.md`, `tests/test_ot_leak.py`
+(`review/REVIEW_round11_D3d.md`). Every number recomputed from the raw data (regeneration byte-identical); the design table recomputed from
+scratch; the plan checked against the transportation LP (equal to 5·10⁻¹⁵, integral when commensurate, a forest otherwise); Danskin to
+3·10⁻¹⁰; the Hessian of J₁₅^{OT} equal to the nearest-atom J₁₅^ν's to 1.7·10⁻¹⁸ with the predicted spectrum; the incommensurate runs
+reproduced from their seeds and continued to s = 2400.
+
+**Verdicts.** (i) holds; (ii) holds as a conditional statement whose hypothesis is incompatible with Theorem D‴'s i.i.d. start except on an
+event of probability ≈ 0.83/m (major); (iii) holds; (iv) holds as stated (the count proved, the bounds formal with vacuous constants; the
+orders confirmed by the right estimators); (v) holds except one false clause; Status, Remark D‴.13, the numerics and the readings hold with
+fixes; the code holds; the experiment script holds with minor fixes; the tests pass and test what they say, with one loose tolerance and
+one tautology.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3d-1 | **major** ((ii), Status, §0, §8) | the frozen-plan hypothesis ("the plan assigns each particle to the atom of its reference's Laguerre cell for every s ≥ 0") forces w^m(0) = q: under the i.i.d. mixture start P(balanced) = 0.053, 0.014, 0.0034, 0.0016 (m = 15, 60, 240, 510) → 0; in all 32 OT systems the plan at s = 0 assigns 1–21 particles away from their nearest atom and the shared-particle coupling never re-matches them (D at 0.97–0.98 of the mismatch plateau at s = 600) | (ii) restated for a balanced sample, with the probability; Step 8's McDiarmid noted as written for i.i.d. particles; the coupling statement labelled formal; the generic case stated as open (a plan-following coupling as the candidate); §0, Status, §8 corrected |
+| D3d-2 | minor ((v), Remark D‴.13) | "after the transit all three vanish" false for the synchronous D, which converges from below to the permanent-mismatch plateau Σp_{kk′}Δ²_{kk′} (0.95–0.96 of it at s = 600) | (v) and D‴.13 corrected: the memory moves from the measure to the coupling; `report()` prints the plateau ratio |
+| D3d-3 | cosmetic | "one to twelve particles" → 1–21 per system; fit errors are seed means | per-system counts and labels |
+| D3d-4 | minor | the fit-error explanation by the jitter's spread 0.02e^{−σ₀600} ≈ 3·10⁻⁴ is off by two orders: the migrated particles sit at Δ_{kk′}e^{−σ₀600} ≈ 0.09 from their atoms and the finals are not stationary (drift 5.7·10⁻⁴–1.1·10⁻³); h² decays at 3.0–3.8σ₀ | `report()` prints the migrated particles' distances and the final drifts; text corrected |
+| D3d-5 | minor | the incommensurate m-laws (−2.07 ± 0.05, −1.21 ± 0.04) were measured against an M = 512 reference carrying its own bridge particles; against μ*(q) = ν the laws are m·W² = 19.3–20.9 (slope −0.98 ± 0.03) and m·fit = 0.45–0.60 (squared slope −1.81 ± 0.05) | `report()` adds the distances to ν; texts quote them as the test of (iv) |
+| D3d-6 | minor | the m = 16 function-level value (0.82 per window) was called stationary; continued runs give the plateau 2.82·10⁻⁴ (21% below), ratio OT/nearest 0.114 | text says "still relaxing" and quotes the continued run |
+| D3d-7 | cosmetic | W₂ written for the squared distance; (iv) compared the W² floor with the wrong law (the nearest-atom W² floor is O(m^{−1/2})) | W² throughout; "half an order in W², a full order at function level" |
+| D3d-8 | cosmetic (code) | `transit_mask` undefined on a tied split row (the centroid bridge particle counted as in transit for ever); header "= ½|w(0) − q|₁" exact on commensurate sizes only | split rows excluded; the table recomputes the unsplit particles in transit from the clouds; the recorded s_tr kept for the commensurate sizes only |
+| D3d-9 | cosmetic | "at m = 16 the two or three particles to move are the split ones" (seed 3 migrates two unsplit ones) | corrected |
+| D3d-10 | cosmetic | "about 0.5δ" → 0.69δ–0.49δ | `report()` prints fit/δ |
+| D3d-11 | cosmetic | "within 5–14%" → −7% to +28% of the formula; the exact K × K transport between the weighted stationary measures gives 0.997–0.999 at admissible weights | `report()` prints both; texts corrected |
+| D3d-12 | cosmetic | (iv)'s constants vacuous on the instance (4·10⁶ against 1.0–1.4; 1.00 against 0.018); measured m·W² ≈ 20 = 0.51Δ_ν², m·fit ≈ 0.55 | stated in (iv) |
+| D3d-13 | cosmetic (tests) | test 2's tolerance slack 1.4·10⁴; test 1's W² identity tautological; dead code | tolerance 10⁻⁸; the plan's cost checked against the LP; dead code removed |
+| D3d-14 | cosmetic | the w̄-law column is 1.6–2.3× the seed means; the exact per-seed function-level law gives 0.999–1.009 | `report()` prints the exact per-seed law |
+| D3d-15 | cosmetic | Laguerre cells not unique for a disconnected support; the M-reference is a poor stand-in for the mean-field flow during the transit | both stated |
+
+**Lesson.** A coupling hypothesis must be checked at s = 0 against the law of the initial data, not only along the flow: the plan's mass
+constraint and an i.i.d. sample are incompatible with probability 1 − O(1/m), and a stationary statement about the particle system does
+not transfer to a dynamical one without a coupling that respects the constraint.
+
+## Round 12 (adversarial review of Corollary D‴.14 and Proposition D‴.15, 2026-10-19)
+
+**Design.** One referee on Corollary D‴.14 (i)–(iii), Proposition D‴.15 and their Status and numerics, the rows and bullets mentioning them,
+`src/core/lifted_orbit.py`, `experiments/exp_ot_real_loop.py` → `results/chaos/ot_real_loop.md`, `experiments/exp_lifted_orbit.py` →
+`results/chaos/lifted_orbit.md`, and the three real-loop tests (`review/REVIEW_round12_D3e.md`). Every number of both md files reproduced
+(regeneration byte-identical); the block structure of Proposition D‴.15 confirmed at the field level (leakage 2·10⁻¹⁶) and at the monodromy
+level (‖BᵀDP B − M_k‖ ≤ 2·10⁻⁷); the ghost monodromy against the matrix ODE (3·10⁻⁹) and against exp(T₀Ā_k) (7·10⁻⁹); the k_e-scaling of the
+prediction's error checked at k_e = 50.
+
+**Verdicts.** D‴.14(i) holds; (ii) and (iii) hold with fixes (a garbled proviso, hidden hypotheses); the Status is honest about the
+uniqueness ball; the D‴.14 numerics reproduce but their reading fails in part (major: three saddle weights unmentioned; the tracking-error
+comparison against a scheme floor); D‴.15 holds, with its last claim true but incompletely proved as written; the D‴.15 numerics reproduce
+with two ranges wrong; the code holds; the tests pass with two weak assertions.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3e-1 | **major** (D‴.14 numerics, §7, RESULTS) | three of the six nearest-atom real-loop systems have inadmissible realised weights (seed 0 m = 15, margin −0.00348; seed 1 m = 15, −0.00108; seed 1 m = 60, −0.00216): their lifts are saddle orbits and the m-systems are not on them (the over-weighted class splits along the centre direction, spread growing); "every size on the orbit of its own weights" and "within 3.3·10⁻⁶ of its own lift" were false for them, and the two ratios 0.960 were the splits | `report()` prints the splitting margin and the within-class spread of every system and names the saddles; (iii) requires w^m, w^M ∈ W_adm; the text separates admissible pairs from saddles |
+| D3e-2 | minor ((ii)) | the proviso "k_e ≥ √m·sup‖Θ^q_p − Θ*‖_w/ρ₀(m)" was off by a factor k_e; ‖·‖_w undefined | restated as √m·sup‖·‖_w ≤ ρ₀(m), i.e. k_e ≥ √m C_q/ρ₀(m) with Theorem J(a)'s C_q/k_e; ‖·‖_w defined |
+| D3e-3 | minor ((ii), (iii), D‴.15) | hidden hypotheses: (i)'s cell condition along Γ_q; admissibility of both weights in (iii); "targets constant along Γ" → "locally constant near Γ" | stated |
+| D3e-4 | minor (D‴.15 proof) | the identification of M_k's exponents through Theorem J(b)'s multiset does not attribute eigenvalues to classes | proof replaced by first-order averaging of the ghost equation (e_p = r/k_e + O(k_e⁻²)), which needs only that Γ_K is Theorem J's orbit of (CL_w) — no condition on m; the Status's conditional removed |
+| D3e-5 | minor | "within 0.6–2.4%" is 0.56–3.22%; "within 0.3–3%" is 0.23–4.07% | `report()` prints the relative errors; texts corrected |
+| D3e-6 | minor | "m = 60 and 510 within 3·10⁻¹¹" false for seed 1, m = 60 (a saddle) | text corrected |
+| D3e-7 | minor | the OT loop's tracking error 3.9·10⁻⁵ and fit error 2.1·10⁻⁴ were the zero-order-hold floor of the integration scheme (the continuous orbit has e ≡ 0; the floor ∝ dt) | the plant's RK4 re-evaluates the control at the stages (Θ frozen over the step) in both real-loop experiments, which are rerun |
+| D3e-8 | cosmetic | the collective prediction labelled λ(G^{1/2}∇²𝒢_qG^{1/2})/k_e is the weight-whitened block | label H_q, the collective block of Proposition D‴.5(i) |
+| D3e-9 | cosmetic | "to four digits" is 10⁻⁴ relative; a round-before-format artefact | relative errors printed; grouped display |
+| D3e-10 | cosmetic ((i)) | "½‖w − q‖₁ … leave" is a lower bound (a chain of reassignments can move more) | "at least" |
+| D3e-11 | cosmetic (§8) | "Theorem J's orbit is the lift" stated unconditionally | "under its uniqueness-ball proviso" |
+| D3e-12 | cosmetic (tests) | test 1's "atoms moved" compared particles with particle 0; test 2's W² > 10⁻³ held at t = 0 | motion measured against the start; the two lifts' displacements compared |
+| D3e-13 | cosmetic | the ghost exponent at the matching masses is exactly σ₀/k_e; "−G∇𝒢_w" is the gradient in the metric diag(w) ⊗ G⁻¹; "within 10⁻⁸" are squared distances | corrected |
+
+**Lesson.** A comparison of tracking errors must first establish the integrator's floor (here the zero-order hold of the control over the
+step), and a run that is meant to sit on an orbit must check that the orbit is stable at the realised weights — the admissible set of
+Proposition D‴.5 is where it decides.
