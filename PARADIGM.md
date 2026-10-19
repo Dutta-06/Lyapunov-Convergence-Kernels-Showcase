@@ -35,14 +35,14 @@ archived as `review/PARADIGM_v2.md`; the review reports of rounds 1–3 cite its
   `exp_periodic_orbit.py`, `exp_orientation_stability.py`, `exp_chaos.py`, `exp_chaos_uniform.py`, `exp_chaos_learning.py`, `exp_prior_design.py`, `exp_ot_leak.py`, `exp_ot_real_loop.py`, `exp_lifted_orbit.py`, `exp_ot_2d.py`, `exp_dither_ot.py`, `exp_uniform_basin.py`, `exp_entropic_leak.py`, `exp_ot_basin.py`, `exp_adaptive_prior.py`, `exp_barycentric_leak.py`,
   `exp_dither_stationary.py` and `exp_pe_general.py`. Their numbers are collected in `results/RESULTS_PARADIGM.md`.
 - **Literature audit.** `LITERATURE_TRANSPORT.md` gives a novelty verdict for each claim. Reference numbers [1]–[89]
-  point to `review/LITERATURE_refs.md`, and [S1]–[S49] point to the audit file.
+  point to `review/LITERATURE_refs.md`, and [S1]–[S50] point to the audit file.
 - **Review log.** `review/REVIEW_LOG.md` lists every confirmed issue and its fix. The raw reports are in
   `review/REVIEW_round1.md`, `review/REVIEW_round2.md`, `review/REVIEW_round3.md`, for round 5 the five files
   `review/REVIEW_round5_*.md` (E0, I, J, DC, consistency), for round 6 `review/REVIEW_round6_E0prime.md`,
   `review/REVIEW_round6_Dpp.md` and `review/REVIEW_round6_Jprime.md`, for round 7 `review/REVIEW_round7_E0p3_E0dp.md` and for
   round 8 `review/REVIEW_round8_Dppp.md`, for round 9 `review/REVIEW_round9_D3b.md`, for round 10 `review/REVIEW_round10_D3c.md`, for
-  round 11 `review/REVIEW_round11_D3d.md`, for round 12 `review/REVIEW_round12_D3e.md`, for round 13 `review/REVIEW_round13_D3f.md` and for
-  round 14 `review/REVIEW_round14_D3g.md`.
+  round 11 `review/REVIEW_round11_D3d.md`, for round 12 `review/REVIEW_round12_D3e.md`, for round 13 `review/REVIEW_round13_D3f.md`, for
+  round 14 `review/REVIEW_round14_D3g.md`, for round 15 `review/REVIEW_round15_D3h.md` and for round 16 `review/REVIEW_round16_D3i.md`.
 
 ---
 
@@ -112,8 +112,8 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | D′ | Finite-horizon propagation of chaos for the dithered closed loop (L_τ): by synchronous coupling, E sup_{t≤T}(‖x^m − x̄‖ + (1/m)Σ‖ϑ_i − ϑ̄_i‖) ≤ T K_Φ e^{ΛT} m^{−1/2}, with Λ independent of m and τ, and a per-particle sup bound of the same order; the plant and the learned function converge at the rate m^{−1/2}, whose exponent is dimension-free, and only W₁(μ^m, μ̄) carries m^{−1/p}; under a dominant leak (small-gain condition κ_eκ_ϑ > L_b′L_ϑ) the bound is uniform in time (Theorem D″), a leak-dominated regime in which the network does not learn (at τ = 0 it collapses to one kernel; at τ > 0 it stays in the dither cloud of the prior) | proved; checked: the coupled distance to a 4096-particle reference decays like m^{−0.47±0.06} (24 seeds, τ = 0; −0.46 ± 0.05 with dither) and like (1/m − 1/M)^{0.94±0.08}, the law of the shared-particle coupling | the technique is Sznitman's, and the dimension-free exponent for the state is its standard output; new in that the plant is in the loop, with constants in control quantities |
 | D‴ | Uniform-in-time propagation of chaos *in the learning regime* for the averaged slow loop (𝔄_m) at τ = 0 (Theorem J′'s leading order): under the synchronous coupling with the mean-field characteristic flow, the interaction term of the coupling identity is −‖f̂_Θ − f̂_Θ̄‖²_{L²(ρ)} + O(D²) — flat convexity of the loss makes it contract whatever the gains — and only the residual-weighted feature curvature R[μ](ϑ) = ⟨r_μ∇²_ϑΦ̃⟩_ρ (Proposition K's R₂) can expand; if along the mean-field flow σ₀I − G^{1/2}RG^{1/2} ⪰ κI on a neighbourhood of the support from a time s₁ on — the strict second-order optimality condition of the fitted configuration, compatible with σ₀ < σ_crit — then sup_s E(1/m)Σ‖ϑ_i − ϑ̄_i‖²_{G⁻¹} ≤ 4e^{2Λ₁}(L_ϑ^G)²K_Φ²/(κ²m) plus a tail exponentially small in m (uniformly in time under exponential convergence of the flow, over horizons e^{cm} without it), no particle changes basin, and the learned function converges at m^{−1/2} uniformly in time while the network learns; the window κ_R[μ_∞] < σ₀ < σ_crit is where learning and uniformity coexist; at finite m the stationary coupled distance follows the weight-sensitivity law E D_∞ = (1/m − 1/M)Σ_k w̄_k tr(S̃_kC̃S̃_kᵀ), S = ∂Θ*/∂w the sensitivity of the stationary atoms to the cluster weights (Proposition D‴.5, the sharp form of the theorem's constant); the leak's prior is a design input of the window: with a measure-valued prior (nearest-atom leak) placed on the plant's structure the stationary residual vanishes and the margin is maximal, κ = σ₀, while the floors at parameter and function level rise (1.6–2.2× on the instance, with the amplitudes), and the sign of the residual at a cluster sets its admissible weights — overshoot splits, undershoot stabilises, so a shrunk prior enlarges the admissible set (Proposition D‴.9, Remark D‴.11); the barycentric OT leak of Theorem C′ toward the same prior constrains the cluster masses to the prior's — the nearest-atom leak conserves them, and the floor is the memory of the initial cloud that this conservation law carries — so on the sizes commensurate with the masses the finite-m stationary measure is the mean-field one exactly, both floors vanish and the fit loses the weight bias, while on other sizes at most K₀ − 1 split particles bridge the clusters, with floors O(1/m²) at function level and O(1/m) in W² against the nearest-atom leak's 1/m and m^{−1/2} (Proposition D‴.12); in the real loop the collapsed-by-class subspace is invariant and carries the weighted K₀-atom loop, so with the OT leak the lift of one K₀-atom periodic orbit is a periodic orbit of every commensurate size — the same orbit measure, learned function and tracking error exactly, the real loop's finite-size floor being zero — while with the nearest-atom leak it is the lift of the orbit of the realised weights, whose distance between sizes is Corollary D‴.7's floor (Corollary D‴.14); the Floquet spectrum of a lifted orbit is the K₀-atom orbit's together with each class's ghost spectrum of multiplicity n_k − 1, independent of m (Proposition D‴.15); with dither the nearest-atom leak equalises the masses only by Arrhenius crossings of the Voronoi ridges (barrier ≈ 0.05 on the instance: frozen for 350/σ₀ at τ₀ = 0.005), while under the OT leak a crossing particle stays assigned to its own atom and returns, so the counts are balanced 88–99.6% of the time at the same crossing barrier (Remark D‴.16); every trajectory of the OT dynamics converges to a Clarke-critical point of its energy (Kurdyka–Łojasiewicz for the definable, semiconcave-plus-smooth J_m^{OT}), so the stationary statement is reached from every initial condition in the basin (Proposition D‴.17) | proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow; it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the coupling carries a floor; the real loop at finite k_e: settled on a warm start by Corollary D‴.7 through Theorem J (both loops converge to their periodic orbits, whose distance is Proposition D‴.5's up to O(1/k_e)), open for a cold start (Remark D‴.4); dither: the entropy method of [S5] (imported); the theorem's regime m ≥ m₀ is asymptotic (m₀ ~ 10²³ on the instance) and Proposition D‴.5 is formal; numerics: on a three-bump instance at σ₀ = 0.15σ_crit the window is realised (κ_R[μ*](N_{0.1}) = 0.0051 < σ₀ = 0.0071 < σ_crit = 0.047) and (H) holds along a warm-start run; the coupled distance saturates (window maxima within 15% over 900 slow units) with slope −1.28 ± 0.30 in m, and the per-seed weight-sensitivity law predicts it within 25% in 9 of 12 cases with per-cluster cosines 0.92–1.00; the exact stationary distance of the replicated weighted configuration reproduces the measured one within 2.3% in all pairs, one m = 16 seed with inadmissible weights sitting on a saddle; a connected cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 (m = 16, 64, 256) decays like m^{−0.64±0.08}; the real loop at k_e = 25 follows its averaged slow dynamics on the same clouds to within 0.7%; for the OT leak the frozen-plan equivalence and the stationary statement are proved (total unimodularity, c-cyclical monotonicity, the Hessian of D‴.5), the quantisation bounds formal, and Theorem D‴'s coupling applies only to a balanced sample (probability ≈ 0.83/m under an i.i.d. start, and even there formal: Step 8 is written for i.i.d. particles) — for a generic sample the shared-particle coupling keeps the transit's mismatch for ever and a coupling theorem for the OT dynamics is open; numerics on the same clouds under the two leaks: cluster weights conserved exactly against equalised by s ≈ 100 slow units (ln 2/σ₀ = 98), function-level and W² distances at 10⁻⁴ and 10⁻³ of the nearest-atom leak's after 4.2/σ₀ and still falling on the commensurate sizes while the synchronous D sits at 0.95 of its mismatch plateau, the quantisation laws m·W²(μ_m, ν) ≈ 20 (slope −0.98 ± 0.03) and m·fit ≈ 0.55 (squared slope −1.81 ± 0.05) on the incommensurate ones, the reference's fit error 0.012 → 8·10⁻⁵; the real loop at k_e = 25 on the same clouds: learned functions of m = 15, 60, 510 within squared distances 7.5·10⁻⁹–2.7·10⁻⁸ of each other under the OT leak against 10⁻⁴–10⁻³ under the nearest-atom leak (the lifted orbits' distance to 1.0003 at the one pair with admissible weights; three of the six nearest-atom systems sit at saddle weights and have split), rms tracking error 0.9–7·10⁻⁶ against 3·10⁻⁴–1.9·10⁻³ (on a planar plant with four kernels: 10⁻⁷ against 10⁻² and 4·10⁻⁶–1.6·10⁻⁵ against 2–7·10⁻³); the lifted orbit's transverse spectrum equals the ghosts' and the collective block the K₀-atom loop's to 10⁻⁴ relative (invariance defects ≤ 10⁻⁷) | the two ingredients — the sign of the interaction from flat convexity, and the curvature at the actual rather than the worst-case residual — are new in propagation of chaos for adaptive control; the decomposition Gram + residual×curvature is the one of the interpolation literature ([S39]); the window between Proposition K's collapsed instability and the fitted configuration's stability is new; the finite-size floor as a conservation law of the leak, broken by the plan's mass constraint so that the particle system's stationary measure is exactly the mean-field one, is new; the lift of a weighted K₀-atom orbit as the exact periodic orbit of every commensurate size, with an m-independent Floquet spectrum (the orbit-level form of Proposition K's block structure), is new in adaptive control, where the size of the approximator is usually a nuisance parameter |
 | D‴.18 | Theorem J uniformly in m at a replicated configuration: for weights with margins (collective block and separation blocks ≥ λ₀) the real loop's orbit near Θ*_m(w) is the lift of the weighted K₀-atom orbit, unique in the per-particle ball of radius ρ/2 (inside the |||·|||-ball of radius ρ where the period map contracts) and attracting every solution started in it at the rate (1 − κ)min{λ_coll, λ_sep}/k_e, with k₀, ρ, C independent of m; in the unnormalised norm of Theorem J the basin is m-independent too but shrinks per particle like m^{−1/2} and the threshold k₀ grows like √m, and for the nearest-atom leak no mean-square (W₂-type) basin is possible — one particle in another cell changes the weights (Remark D‴.19) | proved as an adaptation of Theorem J's proof in the per-particle norm (three structural facts: the plant sees the class means up to second order in the separations; each particle's drift depends on the others only through the plant; the linearisation is block diagonal with an m-independent spectrum); numerics: the Floquet exponents within 0.56–3.22 % of the averaged prediction and the ghosts' to 3·10⁻⁴; on the matching prior fitted rates 0.95–1.05 of the prediction for m ≥ 15 and constants 1.03–1.29, on a moving orbit 0.96–1.16 and 1.04–1.23, all from radii 31–261 times the proved one; across a cell boundary the nearest-atom leak ends at other weights (two of them inadmissible) while the OT leak restores the masses q | uniform-in-m averaging for an adaptive law with a mean-field interaction: the size of the approximator drops out of the stability constants — new in adaptive control, where Lyapunov and averaging constants usually grow with the number of parameters |
-| D‴.20 | The entropic OT leak (Sinkhorn plan, regularisation ε) is a smooth gradient flow of mL̄ + (σ₀m/2)OT_ε that interpolates between the OT leak (ε → 0) and the σ-modification toward the barycentre of the prior (ε → ∞); at a collapsed configuration the separation block is σ₀(I − (2/ε)Cov^G_k) − R^G_k with Cov^G_k the conditional covariance of the atoms, so an over-weighted class splits — and the masses equalise — only below the critical regularisation ε_c = 2σ₀p(1 − p)Δ̂ᵀ(σ₀I − R^G)⁻¹Δ̂; at fixed ε the masses are equalised only down to the critical excess, and the floor returns at large m | (i)–(iii) proved, the separation block checked against the finite-difference Hessian; (iv) the rank-one criterion proved, its two-atom form within 22–31% of the exact threshold; (v) formal, numerics: at ε = 1 every size equalises (the OT leak), at ε = 4 the larger sizes stop at the residual excess, at ε = 16 they keep their sampled weights and the floor is the nearest-atom leak's, at ε = 64 the barycentric bias dominates | the critical temperature of deterministic annealing is the precedent ([S46]); new is its role as the threshold of mass equalisation in an adaptive law, and the consequence that only the hard mass constraint is floor-free for every m |
-| D‴.21 | A measure-level basin for the OT leak: at commensurate sizes two exact identities along the plan segments — the energy, and its gradient paired with the displacement toward the stationary atom of one's own class — give a Polyak–Łojasiewicz inequality ‖∇J‖² ≥ λ·m(𝒥 − 𝒥*) with λ set by the residual-weighted curvature along the segments and independent of m (sharp, 2σ₀, at a matching prior); the excess energy decays exponentially from an m-independent sublevel set that contains configurations with a fixed fraction of the particles in other cells; under a curvature hypothesis at the stationary residual the replicated configuration is the unique minimum among the empirical measures for every m, while the nearest-atom energy has a spurious minimum at every admissible count vector (the energy-landscape form of the floor) | (i), (ii), (iv), (v), (vi) proved, (iii) proved for vertex-selection solutions; the mean-field form and the transfer to the real loop formal (Remark D‴.22); numerics: the identities to 6·10⁻¹³ along 64 runs, the margin positive from s ≤ 300, the observed rate at least λ throughout and λ within 1.5 % of the observed 2σ₀ at the end (matching prior); the nearest-atom runs stop at the energy of the replicated configuration of their sampled weights | the Polyak–Łojasiewicz inequality ([S47]) and Łojasiewicz inequalities for displacement-convex functionals in Wasserstein space ([S48]) are known; the energy here is not displacement-convex, and what is new is the plan as the test direction, with the fixed counts making the constant independent of m |
+| D‴.20 | The entropic OT leak (Sinkhorn plan, regularisation ε) is a smooth gradient flow of mL̄ + (σ₀m/2)OT_ε that interpolates between the OT leak (ε → 0) and the σ-modification toward the barycentre of the prior (ε → ∞); at a collapsed configuration the separation block is σ₀(I − (2/ε)Cov^G_k) − R^G_k with Cov^G_k the conditional covariance of the atoms, so where A_k := σ₀I − R^G_k ≻ 0 an over-weighted class is a saddle exactly below the critical regularisation ε_c = 2σ₀λ_max(A_k^{−1/2}Cov^G_kA_k^{−1/2}) (implicit, along the branch Θ*_ε(w)), and a split moves its excess toward an atom its conditional plan charges, which need not reduce it; at fixed ε the masses are equalised only down to a critical excess δ_c(ε) ≈ w_kp_c(ε), and at large m the floor returns as Proposition D‴.5's law at the entropic stationary point | (i)–(iii) proved, the separation block checked entrywise against the finite-difference Hessian; (iv) proved under A_k ≻ 0 (which fails at large excesses and small ε), the conditional plan charging both under-weighted atoms (Cov^G_k of rank two, the rank-one formula 1.22–1.31 times ε_c); (v) formal; numerics: ε_c = 5.1, 13.5, 23.1, 65.0 for excesses 0.02–0.2; at ε = 1 every size equalises; at ε = 4 every system ends, after up to 6000 slow units, at stable weights with residual excesses up to 0.017, of the order of δ_c(4) = 0.012–0.016; at ε = 16 and 64 the stable systems keep their sampled weights, with floors 0.23–0.91 of the nearest-atom leak's | the critical temperature of deterministic annealing is the precedent ([S46]), with the same roles (particles as codevectors, atoms as data), and the ε → 0/∞ interpolation is that of the Sinkhorn divergences ([S45]); new are its role as the threshold of mass equalisation in an adaptive law, where the conditional covariance of a collapsed class is an effect of its excess, and the consequence that on the commensurate sizes only the hard constraint is floor-free for every m |
+| D‴.21 | A measure-level basin for the OT leak: at commensurate sizes two exact identities along the plan segments — the energy, and its gradient paired with the displacement toward the stationary atom of one's own class — give a Polyak–Łojasiewicz inequality ‖∇J‖² ≥ λ·m(𝒥 − 𝒥*) with λ set by the residual-weighted curvature along the segments and independent of m (sharp, 2σ₀, at a matching prior); the excess energy decays exponentially from an m-independent sublevel set (tiny on the instance: none of its configurations has a particle in another cell below m ≈ 2·10⁵), and a posteriori wherever the plan-segment margin is positive, which covers configurations with a fixed fraction of the particles in other cells; under a curvature hypothesis at the stationary residual the replicated configuration is the unique global minimum among the empirical measures for every m, while the nearest-atom energy has a spurious minimum at every admissible count vector (the energy-landscape form of the floor) | (i), (ii), (iv), (v), (vi) proved, (iii) proved for vertex-selection solutions (their existence assumed); the mean-field form and the transfer to the real loop formal (Remark D‴.22); numerics: the identities to 6·10⁻¹³ along 64 runs, the margin positive from s ≤ 300, the observed rate at least λ throughout and λ within 1.5 % of the observed 2σ₀ at the end (matching prior); the nearest-atom runs at admissible counts stop at the energy of the replicated configuration of their sampled weights, at inadmissible ones (5 of 8 per prior at m ≤ 60) they split below it | the Polyak–Łojasiewicz inequality ([S47]), the generalised geodesics of AGS §9.2 and PL inequalities through optimal maps for functionals that are not geodesically convex ([S48]) are known; new is the PL inequality along the generalised geodesic based at the prior, with the loss linearised at the stationary residual and the counts making the constant independent of m |
 | D‴.23 | Adaptive priors: the OT leak toward a prior whose atoms move toward the class barycentres at a rate η is the gradient flow of L̄ + (σ₀/2)W²(μ_Θ, ν_Z) in a weighted metric, and its stationary points carry no leak bias (the critical points of the unregularised K₀-atom loss); at an exact representation it linearises, for every m, into the separations (rate σ₀) and 2 × 2 collective pairs whose slower rates satisfy ηh_j/(h_j + σ₀ + η) ≤ λ_j^− < min{h_j, η}, h_j the measure-space excitation spectrum — a learned prior removes the fixed prior's bias σ₀(H_L + σ₀I)⁻¹x⁰ mode by mode, at the rate of the excitation; as η → ∞ a capacity-constrained K₀-means regulariser; the transit drags the prior, so the adaptation must start from the fixed-prior stationary point | (i)–(iii) and (v) proved, (iv) formal, (vi) the gates' Lyapunov property proved and the drag numerical; numerics: the K₀-atom modes decay at λ_j^−; started from the fixed-prior stationary point every size m = 15–510 follows the K₀-atom run (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at η = ∞), with fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵ against the fixed prior's 9.78·10⁻³ | proximal point / iterated Tikhonov regularisation, elastic averaging and soft weight-sharing are the precedents ([S49]); new are the mass-constrained form, the mode-by-mode trade-off between the leak's bias and the rate set by the excitation spectrum, and the transit's drag with its gate |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
@@ -2320,8 +2320,9 @@ particle pushed into another Voronoi cell changes the cluster weights, and the s
 small its mean-square displacement — for m large enough that the shifted weights are admissible. At small m they need not be (at m = 15 on
 the matching prior, one particle moved out of a class of five gives the weights (6, 5, 4)/15, whose lift is a saddle, numerics below); the
 solution then splits instead, and either way it does not converge to Γ_q. Under the OT leak the plan restores the masses (a transit,
-Proposition D‴.12(v)), and the basin at the level of the empirical measure is larger: for the averaged loop Theorem D‴.21 below proves
-an m-independent energy basin, which contains configurations with a fixed fraction of the particles in other cells.
+Proposition D‴.12(v)), and the basin at the level of the empirical measure is of a different shape: for the averaged loop Theorem D‴.21
+below proves an m-independent energy basin, and its a-posteriori form covers configurations with a fixed fraction of the particles in
+other cells (the two sets are not nested, and D‴.18 concerns the real loop).
 
 *Status.* Proved as an adaptation of Theorem J's proof, at Theorem J's level of detail: Steps 1–3 and 5 carry over with m-independent
 constants by the structural facts (1)–(2), and Steps 4 and 6 are rerun in the norm |||·||| with (3); the m-uniformity rests on the two-sided
@@ -2380,9 +2381,10 @@ the entropic plan from μ_Θ to ν for the cost ‖·‖²_{G⁻¹} — the uniq
     dϑ_i/ds = G⟨∇_ϑ(r_ΘΦ̃(·;ϑ_i))⟩_ρ − σ₀(ϑ_i − T^ε_i).                                                                (𝔄_m^ε)
 
 (i) *(a smooth gradient flow between two leaks)* (𝔄_m^ε) is the G-gradient flow of J^ε_m := mL̄(μ_Θ) + (σ₀m/2)OT_ε(μ_Θ, ν) — by the
-envelope theorem ∂OT_ε/∂ϑ_i = (2/m)G⁻¹(ϑ_i − T^ε_i) — and J^ε_m is real-analytic in Θ (the dual potentials are analytic in the cost, by the
-implicit function theorem for the strictly concave semi-dual), so there are no plan switches and Łojasiewicz's theorem gives the
-convergence of every bounded trajectory without the nonsmooth machinery of Proposition D‴.17. As ε → 0, T^ε → T̄ wherever the OT plan is
+envelope theorem ∂OT_ε/∂ϑ_i = (2/m)G⁻¹(ϑ_i − T^ε_i) — and J^ε_m is real-analytic in Θ (the dual potentials are analytic in the cost: the
+semi-dual is strictly concave once the gauge g₁ = 0 is fixed, and the implicit function theorem applies), so there are no plan switches and
+Łojasiewicz's theorem gives the convergence of every trajectory — all are bounded, T^ε_i lying in conv supp ν and the fit's force being
+bounded — without the nonsmooth machinery of Proposition D‴.17. As ε → 0, T^ε → T̄ wherever the OT plan is
 unique (Proposition D‴.12); as ε → ∞, π^ε → μ_Θ ⊗ ν and T^ε_i → Σ_jq_jϑ⁰_j: the leak becomes the σ-modification toward the barycentre of ν.
 
 (ii) *(collapsed configurations)* At a configuration collapsed by class with weights w the entropic plan is class-symmetric,
@@ -2399,53 +2401,80 @@ order, and the conditional plan of a particle responds to its own displacement t
 (2/ε)Cov_{π^K(·|k)}(ϑ⁰)G⁻¹ — a positive feedback against the leak's restoring σ₀I.
 
 (iv) *(the critical excess)* When w = q and ε ≪ Δ_ν², the conditional plans charge the other atoms with exponentially small mass and S^ε_k is
-the OT leak's σ₀I − R^G_k up to exponentially small terms. When class k carries an excess and its conditional plan sends a fraction p to
-atom j and 1 − p to its own atom, Cov^G_k = p(1 − p)Δ̂Δ̂ᵀ with Δ̂ := G^{−1/2}(ϑ⁰_j − ϑ⁰_k), and since σ₀I − R^G_k ≻ 0 the rank-one criterion
-says that S^ε_k has a negative eigenvalue iff
+the OT leak's σ₀I − R^G_k up to exponentially small terms. Let class k carry an excess, and assume A_k := σ₀I − R^G_k ≻ 0 at Θ*_ε(w) — the
+splitting condition of Proposition D‴.5, which fails at large excesses and small ε, where the class is a saddle for the fit's own reason.
+Then S^ε_k = A_k − (2σ₀/ε)Cov^G_k has a negative eigenvalue iff
 
-    ε < ε_c := 2σ₀p(1 − p)Δ̂ᵀ(σ₀I − R^G_k)⁻¹Δ̂.
+    ε < 2σ₀λ_max(A_k^{−1/2}Cov^G_kA_k^{−1/2}),
 
-Below ε_c the over-weighted collapsed class is a saddle: it splits, and the split-off part carries the excess to atom j as the OT leak's
-transit does. Above ε_c the class is stable and the excess is absorbed by a bias of its atom toward T_k = (1 − p)ϑ⁰_k + pϑ⁰_j. In general (the
-conditional plan charging more than two atoms) the criterion is λ_min(S^ε_k) < 0, a property of the K-atom problem.
+twice σ₀ times the largest generalised eigenvalue of the conditional covariance relative to A_k. A_k and Cov^G_k depend on ε through Θ*_ε(w)
+and its plan, so the critical regularisation ε_c is the root of λ_min(S^ε_k) = 0 along the branch Θ*_ε(w). When the conditional plan sends
+a fraction p to one atom j and 1 − p to its own, Cov^G_k = p(1 − p)Δ̂Δ̂ᵀ with Δ̂ := G^{−1/2}(ϑ⁰_j − ϑ⁰_k), and the criterion is the rank-one
+ε < 2σ₀p(1 − p)Δ̂ᵀA_k⁻¹Δ̂. Below ε_c the over-weighted collapsed class is a saddle and splits; its split-off particles leave toward an atom its
+conditional plan charges, which need not be an under-weighted one, so a split moves the excess but need not reduce it. Above ε_c the class's
+separation block is positive, and the replicated configuration is a local minimum when the collective block and the other classes' blocks
+are positive as well; the excess is then absorbed by a bias of the class atom toward T_k.
 
-(v) *(the floor at large m)* For fixed ε the critical excess is positive — p_c(ε) ≈ ε/(2‖Δ̂‖²) for small ε and R ≈ 0 — while the sampled
-excess of an i.i.d. warm start is p ~ m^{−1/2}: the entropic leak equalises the cluster masses only down to the critical excess, and for
-m ≫ (2‖Δ̂‖²/ε)² it does not equalise them at all; the stationary measure then depends on the sample again, and the floor of Proposition D‴.5
-returns, with the excess absorbed by the class biases instead of conserved. Only the hard constraint ε → 0 removes the floor for every m.
+(v) *(the floor at large m)* For fixed ε the critical excess δ_c(ε) is positive. At small ε and R ≈ 0 the critical conditional fraction is
+p_c(ε) ≈ ε/(2‖Δ̂‖²), and the plan then sends away exactly the excess, so δ_c ≈ w_kp_c. The sampled excess of an i.i.d. warm start has the
+standard deviation (q_k(1 − q_k)/m)^{1/2}, so the entropic leak equalises the cluster masses only down to the critical excess, and for
+m ≫ ((1 − q_k)/q_k)(2‖Δ̂‖²/ε)² it does not equalise them at all. The masses are then conserved, as under the nearest-atom leak, and partly
+absorbed by the class biases: the stationary measure depends on the sample again, and the floor returns as Proposition D‴.5's law at the
+entropic stationary point. Only the hard constraint ε → 0 removes the floor — on the commensurate sizes; on the others its K₀ − 1 bridge
+particles leave a floor of order m⁻² (Proposition D‴.12's numerics).
 
 *Status.* (i) proved (the envelope theorem; the analyticity of the entropic potentials; the limits are the convergence of the entropic plan
-to an optimal plan as ε → 0 [S45] and the product-measure limit as ε → ∞). (ii) proved (uniqueness of the entropic plan and the class
-symmetry). (iii) proved (the first-order stationarity of the potentials under zero-sum class perturbations and the derivative of the
-conditional softmax); checked against the finite-difference Hessian of J^ε_m at m = 15 in `tests/test_entropic_leak.py`. (iv) the rank-one
-criterion proved, its two-atom form an approximation, compared with the exact λ_min below. (v) formal (the scaling of the sampled excess and
-the identification of the dynamics' end state); numerical below. The structure — a critical regularisation equal to twice the largest
-eigenvalue of a conditional covariance — is that of the critical temperature of deterministic annealing [S46], with the roles exchanged: here
-the particles are softly assigned to the prior's atoms, and what splits is a cluster of particles. Checked: `tests/test_entropic_leak.py`
-(the semi-dual Newton plan's marginals and its agreement with log-domain Sinkhorn; the gradient of J^ε_m against finite differences; the two
-limits; the replicated configuration critical with a class-symmetric plan, and the separation blocks of the finite-difference Hessian equal
-to σ₀(I − (2/ε)Cov^G_k) − R^G_k; the over-weighted class of (6, 5, 4)/15 unstable at ε = 4 and 16, stable at ε = 20 and 64).
+to an optimal plan as ε → 0 — the optimal plan of maximal entropy where it is not unique [S45] — and the product-measure limit as ε → ∞).
+(ii) proved (uniqueness of the entropic plan and the class symmetry). (iii) proved (the first-order stationarity of the potentials under
+zero-sum class perturbations and the derivative of the conditional softmax); checked against the finite-difference Hessian of J^ε_m at
+m = 15 in `tests/test_entropic_leak.py`. (iv) proved under the hypothesis A_k ≻ 0 (the generalised-eigenvalue criterion and its rank-one
+form); the reading of a split as a transport of the excess is not part of it. (v) formal (the scaling of the sampled excess and the
+identification of the dynamics' end state); numerical below. The structure is that of the critical temperature of deterministic annealing
+[S46], with the same roles — the particles as the codevectors, the prior's atoms as the data, ε as the temperature — and twice the largest
+eigenvalue of the conditional covariance when R = 0. New are the two-sided mass constraint, under which the conditional covariance of a
+collapsed class is an effect of its mass excess rather than of a data spread, and the fit's curvature in A_k. Checked:
+`tests/test_entropic_leak.py` (the semi-dual Newton plan's marginals and its agreement with log-domain Sinkhorn; the gradient of J^ε_m
+against finite differences; the two limits at their rates; the replicated configuration critical with a class-symmetric plan, and the
+finite-difference Hessian leaving each class's separation subspace invariant and acting there as I ⊗ (σ₀(I − (2/ε)Cov^G_k) − R^G_k),
+entrywise; the over-weighted class of (6, 5, 4)/15, with A₁ ≻ 0 checked, unstable at ε = 16, 17 and stable at ε = 18, 20, 64; every
+weighted stationary point to a Newton residual of 10⁻⁹).
 
 *Numerics* (`exp_entropic_leak.py` → `results/chaos/entropic_leak.md`). The instance with the matching prior (masses 1/3) at σ₀ = 0.15σ_crit;
-the entropic plan by Newton's method on the semi-dual. *The critical excess.* For the weights w_δ = q + δ(1.5e₁ − 0.5) the separation margin
-of the over-weighted class at Θ*(w_δ) changes sign at ε_c = 5.1, 13.5, 23.1, 136 for δ = 0.02, 0.05, 0.1, 0.2; at ε_c the class sends the
-fraction p = 0.057, 0.15, 0.33, 0.62 of its mass away, and the rank-one formula gives 6.2, 16.6, 30.3, 88 — within 22–31% for δ ≤ 0.1, where
-the conditional plan charges mainly two atoms, and off at δ = 0.2, where it charges all three. *Dynamics.* m = 15, 60, 240 against M = 510
-from the warm clouds of Proposition D‴.12's numerics, 600 slow units, four seeds, ε = 1, 4, 16, 64. At ε = 1 every size equalises its masses
-(|w − q|_∞ = 0 at the end; fit errors 1.7–3.0·10⁻⁴; function-level distances to the reference 1.0–5.6·10⁻⁷): the OT leak's behaviour. At
-ε = 4 m = 15 equalises, while m = 60, 240 and 510 stop at the residual excesses 0.017, 0.029, 0.028 (from 0.083, 0.054, 0.041) — the
-critical excess at that ε — with fit errors 8.8–9.6·10⁻³ and function-level distances 4.5–7.7·10⁻⁵. At ε = 16 only m = 15 moves (0.20 → 0.13)
-and the larger sizes keep their sampled weights: the function-level floor 1.5·10⁻³, 2.2·10⁻⁴, 3.5·10⁻⁵ for m = 15, 60, 240 is of the
-nearest-atom leak's order (2.5·10⁻³, 5.2·10⁻⁴, 5.9·10⁻⁵, Proposition D‴.12's numerics), with fit errors 0.033–0.069. At ε = 64 no excess is
-equalised and the bias toward the barycentre of ν dominates the fit (fit errors 0.12–0.14). The soft constraint thus interpolates in two
-ways at once: in ε between the OT leak and the σ-modification toward the barycentre, and in m between floor-free (small m, large sampled
-excesses) and the nearest-atom leak's floor (large m).
+the entropic plan by Newton's method on the semi-dual; every weighted stationary point continued from a converged neighbour and checked to a
+residual of 10⁻⁹. *The critical excess.* For w_δ = q + δ(1.5e₁ − 0.5) (the excess of class 1 taken from both other atoms) the branch
+Θ*_ε(w_δ), continued in ε from 256 down to 1 (residuals ≤ 8.7·10⁻¹³), changes the sign of the over-weighted class's margin once, at
+ε_c = 5.11, 13.5, 23.1, 65.0 for δ = 0.02, 0.05, 0.1, 0.2. There A₁ ≻ 0 (λ_min 0.0054, 0.0050, 0.0051, 0.0020), the collective block is
+positive (0.0073–0.0078) and so are the other classes' margins: above ε_c the replicated configuration is a local minimum. At ε_c the class
+sends the fraction p = 0.057, 0.15, 0.33, 0.57 of its mass away, about equally to the two under-weighted atoms (conditional plans
+(0.9434, 0.0277, 0.0289), (0.8485, 0.0764, 0.0751), (0.6655, 0.1850, 0.1496), (0.4257, 0.3074, 0.2669)), so Cov^G₁ has rank two; the exact threshold
+2σ₀λ_max(A₁^{−1/2}Cov^G₁A₁^{−1/2}) equals ε_c to the printed digits, and the rank-one formula with all of p sent to one atom gives 1.22–1.31
+times ε_c with atom 2 and 0.70–1.22 with atom 3. With the excess taken from atom 3 alone (w′_δ = q + δ(e₁ − e₃)) ε_c = 6.99, 14.6, 24.3 for
+δ = 0.02, 0.05, 0.1. At fixed ε the critical excess is δ_c = 0.0042, 0.0083, 0.016, 0.030, 0.062, 0.14, 0.20 at ε = 1, 2, 4, 8, 16, 32, 64
+(w_δ; 0.0035–0.18 for w′_δ). Up to ε = 8 it equals w₁p_c, with p_c within 12% (w_δ) and 26% (w′_δ) of the small-ε scale ε/(2‖Δ̂‖²), as
+(v) says; from ε = 16 on the plan no longer sends away exactly the excess.
+*Dynamics.* m = 15, 60, 240 against M = 510 from the warm clouds of Proposition D‴.12's numerics, four seeds, ε = 1, 4, 16, 64, 600 slow
+units, and the ε = 4, 16, 64 runs continued to 6000 slow units. At ε = 1 every system equalises its masses (all sixteen at q by s = 600; fit
+errors 1.7–3.0·10⁻⁴; function-level distances to the reference 3.7·10⁻⁹–1.6·10⁻⁶ per seed on (450, 600], values at the stopping time, still
+falling): the OT leak's behaviour. At ε = 4 the masses move toward q slowly: at s = 600 five of the twelve larger systems sit at unstable
+weights (margins −0.00035 to −0.00146 at Θ*_4(w), e-folding times 1/|margin| of 700–2900 slow units, longer than the run). Continued, every
+system ends at stable weights (positive margins at its s = 6000 weights), the larger ones with residual excesses up to 1/60, 3/240 and 7/510
+(‖w − q‖_∞ = 0.0167, 0.0125, 0.0137), of the order of the critical excess at ε = 4 (0.016 for an excess taken from both other atoms, 0.012
+from one). At ε = 16 the over-weighted (8, 4, 3)/15 reaches (6, 6, 3) within 600 slow units, and in the continuation the three systems at
+unstable weights move: (6, 5, 4)/15 to (5, 6, 4) at s ≈ 3700 — the split-off particle joins atom 2, which was at q, so the excess is moved,
+not reduced — (6, 6, 3)/15 to (5, 6, 4) as well, and (25, 17, 18)/60 to (23, 19, 18); every other system keeps its sampled weights, which
+are stable. At ε = 64 only (8, 4, 3)/15 moves (to (7, 5, 3), at s ≈ 1400). The floors return as Proposition D‴.5's law at the entropic
+stationary point Θ*_ε(q), 0.55 (ε = 16) and 0.74 (ε = 64) of the nearest-atom leak's law; the observed floors on the same clouds are
+0.23–0.84 (ε = 16) and 0.47–0.91 (ε = 64) of the nearest-atom leak's, per seed; at ε = 64 the bias toward the barycentre of ν dominates the
+fit (fit errors 0.12–0.14). The soft constraint thus interpolates in two ways at once: in ε between the OT leak and the σ-modification toward
+the barycentre, and in m between equalisation (small m, large sampled excesses) and conserved sampled masses with a floor of the
+nearest-atom kind, smaller by the factor of the law (large m).
 
 **Theorem D‴.21 (a measure-level basin for the OT leak: a Polyak–Łojasiewicz inequality uniform in m).** Let ν = Σ_jq_jδ_{ϑ⁰_j} and
 let μ* = Σ_jq_jδ_{ϑ*_j} be a replicated stationary measure of (𝔄_m^{OT}) — every atom critical for its class potential,
 ∇V_L[μ*](ϑ*_j) + σ₀G⁻¹(ϑ*_j − ϑ⁰_j) = 0, and the diagonal plan optimal (ε < Δ_ν/2 suffices, Proposition D‴.12(iii)) — with residual r*.
-Put 𝒥(μ) := L̄(μ) + (σ₀/2)W²_{G⁻¹}(μ, ν), so that J_m^{OT}(Θ) = m𝒥(μ_Θ), and 𝒥* := 𝒥(μ*). Let m be commensurate; every optimal plan is
-then an assignment π with |π⁻¹(j)| = mq_j (Proposition D‴.12(ii)), J_m^{OT} = min_πJ^π_m with J^π_m(Θ) := mL̄(μ_Θ) + (σ₀/2)Σ_i‖ϑ_i − ϑ⁰_{π(i)}‖²_{G⁻¹},
+Put 𝒥(μ) := L̄(μ) + (σ₀/2)W²_{G⁻¹}(μ, ν), so that J_m^{OT}(Θ) = m𝒥(μ_Θ), and 𝒥* := 𝒥(μ*). Let m be commensurate; every vertex optimal
+plan is then an assignment π with |π⁻¹(j)| = mq_j (Proposition D‴.12(ii)), J_m^{OT} = min_πJ^π_m over these assignments with J^π_m(Θ) :=
+mL̄(μ_Θ) + (σ₀/2)Σ_i‖ϑ_i − ϑ⁰_{π(i)}‖²_{G⁻¹},
 and for a configuration Θ and such a π write
 
     u_i := ϑ_i − ϑ*_{π(i)},    D_π := (1/m)Σ_i‖u_i‖²_{G⁻¹},    Δf̂ := f̂_Θ − f̂[μ*],    E := 𝒥(μ_Θ) − 𝒥*,
@@ -2460,27 +2489,33 @@ and, along the plan segments S_i := {ϑ*_{π(i)} + tu_i : t ∈ [0, 1]},
 
     (1/m)Σ_i⟨∇_{ϑ_i}J^π_m(Θ), u_i⟩ = ‖Δf̂‖² + σ₀D_π − (1/m)Σ_i∫₀¹u_iᵀ[(1 − t)R[μ*] + tR[μ_Θ]](ϑ*_{π(i)} + tu_i)u_i dt,             (P)
 
-the norms in L²(ρ). The counts enter through Δf̂ = (1/m)Σ_i[Φ̃(·;ϑ_i) − Φ̃(·;ϑ*_{π(i)})], which holds because |π⁻¹(j)| = mq_j.
+the norms in L²(ρ). The counts enter through Δf̂ = (1/m)Σ_i[Φ̃(·;ϑ_i) − Φ̃(·;ϑ*_{π(i)})], which holds because |π⁻¹(j)| = mq_j, and through
+the constant term of the leak. (E) holds for every coupling of μ_Θ with the column masses q, fractional plans included ((1/m)Σ_i replaced by
+Σ_{ij}γ_{ij}); (P), with one test direction per particle, needs an assignment. With counts N ≠ mq both acquire a defect —
+Σ_k(N_k/m − q_k)(−⟨r*, Φ̃(·;ϑ*_k)⟩ + (σ₀/2)‖ϑ*_k − ϑ⁰_k‖²_{G⁻¹}) in (E) and −⟨Δf̂, f̂[μ_N] − f̂[μ*]⟩ in (P), μ_N := Σ_k(N_k/m)δ_{ϑ*_k} — and at
+incommensurate m no PL inequality relative to 𝒥* can hold: the stationary configurations of Proposition D‴.12(iv), with their bridge
+particles, are critical at a positive excess energy.
 
-(ii) *(the Polyak–Łojasiewicz inequality)* If π is optimal at Θ and the plan-segment margin α := σ₀ − (κ* + κ^Θ)/2 is positive, then
-½‖Δf̂‖² + ((σ₀ − κ*)/2)D_π ≤ E and
+(ii) *(the Polyak–Łojasiewicz inequality)* For every assignment π with the counts mq, ½‖Δf̂‖² + ((σ₀ − κ*)/2)D_π ≤ J^π_m(Θ)/m − 𝒥* ≤
+½‖Δf̂‖² + ((σ₀ + κ*_−)/2)D_π (the lower bound is informative when κ* ≤ σ₀). If π is optimal at Θ, so that the middle term is E, and the
+plan-segment margin α := σ₀ − (κ* + κ^Θ)/2 is positive, then
 
     ‖∇J^π_m(Θ)‖²_{G_m} ≥ λ·mE,    λ := α·min{2, 2α/(σ₀ + κ*_−)}.
 
 (iii) *(a-posteriori decay)* Along every vertex-selection solution of (𝔄_m^{OT}) (§4b, Proposition D‴.17(i): an absolutely continuous
-solution that follows an optimal integral plan π(s) for almost every s), E is non-increasing and
+solution that follows an optimal integral plan π(s) for almost every s; their existence is assumed, as in §4b), E is non-increasing and
 
     E(s) ≤ E(0)exp(−∫₀^s λ(σ)₊dσ),
 
 with λ(σ) computed at Θ(σ) with its plan (λ₊ := 0 where α ≤ 0); where κ* < σ₀, moreover W²(μ_{Θ(s)}, μ*) ≤ D_{π(s)} ≤ 2E(s)/(σ₀ − κ*) and
 ‖f̂_{Θ(s)} − f̂[μ*]‖² ≤ 2E(s).
 
-(iv) *(an a-priori basin, uniform in m)* Assume (H*): κ_R[μ*](B) ≤ σ₀ − κ for some κ > 0 on a convex set B containing the stationary
-atoms and the configurations considered — for instance the a priori invariant set N_{R_Θ}(conv supp ν) of Proposition D‴.17, which every
-solution stays in. Then for every commensurate m, J_m^{OT} ≥ m𝒥* on B^m, with equality exactly at the replicated
-configurations (μ* is the unique minimiser among the m-point empirical measures in B, up to the labelling); and every vertex-selection
-solution in B with E(0) ≤ E₀ := κ²/(2(L₂^G)²) satisfies E(s) ≤ E(0)e^{−λ₀s}, λ₀ := (κ/2)min{2, κ/(σ₀ + sup_B‖R^G[μ*]‖)}. The constants
-depend on κ, σ₀, L₂^G and r* — not on m.
+(iv) *(an a-priori basin, uniform in m)* Assume (H*): κ_R[μ*](B) ≤ σ₀ − κ for some κ > 0 on a convex set B, forward-invariant for
+(𝔄_m^{OT}) and containing the stationary atoms — for instance the whole parameter space, or the a-priori invariant set N_{R_Θ}(conv supp ν)
+of Proposition D‴.17 (T̄_i ∈ conv supp ν and the fit's force is bounded). Then for every commensurate m, J_m^{OT} ≥ m𝒥* on B^m, with equality
+exactly at the replicated configurations (μ* is the unique global minimiser among the m-point empirical measures in B, up to the
+labelling); and every vertex-selection solution from B with E(0) ≤ E₀ := κ²/(2(L₂^G)²) satisfies E(s) ≤ E(0)e^{−λ₀s},
+λ₀ := (κ/2)min{2, κ/(σ₀ + sup_B‖R^G[μ*]‖)}. The constants depend on κ, σ₀, L₂^G and r* — not on m.
 
 (v) *(the matching prior; sharpness)* At the matching prior (r* = 0 on supp ρ, μ* = ν), R[μ*] ≡ 0, (H*) holds on the whole parameter space
 with κ = σ₀, E = L̄(μ_Θ) + (σ₀/2)W²(μ_Θ, ν), α = σ₀ − κ^Θ/2 and λ = α·min{2, 2α/σ₀}, which tends to 2σ₀ as κ^Θ → 0. The constant 2σ₀ is attained by the
@@ -2489,9 +2524,12 @@ separations (each particle's displacement within its class decays at σ₀, the 
 (vi) *(what the mass constraint removes)* For the nearest-atom leak the assignment is the Voronoi one, j(·), whose counts N are conserved
 inside the cells (Proposition D‴.12(i)) and differ from mq in general. The derivation of (E)–(P) breaks at the counts:
 (1/m)Σ_iΦ̃(·;ϑ*_{j(ϑ_i)}) = f̂[μ_N] with μ_N := Σ_k(N_k/m)δ_{ϑ*_k}, not f̂[μ*]. And the nearest-atom energy has a critical point at the
-replicated configuration of the weights N/m — a strict local minimum when they are admissible — for every count vector N, at a positive
-excess energy when N ≠ mq (under (H*), by (iv)). These spurious minima carry the floor of Proposition D‴.5. Under the mass constraint they
-are not critical points, and under (H*) no minimum other than μ* is left.
+replicated configuration of the weights N/m — a strict local minimum when they are admissible, a saddle when a separation margin is
+negative — for every count vector N in the domain of the weighted stationary point w ↦ Θ*(w) (a neighbourhood of q, Proposition D‴.5(i))
+whose atoms lie in their own cells, at a positive excess energy when N ≠ mq (under (H*), by (iv)). These spurious minima carry the floor
+of Proposition D‴.5. Under the mass constraint they are not critical points; under (H*) μ* is the unique global minimiser in B and the only
+critical point where α > 0 (in particular in {E ≤ E₀}). Local minima of J_m^{OT} at a positive excess energy are not excluded: by (ii) they
+need κ^Θ ≥ 2σ₀ − κ* on their segments.
 
 *Proof.* (i) The stationarity of the atoms reads σ₀G⁻¹(ϑ*_j − ϑ⁰_j) = ⟨∇_ϑΦ̃(·;ϑ*_j)ᵀr*⟩_ρ. In J^π_m/m − 𝒥* the loss contributes
 −⟨r*, Δf̂⟩ + ½‖Δf̂‖² and the leak (σ₀/2)D_π + (σ₀/m)Σ_i⟨u_i, ϑ*_{π(i)} − ϑ⁰_{π(i)}⟩_{G⁻¹} = (σ₀/2)D_π + ⟨r*, (1/m)Σ_i∇_ϑΦ̃(·;ϑ*_{π(i)})u_i⟩.
@@ -2509,58 +2547,81 @@ every s, J_m^{OT} being locally Lipschitz — dJ_m^{OT}(Θ(s))/ds ≤ ⟨∇J^{�
 lemma applies. The distance bounds are (E)'s lower bound and W² ≤ D_π, the assignment being a coupling of μ_Θ and μ*.
 (iv) The segments lie in B by convexity, so κ* ≤ σ₀ − κ, and (E) gives E ≥ ½‖Δf̂‖² + (κ/2)D_π ≥ 0, with equality iff D_π = 0. Since
 ‖R^G[μ_Θ](ϑ) − R^G[μ*](ϑ)‖ ≤ L₂^G‖Δf̂‖_{L¹(ρ)} ≤ L₂^G(2E)^{1/2}, κ^Θ ≤ κ* + L₂^G(2E)^{1/2}, and α ≥ κ − L₂^G(E/2)^{1/2} ≥ κ/2 when E ≤ E₀; E is
-non-increasing, so this persists, and (iii) gives the rate.
+non-increasing and the solution stays in B (forward invariance), so this persists, and (iii) gives the rate.
 (v) R[μ*] = ⟨r*∇²Φ̃⟩ = 0. For a separation u at μ* (zero class means), Δf̂ = O(‖u‖²), ∇_{ϑ_i}J^π_m = σ₀G⁻¹u_i + O(‖u‖²) and
 E = (σ₀/2)D_π + O(‖u‖³), so ‖∇J^π_m‖²_{G_m}/(mE) → 2σ₀.
 (vi) With counts N the identity behind Δf̂ becomes (1/m)Σ_iΦ̃(ϑ*_{j(ϑ_i)}) = f̂[μ_N]; the replicated configuration of the weights N/m is
-critical for the nearest-atom energy by Proposition D‴.9, a strict local minimum when the weights are admissible (Proposition D‴.5), and
-its excess energy is positive unless N = mq. ∎
+critical for the nearest-atom energy by Proposition D‴.9, a strict local minimum when the weights are admissible and a saddle when a
+separation margin is negative (Proposition D‴.5), and its excess energy is positive unless N = mq. Under (H*) a critical point with E > 0
+has α ≤ 0 by (ii), that is κ* + κ^Θ ≥ 2σ₀. ∎
 
 *Remark D‴.22 (the mean-field form, propagation of chaos, and the real loop).* The identities and their proof hold verbatim for a
 probability measure μ whose optimal plan to ν is induced by a map π (for instance an absolutely continuous μ: the Laguerre map of
 Proposition D‴.12), with (1/m)Σ_i replaced by ∫dμ. So formally the Laguerre-cell flow (𝔄₀^{OT}) has the same PL inequality, and in the
-basin both the particle system and the mean-field flow converge to μ* exponentially in W₂, at the same m-independent rate:
-W₂(μ_{Θ(s)}, μ_s) ≤ W₂(μ_{Θ(s)}, μ*) + W₂(μ_s, μ*) → 0 — propagation of chaos uniform in time with no floor, where Theorem D‴'s synchronous
-coupling kept the transit's mismatch for ever (Proposition D‴.12(v)). The existence of the mean-field OT flow and its chain rule are not
-established here, and smallness in m at finite times — the transit itself — is not claimed. For the real loop: once E(s) ≤
+basin both the particle system and the mean-field flow converge to μ* exponentially in W₂, at the same m-independent rate, so
+W₂(μ_{Θ(s)}, μ_s) ≤ W₂(μ_{Θ(s)}, μ*) + W₂(μ_s, μ*) → 0: for every commensurate m the particle system and the mean-field flow have the same
+limit — no floor, where Theorem D‴'s synchronous coupling kept the transit's mismatch for ever (Proposition D‴.12(v)). This is not
+propagation of chaos uniform in time, which needs sup_sEW₂(μ_{Θ(s)}, μ_s) → 0 as m → ∞: the bound is not small in m at any fixed time (an
+i.i.d. warm start lies in the a-priori basin only at astronomically large m, numerics below), and smallness in m during the transit is not
+claimed; uniform-in-time statements of that kind are known for entropy-regularised mean-field dynamics under a uniform log-Sobolev
+inequality [S50]. The existence of the mean-field OT flow and its chain rule are not established here. For the real loop: once E(s) ≤
 (σ₀ − κ*)(ρ/2)²/(2m), every particle is within ρ/2 of its atom (max_i‖u_i‖² ≤ mD_π), and Theorem D‴.18 takes over; on the averaged
 dynamics this happens after a time O(λ⁻¹log m). The transit of the real loop is covered only on finite horizons, by averaging with plan
 switches (formal).
 
-*Status.* (i), (ii), (iv), (v) proved. (iii) proved for vertex-selection solutions; a Clarke solution in the sense of Proposition D‴.17
-may stop at a kink-type Clarke-critical point where the active plans' gradients cancel (two particles at one point between two atoms), which
-a selection solution leaves. (vi) proved for the critical point; its minimality is Proposition D‴.5's admissibility. Remark D‴.22 is formal.
-The classical case is the leak alone: ½W²(·, ν) satisfies a PL inequality with constant 2, its metric slope being W(·, ν) where the optimal
-plan is a map (AGS §10.4) [S47]. The loss L̄ is flat-convex but not displacement-convex, so the Wasserstein Łojasiewicz theory for displacement-convex functionals [S48] does not
-apply. What restores a PL inequality is the plan: the displacement toward the stationary atoms of one's own class is the test direction,
-and the fixed counts make the fitted function's increment the average of the per-particle increments. The constant is set by the
-residual-weighted curvature along the plan segments, and nothing in it depends on m. Checked: `tests/test_ot_basin.py` ((E) and (P) to
-10⁻¹² relative for random assignments with the counts mq at both priors; the PL chain ‖∇J‖²/(mE) ≥ Q²/(D_πE) ≥ λ; the constant 2σ₀ attained
-by a separation to 10⁻⁴; from the lift with one particle moved into another cell the margin positive, the particle kept in its class, E
-below the a-posteriori bound and decaying at 2σ₀ at the end, while the nearest-atom leak keeps the floor; the nearest-atom spurious minimum
-at (11, 9, 10)/30, critical for that leak, not critical for the OT leak, with the PL inequality holding there).
+*Status.* (i), (ii), (iv), (v) proved. (iii) proved for vertex-selection solutions, whose existence is assumed (§4b); for this leak a
+two-particle tie is never attracting — with h := ⟨ϑ_i − ϑ_{i′}, ϑ⁰_k − ϑ⁰_j⟩_{G⁻¹}, J^{π₁} − J^{π₂} = σ₀h, and on the two sides of the tie
+dh/ds = ℓ − σ₀‖ϑ⁰_k − ϑ⁰_j‖²_{G⁻¹} and ℓ + σ₀‖ϑ⁰_k − ϑ⁰_j‖²_{G⁻¹} with the same loss term ℓ, so no solution slides along it — while multi-way
+ties are not analysed; a Clarke solution in the sense of Proposition D‴.17 may stop at a kink-type Clarke-critical point where the active
+plans' gradients cancel (two particles at one point between two atoms), which a selection solution leaves. (vi) proved for the critical
+point; its minimality is Proposition D‴.5's admissibility. Remark D‴.22 is formal. The classical case is the leak alone: the metric slope of
+½W²(·, ν) is W(·, ν) at every μ, so it satisfies a PL inequality with constant 2 (AGS §10.4, [S47]); a particle velocity field realises the
+slope where the optimal plan is a map. The plan segments are the generalised geodesic from μ* to μ_Θ based at ν (AGS §9.2): the diagonal plan
+ν → μ* and the assignment ν → μ_Θ make (1 − t)ϑ*_{π(i)} + tϑ_i that curve, along which ½W²(·, ν) is 1-convex — the (σ₀/2)D_π of (E) — and
+the passage from convexity along a curve ending at a point to a slope bound is AGS's. PL inequalities in Wasserstein space through optimal
+maps are known for functionals that are not geodesically convex (barycentre functionals; the distance of uniform point clouds to a density)
+[S48]. Here 𝒥 is semiconvex along generalised geodesics only with a negative constant (the loss contributes −L₂^G sup⟨|r|⟩), so a global
+Łojasiewicz argument, as for the λ-convex functionals of [S48], is unavailable. What is specific is the loss linearised exactly in f̂ with
+the curvature taken at the stationary residual, the explicit local constants, and the counts, which make the generalised geodesic a particle
+interpolation and the constant independent of m. (ii) is sharp at a matching prior and not in general: it bounds E with σ₀ + κ*_− and Q with
+(κ* + κ^Θ)/2 separately (numerics below). Checked: `tests/test_ot_basin.py` ((E) and (P) to 10⁻¹² relative for random assignments with the
+counts mq at both priors, and with other counts the two defects exactly; the PL chain ‖∇J‖²/(mE) ≥ Q²/(D_πE) ≥ λ; the constant 2σ₀ attained by
+a separation to 10⁻⁴; from the lift with one particle moved into another cell the margin positive, the particle kept in its class, E below
+the a-posteriori bound and decaying at 2σ₀ at the end, while the nearest-atom leak keeps the floor; the nearest-atom spurious minimum at
+(11, 9, 10)/30, admissible — its separation margins and its K-atom Hessian positive — critical for that leak, not critical for the OT leak,
+with the PL inequality holding there).
 
 *Numerics* (`exp_ot_basin.py` → `results/chaos/ot_basin.md`). The averaged slow loop at σ₀ = 0.15σ_crit from the warm clouds of Proposition
 D‴.12's numerics: sizes m = 15, 60, 240, 510, four seeds, 600 slow units, under both leaks, at the matching prior and at the prior with
 centres shifted by +0.15. The identities (E) and (P) hold along every run to 6·10⁻¹³ relative. Under the OT leak the initial optimal plan
 is never changed (no particle is relabelled between records), and the margin α is positive from s₊ ≤ 300 on — from s ≤ 25 in 19 of the
 32 runs. From then on the observed ratio ‖∇J‖²/(mE) is at least λ at every record (the smallest ratio/λ is 1.00 at the matching prior and
-1.58–1.72 at the shifted one, the chain through Q²/(D_πE) holding as well), and E falls from 4.1·10⁻³–4.0·10⁻² to 8.3·10⁻⁷–8.1·10⁻⁶ (means
-over the seeds; W²(μ_Θ, μ*) from 1.0–5.2 to 2.3·10⁻⁴–2.3·10⁻³), below the a-posteriori bound in every run. At the end the observed ratio is
+1.61–1.72 at the shifted one, Q²/(D_πE)/λ 1.58–1.69), and E falls from 4.1·10⁻³–4.0·10⁻² to 8.3·10⁻⁷–8.1·10⁻⁶ (means over the seeds;
+W²(μ_Θ, μ*) from 0.99–5.25 to 2.3·10⁻⁴–2.3·10⁻³), below the a-posteriori bound in every run. At the end the observed ratio is
 0.01416–0.01417 at the matching prior, against 2σ₀ = 0.01415 and the theorem's λ = 0.0140–0.0141: the inequality is sharp. At the shifted
-prior λ = 0.0077–0.0078 against an observed 0.0137–0.0139: the curvature along the segments (κ* ≈ κ^Θ ≈ 1.4·10⁻³) costs a factor of about
-0.55, and the window still mixes the separation modes, whose slowest rate is 2λ_sep = 0.0113. Under the nearest-atom leak E stays at
-3.5·10⁻³–1.9·10⁻² (W² at 1.0–4.7): at or below the excess energy of the replicated configuration of the sampled weights, within 0.3 % at
-m ≥ 240. That configuration is a critical point of the nearest-atom energy (drift ≤ 6·10⁻¹⁴) and not of the OT energy (drift
-2.3–4.4·10⁻²): the floor is a spurious minimum. The a-priori basin is small. At the matching prior κ = σ₀ and E₀ = 2.0·10⁻⁷. At the shifted
-prior the largest λ_max R^G[μ*] found over the box of the runs (20000 random points) is 4.3·10⁻³ < σ₀, so (H*) holds there with κ = 0.0027:
-μ* is the unique minimiser among the empirical measures in that box for every commensurate m, and E₀ = 3.0·10⁻⁸. Both are far below the runs'
-E(0), which reach the region α > 0 by themselves. *The measure-level basin.* With a fraction p of all the particles, taken from class 0, moved
-0.6 of the way into cell 1, the plan keeps them in their class, and κ^Θ = 0.0093, 0.019, 0.028, 0.047 for p = 1/30, 1/15, 1/10, 1/6: the margin is
-+0.0024 at p = 1/30 and negative from p = 1/15 on — identically at m = 30 and m = 300, the margin being a function of the empirical
-measure. With one particle moved, E decays from 3.3·10⁻³ to 2.5·10⁻⁵ (m = 30) and from 2.3·10⁻⁴ to 3.1·10⁻⁶ (m = 300), at the rate 2σ₀ at the
-end and below the a-posteriori bound, and the particle returns to its own cell; under the nearest-atom leak it stays in cell 1, and E rises
-to the spurious minima's 5.7·10⁻³ and 5.6·10⁻⁴.
+prior λ = 0.0077–0.0078 against an observed 0.0137–0.0139. The local PL constant there is 2min{λ_sep, λ_coll} = 0.01135 (λ_sep = 0.00567),
+so the curvature itself costs a factor 0.802 against 2σ₀ and the inequality (ii) another 0.683 (its slack: the theorem's late λ is 0.548
+of 2σ₀); the window still mixes the separation modes. *The nearest-atom contrast.* Under the nearest-atom leak no particle changes cell.
+At the 22 admissible count vectors (every run at m = 240 and 510, and (5, 4, 6)/15, (19, 21, 20)/60, (19, 18, 23)/60 at both priors) the
+runs sit at the replicated configuration of the sampled weights — E(600) is 0.02–0.24 % below its energy and still rising toward it, the
+classes collapsed (spreads ≤ 0.006) — and that configuration is a critical point of the nearest-atom energy (drift ≤ 6·10⁻¹⁴) and not of
+the OT energy (drift 2.3–4.4·10⁻²): the floor is a spurious minimum. At the other 10, five per prior at m ≤ 60 — (6, 5, 4), (6, 3, 6),
+(8, 4, 3)/15 and (24, 15, 21), (25, 17, 18)/60 — the weights are inadmissible (class-0 separation margins −0.0004 to −0.0061): the
+replicated configuration is a saddle, class 0 splits (spreads 0.04–0.62), and E ends 0.5–16.5 % below it, still falling. *The a-priori
+basin.* At the matching prior κ = σ₀ on the whole space and E₀ = 2.0·10⁻⁷. At the shifted prior the supremum of λ_max R^G[μ*] over the whole
+parameter space is 6.60·10⁻³ < σ₀, approached at a saturation corner (a → a_max, s → s_min): (H*) holds on the whole space with
+κ = 4.7·10⁻⁴ — μ* is the unique global minimiser among all m-point empirical measures for every commensurate m — and E₀ = 9.1·10⁻¹⁰ (over the
+box of the runs' end configurations, which is not forward-invariant, the supremum is 4.39·10⁻³ and E₀ = 2.9·10⁻⁸). These basins are tiny: a
+particle outside its cell is at G⁻¹-distance at least 3.13 (matching) and 2.95 (shifted) from its class atom, so {E ≤ E₀} holds a fraction
+p ≤ 5.8·10⁻⁶ (matching) and 4.4·10⁻⁷ (shifted) of the particles in other cells — none below m ≈ 1.7·10⁵ and 2.3·10⁶. The runs start at
+E(0) = 4.1·10⁻³–4.0·10⁻², far outside, reach the region α > 0 by themselves, and are covered from there a posteriori by (iii). *The
+measure-level basin.* With a fraction p of all the particles, taken from class 0, moved 0.6 of the way into cell 1, the plan keeps them in
+their class, and κ^Θ = 0.0096, 0.019, 0.029, 0.048 for p = 1/30, 1/15, 1/10, 1/6 (segment suprema on 129 points): the margin is +0.0023 at
+p = 1/30 and negative from p = 1/15 on, the same at m = 30 and m = 300, which are the same measures. With one particle moved, E decays from
+3.3·10⁻³ to 2.5·10⁻⁵ (m = 30) and from 2.3·10⁻⁴ to 3.1·10⁻⁶ (m = 300), at the rate 2σ₀ at the end and below E(0)exp(−∫λ₊) with λ evaluated at
+every step (9.9·10⁻⁵ and 3.7·10⁻⁶; λ ≥ 0.00148 throughout), and the particle returns to its own cell. Under the nearest-atom leak it stays in
+cell 1, and E rises toward the spurious minimum of the counts (9, 11, 10)/30 and (99, 101, 100)/300, both admissible: 5.72·10⁻³ and
+5.56·10⁻⁴ at s = 300, 6.304·10⁻³ and 6.128·10⁻⁴ at s = 1000, and the minimum's 6.3126·10⁻³ and 6.1328·10⁻⁴ at s = 3000.
 
 **Theorem D‴.23 (adaptive priors: a learned prior removes the leak's bias, at the rate of the measure-space excitation).** Let q be masses,
 m commensurate, η ≥ 0, and let the prior's atoms Z = (z_1, …, z_{K₀}) move toward the barycentres of the particles that the plan assigns to
@@ -5100,8 +5161,8 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | D‴.14 (n = 2) | a planar plant (four vector-valued bumps, a Lissajous reference, p = 5), k_e = 25, σ₀ = 0.05, sizes 8, 32 against 128 from the same clouds: the OT leak equalises the weights at 13–14 slow units (ln 2/σ₀ = 14), the sizes agree to 5.0·10⁻⁸–1.6·10⁻⁷ with rms tracking errors 3.9·10⁻⁶–1.6·10⁻⁵, against 5.5·10⁻³–2.3·10⁻² and 1.9·10⁻³–6.7·10⁻³ under the nearest-atom leak (fit errors along the orbit 2–9·10⁻⁴ against 0.11–0.39) | `exp_ot_2d.py` → `results/chaos/ot_2d.md` |
 | D‴.17 | J_m^{OT} non-increasing along 300 steps of a run with reassigned particles (strong leak; the plan does not switch there, so this is a smooth gradient flow), dJ/ds = −‖drift‖²_{G⁻¹} where the plan is unique, and at a constructed tie between two optimal plans (mirror-image particles) J^{OT} equals both frozen energies and decreases along either plan's drift | `tests/test_ot_leak.py` |
 | D‴.18 | the real loop at k_e = 25, 8000 time units, sizes 3–240: the 3-atom orbit's Floquet exponents within 0.56–3.22 % of λ_j(H_q)/k_e and the ghosts' equal to (σ₀ − λ_j(R^G_k))/k_e to 3·10⁻⁴ (matching and shifted priors); inside the cells the per-particle distance to the lift decays at 2.69–2.97·10⁻⁴ for m ≥ 15 (prediction 2.83·10⁻⁴) with constants 1.03–1.29 under both leaks, the m = 3 runs mixtures of collective modes; across a cell boundary (ρ = 4.5) the nearest-atom leak ends at other counts (W² 1.9–12.3, that of the lifts of the realised weights; two of them inadmissible) and the OT leak at q (W² 0.010–0.23, falling at 2σ₀); one particle across a boundary: W² grows to 0.79, 0.20 (nearest) and falls to 3.0·10⁻³, 8.2·10⁻⁴ (OT); on a moving orbit (shifted prior) 2.18–2.63·10⁻⁴ against 2.27·10⁻⁴, constants 1.04–1.23; the proof's radius at most 0.019 | `exp_uniform_basin.py` → `results/chaos/uniform_basin.md`; `tests/test_uniform_basin.py` (at the shifted prior: the remainder constant and the exact N_a + N_b/m structure of the per-particle term, the separation response (GR_k − σ₀I)v, the contraction at μ = min{λ_coll, λ_sep} with one constant, the same for every m) |
-| D‴.20 | the critical excess: ε_c = 5.1, 13.5, 23.1, 136 for excesses δ = 0.02–0.2 (rank-one formula 6.2, 16.6, 30.3, 88); dynamics at ε = 1, 4, 16, 64 for m = 15–510: equalised at ε = 1 (function-level distance 10⁻⁷), residual excesses 0.017–0.029 at ε = 4, sampled weights kept at ε = 16 for m ≥ 60 (floors 1.5·10⁻³–3.5·10⁻⁵, the nearest-atom leak's order), fit errors 0.12–0.14 at ε = 64 | `exp_entropic_leak.py` → `results/chaos/entropic_leak.md`; `tests/test_entropic_leak.py` (the solvers, the gradient flow, the limits, the separation block against the finite-difference Hessian, the critical regularisation) |
-| D‴.21 | the averaged loop from the warm clouds (m = 15–510, four seeds, matching and shifted priors, both leaks, 600 slow units): (E), (P) to 6·10⁻¹³; under the OT leak no relabelling, α > 0 from s ≤ 300, ratio/λ ≥ 1.00 (matching) and ≥ 1.58 (shifted), E from 4.1·10⁻³–4.0·10⁻² to 8.3·10⁻⁷–8.1·10⁻⁶ below the a-posteriori bound, the end rate 0.01416–0.01417 against 2σ₀ = 0.01415 and λ = 0.0140–0.0141; the nearest-atom E stays at 3.5·10⁻³–1.9·10⁻², the spurious minima's energy (within 0.3 % at m ≥ 240); (H*) at the shifted prior on the runs' box (κ = 0.0027); the margin a function of the measure: +0.0024 with 1/30 of the particles moved into another cell, negative from 1/15 | `exp_ot_basin.py` → `results/chaos/ot_basin.md`; `tests/test_ot_basin.py` (the identities for every assignment with the counts, the PL chain and its sharp constant, the decay from a particle in another cell below the a-posteriori bound, the nearest-atom spurious minimum) |
+| D‴.20 | the critical excess by continuation in ε (Newton residuals ≤ 8.7·10⁻¹³): ε_c = 5.11, 13.5, 23.1, 65.0 for δ = 0.02–0.2 (the exact threshold equal to ε_c; the rank-one formula 1.22–1.31 and 0.70–1.22 times ε_c with the two atoms), 6.99, 14.6, 24.3 for an excess taken from one atom; δ_c(ε) = 0.0042–0.20 for ε = 1–64; dynamics for m = 15–510 at ε = 1, 4, 16, 64 over 600 slow units, continued to 6000: equalised at ε = 1; at ε = 4 stable end weights with residual excesses up to 1/60, 3/240, 7/510; at ε = 16 and 64 the stable systems keep their sampled weights and the four unstable ones move (one moving its excess to an atom that was at q); floors 0.55 and 0.74 of the nearest-atom law, 0.23–0.84 and 0.47–0.91 of the observed nearest-atom floors; fit errors 0.12–0.14 at ε = 64 | `exp_entropic_leak.py` → `results/chaos/entropic_leak.md`; `tests/test_entropic_leak.py` (the solvers, the gradient flow, the limits at their rates, the separation block entrywise with the invariance of the subspace, the critical regularisation by continuation in ε with A ≻ 0 checked and every residual below 10⁻⁹) |
+| D‴.21 | the averaged loop from the warm clouds (m = 15–510, four seeds, matching and shifted priors, both leaks, 600 slow units): (E), (P) to 6·10⁻¹³; under the OT leak no relabelling, α > 0 from s ≤ 300, ratio/λ ≥ 1.00 (matching) and ≥ 1.61 (shifted), E from 4.1·10⁻³–4.0·10⁻² to 8.3·10⁻⁷–8.1·10⁻⁶ below the a-posteriori bound, the end rate 0.01416–0.01417 against 2σ₀ = 0.01415 and λ = 0.0140–0.0141, at the shifted prior the curvature's cost 0.802 and (ii)'s slack 0.683; the nearest-atom E at the spurious minima's energy at the 22 admissible count vectors (within 0.24 %), split and still falling 0.5–16.5 % below it at the 10 inadmissible ones (m ≤ 60); (H*) on the whole space at the shifted prior (κ = 4.7·10⁻⁴, E₀ = 9.1·10⁻¹⁰), the a-priori basins holding no particle in another cell below m ≈ 1.7·10⁵ (matching) and 2.3·10⁶ (shifted); the margin +0.0023 with 1/30 of the particles moved into another cell, negative from 1/15 | `exp_ot_basin.py` → `results/chaos/ot_basin.md`; `tests/test_ot_basin.py` (the identities for every assignment with the counts and their exact defects at other counts, the PL chain and its sharp constant, the decay from a particle in another cell below the a-posteriori bound with a positive margin, the admissible nearest-atom spurious minimum) |
 | D‴.23 | the linear theory at the exact representation (h_j = 3.06·10⁻⁴–0.195; λ_1^− = 2.68·10⁻⁵–3.06·10⁻⁴ for η = σ₀/10 … ∞); the fixed prior's bias within 4.8% of the first-order formula; the K₀-atom loop: every mode above 10⁻⁶ decays at λ_j^− (log-slopes 0.981–1.002 of it), fit error 9.78·10⁻³ → 1.8·10⁻⁵ (η = σ₀) and 6.7·10⁻⁶ (η = ∞) by s = 6000; m = 15–510 from the warm clouds: ungated the prior is dragged by the transit (‖ȳ‖ 0.032–0.71 at s = 500) and one m = 15 system at η = ∞ is carried onto a plateau of the unregularised loss (Hessian eigenvalues −1.8·10⁻⁵, 7.2·10⁻⁵; still there at s = 23000); the transit gate leaves a residue in the weak modes (‖ȳ‖ 4.9·10⁻³–3.7·10⁻² against 1.3·10⁻³); the settled gate (t_open = 1211–1304) follows the K₀-atom run for every m (per-seed ratios 0.995–1.000 at η = σ₀, 0.968–1.001 at η = ∞), fit errors 1.6·10⁻⁴ and 3.4–3.5·10⁻⁵ against 9.78·10⁻³ | `exp_adaptive_prior.py` → `results/chaos/adaptive_prior.md`; `tests/test_adaptive_prior.py` (the gradient structure, stationarity, the linearisation's rates and its self-adjointness in the gradient-flow metric, the first-order bias, the two gates) |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
@@ -5251,9 +5312,10 @@ Each branch states what is proved, what is open, and the first concrete step.
      this m-uniform statement. In the mean-square norm no m-independent basin exists for the nearest-atom leak (Remark D‴.19).
    - *Done (Theorem D‴.21):* the measure-level basin of the OT leak, for the averaged loop. The OT energy satisfies a Polyak–Łojasiewicz
      inequality whose constant is set by the residual-weighted curvature along the plan segments and does not depend on m (sharp, 2σ₀, at a
-     matching prior); the excess energy decays exponentially from an m-independent sublevel set, which contains configurations with a fixed
-     fraction of the particles in other cells; under a curvature hypothesis at the stationary residual the replicated configuration is the
-     unique minimum among the empirical measures, while the nearest-atom energy has a spurious minimum at every admissible count vector.
+     matching prior); the excess energy decays exponentially from an m-independent sublevel set (tiny on the instance) and a posteriori
+     wherever the plan-segment margin is positive, which covers configurations with a fixed fraction of the particles in other cells; under
+     a curvature hypothesis at the stationary residual the replicated configuration is the unique global minimum among the empirical
+     measures, while the nearest-atom energy has a spurious minimum at every admissible count vector.
      *Open:* the transit of the real loop (averaging with plan switches) and the existence of the mean-field OT flow (Remark D‴.22);
      the dithered real loop with the OT leak (Remark D‴.16, checked on the averaged loop: under the OT leak a ridge crossing is reversible
      — the particle stays assigned to its own atom — while under the nearest-atom leak dither equalises the masses only on the Arrhenius
@@ -5328,8 +5390,8 @@ Each branch states what is proved, what is open, and the first concrete step.
      Clarke-critical point is Proposition D‴.17, without a rate; Theorem D‴.21 gives the rate in an m-independent energy basin, with the plan as
      the test direction, and formally (Remark D‴.22) propagation of chaos with no floor there; smallness in m during the transit from an
      i.i.d. start remains open); a penalised
-     (unbalanced) mass constraint — the entropic one is Proposition D‴.20, which equalises the masses only down to a critical excess, so
-     that its floor returns at large m; the
+     (unbalanced) mass constraint — the entropic one is Proposition D‴.20, which equalises the masses only down to a critical excess and
+     conserves smaller ones, so that its floor returns at large m (Proposition D‴.5's law at the entropic stationary point); the
      mean-field form for a general prior ν (the barycentric projection as the superdifferential of ½W²(·, ν), AGS Thm 10.4.12) and adaptive
      priors with learned masses.
    - *Done (Theorem D‴.23):* adaptive priors with the masses fixed. The prior's atoms move toward the class barycentres of the plan; the

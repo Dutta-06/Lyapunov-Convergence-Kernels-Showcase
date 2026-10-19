@@ -466,16 +466,25 @@ the averaged loop contracts |||·||| at μ = min{λ_coll, λ_sep} with one const
 
 ## Proposition D‴.20 — the entropic OT leak (`exp_entropic_leak.py` → `chaos/entropic_leak.md`)
 
-- Matching prior, σ₀ = 0.15σ_crit; the entropic plan by semi-dual Newton.
-- Critical excess at w_δ = q + δ(1.5e₁ − 0.5): ε_c = 5.1, 13.5, 23.1, 136 for δ = 0.02, 0.05, 0.1, 0.2; rank-one formula 6.2, 16.6, 30.3, 88.
-- Dynamics (m = 15, 60, 240 vs M = 510, 600 slow units, 4 seeds): ε = 1 — all sizes equalised, fit errors 1.7–3.0·10⁻⁴, function-level
-  distances 1.0–5.6·10⁻⁷; ε = 4 — m = 15 equalised, the larger sizes stop at residual excesses 0.017–0.029, fit errors 8.8–9.6·10⁻³; ε = 16 —
-  sampled weights kept for m ≥ 60, function-level floors 1.5·10⁻³, 2.2·10⁻⁴, 3.5·10⁻⁵ (the nearest-atom leak's order), fit errors 0.033–0.069;
-  ε = 64 — no equalisation, fit errors 0.12–0.14 (the barycentric bias).
+- Matching prior, σ₀ = 0.15σ_crit; the entropic plan by semi-dual Newton; every weighted stationary point continued from a converged
+  neighbour and checked to 10⁻⁹.
+- Critical excess at w_δ = q + δ(1.5e₁ − 0.5), by continuation in ε (residuals ≤ 8.7·10⁻¹³): ε_c = 5.11, 13.5, 23.1, 65.0 for δ = 0.02, 0.05,
+  0.1, 0.2; at ε_c the outflow p = 0.057, 0.15, 0.33, 0.57 splits about equally between the two under-weighted atoms (Cov^G₁ of rank two);
+  the exact threshold 2σ₀λ_max(A^{−1/2}Cov^G₁A^{−1/2}) equals ε_c; the rank-one formula 1.22–1.31 (atom 2) and 0.70–1.22 (atom 3) times ε_c.
+  Excess from atom 3 alone: ε_c = 6.99, 14.6, 24.3 for δ = 0.02, 0.05, 0.1. At fixed ε: δ_c = 0.0042, 0.0083, 0.016, 0.030, 0.062, 0.14, 0.20
+  at ε = 1, 2, 4, 8, 16, 32, 64, equal to w₁p_c up to ε = 8.
+- Dynamics (m = 15, 60, 240 vs M = 510, 600 slow units, 4 seeds; ε = 4, 16, 64 continued to 6000): ε = 1 — all equalised, fit errors
+  1.7–3.0·10⁻⁴; ε = 4 — five of the twelve larger systems at unstable weights at s = 600, every system at stable weights at s = 6000 with
+  residual excesses up to 1/60, 3/240, 7/510 (δ_c(4) = 0.012–0.016); ε = 16 — the stable systems keep their sampled weights, three unstable
+  ones move ((6, 5, 4)/15 → (5, 6, 4): the excess moved to an atom at q, not reduced); ε = 64 — only (8, 4, 3)/15 moves, fit errors
+  0.12–0.14 (the barycentric bias).
+- Floors: Proposition D‴.5's law at Θ*_ε(q) is 0.55 (ε = 16) and 0.74 (ε = 64) of the nearest-atom law; observed 0.23–0.84 and 0.47–0.91 of
+  the nearest-atom leak's floors on the same clouds, per seed.
 
 Tests (`tests/test_entropic_leak.py`): marginals and the agreement of the two solvers; the gradient of J^ε_m against finite differences; the
-limits ε → 0 and ε → ∞; the separation blocks of the finite-difference Hessian at a collapsed configuration equal to σ₀(I − (2/ε)Cov^G) − R^G;
-the over-weighted class of (6, 5, 4)/15 unstable at ε = 4, 16 and stable at 20, 64.
+limits ε → 0 and ε → ∞ at their rates (the OT plan's uniqueness checked); the separation blocks of the finite-difference Hessian at a
+collapsed configuration equal to I ⊗ (σ₀(I − (2/ε)Cov^G) − R^G) entrywise, the separation subspace invariant; the over-weighted class of
+(6, 5, 4)/15, continued in ε with A ≻ 0 checked and every residual below 10⁻⁹, unstable at ε = 16, 17 and stable at 18, 20, 64.
 
 
 ## Theorem D‴.21 — a measure-level basin for the OT leak (`exp_ot_basin.py` → `chaos/ot_basin.md`)
@@ -483,22 +492,26 @@ the over-weighted class of (6, 5, 4)/15 unstable at ε = 4, 16 and stable at 20,
 - Averaged slow loop at σ₀ = 0.15σ_crit, the warm clouds of Proposition D‴.12, m = 15, 60, 240, 510, four seeds, 600 slow units, the matching
   prior and the prior with centres +0.15, both leaks. The identities (E), (P) hold along every run to 6·10⁻¹³ relative.
 - OT leak: no particle relabelled; the margin α positive from s ≤ 300 on (from s ≤ 25 in 19 of 32 runs); the observed ratio at least λ at
-  every record with α > 0 (smallest ratio/λ 1.00 at the matching prior, 1.58–1.72 at the shifted one); E from 4.1·10⁻³–4.0·10⁻² to
-  8.3·10⁻⁷–8.1·10⁻⁶ (W²(μ_Θ, μ*) from 1.0–5.2 to 2.3·10⁻⁴–2.3·10⁻³), below the a-posteriori bound; at the end the observed rate is
+  every record with α > 0 (smallest ratio/λ 1.00 at the matching prior, 1.61–1.72 at the shifted one); E from 4.1·10⁻³–4.0·10⁻² to
+  8.3·10⁻⁷–8.1·10⁻⁶ (W²(μ_Θ, μ*) from 0.99–5.25 to 2.3·10⁻⁴–2.3·10⁻³), below the a-posteriori bound; at the end the observed rate is
   0.01416–0.01417 against 2σ₀ = 0.01415 and λ = 0.0140–0.0141 (matching prior: sharp); at the shifted prior λ = 0.0077–0.0078 against the
-  observed 0.0137–0.0139.
-- Nearest-atom leak: E stays at 3.5·10⁻³–1.9·10⁻² (W² 1.0–4.7), the excess energy of the replicated configuration of the sampled weights (within
-  0.3 % at m ≥ 240) — a critical point of the nearest-atom energy (drift ≤ 6·10⁻¹⁴) but not of the OT energy (drift 2.3–4.4·10⁻²).
-- The a-priori basin: E₀ = 2.0·10⁻⁷ at the matching prior (κ = σ₀); at the shifted prior the largest λ_max R^G[μ*] on the runs' box is
-  4.3·10⁻³ < σ₀, so (H*) holds there (κ = 0.0027, E₀ = 3.0·10⁻⁸).
+  observed 0.0137–0.0139, the local PL constant 2λ_sep = 0.01135 (curvature cost 0.802, the slack of (ii) 0.683).
+- Nearest-atom leak: no particle changes cell. At the 22 admissible count vectors E(600) is 0.02–0.24 % below the energy of the replicated
+  configuration of the sampled weights and rising toward it — a critical point of the nearest-atom energy (drift ≤ 6·10⁻¹⁴) but not of the OT
+  energy (drift 2.3–4.4·10⁻²); at the 10 inadmissible ones (m ≤ 60; class-0 margins −0.0004 to −0.0061) class 0 splits and E ends
+  0.5–16.5 % below it, still falling.
+- The a-priori basin: E₀ = 2.0·10⁻⁷ at the matching prior (κ = σ₀); at the shifted prior (H*) holds on the whole parameter space
+  (sup λ_max R^G[μ*] = 6.60·10⁻³ < σ₀, at a saturation corner; κ = 4.7·10⁻⁴, E₀ = 9.1·10⁻¹⁰). {E ≤ E₀} holds a fraction ≤ 5.8·10⁻⁶ (matching)
+  and 4.4·10⁻⁷ (shifted) of the particles in other cells.
 - The measure-level basin (matching prior): a fraction p of the particles moved 0.6 of the way into another cell stays in its class; κ^Θ =
-  0.0093, 0.019, 0.028, 0.047 and α = +0.0024 at p = 1/30, negative from p = 1/15 — identically at m = 30 and m = 300. One particle moved:
-  E 3.3·10⁻³ → 2.5·10⁻⁵ (m = 30) and 2.3·10⁻⁴ → 3.1·10⁻⁶ (m = 300), at 2σ₀ at the end, the particle back in its cell; under the nearest-atom
-  leak E rises to 5.7·10⁻³ and 5.6·10⁻⁴.
+  0.0096, 0.019, 0.029, 0.048 and α = +0.0023 at p = 1/30, negative from p = 1/15 (the same at m = 30 and m = 300: the same measures). One
+  particle moved: E 3.3·10⁻³ → 2.5·10⁻⁵ (m = 30) and 2.3·10⁻⁴ → 3.1·10⁻⁶ (m = 300), at 2σ₀ at the end, below E(0)exp(−∫λ₊), the particle back
+  in its cell; under the nearest-atom leak E rises to the spurious minima's 6.3126·10⁻³ and 6.1328·10⁻⁴ by s = 3000.
 
-Tests (`tests/test_ot_basin.py`): (E) and (P) to 10⁻¹² for random assignments with the counts mq at both priors; the PL chain; the constant
-2σ₀ attained by a separation to 10⁻⁴; the decay from a particle in another cell below the a-posteriori bound, at 2σ₀ at the end, against the
-nearest-atom floor; the spurious minimum (11, 9, 10)/30 of the nearest-atom energy, not critical for the OT leak.
+Tests (`tests/test_ot_basin.py`): (E) and (P) to 10⁻¹² for random assignments with the counts mq at both priors, and their exact defects at
+other counts; the PL chain; the constant 2σ₀ attained by a separation to 10⁻⁴; the decay from a particle in another cell, with a positive
+margin, below the a-posteriori bound, at 2σ₀ at the end, against the nearest-atom floor; the spurious minimum (11, 9, 10)/30 of the
+nearest-atom energy, admissible (separation margins and K-atom Hessian positive), not critical for the OT leak.
 
 ## Theorem D‴.23 — adaptive priors (`exp_adaptive_prior.py` → `chaos/adaptive_prior.md`)
 

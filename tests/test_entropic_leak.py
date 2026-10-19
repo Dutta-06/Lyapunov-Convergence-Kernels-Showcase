@@ -1,8 +1,10 @@
 """Proposition D‴.20 (PARADIGM.md §5d): the entropic OT leak. The semi-dual Newton plan has the prescribed marginals and agrees with
 log-domain Sinkhorn; the leak is the G-gradient flow of J^ε_m = mL̄ + (σ₀m/2)OT_ε (the envelope theorem, against finite differences); its two
-limits (the OT barycentric projection as ε → 0, the barycentre of ν as ε → ∞); at a configuration collapsed by class the entropic plan is
-class-symmetric, the replicated weighted stationary configuration is a critical point, and the separation block of the finite-difference
-Hessian of J^ε_m is σ₀(I − (2/ε)Cov^G_k) − R^G_k; the over-weighted class's margin changes sign at a critical ε."""
+limits, tested at their rates (the OT barycentric projection as ε → 0, the barycentre of ν as ε → ∞, the error falling like 1/ε); at a
+configuration collapsed by class the entropic plan is class-symmetric, the replicated weighted stationary configuration is a critical point,
+and the finite-difference Hessian of J^ε_m leaves each class's separation subspace invariant and acts there as I ⊗ (σ₀(I − (2/ε)Cov^G_k) − R^G_k),
+entrywise; where σ₀I − R^G_k ≻ 0 the over-weighted class's margin changes sign at a critical ε. Every weighted stationary point is checked
+to a Newton residual of 10⁻⁹."""
 import os
 import sys
 
@@ -53,10 +55,16 @@ def test_entropic_leak_is_the_gradient_flow_of_J_eps_and_has_the_two_limits():
             fd[i, j] = (loop.J(Th + E) - loop.J(Th - E)) / (2 * h)
     assert np.abs(g - fd).max() < 1e-7 * max(1.0, np.abs(g).max())                # the envelope theorem: ∂OT_ε/∂ϑ_i = (2/m)G⁻¹(ϑ_i − T^ε_i)
     ot = OT.OTPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, n_quad=96)
-    T_small = EL.EntropicPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, eps=0.05, n_quad=96).leak_target(Th)
-    T_large = EL.EntropicPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, eps=1e5, n_quad=96).leak_target(Th)
-    assert np.abs(T_small - ot.leak_target(Th)).max() < 1e-3                       # ε → 0: the OT barycentric projection (unique plan here)
-    assert np.abs(T_large - (Q @ exact)[None, :]).max() < 1e-3                     # ε → ∞: the σ-modification toward the barycentre of ν
+    gamma, _ = ot.plan(Th)
+    lab = np.argmax(gamma, axis=1); C = ot.cost_matrix(Th)
+    # the OT plan is unique here: every exchange of two particles' atoms costs strictly more (c-cyclical monotonicity with a margin)
+    gaps = [C[i, lab[j]] + C[j, lab[i]] - C[i, lab[i]] - C[j, lab[j]] for i in range(9) for j in range(9) if lab[i] != lab[j]]
+    assert min(gaps) > 1.0
+    err = lambda eps: np.abs(EL.EntropicPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, eps=eps, n_quad=96).leak_target(Th) - ot.leak_target(Th)).max()
+    assert err(0.5) > 1e-3 > 1e-4 > err(0.2)                                       # ε → 0: the OT barycentric projection, exponentially fast
+    bar = lambda eps: np.abs(EL.EntropicPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, eps=eps, n_quad=96).leak_target(Th) - (Q @ exact)[None, :]).max()
+    b4, b5 = bar(1e4), bar(1e5)
+    assert b5 < 1e-3 and 8.0 < b4 / b5 < 12.0                                      # ε → ∞: the barycentre of ν, the error ∝ 1/ε
 
 
 def test_collapsed_configuration_is_critical_and_its_separation_block_is_the_entropic_formula():
@@ -87,9 +95,9 @@ def test_collapsed_configuration_is_critical_and_its_separation_block_is_the_ent
         for a_ in range(nk - 1):
             for c_ in range(3):
                 B[3 * idx + c_, 3 * a_ + c_] = V[:, a_]
-        ev = np.sort(np.linalg.eigvalsh(B.T @ Hw @ B))
-        pred = np.sort(np.repeat(np.linalg.eigvalsh(blocks[k]), nk - 1))
-        assert np.abs(ev - pred).max() < 1e-6 * max(1.0, np.abs(pred).max())          # σ₀(I − (2/ε)Cov^G_k) − R^G_k, multiplicity n_k − 1
+        CB = B.T @ Hw @ B
+        assert np.abs(CB - np.kron(np.eye(nk - 1), blocks[k])).max() < 1e-8          # entrywise I ⊗ (σ₀(I − (2/ε)Cov^G_k) − R^G_k)
+        assert np.abs(Hw @ B - B @ CB).max() < 1e-8                                   # the separation subspace is invariant (no coupling)
     assert mins[0] < 0 < mins[1] and mins[2] > 0                                    # at ε = 10 the over-weighted class splits
 
 
@@ -97,8 +105,12 @@ def test_the_over_weighted_class_has_a_critical_regularisation():
     net, exact = _setup()
     loop = EL.EntropicPriorLoop(net, F_VEC, X_REF, PER, G, SIGMA0, exact, eps=1.0, n_quad=96)
     w = np.array([6, 5, 4]) / 15.0
-    margins = []
-    for eps in (4.0, 16.0, 20.0, 64.0):
-        atoms, res = EL.weighted_stationary_atoms_entropic(loop, w, exact, eps, Q)
-        margins.append(EL.separation_blocks_entropic(loop, w, atoms, eps, Q)[1][0])
-    assert margins[0] < margins[1] < 0 < margins[2] < margins[3]                    # split below ε_c ∈ (16, 20), stable above
+    margins, atoms = {}, exact
+    for eps in (64.0, 20.0, 18.0, 17.0, 16.0):                                     # continuation in ε from above
+        atoms, res = EL.weighted_stationary_atoms_entropic(loop, w, atoms, eps, Q)
+        assert res < 1e-9
+        a, c, s, diff, phi = loop.features(atoms)
+        Rw = SQG[None, :, None] * loop.residual_curvature(loop.F - phi @ (w * a), atoms) * SQG[None, None, :]
+        assert np.linalg.eigvalsh(SIGMA0 * np.eye(3) - Rw[0]).min() > 0             # σ₀I − R^G₁ ≻ 0: the entropic term decides
+        margins[eps] = EL.separation_blocks_entropic(loop, w, atoms, eps, Q)[1][0]
+    assert margins[16.0] < margins[17.0] < 0 < margins[18.0] < margins[20.0] < margins[64.0]   # split below ε_c ∈ (17, 18), stable above

@@ -9,9 +9,12 @@ regularisation replaces the plan by the Sinkhorn plan π^ε from μ_Θ = (1/m)Σ
 
 and the leak −σ₀(ϑ_i − T^ε_i) is the G-gradient flow of J^ε_m := mL̄(μ_Θ) + (σ₀m/2)OT_ε(μ_Θ, ν) (the envelope theorem: ∂OT_ε/∂ϑ_i =
 Σ_jπ^ε_{ij}∂C_{ij}/∂ϑ_i = (2/m)G⁻¹(ϑ_i − T^ε_i)), smooth in Θ.  It interpolates between the OT leak (ε → 0) and the σ-modification toward
-the barycentre Σ_jq_jϑ⁰_j of ν (ε → ∞, π^ε → μ⊗ν).  This module implements the log-domain Sinkhorn plan, the entropic leak loop (a subclass
-of `prior_design.MixturePriorLoop`), the separation block of a collapsed class, and the critical regularisation of Proposition D‴.20.
+the barycentre Σ_jq_jϑ⁰_j of ν (ε → ∞, π^ε → μ⊗ν).  This module implements the entropic plan (Newton's method on the semi-dual, gauge-fixed,
+for a few columns — the prior's atoms — and log-domain Sinkhorn otherwise), the entropic leak loop (a subclass of
+`prior_design.MixturePriorLoop`), the separation block of a collapsed class, and the critical regularisation of Proposition D‴.20.
 """
+import warnings
+
 import numpy as np
 
 from .chaos_learning import _sig
@@ -173,8 +176,10 @@ def weighted_energy_grad_entropic(loop, w, Th, eps, q):
     return loop.grad_V_L(r, Th) + loop.sigma0 * (Th - T) / loop.G[None, :]
 
 
-def weighted_stationary_atoms_entropic(loop, w, Th0, eps, q, iters=100, h=1e-6, tol=1e-12):
-    """Newton with backtracking on the K-atom stationarity condition of the entropic leak; returns (atoms, residual)."""
+def weighted_stationary_atoms_entropic(loop, w, Th0, eps, q, iters=100, h=1e-6, tol=1e-12, warn_tol=1e-9):
+    """Newton with backtracking on the K-atom stationarity condition of the entropic leak; returns (atoms, residual). The caller must check
+    the residual: a start far from the branch can stall (warned above warn_tol); continuation in ε or in the weights from a converged point is
+    the reliable route (referee round 15, D3h-1)."""
     K = Th0.shape[0]; d = 3 * K
     v = Th0.ravel().copy()
     F = lambda v: weighted_energy_grad_entropic(loop, w, v.reshape(K, 3), eps, q).ravel()
@@ -194,7 +199,10 @@ def weighted_stationary_atoms_entropic(loop, w, Th0, eps, q, iters=100, h=1e-6, 
                 break
             lam *= 0.5
         v = vn
-    return v.reshape(K, 3), float(np.abs(F(v)).max())
+    res = float(np.abs(F(v)).max())
+    if res > warn_tol:
+        warnings.warn(f"weighted_stationary_atoms_entropic: Newton did not converge (residual {res:.1e}, ε = {eps})", RuntimeWarning)
+    return v.reshape(K, 3), res
 
 
 def separation_blocks_entropic(loop, w, atoms, eps, q):

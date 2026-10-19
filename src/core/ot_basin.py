@@ -8,7 +8,9 @@ For m commensurate with ν = Σ_j q_jδ_{ϑ⁰_j} every optimal plan of μ_Θ �
 
 Against a replicated stationary measure μ* = Σ_j q_jδ_{ϑ*_j} (every atom critical for its class potential, the diagonal plan optimal; residual
 r*, energy 𝒥* := L̄(μ*) + (σ₀/2)Σ_jq_j‖ϑ*_j − ϑ⁰_j‖²_{G⁻¹}) write u_i := ϑ_i − ϑ*_{a(i)}, D_a := (1/m)Σ_i‖u_i‖²_{G⁻¹} and
-Δf̂ := f̂_Θ − f̂[μ*] = (1/m)Σ_i[Φ̃(·;ϑ_i) − Φ̃(·;ϑ*_{a(i)})] — the last equality is where the counts mq_j enter. Two identities are exact:
+Δf̂ := f̂_Θ − f̂[μ*] = (1/m)Σ_i[Φ̃(·;ϑ_i) − Φ̃(·;ϑ*_{a(i)})] — the last equality is where the counts mq_j enter (with other counts both
+identities acquire the defects of `counts_mismatch`; (E) holds for every coupling with the column masses q, (P) needs an assignment, one
+test direction per particle). Two identities are exact:
 
   (E)  E_a := J_a(Θ)/m − 𝒥* = ½‖Δf̂‖² + (σ₀/2)D_a − ⟨r*, (1/m)Σ_i R₂,i⟩,              R₂,i := Φ̃(ϑ_i) − Φ̃(ϑ*_{a(i)}) − ∇Φ̃(ϑ*_{a(i)})u_i,
   (P)  Q_a := (1/m)Σ_i⟨∇_{ϑ_i}J_a, u_i⟩
@@ -68,13 +70,16 @@ class BasinDiagnostics:
         return np.argmax(gamma, axis=1)
 
     # ------------------------------------------------------------------ the identities
-    def terms(self, Th, lab=None):
-        """Both sides of (E) and (P) for the assignment `lab` (default: an optimal one), the gradient norm and the PL ratios."""
+    def terms(self, Th, lab=None, check_counts=True):
+        """Both sides of (E) and (P) for the assignment `lab` (default: an optimal one), the gradient norm and the PL ratios. The identities
+        need the counts mq (check_counts=False evaluates both sides anyway: with counts N ≠ mq, (E) is off by Σ_k(N_k/m − q_k)c_k with
+        c_k = −⟨r*, Φ̃(ϑ*_k)⟩ + (σ₀/2)‖ϑ*_k − ϑ⁰_k‖²_{G⁻¹}, and (P) by −⟨Δf̂, f̂[μ_N] − f̂[μ*]⟩, μ_N := Σ_k(N_k/m)δ_{ϑ*_k})."""
         Th = np.asarray(Th, float)
         m = Th.shape[0]
         lab = self.labels(Th) if lab is None else np.asarray(lab)
         counts = np.bincount(lab, minlength=self.atoms.shape[0])
-        assert np.all(counts == np.round(m * self.q)), "the assignment must have the counts mq"
+        if check_counts:
+            assert np.all(counts == np.round(m * self.q)), "the assignment must have the counts mq"
         G, s0 = self.G, self.sigma0
         u = Th - self.atoms[lab]
         D = float(np.mean(np.sum(u ** 2 / G[None, :], axis=1)))
@@ -104,7 +109,14 @@ class BasinDiagnostics:
         ratio = gnorm2 / (m * E) if E > 0 else float('nan')
         lam_eff = Q_direct ** 2 / (D * E) if (D > 0 and E > 0) else float('nan')
         return dict(m=m, D=D, ndf2=ndf2, E=E, E_ident=E_ident, Q=Q_direct, Q_ident=Q_ident, gnorm2=gnorm2, kappa_E=kE, kappa_Q=kQ,
-                    ratio=ratio, lam_eff=lam_eff, lab=lab, u=u, r=r)
+                    ratio=ratio, lam_eff=lam_eff, lab=lab, u=u, r=r, df=df, counts=counts)
+
+    def counts_mismatch(self, counts, df):
+        """The defects of (E) and (P) for an assignment with the counts N (zero iff N = mq): (Σ_k(N_k/m − q_k)c_k, −⟨Δf̂, f̂[μ_N] − f̂[μ*]⟩)."""
+        counts = np.asarray(counts, float); m = counts.sum()
+        dw = counts / m - self.q
+        c = -np.mean(self.r_s[:, None] * self.Phi_s, axis=0) + 0.5 * self.sigma0 * np.sum((self.atoms - self.loop.prior) ** 2 / self.G[None, :], axis=1)
+        return float(dw @ c), -float(np.mean(df * (self.Phi_s @ dw)))
 
     # ------------------------------------------------------------------ the plan-segment curvatures and the theorem's rate
     def segment_curvatures(self, Th, lab=None, n_t=9, r=None):
