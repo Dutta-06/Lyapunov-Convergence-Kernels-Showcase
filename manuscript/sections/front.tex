@@ -79,10 +79,12 @@ In Part~I, every step of the stability argument is either proved or verified num
     the dithered linearised loop (Corollary E.0$'$.3) and the slow-regime Lyapunov function for non-periodic
     persistently exciting regressors (Lemma E.0$''$) and uniform-in-time propagation of chaos in the learning
     regime for the averaged slow loop (Theorem D$'''$, with the finite-$m$ weight-sensitivity law of
-    Proposition D$'''$.5, the real loop on a warm start of Corollary D$'''$.7 and the leak's prior as a design input of
-    the window, Proposition D$'''$.9) --- through a seventh (the first two) and an eighth to a tenth (the third). Every confirmed issue
-    and its fix is
-    logged in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--10 are kept beside it.
+    Proposition D$'''$.5, the real loop on a warm start of Corollary D$'''$.7, the leak's prior as a design input of
+    the window, Proposition D$'''$.9, and the barycentric OT leak's mass constraint, which removes the finite-size
+    floor, Proposition D$'''$.12 --- in the real loop too, where the collapsed subspace carries one $K_0$-atom orbit
+    for every commensurate size, Corollary D$'''$.14 and Proposition D$'''$.15) --- through a seventh (the first two)
+    and an eighth to a twelfth (the third). Every confirmed issue and its fix is logged in
+    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--12 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -234,7 +236,7 @@ constant); the leak's prior is a design input of the window: with a measure-valu
 on the plant's structure the stationary residual vanishes and the margin is maximal, $\kappa = \sigma_0$, while the
 floors at parameter and function level rise (1.6--2.2$\times$ on the instance, with the amplitudes), and the sign of
 the residual at a cluster sets its admissible weights --- overshoot splits, undershoot stabilises, so a shrunk prior
-enlarges the admissible set (Proposition D$'''$.9, Remark D$'''$.11)
+enlarges the admissible set (Proposition D$'''$.9, Remark D$'''$.11);
 & proved for the averaged slow loop (synchronous coupling, a bootstrap on the mean square and the per-particle
 distance, McDiarmid for the reference's fluctuation); the hypothesis is a computable property of the mean-field flow;
 it fails for a connected cold start whose mass splits between basins (the support threads the ridges), where the
@@ -250,11 +252,51 @@ per-cluster cosines 0.92--1.00; the exact stationary distance of the replicated 
 measured one within 2.3\% in all pairs, one $m = 16$ seed with inadmissible weights sitting on a saddle; a connected
 cold start grows and carries a floor of pairs in different basins whose fraction 0.20, 0.08, 0.04 ($m = 16$, $64$,
 $256$) decays like $m^{-0.64\pm0.08}$; the real loop at $k_e = 25$ follows its averaged slow dynamics on the same
-clouds to within 0.7\%
+clouds to within 0.7\%;
 & the two ingredients --- the sign of the interaction from flat convexity, and the curvature at the actual rather
 than the worst-case residual --- are new in propagation of chaos for adaptive control; the decomposition
 Gram + residual$\times$curvature is the one of the interpolation literature (\cite{S39}); the window between
-Proposition K's collapsed instability and the fitted configuration's stability is new\\
+Proposition K's collapsed instability and the fitted configuration's stability is new;\\
+D$'''$, cont. & the barycentric OT leak of Theorem C$'$ toward
+the same prior constrains the cluster masses to the prior's --- the nearest-atom leak conserves them, and the floor
+is the memory of the initial cloud that this conservation law carries --- so on the sizes commensurate with the
+masses the finite-$m$ stationary measure is the mean-field one exactly, both floors vanish and the fit loses the
+weight bias, while on other sizes at most $K_0 - 1$ split particles bridge the clusters, with floors $O(1/m^2)$ at
+function level and $O(1/m)$ in $W^2$ against the nearest-atom leak's $1/m$ and $m^{-1/2}$ (Proposition D$'''$.12);
+in the real loop the collapsed-by-class subspace is invariant and carries the weighted $K_0$-atom loop, so with the
+OT leak the lift of one $K_0$-atom periodic orbit is a periodic orbit of every commensurate size --- the same orbit
+measure, learned function and tracking error exactly, the real loop's finite-size floor being zero --- while with
+the nearest-atom leak it is the lift of the orbit of the realised weights, whose distance between sizes is
+Corollary D$'''$.7's floor (Corollary D$'''$.14); the Floquet spectrum of a lifted orbit is the $K_0$-atom orbit's
+together with each class's ghost spectrum of multiplicity $n_k - 1$, independent of $m$ (Proposition D$'''$.15);
+with dither the nearest-atom leak equalises the masses only by Arrhenius hops across the Voronoi ridges (barrier
+$\approx0.04$ on the instance: frozen for $350/\sigma_0$ at $\tau_0 = 0.005$) while the OT leak holds them at $q$
+88--99.6\% of the time (Remark D$'''$.16); every trajectory of the OT dynamics converges to a Clarke-critical point
+of its energy (Kurdyka--{\L}ojasiewicz for the definable, semiconcave-plus-smooth $J_m^{\mathrm{OT}}$), so the
+stationary statement is reached from every initial condition in the basin (Proposition D$'''$.17)
+& for the OT leak the frozen-plan equivalence and the stationary statement are proved (total
+unimodularity, $c$-cyclical monotonicity, the Hessian of D$'''$.5), the quantisation bounds formal, and Theorem
+D$'''$'s coupling applies only to a balanced sample (probability $\approx0.83/m$ under an i.i.d.\ start, and even
+there formal: Step~8 is written for i.i.d.\ particles) --- for a generic sample the shared-particle coupling keeps
+the transit's mismatch for ever and a coupling theorem for the OT dynamics is open; numerics on the same clouds
+under the two leaks: cluster weights conserved exactly against equalised by $s\approx100$ slow units
+($\ln2/\sigma_0 = 98$), function-level and $W^2$ distances at $10^{-4}$ and $10^{-3}$ of the nearest-atom leak's
+after $4.2/\sigma_0$ and still falling on the commensurate sizes while the synchronous $D$ sits at 0.95 of its
+mismatch plateau, the quantisation laws $m\cdot W^2(\mu_m,\nu)\approx20$ (slope $-0.98\pm0.03$) and
+$m\cdot\mathrm{fit}\approx0.55$ (squared slope $-1.81\pm0.05$) on the incommensurate ones, the reference's fit error
+$0.012\to8\cdot10^{-5}$; the real loop at $k_e = 25$ on the same clouds: learned functions of $m = 15$, $60$, $510$
+within squared distances $7.5\cdot10^{-9}$--$2.7\cdot10^{-8}$ of each other under the OT leak against
+$10^{-4}$--$10^{-3}$ under the nearest-atom leak (the lifted orbits' distance to 1.0003 at the one pair with
+admissible weights; three of the six nearest-atom systems sit at saddle weights and have split), rms tracking error
+$0.9$--$7\cdot10^{-6}$ against $3\cdot10^{-4}$--$1.9\cdot10^{-3}$ (on a planar plant with four kernels: $10^{-7}$
+against $10^{-2}$ and $4\cdot10^{-6}$--$1.6\cdot10^{-5}$ against $2$--$7\cdot10^{-3}$); the lifted orbit's
+transverse spectrum equals the ghosts' and the collective block the $K_0$-atom loop's to $10^{-4}$ relative
+(invariance defects $\le10^{-7}$)
+& the finite-size floor
+as a conservation law of the leak, broken by the plan's mass constraint so that the particle system's stationary
+measure is exactly the mean-field one, is new; the lift of a weighted $K_0$-atom orbit as the exact periodic orbit of
+every commensurate size, with an $m$-independent Floquet spectrum (the orbit-level form of Proposition K's block
+structure), is new in adaptive control, where the size of the approximator is usually a nuisance parameter\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance

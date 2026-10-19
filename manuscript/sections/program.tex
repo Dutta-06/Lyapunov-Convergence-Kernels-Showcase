@@ -104,6 +104,18 @@ Each branch states what is proved, what is open, and the first concrete step.
       support threading the ridges, where the coupling has a floor of pairs in different basins). At finite $m$ the
       stationary coupled distance is the weight-sensitivity law of Proposition D$'''$.5, and Corollary D$'''$.7
       carries the uniform statement to the real loop on a warm start through Theorem J.
+    \item \emph{Done (Corollary D$'''$.14, Proposition D$'''$.15):} in the real loop the collapsed-by-class subspace
+      is invariant and carries the weighted $K_0$-atom loop, so Theorem J's orbit at a replicated configuration is,
+      under its uniqueness-ball proviso, the lift of one $K_0$-atom orbit --- with the OT leak the same orbit for
+      every commensurate size (the real loop's finite-size floor is zero), with the nearest-atom leak the orbit of
+      the realised weights (Corollary D$'''$.7's floor is exactly the distance between two weighted $K_0$-atom
+      orbits); the Floquet spectrum of a lifted orbit is the $K_0$-atom orbit's together with each class's
+      single-particle (ghost) spectrum of multiplicity $n_k - 1$, independent of $m$ --- the spectral part of
+      Corollary D$'''$.7's uniformity question. \emph{Open:} Theorem J's basin radius at a replicated configuration
+      in the mean norm; the dithered loop with the OT leak (Remark D$'''$.16: the Gibbs measure of
+      $J_m^{\mathrm{OT}}$ keeps the plan's masses at $q$ up to a barrier $\sigma_0\Delta_\nu^2/2$ per misplaced
+      particle, while under the nearest-atom leak dither equalises the masses only on the Arrhenius time scale) ---
+      Theorem J$'$'s numerics with the two leaks.
     \item \emph{Open:} the measure-weighted form of hypothesis (H) (a bad set of small $\mu_s$-mass, the bootstrap on
       the good particles, the flip fraction $p_m$ and its $m$-law); the transfer to the real loop at finite $k_e$
       through Theorem J$'$'s $O(\varepsilon)$ corrections, uniformly in time; dither (the entropy method
@@ -188,9 +200,12 @@ Each branch states what is proved, what is open, and the first concrete step.
       the mean-field one exactly (the replicated weighted configuration is a critical point for every such $m$, by
       total unimodularity and $c$-cyclical monotonicity), and otherwise differs from it by at most $K_0 - 1$ split
       particles; for an atomic prior the mean-field form of the barycentric leak is the Laguerre-cell leak.
-      \emph{Open:} the uniform-in-time coupling through the transit (the $m$-system is no longer an i.i.d.\ sample
-      after the mass transfer); a soft (entropic or penalised) mass constraint interpolating between the two leaks;
-      the mean-field form for a general prior $\nu$ (the barycentric projection as the superdifferential of
+      \emph{Open:} a coupling theorem for the OT dynamics from an i.i.d.\ start (Theorem D$'''$'s synchronous
+      coupling needs a balanced sample, of probability $\approx0.83/m$, and otherwise keeps the transit's mismatch
+      for ever; a coupling that follows the plan is the natural candidate; the convergence of every trajectory to a
+      Clarke-critical point is Proposition D$'''$.17, without a rate); a soft (entropic or penalised) mass
+      constraint interpolating between the two leaks; the mean-field form for a general prior $\nu$ (the
+      barycentric projection as the superdifferential of
       $\frac12W^2(\cdot,\nu)$, Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}) and adaptive priors ($\nu$,
       and its masses, learned).
     \item Transfer: transporting a learned measure to a new plant.
