@@ -2095,6 +2095,19 @@ their lifts to m = 16 fixed points to 5·10⁻¹⁴. The separation exponents of
 with multiplicity 8 — the saddle orbit of Theorem D‴'s inadmissible seed, Proposition K's split at the orbit level — while the collective
 exponents (2.131·10⁻⁴, …, 9.985·10⁻³) are the weighted 3-atom orbit's to four digits.
 
+*Remark D‴.16 (dither and the mass constraint).* With dither (Theorem J′: τ = τ₀/k_e, σ = σ₀/k_e) the leading-order stationary law of
+the slow variables is the Gibbs measure π ∝ exp(−J_m/τ₀), and the cluster masses are no longer conserved under the nearest-atom leak: a
+particle hops across a Voronoi ridge at the Arrhenius rate exp(−ΔV/τ₀), ΔV ≳ σ₀Δ_ν²/8 (the leak's potential at the ridge, (σ₀/2)(Δ_ν/2)²,
+plus the fit's variation), and the masses relax toward the weights that minimise the restricted energy w ↦ min_Θ J_m^ν(Θ; w) = m𝒢*_w —
+the matching prior's q — with Gaussian fluctuations of variance τ₀/(m∇²_w𝒢*_w) around them: dither does on the Arrhenius time scale what
+the OT leak does deterministically in ln 2/σ₀ slow units at τ₀ = 0. Under the OT leak the Gibbs measure is π^{OT} ∝ exp(−J_m^{OT}/τ₀)
+(the drift −G∇J_m^{OT} is the gradient of a Lipschitz, piecewise-smooth potential), and J_m^{OT} charges a particle sitting in one cluster
+while the plan assigns it to another atom with (σ₀/2)‖ϑ − ϑ⁰_j‖²_{G⁻¹} ≈ σ₀Δ_ν²/2 — a barrier of 0.14 on the instance, twenty times τ₀
+at τ₀ = 0.007 — so the plan's masses are exactly q and the masses by nearest atom are q up to events of probability of order
+exp(−σ₀Δ_ν²/(2τ₀)): a hop across a ridge is answered by a swap of assignments and the transit of one particle back, not by a change of mass.
+Formal (the Gibbs law of a Lipschitz potential; the Arrhenius estimate; the Laplace asymptotics of the restricted energy); the dithered
+numerics of Theorem J′ with the two leaks are not run.
+
 *Numerics* (`exp_chaos_learning.py` → `results/chaos/learning_table.md`). The instance: n = 1, saturated features with a_max = 4,
 c_max = 3, s ∈ [0.3, 2], prior ϑ⁰ = 0, G = diag(1, 0.25, 0.25); a plant of three Gaussian bumps, (A, C, S) = (1, −1.5, 0.5),
 (−0.7, 0, 0.4), (0.8, 1.5, 0.5), which three kernels of weights 3A_k represent exactly; reference x_m = 2 sin t, ρ on a grid of 256
@@ -4658,7 +4671,10 @@ Each branch states what is proved, what is open, and the first concrete step.
      for every commensurate size (the real loop's finite-size floor is zero), with the nearest-atom leak the orbit of the realised weights
      (Corollary D‴.7's floor is exactly the distance between two weighted K₀-atom orbits); the Floquet spectrum of a lifted orbit is the
      K₀-atom orbit's together with each class's single-particle (ghost) spectrum of multiplicity n_k − 1, independent of m — the spectral
-     part of Corollary D‴.7's uniformity question. *Open:* Theorem J's basin radius at a replicated configuration in the mean norm.
+     part of Corollary D‴.7's uniformity question. *Open:* Theorem J's basin radius at a replicated configuration in the mean norm;
+     the dithered loop with the OT leak (Remark D‴.16: the Gibbs measure of J_m^{OT} keeps the plan's masses at q up to a barrier
+     σ₀Δ_ν²/2 per misplaced particle, while under the nearest-atom leak dither equalises the masses only on the Arrhenius time scale) —
+     Theorem J′'s numerics with the two leaks.
    - *Open:* the measure-weighted form of hypothesis (H) (a bad set of small μ_s-mass, the bootstrap on the good particles, the
      flip fraction p_m and its m-law); the transfer to the real loop at finite k_e through Theorem J′'s O(ε) corrections,
      uniformly in time; dither (the entropy method of [S5], whose hypotheses Theorem H verifies, against the coupling's floor).
