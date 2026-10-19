@@ -152,10 +152,10 @@ def report(A, B, t0=None):
              f"The 3-atom loop's periodic orbit is the exact representation with zero tracking error (shooting residual {A['resK']:.1e}); its parameter Floquet exponents are "
              f"{fmt_ex(A['exK'][:-1])}, against Theorem J(b)'s prediction λ_j(G^{{1/2}}∇²𝒢_qG^{{1/2}})/k_e = {fmt_ex(A['pred_collective'])}. The ghosts' exponents: "
              + "; ".join(f"class {k}: {fmt_ex(g[0])} (return residual {g[1]:.1e})" for k, g in A['ghosts'].items()) + f" — σ₀/k_e = {SIGMA0 / KE:.3e} at zero residual.", "",
-             "| m | classes | return residual of the lift | separation exponents per class (multiplicity n_k − 1 each) | invariance defects | collective exponents (parameters) | collective defect |",
+             "| m | classes | return residual of the lift | separation exponents per class (distinct values, rounded to 10⁻⁷; each of multiplicity n_k − 1) | invariance defects | collective exponents (parameters) | collective defect |",
              "|---|---|---|---|---|---|---|"]
     for lf in A['lifts']:
-        lines.append(f"| {lf['m']} | {tuple(lf['counts'])} | {lf['residual']:.1e} | " + "; ".join(f"class {k}: {fmt_ex(np.unique(np.round(c['ex'], 9)))} ×{c['mult']}" for k, c in lf['classes'].items())
+        lines.append(f"| {lf['m']} | {tuple(lf['counts'])} | {lf['residual']:.1e} | " + "; ".join(f"class {k}: {fmt_ex(np.unique(np.round(c['ex'], 7)))} ×{c['mult']}" for k, c in lf['classes'].items())
                      + " | " + ", ".join(f"{c['defect']:.1e}" for c in lf['classes'].values()) + f" | {fmt_ex(lf['collective'][:-1])} | {lf['collective_defect']:.1e} |")
     lines += ["", "## B. The σ-modification (ϑ⁰ = 0) at unequal weights: the weighted 3-atom orbit, its lift to m = 16, and the saddle", ""]
     for b in B:
@@ -166,7 +166,7 @@ def report(A, B, t0=None):
                   "| class k | n_k − 1 | separation exponents of the lift | ghost exponents | prediction (σ₀ − λ_j(R^G_k))/k_e | κ_R at the atom | defect |", "|---|---|---|---|---|---|---|"]
         for k in range(3):
             c = b['lift']['classes'][k]; g = b['ghosts'][k]
-            lines.append(f"| {k} | {c['mult']} | {fmt_ex(np.unique(np.round(c['ex'], 9)))} | {fmt_ex(g[0])} | {fmt_ex(b['pred_sep'][k])} | {b['kR'][k]:+.5f} | {c['defect']:.1e} |")
+            lines.append(f"| {k} | {c['mult']} | {fmt_ex(np.unique(np.round(c['ex'], 7)))} (each ×{c['mult']}) | {fmt_ex(g[0])} | {fmt_ex(b['pred_sep'][k])} | {b['kR'][k]:+.5f} | {c['defect']:.1e} |")
         lines.append("")
     neg = [(b['w'], k, float(b['lift']['classes'][k]['ex'].min())) for b in B for k in range(3) if b['lift']['classes'][k]['ex'].min() < 0]
     lines += ["Reading. The lift of the K₀-atom orbit is a periodic orbit of the m-loop for every size tried (return residuals at the integration tolerance), its monodromy leaves every class's "
