@@ -439,16 +439,30 @@ carry the ghost spectrum (Proposition D‴.15, m = 6).
 ## Theorem D‴.18 — Theorem J uniformly in m (`exp_uniform_basin.py` → `chaos/uniform_basin.md`)
 
 - Real loop at k_e = 25 (σ₀ = 0.15σ_crit, dt = 5·10⁻³), 8000 time units, many systems integrated together.
+- The test of the rates (Part F, by shooting): the 3-atom orbit's parameter Floquet exponents within 0.56–3.22 % (matching prior) and
+  0.57–3.15 % (prior centres +0.15) of λ_j(H_q)/k_e; the ghosts' exponents σ₀/k_e = 2.830·10⁻⁴ (matching) and (σ₀ − λ_j(R^G_k))/k_e to
+  3·10⁻⁴ relative (shifted; slowest 2.2701·10⁻⁴ against 2.2696·10⁻⁴). The proof's radius is at most 0.019 (sampled C_N ≥ 0.092): the runs
+  start 31–261 times outside the proved start radius.
 - Matching prior at the matching masses (constant lift), sizes 3, 15, 60, 240, per-particle random displacements ρ: inside the cells
-  (ρ = 0.3, 1.0, 2.5) both leaks identical, fitted decay rates of the per-particle distance 2.69–2.97·10⁻⁴ for m ≥ 15 (predicted
-  σ₀/k_e = 2.83·10⁻⁴; ratios 0.95–1.05), 2.95–4.06·10⁻⁴ at m = 3 (no separation modes; collective 2.95·10⁻⁴), constants C = 1.00–1.29.
-- Across a cell boundary (ρ = 4.5): nearest-atom leak ends at counts (2, 0, 1), (6, 5, 4), (23, 19, 18), (87, 70, 83), W² 12.3–1.9; OT leak
-  at q for every m, W² 0.010–0.23 (still falling).
-- Moving orbit (OT leak, prior centres +0.15): rates 2.18–2.63·10⁻⁴ against 2.27·10⁻⁴ (ratios 0.96–1.16), constants 1.04–1.23.
+  (ρ = 0.3, 1.0, 2.5) no particle leaves its cell and both leaks are identical; fitted decay rates of the per-particle distance
+  2.69–2.97·10⁻⁴ for m ≥ 15 (σ₀/k_e = 2.83·10⁻⁴; ratios 0.95–1.05), constants C(8000) = 1.03–1.29 (still growing at the horizon for
+  m = 15 at ρ = 0.3, 1); at m = 3 (no separation modes) the runs are mixtures of collective modes (2.948·10⁻⁴ when the slowest carries the
+  end, λ_coll/k_e = 2.952·10⁻⁴; 4.06·10⁻⁴ when the third does).
+- Across a cell boundary (ρ = 4.5; 1, 3, 13, 55 particles start in another cell): the nearest-atom leak ends at counts (2, 0, 1), (6, 5, 4),
+  (23, 19, 18), (87, 70, 83) — at m = 60, 240 through crossings during the transient — with W² 12.3, 2.81, 2.30, 1.92, already that of the
+  lifts of the realised weights (3.21, 2.35, 1.93 for m = 15, 60, 240) though the clouds have not collapsed; (6, 5, 4)/15 and (23, 19, 18)/60
+  are inadmissible (margins −0.00348, −0.00161). The OT leak ends at q for every m (last count change at t ≤ 2695), W² 0.010–0.23 falling at
+  the leak's rate 2σ₀ per slow unit (the transit is over); the plan relabels 4, 15, 53 particles out of their initial class's cell.
+- One particle across a boundary (Remark D‴.19; mean-square displacement 0.311, 0.078 at m = 60, 240): W² grows to 0.79, 0.20 under the
+  nearest-atom leak (the lifts of (19, 21, 20)/60 and (79, 81, 80)/240: 0.8655, 0.2163) and falls to 3.0·10⁻³, 8.2·10⁻⁴ under the OT leak.
+- Moving orbit (OT leak, prior centres +0.15): second-half fits 2.18–2.63·10⁻⁴ against 2.27·10⁻⁴ (ratios 0.96–1.16; mixtures of separation
+  modes, consistent with the bound (1 − κ)μ), constants 1.04–1.23.
 
-Tests (`tests/test_uniform_basin.py`): the drift's second-order remainder ≤ C_N|||u|||² with C_N ≤ 0.04 for random per-particle displacements at
-m = 6, 30, 150, 600 and exactly 0.064 for a collective one; a one-particle separation moves nothing else at first order (response −σ₀u at
-m = 6, 60, 300); the averaged loop contracts |||·||| at 0.9σ₀ with one constant for m = 6, 30, 150.
+Tests (`tests/test_uniform_basin.py`, at the prior with centres shifted by +0.15, where the residual is not zero and λ_sep = 0.80σ₀): the
+drift's second-order remainder ≤ C_N|||u|||² with C_N < 0.1 for random per-particle displacements at m = 6, 30, 150, 600, not growing with m;
+the displaced particle's remainder exactly N_a + N_b/m with N_a the same for every m (non-zero here, zero at the matching prior), the others'
+exactly O(1/m); a separation perturbation moves only its own particles at first order, with the response (GR_k − σ₀I)v at m = 6, 60, 300;
+the averaged loop contracts |||·||| at μ = min{λ_coll, λ_sep} with one constant C ≤ 1.05 for m = 6, 30, 150.
 
 ## Proposition D‴.20 — the entropic OT leak (`exp_entropic_leak.py` → `chaos/entropic_leak.md`)
 

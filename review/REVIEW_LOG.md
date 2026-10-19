@@ -671,3 +671,32 @@ except D3e-12, which was logged as applied but was not.
 crossing particle, so the relevant barrier is the crossing's, and the constraint acts on what happens after the crossing (reversibility), not on
 its probability. And a fix logged in the review log must be checked in the repository before the round is closed — a patch script that stops
 at its first failing anchor silently skips everything after it.
+
+## Round 14 (adversarial review of Theorem D‴.18, Remark D‴.19 and their numerics, 2026-10-19)
+
+**Design.** One referee on Theorem D‴.18 (statement, proof, Status), Remark D‴.19, the numerics paragraph, the §0 and §7 rows, the §8 bullet,
+the RESULTS section, `exp_uniform_basin.py` with its raw data and `tests/test_uniform_basin.py` (`review/REVIEW_round14_D3g.md`). Every
+number recomputed from the raw records (the md regenerates byte-identically); the batched integrator compared with `exp_ot_real_loop.real_run`
+on single systems (4.4·10⁻¹⁶ over 10⁴ steps); the initial configurations rebuilt from the seeds; the three structural facts checked on the
+averaged loop at three replicated configurations (m ≤ 160) and on the real loop's one-period map (m = 6, 30, 150); the 3-atom orbits shot
+and their ghost exponents computed.
+
+**Verdicts.** Theorem D‴.18 holds with a radius fix in (a); (b) and (c) hold; the m-uniformity is sound (the norm is equivalent to the
+per-particle max-norm with constants 2 and 1 + w_min^{−1/2}, and every map of Steps 1–4 is of mean-field type). Remark D‴.19 holds in part.
+The numbers hold; the reading of the runs across a cell boundary fails. The tests pass and are not vacuous, but are weaker than their names.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3g-1 | **major** (D‴.18 numerics, RESULTS, §0, §7) | "at ρ = 4.5 … the nearest-atom leak keeps them there … the lifts of other weights, as Remark D‴.19 says" is false on three counts: the counts change during the transient at m = 60, 240 (m = 240 starts at exactly q), no cloud has collapsed and two of the end weights are inadmissible (their lifts are saddles; (2, 0, 1)/3 empties a class), and the runs displace every particle, not one | the reading rewritten from a new cell-bookkeeping table (`report()` prints per system the particles outside their class cell at t = 0, the count changes and the last one, the within-class spreads, the end weights' stationary point, residual and splitting margin, the distance from and W² of their lift, the relabelled particles and the late W² slope); a new Part C moves one particle across a boundary (m = 60, 240) to show Remark D‴.19's mechanism |
+| D3g-2 | minor (D‴.18 (a), proof) | the contraction is shown on the |||·|||-ball of radius ρ but uniqueness is claimed in the per-particle ball of radius ρ (which needs radius ≈ 2ρ in |||·|||); the margins must bound C(1 + w_min^{−1/2})ρ; C_N names both the remainder constant and the Jacobian-Lipschitz constant (2–5 times larger on the instance) | uniqueness in the per-particle ball of radius ρ/2; both norm equivalences stated; C_N := the |||·|||-Lipschitz constant of D⟨H⟩ (the remainder then (C_N/2)|||u|||²); ρ := min{λ₀/(4C_N), margins/(C(1 + w_min^{−1/2}))} |
+| D3g-3 | minor (Remark D‴.19, §0) | Theorem J's threshold k₀ grows like √m in the unnormalised norm (the real reason for the per-particle norm), omitted; the shifted weights must be admissible (at m = 15 they are not); "the basin at the empirical-measure level is larger" unproved | added; "for m large enough that the shifted weights are admissible" with the m = 15 example; "appears larger in the numerics (open, §8)" |
+| D3g-4 | minor (numerics, docstring) | the runs start 12–640 times outside the proved ball, unsaid | Part F computes a sampled lower bound C_N ≥ 0.092 and the proof's ρ ≤ 0.019 (0.015 shifted); the runs are presented as probing beyond it (31–261 times the start radius) |
+| D3g-5 | minor (numerics, md) | the m = 3 rates are mode mixtures (the 4.06·10⁻⁴ is the third collective mode); C grows at the horizon for three m = 15 runs; Part B's fits are pre-asymptotic mixtures; the md compared m = 3 with σ₀/k_e | Part F's Floquet and ghost exponents are the test of the rate; the m = 3 final deviations projected on the collective modes; C(T) at four horizons with the growing runs flagged; m = 3 against λ_coll/k_e; the fits "consistent with (1 − κ)μ" |
+| D3g-6 | cosmetic | "W² … still falling (the transit)": the transit has ended (last count change t ≤ 2695) and W² falls at exactly 2σ₀; the plan relabels particles | "falling at the leak's rate 2σ₀ (log-slopes −0.01411 … against 0.01415); the transit is over"; the relabelled particles counted; "restores the masses q, not the class map π₀" |
+| D3g-7 | cosmetic (tests) | at zero residual the per-particle remainder vanishes and test 2's "same at every m" holds by construction; test 3 would pass at 0.8σ₀; test 2 perturbs two particles | the tests run at the shifted prior (R ≠ 0, λ_sep = 0.80σ₀): the per-particle remainder is exactly N_a + N_b/m with N_a m-independent and non-zero (zero at the matching prior), the separation response is (GR_k − σ₀I)v, the contraction is tested at μ = min{λ_coll, λ_sep} with C ≤ 1.05; names and docstrings corrected |
+| D3g-8 | cosmetic | fact (1)'s "only through r_Θ"; "∂²_{ϑ_jϑ_l} vanishes" holds for ⟨H⟩ only; the dependence list omits the prior's margins; "the proviso is void"; the §0 row drops ρ/2 and (1 − κ); the §7 constants for m ≥ 15 are 1.03–1.29; the md prints a rate and C for distances that do not tend to zero | corrected; the md prints "—" for runs that do not end at q |
+
+**Lesson.** A reading of runs started outside a theorem's ball must be checked particle by particle before it is attributed to a mechanism:
+the same end weights can come from the initial misplacement or from crossings during the transient, and a lift is a limit only at
+admissible weights. And a rate fitted over a window shorter than the inverse spectral gap measures a mixture: the Floquet exponents are the
+test.
