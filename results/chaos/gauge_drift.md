@@ -2,6 +2,15 @@
 
 Proposition D‴.36's instance (three bumps, one particle per class at an exact representation, m = 3, the replicator at γ, the positions dithered at τ = 0.0001); the masses W_k = β_k/3, the first class saturating at W_1 = 0.25; drifts and diffusions per unit slow time; γ = 10⁻² unless stated.
 
+## A. The second-order identities against the integrated limit map
+
+The limit map by LSODA to 120000 slow units, its second differences at ± 0.02 along the nine noise coordinates.
+
+| W | drift of W_1, W_2, W_3: identities | integrated limit map | relative difference | the flow's residual at the end |
+|---|---|---|---|---|
+| 0.333, 0.333, 0.333 | -2.06e-7, 1.58e-7, 4.75e-8 | -2.05e-7, 1.58e-7, 4.75e-8 | 2.2e-05 | 2.88e-16 |
+| 0.300, 0.350, 0.350 | -1.56e-7, 1.26e-7, 3.04e-8 | -1.56e-7, 1.26e-7, 3.04e-8 | 1.1e-04 | 3.20e-16 |
+
 ## B. The drift split by the noise coordinates
 
 | W | noise on | drift of W_1, W_2, W_3 |
@@ -61,5 +70,14 @@ Largest |drift|: 4.83e-7; D_11 from 8.01e-10 to 4.10e-8; the slowest transverse 
 | 0.2842, 0.2053, 0.5105 | -1.75e-5+0.00e+0j, -2.39e-5+0.00e+0j | attracting | 2.90e-8, -5.86e-9, 2.33e-8 |
 | 0.2841, 0.4843, 0.2316 | -2.40e-5+0.00e+0j, -1.71e-5+0.00e+0j | attracting | 2.87e-8, -2.21e-8, 4.07e-8 |
 | 0.5624, 0.2055, 0.2320 | -1.81e-5+0.00e+0j, -2.36e-5+0.00e+0j | attracting | 3.97e-8, -1.88e-8, 2.36e-8 |
+
+## F. The ensemble mean of exp_gauge_dither.py's Part B (64 seeds) against the mean path dW/ds = b(W)
+
+| s | ensemble mean of W_1, W_2, W_3 (± standard error) | the mean path | the free diffusion's spread √(D_kk s) |
+|---|---|---|---|
+| 10000 | 0.3308 ± 0.0022, 0.3333 ± 0.0016, 0.3359 ± 0.0021 | 0.3312, 0.3349, 0.3338 | 0.017, 0.013, 0.013 |
+| 20000 | 0.3298 ± 0.0029, 0.3354 ± 0.0027, 0.3348 ± 0.0027 | 0.3291, 0.3366, 0.3343 | 0.024, 0.018, 0.019 |
+| 30000 | 0.3269 ± 0.0035, 0.3389 ± 0.0032, 0.3342 ± 0.0031 | 0.3269, 0.3383, 0.3348 | 0.029, 0.022, 0.023 |
+| 50000 | 0.3212 ± 0.0046, 0.3445 ± 0.0041, 0.3342 ± 0.0038 | 0.3223, 0.3419, 0.3358 | 0.038, 0.029, 0.030 |
 
 Numbers are produced by `experiments/exp_gauge_drift.py`; nothing is edited by hand.
