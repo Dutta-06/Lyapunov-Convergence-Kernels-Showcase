@@ -183,6 +183,18 @@ Each branch states what is proved, what is open, and the first concrete step.
       costing $\delta_2=O(1/k)$ in the rate; the guaranteed rate is $(1-\delta-\delta_2)\lambda_T/k$ with
       $\lambda_T$ the exponentially weighted PE level of the window. Checked on a quasi-periodic regressor and on a
       regressor driven by a Lorenz orbit, where no periodic construction applies.
+    \item \emph{Done (Theorem D$'''$.23(ii)):} at an exact representation the measure-space excitation spectrum
+      $h_j$ --- the whitened weighted Gauss--Newton spectrum of the $K_0$-atom loss --- sets both a fixed prior's bias,
+      the fraction $\sigma_0/(h_j + \sigma_0)$ of its error kept in mode $j$, and an adaptive prior's rates
+      $\lambda_j^- < \min\{h_j,\eta\}$ ($h_j,\eta > 0$): removing the leak's bias costs the excitation of every
+      collective mode, and the leak's a-priori bound on the parameters (the leak toward an adaptive prior is an
+      internal force, and the solutions can run off where no exact representation exists; projecting the prior onto a
+      compact convex set restores the bound, Proposition D$'''$.27) --- the measure-space form of the classical
+      trade-off between a leak's robustness and persistent excitation (an unexcited mode, $h_j = 0$, drifts with the
+      prior).
+    \item \emph{Done (Proposition D$'''$.24(i)):} the same spectrum sets the finite-size floor of a fixed prior, each
+      mode weighted by the band-pass $h_j\sigma_0^2/(h_j + \sigma_0)^2\le\sigma_0/4$, centred at $h = \sigma_0$ --- the
+      floor sits in the modes that carry the gauge's displacement, re-weighted toward the level of the leak.
     \item \emph{Open:} the continuum form of (PE); the trajectory kernel
       \[K_T(\vartheta,\vartheta')=\int\Phi(x(s);\vartheta)\Phi(x(s);\vartheta')\dd s;\]
       identifiability of measures up to symmetry; the relation to~\cite{R16}. Remark E.1 shows that the PE level
@@ -201,14 +213,14 @@ Each branch states what is proved, what is open, and the first concrete step.
     \item \emph{Open (in part):} its mean-field form --- done for an atomic prior (the Laguerre-cell leak,
       Proposition D$'''$.12), open for a general prior $\nu$ and a general $\mu$ (where the barycentric projection
       is the superdifferential of $\frac12W^2(\cdot,\nu)$; Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008})
-      --- and adaptive priors ($\nu$ itself learned).
+      --- and adaptive priors ($\nu$ itself learned: its atoms, Theorem D$'''$.23; its masses,
+      Proposition D$'''$.24).
     \item \emph{Done (Proposition D$'''$.9, Section~\ref{sec:thmDppp}):} the nearest-atom leak toward a prior
       measure inherits Theorem D$'''$, Proposition D$'''$.5 and Corollary D$'''$.7 inside the Voronoi cells; the
       prior is a design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window
       closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes).
-    % PARADIGM's text at b76b3b9 through the D'''.20 and D'''.21 clauses; its Theorem D'''.23 wording (the closing
-    % "adaptive priors with learned masses", "its atoms, Theorem D'''.23" in the Open (in part) bullet, and the
-    % Done (Theorem D'''.23) bullet) belongs to a later part.
+    % Branches 7 and 8 as committed at 29f9394: the Theorem D'''.23 to Proposition D'''.31 wording and bullets added in
+    % manuscript part 4e.
     \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
       fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
       Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
@@ -225,8 +237,104 @@ Each branch states what is proved, what is open, and the first concrete step.
       Proposition D$'''$.20, which equalises the masses only down to a critical excess and conserves smaller ones, so
       that its floor returns at large $m$ (Proposition D$'''$.5's law at the entropic stationary point); the
       mean-field form for a general prior $\nu$ (the barycentric projection as the superdifferential of
-      $\frac12W^2(\cdot,\nu)$, Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}) and adaptive priors ($\nu$,
-      and its masses, learned).
+      $\frac12W^2(\cdot,\nu)$, Ambrosio--Gigli--Savar\'e~\cite[Thm.~10.4.12]{ags2008}) and adaptive priors with
+      learned masses beyond the cell masses (Proposition D$'''$.24).
+    \item \emph{Done (Theorem D$'''$.23):} adaptive priors with the masses fixed. The prior's atoms move toward the
+      class barycentres of the plan; the joint flow is the gradient flow of
+      $\bar L + (\sigma_0/2)W^2(\mu_\Theta,\nu_Z)$, its replicated stationary points are the unregularised
+      $K_0$-atom critical points (no leak bias; the non-replicated ones carry the $K_0$-cluster bias), and at an exact
+      representation every collective mode relaxes at $\lambda_j^- < \min\{h_j,\eta\}$, for every commensurate $m$;
+      the fast limit is a capacity-constrained $K_0$-means regulariser. The transit drags the prior and its weak modes
+      remember the drag, so the adaptation starts from the fixed-prior stationary point (a gate). \emph{Open:} the
+      real loop with an adaptive prior over the adaptation's own time scale beyond the linearisation
+      (Corollary D$'''$.26); the plateaus of the unregularised loss that the fast limit exposes; the constants of (v).
+    \item \emph{Done (Corollary D$'''$.26):} perfect tracking with an adaptive prior is an exponentially stable
+      periodic solution of the real loop (locally, for each $m$) at every representable sample: its Floquet exponents
+      are $\sigma_0/k_e$ exactly on the separations and the weighted $K_0$-atom loop's on the collapsed subspace, for
+      every $m$, and the latter are $(1/k_e)[\lambda_j^\pm(w) + c_j^\pm(w)/k_e^2 + O(k_e^{-4})]$ --- the odd orders
+      vanish (the time-reversal parity of the averaged terms), $c_j$ explicit --- the error filter slowing, the
+      slaving speeding up, its sign not fixed. \emph{Open:} its basin uniformly in $m$ (Theorem D$'''$.18's
+      contraction for the joint system).
+    \item \emph{Done (Lemma D$'''$.26a):} the slow Floquet expansion proved for the linearised loop. Chang's periodic
+      decoupling makes the slaving exact, so the slow multipliers are exactly the slow block's, with an expansion to
+      $O(k_e^{-4})$ whose remainder is bounded; defining the slow block at negative $\varepsilon$ by the same
+      contraction, the time-reversal symmetry becomes the identity
+      $\operatorname{eig}\bar A(-\varepsilon) = \operatorname{eig}\bar A(\varepsilon)$ --- the odd orders vanish
+      exactly; and Chang's second transformation decouples the slow coordinates' drift exactly, their noise
+      $\varepsilon b\nu$ with $b$ the high-passed $-(\dot K + aK)^\T$ at leading order and its next term explicit,
+      which proves Proposition D$'''$.30(ii)'s floor for the linearised loop under white noise as a period average
+      (pointwise the fast jitter oscillates by $\pm1\%$ on the instance). \emph{Open:} the constants explicit; the
+      evenness of the noise floor without the slope (observed to $k_e = 800$, not proved); the real loop's nonlinear
+      noise response.
+    \item \emph{Done (Proposition D$'''$.28):} the adaptive prior's floor removal is a property of the amplitude--mass
+      gauge, not of exact representability: at any nondegenerate critical point of the unregularised loss the gauge
+      transform is a critical point at the sampled weights, with the same function, so at a strict local minimum the
+      function-level floor vanishes at the samples of the gauge set $W_g$ with positive margins, whatever the
+      approximation error ($W_g$ shrinking as the error grows); the fixed prior's floor is the bias formula with the
+      full Hessian; for a scalar amplitude the residual curvature scales exactly by $q_k/w_k$ under the gauge, so the
+      adaptive prior's splitting margins are $\sigma_0 - (q_k/w_k)\lambda^+_k$. \emph{Open:} critical points at
+      infinity (the best approximant on the saturation boundary, as for a sharp friction step, a cogging function that
+      two kernels fit as a dipole, or Proposition D$'''$.29's servo globally), where only the projected prior keeps the
+      parameters bounded; vector amplitudes, where the margins have no closed form.
+    \item \emph{Done (Proposition D$'''$.31):} the adaptive prior is a washout leak, and the remedy for the errors in
+      variables. The prior lags the class barycentre by its exponentially forgotten increments, so the leak acts in
+      full on the separations and on the barycentre through the high-pass $i\omega/(i\omega + \eta)$ --- the bias
+      removal and the lost robustness to persistent forces in one transfer function; along every affine time-invariant
+      prior the stationary response $R$ and the bias $B$ satisfy $RH + B = I$, so no prior gives both; the response to
+      a force is at most the norm of its smallest equivalent target perturbation, under every leak; and the desired
+      regressor (the adaptive law's regressor at the reference) keeps the lift, the linearisation and the first-order
+      floor while turning the noise's own persistent force into a least-squares one, bounded uniformly in $k_e$ and in
+      the spectrum --- the parameters' fluctuation adding a force that is not the learning force of a mean tracking
+      error (the classical second-order bias of a constant-gain stochastic approximation): small in absolute terms on
+      the instance ($\le3.9\cdot10^{-4}$ per $(\E\nu^2)^2$), $-8.7\%$ to $+3.3\%$ of DR's and DR*'s biases and
+      $+56\%$ of DR's at $k_e = B = 100$, its own response falling like $k_e^{-2}$ on a one-dimensional reference, where
+      the law's leading term averages out --- which on a curve in $\R^n$ it need not. \emph{Open:} the second-order
+      computation made rigorous, the parameters' part in closed form, and in $\R^n$; the stationary biases in the real
+      loop (the weak modes need ${\sim}10^5$ time units); a sensor model with quantisation and delay.
+    \item \emph{Done (Proposition D$'''$.30):} measurement noise at perfect tracking. The noise is coherent --- a
+      replicated start stays replicated, so its floor does not average out with $m$ (invariance, not attraction: near
+      the lift the separations grow above a noise level, which drifts along the trajectory with the developing
+      errors-in-variables deviation); at first order the loop high-passes the measured error's noise and the
+      function-level floor is $(N_0/2k_e)[\sum_jQ_{jj}(h_j + \eta)/(h_j + \eta + \sigma_0) + \tr H^2]$, the adaptive
+      prior costing at most the filter factor; at second order the noise inside the regressor exerts a mean force (the
+      errors in variables) whose stationary response is $(H + \sigma_0I)^{-1}$ under the fixed prior and $H^{-1}$ under
+      the adaptive prior for every $\eta > 0$ --- the robustness half of the leak, lost in the weakly excited modes.
+      \emph{Open:} the real loop's noise response beyond the linearisation (the linearised loop under white noise:
+      Lemma D$'''$.26a); a projected or partially fixed prior on the weak modes; the optimal $k_e$ and $\eta$ for a
+      given noise level.
+    \item \emph{Done (Proposition D$'''$.29):} second-order plants. With the sliding variable $s = \dot e + \lambda e$
+      the error channel is Theorem J's with $s$ in place of $e$, so the averaged slow loop --- and with it every
+      averaged-loop statement of Section~\ref{sec:thmDppp} --- holds (formally) along the regressor's orbit, the
+      position error being the residual filtered by
+      $(\mathrm{d}/\mathrm{d}t + \lambda)^{-1}(\mathrm{d}/\mathrm{d}t + k_s)^{-1}$. On a cogging-torque servo whose
+      torque four kernels cannot represent --- the loss's infimum lies at the saturation, and its local minimum
+      $\vartheta^b(q)$ is Proposition D$'''$.28's regime --- the adaptive prior removes the fixed prior's floor and,
+      from an engineer's misplaced model, most of its bias, at the rate of the weakest excitation; the real servo
+      follows the exactly filtered prediction to 0.3\%. Noise-free, no leak at all does as well: the floors and biases
+      the leaks remove there are those a fixed leak creates. \emph{Open:} the real-loop statements (Corollaries
+      D$'''$.14, D$'''$.26) for second-order plants; the servo with measurement noise and disturbances, where the leaks'
+      robustness is the point, against the classical baselines and a Fourier regressor of the known harmonics;
+      velocity-dependent friction with the projected prior in the real loop.
+    \item \emph{Done (Proposition D$'''$.27):} the a-priori bound restored. Confining the adaptive prior's atoms to a
+      compact convex set keeps every particle within $B/\sigma_0$ of it (eventually) whatever the target and the
+      energy non-increasing (at $\eta = \infty$ in its selected form, the plan being Lloyd-consistent, not jointly
+      optimal); inside the set the bias removal of Theorem D$'''$.23 is unchanged, and where the limit has an atom on
+      the boundary a bounded bias remains --- the box trading the fit error against the parameters' bound, as long as
+      it contains the representation; at $\eta = \infty$ on collapsed classes it is a switching $\sigma$-modification
+      toward the set. \emph{Open:} the convergence (at $\eta = \infty$ the Kurdyka--{\L}ojasiewicz argument on the
+      selected pieces, at finite $\eta$ with the indicator), the choice of the set as a design input (how large a box
+      keeps every representable target inside), and a sharper bound than the worst-case force $B$.
+    \item \emph{Done (Proposition D$'''$.24):} the masses minimised out of the leak's own energy are the cell masses
+      ($\min_qW^2(\mu,\nu_{Z,q})$ is the nearest-atom distortion), so the nearest-atom leak toward an adaptive prior
+      is the OT leak with free masses --- and the function-level floor does not return at the representable samples
+      (those outside $W$, of probability exponentially small in $m$ but 0.36 at $m = 15$ on the instance, keep an
+      error): it is the weight-derivative of the leak's bias at the sampled weights, which the adaptive atoms remove.
+      What remains is the coupled distance of the amplitude--mass gauge, conditional on representability, which the
+      mass constraint replaces by the transit's mismatch, and at the measure level the cross-class transport common to
+      both priors; the adaptive prior also removes the fixed prior's splitting instability. With an adaptive prior the
+      real loop has perfect tracking as an invariant set at every representable sample. \emph{Open:} the gauge as a
+      design input (the masses set the excitation spectrum $H_L(q)$); the floor law and its removal for a misplaced
+      prior beyond first order.
     \item Transfer: transporting a learned measure to a new plant.
   \end{itemize}
 

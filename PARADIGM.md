@@ -3089,7 +3089,7 @@ O(k_e⁻³), and for the K₀p collective pairs
     (1/k_e)[λ_j^±(w) + c_j^±(w)/k_e² + O(k_e⁻⁴)],
 
 λ_j^±(w) the rates of Theorem D‴.23(ii) at the weights w (η = ∞: h_j(w)) and c_j^±(w) the explicit coefficients of the proof (for
-simple eigenvalues; at a degenerate one only the rates are even). The odd orders vanish because the slow block at −ε is the time reversal
+simple eigenvalues; at a degenerate one only the rates are even). The odd orders vanish because the slow block at −ε (ε := 1/k_e) is the time reversal
 of the reversed reference's at ε, so with the variational equation's symmetry the slow generator's spectrum is even in ε — an identity
 (Lemma D‴.26a(iv)) that a derivative mismatch a ≢ 0 breaks; term by term, every term of Ā_k has the parity (−1)^k under reversal, the
 first order in particular because the first-order averaging correction is skew. c_j is the sum of the error filter's
@@ -3241,7 +3241,7 @@ h_j/(h_j + σ₀)): at time t the fast part is (N₀/2k_e)tr(HĴ(t)ᵀĴ(t)), wh
 *Proof.* (i) On the Banach space of continuous T₀-periodic matrix functions (sup norm) the periodic solution of εu̇ + u = g is
 𝒢g(t) = ∫₀^∞e^{−σ}g(t − εσ)dσ — for ε < 0 the anti-causal ∫₀^∞e^{−σ}g(t + |ε|σ)dσ —, so ‖𝒢g‖ ≤ ‖g‖, and 𝒢g − g = −ε𝒢ġ. The equation
 is P = 𝒢F(P), F(P) := −K − ε²P(KᵀP − Λ). With r := 2|ε|(‖K̇‖ + β), β := (‖K‖ + 1)(‖K‖(‖K‖ + 1) + |Λ|), the ball ‖P + K‖ ≤ r ≤ 1 is
-mapped into itself (‖𝒢F(P) + K‖ ≤ ‖ε𝒢K̇‖ + ε²β) and 𝒢F is a contraction on it with constant ε²(|Λ| + 2‖K‖(‖K‖ + 1)) < 1: Banach's theorem
+mapped into itself (‖𝒢F(P) + K‖ ≤ ‖ε𝒢K̇‖ + ε²β) and 𝒢F is a contraction on it with constant ε²L < 1, L := |Λ| + 2‖K‖(‖K‖ + 1): Banach's theorem
 gives P, unique in the ball. The truncation P_{(3)} := Σ_{k≤3}ε^kP_k satisfies εṖ_{(3)} + P_{(3)} = F(P_{(3)}) + ρ with ‖ρ‖ = O(ε⁴) (the
 recursion cancels the orders ε⁰–ε³; ρ involves K up to its fourth derivative), so P_{(3)} = 𝒢(F(P_{(3)}) + ρ) and
 ‖P − P_{(3)}‖ ≤ ‖ρ‖/(1 − ε²L) = O(ε⁴). With v = w − PY, εv̇ = −(v + PY) − KY − εṖY − ε²P(Kᵀ(v + PY) − ΛY) = −(I + ε²PKᵀ)v, the

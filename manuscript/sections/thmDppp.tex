@@ -736,6 +736,8 @@ coupling identity inside the cells; the matching prior's exact representation st
 zero curvature, margin $\sigma_0$ against the $\sigma$-modification's; the parameter- and function-level
 sensitivities, the latter against finite differences of the fitted function of the weighted stationary point).}
 
+% Remark D'''.10 (PARADIGM.md section 5d as committed at 29f9394: the parenthetical on Propositions D'''.24
+% and D'''.27, added to PARADIGM in d2092a5, brought in in manuscript part 4e).
 \begin{rmk}{Remark}{D$'''$.10}[design]
 The leak's prior is a design input of the window. The $\sigma$-modification's single $\vartheta^0$ biases every
 kernel toward one point and leaves a residual at the fitted configuration --- the residual-weighted curvature that
@@ -745,7 +747,11 @@ removes the bias and gives the maximal margin $\kappa = \sigma_0$ ($1/\kappa = 1
 the observed e-folding times of the coupled distance are 3.3 times shorter in the median, numerics below), at the
 price of a larger floor at both levels (the stationary atoms have the full amplitudes, to which the weight
 sensitivity is proportional): the classical trade-off between bias and variance, here between the window's margin
-and the coupling's floor. A misplaced prior does worse than no structured prior (centres off by $0.6$, amplitudes
+and the coupling's floor (\hyperref[res:thmDppp:24]{Proposition D$'''$.24} resolves it at the function level: the
+floor is the weight-slope of the bias, and an adaptive prior removes both, at the price of the collective rate, of
+the leak's a-priori bound --- restored by projecting the prior, \hyperref[res:thmDppp:27]{Proposition D$'''$.27}
+--- and of a larger parameter-level floor). A misplaced prior does worse than no structured prior (centres off by
+$0.6$, amplitudes
 $\times1.2$ or widths $\times0.7$ close the window, which the $\sigma$-modification keeps open with margin
 $0.0020$), and a shrunk prior does better than the matching one (amplitudes $\times0.5$--$0.7$: margin above
 $\sigma_0$ at the uniform weights, both floors lower, all four tested unbalanced weights admissible --- with
@@ -2768,8 +2774,9 @@ toward an adaptive prior keeps the fitted function exact at the representable sa
 the parameters.
 \end{rmk}
 
-% Corollary D'''.26 with its proof, Status and numerics (PARADIGM.md section 5d, round-20 version, the Status as of
-% commit 3e8f8e5, where Lemma D'''.26a proves (c); the numbers are PARADIGM's copies of
+% Corollary D'''.26 with its proof, Status and numerics (PARADIGM.md section 5d, round-22 version as committed at
+% 29f9394: (c) with x_m in C^4 and its parity sentence, the Hence paragraph and the Status after Lemma D'''.26a; the
+% proof and the numerics unchanged since round 20; the numbers are PARADIGM's copies of
 % results/chaos/adaptive_floquet.md). The anchors res:thmDppp:26 to res:thmDppp:29 are \hyperref targets, as
 % res:thmDppp:21 is. The reference [S9] (LITERATURE_TRANSPORT.md), cited for Kokotovic--Khalil--O'Reilly, is the
 % bibitem kko1986 of refs.tex; [S52] and [S56] are the bibitems S52 and S56.
@@ -2788,18 +2795,20 @@ $T_0$-periodic solution with $e\equiv0$ (\hyperref[res:thmDppp:24]{Proposition D
   \item on the collapsed subspace, the exponents of the weighted $K_0$-atom loop's periodic solution at
     $\vartheta^e(w)$ --- the same for every $m$ with these weights;
   \item if moreover $\partial_x\fhat_{\vartheta^e(w)} = \partial_xf$ on the reference orbit ($\fhat = f$ on a
-    neighbourhood of it --- on the instances everywhere, the exact representation being an identity of functions):
-    $n$ exponents $k_e + O(1/k_e)$ of the error channel, summing to $nk_e - \tr H_L(w)/k_e + O(k_e^{-3})$, and for
-    the $K_0p$ collective pairs
+    neighbourhood of it --- on the instances everywhere, the exact representation being an identity of functions)
+    and $x_m\in C^4$: $n$ exponents $k_e + O(1/k_e)$ of the error channel, summing to
+    $nk_e - \tr H_L(w)/k_e + O(k_e^{-3})$, and for the $K_0p$ collective pairs
     \[
       (1/k_e)\bigl[\lambda_j^\pm(w) + c_j^\pm(w)/k_e^2 + O(k_e^{-4})\bigr],
     \]
     $\lambda_j^\pm(w)$ the rates of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(ii) at the weights $w$
     ($\eta = \infty$: $h_j(w)$) and $c_j^\pm(w)$ the explicit coefficients of the proof (for simple eigenvalues; at a
-    degenerate one only the rates are even). The odd orders vanish because the variational equation and its time
-    reverse have the same multipliers and every term of $\bar A_k$ has the parity $(-1)^k$ under reversal --- a
-    parity that a derivative mismatch $a\not\equiv0$ breaks --- the first order in particular because the
-    first-order averaging correction is skew. $c_j$ is the sum of the error filter's attenuation
+    degenerate one only the rates are even). The odd orders vanish because the slow block at $-\varepsilon$ ($\varepsilon := 1/k_e$) is the
+    time reversal of the reversed reference's at $\varepsilon$, so with the variational equation's symmetry the slow
+    generator's spectrum is even in $\varepsilon$ --- an identity (\hyperref[res:thmDppp:26a]{Lemma D$'''$.26a}(iv))
+    that a derivative mismatch $a\not\equiv0$ breaks; term by term, every term of $\bar A_k$ has the parity
+    $(-1)^k$ under reversal, the first order in particular because the first-order averaging correction is skew.
+    $c_j$ is the sum of the error filter's attenuation
     $-(\dd\lambda_j^\pm/\dd h)v_j^\T\langle\dot{\hat J}^\T\dot{\hat J}\rangle v_j\le0$ (at $\eta = \infty$ it is
     $-h_j\omega_j^2$, $\omega_j^2 = \sum_nn^2\abs{\hat J_nv_j}^2/\sum_n\abs{\hat J_nv_j}^2$ the mode's mean squared
     frequency in the regressor, by Parseval, independent of $\eta$: the averaged rate of a mode holds when
@@ -2808,8 +2817,10 @@ $T_0$-periodic solution with $e\equiv0$ (\hyperref[res:thmDppp:24]{Proposition D
     is not fixed --- on the instances every $c_j < 0$, the filter's part dominating, and with the adaptation gain
     scaled up some $c_j > 0$.
 \end{enumerate}
-Hence, for $k_e$ above a threshold, perfect tracking is exponentially stable (locally, for each $m$) at every
-representable sample, with the rate $(1/k_e)\min\{\sigma_0,\lambda_1^-(w) + c_1^-(w)/k_e^2 + O(k_e^{-4})\}$; the same
+Hence, where $H_L(w)\succ0$ (so $\lambda_1^-(w) > 0$) and for $k_e$ above a threshold --- which depends on the
+spectral gaps of the collective block through \hyperref[res:thmDppp:26a]{Lemma D$'''$.26a}'s $\varepsilon_0$ ---,
+perfect tracking is exponentially stable (locally, for each $m$) at every representable sample, with the rate
+$(1/k_e)\min\{\sigma_0,\lambda_1^-(w) + c_1^-(w)/k_e^2 + O(k_e^{-4})\}$; the same
 holds for the OT leak toward an adaptive prior (\hyperref[res:thmDppp:23]{Theorem D$'''$.23}) at a commensurate $m$,
 with $w = q$ and the diagonal plan (locally constant at the lift). Without the derivative condition the mismatch
 $a(t) := \partial_x(f - \fhat)(x_m(t))$ enters the error equation and moves the collective rates at first order in
@@ -2883,10 +2894,12 @@ $nk_e$), the collective ones to $(1/k_e)\tr(-\bar A_0) + O(k_e^{-3})$. With $a\n
 $-\langle\bar J^\T a\bar J\rangle$ of $\bar A_1$ is self-adjoint and moves the rates at first order, and $a$ --- a
 rate that does not change sign under time reversal --- breaks the parity.
 \end{proof}
-\status{(a) and (b) proved, exactly (no averaging); (c) proved by Lemma D$'''$.26a --- the slaving is an exact
-block-triangularisation, the expansion has a bounded $O(k_e^{-4})$ remainder at simple eigenvalues and the parity is
-the exact identity $\mu(-\varepsilon) = \mu(\varepsilon)$ --- with the structure (the skewness of $\bar A_1$, $c_j$
-explicit) derived here; the stability consequence local, for each $m$ (the nearest-atom cells are constant near the
+\status{(a) and (b) proved, exactly (no averaging); (c) proved by \hyperref[res:thmDppp:26a]{Lemma D$'''$.26a} for
+$x_m\in C^4$ --- the slaving is an exact block-triangularisation, the expansion has a bounded $O(k_e^{-4})$ remainder
+at simple eigenvalues (the threshold and the constant depending on the spectral gaps) and the parity is the exact
+identity $\operatorname{eig}\bar A(-\varepsilon) = \operatorname{eig}\bar A(\varepsilon)$, the stability statement
+under $H_L(w)\succ0$ --- with the structure (the skewness of $\bar A_1$, $c_j$ explicit) derived here; the stability
+consequence local, for each $m$ (the nearest-atom cells are constant near the
 lift, the particles lying inside their cells, so the field is smooth there and the multipliers decide). (a) and (b)
 are Corollary D$'''$.14(ii) and Proposition D$'''$.15 at zero residual with the prior's coordinates added; what the
 adaptive prior brings is the zero-residual lift at every representable $w$, not only at $w = q$ under the OT leak. The
@@ -2946,7 +2959,280 @@ skew (to $1.4\cdot10^{-16}$). The error channel's exponent by Liouville's formul
 $k_e - \tr H_L(w)/k_e$ (24.98084 against 24.98037 at $k_e = 25$).
 \end{sloppypar}
 
-% Lemma D'''.26a (PARADIGM.md section 5d) goes here (manuscript part 4e).
+% Lemma D'''.26a with its proof, Status and numerics (PARADIGM.md section 5d, round-22 version, as committed at
+% 29f9394; the numbers are PARADIGM's copies of results/chaos/adaptive_floquet.md, Part D). The anchor
+% res:thmDppp:26a is a \hyperref target, as res:thmDppp:21 is. The references [S59], [S9] (cited for
+% Kokotovic--Khalil--O'Reilly) and [S56] (LITERATURE_TRANSPORT.md) are the bibitems S59, kko1986 and S56 of refs.tex.
+\begin{thm}{Lemma}{D$'''$.26a}[the exact slow subspace of the perfect-tracking linearisation: Corollary D$'''$.26(c)
+and Proposition D$'''$.30(ii) proved for the linearised loop]\phantomsection\label{res:thmDppp:26a}%
+Let $K:\R\to\R^{n\times q}$ be $T_0$-periodic and $C^4$, $\Lambda\in\R^{q\times q}$, $a:\R\to\R$ $T_0$-periodic and
+$C^1$, $N_0\ge0$, and for real $\varepsilon\ne0$ consider
+\begin{equation}
+  \begin{gathered}
+    \varepsilon\dd w = -(w + K(t)Y)\dd t - (1 + \varepsilon a(t))\varepsilon^{-1}\sqrt{N_0}\dd W,\\
+    \dd Y = \varepsilon(K(t)^\T w - \Lambda Y)\dd t + K(t)^\T\sqrt{N_0}\dd W
+  \end{gathered}
+  \tag{$\bigstar$}
+\end{equation}
+($W$ a standard $n$-dimensional Wiener process). At $\varepsilon = 1/k_e > 0$ and $N_0 = 0$ this is the collapsed
+variational equation of \hyperref[res:thmDppp:26]{Corollary D$'''$.26} under its derivative condition ---
+$\delta e = \varepsilon w$, $K = [\hat J,0]$, $Y = (y,\zeta)$,
+$\Lambda = \left[\begin{smallmatrix}\sigma_0I & -\sigma_0I\\ -\eta I & \eta I\end{smallmatrix}\right]$ for
+$0 < \eta < \infty$ (at $\eta = \infty$: $K = \hat J$, $Y = y$, $\Lambda = 0$; at $\eta = 0$, the fixed prior at the
+atoms: $K = \hat J$, $Y = y$, $\Lambda = \sigma_0I$ --- with the pair's $\Lambda$ the prior's block would have a zero
+rate there) --- and at $N_0 > 0$ \hyperref[res:thmDppp:30]{Proposition D$'''$.30}(ii)'s linearised loop under a white
+measurement noise of density $N_0$ (the error equation's input $-(k_e + a)\nu$, $a = \partial_x\fhat$ on the orbit,
+the law's $\hat J^\T\nu$). $K\in C^4$ holds when $x_m\in C^4$. There is $\varepsilon_0 > 0$, depending on the $C^4$
+norms of $K$, on $\abs{\Lambda}$, $\norm{a}_{C^1}$ and $T_0$ --- and, for (iv), on the distance of $-\lambda_j$ from
+the rest of the spectrum of $\bar A_0$ and on the condition of its eigenvector, for (v) on $\bar A_0$'s stability
+margin, as do the constants of the remainders there --- such that for $0 < \abs{\varepsilon}\le\varepsilon_0$:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the slow subspace)} The equation $\varepsilon\dot P + P = -K - \varepsilon^2P(K^\T P - \Lambda)$ has a
+    unique $T_0$-periodic solution $P(\cdot\,;\varepsilon)$ with $\norm{P + K}_\infty = O(\varepsilon)$, and
+    $P = \sum_{k\le3}\varepsilon^kP_k + O(\varepsilon^4)$ uniformly in $t$, $P_0 = -K$, $P_1 = \dot K$,
+    $P_2 = -(\ddot K + KK^\T K + K\Lambda)$,
+    $P_k = -\dot P_{k-1} - \sum_{i+j=k-2}P_iK^\T P_j + P_{k-2}\Lambda$. In the coordinates $v := w - P(t)Y$ the
+    deterministic part of \textup{($\bigstar$)} is block-triangular,
+    \begin{gather*}
+      \varepsilon\dot v = -(I + \varepsilon^2PK^\T)v,\qquad\dot Y = \varepsilon A(t)Y + \varepsilon K^\T v,\\
+      A := K^\T P - \Lambda = -K^\T K - \Lambda + \varepsilon K^\T\dot K
+      - \varepsilon^2K^\T(\ddot K + KK^\T K + K\Lambda) + O(\varepsilon^3).
+    \end{gather*}
+  \item \emph{(the slow multipliers, exactly)} For $\varepsilon > 0$, $q$ Floquet multipliers of
+    \textup{($\bigstar$)} are those of the slow block $\dot Y = \varepsilon A(t)Y$, of modulus
+    $\ge e^{-\varepsilon T_0\norm{A}_\infty}$, and the other $n$ those of the fast block, of modulus
+    $\le e^{-T_0/(2\varepsilon)}$; the fast exponents sum to
+    $n/\varepsilon + \varepsilon\langle\tr PK^\T\rangle = nk_e - \langle\tr K^\T K\rangle/k_e + O(k_e^{-3})$.
+  \item \emph{(the slow generator)} Let $\Phi(\varepsilon)$ be the slow block's monodromy and
+    $\bar A(\varepsilon) := \log\Phi(\varepsilon)/(\varepsilon T_0)$ (the principal logarithm). Then
+    $\bar A(\varepsilon) = \bar A_0 + \varepsilon\bar A_1 + \varepsilon^2\bar A_2 + \varepsilon^3\bar A_3
+    + O(\varepsilon^4)$ uniformly in $\abs{\varepsilon}\le\varepsilon_0$, with
+    $\bar A_0 = -\langle K^\T K\rangle - \Lambda$,
+    $\bar A_1 = \langle K^\T\dot K\rangle
+    + (1/(2T_0))\int_0^{T_0}\int_0^{t_1}[A_0(t_1),A_0(t_2)]\dd t_2\dd t_1$ ($A_0 := -K^\T K - \Lambda$) and the
+    higher coefficients those of the Magnus series of $\varepsilon A_{(3)}$ collected by powers of $\varepsilon$
+    ($A_{(3)} := K^\T P_{(3)} - \Lambda$, $P_{(3)} := \sum_{k\le3}\varepsilon^kP_k$, a polynomial in $\varepsilon$;
+    $A$ itself has only an asymptotic expansion); the full Magnus series of $\varepsilon A$ converges where
+    $\varepsilon T_0\norm{A}_\infty < \pi$, a sufficient form of Moan--Niesen's
+    $\int_0^{T_0}\norm{\varepsilon A}_2 < \pi$ (\cite{S59}). The averaged generator of
+    \hyperref[res:thmDppp:26]{Corollary D$'''$.26}(c)'s near-identity averaging, carried there to $\bar A_2$, is
+    conjugate to $\bar A(\varepsilon)$ up to $O(\varepsilon^3)$ --- a conjugate generator, with the same eigenvalues
+    to that order; its coefficients differ from $\bar A(\varepsilon)$'s Taylor coefficients by commutators with
+    $\bar A_0$.
+  \item \emph{(the rates, and their parity proved)} At a simple real eigenvalue $-\lambda_j$ of $\bar A_0$ the
+    slow-time rate $\mu_j(\varepsilon) := -(\varepsilon T_0)^{-1}\log\abs{\nu_j(\varepsilon)}$ of the continued
+    multiplier $\nu_j$ is $\mu_j(\varepsilon) = \lambda_j + \varepsilon\mu_j^1 + \varepsilon^2\mu_j^2
+    + \varepsilon^3\mu_j^3 + O(\varepsilon^4)$, the coefficients those of perturbation theory for
+    $\bar A(\varepsilon)$ ($\mu_j^1 = -\ell_j\bar A_1r_j$ and $\mu_j^2 = c_j$ of
+    \hyperref[res:thmDppp:26]{Corollary D$'''$.26}(c)). If the full matrix $M_\varepsilon(t)$ of
+    \textup{($\bigstar$)} satisfies $M_\varepsilon(t)^\T = DM_\varepsilon(t)D^{-1}$ for an invertible $D$ ---
+    \hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s symmetry,
+    $D = \operatorname{diag}(-\varepsilon^2I,I,(\sigma_0/\eta)I)$ in $(w,y,\zeta)$
+    ($\operatorname{diag}(-\varepsilon^2I,I)$ at $\eta = \infty$ and at $\eta = 0$), which persists with a mismatch in
+    the error channel --- and a mismatch does not enter the error channel (it breaks the parity, below), then the
+    spectrum of $\bar A(\varepsilon)$ is even: $\operatorname{eig}\bar A(-\varepsilon)
+    = \operatorname{eig}\bar A(\varepsilon)$ as multisets of complex numbers, the slow block at $-\varepsilon$ defined
+    by (i). In particular $\mu_j(-\varepsilon) = \mu_j(\varepsilon)$ exactly, $\mu_j^1 = \mu_j^3 = 0$ and
+    $\mu_j(\varepsilon) = \lambda_j + c_j\varepsilon^2 + O(\varepsilon^4)$, with a bounded remainder, and at a
+    degenerate eigenvalue the rates are even.
+  \item \emph{(the slow noise)} For $0 < \varepsilon\le\varepsilon_0$ the anti-causal equation
+    $S - \varepsilon\dot S = \varepsilon K^\T - \varepsilon^2(SPK^\T + AS)$ has a unique $T_0$-periodic solution with
+    $S = \varepsilon K^\T + \varepsilon^2\dot K^\T + O(\varepsilon^3)$, and $Y' := Y + \varepsilon S(t)v$ solves
+    exactly
+    \begin{align*}
+      \dd Y' &= \varepsilon A(t)Y'\dd t + \varepsilon b(t)\sqrt{N_0}\dd W,\\
+      b &:= \varepsilon^{-1}[K^\T - \varepsilon^{-1}(1 + \varepsilon a)S - \varepsilon SPK^\T]\\
+      &\phantom{:}= -(\dot K + aK)^\T - \varepsilon(\ddot K + KK^\T K + K\Lambda^\T + a\dot K)^\T + O(\varepsilon^2):
+    \end{align*}
+    the slow coordinates' drift is decoupled from the fast ones, and their noise is $\varepsilon b(t)\nu$ --- at
+    leading order the high-passed $-\varepsilon(\dot K + aK)^\T\nu$; the same Wiener process drives $v$, so
+    $\E[vY'^\T]\ne0$ --- with the diffusion $\varepsilon^2N_0bb^\T$ per unit time (in the slow time
+    $\varepsilon N_0\langle bb^\T\rangle = (N_0/k_e)Q + O(k_e^{-2})$,
+    $Q := \langle(\dot K + aK)^\T(\dot K + aK)\rangle$). If $\bar A_0$ is Hurwitz, the periodic stationary second
+    moments are $\operatorname{Cov}(v) = (N_0/(2\varepsilon^3))(I + O(\varepsilon))$,
+    $\E[vY'^\T] = -N_0b^\T + O(\varepsilon N_0)$ and $\operatorname{Cov}(Y') = \bar\Sigma + O(\varepsilon^2N_0)$,
+    $\bar\Sigma$ the solution of $\bar A_0\bar\Sigma + \bar\Sigma\bar A_0^\T + \varepsilon N_0\bar Q = 0$
+    ($\bar Q = Q$ on the $y$ block, $\bar\Sigma = O(\varepsilon N_0)$); hence
+    $\operatorname{Cov}(Y)(t) - \operatorname{Cov}(Y')(t) = (\varepsilon N_0/2)K(t)^\T K(t)
+    - (\varepsilon^2N_0/2)(\mathrm{d}(K^\T K)/\mathrm{d}t + 2aK^\T K)(t) + O(\varepsilon^3N_0)$ and
+    $\operatorname{Cov}(Y)(t) = \bar\Sigma + (\varepsilon N_0/2)K(t)^\T K(t) + O(\varepsilon^2N_0)$ --- the slow part
+    plus the fast jitter --- and \hyperref[res:thmDppp:30]{Proposition D$'''$.30}(ii)'s floor,
+    $(N_0/2k_e)[\sum_jQ_{jj}(h_j + \eta)/(h_j + \eta + \sigma_0) + \tr H^2]$, holds for the linearised loop under
+    white noise as a period average, with a relative remainder $O(1/k_e)$ (at $\eta = 0$ with $\Lambda = \sigma_0I$,
+    whose filter factor is $h_j/(h_j + \sigma_0)$): at time $t$ the fast part is
+    $(N_0/2k_e)\tr(H\hat J(t)^\T\hat J(t))$, whose oscillation over the period is of the floor's own order.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) On the Banach space of continuous $T_0$-periodic matrix functions (sup norm) the periodic solution of
+$\varepsilon\dot u + u = g$ is $\mathcal{G}g(t) = \int_0^\infty e^{-\sigma}g(t - \varepsilon\sigma)\dd\sigma$ --- for
+$\varepsilon < 0$ the anti-causal $\int_0^\infty e^{-\sigma}g(t + \abs{\varepsilon}\sigma)\dd\sigma$ ---, so
+$\norm{\mathcal{G}g}\le\norm{g}$, and $\mathcal{G}g - g = -\varepsilon\mathcal{G}\dot g$. The equation is
+$P = \mathcal{G}F(P)$, $F(P) := -K - \varepsilon^2P(K^\T P - \Lambda)$. With
+$r := 2\abs{\varepsilon}(\norm{\dot K} + \beta)$, $\beta := (\norm{K} + 1)(\norm{K}(\norm{K} + 1) + \abs{\Lambda})$,
+the ball $\norm{P + K}\le r\le1$ is mapped into itself
+($\norm{\mathcal{G}F(P) + K}\le\norm{\varepsilon\mathcal{G}\dot K} + \varepsilon^2\beta$) and $\mathcal{G}F$ is a
+contraction on it with constant $\varepsilon^2L < 1$, $L := \abs{\Lambda} + 2\norm{K}(\norm{K} + 1)$: Banach's theorem gives
+$P$, unique in the ball. The truncation $P_{(3)} := \sum_{k\le3}\varepsilon^kP_k$ satisfies
+$\varepsilon\dot P_{(3)} + P_{(3)} = F(P_{(3)}) + \rho$ with $\norm{\rho} = O(\varepsilon^4)$ (the recursion cancels
+the orders $\varepsilon^0$--$\varepsilon^3$; $\rho$ involves $K$ up to its fourth derivative), so
+$P_{(3)} = \mathcal{G}(F(P_{(3)}) + \rho)$ and
+$\norm{P - P_{(3)}}\le\norm{\rho}/(1 - \varepsilon^2L) = O(\varepsilon^4)$. With $v = w - PY$,
+$\varepsilon\dot v = -(v + PY) - KY - \varepsilon\dot PY - \varepsilon^2P(K^\T(v + PY) - \Lambda Y)
+= -(I + \varepsilon^2PK^\T)v$, the coefficient of $Y$ vanishing by $P$'s equation; and
+$\dot Y = \varepsilon(K^\T(v + PY) - \Lambda Y)$. (ii) The change of coordinates is periodic, so it conjugates the
+monodromies; in $(v,Y)$ the monodromy is block-triangular, its eigenvalues those of the two diagonal blocks. The fast
+block's monodromy has norm
+$\le\exp(-T_0/\varepsilon + \varepsilon T_0\norm{P}\norm{K})\le e^{-T_0/(2\varepsilon)}$ (a logarithmic-norm
+estimate), the slow one's eigenvalues modulus $\ge e^{-\varepsilon T_0\norm{A}}$; by Liouville's formula the fast
+exponents sum to $\varepsilon^{-1}\langle\tr(I + \varepsilon^2PK^\T)\rangle$, and
+$\langle\tr PK^\T\rangle = -\langle\tr K^\T K\rangle + \varepsilon\langle\tr\dot KK^\T\rangle + O(\varepsilon^2)$
+with $\langle\tr\dot KK^\T\rangle = \frac12\langle(\tr KK^\T)^{\boldsymbol\cdot}\rangle = 0$. (iii)
+$A - A_{(3)} = K^\T(P - P_{(3)}) = O(\varepsilon^4)$ for $A_{(3)} := K^\T P_{(3)} - \Lambda$, a polynomial in
+$\varepsilon$, so by Gr\"onwall's inequality the monodromies of $\varepsilon A$ and $\varepsilon A_{(3)}$ differ by
+$O(\varepsilon^5)$; the latter, $\Phi_{(3)}(\varepsilon)$, is analytic in $\varepsilon$ with $\Phi_{(3)}(0) = I$, and
+the principal logarithm is analytic near $I$, so $\log\Phi_{(3)}(\varepsilon)/(\varepsilon T_0)$ is analytic and
+$\log\Phi(\varepsilon)/(\varepsilon T_0)$ differs from it by $O(\varepsilon^4)$. Its Taylor coefficients are
+obtained by any formal expansion of the logarithm of the monodromy --- the Magnus series of $\varepsilon A_{(3)}$
+collected by powers of $\varepsilon$ ($\Omega_1 = \varepsilon T_0\langle A\rangle$,
+$\Omega_2 = \frac12\int\int[\varepsilon A(t_1),\varepsilon A(t_2)]$ gives $\bar A_1$'s commutator) or the
+near-identity averaging: a periodic transformation $I + \varepsilon U_1 + \dots$ conjugates the system to an
+autonomous one up to $O(\varepsilon^4)$, so the monodromy is conjugate, by $I + \varepsilon U(0) + \dots$, to
+$\exp(\varepsilon T_0(\bar A_0 + \dots + \varepsilon^3\bar A_3) + O(\varepsilon^5))$. The convergence of the full
+Magnus series for $\int_0^{T_0}\norm{\varepsilon A}_2 < \pi$ is Moan and Niesen's theorem (\cite{S59}). (iv) A simple
+real eigenvalue of $\bar A_0$ continues to a simple real eigenvalue of the analytic family
+$\log\Phi_{(3)}(\varepsilon)/(\varepsilon T_0)$, analytic in $\varepsilon$ (Kato, \cite{S59}), and simple eigenvalues
+are Lipschitz under the $O(\varepsilon^4)$ perturbation to $\bar A(\varepsilon)$: the expansion of $\mu_j$ with a
+bounded remainder, the coefficients by standard perturbation theory. Parity. Let $\tilde K(t) := K(-t)$,
+$\tilde a(t) := a(-t)$. The full matrix of \textup{($\bigstar$)} for $(\tilde K,\tilde a)$ is $M_\varepsilon(-t)$, and
+the system with the coefficients $M_\varepsilon(-t)$ has the multipliers of $M_\varepsilon(t)$: its monodromy is
+conjugate to the transpose of $M_\varepsilon$'s, by the symmetry ($\dot z = -M(s)z$ is $D$-conjugate to the adjoint
+system, whose monodromy is the inverse transpose). The fast multipliers being exponentially small and the slow ones
+near 1, the slow multipliers of $\tilde K$ at $\varepsilon$ are those of $K$ at $\varepsilon$. On the other hand
+$P[K](-t;-\varepsilon)$ solves the equation of (i) for $\tilde K$ at $\varepsilon$ (the substitution $t\mapsto-t$,
+$\varepsilon\mapsto-\varepsilon$ leaves $\varepsilon\dot P + P = F(P)$ invariant when $a$ does not enter it), so by
+uniqueness $A[\tilde K](t;\varepsilon) = A[K](-t;-\varepsilon)$: the slow block of $\tilde K$ at $\varepsilon$ is the
+time reversal of the slow block of $K$ at $-\varepsilon$, and its monodromy is the inverse,
+$\Phi_{\tilde K}(\varepsilon) = \Phi_K(-\varepsilon)^{-1}$, whence
+$\bar A[\tilde K](\varepsilon) = \bar A[K](-\varepsilon)$. Together, the slow-time exponents of $K$ at
+$-\varepsilon$ are those at $\varepsilon$, and the continued simple eigenvalue is even:
+$\mu_j(-\varepsilon) = \mu_j(\varepsilon)$ --- more, $\Phi_{\tilde K}(\varepsilon) = \Phi_K(-\varepsilon)^{-1}$ as
+matrices and $\tilde K$'s slow multipliers are $K$'s, so
+$\operatorname{eig}\bar A(-\varepsilon) = \operatorname{eig}\bar A(\varepsilon)$ as multisets (a shorter route needs
+no $P$: the full system at $-\varepsilon$ is the time reversal of $\tilde K$'s at $\varepsilon$, so with the
+$D$-symmetry its slow multipliers are the inverses of $K$'s at $\varepsilon$); the expansion of (iv), valid for both
+signs with the same coefficients (the recursion of (i) does not depend on the sign), has no odd terms. A mismatch $a$
+in the error channel ($\varepsilon\dot w = -(1 - \varepsilon a)w - KY$) adds $\varepsilon aP$ to $F(P)$, which the
+substitution changes in sign: it breaks the parity, at first order. (v) In the coordinates $(v,Y)$,
+$\dd v = -\varepsilon^{-1}(I + \varepsilon^2PK^\T)v\dd t - (\varepsilon^{-2}(1 + \varepsilon a) + PK^\T)\sqrt{N_0}\dd W$
+and $\dd Y = (\varepsilon AY + \varepsilon K^\T v)\dd t + K^\T\sqrt{N_0}\dd W$; for $Y' = Y + \varepsilon Sv$ the
+drift's coefficient of $v$ is $\varepsilon K^\T + \varepsilon\dot S - S - \varepsilon^2(SPK^\T + AS)$, zero by $S$'s
+equation, whose periodic solution is the anti-causal contraction as in (i); the noise of $Y'$ is
+$K^\T - \varepsilon S(\varepsilon^{-2}(1 + \varepsilon a) + PK^\T)
+= K^\T - (K^\T + \varepsilon\dot K^\T)(1 + \varepsilon a) + O(\varepsilon^2)
+= -\varepsilon(\dot K + aK)^\T + O(\varepsilon^2)$ times $\sqrt{N_0}\dd W$. The second moments solve periodic
+Lyapunov equations: $v$'s, $\dot V = -\varepsilon^{-1}(\Gamma V + V\Gamma^\T) + N_0gg^\T$ with
+$\Gamma = I + \varepsilon^2PK^\T$, $g = \varepsilon^{-2}(1 + \varepsilon a) + PK^\T$, quasi-static at the fast rate
+($V = N_0(1 + \varepsilon a)^2/(2\varepsilon^3) + O(N_0/\varepsilon)$); the cross moment $C = \E[vY'^\T]$,
+$\dot C = -\varepsilon^{-1}\Gamma C + \varepsilon CA^\T - \varepsilon N_0gb^\T$, likewise
+$C = -N_0b^\T + O(\varepsilon N_0)$; and $Y'$'s,
+$\dot\Sigma' = \varepsilon(A\Sigma' + \Sigma'A^\T) + \varepsilon^2N_0bb^\T$, a linear periodic equation of the slow
+rate $\varepsilon$: with $\bar\Sigma$ as stated, $Z := \Sigma' - \bar\Sigma$ is driven by
+$\varepsilon[(A - \bar A_0)\bar\Sigma + \bar\Sigma(A - \bar A_0)^\T] + \varepsilon^2N_0(bb^\T - \bar Q)$, of period
+average $O(\varepsilon^3N_0)$ and oscillating part $O(\varepsilon^2N_0)$; the oscillating part's zero-mean
+antiderivative is $O(\varepsilon^2N_0)$, and the slow system's periodic response to the rest is
+$O(\varepsilon^{-1}\cdot\varepsilon^3N_0)$ since its Lyapunov operator is invertible at rate $\varepsilon$
+($\bar A_0$ Hurwitz): $Z = O(\varepsilon^2N_0)$. Then
+$\operatorname{Cov}(Y) = \operatorname{Cov}(Y') - \varepsilon(SC + C^\T S^\T) + \varepsilon^2SVS^\T$, where
+$-\varepsilon(SC + C^\T S^\T) = -\varepsilon^2N_0(\mathrm{d}(K^\T K)/\mathrm{d}t + 2aK^\T K) + O(\varepsilon^3N_0)$
+and, with $S = \varepsilon K^\T + \varepsilon^2\dot K^\T + O(\varepsilon^3)$ and
+$V = N_0(1 + \varepsilon a)^2/(2\varepsilon^3) + O(N_0/\varepsilon)$,
+$\varepsilon^2SVS^\T = (\varepsilon N_0/2)K^\T K + (\varepsilon^2N_0/2)(\mathrm{d}(K^\T K)/\mathrm{d}t + 2aK^\T K)
++ O(\varepsilon^3N_0)$:
+$\operatorname{Cov}(Y) = \bar\Sigma + (\varepsilon N_0/2)K^\T K + O(\varepsilon^2N_0)$. The floor proved is the period
+average of $\tr(H\operatorname{Cov}(y))$: the slow part by \hyperref[res:thmDppp:30]{D$'''$.30}(ii)'s pair blocks (at
+$\eta = 0$ by $-(H + \sigma_0I)$) and the fast part
+$(\varepsilon N_0/2)\tr(H\langle\hat J^\T\hat J\rangle) = (N_0/2k_e)\tr H^2$; at time $t$ the fast part is
+$(\varepsilon N_0/2)\tr(H\hat J(t)^\T\hat J(t))$.
+\end{proof}
+\status{Proved (the constants not made explicit). It upgrades \hyperref[res:thmDppp:26]{Corollary D$'''$.26}(c) from
+a formal to a proved expansion, with a bounded $O(k_e^{-4})$ remainder and the odd orders vanishing exactly (for
+$x_m\in C^4$ at simple eigenvalues; the stability where $H_L(w)\succ0$), and
+\hyperref[res:thmDppp:30]{Proposition D$'''$.30}(ii) to proved for the linearised loop under white noise, for the
+floor's period average, with the relative remainder $O(1/k_e)$ --- the order of round 21's observation, whose
+first-order term comes from the slope $a$ in the noise input (with $a = 0$ in the noise the numerics show an even
+expansion; (v) does not prove it) --- at $\eta = 0$ with the identification $K = \hat J$, $\Lambda = \sigma_0I$. The
+real loop's noise at second order (\hyperref[res:thmDppp:30]{D$'''$.30}(iii)), the OU noise of the numerics and the
+real nonlinear loop stay as stated there. Chang's decoupling transformation of linear singularly perturbed systems
+--- the pair $(P,S)$, here periodic ---, its time-varying and stochastic versions (Kokotovi\'c, Khalil and O'Reilly's
+Ch.~4--5 and App.~A, with the slow subsystem's transformed noise and its covariance; Haddad and Kokotovi\'c; Yang and
+Zhu's contraction for slowly time-varying systems), the slow manifolds of stochastic slow--fast systems (Berglund and
+Gentz) and the convergence of the Magnus series are classical (\cite{S59}, \cite{kko1986}), and so is the reversal
+argument for even expansions (\cite{S56}); what the lemma adds is their application to the perfect-tracking
+linearisation of the transport-leak loop: the slaving of \hyperref[res:thmDppp:26]{Corollary D$'''$.26} made an exact
+block-triangularisation, the parity made an exact identity
+$\operatorname{eig}\bar A(-\varepsilon) = \operatorname{eig}\bar A(\varepsilon)$ through the slow block's definition at
+negative $\varepsilon$, and the slow noise identified exactly as $\varepsilon b(t)\nu$,
+$b = -(\dot K + aK)^\T - \varepsilon(\ddot K + KK^\T K + K\Lambda^\T + a\dot K)^\T + O(\varepsilon^2)$ --- the
+high-passed noise at leading order, the drift decoupled, the noise shared with the fast block. Checked by
+\code{exp_adaptive_floquet.py} Part D: the asymmetric reference at $\eta = 0$, $\sigma_0$ and $\infty$,
+$k_e = 12.5$--$1600$ --- $P$'s invariance residual, the truncations against $\varepsilon^3$ and $\varepsilon^4$, the
+slow block's rates against the full monodromy's, the rates at $\pm\varepsilon$ per mode, a mismatch breaking their
+equality at first order, the Magnus parameter; under white noise the decoupling residual, $b$ against $b_0$ and
+$b_0 + \varepsilon b_1$, the exact periodic covariance in the coordinates $(v,Y')$ with the weakest mode's deviation
+split into its two sources, the jitter with its next term, and the floor over the period. Checked separately by
+\code{tests/test_adaptive_floquet.py}: the slow block's rates against the monodromy's and $P - P_2$ against
+$\varepsilon^3$ on the instance; on a synthetic block with an $O(1)$, non-symmetric $\Lambda$, $P - P_2$ against
+$\varepsilon^3$ and $P - P_{(3)}$ against $\varepsilon^4$, with a flipped $\Lambda$ and a dropped cubic term caught;
+the parity and its breaking by a mismatch at $\eta = \sigma_0$ and $\infty$; and $b_0$ against $\dot K$ by the chain
+rule and the plant's own slope by differences, $b_1$ against $\varepsilon^2$, and the covariance's orders.}
+
+% Numerics of Lemma D'''.26a (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_floquet.md, Part D).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_adaptive_floquet.py} Part D $\to$ \code{results/chaos/adaptive_floquet.md}).
+\hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s instance ($w = (6,5,4)/15$) on the asymmetric reference
+$x_m = 2\sin t + 0.8\sin2t$, $\eta = 0$ ($K = \hat J$, $\Lambda = \sigma_0I$), $\sigma_0$ and $\infty$,
+$k_e = 12.5$--$1600$, a 512-point Fourier grid. The contraction for $P$ converges in 3--9 iterations to an invariance
+residual $\le3.8\cdot10^{-15}$ (at $\eta = 0$ and $k_e = 12.5$ it stalls at rounding: 499 iterations, the residual
+$3.3\cdot10^{-15}$). $\abs{P - P_2}/\varepsilon^3$ tends to $3.34\cdot10^3$ and $\abs{P - P_{(3)}}/\varepsilon^4$ to
+$5.8\cdot10^4$ (bounded: the $O(\varepsilon^3)$ of (i) and the third term of (iii), their constants set by the
+regressor's harmonics). The slow block's slow-time rates equal the full variational equation's to
+$\le1.0\cdot10^{-8}$ (the monodromies' accuracy). The rates at $\pm\varepsilon$ agree to $\le5.9\cdot10^{-12}$ of the
+largest rate and $\le1.1\cdot10^{-9}$ per mode, while their deviation from the first-order prediction is
+$9.8\cdot10^{-2}$--$8.9\cdot10^{-6}$ of the largest rate and, per mode, up to 29.6\% --- the slowest mode's at
+$\eta = \infty$: $-29.6\%$, $-12.5\%$, $-4.0\%$, $-1.1\%$ at $k_e = 12.5$, $25$, $50$, $100$; at $\eta = 0$ the
+slowest mode's is $-1.7\%$ and the largest 12.0\% at $k_e = 12.5$. The parity of (iv) is an identity, not an
+asymptotic statement. With the plant's slope as a mismatch in the error channel the rates at $\pm\varepsilon$ differ
+by $1.1\cdot10^{-2}$--$7.8\cdot10^{-5}$ of the largest rate (per mode $6.1\cdot10^{-2}$--$3.5\cdot10^{-4}$), halving
+per doubling of $k_e$: the parity broken at first order. The Magnus parameter is 0.48 at $k_e = 12.5$, $\le0.25$ from
+$k_e = 25$ and 0.004 at 1600, so the full Magnus series converges throughout. Under white measurement noise the second
+transformation decouples $Y'$ to a residual $\le3\cdot10^{-16}$. The slow noise $b$ differs from
+$b_0 = -(\dot K + aK)^\T$ by 63\%, 40\%, 22\%, 12\%, 5.9\%, 3.0\%, 1.5\% and 0.74\% ($O(\varepsilon)$, with the large
+constant of the regressor's harmonics: $\varepsilon\omega_1\approx0.4$ at $k_e = 25$), and
+$\abs{b - b_0 - \varepsilon b_1}/\varepsilon^2$ tends to $3.34\cdot10^3$ (bounded: $b_1$ of (v)). At $t = 0$ the exact
+periodic covariance gives $\operatorname{Cov}(v)\cdot2\varepsilon^3 - 1$ from $-9.6\cdot10^{-2}$ to
+$-2.4\cdot10^{-5}$ and $\norm{\E[vY'^\T] + b^\T}/\norm{b}$ from 0.15 to $1.2\cdot10^{-3}$ ($O(\varepsilon)$).
+$\norm{\operatorname{Cov}(Y') - \bar\Sigma}/\norm{\bar\Sigma}$ falls from 0.35 to $9.4\cdot10^{-5}$ ($\eta = \infty$;
+to $1.7\cdot10^{-4}$ at $\eta = \sigma_0$ and $2.4\cdot10^{-4}$ at $\eta = 0$), by 3.6--4 per doubling from
+$k_e = 50$ up to 200--400 and by 2--2.9 beyond: the $O(\varepsilon)$ of (v), with a small constant. In the weakest mode
+the deviation is $O(\varepsilon^2)$ (at $\eta = \infty$: $-34\%$, $-17\%$, $-6.0\%$, $-1.7\%$ at
+$k_e = 12.5$--$100$, $-6.6\cdot10^{-5}$ at 1600). It is the sum of two parts of opposite sign: the slow noise's
+attenuation, $\langle bb^\T\rangle$ below $\bar Q$ ($\Sigma$ with $\langle bb^\T\rangle$ in place of $\bar Q$:
+$-56\%$, \dots, $-1.1\cdot10^{-4}$), and the rate's correction ($\Sigma$ with the exact slow generator in place of
+$\bar A_0$: $+49\%$, \dots, $+4.6\cdot10^{-5}$). The attenuation is 2.4--2.5 times the correction from $k_e = 100$ at
+$\eta = \infty$ (1.2 times at $k_e = 12.5$) and 12--23 times at $\eta = 0$.
+$\operatorname{Cov}(Y) - \operatorname{Cov}(Y')$ equals the jitter $(\varepsilon/2)K(0)^\T K(0)$ to a relative 0.32,
+0.16, 0.081, 0.041 and 0.020 at $k_e = 100$--$1600$ ($O(\varepsilon)$), and with the next term
+$-(\varepsilon^2/2)(\mathrm{d}(K^\T K)/\mathrm{d}t + 2aK^\T K)(0)$ to 0.30, 0.079, 0.020, 0.005 and 0.001
+($O(\varepsilon^2)$). The floor at $t = 0$ is 0.763, 0.905, 0.971, 0.992, 0.998, 0.9995, 0.9999 and 1.0000 of the
+lemma's slow-plus-fast value ($\eta = \infty$). Over the period the floor's average is 0.766, 0.907, 0.972, 0.9925,
+0.9981, 0.99951, 0.99987 and 0.99997 of \hyperref[res:thmDppp:30]{Proposition D$'''$.30}(ii)'s formula. Pointwise it
+ranges over $[0.9952,1.0091]$ of the formula at $k_e = 1600$, which is the range of
+$\tr(H(\bar\Sigma + (\varepsilon/2)\hat J(t)^\T\hat J(t)))$: the fast block's jitter, $\pm1\%$. So the formula holds
+as the period average (v), not pointwise.
+\end{sloppypar}
 
 % Proposition D'''.27 with its proof, Status and numerics (PARADIGM.md section 5d, round-20 version; the numbers are
 % PARADIGM's copies of results/chaos/adaptive_prior.md, Part H). The references [4] (PARADIGM.md) and [S52]
@@ -3378,7 +3664,8 @@ at $m = 16$ by $s = 2000$), 0.0148, 0.0147; the OT leak toward the matching prio
 (0.328) --- and no leak at all ($\sigma_0 = 0$) does as well as the best of them (0.0180, 0.0147, 0.0146; floors
 $7.7\cdot10^{-6}$, $2.4\cdot10^{-7}$, $6.6\cdot10^{-8}$). In this noise-free simulation the floors and biases that
 the adaptive and OT leaks remove are those a fixed leak creates; the leaks' purpose --- robustness to noise and
-disturbances, Propositions \hyperref[res:thmDppp:27]{D$'''$.27}, D$'''$.30, D$'''$.31 --- is not exercised here. With
+disturbances, Propositions \hyperref[res:thmDppp:27]{D$'''$.27}, \hyperref[res:thmDppp:30]{D$'''$.30},
+\hyperref[res:thmDppp:31]{D$'''$.31} --- is not exercised here. With
 the misplaced prior from that start, at $\eta = \infty$ the prior never acts (its initial position enters only through
 the first cells: the runs are the matching ones), at $\eta = \sigma_0$ its bias decays (0.035, 0.020, 0.019 at
 $s = 2000$), and the fixed designs keep a bias --- their $m$-systems leave the saddle by splitting their classes
@@ -3406,6 +3693,446 @@ exact zero Gauss--Newton eigenvalues (one per kernel) and 8 below $10^{-6}\sigma
 $2.4\cdot10^{-10}$ of the largest; on ellipses with the velocity axis scaled by 1.1 and 2, 8 and 6 below
 $10^{-6}\sigma_0$ and none exact; on the orbit of $1.2\sin t + 0.3\sin2t$ 3; with the five centres at the origin 16
 exact zeros of 20.
+
+% Proposition D'''.30 with its proof, Status and numerics (PARADIGM.md section 5d, round-22 version, as committed at
+% 29f9394; the numbers are PARADIGM's copies of results/chaos/measurement_noise.md). The anchors res:thmDppp:30 and
+% res:thmDppp:31 are \hyperref targets, as res:thmDppp:21 is. The references [4] (PARADIGM.md), [S53] and [S57]
+% (LITERATURE_TRANSPORT.md) are the bibitems ioannou1996, S53 and S57 of refs.tex.
+\begin{thm}{Proposition}{D$'''$.30}[measurement noise at perfect tracking: a coherent, high-passed noise, and the
+errors in variables]\phantomsection\label{res:thmDppp:30}%
+Let \textup{(CL)} be the real loop of \hyperref[res:thmDppp:26]{Corollary D$'''$.26} ($n = 1$) at the lift $\Gamma_w$
+of an exact representation of representable weights $w$, with the prior at its atoms --- fixed there ($\eta = 0$) or
+adaptive ($0 < \eta\le\infty$) --- and $\partial_x\fhat = \partial_xf$, $\partial^2_x\fhat = \partial^2_xf$ on the
+orbit (an exact representation, an identity of functions, supplies both), and let the controller and the adaptive
+law use the measurement $y = x + \nu$ in place of $x$: $u = \dot x_m - k_e(y - x_m) - \fhat_\Theta(y)$,
+$\dot\vartheta_i = G\nabla_\vartheta((y - x_m)^\T\tilde\Phi(y;\vartheta_i)) - (\sigma_0/k_e)(\vartheta_i - z_{\pi(i)})$,
+$\nu$ a stationary zero-mean noise, independent of the rest, with the spectral density $N_0$ at the frequencies of the
+regressor and of the error channel. Let $H := H_L(w) = \langle\hat J^\T\hat J\rangle$ (the whitened weighted
+Gauss--Newton matrix, \hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s $\hat J$) with the eigenpairs $(h_j,v_j)$,
+$a(t) := \partial_x\fhat(x_m(t))$, $Q := \langle(\dot{\hat J} + a\hat J)^\T(\dot{\hat J} + a\hat J)\rangle$ and
+$Q_{jj} := v_j^\T Qv_j$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(coherence)} The particles of a class see the same $y$, the same error and the same prior atom, so a
+    replicated configuration stays replicated under every path of $\nu$: on the replicated subspace the $m$-system is
+    the weighted $K_0$-atom loop driven by the same noise, for every $m$ with these weights, at every order in $\nu$.
+    Measurement noise does not average out with $m$, as the per-particle dither of Theorem J$'$ does. This is
+    invariance, not attraction. A separation $u = G^{-1/2}\delta\vartheta_i$ of class $k$ obeys
+    $\dot u = (G^{1/2}\varepsilon_m\nabla^2_\vartheta\tilde\Phi(y;\vartheta_k)G^{1/2} - \sigma_0/k_e)u$ along the
+    noisy class trajectory, and to second order in $\nu$ its mean drift is
+    $\E[\varepsilon_m^2]G^{1/2}\partial_x\nabla^2_\vartheta\tilde\Phi G^{1/2}
+    + \E[e]G^{1/2}\nabla^2_\vartheta\tilde\Phi G^{1/2}$ (the measured regressor; the parameters' cross term
+    negligible), $\E[e]$ the mean tracking error. At the lift --- the parameters at their atoms, $\E[e]$ the noise's
+    own mean error at fixed parameters --- its period average $S_k$ gives the decay rate
+    $\sigma_0/k_e - \E\nu^2\lambda_{\max}(S_k)$ to leading order, so near the lift the replicated configuration
+    attracts --- and an $m$-system started near it follows the $K_0$-atom loop --- only below the noise level
+    $\E\nu^2 = (\sigma_0/k_e)/\max_k\lambda_{\max}(S_k)$. Along the noisy trajectory $\E[e]$ also carries the mean
+    tracking error $-\hat J\bar y(t)/k_e$ of the developing errors-in-variables deviation $\bar y(t)$ of (iii), of the
+    same order in $\E\nu^2$, so the drift $S_k(t)$ changes on $\bar y$'s time scale and to this order the separation
+    follows $\dot u = (\E\nu^2S_k(t) - \sigma_0/k_e)u$ (the first-order multiplicative noise, high-passed by the loop,
+    adds a negligible cumulant to its exponent); the long-time threshold --- where $\bar y$ is $O(1)$ at these noise
+    levels and the expansion no longer applies --- is open.
+  \item \emph{(the floor at first order)} To first order in $\nu$ the measured error's noise is
+    $((\mathrm{d}/\mathrm{d}t - a)/(\mathrm{d}/\mathrm{d}t + k_e))\nu$ --- the loop high-passes it --- and in the slow
+    time the collective coordinates diffuse with the matrix $(N_0/k_e)Q$; their stationary covariance solves
+    $\bar A_0\Sigma + \Sigma\bar A_0^\T + (N_0/k_e)\operatorname{diag}(Q,0) = 0$ ($\bar A_0$
+    \hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s averaged collective block), and the function-level floor,
+    averaged over a period, is
+    \[
+      \E\norm{\fhat - f}^2_\rho = (N_0/2k_e)\Bigl[\sum_jQ_{jj}(h_j + \eta)/(h_j + \eta + \sigma_0) + \tr H^2\Bigr]
+      + O(k_e^{-2})
+    \]
+    (at time $t$ its fast part is $(N_0/2k_e)\tr(H\hat J(t)^\T\hat J(t))$, whose oscillation over the period is of
+    the floor's own order): the parameters' part, each mode's share multiplied by
+    $(h_j + \eta)/(h_j + \eta + \sigma_0)$ --- the fixed prior's Tikhonov filter factor $h_j/(h_j + \sigma_0)$ at
+    $\eta = 0$, the factor 1 at $\eta = \infty$, where the part is $(N_0/2k_e)\tr Q$ whatever the spectrum --- and
+    the jitter of the frequencies that the loop passes, independent of the prior (the compensation error at the
+    plant's current point has $\langle\abs{\hat J}^4\rangle$ in place of $\tr H^2$). Mode $j$'s parameter variance is
+    $(N_0/2k_e)Q_{jj}(h_j + \eta)/(h_j(h_j + \eta + \sigma_0))$ --- from $Q_{jj}/(2(h_j + \sigma_0))$ to
+    $Q_{jj}/(2h_j)$ in units of $N_0/k_e$ --- plus the fast part $(N_0/2k_e)h_j$.
+  \item \emph{(the errors in variables)} To second order the noise inside the regressor $\tilde\Phi(y)$ exerts a mean
+    force on the collective coordinates. Its part carried by the noise's own second moments, at fixed parameters, is
+    $k_eF$ in the slow time with $F := \langle\hat J'^\T\E[\varepsilon_m^2] + \hat J^\T\E[e]\rangle = O(\E\nu^2)$
+    ($\hat J' := \partial_x\hat J$, $\varepsilon_m := y - x_m$ the measured error; for an Ornstein--Uhlenbeck noise of
+    rate $B$, $\E[\varepsilon_m^2] = \E\nu^2(a^2 + k_eB)/(k_e(k_e + B))\to\E\nu^2$ as $B/k_e\to\infty$); the
+    parameters' first-order fluctuation adds a force of the same order in $N_0$ --- the compensation's curvature and
+    slope--parameter terms in the error equation, the correlation
+    $\nabla^2_\vartheta\tilde\Phi\E[\varepsilon_m\delta\vartheta]$ in the law --- negligible against $F$ for the
+    measured regressor, not for the desired one (\hyperref[res:thmDppp:31]{Proposition D$'''$.31}(iv)). The
+    stationary response is $k_e(H + \sigma_0I)^{-1}F$ under the fixed prior and $k_eH^{-1}F$ under the adaptive
+    prior, for every $\eta > 0$: the adaptive prior gives up the leak's bound on the response to a persistent force
+    in the weakly excited modes --- the robustness half of the classical trade-off, here against the noise, and the
+    lack-of-excitation drift of adaptive control (\cite{S57}) --- and its function-level bias $k_e^2F^\T H^{-1}F$
+    grows like $k_e^2(\E\nu^2)^2$ while the noise is white well beyond the loop's bandwidth ($k_e\ll B$), and
+    saturates for $k_e\gg B$, where $\E[\varepsilon_m^2]\to\E\nu^2B/k_e$. The part of $F$ that the adaptive prior
+    amplifies is the regressor's own, $\langle\hat J'^\T\E[\varepsilon_m^2]\rangle$; evaluating the regressor at the
+    reference removes it (\hyperref[res:thmDppp:31]{Proposition D$'''$.31}).
+\end{enumerate}
+Hence $\eta$ buys the bias-removal rate $\lambda_j^-(\eta)$ at the price of the factor
+$(h_j + \eta)/(h_j + \eta + \sigma_0)$ in the floor and of the $H^{-1}$ response to the errors in variables, and $k_e$
+lowers the floor like $1/k_e$ while it raises the errors-in-variables bias like $k_e^2$ ($k_e\ll B$).
+\end{thm}
+
+\begin{proof}
+(i) The equations of the particles of a class are identical --- the same $y$, the same measured error and the same
+prior atom (the class mean at $\eta = \infty$, the same $z_k$ otherwise) enter them --- and so are their initial
+values; the field is locally Lipschitz and the cells are constant near the lift, so the trajectories coincide, and the
+class means follow the weighted $K_0$-atom loop with the same noise. (ii) Linearised at $\Gamma_w$ in
+\hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s whitened coordinates:
+$\delta\dot e = -k_e\delta e - \hat Jy - (k_e + a)\nu$ (from $f(x) - \fhat(x + \nu) = -D\fhat[\delta\Theta] - a\nu$),
+$\dot y = \hat J^\T(\delta e + \nu) - (\sigma_0/k_e)(y - \zeta)$, $\dot\zeta = -(\eta/k_e)(\zeta - y)$ (the
+regressor's own noise is of second order). The measured error $\varepsilon_m = \delta e + \nu$ obeys
+$\dot\varepsilon_m = -k_e\varepsilon_m - \hat Jy + \dot\nu - a\nu$, so
+$\varepsilon_m = -(\mathrm{d}/\mathrm{d}t + k_e)^{-1}[\hat Jy] + n$,
+$n := (\mathrm{d}/\mathrm{d}t + k_e)^{-1}[\dot\nu - a\nu]$ (written
+$((\mathrm{d}/\mathrm{d}t - a)/(\mathrm{d}/\mathrm{d}t + k_e))\nu$): the first part is
+\hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s slaving, the second drives $\dot y = \hat J^\T n$. With
+$\xi := (\mathrm{d}/\mathrm{d}t + k_e)^{-1}\nu$, of variance $N_0/(2k_e)$ for white noise,
+$n = \dot\xi - a\xi + (\mathrm{d}/\mathrm{d}t + k_e)^{-1}[\dot a\xi]$ and
+$\hat J^\T n = \mathrm{d}(\hat J^\T\xi)/\mathrm{d}t - (\dot{\hat J} + a\hat J)^\T\xi + O(\xi/k_e)$:
+$y = \hat J^\T\xi + u$, the fast jitter $\hat J^\T\xi$ and the slow part $u$ driven by
+$-(\dot{\hat J} + a\hat J)^\T\xi$, white at the slow scale with the intensity $(N_0/k_e^2)Q$ per unit time,
+$(N_0/k_e)Q$ in the slow time; the averaged slow equation
+$\dd Y = \bar A_0Y\dd s + (N_0/k_e)^{1/2}(Q^{1/2}\dd W,0)$ (stochastic averaging, \cite{S53}; exactly, for the
+linearised loop, \hyperref[res:thmDppp:26a]{Lemma D$'''$.26a}(v)) has the stated stationary covariance. In the
+eigenbasis of $H$ the block $\bar A_0$ is a direct sum of the pair blocks
+$\left[\begin{smallmatrix}-(h + \sigma_0) & \sigma_0\\ \eta & -\eta\end{smallmatrix}\right]$ ($\eta = 0$:
+$-(h + \sigma_0)$; $\eta = \infty$: $-h$), whose Lyapunov equation with the noise $q$ on $y$ gives
+$\Sigma_{\zeta\zeta} = \Sigma_{y\zeta} = \eta\Sigma_{yy}/(h + \eta)$ and
+$\Sigma_{yy} = q(h + \eta)/(2h(h + \eta + \sigma_0))$; $Q$'s off-diagonal entries in that basis enter only the
+covariances of different modes, which $\tr(H\Sigma_{yy}) = \sum_jh_j\Sigma_{yy,jj}$ does not see. The fast jitter
+gives $\E[(\hat J^\T\xi)^\T H(\hat J^\T\xi)] = (N_0/2k_e)\tr H^2$ over a period, and
+$\E[(\hat J(t)\hat J(t)^\T\xi)^2] = (N_0/2k_e)\langle\abs{\hat J}^4\rangle$. (iii) At fixed parameters the
+second-order part of $\E[\varepsilon_m\nabla_\vartheta\tilde\Phi(y;\vartheta)]$ at the lift is
+$\partial_x\nabla_\vartheta\tilde\Phi\cdot\E[\varepsilon_m^2] + \nabla_\vartheta\tilde\Phi\cdot\E[e]$, $\E[e]$ from the
+error equation's second-order terms $\frac12\partial^2_xf\cdot e^2 - \frac12\partial^2_x\fhat\cdot(e + \nu)^2$ --- one
+second derivative for $f$ and $\fhat$, by the hypothesis (otherwise
+$\frac12(\partial^2_xf - \partial^2_x\fhat)\operatorname{Var}(e)$ remains, of the same order); the parameters'
+fluctuation adds $\nabla^2_\vartheta\tilde\Phi\cdot\E[\varepsilon_m\delta\vartheta]$ in the law and
+$-\partial_xD\fhat[\E[(\delta e + \nu)\delta\Theta]] - \frac12\E[D^2_\Theta\fhat[\delta\Theta,\delta\Theta]]$ in the
+error equation, of the same order in $N_0$ (computed in the numerics from the periodic covariance: the full
+second-order mean). For the Ornstein--Uhlenbeck noise, quasi-statically along the orbit,
+$\E[\nu e] = -(k_e + a)\E\nu^2/(k_e + B)$ and $\operatorname{Var}(e) = (k_e + a)^2\E\nu^2/(k_e(k_e + B))$, which give
+$\E[\varepsilon_m^2] = \E\nu^2 + 2\E[\nu e] + \operatorname{Var}(e)$ as stated and
+$\E[e] = -(\partial^2_x\fhat/(2k_e))\E\nu^2(B - k_e - 2a)/(k_e + B)$. A constant slow force $F_s$ on the pair block of
+a mode has the stationary point $\zeta = y$ and $(h + \sigma_0)y - \sigma_0\zeta = F_s$, i.e.\ $y = F_s/h$ for every
+$\eta > 0$, and $y = F_s/(h + \sigma_0)$ under the fixed prior.
+\end{proof}
+\status{(i) proved, exactly, as invariance; the threshold formal at the lift (the separations' averaged second-order
+drift there), the drift along the noisy trajectory computed from the second-order transient and checked against the
+real loop's separation rates on antithetic noise pairs, the long-time threshold open; (ii) proved for the linearised
+loop under white noise, for the floor's period average (\hyperref[res:thmDppp:26a]{Lemma D$'''$.26a}(v): the slow
+coordinates' drift decoupled exactly, their noise $\varepsilon b\nu$, at leading order the high-passed one; at
+$\eta = 0$ with $K = \hat J$, $\Lambda = \sigma_0I$), with the relative remainder $O(1/k_e)$, the closed form exact for
+the averaged system; the OU noise of the numerics and the real loop formal --- and checked against the exact periodic
+covariance of the linearised loop: the deficit 2.4\%, 0.61\%, 0.14\%, 0.028\% at $k_e = 25$--$200$ ($\eta = 0$) is
+dominated there by a term in $k_e^{-2}$, but the relative error is $O(1/k_e)$ --- the slope $a$ in the noise input
+$-(k_e + a)\nu$, a rate that does not change sign under time reversal, breaks the parity of
+\hyperref[res:thmDppp:26]{Corollary D$'''$.26}(c) (with the noise input $-k_e\nu$ the deviation is numerically even in
+$1/k_e$, to $k_e = 800$) --- and the ratio crosses 1 near $k_e = 500$; (iii) formal --- a quasi-static second-moment
+computation for the noise's own moments, the parameters' part computed numerically --- its stationary response exact
+for the averaged system, the exact linearised loop's 10.7\% (adaptive) and 2.6\% (fixed) higher at $k_e = 25$, an
+$O(k_e^{-2})$ excess; the real nonlinear loop checked by Monte Carlo against the sum of the two. Classical:
+measurement noise in adaptive control and the errors-in-variables bias of estimates from noisy regressors
+(bias-compensated least squares and instrumental variables in identification; bounded disturbances and robust
+modifications, \cite{ioannou1996}); using the reference in the regressor, as the desired compensation adaptation law
+does (\cite{S53}); the Lyapunov covariance of a constant-gain adaptive algorithm as its diffusion approximation
+(Benveniste--M\'etivier--Priouret), the LMS misadjustment's dependence on the input's spectrum through a trace only
+(Widrow et al.: the $\eta = \infty$ floor's $\tr Q$), the leaky LMS's steady state (Mayyas--Aboulnasr: the fixed
+prior's factor $h_j/(h_j + \sigma_0)$), the common noise of mean-field theory (Carmona--Delarue--Lacker), of which the
+coherence is an instance, and the drift of the weakly excited directions under a persistent disturbance (Anderson), of
+which the $H^{-1}$ response is (\cite{S57}). New, in the transport-leak setting: the interpolation
+$(h_j + \eta)/(h_j + \eta + \sigma_0)$ of the floor in the prior's mobility, the driving matrix
+$Q = \langle(\dot{\hat J} + a\hat J)^\T(\dot{\hat J} + a\hat J)\rangle$ --- the sensitivity-filtered measurement the
+law sees, built on \hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s derivative Gram --- and their combination with the
+coherence of the $K_0$-atom identification and its noise threshold at the lift. Checked:
+\code{tests/test_measurement_noise.py} (the closed form against the Lyapunov solution, the trace identity at
+$\eta = \infty$ and the monotonicity in $\eta$; the exact periodic floors of the linearised loop at $k_e = 100$ for
+$\eta = 0$, $\sigma_0$ and $\infty$; a lift $m = 6$ under a noise path staying exactly replicated and following the
+$K_0$-atom loop driven by the same path; a separation of the weakest class decaying at the noise std 0.01 and growing
+at 0.05 --- a sign test, the rates within $10^{-4}$ of the lift's prediction ---; the separations' drift against an
+independent quadrature of its two moments, and along the second-order transient the mean parameters moved by the
+averaged force and the mean error carrying the tracking error of the developing deviation; the OU noise's stationary
+variance and correlation, and the law seeing the measured error at the measured point; the responses
+$(H + \sigma_0I)^{-1}$ and $H^{-1}$ to a constant force, the quasi-static force against the full second-order mean's
+noise part to $2\cdot10^{-3}$, the parameters' part below $10^{-4}$ of the bias; the exact periodic mean against the
+filtered-Gram response under both priors, the fixed prior's branch and its leak in the bias; and the mean function's
+curvature term against an independent contraction).}
+
+% Numerics of Proposition D'''.30 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/measurement_noise.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_measurement_noise.py} $\to$ \code{results/chaos/measurement_noise.md}). The
+three-bump instance ($\sigma_0 = 0.15\sigma_{\mathrm{crit}}$, $x_m = 2\sin t$, $k_e = 25$) at the lift of the exact
+representation of the matching weights $q = 1/3$, the prior at its atoms. (A) The linear theory: $H$'s nine eigenvalues
+span $3.06\cdot10^{-4}$--$0.195$; $\tr Q = 8.784$, of which 8.105 is the derivative Gram
+$\langle\dot{\hat J}^\T\dot{\hat J}\rangle$ and 0.679 the slope term $\langle a^2\hat J^\T\hat J\rangle$ (the cross
+term vanishes, as on every one-dimensional reference: an exact differential); $Q_{jj}/h_j$ ranges from 104 (mode 1) to
+5.5 (mode 6). The parameters' floor per unit $N_0$ is 0.1597 under the fixed prior, 0.1627 at $\eta = \sigma_0$,
+0.1690 at $10\sigma_0$ and $0.1757 = \tr Q/(2k_e)$ at $\eta = \infty$ --- the adaptive prior costs 10\% here, the
+strong modes carrying the floor --- while the weakest mode's parameter variance grows from 0.0865 to 2.09,
+$\times24.1$ in the averaged system ($\times28.0$ in the exact linearised loop at $k_e = 25$, Part B). The fast parts
+are $\tr H^2 = 0.0657$ and $\langle\abs{\hat J}^4\rangle = 0.299$. The second-order force of the noise's own moments
+(OU noise, $B = 100$) has the averaged function-level stationary bias 491 (fixed prior) and 2397 (adaptive,
+$\times4.88$) per unit $(\E\nu^2)^2$, equal to the floor of the parameters at the noise std 0.0026 and 0.0012
+respectively and dominant above; the full second-order mean (the periodic covariance contracted with the true field's
+second derivatives) reproduces the force to $1.7\cdot10^{-4}$, the parameters' fluctuation changing the bias by less
+than $10^{-5}$ ($2397.66\to2397.68$; the mean function's 2397.65), and the exact periodic second-order mean of the
+linearised loop gives 504 and 2653 ($\times5.27$). The averaged bias grows in $k_e$ with the local exponent 1.93--1.99
+for $B\ge20k_e$ but 1.69 and 1.47 at $B = 8k_e$ and $4k_e$, and saturates beyond. At the lift the separations'
+second-order drift has $\lambda_{\max}(S_k) = 0.0148$, $0.0101$ and $0.298$ per unit $\E\nu^2$ (real time) in the
+three classes: there the third class's separations stop decaying at the noise std 0.031 (1.5\% of the reference's
+amplitude), and at Part C's stds 0.003 and 0.01 the margin $\sigma_0/k_e$ is used to 0.9\% and 10.5\%. (B) The exact
+periodic stationary covariance of the linearised loop (the monodromy and a discrete Lyapunov equation) against the
+prediction, at $\eta = 0$, $\sigma_0$, $\infty$ and $k_e = 25$--$800$: the function-level floor's ratio 0.976--0.980
+at $k_e = 25$, 0.994--0.995 at 50, 0.9986--0.9988 at 100, 0.9997--0.9998 at 200, and above 1 at 800
+($+1.2\cdot10^{-5}$ at $\eta = 0$, $+1.3\cdot10^{-5}$ at $\eta = \infty$); the deviation's successive ratios per
+doubling are 3.87, 4.38, 5.26, 11.4 and a change of sign ($\eta = \infty$) --- a $k_e^{-2}$ term dominating to
+$k_e = 200$ over a first-order one of the opposite sign --- while with the noise input $-k_e\nu$ (the slope removed,
+the control) they are 3.67, 3.90, 3.98, 3.99, 4.00: without the slope the expansion is numerically even (to
+$k_e = 800$; not proved). The weakest mode's variance is 0.845 (fixed prior) and 0.980 (adaptive) of its
+slow-plus-fast prediction at $k_e = 25$, tending to 1. The exact stationary second-order mean of the linearised loop
+lies 10.7\%, 2.65\%, 0.66\%, 0.17\% above the averaged bias under the adaptive prior and 2.58\%, 0.64\%, 0.16\%,
+0.04\% under the fixed one at $k_e = 25$, $50$, $100$, $200$ --- the weak modes' stiffness being the filtered Gram
+$H - k_e^{-2}\langle\dot{\hat J}^\T\dot{\hat J}\rangle$ of \hyperref[res:thmDppp:26]{Corollary D$'''$.26}(c). (C) The
+real loop (RK4, $\mathrm{d}t = 10^{-3}$, an OU noise exact at the steps, 12 noise paths of 300 time units common to the
+four cases) against the transient covariance of the linearised loop plus the second-order mean deviation: at the noise
+std 0.003 within one standard error at every record ($z$ from $-0.99$ to $0.99$), the mean part 42\% of the
+prediction at $t = 300$; at std 0.01 within 1.75 standard errors ($z$ from $-0.3$ to $1.75$, the records of a run
+correlated), the mean part 89\% at $t = 300$ and the covariance part alone 8.8--8.9 times below the Monte Carlo ---
+the second-order force is the dominant effect of the noise there. The adaptive and the fixed prior drift apart, by
+6.0\% and 6.4\% at $t = 300$ (predicted 5.3\% and 6.1\%): the weak modes, where the two responses part, equilibrate
+over $k_e/h_1\approx8\cdot10^4$ time units, so over 300 time units the transient checks the force (the weak modes
+still grow linearly), and the stationary response is checked against the exact linearised loop (B). The lift
+$m = 15$ (classes of five) driven by the same noise path as the $K_0$-atom run gives the same $\fhat$ to rounding
+(identical in the stored float32, $5.6\cdot10^{-16}$ apart in float64): the noise is coherent, as (i) states. (D) But
+invariance is not attraction: from a separation of size $10^{-6}$ along $S_3$'s top eigenvector, on eight antithetic
+pairs of noise paths of 300 time units per std ($\nu$ and $-\nu$, whose pair means cancel the first-order part of the
+log-growth), the lift's third class separates at $-2.50\cdot10^{-4}\pm3.8\cdot10^{-7}$ per time unit at the std
+0.01, $+2.74\cdot10^{-6}\pm3.3\cdot10^{-6}$ at 0.03 and $+4.53\cdot10^{-4}\pm8.4\cdot10^{-6}$ at 0.05. The
+noise-induced part $\lambda_{\mathrm{eff}} := (\mathrm{rate} + \sigma_0/k_e)/\E\nu^2$ is $0.3271\pm0.0038$,
+$0.3175\pm0.0037$ and $0.2943\pm0.0034$, against the lift's drift $\lambda_{\max}(S_3) = 0.2981$ and the drift along
+the second-order transient from the lift, 0.3264, 0.3270 and 0.3281 (the same estimator applied to
+$\dot u = (\E\nu^2S_3(t) - \sigma_0/k_e)u$). Along the transient the mean error's rms per unit $\E\nu^2$ grows from
+0.121 to 0.602 over the six 50-unit windows to $t = 300$ and $\lambda_{\max}(S_3(t))$ from 0.307 to 0.349: the
+tracking error of the developing errors-in-variables deviation. The weighted fit
+$\lambda_{\mathrm{eff}} = c_0 + c_1\E\nu^2$ has the small-noise limit $c_0 = 0.3291\pm0.0033$ --- 10.4\% above the
+lift's drift, within its standard error of the transient's 0.3264 --- and the next order $c_1 = -13.8\pm2.0$; over
+this window the measured rate vanishes at the std 0.0299, against 0.0308 by the lift's drift and 0.0294 by the
+transient's. Above it the replicated configuration repels, its within-class spread staying exactly 0.0 from a
+replicated start only because each particle's update is the same arithmetic.
+\end{sloppypar}
+
+% Proposition D'''.31 with its proof, Status and numerics (PARADIGM.md section 5d, round-22 version, as committed at
+% 29f9394; the numbers are PARADIGM's copies of results/chaos/eiv_remedy.md). The references [S49], [S53], [S54],
+% [S57] and [S58] (LITERATURE_TRANSPORT.md) are the bibitems S49, S53, S54, S57 and S58 of refs.tex.
+\begin{thm}{Proposition}{D$'''$.31}[the adaptive prior is a washout leak; the desired regressor makes the noise's
+persistent force a least-squares force]\phantomsection\label{res:thmDppp:31}%
+Let the leak be \hyperref[res:thmDppp:23]{Theorem D$'''$.23}'s toward an adaptive prior,
+$\dd z_j/\dd s = -\eta(z_j - \hat T_j)$ with $0 < \eta < \infty$ (the nearest-atom form of
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(ii) with the class barycentres likewise), in the averaged loop or in
+the real loop \textup{(CL)} of \hyperref[res:thmDppp:26]{Corollary D$'''$.26} ($s = t/k_e$); at an exact
+representation of representable weights $w$ let $H$, $\hat J$, $a$ and the mean $\langle\cdot\rangle$ over a period be
+\hyperref[res:thmDppp:30]{Proposition D$'''$.30}'s, $\norm{g}^2_\rho := \langle g^2\rangle$ for a function $g$ along the
+orbit, and $P$ the $L^2_\rho$-projection onto the span of $\hat J$'s components.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the washout)} Along every solution and every path of the plan with $\hat T_j$ of bounded variation,
+    $\hat T_j(s) - z_j(s) = \int_0^se^{-\eta(s-\tau)}\dd\hat T_j(\tau) + e^{-\eta s}(\hat T_j(0) - z_j(0))$ --- and for
+    every measurable $\hat T_j$ (a chattering plan included) in the integrated form
+    $z_j(s) = e^{-\eta s}z_j(0) + \eta\int_0^se^{-\eta(s-\tau)}\hat T_j(\tau)\dd\tau$: the prior lags the barycentre by
+    the barycentre's exponentially forgotten increments. For integral plans (the nearest-atom cells, the OT plan at a
+    commensurate $m$) the leak on a particle, $-\sigma_0(\vartheta_i - z)$, is therefore the full
+    $\sigma$-modification of its offset from the barycentre plus, on the barycentre, the $\sigma$-modification passed
+    through the washout filter $(\mathrm{d}/\mathrm{d}s)(\mathrm{d}/\mathrm{d}s + \eta)^{-1}$ --- zero at zero
+    frequency, the full leak above $\eta$; with split rows (an incommensurate $m$) the barycentres also feel
+    $-\sigma_0(I - M)z$, $M_{jl} := (m/q_j)\sum_i\gamma_{ij}\gamma_{il}$, which is not washed out. Linearised at the
+    exact representation, mode $j$ of the collective block has at the slow frequency $\omega$ the stiffness
+    $h_j + \sigma_0i\omega/(i\omega + \eta)$: the fixed prior's $h_j + \sigma_0$ for $\omega\gg\eta$, the bare $h_j$ at
+    $\omega = 0$. This is \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(iii)'s bias removal --- feedback through a
+    washout filter leaves the equilibria where they are (\cite{S54}), here the replicated ones --- and its price: no
+    leak opposes a persistent force on the class barycentres (the separations keep the full leak).
+  \item \emph{(the stationary identity)} Let the prior be an affine time-invariant filter of the barycentre and of a
+    fixed anchor $z_a$ --- linearised, $\zeta = \mathcal{K}[y] + (I - \mathcal{K})[\delta]$ in the whitened weighted
+    coordinates, $\delta$ the anchor's misplacement from the representation; for example
+    $\dd z/\dd s = -\eta(z - \hat T) - \kappa(z - z_a)$, $\kappa\ge0$, with $\mathcal{K}(0) = \eta/(\eta + \kappa)$
+    ($\kappa = 0$ the adaptive prior, $\kappa = \infty$ the fixed prior at $z_a$) --- and
+    $S_0 := \sigma_0(I - \mathcal{K}(0))$ the leak's zero-frequency gain (the anchor entering through
+    $I - \mathcal{K}$: the filter returns the anchor when the barycentre sits there). A persistent force $F$ on the
+    collective coordinates and the misplacement $\delta$ give the stationary deviation $y = RF + B\delta$ with
+    $R = (H + S_0)^{-1}$ and $B = (H + S_0)^{-1}S_0$, so
+    \[
+      RH + B = I,\qquad\text{i.e.}\qquad R = (I - B)H^{-1}:
+    \]
+    the response is the unregularised one times the share not taken by the anchor ($HR + B = I$ as well where $S_0$
+    commutes with $H$, as for the family; not for a prior fixed on some coordinates or a projected prior with an
+    active face). On every mode, whatever $S_0$, $h_jr_{jj} + b_{jj} = 1$ ($r_{jj} := v_j^\T Rv_j$,
+    $b_{jj} := v_j^\T Bv_j$): a vanishing bias forces the response $1/h_j$. So no such prior both removes the leak's
+    bias and keeps its bound on the response to persistent forces --- the trade binding on the modes with
+    $h_j < \sigma_0$, where $1/h_j$ exceeds the fixed prior's $1/\sigma_0$ --- and a remedy for the robustness loss of
+    \hyperref[res:thmDppp:30]{Proposition D$'''$.30}(iii) has to change the force.
+  \item \emph{(least-squares forces)} For $H\succ0$ and every $S$ with $S + S^\T\succeq0$,
+    $F^\T(H + S)^{-\T}H(H + S)^{-1}F\le F^\T H^{-1}F = \min\{\norm{g}^2_\rho : \langle\hat J^\T g\rangle = F\}$, with
+    equality at $S = 0$: the function-level stationary response to a persistent force is at most the squared norm of
+    the smallest target perturbation that exerts it ($\langle\hat J^\T g\rangle$ is the learning force of the target
+    $f + g$), and the adaptive prior attains the bound. A least-squares force $\langle\hat J^\T g\rangle$ therefore
+    moves the learned function by at most $\norm{g}_\rho$ under every prior --- under the adaptive prior by exactly
+    $Pg$, so that the stationary point's projected residual $P(g - \hat Jy)$ vanishes.
+  \item \emph{(the desired regressor)} Let the adaptive law evaluate its regressor at the reference,
+    $\dot\vartheta_i = G\nabla_\vartheta((y - x_m)^\T\tilde\Phi(x_m;\vartheta_i))
+    - (\sigma_0/k_e)(\vartheta_i - z_{\pi(i)})$ (DR), with the compensation $\fhat_\Theta(y)$ as before or also at
+    the reference, $u = \dot x_m - k_e(y - x_m) - \fhat_\Theta(x_m)$ (DR*, the desired compensation adaptation
+    law~\cite{S53}). Then (a) without noise the lift $\Gamma_w$ is a solution and the linearisation at it is
+    \hyperref[res:thmDppp:26]{Corollary D$'''$.26}'s --- for DR exactly (the regressor's variation multiplies
+    $e\equiv0$), for DR* with $-(k_e - a(t))$ in place of $-k_e$ in the error channel --- and the averaged loop is
+    unchanged at leading order in $1/k_e$ (the regressor moves by $x - x_m = O(1/k_e)$); (b) to first order in $\nu$,
+    DR is \hyperref[res:thmDppp:30]{Proposition D$'''$.30}(ii)'s linearised loop driven by the same noise, path by
+    path; DR* has the noise input $-k_e\nu$ in place of $-(k_e + a)\nu$, and the same floor up to a relative
+    $O(1/k_e)$; (c) to second order the part of the force carried by the noise's own second moments (at fixed
+    parameters) is the least-squares force $\langle\hat J^\T g\rangle$ (slow time) of $g := k_e\E[e]$, the rescaled
+    mean tracking error at the lift; for an Ornstein--Uhlenbeck noise of rate $B$, quasi-statically along the orbit,
+    $g = -\frac12\partial^2_x\fhat\cdot\E\nu^2(B - k_e - 2a)/(k_e + B)$ for DR and
+    $g = \frac12\partial^2_xf\cdot\E\nu^2k_e^3/((k_e - a)^2(k_e - a + B))$ for DR* ($k_e > \max a$), so
+    $\abs{g}\le\frac12\abs{\partial^2_xf}\E\nu^2(1 + O(\abs{a}/k_e))$ for all $k_e$ and $B$. By (iii) its
+    function-level response is at most
+    $\norm{g}^2_\rho\le\frac14\norm{\partial^2_xf}^2_\rho(\E\nu^2)^2(1 + O(1/k_e))$ under every prior --- uniformly in
+    $k_e$, in $B$ and in the spectrum of $H$ --- and under the adaptive prior it leaves no projected mean tracking
+    error. The parameters' first-order fluctuation adds a second-order force of the same order in $N_0$: in the error
+    equation the compensation's curvature $\frac12D^2_\Theta\fhat[\Sigma_{\Theta\Theta}]$ and, for MR and DR, its
+    slope--parameter term (DR*'s compensation, at $x_m$, has none) --- a least-squares force again, of a perturbation
+    set by the parameters' covariance; the curvature also shifts the mean function, and the loop removes its tangent
+    part ---, in the learning law the correlation $\nabla^2_\vartheta\tilde\Phi\E[\varepsilon_m\delta\vartheta]$ of
+    the regressor's parameter dependence with the measured error --- an errors-in-variables term in the parameters,
+    which the reference in the regressor does not remove and which is not the learning force of a mean tracking
+    error, so no bound in the noise's moments applies to it. Its size is set by the parameters' stationary covariance
+    (mode $j$'s variance $(N_0/2k_e)Q_{jj}(h_j + \eta)/(h_j(h_j + \eta + \sigma_0))$, unbounded as $h_j\to0$ at
+    $\eta > 0$), so the bound $\norm{g}^2_\rho$ is the noise part's, not the total's. With the measured regressor the
+    noise part is $F_1 + \langle\hat J^\T g\rangle$, $F_1 := k_e\langle\hat J'^\T\E[\varepsilon_m^2]\rangle$ --- the
+    regressor's errors in variables proper, the learning force of no mean tracking error --- and the adaptive prior's
+    stationary point keeps the projected mean tracking error $P\E[e] = -\hat JH^{-1}F_1/k_e$: what grows like $k_e^2$
+    while $k_e\ll B$ is $k_e$ times it, of squared norm $F_1^\T H^{-1}F_1$, the function-level bias; the mean tracking
+    error itself, of squared norm $F_1^\T H^{-1}F_1/k_e^2\propto(B/(k_e + B))^2$, stays bounded.
+\end{enumerate}
+Hence with the desired regressor the first-order floor still falls like $1/k_e$ while the noise part of the
+errors-in-variables bias stays bounded, and on the instance the parameters' part's own response falls like $k_e^{-2}$
+--- a one-dimensional reference, where the law's leading term, the period average of a function of $x_m$ times
+$\dot x_m$ (a line integral $\oint M\partial_x\hat J\dd x$ along the orbit), vanishes; on a curve in $\R^n$, $n > 1$,
+it need not: the trade-off in $k_e$ of \hyperref[res:thmDppp:30]{Proposition D$'''$.30} disappears, and what is left is
+the plant's state jitter $\E[e^2] = \E\nu^2(k_e + a)^2/(k_e(k_e + B))$ (DR; DR*:
+$k_e^2\E\nu^2/((k_e - a)(k_e - a + B))$) --- the classical price of a high gain under measurement noise.
+\end{thm}
+
+\begin{proof}
+(i) The integrated form is the variation of constants for $\dd z_j/\dd s = -\eta(z_j - \hat T_j)$; for $\hat T_j$ of
+bounded variation (it jumps where the plan does, finitely often on bounded intervals), $u := \hat T_j - z_j$ satisfies
+$\dd u = \dd\hat T_j - \eta u\dd s$, whence $u(s) = e^{-\eta s}u(0) + \int_0^se^{-\eta(s-\tau)}\dd\hat T_j(\tau)$; and
+$\vartheta_i - z = (\vartheta_i - \hat T) + u$ for an integral plan (for split rows the targets are
+$m\sum_j\gamma_{ij}z_j$, and averaging the leak over a class gives $-\sigma_0(\hat T - Mz)$). Linearised,
+$\zeta = \eta(i\omega + \eta)^{-1}y$ on each mode (the prior and the leak are scalars in the whitened weighted
+coordinates, so they commute with $H$), and $\sigma_0(y - \zeta) = \sigma_0i\omega(i\omega + \eta)^{-1}y$. (ii) At
+zero frequency $\zeta = \mathcal{K}(0)y + (I - \mathcal{K}(0))\delta$, so the leak on $y$ is
+$-\sigma_0(y - \zeta) = -S_0(y - \delta)$, and the stationary equation $Hy + S_0(y - \delta) = F$ gives
+$y = (H + S_0)^{-1}(F + S_0\delta)$; then $RH + B = (H + S_0)^{-1}(H + S_0) = I$, and on the diagonal in $H$'s
+eigenbasis $h_jr_{jj} + b_{jj} = 1$. For the family, the prior's stationary equation
+$\eta(y - \zeta) = \kappa(\zeta - \delta)$ gives $\mathcal{K}(0) = \eta/(\eta + \kappa)$. (iii) By congruence with
+$H + S$, $(H + S)^{-\T}H(H + S)^{-1}\le H^{-1}\Leftrightarrow H\le(H + S)^\T H^{-1}(H + S)
+= H + S + S^\T + S^\T H^{-1}S$, true for $S + S^\T\succeq0$. The map $g\mapsto\langle\hat J^\T g\rangle$ has the
+adjoint $F\mapsto\hat JF$, so the smallest $g$ with $\langle\hat J^\T g\rangle = F$ is $\hat JH^{-1}F$, of squared norm
+$F^\T H^{-1}F$; for $F = \langle\hat J^\T g\rangle$, $F^\T H^{-1}F = \norm{Pg}^2_\rho\le\norm{g}^2_\rho$, and at
+$S = 0$, $\hat Jy = \hat JH^{-1}\langle\hat J^\T g\rangle = Pg$. (iv) (a) At $e = 0$ both laws vanish, and their
+variations, $\delta e\nabla_\vartheta\tilde\Phi(x;\vartheta) + e(\cdots)$, coincide at $x = x_m$; for DR*,
+$f(x) - \fhat(x_m) = a\delta e - \hat Jy$ to first order. Off the lift $e$ is slaved,
+$e = r(x_m)/k_e + O(k_e^{-2})$, so the two regressors differ by $O(1/k_e)$. (b) The regressor's dependence on $y$
+enters the law multiplied by $\varepsilon_m$, at second order; for DR* the compensation no longer carries $\nu$. (c) At
+fixed parameters the mean of $\varepsilon_m\nabla_\vartheta\tilde\Phi(x_m;\vartheta)$ is
+$\nabla_\vartheta\tilde\Phi(x_m)\E[e]$, since $\E\nu = 0$; the parameters' fluctuation adds
+$\nabla^2_\vartheta\tilde\Phi(x_m)\E[\varepsilon_m\delta\vartheta]$ in the law and the compensation's curvature and
+slope--parameter terms in the error equation (\hyperref[res:thmDppp:30]{Proposition D$'''$.30}'s proof). For DR,
+$\E[e]$ is \hyperref[res:thmDppp:30]{Proposition D$'''$.30}'s (the same compensation); for DR*,
+$\dot e = (a - k_e)e + \frac12\partial^2_xf\,e^2 - k_e\nu + O(3)$, whose linear part has
+$\operatorname{Var}(e) = k_e^2\E\nu^2/((k_e - a)(k_e - a + B))$ for the OU noise, and the mean balance is
+$(k_e - a)\E[e] = \frac12\partial^2_xf\operatorname{Var}(e)$. The bounds:
+$\abs{B - k_e - 2a}\le(k_e + B)(1 + 2\abs{a}/(k_e + B))$ and
+$k_e^3/((k_e - a)^2(k_e - a + B))\le(k_e/(k_e - a))^3$. With the measured regressor, at the adaptive prior's
+stationary point $\langle\hat J^\T(g - \hat Jy)\rangle + F_1 = 0$ and the mean of the error equation gives
+$k_e\E[e] = g - \hat Jy$ at second order, so $k_eP\E[e] = -\hat JH^{-1}F_1$.
+\end{proof}
+\status{(i) proved, exactly (every solution of the real or the averaged loop; the differential form for $\hat T$ of
+bounded variation, the integrated one always; the leak's decomposition for integral plans); (ii) proved as
+$RH + B = I$ and per mode --- linear algebra on the averaged linearised block; $HR + B = I$ where $S_0$ commutes with
+$H$; (iii) proved ($S + S^\T\succeq0$, $H\succ0$); (iv)(a) proved at the lift and for its linearisation, the
+leading-order equality of the averaged loops by Theorem J's averaging argument (not rewritten); (iv)(b) the
+first-order identity proved for the linearised equations, the floors themselves with
+\hyperref[res:thmDppp:30]{Proposition D$'''$.30}(ii)'s status; (iv)(c) formal and split --- the noise part by
+\hyperref[res:thmDppp:30]{Proposition D$'''$.30}(iii)'s quasi-static second-moment computation, its consequences exact
+for the averaged system; the parameters' part computed numerically (the full second-order mean), not in closed form.
+Classical: reference regressors and the desired compensation adaptation law (\cite{S53}; DR* without Sadegh and
+Horowitz's nonlinear damping is a local statement), washout filters (\cite{S54}), the adaptive law kept near a
+low-pass filtered copy of itself --- Yucelen and Haddad's low-frequency learning, which has the washout structure
+(\cite{S58}) --- and elastic averaging's moving-average centre (\cite{S49}); the identity, per mode the Tikhonov
+filter factor plus the residual factor (the Kalman-gain split of a regularised estimate); the bound (iii), the
+minimum-norm solution with the contraction of the regularised fit; and the split of the noise's force into the
+regressor's errors in variables proper and the output's, of which only the mean biases; and the parameters' own errors
+in variables, the classical second-order bias of a constant-gain stochastic approximation from its own fluctuation ---
+the mean field's curvature in the parameters contracted with their stationary covariance, plus the noise--parameter
+correlation (Benveniste--M\'etivier--Priouret; for constant-step stochastic gradient descent Dieuleveut--Durmus--Bach,
+who remove it by Richardson--Romberg extrapolation; the curvature bias of nonlinear least squares, Box's, the analogue
+of $\frac12D^2_\Theta\fhat[\Sigma_{\Theta\Theta}]$: \cite{S57}). New are their transfer to the transport leaks --- the
+washout reading of the adaptive prior in the mass-constrained, mean-field setting, uniform in $m$ --- and the
+instance's quantification, with the observation that the desired regressor does not remove the parameters' part.
+Checked: \code{tests/test_eiv_remedy.py} (the washout identity along a real-loop solution at finite $\eta$, the
+barycentre's velocity integrated alongside, and on the averaged loop across a plan switch, the jump's share large; the
+collective block's transfer function against the washout formula, $RH + B = I$ along the prior family and, $R$ and
+$B$ from their dynamic blocks, for priors whose zero-frequency leak does not commute with $H$ --- fixed on the
+amplitudes, one active face, a matrix anchor gain, a random one with $K + K^\T\succeq0$ --- where $HR + B = I$ fails;
+the response bound under random leaks $S\ge0$, the smallest equivalent perturbation and the projection; the lift exact
+under DR and DR*, on a common noise path DR's run within the second order of MR's, and the regressor's point in the
+law; DR's and DR*'s noise forces least-squares, their pointwise bounds on $g$, MR's $F_1$ three orders of magnitude
+above; the quasi-static forces against the full second-order mean's noise part, the parameters' part above 1\% for DR
+and DR* and below $10^{-5}$ for MR).}
+
+% Numerics of Proposition D'''.31 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/eiv_remedy.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_eiv_remedy.py} $\to$ \code{results/chaos/eiv_remedy.md}). The instance of
+\hyperref[res:thmDppp:30]{Proposition D$'''$.30} with an Ornstein--Uhlenbeck noise of rate $B$; MR the measured
+regressor and compensation, DR the regressor at the reference, DR* both at the reference. (A) The averaged system's
+biases per unit $(\E\nu^2)^2$. From the noise's own moments, the adaptive prior's function-level bias at $k_e = 25$,
+$B = 100$ is 2397 (MR), 0.471 (DR) and 0.0526 (DR*); with the parameters' fluctuation (the full second-order mean)
+2398, 0.486 ($+3.3\%$) and 0.0481 ($-8.7\%$), the mean function's 2398, 0.476 and 0.0511. Over $k_e = 25$--$200$ and
+$B = 100$, $1000$ the parameters' part changes MR's bias by at most 0.03\%, DR's by $-0.75\%$ to $+3.3\%$ except at
+$k_e = B = 100$ --- where DR's noise part nearly cancels ($4.5\cdot10^{-5}$) and the parameters' part raises it by
+56\% --- and DR*'s by $-8.7\%$ to $-0.15\%$; its own response is $3.9\cdot10^{-4}$, $1.1\cdot10^{-4}$,
+$2.9\cdot10^{-5}$ and $7.4\cdot10^{-6}$ at $k_e = 25$, $50$, $100$, $200$ ($B = 100$), like $k_e^{-2}$ --- the
+cancellation of the law's leading term on the one-dimensional reference ---, while its share of DR's bias does not fall
+monotonically. MR over DR (full) is $4.9\cdot10^3$ at $k_e = 25$, $B = 100$, and $3.0\cdot10^3$--$2.1\cdot10^8$ over
+the grid. MR's bias grows like $(k_eB/(k_e + B))^2$ ($\times46.6$ from $k_e = 25$ to 200 at $B = 1000$, the law
+$\times46.7$, $k_e^2$ $\times64$), while DR's and DR*'s stay at most 1.18, below
+$\frac14\norm{\partial^2_xf}^2_\rho = 1.31$. DR's noise part attains its bound $\norm{g}^2_\rho$ to 0.01\% at
+$k_e = 25$ --- $g$ lies almost in the tangent space, the second derivative of a Gaussian bump being in the span of its
+amplitude and width derivatives. The rescaled projected mean tracking error $k_e^2\norm{P\E[e]}^2_\rho$ under the
+adaptive prior is 2394 for MR (0 for DR and DR* by construction), the mean tracking error itself 3.83 at $k_e = 25$ and
+0.66 at 200 ($B = 100$). The noise level at which the adaptive prior's full bias reaches its floor rises from the std
+0.0012 (MR) to 0.085 (DR) and 0.27 (DR*) at $B = 100$ (stds above 0.1 lie outside the small-noise regime). (B) Along
+the prior family at $\eta = \sigma_0$ ($\kappa/\eta = 0$, $0.1$, $1$, $10$ and the fixed prior; $S_0$ from 0 to
+$\sigma_0$) the weakest mode's response falls from 3269 to 136 while its bias factor rises from 0 to 0.959, with
+$h_1r_1 + b_1 = 1$ and $\max\abs{RH + B - I}\le1.1\cdot10^{-14}$; the trade binds on the 3 of 9 modes with
+$h_j < \sigma_0$; MR's errors-in-variables bias falls only from 2397 to 491, and DR's from 0.471 to 0.211 --- MR over
+DR $2.3\cdot10^3$--$5.1\cdot10^3$ along the family. For priors whose zero-frequency leak does not commute with $H$, $R$
+and $B$ again from their dynamic blocks --- the prior fixed on the amplitudes or on the centres and adaptive at
+$\eta = \sigma_0$ elsewhere, one active face of the projected adaptive prior ($\eta = \infty$), the anchor gain
+$K = \eta P_{\mathrm{amp}}$, a random anchor gain with $K + K^\T\succeq0$ --- the block's $R$ and $B$ equal
+$(H + S_0)^{-1}$ and $(H + S_0)^{-1}S_0$, $S_0$ by elimination of the prior, to $1.9\cdot10^{-15}$: $RH + B = I$ holds
+to $1.4\cdot10^{-14}$ and per mode to $8.9\cdot10^{-15}$, while $\max\abs{HR + B - I}$ is 0.47--0.79. (C) The real
+loop ($k_e = 25$, $B = 100$, std 0.01, $\eta = \infty$, RK4 $\mathrm{d}t = 10^{-3}$, 12 runs of 300 time units, the
+three laws on common noise paths): at $t = 300$, $\E\norm{\fhat - f}^2_\rho$ is $2.43\cdot10^{-6}$ under MR against
+$2.80\cdot10^{-7}$ under DR and $2.75\cdot10^{-7}$ under DR*, a ratio of 8.7 (predicted 9.2); DR and DR* sit at their
+covariance part, their mean parts 0.07\% and 0.008\% of it. Against the prediction the $z$-scores run from $-2.04$ to
+$-0.04$ (MR; \hyperref[res:thmDppp:30]{Proposition D$'''$.30}'s runs of the same loop, on other paths, lay 7\% above
+it) and from $-1.8$ to $0.82$ (DR, DR*). The run mean of $\fhat_{\mathrm{MR}} - \fhat_{\mathrm{DR}}$, in which the
+first-order responses cancel path by path, equals the predicted $\hat J(\bar y_{\mathrm{MR}} - \bar y_{\mathrm{DR}})$
+to a relative $L^2_\rho$ error of 0.5--5.3\% at every record, 0.43--1.83 times the run mean's relative sampling error;
+the averaged prediction carries its own $O(1/k_e)$ error, and the test checks $F_1$ (through MR $-$ DR), not DR's own
+force, whose mean part is $7\cdot10^{-4}$ of its covariance part.
+\end{sloppypar}
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
 \paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}). The instance:

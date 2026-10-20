@@ -368,6 +368,233 @@ inequalities through optimal maps for functionals that are not geodesically conv
 PL inequality along the generalised geodesic based at the prior, with the loss linearised at the stationary residual
 and the counts making the constant independent of $m$\\
 \addlinespace[0.5pt]
+D$'''$.23 & Adaptive priors: the OT leak toward a prior whose atoms move toward the class barycentres at a rate
+$\eta > 0$ is the gradient flow of $\bar L + (\sigma_0/2)W^2(\mu_\Theta,\nu_Z)$ in a weighted metric; its replicated
+stationary points carry no leak bias (the critical points of the unregularised $K_0$-atom loss), its non-replicated
+ones the $K_0$-cluster bias, and boundedness becomes a hypothesis (the leak no longer confines the parameters); at an
+exact representation it linearises, for every $m$, into the separations (rate $\sigma_0$) and $2\times2$ collective
+pairs whose slower rates satisfy $\eta h_j/(h_j + \sigma_0 + \eta) < \lambda_j^- < \min\{h_j,\eta\}$
+($h_j,\eta > 0$), $h_j$ the measure-space excitation spectrum --- a learned prior removes the fixed prior's bias
+$\sigma_0(H_L + \sigma_0I)^{-1}x^0$ mode by mode, at the rate of the excitation; as $\eta\to\infty$ a
+capacity-constrained $K_0$-means regulariser; the transit drags the prior, so the adaptation should start from the
+fixed-prior stationary point
+& (i)--(iii) proved ((i) for bounded solutions), (iv) formal, (v) sketched (the radius stated, its constants not
+derived), (vi) the monotonicity of $\mathcal{J}$ proved and the drag numerical; numerics: the $K_0$-atom modes decay
+at $\lambda_j^-$; from separated starts the $m$-particle systems depart from the $K_0$-atom run at second order in the
+separations, consistent with the same expected size at $m = 15$ and $510$ (five draws); started from the fixed-prior
+stationary point every size $m = 15$--$510$ follows the $K_0$-atom run (per-seed ratios 0.995--1.000 at
+$\eta = \sigma_0$, 0.968--1.001 at $\eta = \infty$), with fit errors $1.6\cdot10^{-4}$ and $3.4$--$3.5\cdot10^{-5}$
+against the fixed prior's $9.78\cdot10^{-3}$
+& proximal point\,/\,iterated Tikhonov regularisation (its per-mode filter factors), elastic averaging (its quadratic
+analysis) and soft weight-sharing are the precedents (\cite{S49}); new are their transfer to the mass-constrained
+particle system uniformly in $m$ ($H_L$ as the measure-space excitation spectrum, the separations decoupled at
+$\sigma_0$), and the transit's drag with its gate; the limits (the lost a-priori bound, the $K_0$-cluster bias) are
+the precedents' own, specific here in their particle form and in the run-off from an exact fit\\
+\addlinespace[0.5pt]
+D$'''$.24 & The finite-size floor is the leak's bias at the sampled weights: under the nearest-atom leak toward a
+fixed matching prior the function-level weight-sensitivity is $F = \hat J\sigma_0(H_L + \sigma_0I)^{-1}\partial_wx^0$,
+the weight-derivative of the bias, and the floor law decomposes on the excitation spectrum with the band-pass weight
+$h_j\sigma_0^2/(h_j + \sigma_0)^2\le\sigma_0/4$, centred at $h = \sigma_0$ --- at the samples where the fixed prior's
+replicated point is stable (D$'''$.5-admissible); the nearest-atom leak toward an adaptive prior is the OT leak with
+the masses minimised out (the cell masses), and its stationary replicated configurations are the critical points of
+the unregularised weighted loss, the exact representation of the sampled weights among them --- no function-level
+floor at any representable sample, every separation relaxing at $\sigma_0$ (no splitting), perfect tracking an
+invariant set of the real loop --- while the coupled distance of the amplitude--mass gauge grows (the sample's weight
+fluctuation moved from the bias into the parameters)
+& (i) $F$ exact at $q$, the bias formula first order, the law (B) formal (the delta method, as D$'''$.9), (ii) proved
+inside the cells and across crossings for vertex-selection solutions, (iii) proved for the stationary points, (iv)
+the boundary case formal, (vi) the invariance proved; numerics: at the stable samples the exact bias at the sampled
+weights reproduces the observed floor (ratio 1.0000), while 5 of the 12 samples are fixed-prior saddles and split;
+the law is asymptotic (the exact floor's expectation 2.8, 1.5, 1.1 times it at $m = 15$, $60$, $240$); under the
+adaptive prior the function-level distance decreases without a floor (at $s = 6000$ at most $2.0\cdot10^{-6}$ at
+$\eta = \sigma_0$ over the representable samples) and the coupled distance is 1.7--4.8 times the fixed prior's, while
+$W^2$ is the cross-class transport of order $\norm{\delta w}_1$ under both priors; the samples outside $W$ have
+probability 0.36, 0.074, 0.0021 at $m = 15$, $60$, $240$; in the real loop the tracking error follows the averaged
+prediction (ratios 0.987--1.001)
+& the $1/m$ fluctuations of mean-field networks and their vanishing at an interpolating limit (\cite{R30},
+\cite{S51}), the delta method and the filter-factor bound of ridge regression are classical; new are the floor as the
+bias's weight-slope, mode by mode, a leak toward a learned prior as the way to restore the interpolation property
+under regularisation, and the design table of Remark D$'''$.25\\
+\addlinespace[0.5pt]
+D$'''$.26 & Perfect tracking with an adaptive prior in the real loop: the lift of the exact representation of
+representable sampled weights, with the prior at its atoms and the plant on the reference, is a $T_0$-periodic
+solution whose Floquet exponents are $\sigma_0/k_e$ exactly on the $(m - K_0)p$ separations --- every separation
+stable, also where the fixed prior's replicated orbit is a saddle --- and the weighted $K_0$-atom loop's on the
+collapsed subspace for every $m$; where $\partial_x\fhat = \partial_xf$ on the orbit (an exact representation) these
+are $(1/k_e)[\lambda_j^\pm(w) + c_j^\pm(w)/k_e^2 + O(k_e^{-4})]$ --- in slow time the odd orders vanish (the
+variational equation's symmetry with the slow block at $-\varepsilon$, the time reversal of the reversed reference's:
+the slow generator's spectrum is even; the first-order correction is skew), and $c_j$, explicit, contains the error
+filter's attenuation ($\le0$), the slaving's part ($\ge0$) and averaging terms, its sign not fixed; so perfect
+tracking is exponentially stable (locally, for each $m$) at the rate
+$(1/k_e)\min\{\sigma_0,\lambda_1^-(w) + c_1^-(w)/k_e^2 + \dots\}$
+& (a), (b) proved, exactly; (c) proved for $x_m\in C^4$ at simple eigenvalues, the stability where $H_L(w)\succ0$
+(Lemma D$'''$.26a: the slaving exact, the $O(k_e^{-4})$ remainder bounded, the parity an identity), $c_j$ explicit;
+the basin uniform in $m$ not proved; numerics: at $(6,5,4)/15$, $m = 15$ and $30$, $k_e = 25$ and $50$,
+$\eta = \sigma_0$ and $\infty$: the separations at $\sigma_0/k_e$ to $\le1.7\cdot10^{-6}$, the collective exponents
+the $K_0$-atom loop's to $\le6.4\cdot10^{-4}$; by the variational equation to $k_e = 400$ on two references (one with
+a non-zero first-order correction): the first-order deviations falling by $\to4$ per doubling (every exponent below
+its prediction on the instance; 13.6\% in the slowest mode at $k_e = 25$), the second-order residuals by $\to16$,
+$c_1/\lambda_1 = -100.6$ of which the filter's $-102.1 = -0.989\omega_1^2$; with the gain scaled by 30 two
+$c_j > 0$, those exponents above their prediction by $c_j/(\lambda_jk_e^2)$
+& Floquet theory, averaging and the Magnus expansion's commutator term, the averaging analysis of adaptive loops (the
+PE level), and leaks compatible with exact tracking ($e$-modification; a centre that follows the parameters) are
+classical, and (a)--(b) are Corollary D$'''$.14(ii) and Proposition D$'''$.15 at zero residual; new are the
+zero-residual lift at every representable sample with its exactly $m$-independent spectrum, and the explicit
+second-order coefficient of this loop (the even expansion is the classical consequence of time symmetry,
+\cite{S56})\\
+\addlinespace[0.5pt]
+D$'''$.\allowbreak26a & The exact slow subspace of the perfect-tracking linearisation: Chang's periodic decoupling $P$ (a
+contraction) makes the slaving of D$'''$.26 an exact block-triangularisation, so the slow Floquet multipliers are
+exactly the slow block's; its generator $\log\Phi(\varepsilon)/(\varepsilon T_0)$ has an expansion to
+$O(\varepsilon^4)$ with a bounded remainder (the Magnus series convergent for $\varepsilon T_0\norm{A} < \pi$); the
+slow block at $-\varepsilon$, defined by the same contraction, is the time reversal of the reversed reference's at
+$\varepsilon$, so with the variational equation's symmetry the slow generator's whole spectrum is even,
+$\operatorname{eig}\bar A(-\varepsilon) = \operatorname{eig}\bar A(\varepsilon)$, and the rates are exactly even; and
+Chang's second transformation decouples the slow coordinates' drift from the fast ones exactly, their noise
+$\varepsilon b\nu$,
+$b = -(\dot K + aK)^\T - \varepsilon(\ddot K + KK^\T K + K\Lambda^\T + a\dot K)^\T + O(\varepsilon^2)$, shared with
+the fast block --- at leading order the high-passed $-\varepsilon(\dot K + aK)^\T\nu$ ---, which gives D$'''$.30(ii)'s
+floor as a period average
+& proved (the constants not explicit; $\varepsilon_0$ also set by the spectral gap and $\bar A_0$'s margin):
+D$'''$.26(c) with a bounded $O(k_e^{-4})$ remainder, D$'''$.30(ii) for the linearised loop under white noise as a
+period average with the relative remainder $O(1/k_e)$ (at $\eta = 0$ with $K = \hat J$, $\Lambda = \sigma_0I$);
+numerics ($\eta = 0$, $\sigma_0$, $\infty$; $k_e = 12.5$--$1600$): the invariance residual $\le3.8\cdot10^{-15}$,
+$P - P_2 = O(\varepsilon^3)$ and $P - P_{(3)} = O(\varepsilon^4)$, the slow block's rates the full equation's to
+$1.0\cdot10^{-8}$, the rates at $\pm\varepsilon$ equal to $5.9\cdot10^{-12}$ of the largest ($1.1\cdot10^{-9}$ per
+mode) while the slowest mode's first-order deviation reaches 29.6\%, a mismatch breaking it at $O(1/k_e)$;
+$b - b_0 - \varepsilon b_1 = O(\varepsilon^2)$; the weakest mode's covariance deviation the slow noise's attenuation
+2.4--2.5 times the rate's correction, of opposite sign; the floor's period average at the formula to $3\cdot10^{-5}$
+at $k_e = 1600$, pointwise $\pm1\%$ (the jitter)
+& Chang's decoupling --- with its time-varying and stochastic versions (Kokotovi\'c--Khalil--O'Reilly Ch.~4--5 and
+App.~A, Haddad--Kokotovi\'c, Yang--Zhu; Berglund--Gentz's slow manifolds under noise) ---, the Magnus series'
+convergence and the reversal argument (the adjoint relation of symmetric methods) are classical (\cite{S59},
+\cite{S56}); new is their application here: the exact slaving, the parity as an identity at negative $\varepsilon$,
+the slow noise identified exactly\\
+\addlinespace[0.5pt]
+D$'''$.27 & A projected adaptive prior restores the leak's a-priori bound: with the prior's atoms started in and
+confined to a compact convex set $\mathcal{Z}$ (the projected flow; at $\eta = \infty$ the projected class
+barycentres), every particle's distance from $\mathcal{Z}$ is at most
+$B/\sigma_0 + (d(0) - B/\sigma_0)_+e^{-\sigma_0s}$, $B$ the worst-case learning force, for every $m$, $\eta$ and
+target; $\mathcal{J}$ is non-increasing (at $\eta = \infty$ in its selected form, along a Lloyd-consistent plan; the
+reduced energy need not decrease); inside $\mathcal{Z}$ nothing changes (Theorem D$'''$.23's bias removal and
+linearisation), and where the limit has an atom on the boundary --- necessarily when no stationary point has its
+prior inside --- a bounded bias remains; at $\eta = \infty$ on collapsed classes the leak is the gradient of the
+exterior penalty $(\sigma_0/2)\operatorname{dist}^2(\vartheta,\mathcal{Z})$, a switching $\sigma$-modification toward
+$\mathcal{Z}$
+& (i), (iii) proved ((iii)'s local convergence as Theorem D$'''$.23(v), sketched); (ii) the monotonicity proved, the
+convergence argued at $\eta = \infty$ and formal at finite $\eta$; (iv) the identification at $\eta = \infty$ proved,
+the boundary atoms and the bias outside numerical; numerics: beyond the saturation both $\eta$ converge to the same
+bounded point (fit error 0.1415; the projected midpoint rule consistent, the trajectory error
+$6.3\cdot10^{-7}$--$3.8\cdot10^{-8}$ at $\mathrm{d}t = 0.25$--$0.0625$), particles within 0.92 of $\mathcal{Z}$
+(bound $\le3686$); the box's amplitude bound 0.75--0.99 of $a_{\max}$ trading the fit error 0.1676--0.1101 between
+the fixed prior's 0.1750 and the unprojected limit 0.1050, tighter boxes (which exclude the exact atoms) worse than
+the fixed prior; at $\eta = \infty$ the reduced energy rising by 26\% along a Lloyd-consistent plan while the selected
+energy falls; on the four-bump target the box stops the width's run-off at its face; at the misplaced prior the box
+never approached
+& parameter projection, the exterior quadratic penalty and the switching $\sigma$-modification (which keeps the ideal
+properties inside its set) are classical, and at $\eta = \infty$ on collapsed classes the construction is the latter;
+new is its transfer to the learned centre of a mass-constrained $K_0$-atom prior at finite $\eta$, compatible with
+Theorem D$'''$.23's bias removal inside $\mathcal{Z}$\\
+\addlinespace[0.5pt]
+D$'''$.28 & The adaptive prior's floor removal is a gauge property: the masses enter the network only through
+$w_ka(\alpha_k)$, so for any nondegenerate critical point $\vartheta^b(q)$ of the unregularised loss --- exact or not
+--- its gauge transform $G_w\vartheta^b(q)$ is a critical point at every sampled weight vector of $W_g$ with the same
+function: at a strict local minimum no function-level floor at the samples of $W_g$ with positive margins, whatever
+the approximation error; the fixed matching prior's floor is $\sigma_0\hat J(\tilde A + \sigma_0I)^{-1}\tilde g$ with
+the full Hessian $\tilde A = H_L - \tilde R$; for a scalar amplitude per kernel the residual curvature has a zero
+amplitude row at a critical point and scales exactly by $q_k/w_k$ under the gauge, so the adaptive prior's splitting
+margins are $\sigma_0 - (q_k/w_k)\lambda^+_k$
+& (i), (iii) proved exactly, about the stationary points; (ii) as D$'''$.24(i); the dynamics' convergence, and with
+it the floor's vanishing, numerical; numerics: with a fourth bump that three kernels cannot represent (fit errors
+0.4--2.5\%), the critical point continued in $w$ from $\vartheta^b(q)$ is the gauge transform to $2\cdot10^{-11}$ with
+$\fhat$ unchanged to $6\cdot10^{-13}$, the adaptive prior's sensitivity $10^{-11}$--$3\cdot10^{-10}$ of the fixed
+prior's, the fixed prior's equal to the full-Hessian formula to $2\cdot10^{-9}$ (the Gauss--Newton form off by
+$7\cdot10^{-4}$--$5.6\cdot10^{-3}$), the margin formula exact to $10^{-14}$ and the dynamics' separation eigenvalues
+to $6\cdot10^{-12}$; $P(w^m\in W_g) = 0.52$ at $m = 15$; the dynamics: under the fixed prior the floor stays and the
+fit error above the approximant's; under the adaptive priors the floor falls by orders of magnitude and the fit error
+tends to the approximant's at the samples inside $W_g$; outside it the systems approach the box minimum on the branch
+(1.11--1.59 times the approximant's fit error)
+& the homogeneity of the conic view (\cite{R49}, \cite{R55}) and the rescaling symmetries of networks (\cite{S55}) are
+classical; new are the gauge as the mechanism of the floor removal, robust to approximation error, and the exact
+margin formula for a scalar amplitude\\
+\addlinespace[0.5pt]
+D$'''$.29 & Second-order plants: with the sliding variable $s = \dot e + \lambda e$ and
+$u = \ddot x_m - \lambda\dot e - k_s s - \fhat_\Theta(z)$, the error channel is $\dot s = -k_s s + r_\Theta(z)$,
+$\dot e = -\lambda e + s$ --- Theorem J's with $s$ in place of $e$ --- so as $k_s\to\infty$ the parameters follow the
+averaged slow loop along the regressor's orbit $z_m(t)$, every averaged-loop statement of
+Section~\ref{sec:thmDppp} transfers with the occupation measure of $z_m$, and the position error is the residual
+filtered by $(\mathrm{d}/\mathrm{d}t + \lambda)^{-1}(\mathrm{d}/\mathrm{d}t + k_s)^{-1}$; kernels on the coordinate
+$f$ depends on see the orbit as an interval, while isotropic phase-plane kernels on a circular orbit ($\omega_0 = 1$ in
+isotropic units) are over-parametrised (von Mises restrictions: in general position one zero Gauss--Newton eigenvalue
+per kernel; on other orbits weak excitation)
+& (i), (iv) exact; (ii), (iii) formal (first-order averaging with the fast pair $(s,e)$; Theorem J's steps carry over
+for the smooth fixed-prior leak once the error-channel steps are redone; switching targets beyond the first-order
+theory); numerics: a position servo with a cogging torque whose four-kernel local minimum $\vartheta^b(q)$ (fit error
+1.46\%; the loss's infimum lies at the saturation, $\le0.64\%$) is Proposition D$'''$.28's regime: from clouds around
+$\vartheta^b(q)$ the fixed prior's floor $1.85\cdot10^{-3}$--$4.49\cdot10^{-5}$ ($m = 16$--$128$), the adaptive
+prior's 38--780 times lower, the OT leak at the approximant, $\sigma$-modification toward 0 biased (0.328), and no leak
+as good (0.0180--0.0146); from an engineer's model (fit error 0.200) the fixed designs stay biased (0.048--0.10) and
+the adaptive prior removes most of the bias, slowly (0.022--0.027 at $s = 2000$; the $K_0$-atom flow 0.0155 at
+$s = 10^5$); the real servo's position error at the exactly filtered prediction to 1.0001--1.0029 (the slaved one
+0.931--0.996), no design drifting; noise-free, so the leaks' robustness is not exercised
+& the filtered error and Gaussian networks in adaptive control are classical (Sanner--Slotine), and so is the partial
+excitation of Gaussian networks along an orbit; new are the transfer of the transport leaks, their floors and the
+adaptive and projected priors to second-order plants, and the exact fibre of isotropic phase-plane kernels on a
+circular orbit\\
+\addlinespace[0.5pt]
+D$'''$.30 & Measurement noise at perfect tracking: the noise is coherent --- a replicated start stays replicated under
+every noise path, so the floor does not average out with $m$ (invariance, not attraction: near the lift the
+separations grow above a noise level, which drifts along the trajectory with the developing errors-in-variables
+deviation); to first order the loop high-passes the measured error's noise,
+$((\mathrm{d}/\mathrm{d}t - a)/(\mathrm{d}/\mathrm{d}t + k_e))\nu$, and the function-level floor is
+$(N_0/2k_e)[\sum_jQ_{jj}(h_j + \eta)/(h_j + \eta + \sigma_0) + \tr H^2]$,
+$Q = \langle(\dot{\hat J} + a\hat J)^\T(\dot{\hat J} + a\hat J)\rangle$ --- the prior's mobility enters the Tikhonov
+filter factor as $h_j + \eta$, and the adaptive prior's floor is $(N_0/2k_e)\tr Q$ whatever the spectrum; to second
+order the noise inside the regressor exerts a mean force (the errors in variables) whose stationary response is
+$(H + \sigma_0I)^{-1}$ under the fixed prior and $H^{-1}$ under the adaptive prior, for every $\eta > 0$
+& (i) exact as invariance, its threshold formal at the lift, the long-time threshold open; (ii) proved for the
+linearised loop under white noise as a period average (Lemma D$'''$.26a), (iii) formal, their closed forms exact for
+the averaged system; numerics: the floor per unit $N_0$ 0.1597 (fixed) to 0.1757 ($\eta = \infty$), the weakest
+mode's variance $\times24.1$ ($\times28.0$ in the exact linearised loop at $k_e = 25$); the exact periodic covariance
+of the linearised loop at the prediction to 0.976--1.00001 ($k_e = 25$--$800$: the relative error $O(1/k_e)$, its
+first-order term from the slope $a$, the slope-free control numerically even in $1/k_e$); the errors-in-variables
+bias 491 (fixed) and 2397 (adaptive) per $(\E\nu^2)^2$ averaged, 504 and 2653 in the exact linearised loop, the
+parameters' fluctuation negligible; the real loop (12 common noise paths, two noise levels) within 1.75 standard
+errors of the prediction, the mean part 89\% at std 0.01; the lift $m = 15$ identical to the $K_0$-atom run to
+rounding; the separations' threshold std 0.031 at the lift; on antithetic pairs the noise-induced separation rate
+$\lambda_{\mathrm{eff}} = 0.327$, $0.318$, $0.294$ at std 0.01, 0.03, 0.05 against the lift's 0.298 and the
+transient's 0.326--0.328, the small-noise limit $0.329\pm0.003$, the rate vanishing at std 0.0299 over 300 time units
+& measurement noise, the errors-in-variables bias, the diffusion approximation, the LMS misadjustment, leaky LMS,
+common noise and the lack-of-excitation drift are classical; new are the floor's interpolation in the prior's
+mobility ($h_j + \eta$ in the filter factor), the driving matrix $Q$ of the sensitivity-filtered measurement, and
+their combination with the coherence of the $K_0$-atom identification and its noise threshold at the lift\\
+\addlinespace[0.5pt]
+D$'''$.31 & The adaptive prior is a washout leak: the prior lags the class barycentre by its exponentially forgotten
+increments, so the leak acts in full on the separations and, for integral plans, on the barycentre through the
+high-pass $i\omega/(i\omega + \eta)$ --- mode $j$'s stiffness $h_j + \sigma_0i\omega/(i\omega + \eta)$ --- which is
+its bias removal and its lost robustness to persistent forces on the barycentres; along every affine time-invariant
+prior the stationary response $R$ and the bias $B$ toward a misplaced anchor satisfy $RH + B = I$ (per mode
+$h_jr_{jj} + b_{jj} = 1$), so no prior gives both; a force's function-level response is at most the norm of its
+smallest equivalent target perturbation, under every leak with $S + S^\T\succeq0$; and the desired regressor (the
+adaptive law's regressor at the reference) keeps the lift, the linearisation and the first-order noise response while
+turning the noise's own persistent force into the least-squares force of $g = k_e\E[e]$, its response at most
+$\frac14\norm{\partial^2_xf}^2_\rho(\E\nu^2)^2$ uniformly in $k_e$, $B$ and the spectrum --- the parameters'
+fluctuation adding a force of the same order that is not the learning force of a mean tracking error, so no bound in
+the noise's moments applies
+& (i)--(iii) proved; (iv)(a)--(b) proved at the lift and for the linearised equations, (iv)(c) formal, its noise
+part's consequences exact for the averaged system, the parameters' part numerical; numerics: the adaptive prior's bias
+2397, 0.471, 0.0526 per $(\E\nu^2)^2$ (noise part; MR, DR, DR*) at $k_e = 25$, with the parameters' fluctuation 2398,
+0.486, 0.0481 (DR $+56\%$ at $k_e = B = 100$, where its noise part nearly cancels); MR over DR
+$3.0\cdot10^3$--$2.1\cdot10^8$ over $k_e = 25$--$200$; $R$ and $B$ from the priors' dynamic blocks, $RH + B = I$ to
+$1.4\cdot10^{-14}$, also for non-commuting leaks, where $HR + B - I$ reaches 0.47--0.79; the real loop on common noise
+paths: $\E\norm{\fhat - f}^2$ 8.7 times lower under DR (predicted 9.2), the MR $-$ DR mean difference at its
+prediction to 0.5--5.3\% (0.4--1.8 sampling errors)
+& washout filters, low-frequency learning, the desired regressor, the Tikhonov\,/\,Kalman split and the minimum-norm
+bound are classical; new are their transfer to the transport leaks (the washout reading of the adaptive prior,
+uniform in $m$) and the quantification; the parameters' own errors in variables is the classical second-order bias of
+a constant-gain stochastic approximation (\cite{S57}: Benveniste--M\'etivier--Priouret, Dieuleveut--Durmus--Bach,
+Box), new only the observation that the desired regressor does not remove it\\
+\addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance
 $O(1/k_e)$, with the same stability type; the parameter Floquet exponents are
