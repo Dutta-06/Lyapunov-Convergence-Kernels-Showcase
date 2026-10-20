@@ -14,15 +14,15 @@ Proposition D‴.32's instance, one particle per class at ϑ^e(1/3) (m = 3), the
 
 ## B. The diffusion measured (64 seeds, γ = 0.01, 50000 slow units)
 
-| s | mean-square displacement of W_1, W_2, W_3 |
-|---|---|
-| 5000 | 1.54e-4, 7.91e-5, 1.26e-4 |
-| 10000 | 3.07e-4, 1.69e-4, 2.80e-4 |
-| 20000 | 5.38e-4, 4.53e-4, 4.67e-4 |
-| 30000 | 7.96e-4, 6.70e-4, 6.01e-4 |
-| 50000 | 0.00151, 0.00116, 9.13e-4 |
+| s | mean-square displacement of W_1, W_2, W_3 | the displacement's variance |
+|---|---|---|
+| 5000 | 1.54e-4, 7.91e-5, 1.26e-4 | 1.53e-4, 8.03e-5, 1.25e-4 |
+| 10000 | 3.07e-4, 1.69e-4, 2.80e-4 | 3.06e-4, 1.71e-4, 2.78e-4 |
+| 20000 | 5.38e-4, 4.53e-4, 4.67e-4 | 5.34e-4, 4.56e-4, 4.73e-4 |
+| 30000 | 7.96e-4, 6.70e-4, 6.01e-4 | 7.66e-4, 6.49e-4, 6.09e-4 |
+| 50000 | 0.00151, 0.00116, 9.13e-4 | 0.00138, 0.00105, 9.27e-4 |
 
-The slope over s ∈ [10000, 50000]: 3.00e-8 ± 5.67e-9, 2.49e-8 ± 4.88e-9, 1.58e-8 ± 3.68e-9 (bootstrap standard errors); predicted (A): 2.85e-8, 1.63e-8, 1.81e-8; ratios 1.05, 1.53, 0.88.
+The variance's slope over s ∈ [10000, 50000]: 2.69e-8 ± 5.82e-9, 2.21e-8 ± 4.65e-9, 1.62e-8 ± 3.76e-9 (bootstrap standard errors); predicted (A): 2.85e-8, 1.63e-8, 1.81e-8; ratios 0.95, 1.36, 0.90.
 
 The masses' mean at s = 50000 (from 1/3): 0.3212 ± 0.0046, 0.3445 ± 0.0041, 0.3342 ± 0.0038 (standard errors): the drift term of the limit, which (A) does not include.
 

@@ -936,16 +936,17 @@ reduced crossing against closed forms; the mass-free leak's blocks.
 ## Proposition D‴.36 — the gauge under dither (`exp_gauge_dither.py` → `chaos/gauge_dither.md`)
 
 - Proposition D‴.32's three-bump instance, one particle per class at the exact representation ϑ^e(1/3), the replicator at γ = 10⁻², the
-  positions dithered at τ = 10⁻⁴. (A–B) The masses diffuse along the manifold of exact fits at the predicted rate (the ratios 1.05, 1.53,
-  0.88 over 64 seeds, within two standard errors); their means drift by about 2.6 standard errors in 5·10⁴ slow units (the limit's drift
-  term, not computed).
+  positions dithered at τ = 10⁻⁴. (A–B) The masses diffuse along the manifold of exact fits at the predicted rate (the displacement's variance at 0.95, 1.36, 0.90 times the prediction over 64 seeds, within two standard errors); their means drift by about 2.6 standard errors in 5·10⁴ slow units (the limit's drift
+  term, computed in Proposition D‴.37).
 - (C) Without a leak the masses spread to 0.05 in 2·10⁵ slow units and the first amplitude runs into the saturation (|a|/a_max = 0.9994,
   against 0.80 with fixed weights), the fit error unchanged (the dither's).
-- (D) The entropic leak on the masses pins them: the spreads 0.0152, 0.0103, 0.0117 (ε = 10⁻⁴) and 0.0044, 0.0032, 0.0034 (10⁻³) against
-  the Ornstein–Uhlenbeck prediction 0.0139, 0.0099, 0.0105 and 0.0044, 0.0031, 0.0033, the means within 0.008 and 0.0005 of 1/3.
+- (D) The entropic leak on the masses pins them: at ε = 10⁻³ the spreads 0.0044, 0.0032, 0.0034 against the Ornstein–Uhlenbeck
+  prediction 0.0044, 0.0031, 0.0033; at ε = 10⁻⁴ four seeds scatter too much to test it (0.0152, 0.0103, 0.0117 against 0.0139, 0.0099,
+  0.0105), the 16-seed test being Proposition D‴.37 (G).
 
 Tests (`tests/test_gauge_dither.py`): the leak a Fisher–Rao gradient; the two-class diffusion's closed form; the leak keeping the exact
-representation stationary and stabilising the gauge; the leak's spread against the two-class closed form; no weight motion at γ = 0.
+representation stationary and stabilising the gauge; the leak's spread against the two-class closed form; no weight motion at γ = 0; D against the projector of the code's
+drift Jacobian; run_dithered's noise 2τG dt.
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 

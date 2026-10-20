@@ -10,7 +10,7 @@ A. The prediction: the manifold M of exact fits {W_ka(α_k) = A_k, the centres a
    (the K − 1 gauges, δα_k = −A_k δW_k/(W_k²a′_k)), the flow's metric g (G⁻¹ on the positions, (m/γ)/W_k on the masses) and the position
    noise Σ = 2τG: the masses' diffusion D = (TᵀgT)⁻¹Tᵀ g Σ g T(TᵀgT)⁻¹ per unit time (the g-orthogonal projection of the noise onto M: the
    linearised gradient flow's limit map), at W = 1/3 for several γ.
-B. The diffusion measured: 64 seeds, τ = 10⁻⁴, γ = 10⁻², 5·10⁴ slow units; the masses' mean-square displacement and its slope over
+B. The diffusion measured: 64 seeds, τ = 10⁻⁴, γ = 10⁻², 5·10⁴ slow units; the masses' displacement variance and its slope over
    s ∈ [10⁴, 5·10⁴] (a bootstrap error), against A; the masses' mean at the end (the limit's drift term, which A does not include).
 C. No leak over long times (10 seeds, 2·10⁵ slow units): the masses' spread, the amplitude coordinates' excursions toward the saturation,
    the fit error; γ = 0 (equal weights, no gauge) as the control (4 seeds).
@@ -124,20 +124,22 @@ def report(A=None, B=None, C=None, D=None):
         L_.append("")
     if B is not None:
         s, ms, W = msd(B)
+        dvar = lambda W_: np.var(W_ - W_[:, :1, :], axis=0, ddof=1)      # round 26 (D3y-5): the variance, not the mean square (the drift removed)
+        vs = dvar(W)
         i0 = int(np.argmin(np.abs(s - 1e4))); i1 = len(s) - 1
-        slope = (ms[i1] - ms[i0]) / (s[i1] - s[i0])
+        slope = (vs[i1] - vs[i0]) / (s[i1] - s[i0])
         rng = np.random.default_rng(0); bs = []
         for _ in range(1000):
-            idx = rng.integers(0, len(W), len(W)); m_ = np.mean((W[idx] - W[idx][:, :1, :]) ** 2, axis=0)
-            bs.append((m_[i1] - m_[i0]) / (s[i1] - s[i0]))
+            idx = rng.integers(0, len(W), len(W)); v_ = dvar(W[idx])
+            bs.append((v_[i1] - v_[i0]) / (s[i1] - s[i0]))
         err = np.std(bs, axis=0)
         pred = np.diag(A['rows'][[r['gamma'] for r in A['rows']].index(GAMMA)]['D']) if A is not None else np.full(3, np.nan)
         L_ += [f"## B. The diffusion measured ({len(W)} seeds, γ = {GAMMA:g}, {S_B:g} slow units)", "",
-               "| s | mean-square displacement of W_1, W_2, W_3 |", "|---|---|"]
+               "| s | mean-square displacement of W_1, W_2, W_3 | the displacement's variance |", "|---|---|---|"]
         for t in (5e3, 1e4, 2e4, 3e4, 5e4):
             i = int(np.argmin(np.abs(s - t)))
-            L_.append(f"| {s[i]:g} | {', '.join(fmt(v) for v in ms[i])} |")
-        L_ += ["", f"The slope over s ∈ [{s[i0]:g}, {s[i1]:g}]: " + ', '.join(f"{fmt(v)} ± {fmt(e)}" for v, e in zip(slope, err))
+            L_.append(f"| {s[i]:g} | {', '.join(fmt(v) for v in ms[i])} | {', '.join(fmt(v) for v in vs[i])} |")
+        L_ += ["", f"The variance's slope over s ∈ [{s[i0]:g}, {s[i1]:g}]: " + ', '.join(f"{fmt(v)} ± {fmt(e)}" for v, e in zip(slope, err))
                + f" (bootstrap standard errors); predicted (A): {', '.join(fmt(v) for v in pred)}; ratios " + ', '.join(f"{v / p:.2f}" for v, p in zip(slope, pred)) + ".", ""]
         Wend = W[:, -1, :]
         L_ += [f"The masses' mean at s = {s[-1]:g} (from 1/3): " + ', '.join(f"{v:.4f} ± {e:.4f}" for v, e in zip(Wend.mean(axis=0), Wend.std(axis=0, ddof=1) / np.sqrt(len(Wend))))

@@ -78,3 +78,28 @@ def test_the_leaks_spread_has_the_two_class_closed_form():
     kappa = eps * Tw / (Ta + Tw)                                            # the leak's stiffness along M, slowed by the positions' share
     sd = GD.leak_spread(W, gamma, tau, eps, A=A, a_max=amax)
     assert np.abs(sd / np.sqrt(D / (2 * kappa)) - 1).max() < 1e-10
+
+
+def test_the_diffusion_is_the_projection_of_the_codes_own_drift():
+    # round 26 (D3y-9): D against the spectral projector of the drift's Jacobian (src/core/gauge_drift.py), which ties the metric g to the code
+    import exp_gauge_drift as X
+    W = np.array([0.30, 0.25, 0.45])
+    d, D, ev = X.drift_at(W[:2])
+    assert np.abs(D - GD.gauge_diffusion(W, X.GAMMA, X.TAU)[:2, :2]).max() < 1e-4 * np.abs(D).max()
+
+
+def test_run_dithered_has_the_noise_two_tau_g():
+    # round 26 (D3y-9): one Euler–Maruyama step from the exact representation (where the drift vanishes): the positions' increments have
+    # the covariance 2τG dt per particle, the weights move only at second order
+    net, base = E.setup()
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2)
+    Th0 = E.exact_rep(net, np.ones(3) / 3)
+    tau, dt, n = 1e-4, 0.25, 4000
+    rng = np.random.default_rng(1)
+    inc = []
+    for _ in range(n):
+        Th, b = loop.run_dithered(Th0, np.ones(3), dt, dt, tau, rng)
+        inc.append((Th - Th0).ravel())
+        assert abs(b.sum() - 3) < 1e-12
+    v = np.var(np.array(inc), axis=0) / (2 * tau * dt * np.tile(E.G, 3))
+    assert np.abs(v - 1).max() < 0.12

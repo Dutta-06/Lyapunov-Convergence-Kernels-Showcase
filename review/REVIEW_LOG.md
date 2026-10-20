@@ -1175,3 +1175,33 @@ reproduced number matches; the md regenerates byte-identically.
 cascade only because its thresholds lay one stage lower; continued, it shed like the original. And a statistic that any order-preserving
 law reproduces tests the order, not the term it was meant to test: the discriminating number was the time, and the linear law missed it by
 22%.
+
+## Round 26 (adversarial review of Proposition D‴.36, the gauge under dither, 2026-10-20)
+
+**Design.** One referee, not modifying the repository. D3y: Proposition D‴.36 on a snapshot of 15dcd79 (`review/REVIEW_round26_D3y.md`; its
+issues ID-1–ID-12 are D3y-1–D3y-12 here): an independent model matching the drift to 10⁻¹⁷, the spectrum and the projector, the limit map by
+long LSODA integrations and its drift term, the full linear Ornstein–Uhlenbeck problem with the leak, batched simulations with 256 seeds
+(Part B, at τ = 10⁻⁴ and 2.5·10⁻⁵) and 64 seeds per ε (Part D), mutants against the tests.
+
+**Verdicts (D3y).** (i) correct for one particle per class (M normally attracting, the slowest normal rate independent of γ); (ii) correct —
+the metric, the spectral projector equal to the g-orthogonal one to 2·10⁻⁹, Table A to every digit, the closed form and the γ-limits;
+the uncomputed drift (−2.055, +1.580, +0.475)·10⁻⁷ explains Part B's means; (iii) mostly correct — the leak a Fisher–Rao gradient, κ and the
+Lyapunov equation right (0.5% and 4% against the full linear covariance), the O(τ/ε) shift confirmed; the numbers reproduce bit for bit.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3y-1 | major ((i), §0 row) | "(or with its classes collapsed)": with n_k > 1 the within-class redistributions are zero modes too (dimension m − 1), and T_α needs n_k | restricted to one particle per class; the n_k > 1 case stated |
+| D3y-2 | major ((iii)) | where w is not representable the bias is O(ε/γ), not O(ε) (the minimiser depends on ε/γ only) | "a bias of order ε/γ" |
+| D3y-3 | major (*Numerics* (D), §0, §8, RESULTS, PAPERS) | at ε = τ the 4-seed agreement is chance: 64 seeds give spreads 14–23% above the prediction, and the ε^{−1/2} ratio 3.7–4.0 | (D): only ε = 10τ informative (to 3%), ε = τ unresolved at 4 seeds, the 16-seed test in Proposition D‴.37 (G); "to 11%" removed |
+| D3y-4 | minor ((D), (B)) | the drift is computable and predicts Part B's means; "0.008 vs 0.0005, as O(τ/ε) says" is 4-seed noise | the drift computed in Proposition D‴.37; the claim removed |
+| D3y-5 | minor ((B)) | the slope used the mean square, which includes the drift's square | the displacement's variance: ratios 0.95, 1.36, 0.90 (`exp_gauge_dither.py`) |
+| D3y-6 | minor (Status) | the time-scale separation is thin (slowest normal rate ≈ 3τ; at ε = 10⁻³ the leak's stiffness exceeds it) | said in the Status |
+| D3y-7 | minor (proof) | "BBᵀ = Σ" should be BBᵀ = G | fixed |
+| D3y-8 | minor ((ii), Status) | for K = 3 only the saturating class's row and column of D vanish; the α-diffusion is exactly 2τG_α; the unbounded excursion is outside Katzenberger's theorem | (ii) and the Status restated |
+| D3y-9 | minor (tests) | nothing ties the metric to the code's drift or the noise to τ | two tests: D against the projector of the code's drift Jacobian; `run_dithered`'s noise 2τG dt |
+| D3y-10 | minor ([S64], New) | Parsons–Rogers' first author T. L. Parsons, J. Phys. A 2017; Constable–McKane–Rogers missing; "in the flow's metric" computed, not new | [S64] fixed and extended; the audit's wording |
+| D3y-11 | minor ((D)) | "amplitudes back inside" depends on the number of seeds | said |
+| D3y-12 | cosmetic | 0.80 vs 0.8033; (C)'s comparison without error bar; (i)'s proof circular | fixed |
+
+**Lesson.** Four seeds can agree with a prediction to 10% by chance when their own scatter is 20%: an agreement is only as good as the
+sample's error bar, and the referee's 64 seeds turned the best-looking number into the one that failed.
