@@ -223,11 +223,11 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   σ₀w_k/k_e and the η = ∞ adaptive prior's collective spectrum, and with the desired regressor (Corollary D‴.33) the classes' noise
   threshold is bounded below uniformly in the gain. The number of kernels is not selected by the leak: it is the transit's and the
   schedule's. A replicator law on the kernels' weights (Proposition D‴.34) — the Fisher–Rao part of a Wasserstein–Fisher–Rao gradient
-  flow, in real time an exponentiated-gradient law with the relative entropy as its Lyapunov function — keeps the stationary set at clustered configurations under the finite range (under the Gaussian kernel it selects the masses) and the saturation's bound, and removes the transit's mass obstruction: at fixed positions bounded trajectories reach the exact fit iff the target is representable.
+  flow, in real time an exponentiated-gradient law with the relative entropy as its Lyapunov function — keeps the stationary set at clustered configurations under the finite range (under the Gaussian kernel it selects the masses) and the saturation's bound, and removes the transit's mass obstruction: at fixed positions bounded trajectories reach the exact fit iff the target is representable. A split is an S_n-symmetric transcritical bifurcation whose quadratic coefficient is the residual's third derivative along the splitting direction (Proposition D‴.35): the extreme particle of the jitter leaves first, alone, and the class's mass-dependent stiffness makes the cascade.
 - **Rests on.** Proposition D‴.32 ((i)–(iii) proved; (iv) proved for the stationary points and their linearisation; (v) the twins' rate
   to leading order, the merger only without a third class within reach; (vi) the lift exact, the collapsed exponents by Corollary D‴.26
-  and Lemma D‴.26a), Corollary D‴.33, Proposition D‴.34, `exp_cohesion_leak.py` (the linear theory, warm and broad starts, the real loop,
-  dither, the cogging servo, the σ₀ sweep, other targets, the scale window, the counterexample to merging), `exp_mass_transfer.py`.
+  and Lemma D‴.26a), Corollary D‴.33, Propositions D‴.34 and D‴.35, `exp_cohesion_leak.py` (the linear theory, warm and broad starts, the real loop,
+  dither, the cogging servo, the σ₀ sweep, other targets, the scale window, the counterexample to merging), `exp_mass_transfer.py`, `exp_split_bifurcation.py`.
 - **Novelty (audit).** Mean shift, aggregation equations, bounded-confidence and polarized consensus-based clustering, clustering in
   self-attention dynamics, splitting steepest descent and Fukumizu–Amari's critical lines, convex clustering and sum-of-norms
   identification, deterministic annealing and self-organising RBF networks are classical ([S60]), as are Wasserstein–Fisher–Rao flows,

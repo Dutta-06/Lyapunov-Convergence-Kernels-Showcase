@@ -914,6 +914,21 @@ conserved; at fixed positions Σβ = m is kept and the exact fit is reached with
 least error when Σ|A_k|/a_max > 1; at the lift of an exact representation the zero modes in (Θ, log β) are the predicted Σ(n_k − 1)
 redistributions and K gauges, a separation keeps −σ₀w_k with γ > 0, and the rest of the spectrum is D‴.32's (γ = 0) and stable (γ > 0).
 
+## Proposition D‴.35 — the split of a class is an S_n-symmetric transcritical bifurcation (`exp_split_bifurcation.py` → `chaos/split_bifurcation.md`)
+
+- Proposition D‴.32's resolution instance (the lift of ϑ^b(q), m = 30, compact R = 1). (A) The middle class splits first (λ⁺ = 2.86·10⁻⁴,
+  the threshold 0.1213σ₀); along its splitting direction the residual's third derivative is c₃ = −1.257·10⁻³.
+- (B) Near the threshold Newton on the full drift finds the S_q × S_{n−q} split states (q = 1–4) where the reduced equation puts them (0.3%–3.0%
+  at μ = 5·10⁻⁷), each a saddle, its eigenvalues converging to ∓μn/(n − 2q) and −μ as μ → 0.
+- (C) The first particle to leave on the side sign(c₃)v is the extreme one of the jitter in 12 of 12 runs, at the reduced equation's time to
+  about 1%; the cascade stops within a stage once the main piece's margin is positive.
+- (D) Under Part G's schedule: 8–10 classes with the cohesion leak, 6–7 with the replicator (γ = 0.1), 4 in 3 of 3 under the mass-free leak —
+  the target's count — but the escapee at the flank and the fit error 0.0149 against 0.003. (E) With the replicator at γ = 1: 5, 6 and 8 classes (the first escapee's mass 0.134–0.136): the cascade shortened, not
+  reliably to the target's count.
+
+Tests (`tests/test_split_bifurcation.py`): the full drift along v against the reduced quadratic equation (the remainder cubic); the
+single-particle split state a saddle with the predicted eigenvalues; the predicted particle leaving first, on the predicted side.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
