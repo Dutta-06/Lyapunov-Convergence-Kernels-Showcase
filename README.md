@@ -76,7 +76,7 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   particle of the jitter runs away first, alone or with a near-tied neighbour — why the cohesion leak sheds single particles — and after a
   departure the stiffness's drop and the curvature's gauge rise favour more (Proposition D‴.35); and under dither the replicator's masses diffuse along the manifold of exact fits (Katzenberger's limit) and their amplitudes run into
   the saturation, which an entropic leak on the masses prevents, without bias where the target's fractions are
-  representable (Proposition D‴.36); rounds 7–25 of the review log cover all of them up to D‴.35, and their remarks.
+  representable (Proposition D‴.36); rounds 7–26 of the review log cover all of them up to D‴.36, and their remarks.
 
 ---
 
