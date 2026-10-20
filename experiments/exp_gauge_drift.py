@@ -13,7 +13,8 @@ B. The drift split by the noise coordinates (each class's amplitude, centre, wid
 C. The slow-replicator limit: the drift over γτ for γ = 10⁻², 10⁻³, 10⁻⁴, 10⁻⁵ against the replicator flow of the entropic free energy,
    −½W_k(∂_kℓ − Σ_lW_l∂_lℓ), ℓ(β) = log det ∇²_ϑJ at the exact representation with the masses β/3 (finite differences).
 D. The saturation layer: the zeros of the first class's drift on the line W_2 = W_3 for γ = 10⁻²–10⁻⁴, their distance from the first
-   class's saturation |A_1|/a_max = 0.25, against √γ.
+   class's saturation |A_1|/a_max = 0.25, against √γ and the rates' crossing δ*; deep inside, the drift against the amplitude's free
+   diffusion carried along M, τG_α∂²_αW_1.
 E. The drift field at γ = 10⁻² on a grid of the representable masses (W_k ≥ |A_k|/a_max + 0.004); its zeros (Newton from the grid's
    twelve smallest drifts and from the three grid points nearest two saturations) and the eigenvalues of its Jacobian there.
 F. The ensemble mean of exp_gauge_dither.py's Part B (64 seeds, 5·10⁴ slow units, from its raw file) against the mean path dW/ds = b(W).
@@ -22,7 +23,8 @@ G. The entropic leak's pinned state (ε = 10⁻⁴, 3·10⁻⁴, 10⁻³; 16 see
 H. Without a leak over 10⁶ slow units (12 seeds): the masses' means and spreads at 10⁵, 3·10⁵, 10⁶ against the limit SDE on M
    (Euler–Maruyama, 4000 paths, ds = 50, the drift and the diffusion interpolated linearly on E's grid, steps leaving the grid refused).
 
-Output: results/chaos/gauge_drift.md and gauge_drift_raw.npz (GDR_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
+Output: results/chaos/gauge_drift.md and gauge_drift_raw.npz (GDR_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`; `--only E,S`
+recomputes H's limit SDE on a new field from the stored full-loop records).
 """
 import os
 import sys
@@ -53,6 +55,7 @@ SEEDS_H, S_H = tuple(range(300, 312)), 1e6
 T_H = (1e5, 3e5, 1e6)
 N_PATHS, DS_SDE = 4000, 50.0
 W_MIN = np.abs(E.A_BUMP) / A_MAX
+H_ID, H2_ID = 3e-6, 1e-4                                                       # the identities' steps (near the saturation the chart curves on 10⁻³)
 NAMES = [f'{q}_{k + 1}' for k in range(3) for q in ('α', 'c', 's')]
 
 
@@ -78,7 +81,7 @@ def instance(gamma=GAMMA):
 
 def drift_at(w, gamma=GAMMA, by_noise=False):
     F, chart, coords, S = instance(gamma)
-    return GDR.limit_drift(F, chart, coords, np.asarray(w, float), S, by_noise=by_noise)
+    return GDR.limit_drift(F, chart, coords, np.asarray(w, float), S, h=H_ID, h2=H2_ID, by_noise=by_noise)
 
 
 def log_det(beta, h=1e-4):
@@ -124,7 +127,13 @@ def d_job(gamma):
     xs = W_MIN[0] + np.geomspace(2e-3, 0.08, 22)
     v = [b1(x) for x in xs]
     roots = [brentq(b1, xs[i], xs[i + 1], xtol=1e-7) for i in range(len(xs) - 1) if np.sign(v[i]) != np.sign(v[i + 1])]
-    return dict(gamma=gamma, roots=np.array(roots), signs=np.sign(v), xs=xs)
+    return dict(gamma=gamma, roots=np.array(roots), signs=np.sign(v), xs=xs, b=np.array(v), ito=np.array([ito_inside(x) for x in xs]))
+
+
+def ito_inside(W1):
+    """Inside the layer: τG_α d²W_1/dα_1² for W_1 = A_1/a(α_1), a = a_max tanh(α/a_max) — the amplitude's free diffusion carried along M."""
+    A = abs(E.A_BUMP[0]); a = A / W1; ap = 1 - (a / A_MAX) ** 2
+    return TAU * E.G[0] * A * (2 * ap ** 2 / a ** 3 + 2 * ap / (a * A_MAX ** 2))
 
 
 def grid_points():
@@ -228,9 +237,10 @@ def sde_paths(field, S_end, t_rec, seed=0):
     return {t: np.c_[v, 1 - v.sum(axis=1)] for t, v in rec.items()}
 
 
-def part_H(runs, field):
+def part_H(R, field):
+    """R: the full loop's records (seeds × records × (s, α_1..3, W_1..3, fit))."""
     sde = sde_paths(field, S_H, T_H)
-    R = np.array([r['rec'] for r in runs]); s = R[0, :, 0]; W = R[:, :, 4:7]; al = R[:, :, 1:4]
+    s = R[0, :, 0]; W = R[:, :, 4:7]; al = R[:, :, 1:4]
     out = []
     for t in T_H:
         i = int(np.argmin(np.abs(s - t)))
@@ -273,11 +283,16 @@ def report(A=None, B=None, C=None, D=None, Ef=None, Ff=None, Gg=None, Hh=None):
         L_.append("")
     if D is not None:
         L_ += [f"## D. The saturation layer: the zeros of the first class's drift on W_2 = W_3 (W_1 − {W_MIN[0]:g} from 0.002 to 0.08)", "",
-               "| γ | the zeros W_1° − 0.25 | over √γ | the sign of b_1 from the saturation outward |", "|---|---|---|---|"]
+               "δ* = ½√(γa_max|A_1|/(mG_α)): where the saturating amplitude's relaxation rate mG_αΓ_11W_1²a′_1² ≈ 4mG_αΓ_11(W_1 − 0.25)² meets "
+               "the mass channel's γa_1²W_1Γ_11 ≈ γa_max|A_1|Γ_11.", "",
+               "| γ | the zeros W_1° − 0.25 | over √γ | over δ* | the sign of b_1 from the saturation outward | b_1 / τG_α∂²_αW_1 at W_1 − 0.25 = 0.002, 0.0024, 0.0028 |", "|---|---|---|---|---|---|"]
         for r in D:
             sg = ''.join('+' if v > 0 else '−' for v in r['signs'])
+            ds = 0.5 * np.sqrt(r['gamma'] * A_MAX * abs(E.A_BUMP[0]) / (3 * E.G[0]))
             L_.append(f"| {r['gamma']:g} | {', '.join(f'{v - W_MIN[0]:.5f}' for v in r['roots']) or '—'} | "
-                      f"{', '.join(f'{(v - W_MIN[0]) / np.sqrt(r['gamma']):.3f}' for v in r['roots']) or '—'} | {sg} |")
+                      f"{', '.join(f'{(v - W_MIN[0]) / np.sqrt(r['gamma']):.3f}' for v in r['roots']) or '—'} | "
+                      f"{', '.join(f'{(v - W_MIN[0]) / ds:.3f}' for v in r['roots']) or '—'} | {sg} | "
+                      f"{', '.join(f'{b_ / i_:.3f}' for b_, i_ in zip(r['b'][:3], r['ito'][:3]))} |")
         L_.append("")
     if Ef is not None:
         f = Ef['field']
@@ -336,7 +351,7 @@ def main():
             h['C'] = pool.map_async(c_job, [(w, g) for w in W_C for g in GAMMAS_C], chunksize=1)
         if 'D' in parts:
             h['D'] = pool.map_async(d_job, GAMMAS_D, chunksize=1)
-        if parts & set('EFH'):
+        if parts & set('EFHS'):
             h['E'] = pool.map_async(grid_job, grid_points(), chunksize=4)
         if 'A' in parts:
             h['A'] = pool.map_async(bf_job, [(w, i) for w in W_A for i in range(9)], chunksize=1)
@@ -368,7 +383,10 @@ def main():
         if 'G' in parts:
             res['G'] = part_G(h['G'].get()); E.save(raw, **res); log('G')
         if 'H' in parts:
-            res['H'] = part_H(h['H'].get(), field); E.save(raw, **res); log('H')
+            res['H_rec'] = np.array([r['rec'] for r in h['H'].get()])
+            res['H'] = part_H(res['H_rec'], field); E.save(raw, **res); log('H')
+        elif 'S' in parts:                                                   # the limit SDE again, on the stored full-loop records
+            res['H'] = part_H(res['H_rec'], field); E.save(raw, **res); log('H (SDE)')
     open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEFGH']))
 
 
