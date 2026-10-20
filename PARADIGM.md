@@ -4050,8 +4050,7 @@ exponents by Corollary D‴.26 and Lemma D‴.26a, the noise statements as in Pr
 from a spread cloud — which classes form and with which masses — and with it any selection of the number of kernels: the count is the
 transit's and the schedule's. Under an annealed Gaussian scale it ended at the target's count on the instance and on well-separated targets
 whose transit masses were representable, not for bumps closer than the broad scale or for unrepresentable transit masses, and at a fixed
-scale not at all (Numerics (C), (H), (J), (K)); the replicator weight law of Proposition D‴.34 removes the mass obstruction. The basin
-uniform in m. Checked: `tests/test_cohesion_leak.py` (the drift equal to −G∇J^coh_m by central differences and J^coh_m decreasing along the
+scale not at all (Numerics (C), (H), (J), (K)); the replicator weight law of Proposition D‴.34 removes the mass obstruction. Nor is the basin uniform in m proved. Checked: `tests/test_cohesion_leak.py` (the drift equal to −G∇J^coh_m by central differences and J^coh_m decreasing along the
 flow, for both kernels; the forces summing to zero and equal to σ₀ × the kernel mass × the mean-shift vector; at the exact representation
 for the counts (3, 2, 2) and (4, 3, 3) the drift zero and the Jacobian's spectrum the predicted one — the separations at −σ₀w_k, the class
 means the unregularised K-atom flow's — to 10⁻⁹; at the best one-atom fit the top separation eigenvalue λ⁺ − σ₀w, stable at σ₀ and split at
@@ -4076,10 +4075,9 @@ merge under the Gaussian kernel (R = 1: their distance 6.1·10⁻³ at s = 4000,
 (~10³), and persist beyond the compact range (2.31 throughout). A dead class (amplitude 0, at 5.19 from the nearest live class, of mass
 4/15) joins it under the Gaussian kernel at R = 2 (to rounding by s = 16000; the fit error then 1.6·10⁻³, the inter-class bias at that
 scale) and at R = 1.5 (at s ≈ 2.8·10⁴, (v)'s time scale 1.8·10⁴; the fit error 1.7·10⁻⁵); at R = 1, where the live classes do not overlap
-and the time scale is 1.4·10⁷, it does not move in 4·10⁴ slow units, nor under the compact kernel. (I) The twins' contraction: along the
-md's twins at R = 1 over s ∈ [200, 2000], ln(Δα(200)/Δα(2000)) = 1.2949 against (v)'s rate integrated along the run, 1.2943 (0.04%). Twins
+and the time scale is 1.4·10⁷, it does not move in 4·10⁴ slow units, nor under the compact kernel. (I) The twins' contraction: along (A)'s twins at R = 1 over s ∈ [200, 2000], ln(Δα(200)/Δα(2000)) = 1.2949 against (v)'s rate integrated along the run, 1.2943 (0.04%). Twins
 far apart do not merge on the runs' time scale: with bump 3's amplitude shared 0.9 : 0.1 (5.28 apart) and 0.97 : 0.03 (8.19) their distance
-does not change in 4·10⁴ slow units ((v)'s rate at their distance 1.3·10⁻⁹ and 3·10⁻¹⁸; 1.45·10⁻⁴ for the md's twins). A third class within
+does not change in 4·10⁴ slow units ((v)'s rate at their distance 1.3·10⁻⁹ and 3·10⁻¹⁸; 1.45·10⁻⁴ for (A)'s twins). A third class within
 reach wins: opposite-sign twins of bump 3 (counts (5, 3, 5, 2), amplitudes +3.8 and −3.5, 12.7 apart), the light twin at the amplitude
 coordinate of the class of bump 2 (3.63 from it), jittered by 10⁻³, do not merge in 4·10⁵ slow units (their distance 11.5–12.9); the light
 twin is drawn toward the class of bump 2 (its centre 1.5 → 0.88) and the fit error grows from 3.2·10⁻⁴ to 4.5·10⁻³, a biased four-class
@@ -4116,7 +4114,7 @@ count is the transit's, not the best configuration of that count, and its smalle
 fourth bump, m = 30 from the jittered lift of ϑ^b(q) with the counts (10, 10, 10), the compact kernel at R = 1, σ halved every 10⁵ slow
 units from σ₀ to σ₀/64 with a jitter 10⁻³ renewed at each stage, three seeds). At w = q, (iv) puts the first split in the middle class at σ
 = 3λ⁺₂ = 0.121σ₀: down to σ₀/8 the three classes stay, the fit error 0.0170, the middle class's margin there −2.0·10⁻⁶ to +9.3·10⁻⁷
-(8.7·10⁻⁶ without the jitter, (A3)); at σ₀/16 it is −1.24·10⁻⁴ to −1.40·10⁻⁴ and the class splits in every seed. Over the 21 stages no class
+(8.7·10⁻⁶ without the jitter, (A)); at σ₀/16 it is −1.24·10⁻⁴ to −1.40·10⁻⁴ and the class splits in every seed. Over the 21 stages no class
 with a positive margin split, every class of two or more particles whose margin was below −5·10⁻⁵ split within its stage (8 of 8), and of
 those between −5·10⁻⁵ and 0 — where the jitter grows by e^{|margin|·10⁵} = 1.2–140 over a stage — 3 of 7; a class counts as split when a
 piece passes the clustering threshold 0.25 from the jitter 10⁻³, a growth by 250 within 10⁵ slow units, i.e. a margin below −ln(250)/10⁵ =
@@ -4129,8 +4127,7 @@ of amplitude, less than the fourth bump's 0.3, so the singletons do not represen
 The fit error falls — 0.0151–0.0152 at σ₀/16, 0.0141 at σ₀/32, 0.0028–0.0031 at σ₀/64 — but the count overshoots: 8–10 classes at σ₀/64,
 five to seven of them single particles, for a target of four bumps. σ₀ sets the resolution as (iv) says; which classes form, and with which
 masses, the shedding decides — the transit, which is not proved. (H) Other targets (the annealed Gaussian schedule of (C), broad starts, m =
-60, three seeds each): two bumps (Σ_k|A_k|/a_max = 0.45) end at two classes with the fit error 8.9·10⁻⁹–1.6·10⁻⁸ in all three runs; the
-four-bump f_ε of (A3) and (G) at three classes with the fit error 0.0174 in all three, near the three-atom approximant's 0.0170 — the fourth
+60, three seeds each): two bumps (Σ_k|A_k|/a_max = 0.45) end at two classes with the fit error 8.9·10⁻⁹–1.6·10⁻⁸ in all three runs; the four-bump f_ε of (A) and (G) at three classes with the fit error 0.0174 in all three, near the three-atom approximant's 0.0170 — the fourth
 bump lies below the resolution σ₀, and its width is the bound s_min = 0.3, so f_ε has no exact representation; five bumps (s_min = 0.2;
 |A_k|/a_max = 0.225, 0.15, 0.175, 0.125, 0.2, Σ = 0.875) at 6–9 classes with the fit error 0.045–0.118. An exact representation needs w_k >
 |A_k|/a_max for every bump, which leaves 0.125 of the mass free, and the transit's masses miss it: in every run two or three of the three

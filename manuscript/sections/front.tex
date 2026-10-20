@@ -88,8 +88,13 @@ In Part~I, every step of the stability argument is either proved or verified num
     Polyak--{\L}ojasiewicz inequality whose constant does not depend on the number of kernels, which gives a
     measure-level basin with an exponential rate and, at the nearest-atom leak, explains the floor as a spurious
     minimum at every admissible count vector, Theorem D$'''$.21) --- through a seventh (the first two) and an eighth
-    to a sixteenth (the third). Every confirmed issue and its fix is logged in \code{review/REVIEW_LOG.md}, and the
-    raw reports of rounds 1--3 and 5--16 are kept beside it.
+    to a sixteenth (the third), and the fourth increment --- adaptive priors and the floor removal (Theorem
+    D$'''$.23, Proposition D$'''$.24, the gauge of Proposition D$'''$.28, the projection of Proposition D$'''$.27),
+    perfect tracking in the real loop (Corollary D$'''$.26, Lemma D$'''$.26a), second-order plants and the cogging
+    servo (Proposition D$'''$.29), measurement noise (Propositions D$'''$.30 and D$'''$.31, Corollary D$'''$.33) and
+    the cohesion leak, a leak on the unexcited subspace without a prior that does not select the number of kernels
+    (Proposition D$'''$.32) --- through a seventeenth to a twenty-third. Every confirmed issue and its fix is logged
+    in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--23 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -594,6 +599,67 @@ bound are classical; new are their transfer to the transport leaks (the washout 
 uniform in $m$) and the quantification; the parameters' own errors in variables is the classical second-order bias of
 a constant-gain stochastic approximation (\cite{S57}: Benveniste--M\'etivier--Priouret, Dieuleveut--Durmus--Bach,
 Box), new only the observation that the desired regressor does not remove it\\
+\addlinespace[0.5pt]
+D$'''$.32 & The cohesion leak: the particles attract each other with a finite-range or Gaussian kernel --- the leak
+is $\sigma_0\times$ the kernel mass $\times$ the mean-shift vector of the network's own parameter distribution, no
+prior, no atom count, no plan --- and the averaged loop is the gradient flow of
+$m\bar L + (\sigma_0m/2)\iint W\dd\mu\dd\mu$ (in the mean field an aggregation equation in the fit's external
+potential with two interactions, the fit's and the cohesion's), its empirical measure the mean-field solution exactly;
+with the finite range, at a clustered configuration whose atoms are $R$ apart the leak vanishes, so every critical
+point of the unregularised weighted loss is stationary, for every number of classes and every set of masses, and it
+acts exactly on the unexcited subspace: the separations of class $k$ at $\sigma_0w_k$, the class means the
+unregularised flow's; a class can split iff $\sigma_0w_k^2 < q_k\lambda^+_k$ at a gauge transform, so $\sigma_0$ sets
+the resolution and an exact representation is never over-split, and a split sheds single particles (the unstable
+separations degenerate, the kernel concave); the Gaussian kernel pays an exponentially small bias, and twins with no
+third class within reach contract at
+$\sigma_0\psi(\Delta\alpha^2/(G_\alpha R^2))(w_ka'_k + w_la'_l)^2/(w_ka'^2_k + w_la'^2_l)$ --- a third class within
+reach can win; in the real loop the lift is periodic with the separation exponents $\sigma_0w_k/k_e$ and the
+$\eta = \infty$ adaptive prior's collective spectrum
+& (i)--(iii) proved; (iv) proved for the stationary points and their linearisation, the split's pattern explained;
+(v) the twins' rate to leading order, their merger only without a third class within reach (a counterexample), the
+dead class's motion and time scale stated, its merger not proved; (vi) the lift exact, the collapsed exponents by
+Corollary D$'''$.26 and Lemma D$'''$.26a; not proved: the transit, and with it any selection of the number of kernels
+--- the count is the transit's and the schedule's; numerics: at the 15 count vectors of $m = 15$ the lift of
+$\vartheta^e(w)$ stationary ($2.8\cdot10^{-17}$) with (iii)'s spectrum to $2.8\cdot10^{-11}$ (the finite differences'
+error), the margins the Jacobian's to $2\cdot10^{-11}$; the twins' rate to 0.04\%, opposite-sign twins with a third
+class within reach not merging ($4\cdot10^5$ slow units, a biased four-class fit); the floor removed from warm starts
+as by the adaptive prior; from broad starts the annealed Gaussian kernel at the target's three classes in 9 of 9 runs
+($\le2.3\cdot10^{-6}$), at a fixed scale not (4--6 classes at $R = 1$, three biased at $R = 2$); the real loop's 45
+slow Floquet exponents to $5.5\cdot10^{-6}$; the dither's within-class spread 0.063--0.068 against
+$\sqrt{(1 - 1/n_k)\tau/(\sigma_0w_k)} = 0.0635$; $\sigma_0$ lowered: no class with a positive margin split and all 8
+below $-5\cdot10^{-5}$ did, by shedding single particles (8--10 classes at $\sigma_0/64$ for four bumps); five and
+three heavy bumps biased (the transit's masses), two bumps closer than the broad scale merged into one
+& mean shift, aggregation equations, bounded-confidence and polarized consensus-based clustering, clustering in
+self-attention dynamics, Fukumizu--Amari's lines of critical points, splitting steepest descent, convex clustering and
+sum-of-norms identification, deterministic annealing and self-organising RBF networks are classical (\cite{S60}); new
+is their combination as a leak in mean-field adaptive control: the exact blocks at clustered configurations with the
+mass factor, the gauge-scaled splitting margin, the twins' rate, the real loop's exponents\\
+\addlinespace[0.5pt]
+D$'''$.33 & The desired regressor keeps the replicated configuration attracting under measurement noise: with the
+adaptive law's regressor at the reference the regressor's own term
+$\langle\E[\varepsilon_m^2]G^{1/2}\partial_x\nabla^2_\vartheta\tilde\Phi G^{1/2}\rangle$ --- which carries the
+measured regressor's drift and does not decrease with $k_e$ --- leaves the separations' second-order drift; what
+remains, the mean error's term $\langle\E[e]G^{1/2}\nabla^2_\vartheta\tilde\Phi G^{1/2}\rangle$ and, once the
+parameters fluctuate, the cross term, is $O(1/k_e)$ like the separations' stiffness, so the noise threshold is bounded
+below uniformly in $k_e$ and constant when the noise's bandwidth scales with the gain (at a fixed bandwidth DR's sign
+reverses at $k_e\approx B$); at the adaptive prior's stationary point the mean error carries the parameters' part of
+the force, not only the residual $(I - P)g$; under DR the compensation's rectification of the noise makes the drift at
+the lift negative in the centre directions of separated kernels, the whole matrix on the instance --- not for
+same-sign, wide or edge kernels ---, and along the trajectory the drift turns indefinite
+& (i) and (iv)'s formula formal at D$'''$.30(i)'s order, (ii)'s bound proved, (iii)'s balance formal with the exact
+periodic mean, (iv)'s sign proved in the centre directions of separated Gaussian kernels at the lift where the
+saturation's term is dominated, the whole matrix's numerical; numerics: at the lift DR's drift negative definite,
+DR*'s largest eigenvalue 60 times below MR's (the threshold std 0.238 against 0.031); $k_e\cdot\lambda_{\max}$
+constant for DR and DR* at $B = 4k_e$ while MR's threshold falls like $k_e^{-1/2}$, at $B = 100$ DR positive definite
+from $k_e = 200$, the floor std $\ge0.069$; at the stationary point rms $\E[e]$ $6.7\cdot10^{-4}$ (DR), its
+parameters' part $6.3\cdot10^{-4}$, the drift indefinite ($\le+3.7\cdot10^{-5}$); along DR's transient the drift first
+positive at $t = 2714$ and at most $+1.05\cdot10^{-4}$ (the formal threshold std 1.64); the real loop on common noise
+paths: MR's separations growing, DR's decaying faster than $\sigma_0/k_e$ at the transient's prediction (0.97--0.98 of
+its noise part, the lift's 0.81--0.82), along DR's weakest directions by 0.14--0.36\% of $\sigma_0/k_e$, DR*'s slower
+& the desired compensation law's insensitivity to measurement noise and the synchronisation of identical systems by a
+common noise are classical (\cite{S53}, \cite{S61}); new is the removal of the regressor's term in the $K_0$-atom
+identification --- a threshold bounded below uniformly in $k_e$ --- and the instance's quantification (the sign at the
+lift, its loss along the trajectory, the stationary point)\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance

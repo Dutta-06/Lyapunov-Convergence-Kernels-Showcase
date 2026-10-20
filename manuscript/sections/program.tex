@@ -220,7 +220,8 @@ Each branch states what is proved, what is open, and the first concrete step.
       prior is a design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window
       closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes).
     % Branches 7 and 8 as committed at 29f9394: the Theorem D'''.23 to Proposition D'''.31 wording and bullets added in
-    % manuscript part 4e.
+    % manuscript part 4e; the Corollary D'''.33 and Proposition D'''.32 bullets as committed at 1ddff8c (part 4f).
+    % Proposition D'''.34's bullet, before them in PARADIGM.md, is not rendered in this part.
     \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
       fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
       Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
@@ -276,6 +277,33 @@ Each branch states what is proved, what is open, and the first concrete step.
       infinity (the best approximant on the saturation boundary, as for a sharp friction step, a cogging function that
       two kernels fit as a dipole, or Proposition D$'''$.29's servo globally), where only the projected prior keeps the
       parameters bounded; vector amplitudes, where the margins have no closed form.
+    \item \emph{Done (Corollary D$'''$.33):} the desired regressor keeps the replicated configuration attracting under
+      measurement noise. With the regressor at the reference the regressor's own term leaves the separations'
+      second-order drift; what remains --- the mean error's term and the cross term --- is $O(1/k_e)$ like the
+      separations' stiffness, so the noise threshold is bounded below uniformly in $k_e$ (constant when the noise's
+      bandwidth scales with the gain; at a fixed bandwidth DR's sign reverses at $k_e\approx B$). Under DR near the
+      lift the compensation's rectification of the noise stiffens the separations of separated alternating-sign
+      kernels (the instance; same-sign, wide or edge kernels soften); along the trajectory the drift turns indefinite
+      as the mean error relaxes with the collective modes, and at the stationary point the parameters' part of the
+      force dominates the mean error. It makes the desired regressor the partner of the cohesion leak, whose
+      separations are the softest ($\sigma_0w_k$). \emph{Open:} the long-time threshold (the drift indefinite along
+      the trajectory and at the stationary point, formally at noise levels outside the expansion); the higher orders;
+      the real loop beyond 300 time units; references in $\R^n$.
+    \item \emph{Done (Proposition D$'''$.32):} the cohesion leak, a prior-free leak on the unexcited subspace. The
+      particles attract each other toward the modes of their own distribution (the mean shift); the averaged loop is
+      the gradient flow of the fit plus an aggregation energy; with a finite-range kernel, at a clustered
+      configuration whose atoms are $R$ apart the leak vanishes, so every critical point of the unregularised loss is
+      stationary, for every count and every set of masses, and it acts exactly on the unexcited subspace (the
+      separations at $\sigma_0w_k$, the class means free); a class can split iff $\sigma_0w_k^2 < q_k\lambda^+_k$, so
+      $\sigma_0$ sets the resolution and an exact representation is never over-split, and a split sheds single
+      particles. A Gaussian kernel pays an exponentially small bias, and twins with no third class within reach
+      contract at an explicit rate (checked to 0.04\%) --- a third class within reach can win. The number of kernels
+      is not selected by the leak: an annealed Gaussian scale found the instance's three kernels from every broad
+      start, a fixed scale did not, and on other targets the count failed where the transit's masses were not
+      representable or the bumps were closer than the broad scale. \emph{Open:} the transit (which classes form, with
+      which masses), and with it any selection; the shedding below the resolution's threshold (Part G); the scale $R$
+      chosen from the data (Parts J, K); the a-priori bound (the leak is internal: a projection). The masses'
+      obstruction is removed by Proposition D$'''$.34.
     \item \emph{Done (Proposition D$'''$.31):} the adaptive prior is a washout leak, and the remedy for the errors in
       variables. The prior lags the class barycentre by its exponentially forgotten increments, so the leak acts in
       full on the separations and on the barycentre through the high-pass $i\omega/(i\omega + \eta)$ --- the bias
