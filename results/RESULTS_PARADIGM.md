@@ -812,6 +812,26 @@ noise's variance), the regressor's point in the law; DR's and DR*'s noise forces
 three orders of magnitude above; the quasi-static forces against the full second-order mean, the parameters' part above 1% for DR and
 DR*, below 10⁻⁵ for MR.
 
+## Corollary D‴.33 — the desired regressor keeps the replicated configuration attracting under measurement noise (`exp_eiv_remedy.py` Part D → `chaos/eiv_remedy.md`)
+
+- Proposition D‴.30's instance (k_e = 25, OU noise B = 100). At the lift the separations' second-order drift (real time, per unit Eν²) has
+  the extreme eigenvalues [−3.7·10⁻¹, +1.5·10⁻²]; [−2.6·10⁻², +1.0·10⁻²]; [−3.5·10⁻², +3.0·10⁻¹] (MR), [−1.1·10⁻², −5.0·10⁻⁴]; [−1.5·10⁻²,
+  −1.5·10⁻⁴]; [−7.2·10⁻³, −3.4·10⁻⁴] (DR) and [+1.6·10⁻⁴, +3.8·10⁻³]; [+5.0·10⁻⁵, +5.0·10⁻³]; [+1.1·10⁻⁴, +2.4·10⁻³] (DR*) in the three
+  classes: DR's negative definite — no threshold at this order —, DR*'s largest 60 times below MR's (the threshold std 0.238 against 0.031
+  under the adaptive prior, 0.138 against 0.018 under the cohesion leak's σ₀w_k).
+- Against k_e (B = 4k_e): MR's largest eigenvalue 0.2982 → 0.3039, its threshold std 0.031 → 0.011 (∝ k_e^{−1/2}); k_e times DR's −0.0038
+  and DR*'s 0.1245–0.1242 at every k_e: thresholds uniform in k_e.
+- At the adaptive prior's stationary point the mean error's rms 2.34·10⁻⁴ (DR) and 2.60·10⁻⁴ (DR*) against 0.0274 and 0.0092 at the lift,
+  the drift ≤ 4.7·10⁻⁶; along DR's transient the window drifts stay negative definite (class 3: −3.21·10⁻⁴ → −2.68·10⁻⁴ over 300 time units;
+  MR's 0.307 → 0.349).
+- The real loop on common noise paths (four antithetic pairs per law and std): MR's separations grow at +4.69·10⁻⁴ and +1.25·10⁻³ per time
+  unit at std 0.05 and 0.1 (all 16 runs growing), DR's decay at −2.965·10⁻⁴ and −3.365·10⁻⁴ (none growing; predicted along the start's
+  direction −2.995·10⁻⁴, −3.492·10⁻⁴): faster than σ₀/k_e — the noise stiffens the separations.
+
+Tests (`tests/test_eiv_remedy.py`): DR's separation drift equals MR's mean-error term and is negative definite in every class, MR's 0.30
+in class 3; DR*'s drift is O(1/k_e) (k_e times its largest eigenvalue the same at k_e = 25 and 50, B = 4k_e) while MR's does not decrease;
+at the adaptive prior's stationary point the residual mean error is below 1% of g/k_e.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

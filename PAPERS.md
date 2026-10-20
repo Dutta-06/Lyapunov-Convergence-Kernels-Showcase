@@ -180,14 +180,18 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   parameters' fluctuation adds a force that is not the learning force of a mean tracking error (the classical second-order bias of a
   constant-gain stochastic approximation): small in absolute terms on the instance (≤ 3.9·10⁻⁴ per (Eν²)²), −8.7% to +3.3% of DR's and
   DR*'s biases and +56% of DR's at k_e = B = 100, its own response falling like k_e⁻² on a one-dimensional reference, where the law's
-  leading term averages out — on a curve in ℝⁿ it need not, which matters for the second-order plants.
+  leading term averages out — on a curve in ℝⁿ it need not, which matters for the second-order plants. With the regressor at the
+  reference the separations' noise drift is the mean error's term alone, so the replicated configuration keeps attracting: the noise
+  threshold no longer falls with k_e, and under DR the noise stiffens the separations (Corollary D‴.33).
 - **Rests on.** Proposition D‴.30 ((i) exact as invariance, its threshold formal at the lift — along the noisy trajectory the separations'
   drift grows with the developing errors-in-variables deviation, checked on antithetic noise pairs, the long-time threshold open —; (ii)
   proved for the linearised loop under white noise as a period average (Lemma D‴.26a), (iii) formal, their closed forms exact for the
   averaged system; (ii) checked against the exact linearised loop, (iii)'s stationary response against its exact periodic mean, the
   transient in the real loop), Proposition D‴.31 ((i)–(iii) proved, (ii) with R and B from the priors' blocks; (iv)(a)–(b) proved for the
   linearised equations, (iv)(c) formal,
-  the parameters' part numerical; the remedy checked in the real loop on common noise paths through MR − DR), Corollary D‴.26,
+  the parameters' part numerical; the remedy checked in the real loop on common noise paths through MR − DR), Corollary D‴.33 ((i), (iii),
+  (iv) formal at D‴.30(i)'s order, (ii)'s bound proved; checked on common noise paths: MR's separations growing, DR's decaying),
+  Corollary D‴.26,
   `exp_measurement_noise.py`, `exp_eiv_remedy.py`.
 - **Novelty (audit).** Classical ingredients (the errors-in-variables bias, stochastic averaging and the diffusion approximation, the LMS
   misadjustment and leaky LMS, common noise, the lack-of-excitation drift, washout filters and low-frequency learning, desired
@@ -195,7 +199,8 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   mobility, the driving matrix of the sensitivity-filtered measurement, the coherence of the K₀-atom identification with its noise
   threshold at the lift, the washout reading of the adaptive prior uniform in m, and the quantification; the parameters' own errors in
   variables is classical (Benveniste–Métivier–Priouret, Dieuleveut–Durmus–Bach, Box), new only the observation that the desired
-  regressor does not remove it.
+  regressor does not remove it; and the desired regressor's effect on the coherence (D‴.33), a classical remedy with a new structural
+  consequence: the separations' drift reduced to the mean error's term, the threshold uniform in k_e.
 - **Missing.** The second-order computation proved (the parameters' part in closed form; the first order is, for the linearised loop under
   white noise, Lemma D‴.26a); the long-time noise threshold of the separations (the second-order expansion fails where the mean
   deviation is O(1)); the stationary biases in the real loop (the weak modes equilibrate over ~10⁵ time units); a remedy for the

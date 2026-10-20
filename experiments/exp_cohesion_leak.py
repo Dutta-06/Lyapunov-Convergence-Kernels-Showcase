@@ -45,8 +45,14 @@ F. An application: the cogging servo of Proposition D‴.29 (experiments/exp_ser
    then at R = 0.35 for 60000; at the end the clusters (masses, |a|/a_max) and the fit error, against the best equal-weight K-atom fits
    (K = 4, 6, 8; 40 random starts each; no model of the torque anywhere).
 
-Output: results/chaos/cohesion_leak.md and cohesion_leak_raw.npz (CO_WORKERS, CO_OUT; `--only A,B,C,D,E,F` runs the listed parts and merges
-them into the raw file; `--from-raw` regenerates the md).
+G. The resolution: the model order against σ₀. The fourth bump (ε = 0.3) and the jittered lift of ϑ^b(q) at m = 30 (counts 10, 10, 10),
+   the compact kernel at R = 1, σ₀ lowered stage by stage (σ₀ × 1, 1/2, …, 1/64, 100000 slow units each, the jitter 10⁻³ renewed at each
+   stage's start), three seeds: at each stage's start the clusters, their masses and the predicted margins σw_k − λ_max(R^G_k) at the
+   class means with the current residual (a class splits iff its margin is negative, Proposition D‴.32(iv)), at its end the clusters
+   and the fit error.
+
+Output: results/chaos/cohesion_leak.md and cohesion_leak_raw.npz (CO_WORKERS, CO_OUT; `--only A,B,C,D,E,F,G` runs the listed parts and
+merges them into the raw file; `--from-raw` regenerates the md).
 """
 import os
 import sys
@@ -497,6 +503,36 @@ def e_job(args):
     return dict(seed=seed, leak=leak, rec=np.array(rec))
 
 
+# ---------------------------------------------------------------------------- G. the resolution: the model order against σ₀
+G_FRACS = (1.0, 0.5, 0.25, 0.125, 0.0625, 1.0 / 32, 1.0 / 64)
+S_G, M_G, SEEDS_G = 100000.0, 30, (0, 1, 2)
+
+
+def g_job(seed):
+    """σ₀ lowered stage by stage from the jittered lift of ϑ^b(q) (fourth bump, m = M_G, counts 10, 10, 10; compact kernel, R = R_WARM): per
+    stage the clusters and masses at its start with the predicted margins σw_k − λ_max(R^G_k) (R^G_k at the class mean with the current
+    residual), the clusters and the fit error at its end."""
+    t0 = time.time()
+    net, base, bq = approximant()
+    counts = np.array([10, 10, 10]); w = counts / M_G
+    rng = np.random.default_rng(700 + seed)
+    Th = np.repeat(gauge(net, bq, w), counts, axis=0)
+    stages = []
+    for frac in G_FRACS:
+        sig = SIGMA0 * frac
+        Th = Th + 1e-3 * rng.standard_normal(Th.shape) * np.sqrt(G)[None, :]
+        lab = CO.clusters(Th, G, CLUSTER_THR)
+        K0 = int(lab.max() + 1)
+        atoms = np.array([Th[lab == k].mean(axis=0) for k in range(K0)])
+        wk = np.bincount(lab, minlength=K0) / M_G
+        margins = sig * wk - base.kappa_R(base.residual(Th), atoms)
+        Th = CO.CohesionLoop(base, R_WARM, 'compact', sigma0=sig).run(Th, S_G, DT)
+        end = describe(net, base, Th)
+        stages.append(dict(frac=frac, K_start=K0, masses=wk, margins=margins, K_end=int(end['K']), fit=float(end['fit']), clusters=end['clusters']))
+    print(f"[{time.time() - t0:.0f}s] G seed {seed}", flush=True)
+    return dict(seed=seed, stages=stages)
+
+
 # ---------------------------------------------------------------------------- F. the cogging servo
 SV_NET = dict(a_max=4.0, c_max=1.6, s_min=0.05, s_max=1.0)
 SV_SIGMA0, SV_NQ, SV_R0, SV_R1, SV_S1, SV_S2, SV_M = 0.01, 400, 0.7, 0.35, 20000.0, 60000.0, 64
@@ -556,7 +592,7 @@ def fmt(x, p=3):
     return f'{x:.{p}g}' if abs(x) >= 1e-3 or x == 0 else f'{x:.{p - 1}e}'.replace('e-0', 'e-').replace('e+0', 'e+')
 
 
-def report(A, B, C, D, E=None, F=None):
+def report(A, B, C, D, E=None, F=None, Gs=None):
     L_ = ['# Proposition D‴.32: the cohesion leak — a leak on the unexcited subspace, without a prior', '',
           f'The three-bump instance (σ₀ = 0.15σ_crit = {SIGMA0:.6g}); the averaged slow loop with the cohesion leak dϑ_i/ds = G⟨∇(r Φ̃)⟩ − (σ₀/m)Σ_jψ(‖ϑ_i − ϑ_j‖²/R²)(ϑ_i − ϑ_j), ψ compact (1 − z)³₊ or Gaussian e^(−z/2); midpoint rule dt = {DT}.', '']
     if A is not None:
@@ -662,6 +698,17 @@ def report(A, B, C, D, E=None, F=None):
             cl = r['end']['clusters']
             L_.append(f"| {r['seed']} | {r['end']['K']} | {fmt(tr[i1, 1])} | {fmt(r['end']['fit'])} | {', '.join(f'{v:.3f}' for v in cl[:, 0])} | {np.abs(cl[:, 1]).max() / SV_NET['a_max']:.3f} |")
         L_.append('')
+    if Gs is not None:
+        L_ += ['## G. The resolution: the model order against σ₀ (the fourth bump, m = 30, compact R = 1)', '',
+               f'σ₀ lowered stage by stage ({S_G:g} slow units each, the jitter 10⁻³ renewed at each start). Per stage: the clusters at its start, their '
+               'masses and the predicted margins σw_k − λ_max(R^G_k) (negative: the class splits), the clusters and the fit error at its end.', '',
+               '| seed | σ/σ₀ | clusters at the start | masses | margins | negative | clusters at the end | fit error |', '|---|---|---|---|---|---|---|---|']
+        for r in sorted(Gs, key=lambda r: r['seed']):
+            for st in r['stages']:
+                order = np.argsort(-st['masses'])
+                L_.append(f"| {r['seed']} | {st['frac']:g} | {st['K_start']} | {', '.join(f'{v:.3f}' for v in st['masses'][order])} | "
+                          f"{', '.join(fmt(v) for v in st['margins'][order])} | {int(np.sum(st['margins'] < 0))} | {st['K_end']} | {fmt(st['fit'])} |")
+        L_.append('')
     return '\n'.join(L_) + '\n'
 
 
@@ -683,9 +730,9 @@ def main():
     args = sys.argv[1:]
     old = load(raw)
     if '--from-raw' in args:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F'), old.get('G')))
         return
-    parts = set('ABCDEF')
+    parts = set('ABCDEFG')
     if '--only' in args:
         parts = set(args[args.index('--only') + 1].split(','))
     from multiprocessing import Pool
@@ -704,6 +751,8 @@ def main():
             asyncs['E'] = pool.map_async(e_job, [(s, leak) for leak in ('none', 'coh_c', 'coh_g', 'fixed', 'sigma') for s in SEEDS_E])
         if 'F' in parts:
             asyncs['F'] = pool.map_async(f_job, [('coh', s) for s in (0, 1, 2)] + [('best', K) for K in (4, 6, 8)])
+        if 'G' in parts:
+            asyncs['G'] = pool.map_async(g_job, list(SEEDS_G))
         if 'A' in parts:
             res['A'] = part_A()
             save(raw, **res)
@@ -718,7 +767,9 @@ def main():
             res['E'] = asyncs['E'].get(); save(raw, **res)
         if 'F' in parts:
             res['F'] = asyncs['F'].get(); save(raw, **res)
-    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F')))
+        if 'G' in parts:
+            res['G'] = asyncs['G'].get(); save(raw, **res)
+    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F'), res.get('G')))
 
 
 if __name__ == '__main__':

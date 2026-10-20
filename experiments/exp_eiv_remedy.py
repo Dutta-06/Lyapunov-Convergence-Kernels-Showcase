@@ -32,7 +32,8 @@ D. The separations under the desired regressor (Corollary D‴.33): the separati
    rate under MR and DR.
 
 Output: results/chaos/eiv_remedy.md and eiv_remedy_raw.npz (ER_WORKERS, ER_RUNS, ER_TC; `--from-raw` regenerates the md; `--only-AB`
-recomputes Parts A and B and merges them, `--only-B` Part B, `--only-D` Part D; ER_ND the pairs of Part D).
+recomputes Parts A and B and merges them, `--only-B` Part B, `--only-D` Part D, `--only-Dpred` Part D's predictions; ER_ND the pairs of
+Part D).
 """
 import os
 import sys
@@ -215,10 +216,12 @@ def part_D_pred():
     net, atoms, cv = collapsed()
     H, Q = MN.noise_matrices(cv, X.fprime)
     lift = {}
+    u = None
     for v in VARIANTS:
         S = MN.separation_drift(cv, X.fprime, X.fsecond, KE, B_OU, 1.0, variant=v)
         ev = [np.linalg.eigvalsh(sk) for sk in S]
-        lift[v] = dict(lo=[float(e[0]) for e in ev], hi=[float(e[-1]) for e in ev])
+        u = np.linalg.eigh(S[2])[1][:, -1] if u is None else u                   # MR's top eigenvector of S₃: the real loop's start
+        lift[v] = dict(lo=[float(e[0]) for e in ev], hi=[float(e[-1]) for e in ev], rq=float(u @ S[2] @ u))
     scan = {}                                                             # the drift's largest eigenvalue over the classes against k_e (B = 4k_e)
     for ke in KES_A:
         for v in VARIANTS:
@@ -407,8 +410,9 @@ def report(A, Bp, Cres, Cpred, t0=None, D=None):
             L.append(f"| [{w_['a']:g}, {w_['b']:g}) | {w_['rmsE']:.4f} | " + ", ".join(f"{x:+.2e}" for x in w_['lam']) + " |")
         L += ["", f"The real loop: the lift m = 15 with class 3 separated by 10⁻⁶·(2, 1, 0, −1, −2) along MR's top eigenvector of S₃, {N_D} antithetic pairs per "
               f"(law, std) on paths common to the laws, {X.T_D:g} time units, the separation's rate (least squares over t ≥ 50) against −σ₀/k_e = "
-              f"{-X.SIGMA0 / KE:.3e} plus Eν² times the largest eigenvalue of the law's S₃ at the lift.", "",
-              "| law | std | measured rate (pair means ± s.e.) | −σ₀/k_e + Eν²λ_max(S₃) | runs growing |", "|---|---|---|---|---|"]
+              f"{-X.SIGMA0 / KE:.3e} plus Eν² times the law's S₃ at the lift — along the start's direction u (uᵀS₃u) and at its largest eigenvalue "
+              "(the rate the separation tends to once it has turned onto the top eigenvector).", "",
+              "| law | std | measured rate (pair means ± s.e.) | −σ₀/k_e + Eν²uᵀS₃u | −σ₀/k_e + Eν²λ_max(S₃) | runs growing |", "|---|---|---|---|---|---|"]
         for v in ('measured', 'reference'):
             for std in STDS_D:
                 rs = [r for r in D['runs'] if r['v'] == v and r['std'] == std]
@@ -416,7 +420,8 @@ def report(A, Bp, Cres, Cpred, t0=None, D=None):
                     continue
                 seeds = sorted(set(r['seed'] for r in rs))
                 pm = np.array([np.mean([r['rate'] for r in rs if r['seed'] == sd]) for sd in seeds])
-                L.append(f"| {NAMES[v]} | {std:g} | {pm.mean():+.4e} ± {pm.std(ddof=1) / np.sqrt(len(pm)):.1e} | "
+                rq = pr['lift'][v].get('rq', np.nan)
+                L.append(f"| {NAMES[v]} | {std:g} | {pm.mean():+.4e} ± {pm.std(ddof=1) / np.sqrt(len(pm)):.1e} | {-X.SIGMA0 / KE + std ** 2 * rq:+.4e} | "
                          f"{-X.SIGMA0 / KE + std ** 2 * pr['lift'][v]['hi'][2]:+.4e} | {sum(r['rate'] > 0 for r in rs)} of {len(rs)} |")
     L += ["", "Numbers are produced by `experiments/exp_eiv_remedy.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'eiv_remedy.md'), 'w', encoding='utf-8') as f:
@@ -433,6 +438,15 @@ def main():
     if '--from-raw' in sys.argv:
         with np.load(raw, allow_pickle=True) as z:
             report(z['A'].item(), z['B'].item(), list(z['C']), z['P'].item(), t0, D=z['D'].item() if 'D' in z.files else None)
+        return
+    if '--only-Dpred' in sys.argv:                                           # Part D's predictions recomputed, its runs kept
+        with np.load(raw, allow_pickle=True) as z:
+            save = {k: z[k] for k in z.files}
+        Dd = save['D'].item()
+        Dd['pred'] = part_D_pred()
+        save['D'] = np.array(Dd, dtype=object)
+        X.save_raw(raw, **save)
+        report(save['A'].item(), save['B'].item(), list(save['C']), save['P'].item(), t0, D=Dd)
         return
     if '--only-D' in sys.argv:                                               # Part D (Corollary D‴.33) computed, merged with the stored parts
         with np.load(raw, allow_pickle=True) as z:

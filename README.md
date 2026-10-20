@@ -62,8 +62,9 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   (its floor does not average out with their number), high-passed by the loop, and at second order a persistent force to which the
   adaptive prior answers with the inverse excitation spectrum (Proposition D‴.30) — the adaptive prior being a washout leak, which
   no prior design makes robust to persistent forces, while evaluating the regressor at the reference turns the noise's own force into a
-  bounded least-squares one, the parameters' fluctuation adding a small force that is not (Proposition D‴.31); rounds 7–21 of the review
-  log cover all of them, and their remarks.
+  bounded least-squares one, the parameters' fluctuation adding a small force that is not (Proposition D‴.31), and keeps the replicated
+  kernels together under the noise — the separations' noise drift reduced to the mean error's term, whose threshold does not fall with the
+  gain (Corollary D‴.33); rounds 7–22 of the review log cover all of them up to D‴.31, and their remarks.
 
 ---
 

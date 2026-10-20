@@ -99,4 +99,50 @@ The run mean of f̂_MR − f̂_DR on the orbit's grid (common random numbers) ag
 | 275 | 2.2983e-06 | 2.2836e-06 | 0.0070 | 1.42e-05 | 0.74 |
 | 300 | 2.4552e-06 | 2.4532e-06 | 0.0079 | 1.36e-05 | 0.90 |
 
+## D. The separations under the desired regressor (Corollary D‴.33)
+
+The separations' second-order drift S_k at the lift (real time, per unit Eν²; k_e = 25, B = 100): its extreme eigenvalues per class and the noise std at which its largest eigenvalue reaches the separations' stiffness — σ₀/k_e under the adaptive prior, σ₀w_k/k_e under the cohesion leak (Proposition D‴.32, w_k = 1/3); '—' where every eigenvalue is negative.
+
+| law | class 1: [min, max] | class 2 | class 3 | threshold std, adaptive prior | threshold std, cohesion leak |
+|---|---|---|---|---|---|
+| MR | [-0.37144, +0.01481] | [-0.02570, +0.01009] | [-0.03507, +0.29815] | 0.031 | 0.018 |
+| DR | [-0.01122, -0.00050] | [-0.01490, -0.00015] | [-0.00719, -0.00034] | — | — |
+| DR* | [+0.00016, +0.00378] | [+0.00005, +0.00498] | [+0.00011, +0.00238] | 0.238 | 0.138 |
+
+The drift's largest eigenvalue over the classes against k_e at B = 4k_e (the noise white over the loop's bandwidth), and k_e times it: the measured regressor's drift is O(1), so its threshold std falls like k_e^{−1/2}; with the regressor at the reference the drift is O(1/k_e), as the stiffness σ₀/k_e is, so the threshold does not fall with k_e.
+
+| k_e | MR: λ_max | DR: λ_max; k_e·λ_max | DR*: λ_max; k_e·λ_max | threshold std (adaptive prior): MR; DR; DR* |
+|---|---|---|---|---|
+| 25 | +2.9815e-01 | -1.514e-04; -0.0038 | +4.979e-03; +0.1245 | 0.031; —; 0.238 |
+| 50 | +3.0140e-01 | -7.585e-05; -0.0038 | +2.485e-03; +0.1242 | 0.022; —; 0.239 |
+| 100 | +3.0305e-01 | -3.795e-05; -0.0038 | +1.242e-03; +0.1242 | 0.015; —; 0.239 |
+| 200 | +3.0387e-01 | -1.898e-05; -0.0038 | +6.208e-04; +0.1242 | 0.011; —; 0.239 |
+
+With the regressor at the reference the drift is the mean error's term ⟨E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ alone, and k_eE[e] = g − Ĵȳ moves from g at the lift to (I − P)g at the adaptive prior's stationary point (ȳ = H⁻¹F): the rms of E[e] at the lift and at the stationary point, and the drift there.
+
+| law | rms E[e]: lift | stationary point | drift at the stationary point: class 1, 2, 3 [min, max] |
+|---|---|---|---|
+| DR | 2.7439e-02 | 2.3352e-04 | [-3.4e-06, +4.1e-06]; [-3.8e-07, +5.4e-07]; [-1.7e-06, +1.3e-06] |
+| DR* | 9.1794e-03 | 2.6050e-04 | [-3.9e-06, +4.7e-06]; [-4.7e-07, +6.8e-07]; [-1.7e-06, +1.2e-06] |
+
+Along DR's second-order transient from the lift (Eν² = 1): per 50-unit window the mean error's rms and the largest eigenvalue of the window-averaged S_k (classes 1, 2, 3); the largest over every one-period average: -3.60e-04, -1.36e-04, -2.61e-04.
+
+| window | rms E[e] | λ_max(S₁), λ_max(S₂), λ_max(S₃) |
+|---|---|---|
+| [0, 50) | 0.0264 | -4.59e-04, -1.48e-04, -3.21e-04 |
+| [50, 100) | 0.0257 | -4.50e-04, -1.46e-04, -3.16e-04 |
+| [100, 150) | 0.0248 | -4.25e-04, -1.45e-04, -3.04e-04 |
+| [150, 200) | 0.0241 | -3.97e-04, -1.47e-04, -2.92e-04 |
+| [200, 250) | 0.0235 | -3.83e-04, -1.44e-04, -2.80e-04 |
+| [250, 300) | 0.0228 | -3.70e-04, -1.39e-04, -2.68e-04 |
+
+The real loop: the lift m = 15 with class 3 separated by 10⁻⁶·(2, 1, 0, −1, −2) along MR's top eigenvector of S₃, 4 antithetic pairs per (law, std) on paths common to the laws, 300 time units, the separation's rate (least squares over t ≥ 50) against −σ₀/k_e = -2.830e-04 plus Eν² times the law's S₃ at the lift — along the start's direction u (uᵀS₃u) and at its largest eigenvalue (the rate the separation tends to once it has turned onto the top eigenvector).
+
+| law | std | measured rate (pair means ± s.e.) | −σ₀/k_e + Eν²uᵀS₃u | −σ₀/k_e + Eν²λ_max(S₃) | runs growing |
+|---|---|---|---|---|---|
+| MR | 0.05 | +4.6910e-04 ± 1.3e-05 | +4.6240e-04 | +4.6240e-04 | 8 of 8 |
+| MR | 0.1 | +1.2484e-03 ± 3.1e-05 | +2.6985e-03 | +2.6985e-03 | 8 of 8 |
+| DR | 0.05 | -2.9651e-04 ± 1.3e-07 | -2.9953e-04 | -2.8382e-04 | 0 of 8 |
+| DR | 0.1 | -3.3650e-04 ± 5.3e-07 | -3.4918e-04 | -2.8634e-04 | 0 of 8 |
+
 Numbers are produced by `experiments/exp_eiv_remedy.py`; nothing is edited by hand.

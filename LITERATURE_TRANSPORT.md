@@ -481,6 +481,13 @@ found the construction.
   cancels; its own response falling like k_e⁻² on the one-dimensional reference, where the law's leading term averages out — and the
   observation that the desired regressor does not remove it. Numerics: `exp_eiv_remedy.py`. Verdict: classical ingredients; a structural
   reading of the adaptive prior and a quantified, partial remedy for the transport leaks.
+- **Corollary D‴.33 (the desired regressor and the coherence under noise).** That a regressor evaluated on the reference trajectory
+  removes the measurement noise from the adaptation's regressor is part of the classical motivation of the desired compensation
+  adaptation law (Sadegh and Horowitz, [S53]). What is specific here is its effect on the coherence of the K₀-atom identification: the
+  separations' second-order drift reduced to the mean error's term, whence a noise threshold uniform in k_e, the stabilising sign of the
+  compensation's rectification of the noise in the centre directions of separated Gaussian kernels, and the drift's relaxation toward
+  the residual (I − P)g at the adaptive prior's stationary point. Numerics: `exp_eiv_remedy.py` Part D. Verdict: a classical remedy, a
+  new structural consequence for the transport leaks (and for the cohesion leak, whose separations are the softest).
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 
