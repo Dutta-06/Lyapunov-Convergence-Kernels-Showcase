@@ -1142,3 +1142,36 @@ D‴.32's round-23 fixes are applied correctly where checked.
 cohesion, so the clean reduction held only where the cohesion vanishes — and every broad run used the kernel under which it does not.
 And a claim of reaching a target needs the trajectory bounded; a theorem about bounded trajectories says nothing about the ones that run
 to the boundary, where the saturated classes live.
+
+## Round 25 (adversarial review of Proposition D‴.35, the split as an S_n-symmetric transcritical bifurcation, 2026-10-20)
+
+**Design.** One referee, not modifying the repository. D3x: Proposition D‴.35 on a snapshot of 44fe0f9 (`review/REVIEW_round25_D3x.md`; its
+issues ID-1–ID-11 are D3x-1–D3x-11 here): an independent instance (round 23's `inst.py`) with the quadratic coefficient re-derived and
+measured, the slaving at third order, the full Jacobian's spectrum at the lift, the branches including the S₅ × S₅ states, all twelve Part C
+runs and the mass-free run of seed 0 reproduced from their seeds, the mass-free schedule extended to σ₀/256, the margin after a departure
+decomposed, mutants against the tests.
+
+**Verdicts (D3x).** (i) holds to second order (the coefficient c₃/2 to 3·10⁻⁸ on a scale of 5·10⁻⁴; no even part in either kernel or the
+mass-free leak), the centre-manifold regime not covering σ₀/16; (ii) holds for 1 ≤ q < n/2 and both signs of μ, the S_{n/2} × S_{n/2} states
+missing; (iii) the order and the escape time hold (the quadratic equation's particle in 12 of 12 runs, its time to 1.2%; the linear one's in
+6 of 12, to 22%), "alone" does not; (iv) the margin's accounting is wrong; (v) the blocks hold, "sheds once per crossing" is refuted; every
+reproduced number matches; the md regenerates byte-identically.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3x-1 | major ((v), *Numerics* (D), Status, §0, §7, §8, RESULTS, PAPERS, README, the audit) | the mass-free leak's thresholds are a factor w_k lower, so Part G's schedule reaches them later; extended to σ₀/256 (seed 0) it ends at 9 classes and 0.0028, as the cohesion leak does: the 4 classes were where the schedule stopped | (v) restated: the thresholds σ = λ⁺_k, the cascade not stopped; Part F extends the mass-free schedule to σ₀/256 for seeds 0–2 (9, 10, 9 classes at σ₀/128 and 9, 8, 9 at σ₀/256, the fit error 0.0028, in all three seeds); "sheds once per crossing", "the target's count" and "the mass factor drives the cascade" removed everywhere |
+| D3x-2 | major ((iv), proof, §0, §8, PAPERS, README) | the margin after a departure omits the curvature's gauge rise (λ⁺/(n − 1), 1.35–2.4 times the stiffness's drop) and the condition is off by μ; the residual's change dominates both | (iv): the margin σ₀(w_k − k/m) − λ⁺(r′, ϑ′) with the gauge factor n/(n − k), "stops only if the residual's change lowers λ⁺ by more than μ + kσ₀/m plus that rise", the residual's change dominating on the instance; the proof cites D‴.28's scaling |
+| D3x-3 | major ((iii), *Numerics* (C), §8, PAPERS, README) | "alone" fails: at σ₀/16 bound pairs leave in 3 of 6 runs (the top two ζ₀ within 1–11%); the 0.1-from-the-median criterion is far inside the range | (iii): "alone when its lead is large, with its neighbour as a bound pair when nearly tied"; Part C reports the pieces beyond the range at the end (at σ₀/16 a single particle in 3 of 6 runs and a bound pair in 3; at μ = 5·10⁻⁵ a single particle in 3, none yet in 3); "sheds the extreme particle, alone or with a near-tied neighbour" |
+| D3x-4 | minor (*Numerics* (C)) | the "+ side" first excursions are not the common drift (it cancels against the median) but linear growth below 2μ/\|c₃\| = 0.22; those particles do not leave | (C) rewritten; Part C prints the linear and flipped-c₃ predictions |
+| D3x-5 | minor ((C), §0, §8, RESULTS) | "first on the side sign(c₃)v the top-ranked, 12 of 12" is order preservation (the linear law gives it too); the first excursion is on that side in 10 of 12 | the discriminating statistics reported: the quadratic equation's particle in 12 of 12 (linear 6, flipped c₃ 2), its time to 1.1% (linear 22%); the side in 10 of 12 |
+| D3x-6 | minor ((ii)) | for even n the S_{n/2} × S_{n/2} states are cubic and missing; "leaves every neighbourhood" too strong | (ii): the cubic states named; "a fixed neighbourhood from almost every initial condition" |
+| D3x-7 | minor ((i), (iii), Status) | at σ₀/16 three stable modes are slower than μ; the third order is mostly the class mean's slaving and the residual's own cubic, nearly cancelling, the kernel's concavity the smaller term | (i): "for \|μ\| small against the other modes' rates", the third-order terms named; the Status: at σ₀/16 the agreement reflects the weak coupling |
+| D3x-8 | minor (tests) | test 3 ran at a negative cohesion strength (a repulsion); `reduced_crossing` untested; `MassFree` untested | test 3 at μ = 10⁻⁴ with σ > 0 and the other classes' margins positive asserted; a test of `reduced_crossing` against the linear closed form and an independent integration; a test of the mass-free leak's blocks (−σ on a separation, 0 on a class mean) |
+| D3x-9 | minor ((E), RESULTS, §8) | "a faster mass transfer shortens the cascade": γ = 1 (5, 6, 8) and γ = 0.1 (6, 6, 7) have the same mean; the seeds are not paired with Part G's | (E): "with the replicator the cascade ends at 5–8 classes against 8–10 without; the rate makes no difference in three seeds", the seeds' jitter unpaired with Part G's said |
+| D3x-10 | minor (Status, §0, [S63], the audit) | order preservation is equivariance and the escape time the Riccati solution; Stewart–Elmhirst–Cohen, Brea et al., Şimşek et al. and Rose missing | "new" restricted to the identification of the coefficient, the margin after a departure and the quantification; [S63] extended (Stewart–Elmhirst–Cohen checked by the referee's web search; Brea et al., Şimşek et al. from memory); Rose in the audit |
+| D3x-11 | cosmetic | σ/ψ̄_i should be σ/(σ₀ψ̄_i); Δs undefined; "side" missing; the closed form is not the time against the median; (D)'s "delayed" sentence | fixed in (v), (iii), (C), (D) |
+
+**Lesson.** A count that comes out right at the end of a schedule is a statement about the schedule. The mass-free leak "stopped" the
+cascade only because its thresholds lay one stage lower; continued, it shed like the original. And a statistic that any order-preserving
+law reproduces tests the order, not the term it was meant to test: the discriminating number was the time, and the linear law missed it by
+22%.

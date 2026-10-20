@@ -17,11 +17,13 @@ B. The branches: at μ = 2·10⁻⁶ and 5·10⁻⁷ the S_q × S_{n−q} split 
 C. Who leaves, when and where: from the lift with a jitter 10⁻³ (seeds 0–5) at μ = 1.39·10⁻⁴ (σ₀/16, Part G's first split) and at
    μ = 5·10⁻⁵: the ranking of sign(c₃)ξ_i(0); the order in which particles leave the class (a particle leaves when it is more than 0.1
    from the median of the class's ξ); the first departure's time against the reduced quadratic equation integrated from the measured
-   ξ(0); its side against sign(c₃); how many leave within 10⁵ slow units; the margin of the class's main piece at the end.
+   ξ(0), without the quadratic term (linear) and with c₃'s sign flipped; its side against sign(c₃); the class's pieces beyond the kernel's
+   range at the end (single linkage at R, round 25); the margin of the class's main piece at the end.
 D. The cascade and two changes of the law (Part G's schedule: σ halved every 10⁵ slow units from σ₀ to σ₀/64, the jitter renewed at each
    stage, seeds 0–2): the cohesion leak with the replicator weight law (Proposition D‴.34, γ = 0.1), and the mass-free leak σ(m_i − ϑ_i)
    (the normalised mean shift: separation stiffness σ instead of σw_k), against Part G's counts.
 E. Part D's schedule with the replicator at γ = 1 (seeds 0–2).
+F. The mass-free leak continued to σ₀/256 (two more stages, seeds 0–2; round 25), replacing Part D's mass-free rows.
 
 Output: results/chaos/split_bifurcation.md and split_bifurcation_raw.npz (SB_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
 """
@@ -50,6 +52,7 @@ MUS_C = (5e-5, None)                                                         # N
 S_C, LEAVE = 100000.0, 0.1
 GAMMA_D, SEEDS_D = 0.1, (0, 1, 2)
 STAGES = (1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625)
+STAGES_MF_EXTRA = (0.0078125, 0.00390625)                                    # round 25 (D3x-1): the mass-free leak's thresholds are w_k lower
 
 
 def setup():
@@ -179,10 +182,16 @@ def c_job(args):
     main = np.bincount(lab[idx]).argmax()
     keep = idx[lab[idx] == main]
     rem_margin = float(sigma * len(keep) / T.shape[0] - base.kappa_R(base.residual(T), T[keep].mean(axis=0, keepdims=True))[0])
+    # round 25 (D3x-3): the pieces of the class at the kernel's range (single linkage at R), with their distances from the main piece
+    labR = CO.clusters(T[idx], E.G, E.R_WARM)
+    mainR = np.bincount(labR).argmax()
+    cm = T[idx][labR == mainR].mean(axis=0)
+    pieces = [(np.where(labR == k)[0].tolist(), float(np.sqrt(np.sum((T[idx][labR == k].mean(axis=0) - cm) ** 2 / E.G))))
+              for k in range(labR.max() + 1) if k != mainR]
     order = sorted(left.items(), key=lambda kv: kv[1][0])
     print(f"[{time.time() - t0:.0f}s] C mu {mu_target} seed {seed}", flush=True)
     return dict(mu_target=mu_target, mu=mu, seed=seed, c3=c3, xi0=xi0, rank=np.argsort(-np.sign(c3) * xi0), left=order,
-                s_pred=s_pred, i_pred=i_pred, K_end=int(lab.max() + 1), fit_end=base.fit_error(T), n_main=int(len(keep)), rem_margin=rem_margin)
+                s_pred=s_pred, i_pred=i_pred, K_end=int(lab.max() + 1), fit_end=base.fit_error(T), n_main=int(len(keep)), rem_margin=rem_margin, pieces=pieces)
 
 
 class MassFree(CO.CohesionLoop):
@@ -201,7 +210,7 @@ def d_job(args):
     rng = np.random.default_rng(seed)
     beta = np.ones(Th.shape[0])
     stages = []
-    for f in STAGES:
+    for f in (STAGES + STAGES_MF_EXTRA if law == 'mass-free' else STAGES):
         Th = Th + 1e-3 * rng.standard_normal(Th.shape) * np.sqrt(E.G)[None, :]
         if law.startswith('replicator'):
             gam = GAMMA_D if law == 'replicator' else float(law.split(' ')[1])
@@ -245,20 +254,32 @@ def report(A=None, B=None, C=None, D=None, G_ref=None):
         L_.append("")
     if C is not None:
         L_ += ["## C. Who leaves, when and where (jitter 10⁻³, 10⁵ slow units)", "",
-               f"A particle leaves when it is more than {LEAVE:g} from the median of the class's ξ. The prediction ranks the particles by sign(c₃)ξ_i(0) "
-               "and integrates the reduced quadratic equation from the measured ξ(0).", "",
-               "| μ | seed | ranking by sign(c₃)ξ(0) (first three) and their values | the particles that left, in order (side) | first departure at s | reduced equation's first departure (particle) | clusters at the end | fit error | the class's main piece at the end: particles, margin |",
-               "|---|---|---|---|---|---|---|---|---|"]
+               f"An excursion: a particle more than {LEAVE:g} from the median of the class's ξ (far inside the kernel's range R = 1). The predictions integrate "
+               "the reduced equation from the measured ξ(0) with the quadratic term c₃, without it (linear) and with c₃'s sign flipped; the pieces at the "
+               "end are the class's single-linkage pieces at the range R, with their distances from the main piece.", "",
+               "| μ | seed | ranking by sign(c₃)ξ(0) (first three) and their values | excursions in order (side) | first at s | quadratic: first (particle) | linear | flipped c₃ | pieces beyond the range at the end (distance) | the main piece: particles, margin |",
+               "|---|---|---|---|---|---|---|---|---|---|"]
+        tally = dict(q=0, lin=0, flip=0, n=0, err=[], err_lin=[], side=0)
         for r in sorted(C, key=lambda r: (-r['mu'], r['seed'])):
             sc = np.sign(r['c3'])
             rk = r['rank'][:3]
             left = ', '.join(f"{i}({'+' if sd > 0 else '−'})" for i, (s_, sd) in r['left']) or '—'
+            s_lin, i_lin = reduced_crossing(r['xi0'], r['mu'], 0.0, LEAVE, 4 * S_C)
+            s_fl, i_fl = reduced_crossing(r['xi0'], r['mu'], -r['c3'], LEAVE, 4 * S_C)
+            pcs = '; '.join(f"{{{', '.join(str(i) for i in p_)}}} ({fmt(d)})" for p_, d in r.get('pieces', [])) or '—'
+            if r['left']:
+                i1, (s1, sd1) = r['left'][0]
+                tally['n'] += 1; tally['q'] += int(i1 == r['i_pred']); tally['lin'] += int(i1 == i_lin); tally['flip'] += int(i1 == i_fl)
+                tally['err'].append(abs(r['s_pred'] / s1 - 1)); tally['err_lin'].append(abs(s_lin / s1 - 1)); tally['side'] += int(sd1 == sc)
             L_.append(f"| {fmt(r['mu'])} | {r['seed']} | {', '.join(str(int(i)) for i in rk)} ({', '.join(f'{sc * r['xi0'][i]:.2e}' for i in rk)}) | {left} | "
-                      f"{fmt(r['left'][0][1][0]) if r['left'] else '—'} | {fmt(r['s_pred'])} ({r['i_pred']}) | {r['K_end']} | {fmt(r['fit_end'])} | {r['n_main']}, {fmt(r['rem_margin'])} |")
-        L_.append("")
+                      f"{fmt(r['left'][0][1][0]) if r['left'] else '—'} | {fmt(r['s_pred'])} ({r['i_pred']}) | {fmt(s_lin)} ({i_lin}) | {fmt(s_fl)} ({i_fl}) | {pcs} | "
+                      f"{r['n_main']}, {fmt(r['rem_margin'])} |")
+        L_ += ["", f"The first excursion's particle: the quadratic equation's in {tally['q']} of {tally['n']} runs, the linear one's in {tally['lin']}, the flipped one's in "
+               f"{tally['flip']}; its time to {100 * max(tally['err']):.1f}% (quadratic) and {100 * max(tally['err_lin']):.1f}% (linear) at most; on the side sign(c₃)v in "
+               f"{tally['side']} of {tally['n']}.", ""]
     if D is not None:
         L_ += ["## D. The cascade under Part G's schedule: the replicator weight law and the mass-free leak", "",
-               "| law | seed | σ/σ₀: clusters (fit error) | at σ₀/64: particles per class | centres | masses |", "|---|---|---|---|---|---|"]
+               "| law | seed | σ/σ₀: clusters (fit error) | at the schedule's end (σ₀/64; the mass-free leak σ₀/256, Part F): particles per class | centres | masses |", "|---|---|---|---|---|---|"]
         rows = list(D)
         if G_ref is not None:
             rows = [dict(law='cohesion leak (Part G)', seed=g['seed'], stages=g['stages']) for g in G_ref] + rows
@@ -270,6 +291,12 @@ def report(A=None, B=None, C=None, D=None, G_ref=None):
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_split_bifurcation.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
+
+
+def d_rows(d):
+    """Part D's rows with the mass-free ones replaced by F's (to σ₀/256) when present, and E's."""
+    rows = [r for r in (list(d['D']) if 'D' in d else []) if not ('F' in d and r['law'] == 'mass-free')]
+    return rows + (list(d['F']) if 'F' in d else []) + (list(d['E']) if 'E' in d else []) or None
 
 
 def g_reference():
@@ -295,9 +322,9 @@ def main():
     args = sys.argv[1:]
     old = E.load(raw)
     if '--from-raw' in args:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), (list(old['D']) if 'D' in old else []) + (list(old['E']) if 'E' in old else []) or None, g_reference()))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), d_rows(old), g_reference()))
         return
-    parts = set('ABCDE')
+    parts = set('ABCDEF')
     if '--only' in args:
         parts = set(args[args.index('--only') + 1].split(','))
     from multiprocessing import Pool
@@ -312,12 +339,14 @@ def main():
             asyncs['D'] = pool.map_async(d_job, [(law, s) for law in ('replicator', 'mass-free') for s in SEEDS_D], chunksize=1)
         if 'E' in parts:
             asyncs['E'] = pool.map_async(d_job, [('replicator 1', s) for s in SEEDS_D], chunksize=1)
+        if 'F' in parts:                                                     # round 25: the mass-free leak to σ₀/256 (replaces D's mass-free rows)
+            asyncs['F'] = pool.map_async(d_job, [('mass-free', s) for s in SEEDS_D], chunksize=1)
         if 'A' in parts:
             res['A'] = part_A(); E.save(raw, **res)
-        for k in 'BCDE':
+        for k in 'BCDEF':
             if k in parts:
                 res[k] = asyncs[k].get(); E.save(raw, **res)
-    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), (list(res['D']) if 'D' in res else []) + (list(res['E']) if 'E' in res else []) or None, g_reference()))
+    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), d_rows(res), g_reference()))
 
 
 if __name__ == '__main__':

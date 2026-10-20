@@ -920,14 +920,18 @@ redistributions and K gauges, a separation keeps −σ₀w_k with γ > 0, and th
   the threshold 0.1213σ₀); along its splitting direction the residual's third derivative is c₃ = −1.257·10⁻³.
 - (B) Near the threshold Newton on the full drift finds the S_q × S_{n−q} split states (q = 1–4) where the reduced equation puts them (0.3%–3.0%
   at μ = 5·10⁻⁷), each a saddle, its eigenvalues converging to ∓μn/(n − 2q) and −μ as μ → 0.
-- (C) The first particle to leave on the side sign(c₃)v is the extreme one of the jitter in 12 of 12 runs, at the reduced equation's time to
-  about 1%; the cascade stops within a stage once the main piece's margin is positive.
-- (D) Under Part G's schedule: 8–10 classes with the cohesion leak, 6–7 with the replicator (γ = 0.1), 4 in 3 of 3 under the mass-free leak —
-  the target's count — but the escapee at the flank and the fit error 0.0149 against 0.003. (E) With the replicator at γ = 1: 5, 6 and 8 classes (the first escapee's mass 0.134–0.136): the cascade shortened, not
-  reliably to the target's count.
+- (C) The reduced quadratic equation names the first excursion's particle in 12 of 12 runs and its time to 1.1%; the linear equation names it
+  in 6 and misses the time by up to 22.4%, the flipped one in 2. The first excursion is on the side sign(c₃)v in 10 of 12. At σ₀/16 a bound
+  pair leaves in 3 of 6 runs (the top two within 1.2%–11%), a single particle in the others; the cascade stops within a stage once the main
+  piece's margin is positive.
+- (D) Under Part G's schedule: 8–10 classes with the cohesion leak, 6–7 with the replicator (γ = 0.1). (E) With the replicator at γ = 1:
+  5, 6 and 8 classes (the first escapee's mass 0.134–0.136): the rate makes no difference in three seeds. (F) The mass-free leak continued to
+  σ₀/256: 4 classes at σ₀/64 in 3 of 3 runs (the fit error 0.0149), then 9, 10, 9 at σ₀/128 and 9, 8, 9 at
+  σ₀/256, the fit error 0.0028 — the cohesion leak's end state: the 4 classes were where the schedule stopped.
 
 Tests (`tests/test_split_bifurcation.py`): the full drift along v against the reduced quadratic equation (the remainder cubic); the
-single-particle split state a saddle with the predicted eigenvalues; the predicted particle leaving first, on the predicted side.
+single-particle split state a saddle with the predicted eigenvalues; the predicted particle leaving first, on the predicted side; the
+reduced crossing against closed forms; the mass-free leak's blocks.
 
 ## Proposition D‴.36 — the gauge under dither (`exp_gauge_dither.py` → `chaos/gauge_dither.md`)
 

@@ -65,7 +65,10 @@ def test_the_extreme_particle_leaves_first_on_the_side_of_the_quadratic_term():
     counts = np.array([4, 4, 4])
     net, base, at, w, Th0 = _instance(counts)
     lam, v, c3s, _ = SB.coefficients(base, at, Th0, 1)
-    sigma = (lam - 4e-4) / w[1]
+    sigma = (lam - 1e-4) / w[1]
+    assert sigma > 0                                                        # round 25 (D3x-8): a cohesion, not a repulsion
+    for k in (0, 2):                                                        # the other classes' separations stable
+        assert sigma * w[k] > SB.coefficients(base, at, Th0, k)[0]
     rng = np.random.default_rng(5)
     Th = Th0 + 1e-3 * rng.standard_normal(Th0.shape) * SQG[None, :]
     idx = np.arange(4, 8)
@@ -78,7 +81,43 @@ def test_the_extreme_particle_leaves_first_on_the_side_of_the_quadratic_term():
         if not first and dev.max() > 0.1:
             i = int(np.argmax(dev)); first.append((i, np.sign(x[i] - np.median(x))))
     xi0 = xi_of(Th)
-    CO.CohesionLoop(base, 1.0, 'compact', sigma0=sigma).run(Th, 30000.0, 0.25, rec_every=20, callback=cb)
+    CO.CohesionLoop(base, 1.0, 'compact', sigma0=sigma).run(Th, 80000.0, 0.25, rec_every=20, callback=cb)
     assert first, 'no particle left'
     assert first[0][0] == int(np.argmax(np.sign(c3s[0]) * xi0))
     assert first[0][1] == np.sign(c3s[0])
+
+
+def test_the_reduced_crossing_against_closed_forms():
+    """Round 25 (D3x-8): without the quadratic term every deviation from the median grows like e^{μs}, so the first crossing of the level is
+    at ln(level/max dev₀)/μ; with it, the crossing time against an independent fine integration."""
+    from scipy.integrate import solve_ivp
+    rng = np.random.default_rng(3)
+    xi0 = 1e-3 * rng.standard_normal(10); xi0 -= xi0.mean()
+    mu, level = 1e-4, 0.1
+    s_lin, i_lin = SB.reduced_crossing(xi0, mu, 0.0, level, 1e6, dt=1.0)
+    dev0 = np.abs(xi0 - np.median(xi0))
+    assert i_lin == int(np.argmax(dev0)) and abs(s_lin - np.log(level / dev0.max()) / mu) <= 1.0 + 1e-9
+    c3 = -1.2e-3
+    s_q, i_q = SB.reduced_crossing(xi0, mu, c3, level, 1e6, dt=1.0)
+    f = lambda t, x: mu * x + 0.5 * c3 * (x ** 2 - np.sum(x ** 2) / x.size)
+    ev = lambda t, x: np.abs(x - np.median(x)).max() - level
+    ev.terminal = True
+    sol = solve_ivp(f, (0, 1e6), xi0, events=ev, rtol=1e-10, atol=1e-14)
+    assert abs(sol.t_events[0][0] - s_q) <= 1.5
+    assert i_q == int(np.argmax(np.abs(sol.y_events[0][0] - np.median(sol.y_events[0][0]))))
+
+
+def test_the_mass_free_leaks_blocks():
+    """Round 25 (D3x-8): at the lift (classes far apart, the compact kernel) the mass-free leak's Jacobian is −σ on a separation and zero on a
+    class mean (the learning drift's part removed by subtracting the cohesion loop with σ = 0)."""
+    counts = np.array([10, 10, 10])
+    net, base, at, w, Th0 = _instance(counts)
+    sig = 3e-4
+    mf, lo = SB.MassFree(base, 1.0, 'compact', sigma0=sig), SB.MassFree(base, 1.0, 'compact', sigma0=0.0)
+    F = lambda L, x: L.drift(x.reshape(-1, 3)).ravel()
+    x0 = Th0.ravel()
+    sep = np.zeros_like(Th0); sep[10, 1] = 1.0; sep[11, 1] = -1.0
+    mean = np.zeros_like(Th0); mean[10:20, 1] = 1.0
+    for v, expect in ((sep, -sig * sep.ravel()), (mean, np.zeros(x0.size))):
+        jv = lambda L: (F(L, x0 + 1e-6 * v.ravel()) - F(L, x0 - 1e-6 * v.ravel())) / 2e-6
+        assert np.abs(jv(mf) - jv(lo) - expect).max() < 1e-9
