@@ -929,6 +929,20 @@ redistributions and K gauges, a separation keeps −σ₀w_k with γ > 0, and th
 Tests (`tests/test_split_bifurcation.py`): the full drift along v against the reduced quadratic equation (the remainder cubic); the
 single-particle split state a saddle with the predicted eigenvalues; the predicted particle leaving first, on the predicted side.
 
+## Proposition D‴.36 — the gauge under dither (`exp_gauge_dither.py` → `chaos/gauge_dither.md`)
+
+- Proposition D‴.32's three-bump instance, one particle per class at the exact representation ϑ^e(1/3), the replicator at γ = 10⁻², the
+  positions dithered at τ = 10⁻⁴. (A–B) The masses diffuse along the manifold of exact fits at the predicted rate (the ratios 1.05, 1.53,
+  0.88 over 64 seeds, within two standard errors); their means drift by about 2.6 standard errors in 5·10⁴ slow units (the limit's drift
+  term, not computed).
+- (C) Without a leak the masses spread to 0.05 in 2·10⁵ slow units and the first amplitude runs into the saturation (|a|/a_max = 0.9994,
+  against 0.80 with fixed weights), the fit error unchanged (the dither's).
+- (D) The entropic leak on the masses pins them: the spreads 0.0152, 0.0103, 0.0117 (ε = 10⁻⁴) and 0.0044, 0.0032, 0.0034 (10⁻³) against
+  the Ornstein–Uhlenbeck prediction 0.0139, 0.0099, 0.0105 and 0.0044, 0.0031, 0.0033, the means within 0.008 and 0.0005 of 1/3.
+
+Tests (`tests/test_gauge_dither.py`): the leak a Fisher–Rao gradient; the two-class diffusion's closed form; the leak keeping the exact
+representation stationary and stabilising the gauge; the leak's spread against the two-class closed form; no weight motion at γ = 0.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

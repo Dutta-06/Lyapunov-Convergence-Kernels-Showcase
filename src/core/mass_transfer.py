@@ -30,12 +30,13 @@ class ReplicatorCohesionLoop:
     """The cohesion leak (range R, kind, strength σ₀) with the replicator weight law of rate γ on top of an `AveragedSlowLoop` `base`;
     `balanced` keeps Σβ = m (λ the β-mean of u), otherwise λ = 0."""
 
-    def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True):
+    def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0):
         self.base = base
         self.G = base.G
         self.R, self.kind = float(R), kind
         self.sigma0 = base.sigma0 if sigma0 is None else float(sigma0)
         self.gamma, self.balanced = float(gamma), bool(balanced)
+        self.eps = float(eps)                     # Proposition D‴.36: the entropic leak on the masses, energy (ε/γ)Σβ_i log β_i
 
     def f_hat(self, Th, beta):
         a, c, s, diff, phi = self.base.features(Th)
@@ -53,13 +54,18 @@ class ReplicatorCohesionLoop:
         r = self.residual(Th, beta)
         dTh = beta[:, None] * self.G[None, :] * self.base.grad_weighted(r, Th) + CO.cohesion_force(Th, self.G, self.R, self.sigma0, self.kind)
         u = self.fitness(r, Th)
+        if self.eps:                              # −∂_β of (ε/γ)Σβ log β, up to the multiplier
+            u = u - (self.eps / self.gamma) * np.log(beta)
         lam = float(beta @ u / beta.sum()) if self.balanced else 0.0
         return dTh, self.gamma * beta * (u - lam)
 
     def J(self, Th, beta):
         m = Th.shape[0]
         r = self.residual(Th, beta)
-        return 0.5 * m * float(np.mean(r ** 2)) + 0.5 * self.sigma0 * m * CO.interaction_energy(Th, self.G, self.R, self.kind)
+        out = 0.5 * m * float(np.mean(r ** 2)) + 0.5 * self.sigma0 * m * CO.interaction_energy(Th, self.G, self.R, self.kind)
+        if self.eps:
+            out += (self.eps / self.gamma) * float(np.sum(beta * np.log(beta)))
+        return out
 
     def fit_error(self, Th, beta):
         r = self.residual(Th, beta)
@@ -81,6 +87,27 @@ class ReplicatorCohesionLoop:
             Tm, lm = Th + 0.5 * dt * d1, lb + 0.5 * dt * g1 / b
             d2, g2 = self.drift(Tm, np.exp(lm))
             Th, lb = Th + dt * d2, lb + dt * g2 / np.exp(lm)
+            if self.balanced:
+                lb = lb - np.log(np.exp(lb).sum() / m)
+        return Th, np.exp(lb)
+
+
+    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None):
+        """Proposition D‴.36: the positions dithered (Euler–Maruyama, the noise √(2τG) per particle), the weights by the midpoint-free Euler
+        step of (𝔉) on log β, renormalised to Σβ = m; callback(s, Θ, β) at the records."""
+        Th, lb = np.array(Th, float), np.log(np.array(beta, float))
+        m = Th.shape[0]
+        sq = np.sqrt(2.0 * tau * dt * self.G)[None, :]
+        n = int(round(S_end / dt))
+        for k in range(n + 1):
+            b = np.exp(lb)
+            if callback is not None and k % rec_every == 0:
+                callback(k * dt, Th, b)
+            if k == n:
+                break
+            dT, db = self.drift(Th, b)
+            Th = Th + dt * dT + sq * rng.standard_normal(Th.shape)
+            lb = lb + dt * db / b
             if self.balanced:
                 lb = lb - np.log(np.exp(lb).sum() / m)
         return Th, np.exp(lb)

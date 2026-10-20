@@ -74,7 +74,8 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   fit iff the target is representable, and from broad starts the five-bump target is found with its five kernels (Proposition D‴.34); and
   a split is an S_n-symmetric transcritical bifurcation whose quadratic coefficient is the residual's third derivative, so the extreme
   particle of the jitter leaves first and alone — why the cohesion leak sheds single particles — and the class's mass-dependent stiffness
-  makes the cascade (Proposition D‴.35); rounds 7–24 of the review log cover all of them up to D‴.34, and their remarks.
+  makes the cascade (Proposition D‴.35); and under dither the replicator's masses diffuse along the manifold of exact fits (Katzenberger's limit) and their amplitudes run into
+  the saturation, which an entropic leak on the masses prevents without bias (Proposition D‴.36); rounds 7–24 of the review log cover all of them up to D‴.34, and their remarks.
 
 ---
 
