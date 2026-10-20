@@ -550,6 +550,36 @@ D$'''$.35 & Proposition D$'''$.32's resolution instance (the lift of $\vartheta^
     and the radial one at $-\mu$; the predicted particle leaving first on the side $\sgn(c_3)v$, at $\mu = 10^{-4}$
     with the other classes' margins positive; the reduced crossing against the linear closed form and an
     independent integration; the mass-free leak's blocks)\\
+D$'''$.36 & Proposition D$'''$.32's three-bump instance, one particle per class at $\vartheta^e(1/3)$,
+  $\tau = 10^{-4}$: (A) the predicted $D_{kk} = 2.85\cdot10^{-8}$, $1.63\cdot10^{-8}$, $1.81\cdot10^{-8}$ at
+  $\gamma = 10^{-2}$ ($4.85\cdot10^{-10}$ to $4.23\cdot10^{-7}$ for the first class over $\gamma = 10^{-3}$--10);
+  (B) 64 seeds, $5\cdot10^4$ slow units: the variance's slopes $(2.69\pm0.58, 2.21\pm0.47, 1.62\pm0.38)\cdot10^{-8}$,
+  the ratios 0.95, 1.36, 0.90; the means $0.3212\pm0.0046$, $0.3445\pm0.0041$, $0.3342\pm0.0038$ (the drift term);
+  (C) 10 seeds, $2\cdot10^5$: the spread 0.057, 0.053, 0.052 ($\sqrt{Ds}$ 0.065, 0.049, 0.052), $\alpha_1$ up to 16.1
+  ($\abs{a}/a_{\max} = 0.9994$, against 0.80 at $\gamma = 0$), the fit error the dither's (0.0253 against 0.0269);
+  (D) the leak at $\varepsilon = 10^{-4}$, $10^{-3}$: the spreads 0.0152, 0.0103, 0.0117 and 0.0044, 0.0032, 0.0034
+  against the predicted 0.0139, 0.0099, 0.0105 and 0.0044, 0.0031, 0.0033, the means within 1.5 standard errors of
+  1/3 (4 seeds; the 16-seed test in D$'''$.37 (G))
+  & \code{exp_gauge_dither.py} $\to$ \code{results/chaos/gauge_dither.md}; \code{tests/test_gauge_dither.py} (the
+    entropic leak a Fisher--Rao gradient; the two-class diffusion's closed form; the leak keeping the exact
+    representation stationary and making the gauge stable; the leak's spread against the two-class
+    Ornstein--Uhlenbeck closed form; $\gamma = 0$ leaving the weights at 1; $D$ against the projector of the code's own
+    drift Jacobian; \code{run_dithered}'s noise $2\tau G\dd t$)\\
+D$'''$.37 & Proposition D$'''$.36's instance, $\tau = 10^{-4}$: (A) the identities against the integrated limit map to
+  $2.2\cdot10^{-5}$ and $1.1\cdot10^{-4}$; (B) at $W = 1/3$ the amplitudes' noise drains each class at 5.34, 3.47,
+  $4.07\cdot10^{-7}$, the centres' and widths' at most $2.2\cdot10^{-10}$; (C) the drift over $\gamma\tau$ at
+  $\gamma = 10^{-5}$ against $-\frac12W_k(\partial_k\ell - \sum_lW_l\partial_l\ell)$ to 0.3\% at four points; (D) the
+  layer's zero at 0.66, 0.61, 0.59, 0.57, 0.57 $\delta^*$ for $\gamma = 10^{-2}$--$10^{-4}$, inside the drift
+  $\tau G_\alpha\partial^2_\alpha W_1$ to 0.6\%; (E) at $\gamma = 10^{-2}$ a repelling node, three saddles, three
+  attracting nodes $(0.284, 0.205, 0.511)$, $(0.284, 0.484, 0.232)$, $(0.562, 0.206, 0.232)$; (F) the 64-seed mean on
+  the mean path within its errors; (G) 16 seeds: the leak's shift within 1--2 errors of $\kappa^{-1}b$ at
+  $\varepsilon = 3\tau$, $10\tau$, 1.8 times it at $\varepsilon = \tau$, the second component above it at every
+  $\varepsilon$; (H) 12 seeds over $10^6$: near-saturation fractions 0.50, 0.25, 0.33, the largest $\abs{\alpha_1}$ by
+  quarters 6.6, 10.1, 10.9, 11.3, 11--12\% of the last quarter beyond the saturation
+  & \code{exp_gauge_drift.py} $\to$ \code{results/chaos/gauge_drift.md}; \code{src/core/gauge_drift.py};
+    \code{tests/test_gauge_drift.py} (closed-form toy limit maps; an integrated limit map in a non-orthogonal metric;
+    the instance's diffusion against D$'''$.36's projection; the slow limit against the log-determinant law; the
+    log-determinant's independence of the split within a class)\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid

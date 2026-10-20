@@ -94,9 +94,12 @@ In Part~I, every step of the stability argument is either proved or verified num
     servo (Proposition D$'''$.29), measurement noise (Propositions D$'''$.30 and D$'''$.31, Corollary D$'''$.33),
     the cohesion leak, a leak on the unexcited subspace without a prior that does not select the number of kernels
     (Proposition D$'''$.32), a replicator weight law, the mass transfer of the cohesion leak (Proposition
-    D$'''$.34), and the split of a class, an $S_n$-symmetric transcritical bifurcation that sheds the extreme particle
-    (Proposition D$'''$.35) --- through a seventeenth to a twenty-fifth. Every confirmed issue and its fix is logged in
-    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--25 are kept beside it.
+    D$'''$.34), the split of a class, an $S_n$-symmetric transcritical bifurcation that sheds the extreme particle
+    (Proposition D$'''$.35), the gauge under dither, along which the replicator's masses diffuse and which an entropic
+    leak on the masses pins (Proposition D$'''$.36), and the dither's drift along it, the replicator flow of a
+    log-determinant free energy that drives the masses into the saturation (Proposition D$'''$.37) --- through a
+    seventeenth to a twenty-seventh. Every confirmed issue and its fix is logged in \code{review/REVIEW_LOG.md}, and
+    the raw reports of rounds 1--3 and 5--27 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -719,6 +722,48 @@ branches with no stable small branch, the jump of sympatric speciation, the perm
 networks --- is classical, as are order preservation and the Riccati escape (\cite{S63}); new is the identification
 for the cohesion leak: the quadratic coefficient as the residual's third derivative, the cohesion at third order, the
 margin after a departure, and the instance's quantification\\
+\addlinespace[0.5pt]
+D$'''$.36 & The gauge under dither: at an exact representation with one particle per class the fits through the
+configuration form a manifold $M$ of dimension $K - 1$ parametrised by the masses ($\fhat$ constant on it); with the
+replicator and the positions dithered the masses diffuse along $M$ (Katzenberger's limit) with the covariance
+$D = (T^\T gT)^{-1}T^\T g\Sigma gT(T^\T gT)^{-1}$ in the flow's metric, for two classes
+$2\tau T_\alpha/(T_\alpha + T_W)^2$, vanishing as $\gamma\to0$ and at the saturation, where the amplitude's excursion
+is unbounded; the entropic leak $(\varepsilon/\gamma)\sum\beta\log\beta$ on the masses is a leak on the unexcited
+subspace: it keeps the exact representation at $W = w$ stationary (no bias where $w$ is representable) and makes the
+gauge an Ornstein--Uhlenbeck direction with stiffness $\kappa = \varepsilon(T^\T gT)^{-1}T_W$, its spread solving
+$\kappa C + C\kappa^\T = D$ ($\propto\varepsilon^{-1/2}$), the dither's drift term shifting it by
+$O(\tau/\varepsilon)$
+& (i) proved, (ii) the diffusion coefficient by Katzenberger's theorem (the drift term not computed), (iii) the
+stationarity, the stiffness and the linearised spread proved; numerics: the masses' diffusion measured over 64 seeds at
+0.95, 1.36, 0.90 times the prediction (the displacement's variance; within two standard errors); without the leak the
+spread 0.05 by $2\cdot10^5$ slow units and the first amplitude at $\abs{a}/a_{\max} = 0.9994$; with it the spreads
+0.0044, 0.0032, 0.0034 at $\varepsilon = 10^{-3}$ against the predicted 0.0044, 0.0031, 0.0033 (4 seeds; at
+$\varepsilon = \tau$ inconclusive)
+& Diffusions forced onto a manifold by a large drift (Katzenberger) and SGD's noise-driven motion along the manifold
+of minimisers (Blanc et al., Li--Wang--Arora) are classical (\cite{S64}); new: the amplitude--mass gauge of
+Proposition D$'''$.28 as such a manifold for the replicator of D$'''$.34, the diffusion in the flow's metric with its
+closed form and its excursion into the saturation, and the entropic leak on the masses as the pin\\
+\addlinespace[0.5pt]
+D$'''$.37 & The dither's drift along the gauge: the drift of Katzenberger's limit on the manifold of exact fits, from
+the second-order identities of the limit map in the linearisation's eigenbasis, is of the same order $\tau$ as the
+diffusion; in the slow-replicator limit it is the replicator (Fisher--Rao) flow of the entropic free energy
+$(\tau/2)\log\det\nabla^2_\Theta J$ --- the positions' Gibbs law averaged and Laplace ---, which within a class sees only
+the class's total mass and diverges to $-\infty$ at the saturation, so dither drives the masses toward the saturated,
+flattest fits; a boundary layer of width $\delta^* = \frac12\sqrt{\gamma a_{\max}\abs{A_k}/(mG_\alpha)} =
+O(\sqrt\gamma)$, where the saturating amplitude's relaxation falls below the mass channel's, slows but does not stop it
+(inside, the drift is the It\^o term of the amplitude's driftless diffusion, so the masses' law is not normalisable
+there); the entropic leak's pinned state is shifted by $\kappa^{-1}b(w) = O(\tau/\varepsilon)$
+& (i) proved (given Katzenberger), (ii) the averaging and Laplace steps sketched, (iii) the divergence and the layer's
+scale, the inside law sketched, (iv) first order; numerics: the identities against the integrated limit map to
+$10^{-3}$; the drift the amplitudes' noise's; the $\gamma\to0$ limit equal to the log-determinant law to 0.3\%; the
+layer's zero at $0.57\delta^*$ as $\gamma\to0$; seven zeros at $\gamma = 10^{-2}$ (three attractors of the mean drift,
+not settling states); the 64-seed ensemble mean on the mean path; the leak's shift and spread predicted for
+$\varepsilon\gtrsim3\tau$; without a leak the excursions into the saturation grow over $10^6$ slow units
+& The limit map's second derivative and the noise-driven drift along manifolds of minima (Katzenberger;
+Li--Wang--Arora, \cite{S64}), averaging and the potential of mean force, Laplace, flat minima (\cite{S65}) are
+classical; new: the replicator's gauge as the slow variable with the log-determinant free energy, the dither's drive
+into the saturation and the $\sqrt\gamma$ layer that does not stop it, the finite-$\gamma$ eigenbasis formula, the
+leak's bias\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance
