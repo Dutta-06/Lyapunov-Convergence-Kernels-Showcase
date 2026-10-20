@@ -1,0 +1,376 @@
+"""
+Proposition D‴.37: the dither's drift along the gauge — in the slow-replicator limit the masses descend the log-determinant of the
+positions' Hessian, toward the saturation, and stop in a boundary layer of width O(√γ)
+=================================================================================================================================
+
+Proposition D‴.36's instance (Proposition D‴.32's three bumps, one particle per class at an exact representation, the replicator at γ, the
+positions dithered at τ = 10⁻⁴): the drift of Katzenberger's limit on the manifold M of exact fits, from the second-order identities of the
+limit map (`src/core/gauge_drift.py`), in the masses' coordinates (W_1, W_2), W_3 = 1 − W_1 − W_2.
+
+A. The identities against the limit map computed by integration (LSODA to 1.2·10⁵ slow units) and its second differences along the nine
+   noise coordinates, at W = 1/3 and at (0.30, 0.35, 0.35), γ = 10⁻².
+B. The drift split by the noise coordinates (each class's amplitude, centre, width) at the same points.
+C. The slow-replicator limit: the drift over γτ for γ = 10⁻², 10⁻³, 10⁻⁴, 10⁻⁵ against the replicator flow of the entropic free energy,
+   −½W_k(∂_kℓ − Σ_lW_l∂_lℓ), ℓ(β) = log det ∇²_ϑJ at the exact representation with the masses β/3 (finite differences).
+D. The saturation layer: the zeros of the first class's drift on the line W_2 = W_3 for γ = 10⁻²–10⁻⁴, their distance from the first
+   class's saturation |A_1|/a_max = 0.25, against √γ.
+E. The drift field at γ = 10⁻² on a grid of the representable masses (W_k ≥ |A_k|/a_max + 0.004); its zeros (Newton from the grid's
+   twelve smallest drifts and from the three grid points nearest two saturations) and the eigenvalues of its Jacobian there.
+F. The ensemble mean of exp_gauge_dither.py's Part B (64 seeds, 5·10⁴ slow units, from its raw file) against the mean path dW/ds = b(W).
+G. The entropic leak's pinned state (ε = 10⁻⁴, 3·10⁻⁴, 10⁻³; 16 seeds each, 4·10⁵ slow units, the means over the second half) against
+   the shift κ⁻¹b(w) (κ the leak's stiffness along M, Proposition D‴.36(iii)) and the nonlinear fixed point b(W) = κ(W)(W − w).
+H. Without a leak over 10⁶ slow units (12 seeds): the masses' means and spreads at 10⁵, 3·10⁵, 10⁶ against the limit SDE on M
+   (Euler–Maruyama, 4000 paths, ds = 50, the drift and the diffusion interpolated linearly on E's grid, steps leaving the grid refused).
+
+Output: results/chaos/gauge_drift.md and gauge_drift_raw.npz (GDR_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
+"""
+import os
+import sys
+import time
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+import numpy as np
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from src.core import mass_transfer as MT
+from src.core import gauge_drift as GDR
+import exp_cohesion_leak as E
+import exp_gauge_dither as GD
+
+OUT = os.environ.get('GDR_OUT', os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos'))
+N_WORKERS = int(os.environ.get('GDR_WORKERS', 3))
+GAMMA, TAU, A_MAX = GD.GAMMA, GD.TAU, 4.0
+W_A = ((1 / 3, 1 / 3), (0.30, 0.35))
+H_BF, S_BF = 0.02, 1.2e5
+GAMMAS_C, W_C = (1e-2, 1e-3, 1e-4, 1e-5), ((1 / 3, 1 / 3), (0.30, 0.35), (0.40, 0.25), (0.28, 0.36))
+GAMMAS_D = (1e-2, 3e-3, 1e-3, 3e-4, 1e-4)
+GRID_N, GRID_PAD = 24, 0.004
+EPS_G, SEEDS_G, S_G = (1e-4, 3e-4, 1e-3), tuple(range(200, 216)), 4e5
+SEEDS_H, S_H = tuple(range(300, 312)), 1e6
+T_H = (1e5, 3e5, 1e6)
+N_PATHS, DS_SDE = 4000, 50.0
+W_MIN = np.abs(E.A_BUMP) / A_MAX
+NAMES = [f'{q}_{k + 1}' for k in range(3) for q in ('α', 'c', 's')]
+
+
+def instance(gamma=GAMMA):
+    """The flow in (Θ, log(β_1/β_3), log(β_2/β_3)), the chart of M by (W_1, W_2), the coordinates, the noise covariance."""
+    net, base = E.setup()
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=gamma)
+
+    def beta_of(z):
+        e = np.exp(np.r_[z, 0.0]); return 3 * e / e.sum()
+
+    def F(x):
+        T = x[:9].reshape(3, 3); b = beta_of(x[9:]); dT, db = loop.drift(T, b); dl = db / b
+        return np.concatenate([dT.ravel(), dl[:2] - dl[2]])
+
+    def chart(w):
+        W = np.r_[w, 1 - w.sum()]; return np.concatenate([E.exact_rep(net, W).ravel(), np.log(W[:2] / W[2])])
+
+    coords = lambda x: beta_of(x[9:])[:2] / 3
+    S = np.zeros((11, 11)); S[np.arange(9), np.arange(9)] = 2 * TAU * np.tile(E.G, 3)
+    return F, chart, coords, S
+
+
+def drift_at(w, gamma=GAMMA, by_noise=False):
+    F, chart, coords, S = instance(gamma)
+    return GDR.limit_drift(F, chart, coords, np.asarray(w, float), S, by_noise=by_noise)
+
+
+def log_det(beta, h=1e-4):
+    """ℓ(β) = log det ∇²_ϑJ at the exact representation with the masses β/3 (the nine position coordinates; central differences)."""
+    net, base = E.setup()
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA)
+    Th = E.exact_rep(net, np.asarray(beta) / 3).ravel()
+    J = lambda t: loop.J(t.reshape(3, 3), np.asarray(beta, float))
+    H = np.zeros((9, 9)); I = np.eye(9) * h
+    for i in range(9):
+        for j in range(i, 9):
+            H[i, j] = H[j, i] = (J(Th + I[i] + I[j]) - J(Th + I[i] - I[j]) - J(Th - I[i] + I[j]) + J(Th - I[i] - I[j])) / (4 * h * h)
+    sgn, ld = np.linalg.slogdet(H)
+    assert sgn > 0
+    return ld
+
+
+def log_det_law(W, hb=1e-3):
+    """The slow-replicator limit of the drift over γτ: −½W_k(∂_kℓ − Σ_lW_l∂_lℓ), ∂_k = ∂/∂β_k (the replicator flow of (τ/2)ℓ)."""
+    W = np.asarray(W, float); beta = 3 * W
+    g = np.array([(log_det(beta + hb * e) - log_det(beta - hb * e)) / (2 * hb) for e in np.eye(3)])
+    return -0.5 * W * (g - W @ g)
+
+
+def bf_job(args):
+    """½∂²(W∘Φ)[Σ] by second differences of the integrated limit map along one noise coordinate (± h)."""
+    w, i = args
+    F, chart, coords, S = instance()
+    x0 = chart(np.asarray(w, float)); e = np.zeros(11); e[i] = H_BF
+    yp, rp = GDR.limit_map(F, x0 + e, S_BF); ym, rm = GDR.limit_map(F, x0 - e, S_BF)
+    return dict(w=w, i=i, val=0.5 * S[i, i] * (coords(yp) - 2 * np.asarray(w) + coords(ym)) / H_BF ** 2, res=max(rp, rm))
+
+
+def c_job(args):
+    w, gamma = args
+    d = drift_at(w, gamma)[0]
+    return dict(w=w, gamma=gamma, d=np.r_[d, -d.sum()] / (gamma * TAU))
+
+
+def d_job(gamma):
+    from scipy.optimize import brentq
+    b1 = lambda W1: drift_at(np.array([W1, (1 - W1) / 2]), gamma)[0][0]
+    xs = W_MIN[0] + np.geomspace(2e-3, 0.08, 22)
+    v = [b1(x) for x in xs]
+    roots = [brentq(b1, xs[i], xs[i + 1], xtol=1e-7) for i in range(len(xs) - 1) if np.sign(v[i]) != np.sign(v[i + 1])]
+    return dict(gamma=gamma, roots=np.array(roots), signs=np.sign(v), xs=xs)
+
+
+def grid_points():
+    pts = []
+    for W1 in np.linspace(W_MIN[0] + GRID_PAD, 1 - W_MIN[1] - W_MIN[2] - 2 * GRID_PAD, GRID_N):
+        for W2 in np.linspace(W_MIN[1] + GRID_PAD, 1 - W_MIN[0] - W_MIN[2] - 2 * GRID_PAD, GRID_N):
+            if 1 - W1 - W2 >= W_MIN[2] + GRID_PAD - 1e-12:
+                pts.append((W1, W2))
+    return pts
+
+
+def grid_job(w):
+    d, D, ev = drift_at(w)
+    return np.r_[w, d, D[0, 0], D[0, 1], D[1, 1], ev.max()]
+
+
+def zeros(field):
+    from scipy.optimize import fsolve
+    out = []
+    W3 = np.c_[field[:, :2], 1 - field[:, 0] - field[:, 1]] - W_MIN               # distances from the saturations
+    corners = [field[np.argmin(W3[:, i] + W3[:, j]), :2] for i, j in ((0, 1), (0, 2), (1, 2))]   # two classes nearest their saturation
+    for w0 in list(field[np.argsort(np.hypot(field[:, 2], field[:, 3]))[:12], :2]) + corners:
+        z, info, ier, msg = fsolve(lambda w: drift_at(w)[0] * 1e7, w0, full_output=True)
+        if ier == 1 and np.all(np.r_[z, 1 - z.sum()] > W_MIN) and not any(np.hypot(*(z - o['w'])) < 1e-4 for o in out):
+            h = 1e-4
+            Jb = np.array([(drift_at(z + h * e)[0] - drift_at(z - h * e)[0]) / (2 * h) for e in np.eye(2)]).T
+            out.append(dict(w=z, eig=np.linalg.eigvals(Jb), D=drift_at(z)[1]))
+    return out
+
+
+def e_job(args):
+    return GD.series(args)
+
+
+def kappa(W, eps):
+    """The leak's stiffness along M in the coordinates (W_1, W_2) (Proposition D‴.36(iii))."""
+    A = E.A_BUMP; K = 3; m = 3; Ga = E.G[0]; W = np.asarray(W, float)
+    a = A / W; ap = 1 - (a / A_MAX) ** 2
+    T = np.zeros((2 * K, K - 1))
+    for j in range(K - 1):
+        dW = np.zeros(K); dW[j] = 1.0; dW[-1] = -1.0
+        T[:K, j] = -(A / (W ** 2 * ap)) * dW; T[K:, j] = dW
+    g = np.diag(np.r_[np.full(K, 1 / Ga), (m / GAMMA) / W])
+    return np.linalg.solve(T.T @ g @ T, T.T @ np.diag(np.r_[np.zeros(K), eps * m / (GAMMA * W)]) @ T)
+
+
+def part_F(field):
+    z = E.load(os.path.join(OUT, 'gauge_dither_raw.npz'))
+    R = np.array([r['rec'] for r in z['B']]); s = R[0, :, 0]; W = R[:, :, 4:7]
+    from scipy.integrate import solve_ivp
+    sol = solve_ivp(lambda t, w: drift_at(w)[0], (0, s[-1]), [1 / 3, 1 / 3], t_eval=[1e4, 2e4, 3e4, 5e4], rtol=1e-6, atol=1e-9)
+    out = dict(n=len(W), s=[], mean=[], se=[], path=[], spread=[])
+    Dk = np.diag(GD.gauge_diffusion(np.ones(3) / 3, GAMMA, TAU))
+    for j, t in enumerate(sol.t):
+        i = int(np.argmin(np.abs(s - t)))
+        out['s'].append(s[i]); out['mean'].append(W[:, i].mean(axis=0)); out['se'].append(W[:, i].std(axis=0, ddof=1) / np.sqrt(len(W)))
+        p = sol.y[:, j]; out['path'].append(np.r_[p, 1 - p.sum()]); out['spread'].append(np.sqrt(Dk * s[i]))
+    return out
+
+
+def part_G(runs):
+    from scipy.optimize import fsolve
+    w = np.ones(3) / 3
+    b = drift_at(w[:2])[0]
+    out = []
+    for eps in EPS_G:
+        rs = [r for r in runs if r['eps'] == eps]
+        Rr = np.array([r['rec'] for r in rs]); h = Rr.shape[1] // 2
+        means = Rr[:, h:, 4:7].mean(axis=1)
+        c = np.linalg.solve(kappa(w, eps), b)
+        f = lambda c_: (drift_at(w[:2] + c_)[0] - kappa(np.r_[w[:2] + c_, 1 - (w[:2] + c_).sum()], eps) @ c_) * 1e7
+        cn = fsolve(f, c)
+        out.append(dict(eps=eps, shift=means.mean(axis=0) - 1 / 3, se=means.std(axis=0, ddof=1) / np.sqrt(len(means)), lin=np.r_[c, -c.sum()],
+                        nl=np.r_[cn, -cn.sum()], std=Rr[:, h:, 4:7].std(axis=(0, 1)), std_pred=GD.leak_spread(w, GAMMA, TAU, eps)))
+    return out
+
+
+def sde_paths(field, S_end, t_rec, seed=0):
+    from scipy.interpolate import LinearNDInterpolator
+    from scipy.spatial import Delaunay
+    P = field[:, :2]
+    ib = LinearNDInterpolator(P, field[:, 2:4]); iD = LinearNDInterpolator(P, field[:, 4:7]); tri = Delaunay(P)
+    rng = np.random.default_rng(seed)
+    W = np.tile([1 / 3, 1 / 3], (N_PATHS, 1))
+    rec = {}
+    n = int(round(S_end / DS_SDE))
+    for step in range(n + 1):
+        s = step * DS_SDE
+        for t in t_rec:
+            if abs(s - t) < DS_SDE / 2:
+                rec[t] = W.copy()
+        if step == n:
+            break
+        b = ib(W); D = iD(W)
+        L11 = np.sqrt(np.maximum(D[:, 0], 0)); L21 = D[:, 1] / np.where(L11 > 0, L11, 1); L22 = np.sqrt(np.maximum(D[:, 2] - L21 ** 2, 0))
+        z = rng.standard_normal((N_PATHS, 2)) * np.sqrt(DS_SDE)
+        Wn = W + b * DS_SDE + np.c_[L11 * z[:, 0], L21 * z[:, 0] + L22 * z[:, 1]]
+        out = tri.find_simplex(Wn) < 0
+        Wn[out] = W[out]                                                     # a step that leaves the grid is refused
+        W = Wn
+    return {t: np.c_[v, 1 - v.sum(axis=1)] for t, v in rec.items()}
+
+
+def part_H(runs, field):
+    sde = sde_paths(field, S_H, T_H)
+    R = np.array([r['rec'] for r in runs]); s = R[0, :, 0]; W = R[:, :, 4:7]; al = R[:, :, 1:4]
+    out = []
+    for t in T_H:
+        i = int(np.argmin(np.abs(s - t)))
+        out.append(dict(s=s[i], mean=W[:, i].mean(axis=0), se=W[:, i].std(axis=0, ddof=1) / np.sqrt(len(W)), std=W[:, i].std(axis=0, ddof=1),
+                        sde_mean=sde[t].mean(axis=0), sde_std=sde[t].std(axis=0, ddof=1),
+                        sat=np.abs(np.tanh(al[:, i] / A_MAX)).max(axis=0), near=np.mean(W[:, i] - W_MIN < 0.02, axis=0),
+                        sde_near=np.mean(sde[t] - W_MIN < 0.02, axis=0)))
+    return out
+
+
+def report(A=None, B=None, C=None, D=None, Ef=None, Ff=None, Gg=None, Hh=None):
+    fmt = E.fmt
+    w3 = lambda w: ', '.join(f'{v:.3f}' for v in np.r_[w, 1 - sum(w)])
+    L_ = ["# Proposition D‴.37: the dither's drift along the gauge (`exp_gauge_drift.py`)", "",
+          f"Proposition D‴.36's instance (three bumps, one particle per class at an exact representation, m = 3, the replicator at γ, "
+          f"the positions dithered at τ = {TAU:g}); the masses W_k = β_k/3, the first class saturating at W_1 = {W_MIN[0]:g}; drifts and diffusions "
+          "per unit slow time; γ = 10⁻² unless stated.", ""]
+    if A is not None:
+        L_ += ["## A. The second-order identities against the integrated limit map", "",
+               f"The limit map by LSODA to {S_BF:g} slow units, its second differences at ± {H_BF:g} along the nine noise coordinates.", "",
+               "| W | drift of W_1, W_2, W_3: identities | integrated limit map | relative difference | the flow's residual at the end |", "|---|---|---|---|---|"]
+        for r in A:
+            d3 = np.r_[r['id'], -r['id'].sum()]; b3 = np.r_[r['bf'], -r['bf'].sum()]
+            L_.append(f"| {w3(r['w'])} | {', '.join(fmt(v) for v in d3)} | {', '.join(fmt(v) for v in b3)} | "
+                      f"{np.abs(d3 - b3).max() / np.abs(b3).max():.1e} | {fmt(r['res'])} |")
+        L_.append("")
+    if B is not None:
+        L_ += ["## B. The drift split by the noise coordinates", "", "| W | noise on | drift of W_1, W_2, W_3 |", "|---|---|---|"]
+        for r in B:
+            for nm, p in zip(NAMES, r['parts']):
+                L_.append(f"| {w3(r['w'])} | {nm} | {', '.join(fmt(v) for v in np.r_[p, -p.sum()])} |")
+            L_.append(f"| {w3(r['w'])} | all | {', '.join(fmt(v) for v in np.r_[r['total'], -r['total'].sum()])} |")
+        L_.append("")
+    if C is not None:
+        L_ += ["## C. The slow-replicator limit: the drift over γτ against the replicator flow of the entropic free energy (τ/2)ℓ", "",
+               "| W | " + ' | '.join(f'γ = {g:g}' for g in GAMMAS_C) + " | −½W_k(∂_kℓ − Σ_lW_l∂_lℓ) | ℓ |", "|---|" + "---|" * (len(GAMMAS_C) + 2)]
+        for r in C:
+            L_.append(f"| {w3(r['w'])} | " + ' | '.join(', '.join(f'{v:+.3f}' for v in r['d'][g]) for g in GAMMAS_C)
+                      + f" | {', '.join(f'{v:+.3f}' for v in r['law'])} | {r['ell']:.3f} |")
+        L_.append("")
+    if D is not None:
+        L_ += [f"## D. The saturation layer: the zeros of the first class's drift on W_2 = W_3 (W_1 − {W_MIN[0]:g} from 0.002 to 0.08)", "",
+               "| γ | the zeros W_1° − 0.25 | over √γ | the sign of b_1 from the saturation outward |", "|---|---|---|---|"]
+        for r in D:
+            sg = ''.join('+' if v > 0 else '−' for v in r['signs'])
+            L_.append(f"| {r['gamma']:g} | {', '.join(f'{v - W_MIN[0]:.5f}' for v in r['roots']) or '—'} | "
+                      f"{', '.join(f'{(v - W_MIN[0]) / np.sqrt(r['gamma']):.3f}' for v in r['roots']) or '—'} | {sg} |")
+        L_.append("")
+    if Ef is not None:
+        f = Ef['field']
+        L_ += [f"## E. The drift field on the representable masses ({len(f)} grid points, W_k ≥ |A_k|/a_max + {GRID_PAD:g})", "",
+               f"Largest |drift|: {fmt(np.abs(f[:, 2:4]).max())}; D_11 from {fmt(f[:, 4].min())} to {fmt(f[:, 4].max())}; the slowest transverse rate from "
+               f"{fmt(-f[:, 7].max())} to {fmt(-f[:, 7].min())}.", "",
+               "| the zero W° of the drift | eigenvalues of the drift's Jacobian (in W_1, W_2) | type | D there (D_11, D_12, D_22) |", "|---|---|---|---|"]
+        for z in Ef['zeros']:
+            ev = np.sort(z['eig'].real); typ = 'attracting' if ev.max() < 0 else ('repelling' if ev.min() > 0 else 'saddle')
+            L_.append(f"| {', '.join(f'{v:.4f}' for v in np.r_[z['w'], 1 - z['w'].sum()])} | {', '.join(fmt(v) for v in z['eig'])} | {typ} | "
+                      f"{fmt(z['D'][0, 0])}, {fmt(z['D'][0, 1])}, {fmt(z['D'][1, 1])} |")
+        L_.append("")
+    if Ff is not None:
+        L_ += [f"## F. The ensemble mean of exp_gauge_dither.py's Part B ({Ff['n']} seeds) against the mean path dW/ds = b(W)", "",
+               "| s | ensemble mean of W_1, W_2, W_3 (± standard error) | the mean path | the free diffusion's spread √(D_kk s) |", "|---|---|---|---|"]
+        for s_, m_, se, p_, sp in zip(Ff['s'], Ff['mean'], Ff['se'], Ff['path'], Ff['spread']):
+            L_.append(f"| {s_:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(m_, se))} | {', '.join(f'{v:.4f}' for v in p_)} | {', '.join(f'{v:.3f}' for v in sp)} |")
+        L_.append("")
+    if Gg is not None:
+        L_ += [f"## G. The entropic leak's pinned state ({len(SEEDS_G)} seeds each, {S_G:g} slow units, the second half)", "",
+               "| ε | the masses' mean − 1/3 (± standard error over the seeds) | predicted κ⁻¹b(1/3) | the nonlinear fixed point − 1/3 | std (measured) | std (Proposition D‴.36(iii)) |",
+               "|---|---|---|---|---|---|"]
+        for r in Gg:
+            L_.append(f"| {r['eps']:g} | {', '.join(f'{a:+.4f} ± {b:.4f}' for a, b in zip(r['shift'], r['se']))} | {', '.join(f'{v:+.4f}' for v in r['lin'])} | "
+                      f"{', '.join(f'{v:+.4f}' for v in r['nl'])} | {', '.join(f'{v:.4f}' for v in r['std'])} | {', '.join(f'{v:.4f}' for v in r['std_pred'])} |")
+        L_.append("")
+    if Hh is not None:
+        L_ += [f"## H. Without a leak: the full loop ({len(SEEDS_H)} seeds) against the limit SDE on M ({N_PATHS} paths)", "",
+               "| s | full loop: mean of W_1, W_2, W_3 (± s.e.) | std | within 0.02 of the saturation (fraction of seeds) | the largest |a|/a_max | limit SDE: mean | std | within 0.02 |",
+               "|---|---|---|---|---|---|---|---|"]
+        for r in Hh:
+            L_.append(f"| {r['s']:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(r['mean'], r['se']))} | {', '.join(f'{v:.4f}' for v in r['std'])} | "
+                      f"{', '.join(f'{v:.2f}' for v in r['near'])} | {', '.join(f'{v:.4f}' for v in r['sat'])} | {', '.join(f'{v:.4f}' for v in r['sde_mean'])} | "
+                      f"{', '.join(f'{v:.4f}' for v in r['sde_std'])} | {', '.join(f'{v:.2f}' for v in r['sde_near'])} |")
+        L_.append("")
+    L_.append("Numbers are produced by `experiments/exp_gauge_drift.py`; nothing is edited by hand.")
+    return '\n'.join(L_) + '\n'
+
+
+def main():
+    raw = os.path.join(OUT, 'gauge_drift_raw.npz')
+    md = os.path.join(OUT, 'gauge_drift.md')
+    old = E.load(raw)
+    get = lambda k: old[k] if k in old else None
+    if '--from-raw' in sys.argv:
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEFGH']))
+        return
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEFGH')
+    from multiprocessing import Pool
+    res = dict(old)
+    t0 = time.time()
+    log = lambda k: print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
+    with Pool(N_WORKERS) as pool:
+        h = {}                                                               # the cheap parts first: the pool's queue is FIFO
+        if 'C' in parts:
+            h['C'] = pool.map_async(c_job, [(w, g) for w in W_C for g in GAMMAS_C], chunksize=1)
+        if 'D' in parts:
+            h['D'] = pool.map_async(d_job, GAMMAS_D, chunksize=1)
+        if parts & set('EFH'):
+            h['E'] = pool.map_async(grid_job, grid_points(), chunksize=4)
+        if 'A' in parts:
+            h['A'] = pool.map_async(bf_job, [(w, i) for w in W_A for i in range(9)], chunksize=1)
+        if 'H' in parts:
+            h['H'] = pool.map_async(e_job, [(GAMMA, 0.0, s, S_H) for s in SEEDS_H], chunksize=1)
+        if 'G' in parts:
+            h['G'] = pool.map_async(e_job, [(GAMMA, e, s, S_G) for e in EPS_G for s in SEEDS_G], chunksize=1)
+        if 'B' in parts:
+            res['B'] = [dict(w=np.array(w), total=d, parts=p) for w in W_A for d, _, _, p in [drift_at(w, by_noise=True)]]
+            E.save(raw, **res); log('B')
+        if 'C' in parts:
+            cr = h['C'].get()
+            res['C'] = [dict(w=np.array(w), d={r['gamma']: r['d'] for r in cr if r['w'] == w}, law=log_det_law(np.r_[w, 1 - sum(w)]),
+                             ell=log_det(3 * np.r_[w, 1 - sum(w)])) for w in W_C]
+            E.save(raw, **res); log('C')
+        if 'D' in parts:
+            res['D'] = h['D'].get(); E.save(raw, **res); log('D')
+        if 'E' in h:
+            field = np.array(h['E'].get())
+            res['E'] = dict(field=field, zeros=zeros(field)); E.save(raw, **res); log('E')
+        else:
+            field = res['E']['field'] if 'E' in res else None
+        if 'A' in parts:
+            bf = h['A'].get()
+            res['A'] = [dict(w=np.array(w), id=drift_at(w)[0], bf=sum(r['val'] for r in bf if r['w'] == w), res=max(r['res'] for r in bf if r['w'] == w)) for w in W_A]
+            E.save(raw, **res); log('A')
+        if 'F' in parts:
+            res['F'] = part_F(field); E.save(raw, **res); log('F')
+        if 'G' in parts:
+            res['G'] = part_G(h['G'].get()); E.save(raw, **res); log('G')
+        if 'H' in parts:
+            res['H'] = part_H(h['H'].get(), field); E.save(raw, **res); log('H')
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEFGH']))
+
+
+if __name__ == '__main__':
+    main()
