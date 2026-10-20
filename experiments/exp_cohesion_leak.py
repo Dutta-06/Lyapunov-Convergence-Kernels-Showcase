@@ -56,7 +56,15 @@ H. Other targets: two, four and five bumps (the four-bump target is Part A3's an
    number of clusters and the fit error after each stage, the classes at the end (masses, centres, widths, |a|/a_max), against the target's
    bump count and the best K-atom fit error at the target's count.
 
-Output: results/chaos/cohesion_leak.md and cohesion_leak_raw.npz (CO_WORKERS, CO_OUT; `--only A,B,C,D,E,F,G,H` runs the listed parts and
+Referee round 23 (D3u) added: I. degenerate representations beyond A4 under the Gaussian kernel — the twins' contraction against (v)'s
+   rate, far twins, opposite-sign twins with a third class within reach (4·10⁵ slow units, and under the annealed schedule), the dead
+   class at R = 1 and 1.5; J. the scale window — Part C's broad starts at a fixed Gaussian scale (R = 1, six seeds; R = 2, three) and under
+   three other annealed schedules; K. four more targets under the annealed schedule (two bumps closer than the broad scale, three heavy
+   bumps whose masses leave 0.05 free, four alternating bumps, three equal bumps), three seeds, with the smallest splitting margin at the
+   end; L. two of K's ends continued (the Gaussian kernel for 2·10⁵ more slow units, then the compact one for 4·10⁴): a stationary bias or a
+   slow transient. The report adds B's boundary sample, E's second-half averages and G's shedding costs (`shed_costs`).
+
+Output: results/chaos/cohesion_leak.md and cohesion_leak_raw.npz (CO_WORKERS, CO_OUT; `--only A,B,…,L` runs the listed parts and
 merges them into the raw file; `--from-raw` regenerates the md; `--merge raw1,raw2,…` merges the parts stored in other raw files —
 written with CO_OUT pointing elsewhere — into this one and regenerates the md).
 """
@@ -562,6 +570,185 @@ def h_job(args):
                 need=float(sum(abs(b[0]) for b in bumps) / net.a_max))
 
 
+
+# ---------------------------------------------------------------------------- I. degenerate representations beyond the md (referee round 23, D3u-1, D3u-3)
+S_I, S_I_LONG = 40000.0, 400000.0
+TWIN_SHARES = (0.9, 0.97)
+
+
+def twin_rate(w_k, w_l, a_k, a_l, dalpha, sigma0, R, a_max):
+    """The twins' contraction rate on their gauge curve with the fit relaxed quasi-statically and no third class within reach:
+    −d log|Δα|/ds = σ₀ψ(Δα²/(G_αR²))(w_ka′_k + w_la′_l)²/(w_ka′_k² + w_la′_l²), a′ = 1 − (a/a_max)², ψ Gaussian (G_α = G[0] = 1)."""
+    dk, dl = 1 - (a_k / a_max) ** 2, 1 - (a_l / a_max) ** 2
+    return sigma0 * np.exp(-0.5 * dalpha ** 2 / (G[0] * R ** 2)) * (w_k * dk + w_l * dl) ** 2 / (w_k * dk ** 2 + w_l * dl ** 2)
+
+
+def i_job(name):
+    """'cx': opposite-sign twins of bump 3 (masses 5/15 and 2/15, amplitudes +3.8 and −3.5), the light twin at the amplitude coordinate of
+    the class of bump 2 (counts (5, 3, 5, 2)), jittered by 10⁻³: the Gaussian kernel at R = 1 for 4·10⁵ slow units ('cx'), or the annealed
+    schedule ('cx_anneal'); 'far0.9', 'far0.97': the md's twins (counts (5, 5, 3, 2)) with bump 3's amplitude shared s : 1 − s, Gaussian
+    R = 1; 'rate': the md's twins (s = 3/4) at Gaussian R = 1 with a fine record, against `twin_rate`; 'dead1', 'dead1.5': the md's dead
+    class under the Gaussian kernel at R = 1 and 1.5."""
+    t0 = time.time()
+    net, base = setup()
+    out = dict(name=name)
+    if name.startswith('cx'):
+        counts = np.array([5, 3, 5, 2]); w = counts / 15
+        amps = np.array([A_BUMP[0] / w[0], A_BUMP[1] / w[1], 3.8, -3.5])
+        assert abs(w[2] * amps[2] + w[3] * amps[3] - A_BUMP[2]) < 1e-12
+        at = net.unconstrained(amps[:, None], np.r_[C_BUMP, C_BUMP[2]][:, None], np.r_[S_BUMP, S_BUMP[2]])
+        lab = np.repeat(np.arange(4), counts)
+        Th = np.repeat(at, counts, axis=0) + 1e-3 * np.random.default_rng(900).standard_normal((15, 3)) * np.sqrt(G)[None, :]
+        out['fit0'] = base.fit_error(np.repeat(at, counts, axis=0))
+        out['d0'] = float(np.sqrt(np.sum((at[2] - at[3]) ** 2 / G)))
+        out['d_third'] = float(np.sqrt(np.sum((at[1] - at[3]) ** 2 / G)))
+        rec = []
+
+        def cb(s_, T):
+            m2, m3 = T[lab == 2].mean(axis=0), T[lab == 3].mean(axis=0)
+            a3, c3, _ = net.physical(m3[None, :])
+            rec.append((s_, float(np.sqrt(np.sum((m2 - m3) ** 2 / G))), base.fit_error(T), CO.clusters(T, G, CLUSTER_THR).max() + 1,
+                        float(a3[0, 0]), float(c3[0, 0])))
+        if name == 'cx':
+            Th = CO.CohesionLoop(base, 1.0, 'gauss').run(Th, S_I_LONG, DT, rec_every=80000, callback=cb)
+        else:
+            Th = CO.CohesionLoop(base, R_BROAD, 'gauss').run(Th, S_C1, DT, rec_every=8000, callback=cb)
+            Th = CO.CohesionLoop(base, R_FINE, 'gauss').run(Th, S_C2, DT, rec_every=8000, callback=lambda s_, T: cb(s_ + S_C1, T))
+        out['rec'] = np.array(rec); out['end'] = describe(net, base, Th)
+    elif name.startswith('far') or name == 'rate':
+        share = 0.75 if name == 'rate' else float(name[3:])
+        counts = np.array([5, 5, 3, 2]); w = counts / 15
+        amps = np.array([A_BUMP[0] / w[0], A_BUMP[1] / w[1], share * A_BUMP[2] / w[2], (1 - share) * A_BUMP[2] / w[3]])
+        at = net.unconstrained(amps[:, None], np.r_[C_BUMP, C_BUMP[2]][:, None], np.r_[S_BUMP, S_BUMP[2]])
+        lab = np.repeat(np.arange(4), counts)
+        Th0 = np.repeat(at, counts, axis=0)
+        out['d0'] = float(np.sqrt(np.sum((at[2] - at[3]) ** 2 / G)))
+        rec = []
+
+        def cb(s_, T):
+            m2, m3 = T[lab == 2].mean(axis=0), T[lab == 3].mean(axis=0)
+            a2, a3 = net.physical(m2[None, :])[0][0, 0], net.physical(m3[None, :])[0][0, 0]
+            rec.append((s_, float(np.sqrt(np.sum((m2 - m3) ** 2 / G))), base.fit_error(T), float(m2[0] - m3[0]), float(a2), float(a3)))
+        S_end = 4000.0 if name == 'rate' else S_I
+        CO.CohesionLoop(base, 1.0, 'gauss').run(Th0, S_end, DT, rec_every=40 if name == 'rate' else 8000, callback=cb)
+        out['rec'] = np.array(rec)
+        if name == 'rate':                                       # the measured log-contraction against ∫ twin_rate along the run
+            r = out['rec']
+            kap = np.array([twin_rate(w[2], w[3], a2, a3, da, SIGMA0, 1.0, net.a_max) for da, a2, a3 in zip(r[:, 3], r[:, 4], r[:, 5])])
+            sel = (r[:, 0] >= 200.0) & (r[:, 0] <= 2000.0)
+            ss = r[sel, 0]; ks = kap[sel]
+            pred = float(np.sum(0.5 * (ks[1:] + ks[:-1]) * np.diff(ss)))
+            meas = float(np.log(abs(r[sel, 3][0]) / abs(r[sel, 3][-1])))
+            out.update(pred=pred, meas=meas, kappa0=float(kap[0]))
+    else:
+        R = float(name[4:])
+        counts = np.array([5, 4, 4, 2]); w = counts / 15
+        amps = np.array([A_BUMP[0] / w[0], A_BUMP[1] / w[1], A_BUMP[2] / w[2], 0.0])
+        at = net.unconstrained(amps[:, None], np.r_[C_BUMP, 2.4][:, None], np.r_[S_BUMP, 0.6])
+        lab = np.repeat(np.arange(4), counts)
+        rec = []
+
+        def cb(s_, T):
+            md = T[lab == 3].mean(axis=0)
+            live = np.array([T[lab == k].mean(axis=0) for k in range(3)])
+            rec.append((s_, float(np.sqrt(np.sum((live - md) ** 2 / G, axis=1)).min()), base.fit_error(T)))
+        CO.CohesionLoop(base, R, 'gauss').run(np.repeat(at, counts, axis=0), S_I, DT, rec_every=8000, callback=cb)
+        out['rec'] = np.array(rec)
+    print(f"[{time.time() - t0:.0f}s] I {name}", flush=True)
+    return out
+
+
+# ---------------------------------------------------------------------------- J. the scale window (referee round 23, D3u-2)
+J_RUNS = [('gauss1', s) for s in range(6)] + [('gauss2', s) for s in range(3)] + [('1.5-1', 0), ('3-1', 0), ('2-0.5', 0)]
+
+
+def j_job(args):
+    """Part C's broad starts (m = 60) under the Gaussian kernel at a fixed scale (R = 1 or 2, 40000 slow units) or other annealed
+    schedules (R₁ for 20000, then R₂ for 20000)."""
+    sched, seed = args
+    t0 = time.time()
+    net, base = setup()
+    Th = broad(net, 60, seed)
+    if sched.startswith('gauss'):
+        Th = CO.CohesionLoop(base, float(sched[5:]), 'gauss').run(Th, S_C1 + S_C2, DT)
+    else:
+        R1, R2 = map(float, sched.split('-'))
+        Th = CO.CohesionLoop(base, R1, 'gauss').run(Th, S_C1, DT)
+        Th = CO.CohesionLoop(base, R2, 'gauss').run(Th, S_C2, DT)
+    print(f"[{time.time() - t0:.0f}s] J {sched} seed {seed}", flush=True)
+    return dict(sched=sched, seed=seed, end=describe(net, base, Th))
+
+
+# ---------------------------------------------------------------------------- K. targets where the count fails (referee round 23, D3u-2)
+TARGETS_K = {'two close': [(0.8, -0.45, 0.4), (0.8, 0.45, 0.4)],
+             'three heavy': [(1.6, -1.5, 0.5), (-1.2, 0.0, 0.4), (1.0, 1.5, 0.5)],
+             'four alternating': [(0.5, -1.6, 0.35), (-0.45, -0.55, 0.35), (0.5, 0.55, 0.35), (-0.4, 1.6, 0.35)],
+             'three equal': [(0.8, -1.5, 0.45), (0.8, 0.0, 0.45), (0.8, 1.5, 0.45)]}
+
+
+def k_job(args):
+    """A broad start (Part C's distribution) under the annealed Gaussian schedule on target `name`; at the end the clusters, the fit error
+    and the splitting margins σ₀w_k − λ_max(R^G_k) of the classes of two or more particles."""
+    name, seed = args
+    t0 = time.time()
+    bumps = TARGETS_K[name]
+    fv = lambda X: sum(A * np.exp(-(np.asarray(X, float) - C) ** 2 / (2 * S ** 2)) for A, C, S in bumps)
+    net = L.SaturatedLiftedNetwork(1, **NET_KW)
+    base = AveragedSlowLoop(net, fv, x_ref, PER, G, SIGMA0, n_quad=N_Q)
+    Th = CO.CohesionLoop(base, R_BROAD, 'gauss').run(broad(net, M_H, seed), S_C1, DT)
+    mid = describe(net, base, Th)
+    Th = CO.CohesionLoop(base, R_FINE, 'gauss').run(Th, S_C2, DT)
+    lab = CO.clusters(Th, G, CLUSTER_THR)
+    K = int(lab.max() + 1)
+    atoms = np.array([Th[lab == k].mean(axis=0) for k in range(K)])
+    wk = np.bincount(lab, minlength=K) / M_H
+    margins = SIGMA0 * wk - base.kappa_R(base.residual(Th), atoms)
+    big = np.bincount(lab, minlength=K) >= 2
+    print(f"[{time.time() - t0:.0f}s] K {name} seed {seed}", flush=True)
+    return dict(name=name, seed=seed, K_true=len(bumps), need=float(sum(abs(b[0]) for b in bumps) / net.a_max), mid=dict(K=mid['K'], fit=mid['fit']),
+                end=describe(net, base, Th), margin_min=float(margins[big].min()) if np.any(big) else float('nan'))
+
+
+S_L1, S_L2 = 200000.0, 40000.0
+
+
+def l_job(name):
+    """Part K's seed-0 run on target `name` continued: the annealed schedule, then the Gaussian kernel at R = 1 for S_L1 more slow units
+    (is the end a stationary point or a slow transient?), then the compact kernel at R = 1 for S_L2 (no inter-class force beyond R: is the
+    remaining error the Gaussian kernel's bias?); the fit error and the clusters along both."""
+    t0 = time.time()
+    bumps = TARGETS_K[name]
+    fv = lambda X: sum(A * np.exp(-(np.asarray(X, float) - C) ** 2 / (2 * S ** 2)) for A, C, S in bumps)
+    net = L.SaturatedLiftedNetwork(1, **NET_KW)
+    base = AveragedSlowLoop(net, fv, x_ref, PER, G, SIGMA0, n_quad=N_Q)
+    Th = CO.CohesionLoop(base, R_BROAD, 'gauss').run(broad(net, M_H, 0), S_C1, DT)
+    rec = []
+    cb = lambda s_, T: rec.append((s_, base.fit_error(T), CO.clusters(T, G, CLUSTER_THR).max() + 1))
+    Th = CO.CohesionLoop(base, R_FINE, 'gauss').run(Th, S_C2 + S_L1, DT, rec_every=40000, callback=lambda s_, T: cb(s_ + S_C1, T))
+    gauss_end = describe(net, base, Th)
+    rec2 = []
+    Th = CO.CohesionLoop(base, R_FINE, 'compact').run(Th, S_L2, DT, rec_every=40000,
+                                                       callback=lambda s_, T: rec2.append((s_, base.fit_error(T), CO.clusters(T, G, CLUSTER_THR).max() + 1)))
+    print(f"[{time.time() - t0:.0f}s] L {name}", flush=True)
+    return dict(name=name, rec=np.array(rec), rec2=np.array(rec2), gauss_end=gauss_end, end=describe(net, base, Th),
+                bumps=np.array(bumps), need=np.array([abs(b[0]) / net.a_max for b in bumps]))
+
+
+def shed_costs(n=10, S=(0.5, 1e-4), ks=(1, 2, 3, 5), R=1.0):
+    """The cohesion energy Σ_{i<j}W(u_i − u_j) of one class of n particles split along a whitened unit direction by the zero-sum pattern
+    'k particles at +d, n − k at −kd/(n − k)' with Σ‖u_i‖² = S, relative to its quadratic part nS/2 (the linear theory's, the same for every
+    pattern), for both kernels: the kernel's concavity makes shedding one particle the cheapest split (referee round 23, D3u-6)."""
+    out = {}
+    for kind in ('compact', 'gauss'):
+        for S_ in S:
+            for k in ks:
+                d = np.sqrt(S_ / (k + k ** 2 / (n - k)))
+                u = np.r_[np.full(k, d), np.full(n - k, -k * d / (n - k))]
+                D2 = (u[:, None] - u[None, :]) ** 2
+                Wsum = 0.5 * float(np.sum(R ** 2 * CO.omega(D2 / R ** 2, kind)))
+                out[(kind, S_, k)] = Wsum / (n * S_ / 2)
+    return out
+
 # ---------------------------------------------------------------------------- F. the cogging servo
 SV_NET = dict(a_max=4.0, c_max=1.6, s_min=0.05, s_max=1.0)
 SV_SIGMA0, SV_NQ, SV_R0, SV_R1, SV_S1, SV_S2, SV_M = 0.01, 400, 0.7, 0.35, 20000.0, 60000.0, 64
@@ -621,7 +808,7 @@ def fmt(x, p=3):
     return f'{x:.{p}g}' if abs(x) >= 1e-3 or x == 0 else f'{x:.{p - 1}e}'.replace('e-0', 'e-').replace('e+0', 'e+')
 
 
-def report(A, B, C, D, E=None, F=None, Gs=None, H=None):
+def report(A, B, C, D, E=None, F=None, Gs=None, H=None, I=None, J=None, K=None, Lc=None):
     L_ = ['# Proposition D‴.32: the cohesion leak — a leak on the unexcited subspace, without a prior', '',
           f'The three-bump instance (σ₀ = 0.15σ_crit = {SIGMA0:.6g}); the averaged slow loop with the cohesion leak dϑ_i/ds = G⟨∇(r Φ̃)⟩ − (σ₀/m)Σ_jψ(‖ϑ_i − ϑ_j‖²/R²)(ϑ_i − ϑ_j), ψ compact (1 − z)³₊ or Gaussian e^(−z/2); midpoint rule dt = {DT}.', '']
     if A is not None:
@@ -673,6 +860,18 @@ def report(A, B, C, D, E=None, F=None, Gs=None, H=None):
                 fit = np.median([r['fit'][m][-1] for r in rs])
                 L_.append(f"| {leak} | {m} | {' | '.join(vals)} | {fmt(fit)} | {fmt(max(r['end'][m]['diam'] for r in rs))} | {fmt(np.nanmax([r['end'][m]['dev'] for r in rs]))} | {', '.join(str(r['end'][m]['K']) for r in rs)} |")
         L_.append('')
+        bad = sorted({r['seed'] for r in B if not representable(np.rint(np.asarray(r['w0'][15]) * 15).astype(int))})
+        if bad:
+            i6 = int(np.argmin(np.abs(B[0]['s'] - 6000.0)))
+            good = [r for r in B if r['seed'] not in bad]
+            L_.append(f"At m = 15 the sample of seed{'s' if len(bad) > 1 else ''} {', '.join(map(str, bad))} (counts "
+                      + '; '.join(str(tuple(int(v) for v in np.rint(np.asarray(next(r for r in B if r['seed'] == sd)['w0'][15]) * 15))) for sd in bad)
+                      + ") is not representable (it lies on the boundary of W): ‖f̂_m − f̂_M‖² at s = 6000 and the fit error there "
+                      + '; '.join(f"{r['leak']} {fmt(r['h2'][15][i6])}, {fmt(r['fit'][15][-1])}" for r in sorted([r for r in B if r['seed'] in bad], key=lambda r: r['leak']))
+                      + f"; over the representable samples at m = 15 ‖f̂_m − f̂_M‖² at s = 6000 is {fmt(min(r['h2'][15][i6] for r in good if r['leak'] != 'fixed'))}–"
+                      + f"{fmt(max(r['h2'][15][i6] for r in good if r['leak'] != 'fixed'))} under every leak but the fixed prior "
+                      + f"({fmt(min(r['h2'][15][i6] for r in good if r['leak'] == 'fixed'))}–{fmt(max(r['h2'][15][i6] for r in good if r['leak'] == 'fixed'))}).")
+            L_.append('')
     if C is not None:
         L_ += ['## C. The unknown model order (broad starts)', '', '| leak | m | seed | clusters | fit error | masses | |a|/a_max (max) | centres | widths |', '|---|---|---|---|---|---|---|---|---|']
         for r in sorted(C, key=lambda r: (r['leak'], r['m'], r['seed'])):
@@ -717,6 +916,11 @@ def report(A, B, C, D, E=None, F=None, Gs=None, H=None):
             dev = np.median(np.concatenate([h[:, 2] for h in half])); fit = np.mean(np.concatenate([h[:, 3] for h in half]))
             L_.append(f"| {leak} | {' | '.join(cols)} | {fmt(dev)} | {fmt(fit)} |")
         L_.append('')
+        avg = {leak: np.mean(np.concatenate([r['rec'][r['rec'][:, 0] >= S_E / 2][:, 1] for r in E if r['leak'] == leak])) for leak in ('coh_c', 'coh_g', 'fixed', 'sigma') if any(r['leak'] == leak for r in E)}
+        L_.append(f"The spread averaged over the second half (three seeds): " + ', '.join(f'{k} {v:.4f}' for k, v in avg.items())
+                  + f"; the linear prediction with the class mean's own share removed, √((1 − 1/n_k)τ/(σ₀w_k)) = {np.sqrt((1 - 1 / 20) * TAU_E / (SIGMA0 / 3)):.4f} "
+                  f"(n_k = 20) for the cohesion leak and √((1 − 1/n_k)τ/σ₀) = {np.sqrt((1 - 1 / 20) * TAU_E / SIGMA0):.4f} for a leak toward a prior.")
+        L_.append('')
     if F is not None:
         L_ += ['## F. The cogging servo (no model of the torque)', '', 'The best equal-weight K-atom fits (40 random starts each): ' +
                '; '.join(f"K = {r['K']}: {fmt(r['fit'])} (largest |a|/a_max {r['amax']:.3f})" for r in sorted([r for r in F if r['kind'] == 'best'], key=lambda r: r['K'])) +
@@ -738,6 +942,18 @@ def report(A, B, C, D, E=None, F=None, Gs=None, H=None):
                 L_.append(f"| {r['seed']} | {st['frac']:g} | {st['K_start']} | {', '.join(f'{v:.3f}' for v in st['masses'][order])} | "
                           f"{', '.join(fmt(v) for v in st['margins'][order])} | {int(np.sum((st['margins'] < 0) & (st['masses'] * M_G > 1.5)))} | {st['K_end']} | {fmt(st['fit'])} |")
         L_.append('')
+        sc = shed_costs()
+        L_ += ["The split's pattern: a class's unstable separations are (n_k − 1)-fold degenerate, so the linear theory does not choose which particles "
+               "leave; the kernel's concavity does. The cohesion energy of one class of n = 10 particles split along a direction by 'k particles at +d, "
+               "10 − k at −kd/(10 − k)' with Σ‖u_i‖² = S, relative to its quadratic part nS/2 (the same for every pattern), R = 1:", '',
+               '| kernel | S | k = 1 | 2 | 3 | 5 |', '|---|---|---|---|---|---|']
+        for kind in ('compact', 'gauss'):
+            for S_ in (0.5, 1e-4):
+                L_.append(f"| {kind} | {S_:g} | " + ' | '.join(f"{sc[(kind, S_, k)]:.6f}" for k in (1, 2, 3, 5)) + ' |')
+        L_.append('')
+        L_.append(f"A class counts as split when a piece passes the single-linkage threshold {CLUSTER_THR:g} from the jitter 10⁻³ within a stage of {S_G:g} slow units: "
+                  f"a growth by {CLUSTER_THR / 1e-3:g}, i.e. a margin near −ln({CLUSTER_THR / 1e-3:g})/{S_G:g} = {-np.log(CLUSTER_THR / 1e-3) / S_G:.2e}.")
+        L_.append('')
     if H is not None:
         L_ += ['## H. Other targets (the annealed Gaussian schedule, broad starts, m = 60)', '',
                'Σ_k|A_k|/a_max is the least total mass with which the target is representable (an exact representation needs w_k ≥ |A_k|/a_max).', '',
@@ -748,6 +964,64 @@ def report(A, B, C, D, E=None, F=None, Gs=None, H=None):
             L_.append(f"| {r['name']} | {r['K_true']} | {r['need']:.3f} | {r['seed']} | {r['mid']['K']} | {fmt(r['mid']['fit'])} | {r['end']['K']} | {fmt(r['end']['fit'])} | "
                       f"{', '.join(f'{v:.3f}' for v in cl[:8, 0])}{' …' if len(cl) > 8 else ''} | {', '.join(f'{v:+.3f}' for v in cl[:8, 2])}{' …' if len(cl) > 8 else ''} | "
                       f"{', '.join(f'{v:.3f}' for v in cl[:8, 3])}{' …' if len(cl) > 8 else ''} | {np.abs(cl[:, 1]).max() / NET_KW['a_max']:.3f} |")
+        L_.append('')
+    if I is not None:
+        Ib = {r['name']: r for r in I}
+        L_ += ['## I. Degenerate representations beyond A4 (the Gaussian kernel)', '']
+        if 'cx' in Ib:
+            r = Ib['cx']; rec = r['rec']
+            L_.append(f"- Opposite-sign twins of bump 3 (counts (5, 3, 5, 2), amplitudes +3.8 and −3.5, the fit error {fmt(r['fit0'])}): the twins {fmt(r['d0'])} apart, the light "
+                      f"twin {fmt(r['d_third'])} from the class of bump 2. R = 1 over {S_I_LONG:g} slow units from the jitter 10⁻³: the twins' distance "
+                      + ', '.join(f"{fmt(x[1])} (s = {int(x[0])})" for x in rec[::2]) + f"; clusters {int(rec[0][3])} → {int(rec[-1][3])}; the fit error "
+                      f"{fmt(rec[0][2])} → {fmt(rec[-1][2])}; the light twin at the end a = {rec[-1][4]:+.3f}, c = {rec[-1][5]:+.3f}.")
+        if 'cx_anneal' in Ib:
+            r = Ib['cx_anneal']; rec = r['rec']
+            L_.append(f"- The same start under the annealed schedule (R = {R_BROAD:g}, then {R_FINE:g}): the twins' distance {fmt(rec[0][1])} → {fmt(rec[-1][1])}, "
+                      f"clusters {r['end']['K']}, the fit error {fmt(r['end']['fit'])}.")
+        for sh in TWIN_SHARES:
+            if f'far{sh:g}' in Ib:
+                r = Ib[f'far{sh:g}']; rec = r['rec']
+                L_.append(f"- The md's twins (counts (5, 5, 3, 2)) with bump 3 shared {sh:g} : {1 - sh:.2g} (the twins {fmt(r['d0'])} apart), R = 1: their distance "
+                          + ', '.join(f"{fmt(x[1])} (s = {int(x[0])})" for x in rec[1::2]) + f"; the fit error {fmt(rec[-1][2])}.")
+        if 'rate' in Ib:
+            r = Ib['rate']
+            L_.append(f"- The twins' contraction on their gauge curve, the md's twins at R = 1 over s ∈ [200, 2000]: ln(Δα(200)/Δα(2000)) = {r['meas']:.5f} measured against "
+                      f"∫ σ₀ψ(Δα²/R²)(w_ka′_k + w_la′_l)²/(w_ka′_k² + w_la′_l²) ds = {r['pred']:.5f} along the run (ratio {r['meas'] / r['pred']:.4f}; the rate at the start "
+                      f"{fmt(r['kappa0'])}).")
+        for R in ('1', '1.5'):
+            if f'dead{R}' in Ib:
+                rec = Ib[f'dead{R}']['rec']
+                L_.append(f"- The md's dead class under the Gaussian kernel at R = {R}: its distance from the nearest live class "
+                          + ', '.join(f"{fmt(x[1])} (s = {int(x[0])})" for x in rec[::2]) + f"; the fit error {fmt(rec[-1][2])}.")
+        L_.append('')
+    if J is not None:
+        L_ += ['## J. The scale window (Part C\'s broad starts, m = 60, the Gaussian kernel)', '',
+               '| schedule | seed | clusters | fit error | masses | centres | |a|/a_max (max) |', '|---|---|---|---|---|---|---|']
+        for r in sorted(J, key=lambda r: (r['sched'], r['seed'])):
+            e = r['end']; cl = e['clusters']
+            name = {'gauss1': 'R = 1 throughout', 'gauss2': 'R = 2 throughout'}.get(r['sched'], 'R = ' + r['sched'].replace('-', ' → '))
+            L_.append(f"| {name} | {r['seed']} | {e['K']} | {fmt(e['fit'])} | {', '.join(f'{v:.3f}' for v in cl[:7, 0])}{' …' if len(cl) > 7 else ''} | "
+                      f"{', '.join(f'{v:+.3f}' for v in cl[:7, 2])}{' …' if len(cl) > 7 else ''} | {np.abs(cl[:, 1]).max() / NET_KW['a_max']:.3f} |")
+        L_.append('')
+    if K is not None:
+        L_ += ['## K. Targets where the count fails or holds (the annealed Gaussian schedule, broad starts, m = 60)', '',
+               '| target | bumps | Σ|A_k|/a_max | seed | clusters after R = 2 | clusters at the end | fit error | masses | centres | widths | smallest margin (n_k ≥ 2) |',
+               '|---|---|---|---|---|---|---|---|---|---|---|']
+        for r in sorted(K, key=lambda r: (list(TARGETS_K).index(r['name']), r['seed'])):
+            e = r['end']; cl = e['clusters']
+            L_.append(f"| {r['name']} | {r['K_true']} | {r['need']:.3f} | {r['seed']} | {r['mid']['K']} | {e['K']} | {fmt(e['fit'])} | {', '.join(f'{v:.3f}' for v in cl[:7, 0])}{' …' if len(cl) > 7 else ''} | "
+                      f"{', '.join(f'{v:+.3f}' for v in cl[:7, 2])}{' …' if len(cl) > 7 else ''} | {', '.join(f'{v:.3f}' for v in cl[:7, 3])}{' …' if len(cl) > 7 else ''} | {fmt(r['margin_min'])} |")
+        L_.append('')
+    if Lc is not None:
+        L_ += ['## L. Two of Part K\'s ends continued (seed 0): the Gaussian kernel at R = 1 for another '
+               f'{S_L1:g} slow units, then the compact kernel at R = 1 for {S_L2:g}', '']
+        for r in sorted(Lc, key=lambda r: list(TARGETS_K).index(r['name'])):
+            e = r['end']; cl = e['clusters']
+            L_.append(f"- {r['name']}: the fit error (clusters) under the Gaussian kernel at s = " + ', '.join(f"{int(x[0])}: {fmt(x[1])} ({int(x[2])})" for x in r['rec'][::1])
+                      + "; then under the compact kernel at s (from the switch) = " + ', '.join(f"{int(x[0])}: {fmt(x[1])} ({int(x[2])})" for x in r['rec2'])
+                      + f". At the end the classes (mass, a, c, s): " + '; '.join(f"({v[0]:.3f}, {v[1]:+.3f}, {v[2]:+.3f}, {v[3]:.3f})" for v in cl)
+                      + "; the weighted amplitudes mass × a: " + ', '.join(f"{v[0] * v[1]:+.4f}" for v in cl[np.argsort(cl[:, 2])])
+                      + " against the bumps' " + ', '.join(f"{b[0]:+.4f}" for b in r['bumps'][np.argsort(r['bumps'][:, 1])]) + '.')
         L_.append('')
     return '\n'.join(L_) + '\n'
 
@@ -780,9 +1054,10 @@ def main():
         old = merged
         args = args + ['--from-raw']
     if '--from-raw' in args:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F'), old.get('G'), old.get('H')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F'), old.get('G'), old.get('H'),
+                                   old.get('I'), old.get('J'), old.get('K'), old.get('L')))
         return
-    parts = set('ABCDEFGH')
+    parts = set('ABCDEFGHIJKL')
     if '--only' in args:
         parts = set(args[args.index('--only') + 1].split(','))
     from multiprocessing import Pool
@@ -805,6 +1080,14 @@ def main():
             asyncs['G'] = pool.map_async(g_job, list(SEEDS_G))
         if 'H' in parts:
             asyncs['H'] = pool.map_async(h_job, [(name, s) for name in TARGETS_H for s in SEEDS_H])
+        if 'I' in parts:
+            asyncs['I'] = pool.map_async(i_job, ['cx', 'cx_anneal'] + [f'far{sh:g}' for sh in TWIN_SHARES] + ['rate', 'dead1', 'dead1.5'], chunksize=1)
+        if 'J' in parts:
+            asyncs['J'] = pool.map_async(j_job, J_RUNS, chunksize=1)
+        if 'K' in parts:
+            asyncs['K'] = pool.map_async(k_job, [(name, s) for name in TARGETS_K for s in SEEDS_H], chunksize=1)
+        if 'L' in parts:
+            asyncs['L'] = pool.map_async(l_job, ['four alternating', 'three equal'], chunksize=1)
         if 'A' in parts:
             res['A'] = part_A()
             save(raw, **res)
@@ -823,7 +1106,11 @@ def main():
             res['G'] = asyncs['G'].get(); save(raw, **res)
         if 'H' in parts:
             res['H'] = asyncs['H'].get(); save(raw, **res)
-    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F'), res.get('G'), res.get('H')))
+        for k in 'IJKL':
+            if k in parts:
+                res[k] = asyncs[k].get(); save(raw, **res)
+    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F'), res.get('G'), res.get('H'),
+                               res.get('I'), res.get('J'), res.get('K'), res.get('L')))
 
 
 if __name__ == '__main__':

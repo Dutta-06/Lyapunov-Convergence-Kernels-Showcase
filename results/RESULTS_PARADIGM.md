@@ -815,34 +815,48 @@ DR*, below 10⁻⁵ for MR.
 ## Proposition D‴.32 — the cohesion leak: a leak on the unexcited subspace, without a prior (`exp_cohesion_leak.py` → `chaos/cohesion_leak.md`)
 
 - The three-bump instance (σ₀ = 0.15σ_crit), the averaged slow loop. (A) At each of the 15 count vectors of m = 15 the lift of ϑ^e(w) is
-  stationary (the largest drift 2.8·10⁻¹⁷ under the compact kernel, 6.2·10⁻¹⁰ under the Gaussian) with (iii)'s spectrum to 2.8·10⁻¹¹ and
-  4.6·10⁻⁹: the separations at σ₀w_k, the collective modes the unregularised flow's. The Gaussian kernel's bias is 2.1·10⁻⁸, 1.3·10⁻³ and
-  0.068 (whitened) at R = 1, 1.5, 2, at its first order to 6·10⁻⁸–1.0% (56% off at R = 3, where the classes overlap). The splitting margins
-  σ₀w_k − (q_k/w_k)λ⁺_k are the Jacobian's to 2·10⁻¹¹; at σ₀/8 the class with the margin −1.22·10⁻⁴ splits (3 → 4 classes, the fit error
-  0.017 → 0.0148). Twins and a dead class merge under the Gaussian kernel and persist under the compact one.
-- (B) From warm clouds (m = 15, 60, 240) both kernels remove the floor as the adaptive prior does (‖f̂_m − f̂_M‖² at s = 6000 within its
-  ranges, against the fixed prior's floor 3.0·10⁻⁴–5.5·10⁻³ at m = 15).
+  stationary (the largest drift 2.8·10⁻¹⁷ under the compact kernel, 6.2·10⁻¹⁰ under the Gaussian) with (iii)'s spectrum to 2.8·10⁻¹¹ (the
+  finite differences' error) and 4.6·10⁻⁹ (the Gaussian kernel's cross-class terms): the separations at σ₀w_k, the collective modes the
+  unregularised flow's. The Gaussian kernel's bias is 2.1·10⁻⁸, 1.3·10⁻³ and 0.068 (whitened) at R = 1, 1.5, 2, at its first order to
+  6·10⁻⁸–1.0% (56% off at R = 3, where the classes overlap). The splitting margins σ₀w_k − (q_k/w_k)λ⁺_k are the Jacobian's to 2·10⁻¹¹; at
+  σ₀/8 the class with the margin −1.22·10⁻⁴ splits (3 → 4 classes, the fit error 0.017 → 0.0148). Twins merge under the Gaussian kernel
+  and persist under the compact one; a dead class joins a live one at R = 2 and 1.5 and does not move at R = 1, as (v)'s time scale says.
+- (I) The twins' contraction on their gauge curve is (v)'s rate to 0.04%; twins 5.3 and 8.2 apart do not move in 4·10⁴ slow units;
+  opposite-sign twins with a third class within reach do not merge in 4·10⁵ slow units and end at a biased four-class fit (the fit error
+  3.2·10⁻⁴ → 4.5·10⁻³).
+- (B) From warm clouds (m = 15, 60, 240) both kernels remove the floor as the adaptive prior does (‖f̂_m − f̂_M‖² at s = 6000
+  1.9·10⁻¹⁰–5.4·10⁻⁸ over the representable samples at m = 15, against the fixed prior's floor 3.0·10⁻⁴–2.4·10⁻³); the one sample on
+  the boundary of W (seed 3) ends at 7·10⁻⁵ under every leak but the fixed prior.
 - (C) From broad starts the annealed Gaussian kernel (R = 2, then R = 1) ends at the target's three classes in 9 of 9 runs, the fit error
   1.8·10⁻⁷–2.3·10⁻⁶ — as the adaptive prior told K₀ = 3 (4.2·10⁻⁹–2.1·10⁻⁶); told K₀ = 2 it ends biased (0.13–0.19), told K₀ = 4 with a bump
   split (5.4·10⁻⁴–5.6·10⁻³); the σ-modification ends at 0.24, no leak at 40–48 classes, the compact kernel without the broad stage at 17–22.
+  (J) At a fixed Gaussian scale it does not: 4–6 classes at R = 1, three biased classes at R = 2; three other annealed schedules end at
+  three classes.
 - (D) The real loop (k_e = 25): the lift returns after a period to 7.8·10⁻¹⁶, and its 45 slow Floquet exponents (36 separations at
   σ₀w_k/k_e) are the predicted ones to 5.5·10⁻⁶; from warm clouds the rms tracking error at t ≈ 2900 is 5.8·10⁻⁴ (m = 15) and 2.4·10⁻⁴
   (m = 60), against the fixed prior's 1.3·10⁻³ and 3.9·10⁻⁴.
-- (E) Under the dither τ = 10⁻⁵ the within-class spread settles at 0.066–0.077 against τ/(σ₀w_k)'s 0.065 (the fixed prior's 0.035–0.040
-  against τ/σ₀'s 0.038; without a leak it diffuses, 0.44–0.56).
+- (E) Under the dither τ = 10⁻⁵ the within-class spread over the second half is 0.068 (compact) and 0.063 (Gaussian) against
+  √((1 − 1/n_k)τ/(σ₀w_k)) = 0.0635 (the fixed prior's 0.036 against 0.0366; without a leak it diffuses, 0.44–0.56).
 - (F) On the cogging servo the leak settles on 7–8 classes with the fit error 0.14%–0.35%, below the four-kernel designs of Proposition D‴.29
   (1.46%, 0.64%) and above the best equal-weight six- and eight-kernel fits.
 - (G) σ halved stage by stage from σ₀ to σ₀/64 (the fourth bump, m = 30): no split down to σ₀/8 (the predicted threshold 0.121σ₀), the
-  middle class splitting at σ₀/16 in every seed; no class with a positive margin split, all 8 with a margin below −5·10⁻⁵ did. A split
-  sheds single particles: 8–10 classes at σ₀/64, five to seven of them of one particle, the fit error 0.0028–0.0031.
+  middle class splitting at σ₀/16 in every seed; no class with a positive margin split, all 8 with a margin below −5·10⁻⁵ (the detection
+  threshold −ln 250/10⁵) did. A split sheds single particles (the kernel's concavity: shedding one particle costs 0.43 of the quadratic
+  cohesion energy, halving 0.74): 8–10 classes at σ₀/64, five to seven of them of one particle, the fit error 0.0028–0.0031.
 - (H) Two bumps: two classes, the fit error ≤ 1.6·10⁻⁸; the four-bump f_ε: three classes (0.0174), the fourth bump below the resolution;
-  five bumps (Σ_k|A_k|/a_max = 0.875): 6–9 classes, biased (0.045–0.118) — the transit's masses are not representable.
+  five bumps (Σ_k|A_k|/a_max = 0.875): 6–9 classes, biased (0.045–0.118) — the transit's masses are not representable. (K) Three equal
+  bumps: three classes (9.4·10⁻⁵–1.8·10⁻⁴, the Gaussian kernel's bias, removed by the compact kernel: (L)); four alternating bumps: four
+  (9.6·10⁻³–1.1·10⁻², a slow transient: (L)); three heavy bumps (0.95): 3–5, biased
+  (0.058–0.20); two bumps closer than the broad scale: merged into one stable class (0.098–0.13). The count is not selected by the leak:
+  it is the transit's and the schedule's.
 
 Tests (`tests/test_cohesion_leak.py`): the drift equals −G∇J^coh_m (central differences) and J^coh_m decreases along the flow, for both
 kernels; the forces sum to zero and equal σ₀ × the kernel mass × the mean-shift vector; at the exact representation for the counts
 (3, 2, 2) and (4, 3, 3) the drift vanishes and the Jacobian's spectrum is the predicted one to 10⁻⁹; at the best one-atom fit the top
-separation eigenvalue is λ⁺ − σ₀w, stable at σ₀ and split at λ⁺/2; twins merge under the Gaussian kernel and persist beyond the compact
-range; the real loop's lift is T₀-periodic and a separation contracts by e^{−σ₀w_kT₀/k_e} per period to 10⁻⁶.
+separation eigenvalue is λ⁺ − σ₀w, stable at σ₀ and split at λ⁺/2; twins contract at (v)'s rate to 1% under the Gaussian kernel and
+persist beyond the compact range; under the compact kernel a pair at 0.99R attracts and at 1.01R does not, and the Gaussian pair force at
+the distance R is e^{−1/2} of its linear part; single linkage recovers known clusters; the real loop's lift is T₀-periodic and a separation contracts by
+e^{−σ₀w_kT₀/k_e} per period to 10⁻⁶.
 
 ## Corollary D‴.33 — the desired regressor keeps the replicated configuration attracting under measurement noise (`exp_eiv_remedy.py` Part D → `chaos/eiv_remedy.md`)
 
@@ -872,6 +886,29 @@ MR's 0.30 in class 3; DR*'s drift is O(1/k_e) (k_e times its largest eigenvalue 
 quadrature's to 10⁻⁴; at the adaptive prior's stationary point the exact periodic mean is the sum of its noise and parameters' parts, the
 parameters' part dominant and largely in the tangent space, the drift indefinite; the period maps of `long_transient` continue
 `second_order_transient` to 10⁻⁷, and DR's drift turns indefinite within 800 periods.
+
+## Proposition D‴.34 — mass transfer: the replicator weight law with the cohesion leak (`exp_mass_transfer.py` → `chaos/mass_transfer.md`)
+
+- Proposition D‴.32's instances, the weighted network f̂ = (1/m)Σβ_iΦ̃_i, the replicator law dβ_i/ds = γβ_i(u_i − λ) beside the transport
+  law. (A) At fixed positions (the five bumps' atoms, two classes short of mass) the transport alone stalls at the fit error 0.388; with the
+  replicator it reaches 2.9·10⁻⁴ (γ = 10⁻³) and 3.0·10⁻¹⁴ (γ = 10⁻²) at s = 4·10⁴; with the amplitudes scaled by 1.25 (Σ_k|A_k|/a_max = 1.094)
+  it stalls at 0.071 with every class saturating — the representability criterion (iv).
+- (B) The five-bump target from broad starts (m = 60, the annealed Gaussian schedule): 6–9 biased classes without the replicator
+  (0.045–0.118), 5–7 at γ = 10⁻³ (0.0076–0.0139), five at the bumps in 3 of 3 runs at γ = 10⁻² (6.0·10⁻⁴–1.4·10⁻³, still falling).
+  (F) The three heavy bumps of D‴.32 (K) (Σ_k|A_k|/a_max = 0.95): three classes in 3 of 3, 7.8·10⁻⁸–1.6·10⁻⁷ (3–5 biased without); two
+  bumps closer than the broad scale stay merged (0.068–0.13): the scale's obstruction is not the masses'. (D) The instance: three
+  classes, 2.4·10⁻⁷–9.7·10⁻⁷, as without.
+- (C) The finest resolution stage (σ₀/64): the same 8–10 classes with and without the replicator — the fitness vanishes at a critical
+  point, so the shedding of D‴.32 (G) is untouched.
+- (E) The real loop at the instance's atoms (k_e = 25, γ = 2): V = ½e² + (1/(γm))Σβ*log(β*/β) from 0.0418 to 2.1·10⁻⁷, monotone, V̇ = −k_ee²
+  to 1.1·10⁻¹⁶ (relative), Σβ = m to 2.4·10⁻¹⁴. The averaged linearisation at the lift of ϑ^e(w), counts (6, 5, 4): 15 zero modes in
+  (Θ, log β) — the 12 within-class redistributions and 3 gauges — the rest stable, at γ = 0 Proposition D‴.32's spectrum to 2.1·10⁻¹¹.
+
+Tests (`tests/test_mass_transfer.py`): the weighted loop's drift equals the gradient of its energy in the Euclidean–Fisher–Rao metric (central
+differences) and is Proposition D‴.32's at γ = 0; in the real loop at fixed positions V̇ = −k_ee² pointwise from the vector field and Σβ is
+conserved; at fixed positions the exact fit is reached with the replicator and not without it, and not when Σ|A_k|/a_max > 1; at the lift
+of an exact representation the weights add exactly Σ(n_k − 1) + K zero modes in (Θ, log β), the rest of the spectrum D‴.32's (γ = 0) and
+stable (γ > 0).
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 

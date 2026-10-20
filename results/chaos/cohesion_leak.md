@@ -63,6 +63,8 @@ The three-bump instance (σ₀ = 0.15σ_crit = 0.00707439); the averaged slow lo
 | coh_g | 60 | 1.54e-6–2.18e-5 | 2.15e-9–5.17e-9 | 2.38e-10–6.87e-10 | 2.47e-5 | 9.62e-7 | 0.00102 | 3, 3, 3, 3 |
 | coh_g | 240 | 7.21e-8–5.75e-6 | 1.64e-12–1.63e-8 | 5.11e-14–2.17e-9 | 2.69e-5 | 2.04e-7 | 0.00447 | 3, 3, 3, 3 |
 
+At m = 15 the sample of seed 3 (counts (8, 4, 3)) is not representable (it lies on the boundary of W): ‖f̂_m − f̂_M‖² at s = 6000 and the fit error there adaptive 7.04e-5, 0.0129; coh_c 7.10e-5, 0.013; coh_g 7.04e-5, 0.0129; fixed 0.00552, 0.119; over the representable samples at m = 15 ‖f̂_m − f̂_M‖² at s = 6000 is 1.90e-10–5.41e-8 under every leak but the fixed prior (3.00e-4–0.0024).
+
 ## C. The unknown model order (broad starts)
 
 | leak | m | seed | clusters | fit error | masses | |a|/a_max (max) | centres | widths |
@@ -143,6 +145,8 @@ Predictions: the within-class spread per coordinate √(τ/(σ₀w_k)) = 0.06512
 | fixed | 0.0323–0.036 | 0.0375–0.0395 | 0.035–0.0398 | 0.00851 | 0.00148 |
 | sigma | 0.0277–0.0319 | 0.0319–0.0337 | 0.029–0.0341 | 2.9 | 0.244 |
 
+The spread averaged over the second half (three seeds): coh_c 0.0676, coh_g 0.0634, fixed 0.0362, sigma 0.0299; the linear prediction with the class mean's own share removed, √((1 − 1/n_k)τ/(σ₀w_k)) = 0.0635 (n_k = 20) for the cohesion leak and √((1 − 1/n_k)τ/σ₀) = 0.0366 for a leak toward a prior.
+
 ## F. The cogging servo (no model of the torque)
 
 The best equal-weight K-atom fits (40 random starts each): K = 4: 0.00639 (largest |a|/a_max 1.000); K = 6: 9.37e-6 (largest |a|/a_max 1.000); K = 8: 3.31e-7 (largest |a|/a_max 0.974). The four-kernel designs of Proposition D‴.29: ϑ^b(q) 1.46%, the saturated infimum 0.64%.
@@ -181,6 +185,17 @@ The best equal-weight K-atom fits (40 random starts each): K = 4: 0.00639 (large
 | 2 | 0.03125 | 5 | 0.333, 0.333, 0.267, 0.033, 0.033 | 2.72e-5, -3.81e-5, 3.42e-5, -1.57e-4, 6.72e-6 | 1 | 5 | 0.0141 |
 | 2 | 0.015625 | 5 | 0.333, 0.333, 0.267, 0.033, 0.033 | 2.12e-5, -7.95e-5, -2.75e-5, 5.36e-6, 7.29e-6 | 2 | 10 | 0.00284 |
 
+The split's pattern: a class's unstable separations are (n_k − 1)-fold degenerate, so the linear theory does not choose which particles leave; the kernel's concavity does. The cohesion energy of one class of n = 10 particles split along a direction by 'k particles at +d, 10 − k at −kd/(10 − k)' with Σ‖u_i‖² = S, relative to its quadratic part nS/2 (the same for every pattern), R = 1:
+
+| kernel | S | k = 1 | 2 | 3 | 5 |
+|---|---|---|---|---|---|
+| compact | 0.5 | 0.432442 | 0.621277 | 0.696172 | 0.738000 |
+| compact | 0.0001 | 0.999833 | 0.999906 | 0.999929 | 0.999940 |
+| gauss | 0.5 | 0.873126 | 0.925790 | 0.942770 | 0.951626 |
+| gauss | 0.0001 | 0.999972 | 0.999984 | 0.999988 | 0.999990 |
+
+A class counts as split when a piece passes the single-linkage threshold 0.25 from the jitter 10⁻³ within a stage of 100000 slow units: a growth by 250, i.e. a margin near −ln(250)/100000 = -5.52e-05.
+
 ## H. Other targets (the annealed Gaussian schedule, broad starts, m = 60)
 
 Σ_k|A_k|/a_max is the least total mass with which the target is representable (an exact representation needs w_k ≥ |A_k|/a_max).
@@ -196,4 +211,53 @@ The best equal-weight K-atom fits (40 random starts each): K = 4: 0.00639 (large
 | five | 5 | 0.875 | 0 | 6 | 0.12 | 6 | 0.118 | 0.417, 0.183, 0.150, 0.117, 0.067, 0.067 | +1.626, -1.581, +0.015, +0.828, -1.879, -0.801 | 0.328, 0.265, 0.272, 0.226, 0.318, 0.273 | 0.998 |
 | five | 5 | 0.875 | 1 | 10 | 0.0484 | 9 | 0.045 | 0.200, 0.183, 0.133, 0.133, 0.117, 0.100, 0.100, 0.017 … | -1.498, -0.015, -1.862, +1.505, +1.752, -0.792, +0.809, +0.290 … | 0.231, 0.261, 0.231, 0.301, 0.306, 0.262, 0.235, 0.259 … | 0.995 |
 | five | 5 | 0.875 | 2 | 7 | 0.0589 | 8 | 0.0497 | 0.233, 0.167, 0.133, 0.133, 0.117, 0.100, 0.100, 0.017 | -1.517, +0.008, -1.882, +1.478, +1.781, -0.791, +0.802, +1.005 | 0.237, 0.279, 0.237, 0.286, 0.288, 0.255, 0.237, 0.240 | 0.995 |
+
+## I. Degenerate representations beyond A4 (the Gaussian kernel)
+
+- Opposite-sign twins of bump 3 (counts (5, 3, 5, 2), amplitudes +3.8 and −3.5, the fit error 1.58e-16): the twins 12.7 apart, the light twin 3.63 from the class of bump 2. R = 1 over 400000 slow units from the jitter 10⁻³: the twins' distance 12.7 (s = 0), 12.8 (s = 40000), 12.9 (s = 80000), 12.8 (s = 120000), 12.5 (s = 160000), 12 (s = 200000), 11.5 (s = 240000), 11.8 (s = 280000), 12.2 (s = 320000), 12.6 (s = 360000), 12.9 (s = 400000); clusters 4 → 4; the fit error 3.16e-4 → 0.00454; the light twin at the end a = -3.870, c = +0.883.
+- The same start under the annealed schedule (R = 2, then 1): the twins' distance 12.7 → 11.7, clusters 4, the fit error 0.00499.
+- The md's twins (counts (5, 5, 3, 2)) with bump 3 shared 0.9 : 0.1 (the twins 5.28 apart), R = 1: their distance 5.28 (s = 2000), 5.28 (s = 6000), 5.28 (s = 10000), 5.28 (s = 14000), 5.28 (s = 18000), 5.28 (s = 22000), 5.28 (s = 26000), 5.29 (s = 30000), 5.29 (s = 34000), 5.29 (s = 38000); the fit error 1.62e-6.
+- The md's twins (counts (5, 5, 3, 2)) with bump 3 shared 0.97 : 0.03 (the twins 8.19 apart), R = 1: their distance 8.19 (s = 2000), 8.19 (s = 6000), 8.19 (s = 10000), 8.19 (s = 14000), 8.19 (s = 18000), 8.19 (s = 22000), 8.19 (s = 26000), 8.19 (s = 30000), 8.19 (s = 34000), 8.19 (s = 38000); the fit error 5.38e-6.
+- The twins' contraction on their gauge curve, the md's twins at R = 1 over s ∈ [200, 2000]: ln(Δα(200)/Δα(2000)) = 1.29485 measured against ∫ σ₀ψ(Δα²/R²)(w_ka′_k + w_la′_l)²/(w_ka′_k² + w_la′_l²) ds = 1.29430 along the run (ratio 1.0004; the rate at the start 1.45e-4).
+- The md's dead class under the Gaussian kernel at R = 1: its distance from the nearest live class 5.19 (s = 0), 5.19 (s = 4000), 5.19 (s = 8000), 5.19 (s = 12000), 5.19 (s = 16000), 5.19 (s = 20000), 5.19 (s = 24000), 5.19 (s = 28000), 5.19 (s = 32000), 5.19 (s = 36000), 5.19 (s = 40000); the fit error 7.01e-7.
+- The md's dead class under the Gaussian kernel at R = 1.5: its distance from the nearest live class 5.19 (s = 0), 5.08 (s = 4000), 4.97 (s = 8000), 4.82 (s = 12000), 4.62 (s = 16000), 4.29 (s = 20000), 3.43 (s = 24000), 0.0056 (s = 28000), 7.25e-8 (s = 32000), 8.94e-13 (s = 36000), 0 (s = 40000); the fit error 1.70e-5.
+
+## J. The scale window (Part C's broad starts, m = 60, the Gaussian kernel)
+
+| schedule | seed | clusters | fit error | masses | centres | |a|/a_max (max) |
+|---|---|---|---|---|---|---|
+| R = 1.5 → 1 | 0 | 3 | 2.44e-8 | 0.483, 0.283, 0.233 | +1.500, -1.500, +0.000 | 0.882 |
+| R = 2 → 0.5 | 0 | 3 | 1.93e-7 | 0.500, 0.283, 0.217 | +1.500, -1.500, +0.000 | 0.882 |
+| R = 3 → 1 | 0 | 3 | 5.89e-6 | 0.500, 0.283, 0.217 | +1.500, -1.500, +0.000 | 0.882 |
+| R = 1 throughout | 0 | 5 | 7.81e-4 | 0.417, 0.283, 0.217, 0.050, 0.033 | +1.509, -1.499, -0.003, +2.251, +0.585 | 0.883 |
+| R = 1 throughout | 1 | 6 | 0.00159 | 0.350, 0.317, 0.233, 0.050, 0.033, 0.017 | +1.496, -1.487, -0.004, -2.127, +0.453, +2.439 | 0.746 |
+| R = 1 throughout | 2 | 5 | 0.00116 | 0.350, 0.283, 0.250, 0.083, 0.033 | -1.489, +1.504, +0.003, -2.023, +0.815 | 0.711 |
+| R = 1 throughout | 3 | 5 | 7.29e-4 | 0.367, 0.350, 0.250, 0.017, 0.017 | -1.494, +1.496, -0.002, -2.137, +0.140 | 0.678 |
+| R = 1 throughout | 4 | 4 | 0.00109 | 0.350, 0.333, 0.300, 0.017 | -1.507, +1.500, -0.002, -2.329 | 0.717 |
+| R = 1 throughout | 5 | 5 | 4.84e-4 | 0.350, 0.317, 0.267, 0.033, 0.033 | +1.501, -1.495, +0.001, +2.286, -2.191 | 0.781 |
+| R = 2 throughout | 0 | 3 | 7.82e-4 | 0.500, 0.283, 0.217 | +1.500, -1.500, -0.000 | 0.882 |
+| R = 2 throughout | 1 | 3 | 0.0014 | 0.367, 0.367, 0.267 | -1.499, +1.499, +0.000 | 0.682 |
+| R = 2 throughout | 2 | 3 | 0.00134 | 0.433, 0.300, 0.267 | -1.499, +1.499, -0.000 | 0.666 |
+
+## K. Targets where the count fails or holds (the annealed Gaussian schedule, broad starts, m = 60)
+
+| target | bumps | Σ|A_k|/a_max | seed | clusters after R = 2 | clusters at the end | fit error | masses | centres | widths | smallest margin (n_k ≥ 2) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| two close | 2 | 0.400 | 0 | 3 | 3 | 0.0983 | 0.967, 0.017, 0.017 | +0.000, -1.421, +1.421 | 0.716, 0.330, 0.330 | 0.00684 |
+| two close | 2 | 0.400 | 1 | 2 | 2 | 0.117 | 0.983, 0.017 | +0.020, +1.410 | 0.690, 0.313 | 0.00646 |
+| two close | 2 | 0.400 | 2 | 1 | 1 | 0.13 | 1.000 | -0.000 | 0.667 | 0.00707 |
+| three heavy | 3 | 0.950 | 0 | 3 | 3 | 0.204 | 0.467, 0.283, 0.250 | +1.505, -1.576, -0.017 | 0.471, 0.678, 0.430 | 0.00179 |
+| three heavy | 3 | 0.950 | 1 | 4 | 5 | 0.113 | 0.417, 0.200, 0.200, 0.167, 0.017 | -1.502, +0.003, +1.722, +1.147, -1.186 | 0.487, 0.523, 0.364, 0.344, 0.409 | 0.00112 |
+| three heavy | 3 | 0.950 | 2 | 3 | 3 | 0.0577 | 0.467, 0.283, 0.250 | -1.495, +1.492, +0.000 | 0.494, 0.491, 0.449 | 5.45e-4 |
+| four alternating | 4 | 0.463 | 0 | 4 | 4 | 0.0112 | 0.417, 0.250, 0.183, 0.150 | +1.573, -1.582, +0.548, -0.542 | 0.376, 0.367, 0.392, 0.393 | 0.00105 |
+| four alternating | 4 | 0.463 | 1 | 4 | 4 | 0.00957 | 0.317, 0.233, 0.233, 0.217 | -1.584, +1.581, +0.545, -0.546 | 0.366, 0.368, 0.382, 0.387 | 0.00153 |
+| four alternating | 4 | 0.463 | 2 | 4 | 4 | 0.0101 | 0.333, 0.250, 0.217, 0.200 | -1.582, +1.579, +0.545, -0.546 | 0.367, 0.370, 0.385, 0.390 | 0.00141 |
+| three equal | 3 | 0.600 | 0 | 3 | 3 | 9.39e-5 | 0.467, 0.267, 0.267 | +1.500, -0.000, -1.500 | 0.450, 0.450, 0.450 | 0.00188 |
+| three equal | 3 | 0.600 | 1 | 3 | 3 | 1.79e-4 | 0.350, 0.333, 0.317 | -1.500, +1.500, -0.000 | 0.450, 0.450, 0.450 | 0.00224 |
+| three equal | 3 | 0.600 | 2 | 3 | 3 | 1.35e-4 | 0.417, 0.300, 0.283 | -1.500, +0.000, +1.500 | 0.450, 0.450, 0.450 | 0.002 |
+
+## L. Two of Part K's ends continued (seed 0): the Gaussian kernel at R = 1 for another 200000 slow units, then the compact kernel at R = 1 for 40000
+
+- four alternating: the fit error (clusters) under the Gaussian kernel at s = 20000: 0.0217 (4), 30000: 0.0125 (4), 40000: 0.0112 (4), 50000: 0.00996 (4), 60000: 0.00877 (4), 70000: 0.00768 (4), 80000: 0.00668 (4), 90000: 0.00579 (4), 100000: 0.005 (4), 110000: 0.00431 (4), 120000: 0.00372 (4), 130000: 0.0032 (4), 140000: 0.00275 (4), 150000: 0.00237 (4), 160000: 0.00204 (4), 170000: 0.00175 (4), 180000: 0.00151 (4), 190000: 0.0013 (4), 200000: 0.00111 (4), 210000: 9.59e-4 (4), 220000: 8.26e-4 (4), 230000: 7.10e-4 (4), 240000: 6.12e-4 (4); then under the compact kernel at s (from the switch) = 0: 6.12e-4 (4), 10000: 5.26e-4 (4), 20000: 4.53e-4 (4), 30000: 3.90e-4 (4), 40000: 3.36e-4 (4). At the end the classes (mass, a, c, s): (0.417, -0.960, +1.599, 0.351); (0.250, +2.000, -1.600, 0.350); (0.183, +2.727, +0.550, 0.351); (0.150, -3.000, -0.550, 0.351); the weighted amplitudes mass × a: +0.5001, -0.4500, +0.5000, -0.4000 against the bumps' +0.5000, -0.4500, +0.5000, -0.4000.
+- three equal: the fit error (clusters) under the Gaussian kernel at s = 20000: 0.0131 (3), 30000: 9.39e-5 (3), 40000: 9.39e-5 (3), 50000: 9.39e-5 (3), 60000: 9.39e-5 (3), 70000: 9.39e-5 (3), 80000: 9.39e-5 (3), 90000: 9.39e-5 (3), 100000: 9.39e-5 (3), 110000: 9.39e-5 (3), 120000: 9.39e-5 (3), 130000: 9.39e-5 (3), 140000: 9.39e-5 (3), 150000: 9.39e-5 (3), 160000: 9.39e-5 (3), 170000: 9.39e-5 (3), 180000: 9.39e-5 (3), 190000: 9.39e-5 (3), 200000: 9.39e-5 (3), 210000: 9.39e-5 (3), 220000: 9.39e-5 (3), 230000: 9.39e-5 (3), 240000: 9.39e-5 (3); then under the compact kernel at s (from the switch) = 0: 9.39e-5 (3), 10000: 3.21e-7 (3), 20000: 2.77e-9 (3), 30000: 2.40e-11 (3), 40000: 2.45e-13 (3). At the end the classes (mass, a, c, s): (0.467, +1.714, +1.500, 0.450); (0.267, +3.000, -0.000, 0.450); (0.267, +3.000, -1.500, 0.450); the weighted amplitudes mass × a: +0.8000, +0.8000, +0.8000 against the bumps' +0.8000, +0.8000, +0.8000.
 

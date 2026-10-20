@@ -65,10 +65,14 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   bounded least-squares one, the parameters' fluctuation adding a small force that is not (Proposition D‴.31), and keeps the replicated
   kernels together under the noise — the regressor's own term leaves the separations' noise drift, whose threshold is then bounded below
   uniformly in the gain (Corollary D‴.33); and a prior-free leak — the kernels attract each other toward the modes of their own distribution
-  — holds the separations without biasing any clustered critical point, splits a class only where the residual's curvature asks for a kernel
-  and merges duplicated or dead ones, so the network selects its number of kernels — the target's on the instance, though a split sheds
-  single particles and the classes' masses are the transit's (Proposition D‴.32); rounds 7–23 of the review log cover all of them, and their
-  remarks.
+  — whose finite-range form holds the separations without biasing any clustered critical point and splits a class only where the residual's curvature asks for a kernel,
+  while its Gaussian form pays an exponentially small bias for merging duplicated kernels at a computed rate when no third class is
+  within reach; the number of kernels is not selected but is the transit's and the schedule's — an annealed scale found the target's
+  count where the transit's masses were representable, not on close or heavy bumps (Proposition D‴.32) — and a replicator law on the
+  kernels' weights, a Fisher–Rao mass transfer with the relative entropy as its Lyapunov function, removes the masses' obstruction without
+  changing the stationary set: at fixed positions the exact fit is reached iff the target is representable, and from broad starts the
+  five-bump target is found with its five kernels (Proposition D‴.34); rounds 7–23 of the review log cover all of them up to D‴.33, and
+  their remarks.
 
 ---
 
@@ -176,9 +180,9 @@ n = 3 and NTK results contradict them.
 | [PAPERS.md](PAPERS.md) | the papers that can be written from these results: claims, the results they rest on with their status, novelty, what is missing, venues |
 | [ASSESSMENT.md](ASSESSMENT.md), [THEORY_REVISED.md](THEORY_REVISED.md) | the audit of the original controller and its corrected theorem |
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5–18, archived version 2 of the theory |
-| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `ot_leak.py` (Proposition D‴.12), `lifted_orbit.py` (Corollary D‴.14, Proposition D‴.15), `entropic_leak.py` (Proposition D‴.20), `ot_basin.py` (Theorem D‴.21), `adaptive_prior.py` (Theorem D‴.23), `floor_bias.py` (Proposition D‴.24), `planar_loop.py` (the averaged loop on ℝⁿ), `adaptive_floquet.py` (Corollary D‴.26), `sliding.py` (Proposition D‴.29: second-order plants, the sliding-variable reduction), `measurement_noise.py` (Propositions D‴.30 and D‴.31), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
+| `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `ot_leak.py` (Proposition D‴.12), `lifted_orbit.py` (Corollary D‴.14, Proposition D‴.15), `entropic_leak.py` (Proposition D‴.20), `ot_basin.py` (Theorem D‴.21), `adaptive_prior.py` (Theorem D‴.23), `floor_bias.py` (Proposition D‴.24), `planar_loop.py` (the averaged loop on ℝⁿ), `adaptive_floquet.py` (Corollary D‴.26), `sliding.py` (Proposition D‴.29: second-order plants, the sliding-variable reduction), `measurement_noise.py` (Propositions D‴.30 and D‴.31), `cohesion_leak.py` (Proposition D‴.32), `mass_transfer.py` (Proposition D‴.34), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 157 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 177 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 

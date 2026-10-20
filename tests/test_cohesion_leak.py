@@ -126,7 +126,11 @@ def test_splitting_margin_with_residual_curvature():
     assert sep[-1] > 0                                                          # below λ⁺ the class splits
 
 
-def test_twins_merge_under_the_gaussian_kernel_and_persist_beyond_the_compact_range():
+def test_twins_contract_at_the_predicted_rate_and_persist_beyond_the_compact_range():
+    """(v) as restated in round 23 (D3u-1): twins of bump 3 (the same centre and width, its amplitude shared 0.6 : 0.4) with no third class
+    within reach contract on their gauge curve at the rate σ₀ψ(Δα²/R²)(w_ka′_k + w_la′_l)²/(w_ka′_k² + w_la′_l²) (a′ = 1 − (a/a_max)², the fit
+    relaxed quasi-statically): the measured ln Δα(40)/Δα(160) is ∫ of the rate along the run to 1% at 10σ₀; and beyond the compact kernel's
+    range they are a neutral pair."""
     net, base = setup()
     counts = np.array([2, 2, 1, 1]); w = counts / 6
     amps = np.array([A_B[0] / w[0], A_B[1] / w[1], 0.6 * A_B[2] / w[2], 0.4 * A_B[2] / w[3]])
@@ -136,13 +140,52 @@ def test_twins_merge_under_the_gaussian_kernel_and_persist_beyond_the_compact_ra
     d0 = np.sqrt(np.sum((at[2] - at[3]) ** 2 / G))
     assert d0 > 1.0
     sig = 10 * SIGMA0
-    gl = CO.CohesionLoop(base, 1.0, 'gauss', sigma0=sig)
-    cl = CO.CohesionLoop(base, 1.0, 'compact', sigma0=sig)
-    Tg, Tc = gl.run(Th0, 400.0, 0.25), cl.run(Th0, 400.0, 0.25)
-    dg = np.sqrt(np.sum((Tg[4] - Tg[5]) ** 2 / G)); dc = np.sqrt(np.sum((Tc[4] - Tc[5]) ** 2 / G))
-    assert abs(dc - d0) < 1e-10                                                 # compact, beyond the range: a neutral, persistent pair
-    assert dg < 0.9 * d0                                                        # Gaussian: the twins approach each other along the gauge curve
-    assert base.fit_error(Tg) < 2e-2
+    rec = []
+
+    def cb(s_, T):
+        a_, c_, s__ = net.physical(T[4:6])
+        rec.append((s_, T[4, 0] - T[5, 0], a_[0, 0], a_[1, 0]))
+    CO.CohesionLoop(base, 1.0, 'gauss', sigma0=sig).run(Th0, 160.0, 0.25, rec_every=4, callback=cb)
+    r = np.array(rec)
+    da = lambda a: 1 - (a / NET_KW['a_max']) ** 2
+    kap = sig * np.exp(-0.5 * r[:, 1] ** 2 / G[0]) * (w[2] * da(r[:, 2]) + w[3] * da(r[:, 3])) ** 2 / (w[2] * da(r[:, 2]) ** 2 + w[3] * da(r[:, 3]) ** 2)
+    sel = r[:, 0] >= 40.0
+    pred = np.sum(0.5 * (kap[sel][1:] + kap[sel][:-1]) * np.diff(r[sel, 0]))
+    meas = np.log(abs(r[sel, 1][0]) / abs(r[sel, 1][-1]))
+    assert pred > 2.0 and abs(meas / pred - 1) < 0.01
+    Tc = CO.CohesionLoop(base, 1.0, 'compact', sigma0=sig).run(Th0, 400.0, 0.25)
+    assert abs(np.sqrt(np.sum((Tc[4] - Tc[5]) ** 2 / G)) - d0) < 1e-10        # compact, beyond the range: a neutral, persistent pair
+
+
+def test_the_kernels_range_and_scale_are_pinned():
+    """D3u-5: the compact kernel attracts a pair at 0.99R and not at 1.01R; the Gaussian kernel's pair force at the distance R is e^{−1/2}
+    times its linear part; both at a G⁻¹ distance (the whitened coordinates)."""
+    R, sig = 1.3, 0.7
+    for kind in ('compact', 'gauss'):
+        for frac in (0.5, 0.99, 1.01, 2.0):
+            d = frac * R
+            Th = np.array([[0.0, 0.0, 0.0], [d * np.sqrt(G[0]), 0.0, 0.0]])
+            F = CO.cohesion_force(Th, G, R, sig, kind)
+            lin = sig / 2 * d * np.sqrt(G[0])                                    # (σ₀/m)·ψ(0)·|Δϑ| for m = 2
+            ratio = F[0, 0] / lin                                                  # particle 0 pulled toward particle 1
+            if kind == 'compact':
+                assert (ratio > 1e-6) == (frac < 1.0) and abs(ratio - max(1 - frac ** 2, 0.0) ** 3) < 1e-12
+            else:
+                assert abs(ratio - np.exp(-0.5 * frac ** 2)) < 1e-12
+            assert abs(F[0, 0] + F[1, 0]) < 1e-15
+
+
+def test_single_linkage_clusters_on_a_known_configuration():
+    """D3u-5: `clusters` counts three groups whose members are within the threshold and whose gaps exceed it, links a chain of steps below
+    the threshold into one cluster, and measures distances in the G⁻¹ metric."""
+    rng = np.random.default_rng(1)
+    centres = np.array([[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [0.0, 1.0, 0.5]]) * np.sqrt(G)[None, :]
+    Th = np.repeat(centres, 4, axis=0) + 0.01 * rng.standard_normal((12, 3)) * np.sqrt(G)[None, :]
+    lab = CO.clusters(Th, G, 0.25)
+    assert lab.max() + 1 == 3 and all(len(set(lab[4 * k:4 * k + 4])) == 1 for k in range(3))
+    chain = np.array([[0.2 * i * np.sqrt(G[1]) * 0 + 0.0, 0.2 * i * np.sqrt(G[1]), 0.0] for i in range(6)])
+    assert CO.clusters(chain, G, 0.25).max() == 0
+    assert CO.clusters(chain, G, 0.15).max() == 5
 
 
 def test_real_loop_lift_periodic_and_separation_decay_exact():
