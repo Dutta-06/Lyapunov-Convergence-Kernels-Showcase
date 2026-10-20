@@ -240,7 +240,8 @@ is a delta-method statement, new in its object.}
     Numerics: \code{exp_ot_basin.py}. Verdict: classical inequality and geometry (the generalised geodesic), new
     mechanism for a new energy (the counts as the source of uniformity in $m$).
   % The items Theorem D'''.23 to Corollary D'''.33 are LITERATURE_TRANSPORT.md's audit bullets as committed at 1ddff8c
-  % (D'''.25 has none). Its references [S..] are the bibitems S.. of refs.tex; [1], [3], [4], [6]--[8], [30], [49]
+  % (D'''.25 has none), the item Proposition D'''.34 as committed at 9d122dd (manuscript part 4g; the D'''.32 item is
+  % unchanged there). Its references [S..] are the bibitems S.. of refs.tex; [1], [3], [4], [6]--[8], [30], [49]
   % and [55] (review/LITERATURE_refs.md) are sanner1992, x-ioannou1983 (Ioannou--Kokotovic's sigma-modification),
   % ioannou1996, R6--R8, R30, R49 and R55; [S9] (the standard references) is sb1989 where it is cited for
   % Sastry--Bodson and kko1986 where it is cited for Kokotovic--Khalil--O'Reilly and singular perturbations.
@@ -451,6 +452,28 @@ is a delta-method statement, new in its object.}
     parameters' part of the force dominates the mean error. Numerics: \code{exp_eiv_remedy.py} Part D. Verdict: a
     classical remedy in a classical frame; a new structural consequence for the transport leaks (and for the cohesion
     leak, whose separations are the softest).
+  \item \emph{Proposition D$'''$.34 (mass transfer: the replicator weight law).} Transport and creation of mass
+    together are the Wasserstein--Fisher--Rao (Hellinger--Kantorovich) geometry of positive measures
+    (Liero--Mielke--Savar\'e); particles that move and change weight are conic particle gradient descent, with global
+    convergence for sparse optimisation on measures under non-degeneracy (Chizat), and a non-local birth--death term
+    added to the mean-field dynamics of a one-hidden-layer network keeps the minimiser and speeds the convergence
+    (Rotskoff--Jelassi--Bruna--Vanden-Eijnden); the multiplicative weight update is the exponentiated-gradient law
+    (Kivinen--Warmuth) and EM's update of mixture weights (Dempster--Laird--Rubin), adaptation laws of mirror-descent
+    type replace the quadratic parameter error of the Lyapunov function by a Bregman divergence (Boffi--Slotine) ---
+    (ii) is their negative-entropy instance ---, and the replicator equation is the gradient flow of Shahshahani's
+    metric with the relative entropy as its Lyapunov function at a stable state (Shahshahani, Hofbauer--Sigmund); the
+    Wasserstein--Fisher--Rao distance has two more origins (Kondratyev--Monsaingeon--Vorotnikov,
+    Chizat--Peyr\'e--Schmitzer--Vialard), and gradient descent on the positions and square-root weights of a
+    two-layer network is its particle form (Chizat--Bach) (\cite{S62}). The law here is gradient descent on
+    $(\sqrt\beta,\Theta)$ --- Euclidean on the positions, not the WFR metric's mass-weighted one ---, with the
+    cohesion energy of the unweighted cloud. What is specific: the replicator as the mass transfer of the cohesion
+    leak in mean-field adaptive control --- the stationary set unchanged at clustered configurations under the finite
+    range (under the Gaussian kernel the replicator selects the masses), the saturation's bound kept without a
+    projection, the saturation trap of the transit's masses removed, the representability criterion
+    $\sum_k\abs{A_k}/a_{\max} < 1$ at fixed positions for bounded trajectories, the zero modes at the lift --- and the
+    numerics (the five-bump and three-heavy-bump targets found with their kernels; bumps closer than the broad scale
+    and the shedding not repaired). Numerics: \code{exp_mass_transfer.py}. Verdict: classical ingredients; a new
+    remedy for the transit's masses.
 \end{itemize}
 
 \begin{proof}
@@ -4348,8 +4371,9 @@ force, whose mean part is $7\cdot10^{-4}$ of its covariance part.
 
 % Proposition D'''.32 with its proof, Status and numerics (PARADIGM.md section 5d, round-23 version, as committed at
 % 1ddff8c; the numbers are PARADIGM's copies of results/chaos/cohesion_leak.md). The anchors res:thmDppp:32 and
-% res:thmDppp:33 are \hyperref targets, as res:thmDppp:21 is. Proposition D'''.34, named in the Status and in the
-% numerics (K), is not rendered in this part and is cited without a link. The block cites no bibitem.
+% res:thmDppp:33 are \hyperref targets, as res:thmDppp:21 is; its (A) as committed at 9d122dd (the dead class's mass).
+% Proposition D'''.34, named in the Status and in the numerics (K), is linked to res:thmDppp:34 (manuscript part 4g).
+% The block cites no bibitem.
 \begin{thm}{Proposition}{D$'''$.32}[the cohesion leak: a leak on the unexcited subspace, without a
 prior]\phantomsection\label{res:thmDppp:32}%
 Let $\psi : [0,\infty)\to[0,1]$ be $C^2$, non-increasing, $\psi(0) = 1$ --- of finite range, $\psi(z) = (1 - z)^3_+$
@@ -4539,8 +4563,8 @@ cloud --- which classes form and with which masses --- and with it any selection
 is the transit's and the schedule's. Under an annealed Gaussian scale it ended at the target's count on the instance
 and on well-separated targets whose transit masses were representable, not for bumps closer than the broad scale or
 for unrepresentable transit masses, and at a fixed scale not at all (Numerics (C), (H), (J), (K)); the replicator
-weight law of Proposition D$'''$.34 removes the mass obstruction. Nor is the basin uniform in $m$ proved. Checked:
-\code{tests/test_cohesion_leak.py} (the drift equal to $-G\nabla J^{\mathrm{coh}}_m$ by central differences and
+weight law of \hyperref[res:thmDppp:34]{Proposition D$'''$.34} removes the mass obstruction. Nor is the basin
+uniform in $m$ proved. Checked: \code{tests/test_cohesion_leak.py} (the drift equal to $-G\nabla J^{\mathrm{coh}}_m$ by central differences and
 $J^{\mathrm{coh}}_m$ decreasing along the flow, for both kernels; the forces summing to zero and equal to
 $\sigma_0\times$ the kernel mass $\times$ the mean-shift vector; at the exact representation for the counts
 $(3,2,2)$ and $(4,3,3)$ the drift zero and the Jacobian's spectrum the predicted one --- the separations at
@@ -4575,11 +4599,12 @@ $+8.7\cdot10^{-6}$, makes that class's diameter decay at $8.8\cdot10^{-6}$ ($6.9
 $s = 2\cdot10^4$ to $10^5$); at $\sigma_0$ every class collapses to rounding. Twins (bump 3 carried by classes of
 masses $3/15$ and $2/15$, the weighted amplitude shared $3:1$, 2.31 apart) merge under the Gaussian kernel ($R = 1$:
 their distance $6.1\cdot10^{-3}$ at $s = 4000$, 0 by $s = 18000$, the fit error $4.5\cdot10^{-10}$), on (v)'s time
-scale (${\sim}10^3$), and persist beyond the compact range (2.31 throughout). A dead class (amplitude 0, mass $2/15$, at 5.19 from the nearest live class, of mass $4/15$) joins it under the Gaussian kernel at $R = 2$ (to rounding by $s = 16000$; the
-fit error then $1.6\cdot10^{-3}$, the inter-class bias at that scale) and at $R = 1.5$ (at $s\approx2.8\cdot10^4$,
-(v)'s time scale $1.8\cdot10^4$; the fit error $1.7\cdot10^{-5}$); at $R = 1$, where the live classes do not overlap
-and the time scale is $1.4\cdot10^7$, it does not move in $4\cdot10^4$ slow units, nor under the compact kernel. (I)
-The twins' contraction: along (A)'s twins at $R = 1$ over $s\in[200,2000]$,
+scale (${\sim}10^3$), and persist beyond the compact range (2.31 throughout). A dead class (amplitude 0, mass $2/15$,
+at 5.19 from the nearest live class, of mass $4/15$) joins it under the Gaussian kernel at $R = 2$ (to rounding by
+$s = 16000$; the fit error then $1.6\cdot10^{-3}$, the inter-class bias at that scale) and at $R = 1.5$ (at
+$s\approx2.8\cdot10^4$, (v)'s time scale $1.8\cdot10^4$; the fit error $1.7\cdot10^{-5}$); at $R = 1$, where the live
+classes do not overlap and the time scale is $1.4\cdot10^7$, it does not move in $4\cdot10^4$ slow units, nor under
+the compact kernel. (I) The twins' contraction: along (A)'s twins at $R = 1$ over $s\in[200,2000]$,
 $\ln(\Delta\alpha(200)/\Delta\alpha(2000)) = 1.2949$ against (v)'s rate integrated along the run, 1.2943 (0.04\%).
 Twins far apart do not merge on the runs' time scale: with bump 3's amplitude shared $0.9 : 0.1$ (5.28 apart) and
 $0.97 : 0.03$ (8.19) their distance does not change in $4\cdot10^4$ slow units ((v)'s rate at their distance
@@ -4676,7 +4701,8 @@ the widths 0.4) --- the broad stage merges them into one class of width 0.67--0.
 margin positive, $6.5\cdot10^{-3}$--$7.1\cdot10^{-3}$: a stable biased configuration), with one or two stray
 particles, 1--3 classes, 0.098--0.13. So the count is the target's when the bumps are farther apart than the broad
 scale and the transit's masses are representable, and the approximant's below the resolution; the scale and the
-masses, the memory of the transit, decide the rest --- the masses are Proposition D$'''$.34's remedy, the scale is not.
+masses, the memory of the transit, decide the rest --- the masses are \hyperref[res:thmDppp:34]{Proposition
+D$'''$.34}'s remedy, the scale is not.
 \end{sloppypar}
 
 % Corollary D'''.33 with its proof, Status and numerics (PARADIGM.md section 5d, round-23 version, as committed at
@@ -4855,6 +4881,204 @@ than $\sigma_0/k_e$ in every family; no DR or DR* run grows. MR's separations gr
 $+4.69\cdot10^{-4}\pm1.3\cdot10^{-5}$ and $+1.25\cdot10^{-3}\pm3.1\cdot10^{-5}$ (8 of 8 runs each), the latter less
 than half the second-order prediction (the next order of \hyperref[res:thmDppp:30]{Proposition D$'''$.30}). On the
 same noise paths the measured regressor's replicas separate and the desired regressor's stay together.
+\end{sloppypar}
+
+% Proposition D'''.34 with its proof, Status and numerics (PARADIGM.md section 5d, round-24 version, as committed at
+% 9d122dd; the numbers are PARADIGM's copies of results/chaos/mass_transfer.md). The anchor res:thmDppp:34 is a
+% \hyperref target, as res:thmDppp:21 is. The reference [S62] (LITERATURE_TRANSPORT.md) is the bibitem S62 of
+% refs.tex.
+\begin{thm}{Proposition}{D$'''$.34}[mass transfer: the replicator weight law removes the saturation trap of the
+transit's masses]\phantomsection\label{res:thmDppp:34}%
+Let the particles of \hyperref[res:thmDppp:32]{Proposition D$'''$.32} carry weights $\beta_i > 0$ with
+$\sum_i\beta_i = m$ --- the network $\fhat = (1/m)\sum_i\beta_i\tilde\Phi(\cdot\,;\vartheta_i)$, its measure
+$\mu_{\Theta,\beta} = (1/m)\sum_i\beta_i\delta_{\vartheta_i}$, the class masses $W_k = \sum_{i\in k}\beta_i/m$ --- and
+let the weights adapt by the replicator law
+\begin{equation}
+  \frac{\dd\beta_i}{\dd s} = \gamma\beta_i(u_i - \lambda),\qquad
+  u_i := \langle r\tilde\Phi(\cdot\,;\vartheta_i)\rangle_\rho,\qquad
+  \lambda := \sum_j\beta_ju_j\Big/\sum_j\beta_j
+  \tag{$\mathfrak{F}$}
+\end{equation}
+beside
+$\dd\vartheta_i/\dd s = \beta_iG\langle\nabla_\vartheta(r\tilde\Phi(\cdot\,;\vartheta_i))\rangle_\rho
+- (\sigma_0/m)\sum_j\psi(\norm{\vartheta_i - \vartheta_j}^2_{G^{-1}}/R^2)(\vartheta_i - \vartheta_j)$
+($r = f - \fhat$; in the real loop, on $\sum\beta = m$,
+$\dot\beta_i = \gamma\beta_ie^\T(\tilde\Phi(x;\vartheta_i) - \fhat(x))$, the replicator dynamics with the fitness
+$e^\T\tilde\Phi_i$ --- an exponentiated-gradient law).
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(a gradient flow; the bound kept)} The pair is the gradient flow of
+    $J(\Theta,\beta) := m\bar L(\mu_{\Theta,\beta}) + (\sigma_0m/2)\iint W\dd\mu_\Theta\dd\mu_\Theta$ (the cohesion
+    energy of the unweighted cloud, so that the weights see the fit only) in the metric
+    $\sum_i\norm{\delta\vartheta_i}^2_{G^{-1}} + \sum_i\delta\beta_i^2/(\gamma\beta_i)$ on $\{\sum_i\beta_i = m\}$ ---
+    Euclidean on the positions, Fisher--Rao (Shahshahani) on the weights; with $\varrho_i := \sqrt{\beta_i}$,
+    gradient descent on $(\varrho,\Theta)$, with the step $\gamma/4$ in $\varrho$, on the sphere
+    $\sum_i\varrho_i^2 = m$, $\varrho_i^2/m$ the output weights of a two-layer network ---, so $J$ decreases;
+    $\beta > 0$ and $\sum\beta$ are invariant (from every start), and on $\sum\beta = m$,
+    $\abs{\fhat}\le(1/m)\sum\beta_i\abs{a_i}\le a_{\max}$ as for equal weights: no projection is needed. With
+    $\beta\equiv1$ and $\gamma = 0$ it is the loop of \hyperref[res:thmDppp:32]{Proposition D$'''$.32}. (A
+    Wasserstein--Fisher--Rao metric would weigh the positions by their masses,
+    $\sum_i\beta_i\norm{\delta\vartheta_i}^2_{G^{-1}}$: its drift lacks the factor $\beta_i$ on the fit and divides
+    the cohesion force by $\beta_i$; and $J$ is not a function of $\mu_{\Theta,\beta}$ alone, its cohesion being the
+    unweighted cloud's.)
+  \item \begin{sloppypar}\emph{(the real loop at fixed positions)} With the positions at atoms where
+    $f(x) = (1/m)\sum_i\beta^*_i\tilde\Phi(x;\vartheta_i)$ at every state the loop visits (for $n = 1$ and analytic
+    features, on the orbit's interval), $\sum\beta^* = m$, the real loop with \textup{($\mathfrak{F}$)} has
+    $\dot V = -k_e\abs{e}^2$ for
+    $V := \frac12\abs{e}^2 + (1/(\gamma m))\sum_i\beta^*_i\log(\beta^*_i/\beta_i)$: the relative entropy of the
+    weights takes the place of the quadratic parameter error --- the negative-entropy instance of the mirror-descent
+    adaptation laws with Bregman Lyapunov functions (\cite{S62}). The identity needs only $\sum\beta^* = m$ and the
+    pointwise representation; $V\ge0$ needs $\sum\beta = m$, which the law keeps (it does not restore it).
+    $\beta\to\beta^*$ is not claimed: it needs the persistent excitation of $(\tilde\Phi(x_m(t);\vartheta_i))_i$.\end{sloppypar}
+  \item \emph{(the stationary points; the saturated transients)} $(\Theta,\beta)$ is stationary iff
+    $\beta_iG\langle r\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)\rangle_\rho
+    = (\sigma_0/m)\sum_j\psi_{ij}(\vartheta_i - \vartheta_j)$ for every $i$ and $u_i = \lambda$ on the support: the
+    fit's force carries the factor $\beta_i$, the cohesion does not. At a clustered configuration under the finite
+    range (the classes $R$ apart) the cohesion vanishes, the condition is
+    $\langle r\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_k)\rangle = 0$, whose amplitude component
+    $(1 - a_k^2/a_{\max}^2)\langle r\varphi_k\rangle = 0$ forces $\langle r\varphi_k\rangle = 0$, so
+    $u_k = a_k\langle r\varphi_k\rangle = 0 = \lambda$: there the stationary points are
+    \hyperref[res:thmDppp:32]{Proposition D$'''$.32}'s, for every vector of masses. Under the Gaussian kernel the
+    inter-class forces do not vanish and the fit's factor $\beta_i$ weighs against them, so $u_k = \lambda$ fixes the
+    masses: the replicator selects the masses of each class configuration and moves the Gaussian kernel's bias
+    (Numerics (G)); and a class whose particles carry unequal weights is not exactly replicated at a biased
+    stationary point. The difference is the saturated transient: when a class is short of mass
+    ($\abs{A_k} > W_ka_{\max}$) the equal-weight loop at fixed positions stays biased (it has no critical point)
+    while $\abs{a_k}\to a_{\max}$ with $\langle r\varphi_k\rangle\not\to0$, its amplitude gradient exponentially
+    small in $\alpha_k$ (heuristically $\alpha_k$ grows like $(a_{\max}/2)\log s$); under \textup{($\mathfrak{F}$)}
+    the starved class's mass grows at the rate $\gamma(u_k - \lambda)$,
+    $u_k\approx a_{\max}\abs{\langle r\varphi_k\rangle}$ --- $\dd W_k/\dd s = \gamma W_k(1 - W_k)u_k > 0$ exactly
+    when the class's particles coincide and $u_l = 0$ for the other classes --- and the others take up the gauge
+    (\hyperref[res:thmDppp:28]{Proposition D$'''$.28}: their $p_l = W_la_l$ kept by $\abs{a_l}$ increasing).
+  \item \emph{(fixed positions: representability)} With one particle at each of $K$ distinct atoms whose centres and
+    widths are fixed and whose features $\varphi_k$ are linearly independent in $L^2_\rho$, and
+    $f = \sum_kA_k\varphi_k$ in their span (otherwise $A$ is the least-squares coefficient vector), the flow of
+    $(W,\alpha)$ is a gradient flow of the least-squares loss in $p_k := W_ka(\alpha_k)$, convex in $p$, on the open
+    simplex times $\R^K$; its critical points are the exact fits $p = A$, which exist iff
+    $\sum_k\abs{A_k}/a_{\max} < 1$ (the representable set of \hyperref[res:thmDppp:24]{Proposition D$'''$.24} is not
+    empty); every trajectory bounded in $(\log W,\alpha)$ converges to one ($\bar L$ is real-analytic there:
+    {\L}ojasiewicz), so bounded trajectories reach the exact fit iff the target is representable (boundedness is not
+    proved); when $\sum_k\abs{A_k}/a_{\max}\ge1$ every trajectory leaves every compact set, each class saturating or
+    losing its mass, and the fit error stays above the least-squares error over the $\ell^1$ ball
+    $\sum_k\abs{p_k}\le a_{\max}$. The transit's masses no longer decide whether the target is fitted.
+  \item \emph{(the linearisation at an exact representation)} At the lift of an exact representation
+    ($\beta\equiv1$) the weights add, on $\{\sum\beta = m\}$, $\sum_k(n_k - 1)$ neutral directions (the
+    redistribution of mass inside a class, which $\fhat$ does not see) and $K - 1$ gauge directions (mass moved
+    between classes against their amplitudes, $W_ka_k$ fixed), and no unstable one --- in the coordinates
+    $(\Theta,\log\beta)$, the constraint not imposed, the common rescaling of the weights against the amplitudes is a
+    $K$-th gauge; the separations' block is \hyperref[res:thmDppp:32]{Proposition D$'''$.32}'s ($-\sigma_0w_k$,
+    $w_k$ the particle fraction), the collective block changes by the replicator's metric on the masses. In the real
+    loop the lift is a periodic orbit in a manifold of periodic orbits (the gauge and the redistributions), neutral
+    along it.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) $\partial_{\vartheta_i}(m\bar L) = -\beta_i\langle r\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)\rangle_\rho$
+and $\partial_{\beta_i}(m\bar L) = -u_i$ ($\fhat$ is linear in $\beta$); the cohesion energy does not depend on
+$\beta$; the Fisher--Rao gradient on $\{\sum\beta = \mathrm{const}\}$ is
+$-\gamma\beta_i(\partial_{\beta_i}J - \lambda')$, $\lambda' = \sum_j\beta_j\partial_{\beta_j}J/\sum_j\beta_j$, which
+is \textup{($\mathfrak{F}$)}, and
+$\dd J/\dd s = -\sum_i\norm{\dd\vartheta_i/\dd s}^2_{G^{-1}} - \sum_i(\dd\beta_i/\dd s)^2/(\gamma\beta_i)\le0$;
+$\dd\log\beta_i/\dd s$ is bounded on bounded sets, so $\beta$ stays positive, and
+$\sum_i\dd\beta_i/\dd s = \gamma\sum_i\beta_i(u_i - \lambda) = 0$. With $\beta_i = \varrho_i^2$,
+$\delta\beta_i^2/(\gamma\beta_i) = 4\delta\varrho_i^2/\gamma$. (ii) With $\sum\beta = m$, $\lambda(t) = e^\T\fhat(x)$;
+$\frac{\mathrm{d}}{\mathrm{d}t}\sum_i\beta^*_i\log(\beta^*_i/\beta_i)
+= -\gamma e^\T\sum_i\beta^*_i(\tilde\Phi_i - \fhat) = -\gamma me^\T(f - \fhat)$
+($f = (1/m)\sum\beta^*_i\tilde\Phi_i$, $\sum\beta^* = m$), and $\dot e = f - \fhat - k_ee$;
+$\sum_i\beta^*_i\log(\beta^*_i/\beta_i) = m\cdot\KL(\beta^*/m\,\|\,\beta/m)\ge0$ when $\sum\beta = m$. (iii) The
+stationarity of the positions and of the weights read off (i); at a clustered configuration under the finite range
+$\psi = 0$ across classes and $\vartheta_i - \vartheta_j = 0$ inside them; the amplitude's derivative
+$\dd a/\dd\alpha = 1 - a^2/a_{\max}^2 = 4e^{-2\abs{\alpha}/a_{\max}}(1 + o(1))$;
+$\dd W_k/\dd s = (1/m)\sum_{i\in k}\gamma\beta_i(u_k - \lambda) = \gamma W_k(u_k - \lambda)$ and
+$\lambda = \sum_lW_lu_l = W_ku_k$ when $u_l = 0$ for $l\ne k$. (iv) In the variables $(W,\alpha)$ the flow is the
+restriction of (i)'s gradient flow; $\bar L$ depends on them through $p$,
+$\partial\bar L/\partial p_k = -\langle r\varphi_k\rangle =: -g_k$, and at a critical point with $W$ in the open
+simplex the amplitude component gives $g_k = 0$ for every $k$, i.e.\ $p$ is the least-squares solution $A$;
+$\abs{a(\alpha)} < a_{\max}$ and $\sum W_k = 1$ make $p = A$ attainable iff $\sum_k\abs{A_k}/a_{\max} < 1$. The flow
+is the gradient flow of a real-analytic function for an analytic metric in $(\log W,\alpha)$, so a bounded
+trajectory has a single limit, a critical point ({\L}ojasiewicz's theorem). The dissipation
+$\int\norm{\nabla J}^2\dd s\le J(0)$ makes every $\omega$-limit point critical, so without a critical point a
+trajectory has no $\omega$-limit point and eventually leaves every compact set; and
+$\sum_k\abs{p_k} = \sum_kW_k\abs{a_k} < a_{\max}$ always, which bounds the fit error below by the $\ell^1$ ball's.
+(v) At $r = 0$ the Hessian of $m\bar L$ is the Gram matrix of the derivatives of $\fhat$, and $J$'s Hessian is the
+linearisation's up to the metric: inside a class $\partial\fhat/\partial\beta_i = \tilde\Phi_k/m$ is the same for
+every particle (the redistributions), and $\partial\fhat/\partial\beta_i = (a_k/a'_k)\partial\fhat/\partial\alpha_i$
+at $\beta_i = 1$ (the gauge, one per class; $K - 1$ combinations of them keep $\sum\delta\beta = 0$); the cohesion
+energy acts on the separations only and does not see the weights; $J$'s Hessian is positive semidefinite there (the
+Gram matrix plus the cohesion's $\nabla^2W(0) = G^{-1}$ on the separations), so no direction is unstable; along the
+lift $e\equiv0$, so $\dd\beta/\dd t = 0$.
+\end{proof}
+\status{(i), (ii), (iii)'s stationarity at clustered configurations under the finite range and (v)'s zero modes
+proved; under the Gaussian kernel the masses' selection numerical (G); (iii)'s transient: the rate exact under its
+conditions, the bias's duration heuristic; (iv) proved for bounded trajectories, boundedness not proved; the transit
+with the cohesion leak numerical, and with it any selection of the number of kernels: the replicator does not act on
+the separations at a critical point ($u_k = 0 = \lambda$ there), so the shedding of
+\hyperref[res:thmDppp:32]{Proposition D$'''$.32}(iv) is untouched (Numerics (C)). Classical: Wasserstein--Fisher--Rao
+(Hellinger--Kantorovich) distances and gradient flows of measures, conic particle gradient descent and the lift to
+$(\sqrt\beta,\Theta)$ with its global convergence for sparse optimisation on measures, neuron birth--death, the
+exponentiated-gradient law and EM's multiplicative update of mixture weights, mirror-descent adaptation laws with
+Bregman Lyapunov functions --- of which (ii) is the negative-entropy instance ---, the replicator equation as the
+Shahshahani gradient flow with its relative-entropy Lyapunov function (\cite{S62}). New: the replicator as the mass
+transfer of the cohesion leak in mean-field adaptive control --- the stationary set unchanged at clustered
+configurations under the finite range, the masses selected under the Gaussian kernel, the saturation trap of the
+transit's masses removed ---, the representability criterion at fixed positions for bounded trajectories, and the
+numerics.}
+
+% Numerics of Proposition D'''.34 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/mass_transfer.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_mass_transfer.py} $\to$ \code{results/chaos/mass_transfer.md};
+\hyperref[res:thmDppp:32]{Proposition D$'''$.32}'s instances, the midpoint rule on $(\Theta,\log\beta)$). (A) Fixed
+positions --- the five-bump target's atoms, one particle per class, the masses (0.15, 0.30, 0.20, 0.25, 0.10), two of
+them short of $\abs{A_k}/a_{\max} = (0.225, 0.150, 0.175, 0.125, 0.200)$, the amplitudes and the weights adapted:
+without the replicator the fit error stays at 0.388 from $s = 4000$ on --- the least fit error at those masses is
+0.387 (G) ---, the two short classes at $\abs{a}/a_{\max} = 0.999$; with $\gamma = 10^{-3}$ it falls to
+$2.9\cdot10^{-4}$ at $s = 40000$, with $\gamma = 10^{-2}$ to $3.0\cdot10^{-14}$ (geometrically, by about 6 per 2000
+slow units), every mass above its $\abs{A_k}/a_{\max}$ at the end (0.234, 0.199, 0.191, 0.168, 0.208). With the
+amplitudes scaled by 1.25 ($\sum_k\abs{A_k}/a_{\max} = 1.094$) the fit error falls to 0.071 at both rates and still
+creeps down toward the $\ell^1$ ball's least error 0.0684 (G), every class at $\abs{a}/a_{\max}\ge0.992$, the masses
+already the minimiser's (0.271, 0.164, 0.194, 0.132, 0.239 against 0.270, 0.164, 0.194, 0.132, 0.239): (iv)'s
+dichotomy. (B) The five-bump target from broad starts ($m = 60$, the annealed Gaussian schedule): without the
+replicator 6--9 classes, the fit error 0.045--0.118 (\hyperref[res:thmDppp:32]{Proposition D$'''$.32}, Numerics
+(H)); with $\gamma = 10^{-3}$ 5--7 classes, 0.0076--0.0139; with $\gamma = 10^{-2}$ five classes in 3 of 3 runs,
+their centres the bumps' to 0.01 ($-1.600$, $-0.798$, $+0.004$, $+0.798$, $+1.597$ for seed 1), the fit error
+$6.0\cdot10^{-4}$--$1.4\cdot10^{-3}$, falling at the end by 2--4\% per 1000 slow units. Continued (G, seed 1) it
+levels off --- $5.99\cdot10^{-4}$, $3.62\cdot10^{-4}$, $3.01\cdot10^{-4}$, $2.87\cdot10^{-4}$, $2.82\cdot10^{-4}$,
+$2.80\cdot10^{-4}$ at $s = 0, 2, \dots, 10\cdot10^4$ under the Gaussian kernel, near its class-level stationary point
+($2.63\cdot10^{-4}$), and $2.85\cdot10^{-4}$ after $4\cdot10^4$ slow units under the compact kernel, whose
+class-level stationary point is exact ($2.4\cdot10^{-16}$): the nearly saturated classes ($\abs{a}/a_{\max}$ up to
+0.96) are slow. (D) The instance (\hyperref[res:thmDppp:32]{D$'''$.32} (C)) with $\gamma = 10^{-2}$: three classes
+in 3 of 3 runs, the fit error $2.4\cdot10^{-7}$--$9.7\cdot10^{-7}$ (without the replicator, the same seeds 0--2,
+$1.9\cdot10^{-7}$--$9.0\cdot10^{-7}$). (C) The resolution's finest stage (the fourth bump, compact $R = 1$,
+$\sigma_0/64$, from the jittered lift of $\vartheta^b(q)$, $10^5$ slow units): with $\gamma = 10^{-2}$ the same 8--10
+classes as without, from the same splits at nearly the same times (3 of 51 records differ by one class; the fit error
+0.0055--0.0075 against 0.0059--0.0078): at a critical point of $L_w$ the fitness vanishes
+($u_k = a_k\langle r\varphi_k\rangle = 0 = \lambda$), so the replicator does not act on the separations'
+instability, and the shedding of \hyperref[res:thmDppp:32]{D$'''$.32} (iv) is untouched. (F) The targets where
+\hyperref[res:thmDppp:32]{D$'''$.32}'s count failed (its Numerics (K); the annealed schedule, $\gamma = 10^{-2}$):
+three heavy bumps ($\sum_k\abs{A_k}/a_{\max} = 0.95$) end at three classes at the bumps in 3 of 3 runs, the fit error
+$7.8\cdot10^{-8}$--$1.6\cdot10^{-7}$, every mass above its $\abs{A_k}/a_{\max}$ (0.411--0.423, 0.308--0.313,
+0.265--0.280 against 0.400, 0.300, 0.250), where without the replicator 3--5 biased classes ended at 0.058--0.20;
+two bumps closer than the broad scale ($\pm0.45$) end as without it, merged (1--3 classes, 0.068--0.13, one class of
+mass 0.88--1.00 at the centre): the scale's obstruction is not the masses', and no mass transfer separates what the
+broad stage merged. (G) The stationary points at the class level (a run's classes replicated with equal weights
+inside each, the conditions of (iii) solved to rounding, $R = 1$): for B's seed 1 (the counts $(6,6,20,10,18)$)
+under the Gaussian kernel the fit error is $3.85\cdot10^{-4}$ with the masses held and $2.63\cdot10^{-4}$ with
+$u_k = \lambda$, the masses moving (0.1573, 0.1330, 0.2618, 0.2060, 0.2419 $\to$ 0.1579, 0.1318, 0.2661, 0.2076,
+0.2366) and the classes of each sign then at a common $\abs{a}/a_{\max}$ (0.9578, 0.8464); under the compact kernel
+both are exact ($2.4\cdot10^{-16}$--$2.5\cdot10^{-16}$), the masses free to $5\cdot10^{-4}$. For
+\hyperref[res:thmDppp:32]{D$'''$.32} (L)'s three equal bumps $(28,16,16)$ the Gaussian kernel's stationary point has
+$9.39\cdot10^{-5}$ with the masses held and $9.17\cdot10^{-5}$ with them free, the masses moving from (0.467, 0.267,
+0.267) toward (0.567, 0.217, 0.217) (the residual of the conditions there $1.7\cdot10^{-10}$: the outer classes
+approach the saturation), the compact kernel's exact either way: (iii)'s difference between the kernels. (E) The real
+loop at the instance's atoms ($m = 3$, $k_e = 25$, $\gamma = 2$, $\beta(0) = (1.6, 0.7, 0.7)$, 200 time units): $V$
+from 0.0418 to $2.1\cdot10^{-7}$, monotone; $\dot V$ from the vector field equal to $-k_ee^2$ to $1.1\cdot10^{-16}$
+of $\max k_ee^2$; $\sum\beta = m$ to $2.4\cdot10^{-14}$; $\beta$ at the end within $1.3\cdot10^{-3}$ of
+$\beta^* = 1$. The averaged loop's linearisation in $(\Theta,\log\beta)$ at the lift of $\vartheta^e(w)$, counts
+$(6,5,4)$, compact $R = 1$: with $\gamma = 10^{-2}$ 15 eigenvalues below $10^{-9}$ --- the 12 redistributions and the
+3 gauges of (v) --- and the 45 others in $[-0.1834,-3.081\cdot10^{-4}]$; with $\gamma = 0$ the 45 are
+\hyperref[res:thmDppp:32]{Proposition D$'''$.32}'s predicted spectrum to $2.1\cdot10^{-11}$ (the finite differences'
+error).
 \end{sloppypar}
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).

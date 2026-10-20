@@ -91,10 +91,11 @@ In Part~I, every step of the stability argument is either proved or verified num
     to a sixteenth (the third), and the fourth increment --- adaptive priors and the floor removal (Theorem
     D$'''$.23, Proposition D$'''$.24, the gauge of Proposition D$'''$.28, the projection of Proposition D$'''$.27),
     perfect tracking in the real loop (Corollary D$'''$.26, Lemma D$'''$.26a), second-order plants and the cogging
-    servo (Proposition D$'''$.29), measurement noise (Propositions D$'''$.30 and D$'''$.31, Corollary D$'''$.33) and
+    servo (Proposition D$'''$.29), measurement noise (Propositions D$'''$.30 and D$'''$.31, Corollary D$'''$.33),
     the cohesion leak, a leak on the unexcited subspace without a prior that does not select the number of kernels
-    (Proposition D$'''$.32) --- through a seventeenth to a twenty-third. Every confirmed issue and its fix is logged
-    in \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--23 are kept beside it.
+    (Proposition D$'''$.32), and a replicator weight law, the mass transfer of the cohesion leak (Proposition
+    D$'''$.34) --- through a seventeenth to a twenty-fourth. Every confirmed issue and its fix is logged in
+    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--24 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -660,6 +661,37 @@ its noise part, the lift's 0.81--0.82), along DR's weakest directions by 0.14--0
 common noise are classical (\cite{S53}, \cite{S61}); new is the removal of the regressor's term in the $K_0$-atom
 identification --- a threshold bounded below uniformly in $k_e$ --- and the instance's quantification (the sign at the
 lift, its loss along the trajectory, the stationary point)\\
+\addlinespace[0.5pt]
+D$'''$.34 & Mass transfer: the particles carry weights adapted by the replicator law
+$\dd\beta_i/\dd s = \gamma\beta_i(\langle r\tilde\Phi_i\rangle - \lambda)$ (in real time the exponentiated-gradient
+law $\dot\beta_i = \gamma\beta_ie(\tilde\Phi_i - \fhat)$) beside the transport law with the cohesion leak; the pair is
+the gradient flow of the fit plus the cohesion energy in the metric Euclidean on the positions and Fisher--Rao on the
+weights (gradient descent on $(\sqrt\beta,\Theta)$), $\sum\beta$ and the saturation's bound kept without a
+projection; at fixed positions the relative entropy of the weights is a Lyapunov function of the real loop
+($\dot V = -k_e\abs{e}^2$), the negative-entropy instance of a mirror-descent adaptation law; at clustered
+configurations under the finite range the stationary points are Proposition D$'''$.32's for every vector of masses,
+under the Gaussian kernel the replicator selects the masses and moves the bias; the saturated transients --- a class
+short of mass creeping to $a_{\max}$ with its residual --- are left at the replicator's rate, so the transit's masses
+no longer decide whether a target is fitted: at fixed positions bounded trajectories reach the exact fit iff
+$\sum_k\abs{A_k}/a_{\max} < 1$
+& (i), (ii), (iii)'s stationarity at clustered configurations under the finite range, (v)'s zero modes proved; (iv)
+proved for bounded trajectories (boundedness not proved); the Gaussian kernel's mass selection and the transit
+numerical; numerics: at fixed positions the exact fit reached with the replicator ($3.0\cdot10^{-14}$ at
+$\gamma = 10^{-2}$) where the transport alone stalls at 0.388 (the least error at those masses 0.387), and not when
+$\sum\abs{A_k}/a_{\max} = 1.09$ (0.071, creeping to the $\ell^1$ ball's 0.0684); from broad starts the five-bump
+target at five classes in 3 of 3 runs ($6.0\cdot10^{-4}$--$1.4\cdot10^{-3}$, levelling off at $2.8\cdot10^{-4}$ near
+the Gaussian kernel's stationary point; 6--9 biased classes without), the three heavy bumps at three
+($\le1.6\cdot10^{-7}$; 3--5 biased without), the instance unchanged; two bumps closer than the broad scale merged as
+without, and the shedding at $\sigma_0/64$ unchanged (the fitness vanishes at critical points); at the class level the
+Gaussian kernel's stationary fit error $3.85\cdot10^{-4}$ with the masses held and $2.63\cdot10^{-4}$ with them free,
+the compact kernel's exact; the real loop's $V$ monotone with $\dot V = -k_ee^2$ to $1.1\cdot10^{-16}$; at the lift 15
+zero modes in $(\Theta,\log\beta)$ --- 12 redistributions, 3 gauges
+& Wasserstein--Fisher--Rao distances and gradient flows, conic particle gradient descent and the $\sqrt\beta$ lift,
+neuron birth--death, the exponentiated-gradient law and EM's multiplicative weights, mirror-descent adaptation laws
+with Bregman Lyapunov functions and the replicator equation's Shahshahani gradient structure are classical
+(\cite{S62}); new is the replicator as the mass transfer of the cohesion leak in mean-field adaptive control: the
+stationary set unchanged at clustered configurations under the finite range, the saturation trap removed, the
+representability criterion\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance

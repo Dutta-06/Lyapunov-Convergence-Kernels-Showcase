@@ -220,8 +220,8 @@ Each branch states what is proved, what is open, and the first concrete step.
       prior is a design input of the window (maximal margin $\kappa = \sigma_0$ at a matching prior, the window
       closing as the prior is misplaced) and of the floors (which grow with the stationary amplitudes).
     % Branches 7 and 8 as committed at 29f9394: the Theorem D'''.23 to Proposition D'''.31 wording and bullets added in
-    % manuscript part 4e; the Corollary D'''.33 and Proposition D'''.32 bullets as committed at 1ddff8c (part 4f).
-    % Proposition D'''.34's bullet, before them in PARADIGM.md, is not rendered in this part.
+    % manuscript part 4e; the Corollary D'''.33 and Proposition D'''.32 bullets as committed at 1ddff8c (part 4f);
+    % Proposition D'''.34's bullet, before them in PARADIGM.md, as committed at 9d122dd (part 4g).
     \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
       fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
       Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
@@ -277,6 +277,19 @@ Each branch states what is proved, what is open, and the first concrete step.
       infinity (the best approximant on the saturation boundary, as for a sharp friction step, a cogging function that
       two kernels fit as a dipole, or Proposition D$'''$.29's servo globally), where only the projected prior keeps the
       parameters bounded; vector amplitudes, where the margins have no closed form.
+    \item \emph{Done (Proposition D$'''$.34):} mass transfer for the cohesion leak. The particles carry weights
+      adapted by the replicator law (in real time an exponentiated-gradient law with the relative entropy of the
+      weights as its Lyapunov function, the negative-entropy instance of a mirror-descent adaptation law); with the
+      transport law the pair is a gradient flow (Euclidean on the positions, Fisher--Rao on the weights: gradient
+      descent on $(\sqrt\beta,\Theta)$), $\sum\beta$ and the saturation's bound kept. At clustered configurations
+      under the finite range its stationary points are D$'''$.32's; under the Gaussian kernel it selects the masses and
+      moves the bias. The saturated transients that froze the transit's masses are left: at fixed positions bounded
+      trajectories reach the exact fit iff the target is representable ($\sum_k\abs{A_k}/a_{\max} < 1$), and from
+      broad starts the five-bump and the three-heavy-bump targets of D$'''$.32 (H), (K) are found with their kernels.
+      It does not separate bumps closer than the broad scale, nor act on the shedding (the fitness vanishes at a
+      critical point). \emph{Open:} boundedness at fixed positions; the transit with the replicator (which classes
+      form; the shedding of D$'''$.32 (G)); the neutral directions under noise (a common noise random-walks the gauge;
+      the redistributions move only when the positions are dithered); the real loop with the transport.
     \item \emph{Done (Corollary D$'''$.33):} the desired regressor keeps the replicated configuration attracting under
       measurement noise. With the regressor at the reference the regressor's own term leaves the separations'
       second-order drift; what remains --- the mean error's term and the cross term --- is $O(1/k_e)$ like the
