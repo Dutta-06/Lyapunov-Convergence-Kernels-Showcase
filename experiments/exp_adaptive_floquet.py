@@ -149,6 +149,41 @@ def job_C(args):
                 A1_selfadj=float(np.abs(Wm @ A1 + (Wm @ A1).T).max()), lin=lin, trH=float(np.trace(H)))
 
 
+def derived_C(key, eta, G_=None):
+    """The η-independent mean squared frequencies of the modes in the regressor, ω_j² = v_jᵀ⟨Ĵ̇ᵀĴ̇⟩v_j/h_j (v_j, h_j the eigenpairs of H), and
+    Ā₀'s self-adjointness: |WĀ₀ − (WĀ₀)ᵀ| in the metric W = diag(I, (σ₀/η)I) and |Ā₀ − Ā₀ᵀ| in I."""
+    net, w, exact_w, loop = setup()
+    cv = AF.CollapsedVariational(net, x_ref_C(key), PER, G if G_ is None else G_, SIGMA0, eta, exact_w, w)
+    A0, A1, A2, H, filt = cv.averaged()
+    h, V = np.linalg.eigh(H)
+    om2 = np.einsum('ij,ik,kj->j', V, filt, V) / h
+    d = cv.d
+    Wm = np.eye(A0.shape[0]) if np.isinf(eta) else np.diag(np.r_[np.ones(d), np.full(d, SIGMA0 / eta)])
+    return dict(omega2=om2, A0_metric=float(np.abs(Wm @ A0 - (Wm @ A0).T).max()), A0_plain=float(np.abs(A0 - A0.T).max()), A0_norm=float(np.abs(A0).max()),
+                A1_skew_metric=float(np.abs(Wm @ A1 + (Wm @ A1).T).max()), A1_norm=float(np.abs(A1).max()))
+
+
+GAIN_C = 30.0
+KES_GAIN = (100.0, 200.0, 400.0)
+
+
+def job_C_gain(args):
+    """The adaptation gain scaled, G → GAIN_C·G (the symmetric reference, η = ∞): the second-order coefficients c_j (both signs) and the
+    variational exponents at KES_GAIN against the first-order prediction — the sign of c_j is not fixed by Corollary D‴.26(c)."""
+    key, eta = args
+    t0 = time.time()
+    net, w, exact_w, loop = setup()
+    cv = AF.CollapsedVariational(net, x_ref_C(key), PER, GAIN_C * G, SIGMA0, eta, exact_w, w)
+    gens = cv.averaged()
+    lam, c, cf = cv.second_order(gens=gens)
+    rows = []
+    for ke in KES_GAIN:
+        slow, err = cv.exponents(ke)
+        rows.append(dict(ke=ke, slow=slow, p1=cv.predicted(ke, 1, gens=gens), p2=cv.predicted(ke, 2, gens=gens)))
+    print(f"[{time.time() - t0:.0f}s] C gain {GAIN_C:g} {key} eta {eta:g}", flush=True)
+    return dict(key=key, eta=eta, gain=GAIN_C, lam=lam, c=c, cf=cf, rows=rows)
+
+
 def split(r):
     """The (m − K₀)p exponents nearest σ₀/k_e (the separations) and the others (the collective ones), both sorted."""
     s = np.sort(r['slow']); n_sep = (r['m'] - 3) * 3
@@ -157,7 +192,7 @@ def split(r):
     return sep, coll
 
 
-def report(R, t0=None, RC=None):
+def report(R, t0=None, RC=None, RG=None):
     eta_s = lambda e: '∞' if np.isinf(e) else f'{e:.5f}'
     net, w, exact_w, loop = setup()
     lines = ["# Corollary D‴.26: perfect tracking with an adaptive prior in the real loop — the Floquet spectrum (`exp_adaptive_floquet.py`)", "",
@@ -224,16 +259,36 @@ def report(R, t0=None, RC=None):
             lines.append(f"- {REF_NAME[r['key']]}, η = {eta_s(r['eta'])}: per doubling of k_e the largest first-order deviation falls by "
                          + ", ".join(f"{a / b:.2f}" for a, b in zip(d1[:-1], d1[1:])) + " (→ 4: O(k_e⁻²) relative) and the second-order residual by "
                          + ", ".join(f"{a / b:.2f}" for a, b in zip(d2[:-1], d2[1:])) + " (→ 16: O(k_e⁻⁴), the odd orders vanishing); every exponent below its first-order "
-                         f"prediction at every k_e: {neg}.")
-        lines += ["", "The second-order coefficients (the slow-time rates are λ_j + c_j/k_e² + O(k_e⁻⁴)), c_j/λ_j in the order of λ_j, the error filter's part of "
-                  "the slowest mode's (at η = ∞ minus the Rayleigh quotient v₁ᵀ⟨Ĵ̇ᵀĴ̇⟩v₁/h₁ = Σ_n n²|Ĵ_nv₁|²/Σ_n|Ĵ_nv₁|², the mode's mean squared frequency in the "
-                  "regressor), and the measured (actual·k_e − λ₁)k_e²/λ₁ of the slowest mode at k_e = 100, 200, 400:", ""]
+                         f"prediction at every k_e: {neg} (on this instance: every c_j < 0 here; see the gain-scaled case below)."
+                         + (f" Ā₀ is self-adjoint in the metric diag(I, (σ₀/η)I) to {r['A0_metric']:.1e} (in I: {r['A0_plain']:.1e}; |Ā₀| = {r['A0_norm']:.1e})."
+                            if 'A0_metric' in r else ""))
+        lines += ["", "The second-order coefficients (the slow-time rates are λ_j + c_j/k_e² + O(k_e⁻⁴)), c_j/λ_j in the order of λ_j; the error filter's part "
+                  "of the slowest mode's, −κ₁ω₁² with ω₁² = v₁ᵀ⟨Ĵ̇ᵀĴ̇⟩v₁/h₁ = Σ_n n²|Ĵ_nv₁|²/Σ_n|Ĵ_nv₁|² — the mode's mean squared frequency in the regressor, "
+                  "independent of η — and κ₁ = h₁(dλ₁/dh)/λ₁ (1 at η = ∞); and the measured (actual·k_e − λ₁)k_e²/λ₁ of the slowest mode at k_e = 100, 200, 400:", ""]
         for r in sorted(RC, key=lambda r: (r['key'] != 'sym', np.isinf(r['eta']))):
             meas = [(row['slow'][0] * row['ke'] - r['lam'][0]) * row['ke'] ** 2 / r['lam'][0] for row in r['rows'] if row['ke'] >= 100]
+            if 'omega2' in r:
+                om2 = float(r['omega2'][0]); kap = -(r['cf'][0] / r['lam'][0]) / om2
+                ftxt = f"of which the filter's {r['cf'][0] / r['lam'][0]:.2f} = −{kap:.3f}ω₁², ω₁ = {np.sqrt(om2):.4f}"
+            else:
+                ftxt = f"of which the filter's {r['cf'][0] / r['lam'][0]:.2f}"
             lines.append(f"- {REF_NAME[r['key']]}, η = {eta_s(r['eta'])}: c_j/λ_j = " + ", ".join(f"{x:.2f}" for x in r['c'] / r['lam'])
-                         + f"; the slowest c₁/λ₁ = {r['c'][0] / r['lam'][0]:.2f}, of which the filter's {r['cf'][0] / r['lam'][0]:.2f} = −ω₁², "
-                         f"ω₁ = {np.sqrt(-r['cf'][0] / r['lam'][0]):.2f} (the slowest mode's root-mean-square frequency in the regressor); measured "
-                         + ", ".join(f"{x:.2f}" for x in meas) + ".")
+                         + f"; the slowest c₁/λ₁ = {r['c'][0] / r['lam'][0]:.2f}, " + ftxt + "; measured " + ", ".join(f"{x:.2f}" for x in meas) + ".")
+        if RG:
+            for g in RG:
+                if g.get('metric_check'):
+                    lines += ["", f"At η = 10σ₀ ({REF_NAME[g['key']]}), where the metric W = diag(I, (σ₀/η)I) is not the identity: |WĀ₀ − (WĀ₀)ᵀ| = {g['A0_metric']:.1e} "
+                              f"against |Ā₀ − Ā₀ᵀ| = {g['A0_plain']:.1e} (|Ā₀| = {g['A0_norm']:.1e}): Ā₀ is self-adjoint in W only; |WĀ₁ + (WĀ₁)ᵀ| = "
+                              f"{g['A1_skew_metric']:.1e} (|Ā₁| = {g['A1_norm']:.1e})."]
+                    continue
+                pos = g['c'] > 0
+                lines += ["", f"The adaptation gain scaled by {g['gain']:g} ({REF_NAME[g['key']]}, η = {eta_s(g['eta'])}): c_j/λ_j = " + ", ".join(f"{x:+.2f}" for x in g['c'] / g['lam'])
+                          + f" — {int(np.sum(pos))} positive (the slaving's −(J̄ᵀJ̄)² and the level repulsion outweigh the filter where |Ĵ|² is large against "
+                          "the frequencies). The relative deviations (actual − first order)/first order of those modes at k_e = "
+                          + ", ".join(f"{row['ke']:g}" for row in g['rows']) + ": " + "; ".join(", ".join(f"{x:+.3e}" for x in ((row['slow'] - row['p1']) / row['p1'])[pos]) for row in g['rows'])
+                          + ", against c_j/(λ_jk_e²) = " + "; ".join(", ".join(f"{x:+.3e}" for x in (g['c'] / g['lam'])[pos] / row['ke'] ** 2) for row in g['rows'])
+                          + ": those exponents lie above their first-order prediction, and the slowest below it ("
+                          + ", ".join(f"{((row['slow'] - row['p1']) / row['p1'])[0]:+.3e}" for row in g['rows']) + ")."]
     lines += ["", "Numbers are produced by `experiments/exp_adaptive_floquet.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'adaptive_floquet.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")
@@ -250,7 +305,20 @@ def main():
         with np.load(raw, allow_pickle=True) as z:
             R = list(z['R'])
             RC = list(z['RC']) if 'RC' in z.files else None
-        report(R, t0, RC)
+            RG = list(z['RG']) if 'RG' in z.files else None
+        report(R, t0, RC, RG)
+        return
+    if '--add-C' in sys.argv:                                               # the derived quantities and the gain-scaled case; R and RC kept
+        with np.load(raw, allow_pickle=True) as z:
+            R = list(z['R']); RC = list(z['RC'])
+        for r in RC:
+            r.update(derived_C(r['key'], r['eta']))
+        with mp.Pool(min(N_WORKERS, 2)) as pool:
+            RG = pool.map(job_C_gain, [('sym', np.inf)], chunksize=1)
+        for key in REFS_C:                                                  # the metric at η = 10σ₀, where it is not the identity
+            g = derived_C(key, 10 * SIGMA0); g.update(key=key, eta=10 * SIGMA0, metric_check=True); RG.append(g)
+        save_raw(raw, R=np.array(R, dtype=object), RC=np.array(RC, dtype=object), RG=np.array(RG, dtype=object))
+        report(R, t0, RC, RG)
         return
     if '--only-C' in sys.argv:
         with np.load(raw, allow_pickle=True) as z:

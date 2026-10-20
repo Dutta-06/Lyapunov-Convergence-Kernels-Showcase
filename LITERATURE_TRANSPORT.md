@@ -72,6 +72,8 @@ found the construction.
 - [S52] K. S. Narendra, A. M. Annaswamy. *A new adaptive law for robust adaptation without persistent excitation*. IEEE TAC 32(2):134–145, 1987 (the e-modification: the leak scaled by |e|, vanishing at perfect tracking). P. A. Ioannou. *General robust adaptive law for tuning controllers*. Proc. 25th IEEE CDC, 474–476, 1986 (the switching σ-modification "guarantees robustness without destroying the ideal properties of the adaptive control schemes": quoted from the abstract, read through a web search in referee round 19), and P. A. Ioannou, J. Sun, *Theory and design of robust direct and indirect adaptive-control schemes*, Int. J. Control 47(3):775–813, 1988 (the comparison of the dead-zone, fixed-σ, ε₁- and switching-σ modifications). W. Magnus. *On the exponential solution of differential equations for a linear operator*. Comm. Pure Appl. Math. 7(4):649–673, 1954; S. Blanes, F. Casas, J. A. Oteo, J. Ros. *The Magnus expansion and some of its applications*. Phys. Rep. 470(5–6):151–238, 2009 (the second term of the expansion is a commutator). R. L. Kosut, B. D. O. Anderson, I. M. Y. Mareels. *Stability theory for adaptive systems: method of averaging and persistency of excitation*. IEEE TAC 32(1):26–34, 1987 (the averaging of adaptive loops; the rate set by the averaged regressor's excitation). The precedents of Corollary D‴.26 and Proposition D‴.27 (bibliographic details checked by a web search; the content from memory except where quoted).
 - [S53] R. Z. Khas'minskii. *A limit theorem for the solutions of differential equations with random right-hand sides*. Theory Probab. Appl. 11(3):390–406, 1966 (stochastic averaging). N. Sadegh, R. Horowitz. *Stability and robustness analysis of a class of adaptive controllers for robotic manipulators*. Int. J. Robotics Research 9(3):74–92, 1990 (the desired compensation adaptation law: the adaptation law and the compensation use the desired trajectory, not the measured one). T. Söderström. *Errors-in-Variables Methods in System Identification*. Springer, 2018 (bias compensation, instrumental variables). The precedents of Proposition D‴.30 (bibliographic details checked by a web search; the content from memory).
 - [S54] M. A. Hassouneh, H.-C. Lee, E. H. Abed. *Washout filters in feedback control: benefits, limitations and extensions*. Proc. 2004 American Control Conference, paper FrA02.2 (feedback through washout filters preserves the open loop's equilibria; their limitations, and generalised washout filters with coupled auxiliary states). The precedent of Proposition D‴.31's washout reading (bibliographic details checked by a web search; the content from the abstract and from memory).
+- [S55] L. Dinh, R. Pascanu, S. Bengio, Y. Bengio. *Sharp minima can generalize for deep nets*. ICML 2017 (rescalings of rectifier networks give equivalent models with arbitrarily sharper minima: the curvature at a minimum is not reparametrisation-invariant). B. Neyshabur, R. Salakhutdinov, N. Srebro. *Path-SGD: path-normalized optimization in deep neural networks*. NeurIPS 2015 (the rescaling invariance of ReLU networks). B. Şimşek, F. Ged, A. Jacot, F. Spadaro, C. Hongler, W. Gerstner, J. Brea. *Geometry of the loss landscape in overparameterized neural networks: symmetries and invariances*. ICML 2021 (symmetry-induced critical points). The precedents of Proposition D‴.28's gauge (the first and the third checked by the round-20 referee through a web search; the content from memory).
+- [S56] E. Hairer, C. Lubich, G. Wanner. *Geometric Numerical Integration: Structure-Preserving Algorithms for Ordinary Differential Equations*. 2nd ed., Springer, 2006 (symmetric methods and reversibility: an expansion in a small parameter is even when the problem is invariant under a symmetry reversing the parameter's sign, as for the error expansion of symmetric integrators). With [S52]'s Blanes–Casas–Oteo–Ros (the time symmetry of the Magnus exponent), the precedent of Corollary D‴.26(c)'s parity argument (from memory).
 - [S49] R. T. Rockafellar. *Monotone operators and the proximal point algorithm*. SIAM J. Control Optim. 14(5):877–898, 1976 (the proximal point method: a quadratic penalty toward a centre moved to the last iterate — iterated Tikhonov regularisation; the leak toward a moving centre is its continuous-time form; for a maximal monotone operator the iterates are bounded iff a zero exists, the precedent of the adaptive prior's lost a-priori bound). M. Hanke, C. W. Groetsch. *Nonstationary iterated Tikhonov regularization*. J. Optim. Theory Appl. 98(1):37–53, 1998 (iterated Tikhonov regularisation: on a quadratic, each step contracts the error in the eigendirection of curvature h by σ/(h + σ), the complement 1 − h/(h + σ) of the Tikhonov filter factor h/(h + σ), i.e. the residual factor; the bound h/(h + σ)² ≤ 1/(4σ) is ridge regression's AM–GM bound on the filter factors). S. Zhang, A. Choromanska, Y. LeCun. *Deep learning with elastic averaging SGD*. NeurIPS 2015 (workers pulled elastically toward a centre variable that moves toward their average: the coupled pair dynamics of the class means and the prior's atoms; its stability analysis of the worker–centre map on a quadratic, in the learning and the moving rate, is the discrete-time form of the pair matrix). S. J. Nowlan, G. E. Hinton. *Simplifying neural networks by soft weight-sharing*. Neural Computation 4(4):473–493, 1992; K. Ullrich, E. Meeds, M. Welling. *Soft weight-sharing for neural network compression*. ICLR 2017 (a mixture prior on the weights whose centres are learned with them; its hard limit is a K-means quantiser of the weights). The precedents of Theorem D‴.23. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
@@ -393,37 +395,44 @@ found the construction.
   parameterisation is the textbook goal of adaptive control, which σ-modification gives up for robustness ([3], [4]), and leaks
   compatible with it are known — the e-modification scales the leak by |e| and vanishes at perfect tracking ([S52]), a centre that follows
   the parameters has unbiased fixed points ([S49]). (a) and (b) are Corollary D‴.14(ii) and Proposition D‴.15 at zero residual, with the
-  prior's coordinates added. What is specific here is the combination: with the adaptive prior the zero-residual lift exists at every
-  representable sample (not only at w = q under the OT leak), its Floquet spectrum is exactly m-independent with collective rates
-  λ_j^±(w)/k_e, and its expansion in 1/k_e is even — by the skewness of the first correction and the time-reversal symmetry
-  M(t)ᵀ = DM(t)D⁻¹ of the adjoint pair — with an explicit second-order coefficient dominated by the error filter's attenuation, which a
-  derivative mismatch ∂_x(f − f̂) ≠ 0 would spoil at first order. Numerics: `exp_adaptive_floquet.py`. Verdict: classical tools, a new
-  structural statement (an exact, m-independent spectrum at every representable sample, and its even expansion).
+  prior's coordinates added; that an expansion is even when the problem is invariant under a symmetry reversing the small parameter's sign
+  is the classical mechanism of the even error expansions of symmetric integrators and of the time symmetry of the Magnus exponent
+  ([S56], [S52]). What is specific here is the combination: with the adaptive prior the zero-residual lift exists at every representable
+  sample (not only at w = q under the OT leak), its Floquet spectrum is exactly m-independent with collective rates λ_j^±(w)/k_e, and its
+  expansion in 1/k_e has an explicit second-order coefficient — the error filter's attenuation against the slaving's speed-up, its sign
+  not fixed (positive coefficients appear when the adaptation gain is raised) — which a derivative mismatch ∂_x(f − f̂) ≠ 0 would spoil at
+  first order. Numerics: `exp_adaptive_floquet.py`. Verdict: classical tools, a new structural statement (an exact, m-independent spectrum
+  at every representable sample, with the explicit second-order coefficient of this loop).
 - **Proposition D‴.27 (a projected adaptive prior).** Projection of the parameter estimates onto a convex set (Pomet–Praly), the exterior
   quadratic penalty and the switching σ-modification are the classical robustness modifications of adaptive laws ([4]), and the switching
   σ-modification keeps the ideal (unbiased) properties of the law when the true parameter lies in its set ([4], [S52]); the a-priori bound
   by a projection inequality and a comparison argument is standard. On collapsed classes at η = ∞ the construction is exactly that law,
   toward the set, with the leak off on it. What is specific here is its transfer to the learned centre of a mass-constrained K₀-atom prior at
   finite η — a projected adaptive law for the prior's atoms (whose velocity jumps at the faces, while the particles' law keeps its smooth
-  gradient form) — and its compatibility with Theorem D‴.23's bias removal wherever the target is representable inside the set; the
-  convergence at η = ∞ follows from Proposition D‴.17's argument, the box adding only a C^{1,1} semialgebraic penalty. Numerics:
+  gradient form) — and its compatibility with Theorem D‴.23's bias removal wherever the target is representable inside the set; at η = ∞
+  the plan is Lloyd-consistent rather than jointly optimal (as in Lloyd's algorithm for K-means, whose fixed points are local), so the
+  monotone quantity is the selected energy, and Proposition D‴.17's convergence argument does not apply as it stands. Numerics:
   `exp_adaptive_prior.py` Part H. Verdict: classical ingredients and, at η = ∞, a classical law; a new transfer (the learned centre of the
   mass-constrained prior at finite η) that restores the robustness half of the trade-off which the adaptive prior gave up.
 - **Proposition D‴.28 (the floor removal is a gauge property).** The amplitude–mass degeneracy is the positive homogeneity that the conic
-  (Wasserstein–Fisher–Rao) view of mean-field networks exploits ([49], [55]), and rescaling symmetries of network parameters are classical;
+  (Wasserstein–Fisher–Rao) view of mean-field networks exploits ([49], [55]), and rescaling symmetries of network parameters — which map
+  critical points to critical points with the same function while changing their curvature — are classical ([S55]);
   the implicit-function derivation of the fixed prior's sensitivity is the one of Proposition D‴.24(i). What is specific here is that the
   gauge, not exact representability, is the mechanism of the adaptive prior's floor removal — so it survives an approximation error, the
-  regime of real plants — together with the exact scaling R_k(G_wϑ) = (q_k/w_k)R_k(ϑ) of the residual curvature at a critical point, which
-  turns the adaptive prior's splitting margins into a closed formula. Numerics: `exp_gauge_floor.py`.
-  Verdict: classical symmetry, a new identification of the mechanism and an exact margin formula.
+  regime of real plants, at a strict local minimum in the interior — together with the exact scaling R_k(G_wϑ) = (q_k/w_k)R_k(ϑ) of the
+  residual curvature at a critical point for a scalar amplitude per kernel, which turns the adaptive prior's splitting margins into a
+  closed formula: the scalar-amplitude instance of the reparametrisation dependence of curvature [S55]. Numerics: `exp_gauge_floor.py`.
+  Verdict: classical symmetry, a new identification of the mechanism and an exact margin formula for a scalar amplitude.
 - **Proposition D‴.29 (second-order plants).** The sliding-variable (filtered-error) construction is the classical route of adaptive control
   to higher-order plants, and Gaussian networks with it are Sanner and Slotine's ([1]); singular-perturbation averaging with a stable fast
-  linear subsystem is standard ([S9]). What is specific here is the transfer of the transport leaks of §5d — their finite-size floors, the
-  mass constraint, the adaptive and projected priors and the gauge — to such plants through the occupation measure of the regressor's
-  orbit; the exact filter (d/dt + k_s)⁻¹ in the position-error prediction (the slaved r/k_s drops the attenuation of the residual's
-  harmonics); and the over-parametrisation of isotropic phase-plane kernels on circular orbits (von Mises restrictions) as an excitation
-  defect of the measure-space kind. Numerics: `exp_servo_cogging.py`. Verdict: a classical reduction; new applications of §5d's mechanisms
-  to a standard servo problem.
+  linear subsystem is standard ([S9]); the exact filter (d/dt + k_s)⁻¹ in the position-error prediction is the filtered error itself, and
+  the weak excitation of Gaussian networks along an orbit is the classical partial persistence of excitation ([6]–[8]). What is specific
+  here is the transfer of the transport leaks of §5d — their finite-size floors, the mass constraint, the adaptive and projected priors and
+  the gauge — to such plants through the occupation measure of the regressor's orbit, and the exact fibre of isotropic phase-plane kernels
+  on a circular orbit (von Mises restrictions: in general position one zero Gauss–Newton eigenvalue per kernel). The numerics are
+  noise-free: the leaks' robustness is not exercised there, and no leak at all fits as well. Numerics: `exp_servo_cogging.py`. Verdict: a
+  classical reduction; new applications of §5d's mechanisms to a standard servo problem, whose case rests on the noisy setting still to
+  be run.
 - **Proposition D‴.30 (measurement noise at perfect tracking).** Measurement noise in adaptive control, the robust modifications against
   bounded disturbances ([4]) and the errors-in-variables bias of estimates from noisy regressors (bias compensation and instrumental
   variables in identification, [S53]) are classical, and so is the remedy of putting the reference in the regressor (the desired

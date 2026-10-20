@@ -7,7 +7,9 @@ the gradient-flow metric (M times the Jacobian is minus the Hessian of 𝒥); th
 fallen below its tolerance, after the transit; the limits of (i): a non-replicated stationary point (a class split over two bumps and held
 by the leak toward its barycentre, against a non-zero loss gradient — a saddle) and a permuted prior that is stationary at the exact
 representation (z_σ(k) = ϑ_k for the plan's bijection σ); and the loss of the a-priori bound: with a target bump beyond the saturation the
-fixed prior's K₀-atom solution converges while the adaptive prior's amplitude coordinate runs off."""
+fixed prior's K₀-atom solution converges while the adaptive prior's amplitude coordinate runs off; the projected prior (Proposition D‴.27)
+keeps it bounded, and at η = ∞ its flow carries a Lloyd-consistent plan, along which the selected energy never increases while the
+reduced energy min_Z𝒥 can rise."""
 import os
 import sys
 
@@ -284,3 +286,46 @@ def test_a_projected_prior_keeps_the_solutions_bounded_and_is_inactive_inside_it
     star = loop2.stationary_atoms(prior)[0]
     runs = [AP.AdaptivePriorLoop(loop2, SIGMA0, box=bx).run(star.copy(), prior.copy(), 300.0, 0.25, plan_every=4, rec_every=10 ** 9)[:2] for bx in (None, box)]
     assert np.array_equal(runs[0][0], runs[1][0]) and np.array_equal(runs[0][1], runs[1][1])
+
+
+def test_at_eta_infinity_the_selected_energy_decreases_while_the_reduced_energy_may_rise():
+    """Proposition D‴.27(ii) at η = ∞: the flow carries a Lloyd-consistent plan (optimal for its own projected barycentres), not a jointly
+    optimal one. Six particles at zero amplitude (the configuration of exp_adaptive_prior.py Part H(e), found there by a seeded search), a
+    small three-bump target, the box: along the run the selected energy 𝒥(Θ, Z) never increases, while the reduced energy min_Z𝒥 (the
+    minimum over the 15 balanced pairings) rises before the plan becomes the optimal one."""
+    Y = np.array([[1.4296171063502774, -1.8656576987781426], [0.9186217857197763, -1.297377517589764], [1.4527156893995463, 0.16584488099636685],
+                  [-0.8011524378504609, -0.3092511152093662], [-1.8867213154181481, -1.5028668940017442], [0.6824976587745213, 0.5887580462970003]])
+    pair = [(0, 2), (1, 4), (3, 5)]
+    net = L.SaturatedLiftedNetwork(1, a_max=4.0, c_max=3.0, s_min=0.3, s_max=2.0)
+    lo = np.array([-net.a_max * np.arctanh(0.9), -net.c_max * np.arctanh(0.9), -6.0]); hi = -lo
+    Th0 = np.column_stack([np.zeros(6), np.sqrt(G[1]) * Y[:, 0], np.sqrt(G[2]) * Y[:, 1]])
+    Z0 = np.array([Th0[list(pp)].mean(axis=0) for pp in pair])
+    small = lambda X: 0.02 * F_VEC(X)
+    loop = OT.OTPriorLoop(net, small, X_REF, PER, G, SIGMA0, Z0, n_quad=96)
+    apl = AP.AdaptivePriorLoop(loop, np.inf, plan='ot', box=(lo, hi))
+
+    def pairings(rem):
+        if not rem:
+            yield []
+            return
+        for b in rem[1:]:
+            for pp in pairings([x for x in rem if x not in (rem[0], b)]):
+                yield [(rem[0], b)] + pp
+    PAIRS = list(pairings(list(range(6))))
+
+    def reduced(Th):
+        best = np.inf
+        for pp in PAIRS:
+            e = 0.0
+            for a, b in pp:
+                T = (Th[a] + Th[b]) / 2
+                e += (np.sum((Th[a] - T) ** 2 / G) + np.sum((Th[b] - T) ** 2 / G)) / 6 + np.sum((T - np.clip(T, lo, hi)) ** 2 / G) / 3
+            best = min(best, loop.L_bar(Th) + 0.5 * SIGMA0 * e)
+        return best
+    sel, red = [], []
+    apl.run(Th0.copy(), Z0.copy(), 200.0, 0.25, plan_every=4, rec_every=40,
+            callback=lambda s, Th, Z, ad: (sel.append(apl.energy(Th, Z)), red.append(reduced(Th))))
+    sel, red = np.array(sel), np.array(red)
+    assert np.all(np.diff(sel) <= 1e-12)                                       # the selected energy: non-increasing
+    assert red[0] < sel[0] and red.max() > 1.2 * red[0]                        # the plan not jointly optimal; the reduced energy rises
+    assert abs(sel[-1] - red[-1]) < 1e-12                                     # … until the plan is the optimal one

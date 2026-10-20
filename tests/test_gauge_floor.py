@@ -2,8 +2,9 @@
 three-bump instance with a fourth bump that three kernels cannot represent (ε = 0.3): the gauge transform G_wϑ^b of the best weighted
 approximant is a critical point of the unregularised loss at the sampled weights, with the same function; the adaptive prior's
 function-level sensitivity vanishes while the fixed prior's is σ₀Ĵ(Ã + σ₀I)⁻¹g̃ with the full Hessian Ã = H_L − R̃ (not the Gauss–Newton
-block); the residual curvature has a zero amplitude row at a critical point and scales by q_k/w_k under the gauge; and the adaptive prior's
-dynamics converges to the gauge transform."""
+block); the residual curvature has a zero amplitude row at a critical point and scales by q_k/w_k under the gauge, and the separation
+eigenvalues of the adaptive prior's dynamics at the replicated configuration are −σ₀ + (q_k/w_k)eig(G^{1/2}R_kG^{1/2}); and the adaptive
+prior's dynamics (η = ∞ and σ₀) converges to the gauge transform."""
 import os
 import sys
 
@@ -56,7 +57,9 @@ def test_the_gauge_transform_of_the_best_approximant_is_a_critical_point_with_th
     for w in (np.array([0.42, 0.30, 0.28]), np.array([0.27, 0.38, 0.35])):
         tg = _gauge(net, tb, w)
         assert np.abs(FB.unregularised_grad(loop, w, tg)).max() < 1e-12        # ∇L_w(G_wϑ^b) = 0
-        assert np.abs(_fhat(loop, tg, w) - _fhat(loop, tb, Q)).max() < 1e-14   # the same function, the same residual
+        assert np.abs(_fhat(loop, tg, w) - _fhat(loop, tb, Q)).max() < 1e-14   # f̂_w∘G_w = f̂_q (the gauge identity, for every Θ)
+        tc = FB.exact_weighted_atoms(loop, w, tb, n_cont=20, w0=Q, fit_tol=1.0)[0]   # the critical point continued in w from ϑ^b(q)
+        assert np.abs(tc - tg).max() < 1e-9                                    # is the gauge transform (not started there)
 
 
 def test_the_fixed_prior_floor_has_the_full_hessian_and_the_adaptive_prior_none():
@@ -68,7 +71,7 @@ def test_the_fixed_prior_floor_has_the_full_hessian_and_the_adaptive_prior_none(
         o = {}
         for sg in (+1, -1):
             w = Q + sg * h * Vd[:, c]
-            ta = FB.exact_weighted_atoms(loop, w, _gauge(net, tb, w), n_cont=1, w0=w, fit_tol=1.0)[0]
+            ta = FB.exact_weighted_atoms(loop, w, tb, n_cont=1, w0=w, fit_tol=1.0)[0]       # Newton from ϑ^b(q), not from the gauge transform
             tf = PD.weighted_stationary_atoms_prior(loop.nearest, w, tb)[0]
             o[sg] = (_fhat(loop, ta, w), _fhat(loop, tf, w), _gauge(net, tb, w))
         Fa.append((o[1][0] - o[-1][0]) / (2 * h)); Ff.append((o[1][1] - o[-1][1]) / (2 * h)); gt.append(((o[1][2] - o[-1][2]) / (2 * h)).ravel())
@@ -96,13 +99,38 @@ def test_the_residual_curvature_has_no_amplitude_row_and_scales_with_the_gauge()
     r = loop.F - _fhat(loop, tb, Q)
     R_q = loop.residual_curvature(r, tb)
     R_w = loop.residual_curvature(loop.F - _fhat(loop, tg, w), tg)
-    assert np.abs(R_q[:, 0, :]).max() < 1e-10 * np.abs(R_q).max() + 1e-14     # the amplitude row vanishes at a critical point
+    assert np.abs(R_q[:, 0, :]).max() < 1e-9 * np.abs(R_q).max()             # the amplitude row vanishes at a critical point (to the FD error)
     assert np.abs(R_q).max() > 1e-5                                           # while the residual curvature does not
     assert np.abs(R_w - (Q / w)[:, None, None] * R_q).max() < 1e-9 * np.abs(R_q).max()   # R_k(G_wϑ^b) = (q_k/w_k)R_k(ϑ^b)
     marg = SIGMA0 - loop.kappa_R(loop.F - _fhat(loop, tg, w), tg)
     sqG = np.sqrt(G)
     lam = np.array([np.linalg.eigvalsh(sqG[:, None] * (0.5 * (R_q[k] + R_q[k].T)) * sqG[None, :])[-1] for k in range(3)])
     assert np.all(lam >= -1e-12) and np.abs(marg - (SIGMA0 - (Q / w) * lam)).max() < 1e-10   # the margins σ₀ − (q_k/w_k)λ⁺_k
+    # … and the dynamics': the Jacobian of the averaged adaptive drift (η = ∞) at the replicated configuration, counts (3, 2, 2), on the
+    # separations (Helmert contrasts per class) has the eigenvalues −σ₀ + (q_k/w_k)eig(G^{1/2}R_k(q)G^{1/2}), each n_k − 1 times
+    counts = np.array([3, 2, 2]); m = 7; wc = counts / m; lab = np.repeat(np.arange(3), counts)
+    tgc = _gauge(net, tb, wc)
+    apl = AP.AdaptivePriorLoop(loop, np.inf, plan='nearest')
+    Th = tgc[lab].copy()
+    gamma, _ = apl.plan(Th, tgc)
+    fun = lambda v: apl.drift(v.reshape(m, 3), tgc, gamma)[0].ravel()
+    v0 = Th.ravel(); J = np.zeros((3 * m, 3 * m))
+    for j in range(3 * m):
+        e = np.zeros(3 * m); hh = 1e-7 * max(1.0, abs(v0[j])); e[j] = hh
+        J[:, j] = (fun(v0 + e) - fun(v0 - e)) / (2 * hh)
+    cols = []
+    for k in range(3):
+        idx = np.where(lab == k)[0]
+        for a_ in range(1, len(idx)):
+            c = np.zeros(m); c[idx[:a_]] = 1.0; c[idx[a_]] = -a_; c /= np.linalg.norm(c)
+            for jj in range(3):
+                v = np.zeros(3 * m); v[np.arange(m) * 3 + jj] = c; cols.append(v)
+    S = np.array(cols).T
+    es = np.sort(np.linalg.eigvals(S.T @ J @ S).real)
+    ev_q = [np.linalg.eigvalsh(sqG[:, None] * (0.5 * (R_q[k] + R_q[k].T)) * sqG[None, :]) for k in range(3)]
+    pred = np.sort(np.concatenate([np.repeat(-SIGMA0 + (Q[k] / wc[k]) * ev_q[k], counts[k] - 1) for k in range(3)]))
+    assert np.abs(J @ S - S @ (S.T @ J @ S)).max() < 1e-7 * np.abs(J @ S).max()   # the separations are invariant
+    assert np.abs(es - pred).max() < 1e-9                                       # the dynamics' separation eigenvalues
 
 
 def test_the_adaptive_prior_converges_to_the_gauge_transform():
@@ -112,6 +140,18 @@ def test_the_adaptive_prior_converges_to_the_gauge_transform():
     tg = _gauge(net, tb, w)
     rng = np.random.default_rng(2)
     Th0 = np.repeat(tb, counts, axis=0) + 0.01 * rng.standard_normal((m, 3)) * np.sqrt(G)[None, :]
+    # η = σ₀: the prior in the state, started at ϑ^b(q); slower (the weakest collective rate λ^−), at the gauge transform by s = 1.2·10⁵
+    aps = AP.AdaptivePriorLoop(loop, SIGMA0, plan='nearest')
+    gs, _ = aps.plan(Th0, tb)
+    labs = np.argmax(gs, axis=1)
+
+    def rhs_s(t, v):
+        d1, d2 = aps.drift(v[:3 * m].reshape(m, 3), v[3 * m:].reshape(3, 3), gs)
+        return np.concatenate([d1.ravel(), d2.ravel()])
+    sol = solve_ivp(rhs_s, (0.0, 1.2e5), np.concatenate([Th0.ravel(), tb.ravel()]), method='LSODA', rtol=1e-10, atol=1e-12)
+    Ths = sol.y[:3 * m, -1].reshape(m, 3)
+    assert np.abs(np.array([Ths[labs == k].mean(axis=0) for k in range(3)]) - tg).max() < 1e-6
+    assert np.abs(loop.f_hat(Ths) - _fhat(loop, tb, Q)).max() < 1e-6
     apl = AP.AdaptivePriorLoop(loop, np.inf, plan='nearest')
     gamma, _ = apl.plan(Th0, tb)
     lab = np.argmax(gamma, axis=1)

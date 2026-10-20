@@ -623,19 +623,21 @@ of its integrator second order against DOP853.
   (relative). Collective exponents: the other 18 (η = σ₀) or 9 (η = ∞) equal the weighted K₀-atom loop's to 1.4·10⁻⁵–6.4·10⁻⁴.
 - Part C, the variational equation on the collapsed subspace (its generator the real loop's linearisation to 5.8·10⁻¹¹, its exponents the
   differences' to 4.1·10⁻⁵), k_e = 12.5–400, on x_m = 2 sin t (where the first-order averaging correction vanishes identically) and on
-  2 sin t + 0.8 sin 2t (where it does not: ‖Ā₁‖ = 5.6·10⁻³, skew): every exponent below its first-order prediction λ_j^±(w)/k_e — the
-  slowest mode by 13.6% and 3.84% at k_e = 25 and 50 (η = σ₀) — the deviations falling by → 4 per doubling of k_e (O(k_e⁻²) relative), the
-  residuals of the second-order prediction by → 16 (O(k_e⁻⁴): the odd orders vanish; 4.9·10⁻⁷ at k_e = 400). The second-order
-  coefficients are all negative, c₁/λ₁ = −100.6 in the slowest mode, of which the error filter's part −102.1 (measured −100.5 at
-  k_e = 400). The error channel's exponent by Liouville's formula within O(k_e⁻³) of k_e − tr H_L(w)/k_e.
+  2 sin t + 0.8 sin 2t (where it does not: ‖Ā₁‖ = 5.6·10⁻³, skew): every exponent below its first-order prediction λ_j^±(w)/k_e here —
+  the slowest mode by 13.6% and 3.84% at k_e = 25 and 50 (η = σ₀) — the deviations falling by → 4 per doubling of k_e (O(k_e⁻²) relative),
+  the residuals of the second-order prediction by → 16 (O(k_e⁻⁴): the odd orders vanish; 4.9·10⁻⁷ at k_e = 400). The second-order
+  coefficients are all negative here, c₁/λ₁ = −100.6 in the slowest mode, of which the error filter's part −102.1 = −0.989ω₁², ω₁ = 10.16
+  (measured −100.5 at k_e = 400); with the adaptation gain scaled by 30 two are positive (+4.17, +12.65) and those exponents lie above
+  their first-order prediction by c_j/(λ_jk_e²); at η = 10σ₀ Ā₀ is self-adjoint in diag(I, (σ₀/η)I) only. The error channel's exponent by Liouville's formula within O(k_e⁻³) of k_e − tr H_L(w)/k_e.
 
 Tests (`tests/test_adaptive_floquet.py`): at the matching weights, η = ∞, m = 6: the return of one period; the nine separation exponents
 at σ₀/k_e; the collective exponents equal to the weighted K₀-atom loop's, within the averaging correction of the prediction. At the
 weights (2, 1, 1)/4 with the prior in the state, η = σ₀, m = 4: the real loop's Jacobian at the lift maps the separations to −σ₀/k_e times
 themselves and the collapsed subspace into itself as the collapsed variational equation; the monodromy's 3 separation exponents at
-σ₀/k_e and its 18 collective ones the variational ones, within the second-order prediction and below the first-order one. On an
-asymmetric reference: Ā₁ non-zero and skew, the second-order residual falling like k_e⁻⁴, the measured second-order coefficient the
-explicit c₁, the error channel by Liouville's formula.
+σ₀/k_e and its 18 collective ones the variational ones, within the second-order prediction and below the first-order one (an instance
+property). On an asymmetric reference: Ā₁ non-zero and skew, ℓ_jĀ₁r_j = 0, the second-order residual falling like k_e⁻⁴, the measured
+second-order coefficient the explicit c₁, the error channel by Liouville's formula; at η = 10σ₀ Ā₀ self-adjoint in the metric and not in
+I, Ā₁ skew in it.
 
 ## Proposition D‴.27 — a projected adaptive prior (`exp_adaptive_prior.py` Part H → `chaos/adaptive_prior.md`)
 
@@ -643,16 +645,21 @@ explicit c₁, the error channel by Liouville's formula.
   κ ∈ [−6, 6]; the instance's exact atoms inside.
 - Beyond the saturation (Part G(b)'s target, weighted amplitude 4.8 > a_max; the K₀-atom system from the exact atoms with the prior there):
   the projected prior converges at η = σ₀ (the projected midpoint rule, positions projected inside the step, dt = 0.25 and 0.125, to
-  s = 10⁵; the two end states within 3.4·10⁻¹²) and at η = ∞ (LSODA) to the same bounded stationary point (drift ≤ 3.5·10⁻¹⁵): the prior's
+  s = 10⁵; the two end states within 3.4·10⁻¹², their shared fixed point; the trajectory at s = 300 within 6.3·10⁻⁷, 1.9·10⁻⁷, 3.8·10⁻⁸ of
+  a reference for dt = 0.25, 0.125, 0.0625) and at η = ∞ (LSODA) to the same bounded stationary point (drift ≤ 3.5·10⁻¹⁵): the prior's
   amplitude atom on the face (5.889), the particle's at 6.728, the fit error 0.1415.
 - The particles' largest G⁻¹-distance from 𝒵 along the run: 0.92 (η = σ₀), 0.89 (η = ∞), against the a-priori bound B/σ₀ ≤ 3686
   (B ≤ 26.08 with the closed-form bound 4.658 of L_ϑ^G; 4.044 by search).
-- The box's size: the amplitude bound 0.7, 0.75, 0.8, 0.9, 0.95, 0.99 of a_max gives the fit errors 0.1736, 0.1676, 0.1611, 0.1415, 0.1268,
-  0.1101 — between the fixed prior's 0.1750 and the unprojected adaptive prior's 0.1050, reached only as its coordinate runs off.
+- The box's size: the amplitude bound 0.75, 0.8, 0.9, 0.95, 0.99 of a_max (boxes containing the exact atoms) gives the fit errors 0.1676,
+  0.1611, 0.1415, 0.1268, 0.1101 — between the fixed prior's 0.1750 and the unprojected adaptive prior's 0.1050, reached only as its
+  coordinate runs off; 0.7 (0.1736) excludes the exact atoms, and the tighter 0.65, 0.6, 0.5 are worse than the fixed prior (0.1792,
+  0.1845, 0.1949): a box should contain the representation.
+- At η = ∞ the plan is Lloyd-consistent, not jointly optimal: on six particles in a consistent, non-optimal pairing the selected energy
+  falls (largest increment −3.4·10⁻⁶) while the reduced energy min_Z𝒥 rises from 1.251·10⁻³ to 1.574·10⁻³ before the plan becomes optimal.
 - Part G(a)'s four-bump target: the box stops the merged atom's width coordinate at the face κ = 6 from s = 10⁹ (unprojected: κ = 9.75 at
   s = 10¹⁰ and growing like ln s), the fit error within 9.3·10⁻⁷ of the face minimiser's.
 - Part C's K₀-atom loop at the misplaced prior (η = σ₀, 6000 slow units) is identical with and without 𝒵: the box is never approached
-  (margins at least 17% of its width), so the runs coincide by construction.
+  (margins at least 16.9% of its width), so the runs coincide by construction.
 
 Tests (`tests/test_adaptive_prior.py`): beyond the saturation the projected prior at η = ∞ keeps the particles within 2 of the box and
 converges, while without the box the prior's coordinate passes 11 by s = 10⁴; at η = σ₀ and dt = 0.125 the prior stays in the box with its
@@ -662,44 +669,55 @@ non-increasing; at the misplaced prior near the exact representation the project
 ## Proposition D‴.28 — the floor removal is a gauge property (`exp_gauge_floor.py` → `chaos/gauge_floor.md`)
 
 - The three-bump instance plus a fourth bump ε·exp(−(x − 0.8)²/(2·0.3²)) that three kernels cannot represent, ε = 0–0.5, masses 1/3,
-  σ₀ = 0.15σ_crit: the best weighted approximant ϑ^b(q), a nondegenerate critical point of the unregularised loss with the relative fit
+  σ₀ = 0.15σ_crit: the weighted approximant ϑ^b(q) continued in ε, a strict local minimum of the unregularised loss with the relative fit
   error 3.6·10⁻³–2.5·10⁻² (ε = 0.05–0.5).
-- The gauge: at six weight vectors of W_g Newton's critical point is the gauge transform (distance 0.0, f̂ unchanged to ≤ 7.8·10⁻¹⁶);
-  the adaptive prior's sensitivity ≤ 2.3·10⁻¹¹ of the fixed prior's.
+- The gauge: at six weight vectors of W_g the critical point continued in w from ϑ^b(q) is the gauge transform (to ≤ 1.7·10⁻¹¹, f̂
+  unchanged to ≤ 5.5·10⁻¹³); the adaptive prior's sensitivity 1.4·10⁻¹¹–2.7·10⁻¹⁰ of the fixed prior's; P(w^m ∈ W_g) = 0.52, 0.87,
+  0.997 at m = 15, 60, 240 (ε ≤ 0.3); the branch reaches the saturation near ε = 0.68.
 - The fixed prior's sensitivity equals σ₀Ĵ(Ã + σ₀I)⁻¹g̃ (the full Hessian) to ≤ 2.2·10⁻⁹, against 7.0·10⁻⁴–5.6·10⁻³ for the Gauss–Newton
   form; its floor law 6.17·10⁻² (ε = 0) to 8.52·10⁻² (ε = 0.5) per unit of 1/m − 1/M.
 - The residual curvature: the amplitude row ≤ 7.4·10⁻¹⁴; the margins σ₀ − (q_k/w_k)λ⁺_k exact to ≤ 2.1·10⁻¹⁴ over every count vector of
-  m = 15 and 60 in W_g, none negative.
-- The dynamics (m = 15, 60, 240 against M = 510, four seeds, 6000 slow units, ε = 0.1 and 0.3): the fixed prior's floor constant from
-  s = 600, its fit error above the approximant's (its bias; split classes at its saddles); the adaptive priors' floor falling (m = 60,
+  m = 15 and 60 in W_g, none negative; the dynamics' separation eigenvalues at a replicated configuration equal to them to ≤ 5.8·10⁻¹².
+- The dynamics (m = 15, 60, 240 against M = 510, four seeds, 6000 slow units, ε = 0.1 and 0.3): the fixed prior's floor within 8% of its
+  value at s = 600, its fit error above the approximant's (its bias; split classes at its saddles); the adaptive priors' floor falling (m = 60,
   ε = 0.1: to 1.0·10⁻⁹–1.4·10⁻⁸ at η = σ₀, 3.2·10⁻¹¹–3.8·10⁻⁹ at η = ∞) and the fit error tending to the approximant's (median relative
-  excess 1.2·10⁻⁴, 1.2·10⁻⁴, 1.6·10⁻⁵ at m = 15, 60, 240 for the samples 0.02 inside W_g); at the sample outside W_g an error remains, at
-  the sample 6·10⁻⁴ inside it the approach is slow.
+  excess 1.2·10⁻⁴, 1.2·10⁻⁴, 1.6·10⁻⁵ at m = 15, 60, 240 for the samples 0.02 inside W_g); at the sample outside W_g the systems approach the
+  box minimum on the branch (1.107 and 1.586 times the approximant's fit error), at the sample 6·10⁻⁴ inside it the approach is slow.
 
 Tests (`tests/test_gauge_floor.py`): at ε = 0.3, the gauge transform a critical point at two sampled weight vectors with the same
-function; the adaptive prior's sensitivity negligible, the fixed prior's the full-Hessian formula and not the Gauss–Newton form; the
-residual curvature's zero amplitude row, its scaling by q_k/w_k and the margins; an adaptive-prior run converging to the gauge transform
-with the approximant's function.
+function, reached by continuation from ϑ^b(q); the adaptive prior's sensitivity negligible, the fixed prior's the full-Hessian formula and
+not the Gauss–Newton form; the residual curvature's zero amplitude row, its scaling by q_k/w_k, the margins and the dynamics' separation
+eigenvalues; adaptive-prior runs (η = ∞ and σ₀) converging to the gauge transform with the approximant's function.
 
 ## Proposition D‴.29 — second-order plants: the sliding-variable reduction; a cogging-torque servo (`exp_servo_cogging.py` → `servo/servo_cogging.md`)
 
 - The servo ẍ = −τ_cog(x) + u, τ_cog(x) = 0.4 sin(3x + 0.3) + 0.1 sin 7x, x_m = sin t, s = ė + 5e; K₀ = 4 saturated Gaussian kernels on
   the position, masses 1/4, σ₀ = 0.01.
-- The approximant (no exact representation): fit error 1.46·10⁻², Ã spanning 2.9·10⁻⁴σ₀–30σ₀ (the adaptive prior's slowest rates
-  1.4·10⁻⁴σ₀ and 2.9·10⁻⁴σ₀ against the fixed prior's ≈ σ₀), λ⁺_k ≤ 0.0098σ₀, the floor law 1.29·10⁻²; a misplaced prior (phase 0.5)
-  whose replicated stationary point is a D‴.5 saddle (margin −3.97·10⁻³, fit error 0.0545).
-- The averaged loop (m = 16, 64, 128 against M = 256, three seeds, 2000 slow units): the fixed prior's floor 1.85·10⁻³, 2.24·10⁻⁴,
-  4.49·10⁻⁵ (fit error 0.174, 0.066, 0.038); the adaptive prior's (η = ∞) 38–780 times lower, the fit error 0.0298, 0.0148, 0.0147
-  against the approximant's 0.0146; the OT leak at the approximant with no floor; σ-modification's bias 0.328. Misplaced: the fixed
-  designs split their classes and end at 0.048 (OT) and 0.10–0.048 (nearest atom); the adaptive prior is unaffected at η = ∞, slower at
-  η = σ₀ (0.035–0.019).
-- The real servo (k_s = 25, 1000 time units): position-error rms 1.7–2.1·10⁻⁵ (adaptive designs, matching OT), 7.8·10⁻⁵ (misplaced OT),
-  9.2·10⁻⁵–1.8·10⁻⁴ (fixed nearest atom), 5.5·10⁻⁴ (σ-modification), equal to the prediction (d/dt + λ)⁻¹(d/dt + k_s)⁻¹r(x_m) to
-  1.0000–1.0029 (with the slaved r/k_s: 0.93–0.996, the filter's attenuation of the residual's harmonics).
+- ϑ^b(q), the nondegenerate local minimum BFGS reaches from a fixed start (no exact representation): fit error 1.46·10⁻², Ã spanning
+  2.9·10⁻⁴σ₀–30σ₀ (four modes below 0.1σ₀; the adaptive prior's slowest rates 1.4·10⁻⁴σ₀ and 2.9·10⁻⁴σ₀ against the fixed prior's
+  ≈ σ₀), λ⁺_k ≤ 0.0098σ₀, the floor law 1.29·10⁻². Globally the loss's infimum lies at the saturation: of 120 random starts 1 ends at
+  ϑ^b(q) and 33 below its fit error, all saturated; the best 6.39·10⁻³, approached with the saturated amplitudes held at |α| = 6–14
+  (7.14·10⁻³–6.40·10⁻³), not attained. A misplaced prior (phase 0.5, the engineer's model, fit error 0.200) whose replicated stationary
+  point is a D‴.5 saddle (margin −3.97·10⁻³, fit error 0.0545).
+- The averaged loop (m = 16, 64, 128 against M = 256, three seeds, 2000 slow units) from clouds around ϑ^b(q): the fixed prior's floor
+  1.85·10⁻³, 2.24·10⁻⁴, 4.49·10⁻⁵ (fit error 0.174, 0.066, 0.038); the adaptive prior's (η = ∞) 38–780 times lower, the fit error 0.0298,
+  0.0148, 0.0147 against the approximant's 0.0146; the OT leak at the approximant with no floor; the σ-modification toward 0 biased
+  (0.328); no leak (σ₀ = 0) as good: 0.0180, 0.0147, 0.0146 (floors 7.7·10⁻⁶, 2.4·10⁻⁷, 6.6·10⁻⁸) — noise-free, the floors and biases
+  the leaks remove are those a fixed leak creates. Misplaced: the fixed designs split their classes and end at 0.048 (OT) and 0.10–0.048
+  (nearest atom); the adaptive prior is unaffected at η = ∞ (its prior never acts from this start), slower at η = σ₀ (0.035–0.019).
+- From the engineer's model (clouds around it, the prior at it): the fixed designs 0.102, 0.060, 0.048 (OT 0.048); the adaptive prior
+  0.027, 0.025, 0.022 (η = ∞) and 0.032, 0.028, 0.028 (η = σ₀) at s = 2000; no leak 0.0152, 0.0147, 0.0147. The collapsed K₀-atom flow
+  from the engineer's model at η = ∞: 0.0297, 0.0213, 0.0169, 0.0155 at s = 600, 2000, 10⁴, 10⁵.
+- Phase-plane kernels (five isotropic kernels): on the circle 5 exact zero Gauss–Newton eigenvalues and 8 below 10⁻⁶σ₀; ellipses ×1.1
+  and ×2: 8 and 6 below 10⁻⁶σ₀, none exact; a two-harmonic orbit 3; centred kernels 16 exact of 20.
+- The real servo (k_s = 25, 1000 time units; records and leak targets every 0.02 time units): position-error rms 1.7–2.1·10⁻⁵ (adaptive
+  designs, matching OT, no leak), 7.8·10⁻⁵ (misplaced OT), 9.1·10⁻⁵–1.8·10⁻⁴ (fixed nearest atom), 5.4–5.5·10⁻⁴ (σ-modification), equal
+  to the prediction (d/dt + λ)⁻¹(d/dt + k_s)⁻¹r(x_m) to 1.0001–1.0029 at t = 500 and 1000 (with the slaved r/k_s: 0.931–0.996, the
+  filter's attenuation of the residual's broad fine scale).
 
 Tests (`tests/test_sliding.py`): the phase-plane averaged loop is the gradient flow of L̄; on a circular orbit isotropic phase-plane
-kernels have one zero Gauss–Newton eigenvalue each; the servo's parameters follow the averaged loop over ten periods (within 3% at
-k_s = 25, closer at 50), its position error within 1% of both predictions.
+kernels in general position have one zero Gauss–Newton eigenvalue each; the servo's parameters follow the averaged loop over ten periods
+(within 3% at k_s = 25, closer at 50), its position error within 1% of both predictions.
 
 ## Proposition D‴.30 — measurement noise at perfect tracking: coherent, high-passed, and the errors in variables (`exp_measurement_noise.py` → `chaos/measurement_noise.md`)
 

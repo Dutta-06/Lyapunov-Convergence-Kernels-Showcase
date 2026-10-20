@@ -437,7 +437,8 @@ def boundary_job():
 A_BOUND, C_BOUND, K_BOUND = 0.9, 0.9, 6.0                                  # Part H: the box, amplitudes and centres to 90% of a_max, c_max
 S_H = 1e5                                                                  # Part H: the projected midpoint run at η = σ₀
 DT_H = (0.25, 0.125)                                                       # Part H(a): the projected midpoint rule at two steps
-A_SCAN = (0.7, 0.75, 0.8, 0.9, 0.95, 0.99)                                 # Part H(c): the box's amplitude bound, a fraction of a_max
+A_SCAN = (0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.9, 0.95, 0.99)                # Part H(c): the box's amplitude bound, a fraction of a_max
+DT_TRAJ, DT_REF, S_TRAJ = (0.25, 0.125, 0.0625), 0.015625, 300.0            # Part H(a): the trajectory error against a fine reference
 
 
 def projected_box(net, a_bound=A_BOUND):
@@ -510,6 +511,12 @@ def projected_job():
     runs.insert(0, dict(eta=SIGMA0, status=0, rows=ends[0]['rows'], max_dist=ends[0]['max_dist']))
     dt_check = dict(dts=DT_H, diff=float(max(np.abs(ends[0]['Th'] - ends[1]['Th']).max(), np.abs(ends[0]['Z'] - ends[1]['Z']).max())),
                     drifts=[e['drift'] for e in ends], gaps=[e['gap'] for e in ends], max_dist2=ends[1]['max_dist'])
+    # the scheme's consistency: the trajectory at s = S_TRAJ against a reference at DT_REF (the end states above share the fixed point)
+    traj = {}
+    for dt in DT_TRAJ + (DT_REF,):
+        apl = AP.AdaptivePriorLoop(loop2, SIGMA0, box=box)
+        traj[dt] = apl.run(start.copy(), start.copy(), S_TRAJ, dt, plan_every=max(1, int(round(PLAN_EVERY * DT / dt))), rec_every=10 ** 9)[:2]
+    dt_check['traj'] = {dt: float(max(np.abs(traj[dt][0] - traj[DT_REF][0]).max(), np.abs(traj[dt][1] - traj[DT_REF][1]).max())) for dt in DT_TRAJ}
     # (b) the misplaced prior: the box never reached
     net_, exact, prior, loop = setup()
     star = loop.stationary_atoms(prior)[0]
@@ -532,7 +539,8 @@ def projected_job():
     for ab in A_SCAN:
         bx = projected_box(net, ab)
         r = lsoda_inf(bx, (T_G[-1],))
-        scan.append(dict(a_bound=ab, face=float(bx[1][0]), **{k: r['rows'][-1][k] for k in ('th_a0', 'z_a0', 'fit', 'drift')}, max_dist=r['max_dist'], status=r['status']))
+        scan.append(dict(a_bound=ab, face=float(bx[1][0]), **{k: r['rows'][-1][k] for k in ('th_a0', 'z_a0', 'fit', 'drift')}, max_dist=r['max_dist'], status=r['status'],
+                         start_inside=bool(np.all(start >= bx[0][None, :]) and np.all(start <= bx[1][None, :]))))
     # (d) Part G(a)'s four-bump target with the box (η = ∞)
     m = 6
     Th0 = net.unconstrained(np.array([[3.0], [3.0], [-2.1], [-2.1], [2.4], [2.4]]), np.array([[-1.5], [-1.5], [0.0], [0.0], [1.3], [2.3]]),
@@ -554,7 +562,80 @@ def projected_job():
     G4 = dict(classes=tuple(int(x) for x in np.argmax(g_, axis=1)), spread=spread, kk=kk, kappa_start=float(atoms[kk, 2]), fit_start=loop4.fit_error(Th), cont=cont,
               status=int(sol.status), face=float(box[1][2]))
     print(f"[{time.time() - t0:.0f}s] H", flush=True)
-    return dict(box=box, LG=LG, B=B, runs=runs, dt_check=dt_check, diff_b=diff, inside_b=inside, margin_b=dict(marg), scan=scan, G4=G4)
+    return dict(box=box, LG=LG, B=B, runs=runs, dt_check=dt_check, diff_b=diff, inside_b=inside, margin_b=dict(marg), scan=scan, G4=G4, sel=selection_job())
+
+
+def selection_job():
+    """Part H(e): at η = ∞ the plan is Lloyd-consistent (optimal for its own class means), not jointly optimal. A configuration of m = 6
+    particles (K₀ = 3 atoms of mass 1/3; zero amplitudes, the target 0.02 × the three bumps; Part H's box), found by a seeded search over
+    planar configurations in the whitened (γ, κ) coordinates for a Lloyd-consistent, non-optimal pairing along whose pure-leak flow the
+    jointly optimal pairing's energy rises; the prior started at the class means of that pairing. Along AdaptivePriorLoop's run (plan 'ot',
+    η = ∞): the selected energy 𝒥(Θ, Z) (Z the class means of the current plan, optimal for ν_Z) and the reduced energy min_Z𝒥 (the minimum
+    over the 15 balanced pairings, with the box's q_j dist²(T̂_j, 𝒵) term)."""
+    from scipy.optimize import linear_sum_assignment
+
+    def pairings(rem):
+        if not rem:
+            yield []
+            return
+        a = rem[0]
+        for b in rem[1:]:
+            for pp in pairings([x for x in rem if x not in (a, b)]):
+                yield [(a, b)] + pp
+    PAIRS = list(pairings(list(range(6))))
+    energy = lambda Y, pp: sum(np.sum((Y[a] - Y[b]) ** 2) / 2 for a, b in pp)
+    rng = np.random.default_rng(0)
+    Y = pair = None
+    for trial in range(20000):
+        Yt = rng.uniform(-2, 2, (6, 2))
+        Es = np.array([energy(Yt, pp) for pp in PAIRS])
+        order = np.argsort(Es)
+        if Es[order[1]] - Es[order[0]] < 1e-3:
+            continue
+        act = PAIRS[order[0]]
+        for k in order[1:]:
+            pp = PAIRS[k]
+            Zt = np.array([(Yt[a] + Yt[b]) / 2 for a, b in pp])
+            Cm = np.sum((Yt[:, None, :] - Zt[None, :, :]) ** 2, axis=2)
+            rep_ = np.repeat(np.arange(3), 2)
+            r_, c_ = linear_sum_assignment(Cm[:, rep_])
+            if sum(Cm[a, j] + Cm[b, j] for j, (a, b) in enumerate(pp)) > Cm[r_, rep_[c_]].sum() + 1e-12:
+                continue                                                   # not Lloyd-consistent
+            V = np.zeros_like(Yt)
+            for a, b in pp:
+                mu = (Yt[a] + Yt[b]) / 2; V[a] = -(Yt[a] - mu); V[b] = -(Yt[b] - mu)
+            if sum(np.dot(Yt[a] - Yt[b], V[a] - V[b]) for a, b in act) > 1e-3:
+                Y, pair = Yt, pp
+            break
+        if Y is not None:
+            break
+    net = L.SaturatedLiftedNetwork(1, **NET_KW)
+    lo, hi = projected_box(net)
+    Th0 = np.column_stack([np.zeros(6), np.sqrt(G[1]) * Y[:, 0], np.sqrt(G[2]) * Y[:, 1]])
+    Z0 = np.array([Th0[list(pp)].mean(axis=0) for pp in pair])
+    loop = OT.OTPriorLoop(net, _bumps([(0.02 * A, C, S) for A, C, S in BUMPS]), x_ref, PER, G, SIGMA0, Z0, n_quad=N_Q)
+    apl = AP.AdaptivePriorLoop(loop, np.inf, plan='ot', box=(lo, hi))
+
+    def reduced(Th):
+        best = np.inf
+        for pp in PAIRS:
+            e = 0.0
+            for a, b in pp:
+                T = (Th[a] + Th[b]) / 2
+                e += (np.sum((Th[a] - T) ** 2 / G) + np.sum((Th[b] - T) ** 2 / G)) / 6 + (1 / 3) * np.sum((T - np.clip(T, lo, hi)) ** 2 / G)
+            best = min(best, loop.L_bar(Th) + 0.5 * SIGMA0 * e)
+        return best
+    rec = dict(s=[], sel=[], red=[], optimal=[])
+
+    def cb(s_, Th, Z, ad):
+        g, _ = apl.plan(Th, Z)
+        rec['s'].append(s_); rec['sel'].append(apl.energy(Th, Z)); rec['red'].append(reduced(Th))
+        rec['optimal'].append(bool(abs(rec['sel'][-1] - rec['red'][-1]) < 1e-12))
+    apl.run(Th0.copy(), Z0.copy(), 400.0, 0.25, plan_every=4, rec_every=40, callback=cb)
+    out = {k: np.array(v) for k, v in rec.items()}
+    out.update(trial=trial, pairing=pair)
+    print("[H selection]", flush=True)
+    return out
 
 
 def report(lin, C, D, E=None, t0=None, F=None, Gb=None, H=None):
@@ -843,7 +924,9 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None, H=None):
                 lines.append(f"| {eta_s(run['eta'])} | {r_['s']:.0e} | {r_['th_a0']:.4f} | {r_['z_a0']:.4f} | {r_['a0']:.6f} | {r_['fit']:.4e} | {r_['drift']:.2e} |")
         lines += ["", f"At dt = {dc['dts'][1]:g} the η = σ₀ run ends within {dc['diff']:.1e} of the dt = {dc['dts'][0]:g} run (atoms and prior), with the projected flow's "
                   f"drift {dc['drifts'][1]:.1e} at s = {S_H:.0e} ({dc['drifts'][0]:.1e} at dt = {dc['dts'][0]:g}) and the prior's amplitude atom on the face (gaps "
-                  + ", ".join(f"{g:.1e}" for g in dc['gaps']) + ").",
+                  + ", ".join(f"{g:.1e}" for g in dc['gaps']) + ")" + (": the shared fixed point. The scheme's consistency: at s = " + f"{S_TRAJ:g} the "
+                  "trajectory (atoms and prior) differs from a reference at dt = " + f"{DT_REF:g} by " + ", ".join(f"{v:.1e} (dt = {k:g})" for k, v in dc['traj'].items())
+                  + "." if 'traj' in dc else "."),
                   "", "The largest G⁻¹-distance of a particle from 𝒵 along the run: " + "; ".join(f"η = {eta_s(r['eta'])}: {r['max_dist']:.4f}" for r in H['runs'])
                   + f" (η = σ₀ at dt = {dc['dts'][1]:g}: {dc['max_dist2']:.4f}), against the a-priori bound B/σ₀ ≤ {H['B'] / SIGMA0:.1f} (B ≤ {H['B']:.2f} = (max|f| + a_max)·L, "
                   f"L = {H['LG']:.3f} the closed-form bound of L_ϑ^G; 4.044 by search, `learning_table.md`). Both priors converge to the same bounded stationary point, with "
@@ -851,17 +934,33 @@ def report(lin, C, D, E=None, t0=None, F=None, Gb=None, H=None):
                   "(Part G(b)) — (c) shows its dependence on the box.", "",
                   f"(b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, {S_C:g} slow units) with and without 𝒵: the largest difference of the atoms and of the prior "
                   f"at the end is {H['diff_b']:.1e} (the run stays inside 𝒵: {H['inside_b']}). The box is never approached — along the run the prior keeps a margin of at least "
-                  f"{H['margin_b']['Z']:.0%} of the box's width to every face, the particles {H['margin_b']['Th']:.0%} — so the two runs coincide by construction (the "
+                  f"{H['margin_b']['Z']:.1%} of the box's width to every face, the particles {H['margin_b']['Th']:.1%} — so the two runs coincide by construction (the "
                   "projection is the identity inside 𝒵).", "",
                   "(c) The box's size: (a)'s η = ∞ system (LSODA to s = " + f"{T_G[-1]:.0e}" + ") with the amplitude bound of 𝒵 varied (the centre and width bounds as above).", "",
-                  "| amplitude bound (× a_max) | the α-face | ϑ_a | z_a | fit error | largest drift |", "|---|---|---|---|---|---|"]
+                  "| amplitude bound (× a_max) | the α-face | the start (the exact atoms) inside 𝒵 | ϑ_a | z_a | fit error | largest drift |", "|---|---|---|---|---|---|---|"]
         for r_ in H['scan']:
-            lines.append(f"| {r_['a_bound']:g} | {r_['face']:.4f} | {r_['th_a0']:.4f} | {r_['z_a0']:.4f} | {r_['fit']:.4e} | {r_['drift']:.1e} |")
+            lines.append(f"| {r_['a_bound']:g} | {r_['face']:.4f} | {'yes' if r_.get('start_inside', True) else 'no'} | {r_['th_a0']:.4f} | {r_['z_a0']:.4f} | {r_['fit']:.4e} | {r_['drift']:.1e} |")
         if Gb:
             fx = [r for r in Gb['b']['runs'] if r['eta'] == 0.0][0]['rows'][-1]['fit']
             un = [r for r in Gb['b']['runs'] if np.isinf(r['eta'])][0]['rows'][-1]['fit']
-            lines += ["", f"The fixed prior's limit is {fx:.4e} and the unprojected adaptive prior's fit error at s = {T_G[-1]:.0e} {un:.4e} (Part G(b)): the box trades the "
-                      "fit error against the parameters' bound, monotonically on this target."]
+            btw = [r_['a_bound'] for r_ in H['scan'] if un <= r_['fit'] <= fx]
+            worse = [(r_['a_bound'], r_['fit']) for r_ in H['scan'] if r_['fit'] > fx]
+            outs = [r_['a_bound'] for r_ in H['scan'] if not r_.get('start_inside', True)]
+            lines += ["", f"The fixed prior's limit is {fx:.4e} and the unprojected adaptive prior's fit error at s = {T_G[-1]:.0e} {un:.4e} (Part G(b)): for the amplitude "
+                      f"bounds {min(btw):g}–{max(btw):g} the box's fit error lies between them, decreasing as the box grows"
+                      + (f"; the tighter boxes are worse than the fixed prior (" + ", ".join(f"{f_:.4f} at {a_:g}" for a_, f_ in worse) + ")" if worse else "")
+                      + (f", and the boxes with the bound ≤ {max(outs):g} exclude the instance's exact atoms (the start is projected at once): a box should contain "
+                         "the representation." if outs else ".")]
+        if 'sel' in H:
+            sl = H['sel']
+            i_ = int(np.argmax(np.diff(sl['red'])))
+            lines += ["", f"(e) At η = ∞ the plan is Lloyd-consistent — optimal for its own class means — not jointly optimal: a configuration of six particles "
+                      f"(zero amplitudes, the target 0.02 × the three bumps, the box; found by a seeded search, trial {int(sl['trial'])}) with the prior at the class means "
+                      f"of the consistent pairing {[tuple(int(x) for x in pp) for pp in sl['pairing']]}. Along AdaptivePriorLoop's run (plan 'ot', η = ∞, 400 slow units) "
+                      f"the selected energy 𝒥(Θ, Z) falls ({sl['sel'][0]:.4e} → {sl['sel'][-1]:.4e}, its largest increment {np.diff(sl['sel']).max():+.1e}), while the "
+                      f"reduced energy min_Z𝒥 (the minimum over the 15 balanced pairings) rises from {sl['red'][0]:.4e} to {sl['red'].max():.4e} (its largest increment "
+                      f"{np.diff(sl['red']).max():+.2e}, at s = {sl['s'][i_]:g}–{sl['s'][i_ + 1]:g}) before the plan becomes optimal (at s = "
+                      f"{sl['s'][int(np.argmax(sl['optimal']))]:g}): the selected energy is the Lyapunov function, the reduced energy is not."]
         g4 = H['G4']
         lines += ["", f"(d) Part G(a)'s four-bump target with 𝒵 at η = ∞: the joint flow from the exact split fit ({S_G:g} slow units; plan classes {g4['classes']}, largest "
                   f"spread {g4['spread']:.1e}, the merged atom's κ = {g4['kappa_start']:.3f}, fit error {g4['fit_start']:.6e}), then the collapsed dynamics with 𝒵 (the "

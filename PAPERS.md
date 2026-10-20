@@ -151,15 +151,20 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
 ### 11. Adaptive cogging-torque compensation in servos with transport leaks
 
 - **Claim.** For a position servo with an unknown position-dependent disturbance (cogging torque), the sliding-variable controller with
-  adaptive Gaussian kernels on the position reduces to the averaged slow loop of §5d along the position orbit; without an exact
-  representation (the regime of Proposition D‴.28), the adaptive prior removes the finite-size floor of the learned compensation and a
-  misplaced prior's bias, the OT leak removes the floor at fixed masses, the classical σ-modification keeps a large bias, and the real
-  servo's position error follows the exactly filtered prediction (d/dt + λ)⁻¹(d/dt + k_s)⁻¹r to 0.3%.
-- **Rests on.** Proposition D‴.29 ((i), (iv) exact; (ii)–(iii) formal), Propositions D‴.27 and D‴.28, `exp_servo_cogging.py`.
-- **Novelty (audit).** The sliding-variable reduction and Gaussian networks in adaptive control are classical ([1]); new are the transport
-  leaks' floors and priors on a standard servo problem, and the over-parametrisation of phase-plane kernels on circular orbits.
-- **Missing.** A measured cogging profile (hardware or a high-fidelity simulation), measurement noise, input saturation, and
-  velocity-dependent friction (a sharp Stribeck step, whose best approximant lies at infinity) with the projected prior in the real loop.
+  adaptive Gaussian kernels on the position reduces (formally) to the averaged slow loop of §5d along the position orbit. On a cogging
+  torque that four kernels cannot represent — the loss has a nondegenerate local minimum ϑ^b(q) (Proposition D‴.28's regime) and its
+  infimum at the saturation — the adaptive prior removes the finite-size floor that a fixed prior's leak creates and, from an engineer's
+  misplaced model, most of its bias, at the rate of the weakest excitation; the OT leak removes the floor at fixed masses; the real servo's
+  position error follows the exactly filtered prediction (d/dt + λ)⁻¹(d/dt + k_s)⁻¹r to 0.3%. Noise-free, no leak at all fits as well:
+  the paper's case for the leaks rests on their robustness to noise and disturbances, which it must exercise.
+- **Rests on.** Proposition D‴.29 ((i), (iv) exact; (ii)–(iii) formal), Propositions D‴.27, D‴.28 and D‴.30, `exp_servo_cogging.py`.
+- **Novelty (audit).** The sliding-variable reduction and Gaussian networks in adaptive control are classical ([1]), and so is the partial
+  excitation of Gaussian networks along an orbit ([6]–[8]); new are the transport leaks' floors and priors on a standard servo problem,
+  and the exact fibre of isotropic phase-plane kernels on a circular orbit.
+- **Missing.** The classical baselines (σ- and e-modification toward a nominal model, projection, a Fourier regressor of the known
+  harmonics, which represents τ_cog exactly); measurement noise and disturbances, where the leaks' robustness is the point (Propositions
+  D‴.30–D‴.31 for first-order plants); a measured cogging profile (hardware or a high-fidelity simulation); input saturation;
+  velocity-dependent friction with the projected prior in the real loop.
 - **Venue.** IEEE/ASME Trans. Mechatronics; Control Engineering Practice.
 
 ### 12. Measurement noise in mean-field adaptive control: coherent floors, the washout prior and the desired regressor

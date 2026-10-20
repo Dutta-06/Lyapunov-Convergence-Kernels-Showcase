@@ -105,7 +105,7 @@ def test_at_finite_eta_and_unequal_weights_the_lift_has_the_separation_exponent_
     p1, p2 = cv.predicted(KE, 1, gens=gens), cv.predicted(KE, 2, gens=gens)
     assert np.abs(var / p1 - 1).max() < 0.27                                            # λ_j^±(w)/k_e up to the O(k_e⁻²) correction (0.133 here)
     assert np.max(np.abs(var - p2) / p1) < 0.05                                         # the second-order prediction (0.026 here)
-    assert np.all(var < p1)                                                             # the correction slows every mode (the error filter)
+    assert np.all(var < p1)        # an instance property (every c_j < 0 here, the filter's part dominating); the sign of c_j is not fixed in general
 
 
 def test_the_collective_exponents_are_even_in_one_over_ke_with_the_explicit_second_order_coefficient():
@@ -128,4 +128,13 @@ def test_the_collective_exponents_are_even_in_one_over_ke_with_the_explicit_seco
         meas.append((var[0] * ke - lam[0]) * ke ** 2)
         assert abs(err - (ke - np.trace(H) / ke)) < 2e-4                               # the error channel by Liouville's formula
     assert res[0] / res[1] > 12 and res[1] < 1e-4                                       # O(k_e⁻⁴): the third order vanishes as well
-    assert abs(meas[1] / c[0] - 1) < 0.01 and c[0] < 0 and cf[0] < 0                    # c₁ explicit, negative, with the filter's part
+    assert abs(meas[1] / c[0] - 1) < 0.01 and c[0] < 0 and cf[0] < 0                    # c₁ explicit (negative here), with the filter's part
+    # the mechanism of the vanishing first order: ℓ_jĀ₁r_j = 0 for every mode, Ā₁ being skew in the metric of Ā₀'s self-adjointness; at
+    # η = 10σ₀ that metric diag(I, (σ₀/η)I) is not the identity, and Ā₀ is self-adjoint in it only
+    lv, Rv = np.linalg.eig(A0); Lv = np.linalg.inv(Rv)
+    assert np.abs(np.diag(Lv @ A1 @ Rv)).max() < 1e-10 * np.abs(A1).max()
+    cv10 = AF.CollapsedVariational(net, xr, PER, G, SIGMA0, 10 * SIGMA0, e, W211)
+    B0, B1 = cv10.averaged()[:2]
+    W10 = np.diag(np.r_[np.ones(9), np.full(9, 0.1)])
+    assert np.abs(W10 @ B0 - (W10 @ B0).T).max() < 1e-12 * np.abs(B0).max() and np.abs(B0 - B0.T).max() > 0.1 * np.abs(B0).max()
+    assert np.abs(W10 @ B1 + (W10 @ B1).T).max() < 1e-12 and np.abs(B1).max() > 1e-3

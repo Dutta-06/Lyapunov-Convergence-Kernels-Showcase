@@ -250,24 +250,29 @@ The box 𝒵 for the prior's atoms (unconstrained coordinates): α ∈ [-5.8889,
 | ∞ | 1e+05 | 6.7278 | 5.8889 | 3.732452 | 1.4155e-01 | 1.18e-16 |
 | ∞ | 1e+06 | 6.7278 | 5.8889 | 3.732452 | 1.4155e-01 | 2.50e-17 |
 
-At dt = 0.125 the η = σ₀ run ends within 3.4e-12 of the dt = 0.25 run (atoms and prior), with the projected flow's drift 3.5e-15 at s = 1e+05 (1.8e-15 at dt = 0.25) and the prior's amplitude atom on the face (gaps 0.0e+00, 0.0e+00).
+At dt = 0.125 the η = σ₀ run ends within 3.4e-12 of the dt = 0.25 run (atoms and prior), with the projected flow's drift 3.5e-15 at s = 1e+05 (1.8e-15 at dt = 0.25) and the prior's amplitude atom on the face (gaps 0.0e+00, 0.0e+00): the shared fixed point. The scheme's consistency: at s = 300 the trajectory (atoms and prior) differs from a reference at dt = 0.015625 by 6.3e-07 (dt = 0.25), 1.9e-07 (dt = 0.125), 3.8e-08 (dt = 0.0625).
 
 The largest G⁻¹-distance of a particle from 𝒵 along the run: η = 0.00707: 0.9165; η = ∞: 0.8880 (η = σ₀ at dt = 0.125: 0.9165), against the a-priori bound B/σ₀ ≤ 3686.3 (B ≤ 26.08 = (max|f| + a_max)·L, L = 4.658 the closed-form bound of L_ϑ^G; 4.044 by search, `learning_table.md`). Both priors converge to the same bounded stationary point, with the prior's amplitude atom on the boundary of 𝒵; in this run the fit error lies between the fixed prior's and the unprojected adaptive prior's limit (Part G(b)) — (c) shows its dependence on the box.
 
-(b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, 6000 slow units) with and without 𝒵: the largest difference of the atoms and of the prior at the end is 0.0e+00 (the run stays inside 𝒵: True). The box is never approached — along the run the prior keeps a margin of at least 17% of the box's width to every face, the particles 17% — so the two runs coincide by construction (the projection is the identity inside 𝒵).
+(b) Part C's K₀-atom loop at the misplaced prior (η = σ₀, 6000 slow units) with and without 𝒵: the largest difference of the atoms and of the prior at the end is 0.0e+00 (the run stays inside 𝒵: True). The box is never approached — along the run the prior keeps a margin of at least 16.9% of the box's width to every face, the particles 16.9% — so the two runs coincide by construction (the projection is the identity inside 𝒵).
 
 (c) The box's size: (a)'s η = ∞ system (LSODA to s = 1e+06) with the amplitude bound of 𝒵 varied (the centre and width bounds as above).
 
-| amplitude bound (× a_max) | the α-face | ϑ_a | z_a | fit error | largest drift |
-|---|---|---|---|---|---|
-| 0.7 | 3.4692 | 5.4730 | 3.4692 | 1.7362e-01 | 5.7e-17 |
-| 0.75 | 3.8918 | 5.6352 | 3.8918 | 1.6763e-01 | 1.7e-17 |
-| 0.8 | 4.3944 | 5.8511 | 4.3944 | 1.6108e-01 | 5.4e-17 |
-| 0.9 | 5.8889 | 6.7278 | 5.8889 | 1.4155e-01 | 2.5e-17 |
-| 0.95 | 7.3271 | 7.7789 | 7.3271 | 1.2679e-01 | 9.4e-17 |
-| 0.99 | 10.5866 | 10.6806 | 10.5866 | 1.1012e-01 | 2.0e-17 |
+| amplitude bound (× a_max) | the α-face | the start (the exact atoms) inside 𝒵 | ϑ_a | z_a | fit error | largest drift |
+|---|---|---|---|---|---|---|
+| 0.5 | 2.1972 | no | 5.0616 | 2.1972 | 1.9490e-01 | 5.6e-17 |
+| 0.6 | 2.7726 | no | 5.2358 | 2.7726 | 1.8451e-01 | 6.8e-17 |
+| 0.65 | 3.1012 | no | 5.3436 | 3.1012 | 1.7921e-01 | 2.3e-17 |
+| 0.7 | 3.4692 | no | 5.4730 | 3.4692 | 1.7362e-01 | 5.7e-17 |
+| 0.75 | 3.8918 | yes | 5.6352 | 3.8918 | 1.6763e-01 | 1.7e-17 |
+| 0.8 | 4.3944 | yes | 5.8511 | 4.3944 | 1.6108e-01 | 5.4e-17 |
+| 0.9 | 5.8889 | yes | 6.7278 | 5.8889 | 1.4155e-01 | 2.5e-17 |
+| 0.95 | 7.3271 | yes | 7.7789 | 7.3271 | 1.2679e-01 | 9.4e-17 |
+| 0.99 | 10.5866 | yes | 10.6806 | 10.5866 | 1.1012e-01 | 2.0e-17 |
 
-The fixed prior's limit is 1.7498e-01 and the unprojected adaptive prior's fit error at s = 1e+06 1.0497e-01 (Part G(b)): the box trades the fit error against the parameters' bound, monotonically on this target.
+The fixed prior's limit is 1.7498e-01 and the unprojected adaptive prior's fit error at s = 1e+06 1.0497e-01 (Part G(b)): for the amplitude bounds 0.7–0.99 the box's fit error lies between them, decreasing as the box grows; the tighter boxes are worse than the fixed prior (0.1949 at 0.5, 0.1845 at 0.6, 0.1792 at 0.65), and the boxes with the bound ≤ 0.7 exclude the instance's exact atoms (the start is projected at once): a box should contain the representation.
+
+(e) At η = ∞ the plan is Lloyd-consistent — optimal for its own class means — not jointly optimal: a configuration of six particles (zero amplitudes, the target 0.02 × the three bumps, the box; found by a seeded search, trial 1) with the prior at the class means of the consistent pairing [(0, 2), (1, 4), (3, 5)]. Along AdaptivePriorLoop's run (plan 'ot', η = ∞, 400 slow units) the selected energy 𝒥(Θ, Z) falls (4.5195e-03 → 4.9483e-05, its largest increment -3.4e-06), while the reduced energy min_Z𝒥 (the minimum over the 15 balanced pairings) rises from 1.2512e-03 to 1.5742e-03 (its largest increment +6.00e-05, at s = 60–70) before the plan becomes optimal (at s = 80): the selected energy is the Lyapunov function, the reduced energy is not.
 
 (d) Part G(a)'s four-bump target with 𝒵 at η = ∞: the joint flow from the exact split fit (40000 slow units; plan classes (0, 0, 1, 1, 2, 2), largest spread 4.4e-16, the merged atom's κ = -0.245, fit error 2.226877e-02), then the collapsed dynamics with 𝒵 (the leak toward the projection of the atoms; LSODA, rtol 10⁻¹⁰; s counted from the end of the run): the merged atom's width coordinate κ, its prior atom's, the fit error and the largest whitened drift.
 
