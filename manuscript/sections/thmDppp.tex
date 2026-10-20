@@ -2183,8 +2183,11 @@ $\pi$ an optimal assignment from $\mu_\Theta$ to $\nu_Z$ ($\eta = 0$ is the fixe
   \item \emph{(infinitely fast priors: a capacity-constrained $K_0$-means regulariser)} Formally, as $\eta\to\infty$
     the prior follows the class barycentres, $z_j = \hat T_j$, and \textup{($\mathfrak{A}_m^{\mathrm{OT},\eta}$)}
     becomes the gradient flow of $\bar L(\mu_\Theta) + (\sigma_0/2)\mathcal{Q}_q(\mu_\Theta)$, with
-    $\mathcal{Q}_q(\mu) := \min_ZW^2(\mu,\nu_Z)$ the capacity-constrained $K_0$-means distortion of $\mu$: a
-    regulariser that pulls the network toward $K_0$ clusters of the prescribed masses without biasing where they sit.
+    $\mathcal{Q}_q(\mu) := \min_ZW^2(\mu,\nu_Z)$ the capacity-constrained $K_0$-means distortion of $\mu$ ---
+    along the plan the flow carries, which is optimal for its own barycentres (Lloyd-consistent) and need not be
+    jointly optimal: the flow follows the selected piece of $\mathcal{Q}_q$, and $\mathcal{Q}_q$ itself need not
+    decrease (\hyperref[res:thmDppp:27]{Proposition D$'''$.27}(ii)) ---: a regulariser that pulls the network
+    toward $K_0$ clusters of the prescribed masses without biasing where they sit.
     The separations keep the rate $\sigma_0$, and mode $j$ of the class means relaxes at $h_j$. It does bias how many
     there are: a target that the network fits exactly only with a class split is fitted with $K_0$ clusters
     (numerics, Part G), so $K_0$ remains a design input.
@@ -2764,6 +2767,645 @@ OT leak toward a fixed one; and when the masses cannot be prescribed (the sample
 toward an adaptive prior keeps the fitted function exact at the representable samples and leaves the fluctuation in
 the parameters.
 \end{rmk}
+
+% Corollary D'''.26 with its proof, Status and numerics (PARADIGM.md section 5d, round-20 version, the Status as of
+% commit 3e8f8e5, where Lemma D'''.26a proves (c); the numbers are PARADIGM's copies of
+% results/chaos/adaptive_floquet.md). The anchors res:thmDppp:26 to res:thmDppp:29 are \hyperref targets, as
+% res:thmDppp:21 is. The reference [S9] (LITERATURE_TRANSPORT.md), cited for Kokotovic--Khalil--O'Reilly, is the
+% bibitem kko1986 of refs.tex; [S52] and [S56] are the bibitems S52 and S56.
+\begin{thm}{Corollary}{D$'''$.26}[perfect tracking with an adaptive prior in the real loop: the Floquet spectrum,
+uniformly in $m$]\phantomsection\label{res:thmDppp:26}%
+Let \textup{(CL)} be the real closed loop of Theorem J with the nearest-atom leak toward an adaptive prior --- the
+particles leak at $\sigma = \sigma_0/k_e$ toward the atom of their class, and the atoms follow the class means at the
+rate $\eta/k_e$, $\dot z_j = -(\eta/k_e)(z_j - \bar\vartheta_j)$, $0 < \eta\le\infty$ ($\eta = \infty$:
+$z_j = \bar\vartheta_j$) --- and let $w = N/m$ be representable sampled weights ($w\in W$,
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}) with the exact representation $\vartheta^e(w)$. Let $\Gamma_w$ be
+the lift of $\vartheta^e(w)$ by the classes, with $Z = \vartheta^e(w)$ and the plant on the reference: a
+$T_0$-periodic solution with $e\equiv0$ (\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(vi)). Its Floquet exponents
+(the rates $-\log\abs{\lambda}/T_0$ of its monodromy) are:
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item $\sigma_0/k_e$ exactly, with multiplicity $(m - K_0)p$, on the separation subspaces of the classes;
+  \item on the collapsed subspace, the exponents of the weighted $K_0$-atom loop's periodic solution at
+    $\vartheta^e(w)$ --- the same for every $m$ with these weights;
+  \item if moreover $\partial_x\fhat_{\vartheta^e(w)} = \partial_xf$ on the reference orbit ($\fhat = f$ on a
+    neighbourhood of it --- on the instances everywhere, the exact representation being an identity of functions):
+    $n$ exponents $k_e + O(1/k_e)$ of the error channel, summing to $nk_e - \tr H_L(w)/k_e + O(k_e^{-3})$, and for
+    the $K_0p$ collective pairs
+    \[
+      (1/k_e)\bigl[\lambda_j^\pm(w) + c_j^\pm(w)/k_e^2 + O(k_e^{-4})\bigr],
+    \]
+    $\lambda_j^\pm(w)$ the rates of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(ii) at the weights $w$
+    ($\eta = \infty$: $h_j(w)$) and $c_j^\pm(w)$ the explicit coefficients of the proof (for simple eigenvalues; at a
+    degenerate one only the rates are even). The odd orders vanish because the variational equation and its time
+    reverse have the same multipliers and every term of $\bar A_k$ has the parity $(-1)^k$ under reversal --- a
+    parity that a derivative mismatch $a\not\equiv0$ breaks --- the first order in particular because the
+    first-order averaging correction is skew. $c_j$ is the sum of the error filter's attenuation
+    $-(\dd\lambda_j^\pm/\dd h)v_j^\T\langle\dot{\hat J}^\T\dot{\hat J}\rangle v_j\le0$ (at $\eta = \infty$ it is
+    $-h_j\omega_j^2$, $\omega_j^2 = \sum_nn^2\abs{\hat J_nv_j}^2/\sum_n\abs{\hat J_nv_j}^2$ the mode's mean squared
+    frequency in the regressor, by Parseval, independent of $\eta$: the averaged rate of a mode holds when
+    $k_e\gg\omega_j$), of the slaving's part from $-(\bar J^\T\bar J)^2$, which speeds the modes up, and of the
+    averaging terms, of either sign (the level repulsion through $\bar A_1$ is $\ge0$ for the slowest mode): its sign
+    is not fixed --- on the instances every $c_j < 0$, the filter's part dominating, and with the adaptation gain
+    scaled up some $c_j > 0$.
+\end{enumerate}
+Hence, for $k_e$ above a threshold, perfect tracking is exponentially stable (locally, for each $m$) at every
+representable sample, with the rate $(1/k_e)\min\{\sigma_0,\lambda_1^-(w) + c_1^-(w)/k_e^2 + O(k_e^{-4})\}$; the same
+holds for the OT leak toward an adaptive prior (\hyperref[res:thmDppp:23]{Theorem D$'''$.23}) at a commensurate $m$,
+with $w = q$ and the diagonal plan (locally constant at the lift). Without the derivative condition the mismatch
+$a(t) := \partial_x(f - \fhat)(x_m(t))$ enters the error equation and moves the collective rates at first order in
+$1/k_e$ (the proof).
+\end{thm}
+
+\begin{proof}
+Along $\Gamma_w$ the linearisation of \textup{(CL)} reads
+$\delta\dot e = (a(t) - k_e)\delta e - D\fhat[\delta\Theta](x_m(t))$,
+$\delta\dot\vartheta_i = G\nabla_\vartheta\tilde\Phi(x_m(t);\vartheta^e_{\pi(i)})^\T\delta e
+- (\sigma_0/k_e)(\delta\vartheta_i - \delta z_{\pi(i)})$,
+$\delta\dot z_j = -(\eta/k_e)(\delta z_j - \delta\bar\vartheta_j)$, with $a\equiv0$ under the derivative condition:
+the second-derivative term $G\nabla^2_\vartheta(e^\T\tilde\Phi)\delta\vartheta_i$ and the $x$-derivative of the
+learning law vanish because $e\equiv0$. (a) A separation (zero class means, $\delta z = 0$, $\delta e = 0$) does not
+move $\fhat$ at first order ---
+$D\fhat[\delta\Theta] = \sum_k(1/m)\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta^e_k)
+\sum_{i\in\pi^{-1}(k)}\delta\vartheta_i = 0$ --- so it stays a separation with
+$\delta\dot\vartheta_i = -(\sigma_0/k_e)\delta\vartheta_i$: the subspace is invariant and the exponent is
+$\sigma_0/k_e$, whatever $a$. (b) The collapsed subspace is invariant (Corollary D$'''$.14(i), with the prior's
+equation: the class atoms and their prior atoms follow the weighted $K_0$-atom equations), and the loop on it is the
+weighted $K_0$-atom loop with its prior. (c) In the whitened weighted coordinates
+$y_k = \sqrt{w_k}G^{-1/2}\delta\vartheta_k$ (and $\zeta_k$ likewise for $\delta z_k$) the collapsed variational
+equation is the adjoint pair $\delta\dot e = (a - k_e)\delta e - \hat J(t)y$,
+$\dot y = \hat J(t)^\T\delta e - (\sigma_0/k_e)(y - \zeta)$, $\dot\zeta = -(\eta/k_e)(\zeta - y)$, with
+$\hat J(t) = [\sqrt{w_k}(G^{1/2}\nabla_\vartheta\tilde\Phi(x_m(t);\vartheta^e_k))^\T]_k$ ($\eta = \infty$:
+$\zeta = y$, and the leak vanishes on the collapsed subspace). Let $\varepsilon = 1/k_e$, $Y = (y,\zeta)$,
+$\bar J = \hat J$ on the $y$ block and $C$ the leak and the prior's constant block in slow time. The error channel is
+slaved: the linear periodic system has the invariant subspace $\delta e = L(t)Y$,
+$L = \varepsilon L_1 + \varepsilon^2L_2 + \varepsilon^3L_3 + \dots$, with $L_1 = -\bar J$,
+$L_2 = \dot{\bar J} - a\bar J$ and, for $a\equiv0$, $L_3 = -\ddot{\bar J} + \bar JC - \bar J\bar J^\T\bar J$ (the
+Chang transformation, \cite{kko1986}: Kokotovi\'c--Khalil--O'Reilly). This leaves, in slow time $s = \varepsilon t$,
+the slow block $\dd Y/\dd s = (B_0 + \varepsilon B_1 + \varepsilon^2B_2 + \dots)Y$ with $B_0 = C - \bar J^\T\bar J$,
+$B_1 = \bar J^\T(\dot{\bar J} - a\bar J)$ and, for $a\equiv0$,
+$B_2 = -\bar J^\T\ddot{\bar J} + \bar J^\T\bar JC - (\bar J^\T\bar J)^2$, a system of fast period $\varepsilon T_0$.
+Its near-identity averaging gives the averaged generator
+$\bar A = \bar A_0 + \varepsilon\bar A_1 + \varepsilon^2\bar A_2 + \dots$, whose eigenvalues are the slow-time
+exponents: $\bar A_0 = \langle B_0\rangle = C - \langle\bar J^\T\bar J\rangle$, the averaged loop's linearisation at
+the replicated configuration (\hyperref[res:thmDppp:23]{Theorem D$'''$.23}(ii) at the weights $w$,
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(iv)), self-adjoint in the metric
+$\operatorname{diag}(I,(\sigma_0/\eta)I)$ of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i);
+$\bar A_1 = \langle B_1\rangle + \langle\tilde B_0U_1\rangle$ with $U_1' = \tilde B_0$ (zero means);
+$\bar A_2 = \langle B_2\rangle + \langle B_1U_1\rangle + \langle B_0U_2\rangle$ with
+$U_2' = B_1 + B_0U_1 - U_1\bar A_0 - \bar A_1$. With $a\equiv0$, $\bar A_1$ is skew: the self-adjoint parts of
+$\langle\bar J^\T\dot{\bar J}\rangle$ and $\langle\tilde B_0U_1\rangle$ are
+$\frac12\langle(\bar J^\T\bar J)^{\boldsymbol\cdot}\rangle = 0$ and $\frac12\langle(U_1^2)'\rangle = 0$, and a skew
+perturbation moves no simple eigenvalue of a self-adjoint matrix at first order ($v^\T Kv = 0$; on a degenerate
+eigenspace it splits the eigenvalue into a pair of unchanged real part). All odd orders vanish: the variational
+matrix $M(t)$ satisfies $M(t)^\T = DM(t)D^{-1}$ with $D = \operatorname{diag}(-I_n,I,(\sigma_0/\eta)I)$ (at
+$\eta = \infty$ on $(\delta e,y)$, $D = \operatorname{diag}(-I_n,I)$), so the system with its coefficients reversed in
+time, $M(-t)$, has the same Floquet multipliers (its monodromy is conjugate to the inverse of the adjoint system's,
+which is the inverse transpose of the original's); reversing time changes the sign of every fast-time derivative and
+antiderivative, and a term of $\bar A_k$ carries a number of them of the parity of $k$ ($\varepsilon$ is a time,
+$\hat J$ and $\mathrm{d}/\mathrm{d}t$ are rates, $C$ a rate in slow time), so $\bar A_k\mapsto(-1)^k\bar A_k$, and the
+exponents, being unchanged, are even in $\varepsilon$ --- for simple eigenvalues of $\bar A_0$; at a degenerate one
+the first-order splitting $\pm i\varepsilon\kappa$ is imaginary and only the rates are even. The symmetry
+$M(t)^\T = DM(t)D^{-1}$ alone does not suffice: it persists with $a\not\equiv0$, which enters only the
+$(\delta e,\delta e)$ entry, while $a$ breaks the parity count. (The mechanism is that of the even error expansions of
+symmetric integrators and of the time symmetry of the Magnus exponent, \cite{S56}, \cite{S52}.) Perturbation theory
+gives $c_j = -\ell_j\bar A_2r_j - \sum_{i\ne j}(\ell_j\bar A_1r_i)(\ell_i\bar A_1r_j)/(\lambda_i - \lambda_j)$
+($r_j$, $\ell_j$ the right and left eigenvectors of $-\bar A_0$, $\ell_jr_j = 1$), and $\langle B_2\rangle$ contains
+$-\langle\bar J^\T\ddot{\bar J}\rangle = \langle\dot{\bar J}^\T\dot{\bar J}\rangle$: the error filter
+$k_e/(k_e + i\omega)$ attenuates the regressor's harmonics,
+$H_L - \varepsilon^2\langle\dot{\hat J}^\T\dot{\hat J}\rangle + O(\varepsilon^4)$ in place of $H_L$;
+$\langle B_2\rangle$ also contains $-\langle(\bar J^\T\bar J)^2\rangle$, from the slaving's $L_3$, which enters $c_j$
+with the opposite sign, and the level repulsion
+$-\sum_{i\ne j}(\ell_j\bar A_1r_i)(\ell_i\bar A_1r_j)/(\lambda_i - \lambda_j)
+= \sum_{i\ne j}\abs{\ell_j\bar A_1r_i}^2/(\lambda_i - \lambda_j)$ ($\bar A_1$ skew) is $\ge0$ for the slowest mode,
+so the sign of $c_j$ is not fixed. The error channel's exponents are $k_e + O(\varepsilon)$, and by Liouville's
+formula all the exponents sum to $-\langle\tr M\rangle = nk_e + (\sigma_0 + \eta)K_0p/k_e$ ($\eta = \infty$:
+$nk_e$), the collective ones to $(1/k_e)\tr(-\bar A_0) + O(k_e^{-3})$. With $a\not\equiv0$ the term
+$-\langle\bar J^\T a\bar J\rangle$ of $\bar A_1$ is self-adjoint and moves the rates at first order, and $a$ --- a
+rate that does not change sign under time reversal --- breaks the parity.
+\end{proof}
+\status{(a) and (b) proved, exactly (no averaging); (c) proved by Lemma D$'''$.26a --- the slaving is an exact
+block-triangularisation, the expansion has a bounded $O(k_e^{-4})$ remainder at simple eigenvalues and the parity is
+the exact identity $\mu(-\varepsilon) = \mu(\varepsilon)$ --- with the structure (the skewness of $\bar A_1$, $c_j$
+explicit) derived here; the stability consequence local, for each $m$ (the nearest-atom cells are constant near the
+lift, the particles lying inside their cells, so the field is smooth there and the multipliers decide). (a) and (b)
+are Corollary D$'''$.14(ii) and Proposition D$'''$.15 at zero residual with the prior's coordinates added; what the
+adaptive prior brings is the zero-residual lift at every representable $w$, not only at $w = q$ under the OT leak. The
+basin uniform in $m$ in the per-particle norm would follow from Theorem D$'''$.18's contraction argument for the joint
+system, as sketched in \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(v), and is not proved here. With a fixed prior the
+lift of $\vartheta^e(w)$ is a solution only when the prior sits at $\vartheta^e(w)$ --- at a matching prior, $w = q$;
+at the other sampled weights the leak's bias keeps $e = O(1/k_e)$ (Theorem J) --- so perfect tracking at every
+representable sample, with this spectrum, is specific to the adaptive prior. (a) does not depend on the fixed prior's
+splitting margin at $w$: at $(6,5,4)/15$, where the fixed prior's replicated orbit is a saddle orbit
+(\hyperref[res:thmDppp:24]{Proposition D$'''$.24}'s numerics), every separation of perfect tracking decays at
+$\sigma_0/k_e$. Checked: \code{tests/test_adaptive_floquet.py} (at the matching weights, $\eta = \infty$, $m = 6$: the
+return of one period, the nine separation exponents at $\sigma_0/k_e$, the collective exponents the $K_0$-atom loop's,
+within the averaging correction of the prediction; at the weights $(2,1,1)/4$ with the prior in the state,
+$\eta = \sigma_0$, $m = 4$: the real loop's Jacobian at the lift mapping the separations to $-(\sigma_0/k_e)$ times
+themselves and the collapsed subspace into itself as the collapsed variational equation, the monodromy's 3 separation
+exponents at $\sigma_0/k_e$ and its 18 collective ones the variational ones, within the second-order prediction and
+below the first-order one; on an asymmetric reference: $\bar A_1$ non-zero and skew, the residual of the second-order
+prediction falling like $k_e^{-4}$, the measured second-order coefficient the explicit $c_1$, the error channel by
+Liouville's formula).}
+
+% Numerics of Corollary D'''.26 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_floquet.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_adaptive_floquet.py} $\to$ \code{results/chaos/adaptive_floquet.md}). The three-bump
+instance at $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$, $x_m = 2\sin t$, the sampled weights $w = (6,5,4)/15$ (the
+amplitudes $A_k/w_k = 2.5$, $-2.1$, $3.0$; representable, and a saddle of the fixed prior, splitting margin
+$-3.48\cdot10^{-3}$), $\eta = \sigma_0$ and $\infty$, $k_e = 25$ and $50$; the monodromy by central differences of the
+period map (step $10^{-5}$ relative, DOP853 at rtol $10^{-13}$). Every lift returns after one period to
+$\le1.7\cdot10^{-15}$. (a) At $m = 15$ and $30$ the $(m - 3)\cdot3 = 36$ and $81$ separation exponents equal
+$\sigma_0/k_e$ to $\le1.7\cdot10^{-6}$ (relative). (b) The other 18 ($\eta = \sigma_0$) or 9 ($\eta = \infty$)
+exponents equal the weighted $K_0$-atom loop's to $1.4\cdot10^{-5}$--$6.4\cdot10^{-4}$ (relative, the resolution of
+the differences for the slowest of them). (c) Part C integrates the variational equation on the collapsed subspace
+over a period (its generator equals the central differences of the real loop's field to $\le5.8\cdot10^{-11}$
+relative, its exponents the differences' to $\le4.1\cdot10^{-5}$) at $k_e = 12.5$, $25$, \dots, $400$. At
+$\eta = \sigma_0$ the slowest exponent lies 37.5\%, 13.6\%, 3.84\%, 0.99\%, 0.25\% and 0.063\% below
+$\lambda_1^-(w)/k_e$ --- every exponent lies below its first-order prediction at every $k_e$, a property of the
+instance --- and the largest deviation falls by 2.77, 3.53, 3.86, 3.96, 3.99 per doubling of $k_e$ ($\to4$), while
+the residual of the second-order prediction falls by 11.1, 14.0, 15.4, 15.8, 16.0 ($\to16$: $O(k_e^{-4})$;
+$4.9\cdot10^{-7}$ at $k_e = 400$). Every $c_j$ is negative here ($c_j/\lambda_j$ from $-0.47$ to $-100.6$); the
+slowest mode's $c_1/\lambda_1 = -100.6$ ($-101.7$ at $\eta = \infty$), of which the error filter's part is
+$-102.1 = -0.989\omega_1^2$ ($-103.3 = -\omega_1^2$ at $\eta = \infty$), $\omega_1 = 10.16$ the slowest mode's
+root-mean-square frequency in the regressor --- the weakest-excited mode is carried by the regressor's high harmonics,
+which the error filter attenuates unless $k_e\gg\omega_1$ --- and the measured
+$(k_e\mu_1 - \lambda_1)k_e^2/\lambda_1$ approaches it ($-99.4$, $-100.3$, $-100.5$ at $k_e = 100$, $200$, $400$;
+$\mu_1$ the slowest exponent). On $x_m = 2\sin t$ the first-order correction vanishes identically (in one dimension
+$\langle\hat J^\T\dot{\hat J}\rangle$ is the integral of an exact differential, and the commutator term vanishes by
+the symmetry $t\to\pi - t$), so this reference alone could not test the mechanism; on the asymmetric
+$x_m = 2\sin t + 0.8\sin2t$ it does not vanish ($\norm{\bar A_1} = 5.6\cdot10^{-3}$, its self-adjoint part
+$1.4\cdot10^{-16}$), and the deviations still fall by $\to4$ per doubling and the second-order residuals by $\to16$
+(15.5 and 15.9 at the last two doublings), with $c_1/\lambda_1 = -108.2$ (the filter's part
+$-109.7 = -0.984\omega_1^2$, $\omega_1 = 10.56$). With the adaptation gain scaled by 30 two coefficients are positive
+($c_8/\lambda_8 = +4.17$, $c_9/\lambda_9 = +12.65$) and those exponents lie above their first-order predictions by
+$c_j/(\lambda_jk_e^2)$ to three digits ($+4.17\cdot10^{-4}$ and $+1.27\cdot10^{-3}$ at $k_e = 100$), the slowest
+still below. At $\eta = 10\sigma_0$, where the metric $\operatorname{diag}(I,(\sigma_0/\eta)I)$ is not the identity,
+$\bar A_0$ is self-adjoint in it (to $8.7\cdot10^{-18}$; in $I$ its asymmetry is $6.4\cdot10^{-2}$) and $\bar A_1$
+skew (to $1.4\cdot10^{-16}$). The error channel's exponent by Liouville's formula is within $O(k_e^{-3})$ of
+$k_e - \tr H_L(w)/k_e$ (24.98084 against 24.98037 at $k_e = 25$).
+\end{sloppypar}
+
+% Lemma D'''.26a (PARADIGM.md section 5d) goes here (manuscript part 4e).
+
+% Proposition D'''.27 with its proof, Status and numerics (PARADIGM.md section 5d, round-20 version; the numbers are
+% PARADIGM's copies of results/chaos/adaptive_prior.md, Part H). The references [4] (PARADIGM.md) and [S52]
+% (LITERATURE_TRANSPORT.md) are the bibitems ioannou1996 and S52 of refs.tex.
+\begin{thm}{Proposition}{D$'''$.27}[a projected adaptive prior restores the leak's a-priori
+bound]\phantomsection\label{res:thmDppp:27}%
+Let $\mathcal{Z}\subset\R^p$ be a compact convex set --- on the instance a bounded box in the unconstrained
+coordinates --- and let the prior's atoms of \hyperref[res:thmDppp:23]{Theorem D$'''$.23} (or of
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(ii)) start in it, $Z(0)\in\mathcal{Z}^{K_0}$, and be confined to it:
+$\dd z_j/\dd s = \Pi_{T_{\mathcal{Z}}(z_j)}(-\eta(z_j - \hat T_j))$, the velocity projected onto the tangent cone of
+$\mathcal{Z}$ at $z_j$ in the metric $\Ginv$ (for a box and diagonal $G$: the outward components set to zero on the
+active faces); at $\eta = \infty$, $z_j = \Pi_{\mathcal{Z}}(\hat T_j)$, the $\Ginv$-projection of the class
+barycentre. Let
+$B := \sup_{\Theta,\vartheta}\norm{G\langle r_\Theta\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta)\rangle_\rho}_{\Ginv}
+\le(\max_\rho\abs{f} + a_{\max})\cdot L_\vartheta^G$, with
+$L_\vartheta^G := \sup_{x,\vartheta}\norm{G^{1/2}\nabla_\vartheta\tilde\Phi(x;\vartheta)}$ ($\abs{\fhat}\le a_{\max}$
+for the saturated network).
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the a-priori bound)} Every particle satisfies
+    $\operatorname{dist}_{\Ginv}(\vartheta_i(s),\mathcal{Z})\le B/\sigma_0
+    + (\operatorname{dist}_{\Ginv}(\vartheta_i(0),\mathcal{Z}) - B/\sigma_0)_+e^{-\sigma_0s}$, at most
+    $\max\{\operatorname{dist}_{\Ginv}(\vartheta_i(0),\mathcal{Z}),B/\sigma_0\}$, for all $s\ge0$, and the prior stays
+    in $\mathcal{Z}$; $\mathcal{Z}$ being bounded, every solution is bounded, for every $m$, every
+    $\eta\in(0,\infty]$ and every target. (For an unbounded $\mathcal{Z}$ the distance bound still holds but bounds
+    nothing: $\mathcal{Z} = \R^p$ is \hyperref[res:thmDppp:23]{Theorem D$'''$.23}'s prior, which runs off.)
+  \item \emph{(the energy)} $\mathcal{J} = \bar L + (\sigma_0/2)W^2$ --- for the nearest-atom prior of
+    \hyperref[res:thmDppp:24]{Proposition D$'''$.24}(ii) its energy $\mathcal{J}_\circ$, with the cell masses --- is
+    non-increasing along the projected flow, which is the vertex-selection gradient flow of
+    $\mathcal{J} + \iota_{\mathcal{Z}^{K_0}}(Z)$ in the metric of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i)
+    (for $\mathcal{J}_\circ$ with the cell masses) --- at $\eta = \infty$ in its selected form
+    $\mathcal{J}(\Theta,\Pi_{\mathcal{Z}}\hat T(\gamma))$, $\gamma$ the plan the flow carries, optimal for its own
+    projected barycentres (Lloyd-consistent) but not necessarily jointly optimal, so that the reduced energy
+    $\min_{Z\in\mathcal{Z}^{K_0}}\mathcal{J}$ itself need not decrease. At $\eta = \infty$ the bounded solutions are
+    expected to converge, by a Kurdyka--{\L}ojasiewicz argument on the finitely many selected pieces, to a critical
+    point of a Lloyd-consistent piece, which need not be Clarke-critical for the reduced energy; at finite $\eta$ the
+    solutions are expected to converge to Clarke-critical points of $\mathcal{J} + \iota$. At a critical point with a
+    unique plan the prior is a stationary point of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i) where it is
+    interior, and each boundary atom satisfies the Karush--Kuhn--Tucker condition
+    $z_j = \Pi_{\mathcal{Z}}(\hat T_j)$, $\hat T_j - z_j$ in the normal cone of $\mathcal{Z}$ at $z_j$; at a tie of
+    plans the condition holds for a convex combination of the active pieces, as in Proposition D$'''$.17(iii).
+  \item \emph{(nothing changes inside)} As long as the prior stays in the interior of $\mathcal{Z}$ the projected flow
+    is \hyperref[res:thmDppp:23]{Theorem D$'''$.23}'s. In particular, at an exact representation whose atoms lie in
+    $\operatorname{int}\mathcal{Z}$ the stationary point and its linearisation are
+    \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i)--(ii)'s, and the bias removal of (iii) and the local convergence
+    of (v) hold unchanged for starts close enough that the prior stays in $\operatorname{int}\mathcal{Z}$.
+  \item \emph{(the price outside)} If the limit has an atom on $\partial\mathcal{Z}$ with its class barycentre outside
+    $\mathcal{Z}$ --- necessarily so when no stationary point of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i) has
+    its prior in $\mathcal{Z}$ --- the particles of that class leak toward the face, and the limit keeps a bias,
+    bounded by (i), in place of the unprojected prior's run-off (an atom on $\partial\mathcal{Z}$ with
+    $\hat T_j = z_j$ is a stationary point of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i) whose prior lies on the
+    boundary, with no bias). At $\eta = \infty$ on a collapsed class the leak is
+    $-\sigma_0(\vartheta - \Pi_{\mathcal{Z}}\vartheta)$, the gradient of the exterior quadratic penalty
+    $(\sigma_0/2)\operatorname{dist}^2_{\Ginv}(\vartheta,\mathcal{Z})$ --- zero on $\mathcal{Z}$ and growing linearly
+    outside: a switching $\sigma$-modification toward $\mathcal{Z}$, the leak off on $\mathcal{Z}$
+    (\cite{ioannou1996}, \cite{S52}).
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) $z_{\pi(i)}\in\mathcal{Z}$ at all times, and so is the leak target $m\sum_j\gamma_{ij}z_j$ of a split row
+(incommensurate $m$), a convex combination. With $\Pi := \Pi_{\mathcal{Z}}$ and
+$d := \operatorname{dist}_{\Ginv}(\vartheta_i,\mathcal{Z})$, $\frac12d^2$ is $C^1$ with gradient
+$\vartheta - \Pi\vartheta$ in the metric $\Ginv$, so
+$(\mathrm{d}/\mathrm{d}s)\frac12d^2
+= \ip{\vartheta_i - \Pi\vartheta_i}{G\langle r\nabla\tilde\Phi(\vartheta_i)\rangle}_{\Ginv}
+- \sigma_0\ip{\vartheta_i - \Pi\vartheta_i}{\vartheta_i - z}_{\Ginv}$, $z$ the leak target. The
+projection inequality $\ip{\vartheta - \Pi\vartheta}{z - \Pi\vartheta}_{\Ginv}\le0$ for $z\in\mathcal{Z}$ gives
+$\ip{\vartheta_i - \Pi\vartheta_i}{\vartheta_i - z}_{\Ginv}\ge d^2$, so
+$(\mathrm{d}/\mathrm{d}s)\frac12d^2\le Bd - \sigma_0d^2$, i.e.\ $d'\le B - \sigma_0d$ where $d > 0$, and the
+comparison principle gives the bound; boundedness follows from that of $\mathcal{Z}$. The bound on $B$:
+$\norm{G\langle r\nabla\tilde\Phi\rangle}_{\Ginv} = \norm{\langle rG^{1/2}\nabla\tilde\Phi\rangle}
+\le\sup\abs{r}\cdot L_\vartheta^G$ and $\abs{r}\le\abs{f} + \abs{\fhat}$. (ii) The particles' part of
+$\dd\mathcal{J}/\dd s$ is \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i)'s, minus the squared norm of their
+velocity; the prior's is
+$\ip{\nabla_Z\mathcal{J}}{\Pi_T(-c\nabla_Z\mathcal{J})} = -\norm{\Pi_T(-c\nabla_Z\mathcal{J})}^2/c$ ($c$ the metric's
+factor; Moreau's decomposition of $-c\nabla_Z\mathcal{J}$ into its tangent-cone and normal-cone parts, which are
+orthogonal), so $\mathcal{J}$ is non-increasing. At $\eta = \infty$ the prior minimises the $W^2$ part over
+$\mathcal{Z}$ for the current plan: for each plan $\gamma$,
+$\min_Z\mathcal{J} = \bar L + (\sigma_0/2)\sum_j\bigl[\sum_i\gamma_{ij}\norm{\vartheta_i - \hat T_j}^2_{\Ginv}
++ q_j\operatorname{dist}^2_{\Ginv}(\hat T_j,\mathcal{Z})\bigr]$ (minimising
+$\sum_i\gamma_{ij}\norm{\vartheta_i - z}^2 = q_j\norm{z - \hat T_j}^2 + \mathrm{const}$ over $z\in\mathcal{Z}$), each
+piece $C^{1,1}$ and definable (the squared distance to a box is piecewise quadratic), and its gradient in
+$\vartheta_i$ is the learning term and the leak toward $\Pi_{\mathcal{Z}}\hat T_j$ (the derivative of
+$q_j\operatorname{dist}^2(\hat T_j,\mathcal{Z})$ adds $\gamma_{ij}(\hat T_j - \Pi_{\mathcal{Z}}\hat T_j)$ to the
+within-class term). Between plan refreshes the particles follow the gradient flow of the piece
+$E_\gamma(\Theta) := \min_Z\mathcal{J}(\Theta,Z;\gamma)$ of the plan $\gamma$ they carry, and at a refresh the new
+plan is optimal for the current prior and the prior then re-minimises, so the selected energy does not increase there
+either. But $\gamma$ is Lloyd-consistent --- optimal for $\nu_Z$ with $Z = \Pi_{\mathcal{Z}}\hat T(\gamma)$ --- and
+need not attain $\min_\gamma E_\gamma = \min_Z\mathcal{J}$: the flow is then not a subgradient trajectory of the
+reduced energy, and Proposition D$'''$.17's argument, whose fixed prior makes every selected piece the active one,
+does not apply as it stands (Part H(e): the reduced energy rises by 26\% while the selected energy falls). A
+Kurdyka--{\L}ojasiewicz argument on the finitely many definable pieces that share the limiting value should give the
+bounded solutions finite length, with a critical point of a Lloyd-consistent piece as the limit; it is not carried out
+here. At finite $\eta$ the joint energy carries the indicator of $\mathcal{Z}^{K_0}$, and the Kurdyka--{\L}ojasiewicz
+argument with it is not carried out here. At a critical point the projected velocity of every atom vanishes, which is
+the stated condition. (iii) The projection is inactive in $\operatorname{int}\mathcal{Z}$, and
+\hyperref[res:thmDppp:23]{Theorem D$'''$.23}(v)'s ball keeps the prior within $\rho(\eta/(\sigma_0q_k))^{1/2}$ of the
+atoms. (iv) If no stationary point of \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i) has its prior in
+$\operatorname{int}\mathcal{Z}$, a critical point of (ii) has an atom on $\partial\mathcal{Z}$. At $\eta = \infty$
+with a class collapsed at $\vartheta$, $\hat T = \vartheta$ and $z = \Pi_{\mathcal{Z}}\vartheta$.
+\end{proof}
+\status{(i) proved; (ii) the monotonicity of the selected energy and the characterisation of the critical points
+proved, the convergence argued at $\eta = \infty$ (a Kurdyka--{\L}ojasiewicz argument on the selected pieces, not
+carried out) and formal at finite $\eta$; (iii) proved, its local convergence as
+\hyperref[res:thmDppp:23]{Theorem D$'''$.23}(v) (sketched); (iv) the identification at $\eta = \infty$ on collapsed
+classes proved, the boundary atoms and the bias outside numerical. The bound of (i) is crude (it uses the worst-case
+force; $L_\vartheta^G\le4.658$ is the closed-form bound, 4.044 by search), and its content is qualitative:
+boundedness is no longer a hypothesis. Parameter projection onto a convex set, the exterior quadratic penalty and the
+switching $\sigma$-modification are classical robustness modifications of adaptive laws, and the switching
+$\sigma$-modification keeps the ideal (unbiased) properties of the adaptive law when the true parameter lies in its
+set (\cite{ioannou1996}, \cite{S52}); on collapsed classes at $\eta = \infty$ the construction is that law. New is its
+transfer to the learned centre of a mass-constrained $K_0$-atom prior at finite $\eta$ --- a projected adaptive law
+for the prior's atoms, whose velocity jumps at the faces while the particles' law keeps its smooth gradient form ---
+and its compatibility with \hyperref[res:thmDppp:23]{Theorem D$'''$.23}'s bias removal wherever the target is
+representable inside $\mathcal{Z}$. Checked: \code{tests/test_adaptive_prior.py} (beyond the saturation, the
+projected prior at $\eta = \infty$ (LSODA) keeps the particles within 2 of the box and converges, while without the
+box the prior's coordinate passes 11 by $s = 10^4$; at $\eta = \sigma_0$ the projected midpoint rule at
+$\mathrm{d}t = 0.125$ keeps the prior in the box, brings its amplitude atom onto the face, keeps the particles bounded
+and $\mathcal{J}$ non-increasing; at the misplaced prior near the exact representation the projected and unprojected
+runs are identical).}
+
+% Numerics of Proposition D'''.27 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/adaptive_prior.md, Part H).
+\paragraph{Numerics} (\code{exp_adaptive_prior.py} Part H $\to$ \code{results/chaos/adaptive_prior.md}). The box
+$\mathcal{Z}$ holds the amplitudes and centres to 0.9 of $a_{\max}$ and $c_{\max}$ ($\alpha\in[-5.889,5.889]$,
+$\gamma\in[-4.417,4.417]$) and the width coordinate in $[-6,6]$; the instance's exact atoms are inside. (a) Part
+G(b)'s saturated target (a weighted amplitude $4.8 > a_{\max}$), the $K_0$-atom system from the exact atoms with the
+prior there: under the projected prior both $\eta = \sigma_0$ (the projected midpoint rule --- positions projected
+inside the step --- at $\mathrm{d}t = 0.25$ and $0.125$, to $s = 10^5$) and $\eta = \infty$ (LSODA, rtol $10^{-10}$)
+converge to the same bounded stationary point (largest drift $1.8\cdot10^{-15}$, $3.5\cdot10^{-15}$ and
+$1.2\cdot10^{-16}$; the two steps' end states within $3.4\cdot10^{-12}$), the first prior atom's amplitude coordinate
+on the face of $\mathcal{Z}$ ($z_a = 5.889$) and the particle's at 6.728 (amplitude 3.7325), with the fit error
+0.1415 --- the two steps' agreement shows their shared fixed point; the scheme's consistency: at $s = 300$ the
+trajectory lies within $6.3\cdot10^{-7}$, $1.9\cdot10^{-7}$ and $3.8\cdot10^{-8}$ of a reference at
+$\mathrm{d}t = 1/64$ for $\mathrm{d}t = 0.25$, $0.125$, $0.0625$. The particles' largest $\Ginv$-distance from
+$\mathcal{Z}$ along the run is 0.92 ($\eta = \sigma_0$) and 0.89 ($\eta = \infty$), against the bound
+$B/\sigma_0\le3686$ ($B\le26.08$ with the closed-form $L_\vartheta^G$). (b) Part C's $K_0$-atom loop at the misplaced
+prior ($\eta = \sigma_0$, 6000 slow units) is identical with and without $\mathcal{Z}$ (largest difference 0.0): the
+box is never approached --- the prior and the particles keep at least 16.9\% of the box's width to every face --- so
+the two runs coincide by construction. (c) The box trades the fit error against the parameters' bound: with the
+amplitude bound 0.75, 0.8, 0.9, 0.95, 0.99 of $a_{\max}$ --- boxes that contain the instance's exact atoms --- the
+limit's fit error is 0.1676, 0.1611, 0.1415, 0.1268, 0.1101, decreasing between the fixed prior's 0.1750 and the
+unprojected adaptive prior's 0.1050 at $s = 10^6$ (which that prior approaches only as its amplitude coordinate runs
+off), the prior's amplitude atom on the face in every case; the bound 0.7 (0.1736) already excludes the exact atoms
+(the start is projected at once), and the tighter boxes 0.65, 0.6, 0.5 are worse than the fixed prior (0.1792,
+0.1845, 0.1949): a box should contain the representation. (e) At $\eta = \infty$ on six particles in a
+Lloyd-consistent, non-optimal pairing (a seeded search; zero amplitudes, a small three-bump target, the box) the
+selected energy falls from $4.52\cdot10^{-3}$ to $4.95\cdot10^{-5}$ (its largest increment $-3.4\cdot10^{-6}$) while
+the reduced energy $\min_Z\mathcal{J}$ rises from $1.251\cdot10^{-3}$ to $1.574\cdot10^{-3}$ before the plan becomes
+optimal at $s = 80$. (d) On Part G(a)'s four-bump target, where without the box the merged atom's width coordinate
+grows like $\ln s$ and the solution leaves every compact set, the box stops it: from the exact split fit at
+$\eta = \infty$ (the joint flow for 40000 slow units, then the collapsed dynamics) $\kappa$ passes 2.159, 3.843, 5.529
+at $s = 10^6$, $10^7$, $10^8$ as before and stays at the face $\kappa = 6$ from $s = 10^9$ (the atom within
+$6.6\cdot10^{-7}$ of it, drift $5.3\cdot10^{-17}$), with the fit error $1.943376\cdot10^{-2}$, within
+$9.3\cdot10^{-7}$ of the minimiser's on the face $s = s_{\max}$ that the unprojected solution approaches only as
+$s\to\infty$.
+
+% Proposition D'''.28 with its proof, Status and numerics (PARADIGM.md section 5d, round-20 version; the numbers are
+% PARADIGM's copies of results/chaos/gauge_floor.md). The references [49], [55] (PARADIGM.md) and [S55]
+% (LITERATURE_TRANSPORT.md) are the bibitems R49, R55 and S55 of refs.tex.
+\begin{thm}{Proposition}{D$'''$.28}[the adaptive prior's floor removal is a gauge property: it survives an
+approximation error]\phantomsection\label{res:thmDppp:28}%
+Let $\vartheta^b(q)$ be a nondegenerate critical point of the unregularised weighted loss
+$L_q(\Theta) := \frac12\langle\abs{f - \sum_kq_k\tilde\Phi(\cdot\,;\vartheta_k)}^2\rangle_\rho$ --- not necessarily an
+exact representation: $r_b := f - \fhat_b$ may be non-zero --- and let the masses enter the network only through the
+products $w_ka(\alpha_k)$, as they do for the saturated network. The amplitude--mass gauge
+$G_w : \alpha_k\mapsto a^{-1}(q_ka(\alpha_k)/w_k)$, the other coordinates unchanged, is defined on
+$W_g := \{w : q_k\abs{a^b_k} < w_ka_{\max}\text{ for every }k\}$ and satisfies $\fhat_w\circ G_w = \fhat_q$, hence
+$L_w\circ G_w = L_q$.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the stationary points carry no function-level floor)} For every $w\in W_g$,
+    $\vartheta^b(w) := G_w\vartheta^b(q)$ is a nondegenerate critical point of $L_w$ with the same function
+    $\fhat_b$, the same residual $r_b$ and the same Hessian signature. With the prior at its atoms it is a stationary
+    replicated configuration of the nearest-atom leak toward an adaptive prior
+    (\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(iii)), so two systems at their samples' gauge transforms carry
+    the same function whatever the approximation error, with the fit error $\norm{r_b}_\rho$. The function-level floor
+    --- the limit of $\E\norm{\fhat_m - \fhat_M}^2$ along the dynamics --- therefore vanishes at the samples of $W_g$
+    with positive margins in (iii) when $\vartheta^b(q)$ is a strict local minimum and the systems converge to the
+    gauge transforms (numerical); $W_g$ shrinks as the approximation error grows (its thresholds
+    $q_k\abs{a^b_k}/a_{\max}$ rise with the amplitudes). (At an exact representation $W_g$ is
+    \hyperref[res:thmDppp:24]{Proposition D$'''$.24}'s $W$.)
+  \item \emph{(the fixed prior's floor)} At the matching prior $\vartheta^0 = \vartheta^b(q)$ the function-level
+    weight-sensitivity of the fixed prior's stationary point is
+    \[
+      F = \sigma_0\hat J(\tilde A + \sigma_0I)^{-1}\tilde g,\qquad\tilde A := H_L - \tilde R,
+    \]
+    $\tilde A$ the whitened weighted Hessian of $L_q$ at $\vartheta^b(q)$ ($\tilde R$ the whitened weighted residual
+    curvature) and $\tilde g$ the whitened gauge displacement, the direct effect of the weights on $\fhat$ being
+    $\hat J\tilde g$: \hyperref[res:thmDppp:24]{Proposition D$'''$.24}(i) with the full Hessian in place of the
+    Gauss--Newton block. Along the same derivation the adaptive prior's sensitivity is $F(\sigma)$ at $\sigma = 0$,
+    which vanishes, as (i) says.
+  \item \emph{(the splitting margins under the adaptive prior)} For a scalar amplitude per kernel (one output), at a
+    critical point the residual curvature
+    $R_k = \langle r\nabla^2_\vartheta\tilde\Phi(\cdot\,;\vartheta_k)\rangle_\rho$ has a zero amplitude row and
+    column, and its block in the centre and width coordinates is $a(\alpha_k)$ times a function of those coordinates
+    alone. Hence $R_k(\vartheta^b(w)) = (q_k/w_k)R_k(\vartheta^b(q))$ exactly, and Proposition D$'''$.5's splitting
+    margins at the adaptive prior's replicated stationary point are
+    \[
+      \sigma_0 - (q_k/w_k)\lambda^+_k,\qquad
+      \lambda^+_k := \lambda_{\max}(G^{1/2}R_k(\vartheta^b(q))G^{1/2})\ge0:
+    \]
+    a class sampled below $q_k\lambda^+_k/\sigma_0$ can split. At an exact representation $\lambda^+ = 0$ and every
+    margin is $\sigma_0$ (\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(iii)); with an approximation error, and
+    $\vartheta^b(q)$ a strict local minimum, the adaptive prior's admissible set is
+    $\{w\in W_g : w_k > q_k\lambda^+_k/\sigma_0\}$. For vector amplitudes ($n\ge2$ outputs, $a(\alpha)\in\R^n$
+    saturated componentwise) only the centre--width block scales by $q_k/w_k$: stationarity in the amplitudes gives
+    $\Psi_r = 0$ for every output $r$ but stationarity in the centres only $\sum_ra_r\partial_\gamma\Psi_r = 0$, so
+    the amplitude--centre block $a'_r(\alpha_r)\partial_\gamma\Psi_r$ survives, is gauge-invariant in the physical
+    amplitudes, and no closed margin formula follows.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) $G_w$ is a diffeomorphism from $\{\alpha : \abs{q_ka(\alpha)/w_k} < a_{\max}\}$ onto its image with
+$\fhat_w(G_w\Theta) = \fhat_q(\Theta)$, so $L_w\circ G_w = L_q$, and it maps critical points to critical points with
+the same Hessian signature; the function and the residual are unchanged by construction. The leak toward an adaptive
+prior at its atoms vanishes (\hyperref[res:thmDppp:23]{Theorem D$'''$.23}(i),
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(ii)). (ii) Let $u := \partial_w(G_w\vartheta^b(q))$ at $w = q$,
+$D := \operatorname{diag}(q_k\Ginv)$, $A := \nabla^2L_q(\vartheta^b)$, $B := \partial_w\nabla_\Theta L_w$ at fixed
+$\Theta$, $J := \partial_\Theta\fhat$, $\Phi := \partial_w\fhat$ at fixed $\Theta$. Differentiating
+$\fhat_w(G_w\Theta) = \fhat_q(\Theta)$ gives $\Phi = -Ju$, and differentiating $\nabla L_w(G_w\vartheta^b) = 0$ gives
+$B = -Au$. The fixed prior's stationarity $\nabla L_w(\Theta) + \sigma_0D(\Theta - \vartheta^0) = 0$, linearised at
+$(q,\vartheta^b)$, reads $(A + \sigma_0D)\delta\Theta = -B\delta w = Au\delta w$, so
+$\delta\fhat = \Phi\delta w + J\delta\Theta = -J(A + \sigma_0D)^{-1}[(A + \sigma_0D) - A]u\delta w
+= -\sigma_0J(A + \sigma_0D)^{-1}Du\delta w$; in the whitened coordinates ($\hat J = JD^{-1/2}$,
+$\tilde A = D^{-1/2}AD^{-1/2}$, $\tilde g := -D^{1/2}u$) this is $\sigma_0\hat J(\tilde A + \sigma_0I)^{-1}\tilde g$.
+With $\sigma_0 = 0$, $\delta\Theta = u\delta w$ and $\delta\fhat = 0$. At an exact representation $\tilde R = 0$,
+$\tilde A = H_L$ and $\tilde g = \partial_wx^0$. (iii) With a scalar amplitude and
+$\Psi(\gamma,\kappa) := \langle r\varphi(\cdot\,;c(\gamma),s(\kappa))\rangle_\rho$,
+$\langle r\tilde\Phi(\cdot\,;\vartheta)\rangle_\rho = a(\alpha)\Psi$, whose gradient is
+$(a'\Psi,a\Psi_\gamma,a\Psi_\kappa)$ and whose Hessian is
+$\left[\begin{smallmatrix}a''\Psi & a'\Psi_\gamma & a'\Psi_\kappa\\ a'\Psi_\gamma & a\Psi_{\gamma\gamma}
+& a\Psi_{\gamma\kappa}\\ a'\Psi_\kappa & a\Psi_{\gamma\kappa} & a\Psi_{\kappa\kappa}\end{smallmatrix}\right]$. At a
+critical point the gradient vanishes, so $\Psi = \Psi_\gamma = \Psi_\kappa = 0$ ($a' > 0$, $a\ne0$) and only the
+block $a\Psi_{(\gamma,\kappa)}$ remains; $r$ and $\Psi$ are unchanged by the gauge and $a$ scales by $q_k/w_k$. The
+$\alpha$-direction contributes the eigenvalue 0, so $\lambda^+_k\ge0$.
+\end{proof}
+\status{(i) and (iii) proved, exactly, as statements about the stationary points and their linearisation (no
+linearisation in $w$: the gauge maps critical points to critical points); (ii) as
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(i) --- exact at $q$, first order in $w$; the convergence of the
+dynamics to the gauge transform numerical, and with it the floor's vanishing. The amplitude--mass degeneracy is the
+homogeneity of the conic view \cite{R49}, \cite{R55}, and the rescaling symmetries of networks, which map critical
+points to critical points with the same function while changing their curvature, are classical (\cite{S55}); what is
+new is that this symmetry, not exact representability, is the mechanism of
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}'s floor removal --- so at a strict local minimum in the interior the
+adaptive prior keeps the fitted function independent of the sampled weights without an exact representation --- and,
+for a scalar amplitude per kernel, the exact scaling of the residual curvature under the gauge, which gives the
+adaptive prior's splitting margins in closed form. Its hypotheses are a strict local minimum in the interior and
+samples in $W_g$ with positive margins: on the instance $P(w^m\in W_g)$ is only 0.52 at $m = 15$ (0.87 at $m = 60$),
+and the branch ends at the saturation near $\varepsilon = 0.68$; targets whose best approximant lies on the saturation
+boundary (a sharp friction step fitted by a dipole of two kernels; the cogging servo of
+\hyperref[res:thmDppp:29]{Proposition D$'''$.29}, globally; \hyperref[res:thmDppp:27]{Proposition D$'''$.27}'s
+beyond-the-saturation example) are outside it. Checked: \code{tests/test_gauge_floor.py} (at $\varepsilon = 0.3$, a
+critical point with a 1.7\% fit error: the gauge transform a critical point at two sampled weight vectors, the
+critical point continued in $w$ from $\vartheta^b(q)$ landing on it; the adaptive prior's sensitivity, from critical
+points reached by Newton from $\vartheta^b(q)$, below $10^{-8}$ of the fixed prior's, the fixed prior's equal to
+$\sigma_0\hat J(\tilde A + \sigma_0I)^{-1}\tilde g$ to $10^{-6}$ and not to the Gauss--Newton form; the residual
+curvature's zero amplitude row, its scaling $(q_k/w_k)$, the margins $\sigma_0 - (q_k/w_k)\lambda^+_k$ and the
+dynamics' separation eigenvalues $-\sigma_0 + (q_k/w_k)\operatorname{eig}(G^{1/2}R_kG^{1/2})$ to $10^{-9}$;
+adaptive-prior runs at $\eta = \infty$ and $\sigma_0$ converging to the gauge transform, 1.2 away from
+$\vartheta^b(q)$, with the approximant's function).}
+
+% Numerics of Proposition D'''.28 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/gauge_floor.md).
+\paragraph{Numerics} (\code{exp_gauge_floor.py} $\to$ \code{results/chaos/gauge_floor.md}). The three-bump instance
+with a fourth bump $\varepsilon\cdot\exp(-(x - 0.8)^2/(2\cdot0.3^2))$ that $K_0 = 3$ kernels cannot represent,
+$\varepsilon = 0$--$0.5$, the masses $q = 1/3$, $\sigma_0 = 0.15\sigma_{\mathrm{crit}}$; $\vartheta^b(q)$ the weighted
+approximant, a critical point of the unregularised loss continued in $\varepsilon$ from the exact representation
+(relative fit error $3.6\cdot10^{-3}$, $6.8\cdot10^{-3}$, $1.2\cdot10^{-2}$, $1.7\cdot10^{-2}$, $2.5\cdot10^{-2}$ at
+$\varepsilon = 0.05$, $0.1$, $0.2$, $0.3$, $0.5$; gradient residual $\le1.6\cdot10^{-15}$; nondegenerate, the
+smallest eigenvalue of $\tilde A$ $4.6\cdot10^{-5}$--$3.1\cdot10^{-4}$). (i) At six weight vectors 0.01 inside $W_g$
+the unregularised gradient at $G_w\vartheta^b(q)$ is $\le1.6\cdot10^{-15}$, and Newton's method continued in $w$ from
+$\vartheta^b(q)$ (20 steps) lands on $G_w\vartheta^b(q)$ to $\le1.7\cdot10^{-11}$ with $\fhat$ unchanged to
+$\le5.5\cdot10^{-13}$ --- plain Newton from $\vartheta^b(q)$ at $w$ does so in 3--5 of the 6 cases, elsewhere
+reaching other critical points of $L_w$; the adaptive prior's function-level sensitivity, from the critical points
+reached from $\vartheta^b(q)$, is $1.4\cdot10^{-11}$--$2.7\cdot10^{-10}$ of the fixed prior's. The samples fall in
+$W_g$ with the probability 0.52, 0.87--0.88, 0.997 at $m = 15$, $60$, $240$ ($\varepsilon = 0.05$--$0.3$; 0.26, 0.71,
+0.98 at $\varepsilon = 0.5$), and the branch continued to $\varepsilon = 0.68$ reaches
+$\max_k\abs{a^b_k}/a_{\max} = 0.999$, the smallest eigenvalue of $\tilde A$ $1.2\cdot10^{-8}$ and $W_g$'s threshold
+$0.333 = q_2$ for its class: there $w = q$ leaves $W_g$. (ii) The fixed matching prior's sensitivity equals
+$\sigma_0\hat J(\tilde A + \sigma_0I)^{-1}\tilde g$ to $\le2.2\cdot10^{-9}$ and misses
+\hyperref[res:thmDppp:24]{Proposition D$'''$.24}'s Gauss--Newton form by $7.0\cdot10^{-4}$--$5.6\cdot10^{-3}$,
+growing with $\varepsilon$ as $\norm{\tilde R}/\norm{H_L}$ does ($5.3\cdot10^{-4}$--$2.8\cdot10^{-3}$); its floor law
+per unit of $1/m - 1/M$ rises from $6.17\cdot10^{-2}$ ($\varepsilon = 0$) to $8.52\cdot10^{-2}$
+($\varepsilon = 0.5$). (iii) The residual curvature's amplitude row is $\le7.4\cdot10^{-14}$ (its largest entry
+$2.6\cdot10^{-4}$--$2.9\cdot10^{-3}$), $\lambda^+_k\le7.2\cdot10^{-4}$ (at most $0.10\sigma_0$), and over every count
+vector of $m = 15$ and $60$ in $W_g$ the adaptive prior's splitting margins equal $\sigma_0 - (q_k/w_k)\lambda^+_k$ to
+$\le2.1\cdot10^{-14}$, none negative (the smallest $+6.23\cdot10^{-3}$); the separation eigenvalues of the dynamics at
+a replicated configuration (counts $(6,4,5)$, the Jacobian of the averaged drift at $\eta = \sigma_0$ and $\infty$)
+equal $-\sigma_0 + (q_k/w_k)\operatorname{eig}(G^{1/2}R_kG^{1/2})$ to $\le5.8\cdot10^{-12}$. \emph{The dynamics}
+(Part B: warm clouds of width 0.02 around $\vartheta^b(q)$, $m = 15$, $60$, $240$ against $M = 510$, four seeds, 6000
+slow units, $\varepsilon = 0.1$ and $0.3$, the nearest-atom leak). Under the fixed prior $\norm{\fhat_m - \fhat_M}^2$
+stays within 8\% of its value at $s = 600$ (the ratio at $s = 6000$ 0.917--1.003; at $\varepsilon = 0.1$:
+$3.1\cdot10^{-4}$--$5.9\cdot10^{-3}$, $1.1\cdot10^{-4}$--$1.0\cdot10^{-3}$ and $5.0\cdot10^{-6}$--$8.2\cdot10^{-5}$
+at $m = 15$, $60$, $240$) and the fit error above the approximant's ($9.0\cdot10^{-3}$--$1.2\cdot10^{-1}$ against
+$6.84\cdot10^{-3}$), the classes splitting at the samples where the fixed prior's point is a saddle (diameters up to
+1.6). Under the adaptive priors the classes stay replicated, their means approach the gauge transform
+$G_w\vartheta^b(q)$, $\norm{\fhat_m - \fhat_M}^2$ falls (at $m = 60$, $\varepsilon = 0.1$, from
+$6.9\cdot10^{-6}$--$1.2\cdot10^{-4}$ at $s = 600$ to $1.0\cdot10^{-9}$--$1.4\cdot10^{-8}$ at $\eta = \sigma_0$ and to
+$3.2\cdot10^{-11}$--$3.8\cdot10^{-9}$ at $\eta = \infty$ by $s = 6000$), and the fit error tends to the approximant's:
+at the samples at least 0.02 inside $W_g$ it exceeds it at $s = 6000$ by a median $1.2\cdot10^{-4}$,
+$1.2\cdot10^{-4}$, $1.6\cdot10^{-5}$ (relative; at most $1.1\cdot10^{-1}$, $1.2\cdot10^{-2}$, $1.3\cdot10^{-3}$) at
+$m = 15$, $60$, $240$. At the $m = 15$ sample $(0.533,0.267,0.200)$, outside $W_g$ (margins $-0.0016$ and $-0.0097$
+at $\varepsilon = 0.1$ and $0.3$), $\vartheta^b(q)$'s branch has no gauge transform: the adaptive priors' fit errors
+at $s = 6000$ ($2.2\cdot10^{-2}$ and $1.6\cdot10^{-2}$ at $\varepsilon = 0.1$, $3.7\cdot10^{-2}$ and
+$3.3\cdot10^{-2}$ at $\varepsilon = 0.3$, for $\eta = \sigma_0$ and $\infty$) are still falling toward the minimum of
+$L_w$ over the closed amplitude box on the branch, 1.107 and 1.586 times the approximant's fit error (one amplitude at
+the bound, its coordinate running off), and a gauge transform with two classes exchanged exists there, which the
+warm-cloud dynamics does not reach; at $(0.400,0.200,0.400)$, $6\cdot10^{-4}$ inside $W_g$ at $\varepsilon = 0.3$,
+the gauge transform's amplitude lies near the saturation and the approach is slow (2.8--3.1 from it at $s = 6000$),
+as at the boundary of \hyperref[res:thmDppp:24]{Proposition D$'''$.24}'s $W$.
+
+% Proposition D'''.29 with its proof, Status and numerics (PARADIGM.md section 5d, round-20 version; the numbers are
+% PARADIGM's copies of results/servo/servo_cogging.md). The references [1] and [6]--[8] (PARADIGM.md) are the bibitems
+% sanner1992 and R6, R7, R8 of refs.tex.
+\begin{thm}{Proposition}{D$'''$.29}[second-order plants: the sliding-variable
+reduction]\phantomsection\label{res:thmDppp:29}%
+Let the plant be $\ddot x = f(x,\dot x) + u$, $x_m$ a $T_0$-periodic $C^3$ reference, $e := x - x_m$,
+$s := \dot e + \lambda e$ ($\lambda > 0$), and let the controller and the adaptive law be
+\[
+  u = \ddot x_m - \lambda\dot e - k_s s - \fhat_\Theta(z),\qquad
+  \dot\vartheta_i = G\nabla_\vartheta(s\tilde\Phi(z;\vartheta_i)) - (\sigma_0/k_s)(\vartheta_i - T_i),
+\]
+$z$ the coordinates of $(x,\dot x)$ on which $f$ depends and $T_i$ any of the leak targets of this section (a fixed
+prior, the nearest-atom or the OT plan, an adaptive or a projected prior).
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the error channel)} $\dot s = -k_s s + r_\Theta(z)$ and $\dot e = -\lambda e + s$, with
+    $z = z_m + (e,\dot e)$ the regressor at the plant's state: Theorem J's error channel with $s$ in place of $e$.
+  \item \emph{(the averaged slow loop)} As $k_s\to\infty$ at fixed $\lambda$, $s$ and $e$ are slaved ---
+    $s = (\mathrm{d}/\mathrm{d}t + k_s)^{-1}[r_\Theta(z_m)] + O(k_s^{-2}) = r_\Theta(z_m)/k_s + O(k_s^{-2})$ and
+    $e = (\mathrm{d}/\mathrm{d}t + \lambda)^{-1}s$, the periodic solutions of the two filters --- and in the slow time
+    $\tau = t/k_s$ the parameters follow Theorem J's averaged slow loop along the regressor's orbit $z_m(t)$,
+    \[
+      \frac{\dd\vartheta_i}{\dd\tau} = G\langle r_\Theta\nabla_\vartheta\tilde\Phi(\cdot\,;\vartheta_i)\rangle_\rho
+      - \sigma_0(\vartheta_i - T_i),\quad\text{$\rho$ the occupation measure of $z_m$ over one period,}
+    \]
+    up to $O(1/k_s)$, the prior's law at finite $\eta$ being $\dd z_j/\dd t = -(\eta/k_s)(z_j - \hat T_j)$ in real
+    time. Both forms of the slaved error --- the exact filter $(\mathrm{d}/\mathrm{d}t + k_s)^{-1}$ and $r/k_s$ ---
+    are accurate to $O(k_s^{-2})$ in $s$, i.e.\ to $O(1/k_s)$ relatively, the parameters' within-period motion and the
+    nonlinearity $r(z) - r(z_m)$ entering at the same order; the exact filter keeps the error filter's attenuation of
+    the residual's harmonics, which $r/k_s$ drops at the relative order $n^2\omega_0^2/(2k_s^2)$ in the rms of the
+    $n$-th harmonic, and is the better prediction where that term dominates (a small residual of high frequency).
+  \item \emph{(the transfer)} Every statement of this section about the averaged slow loop holds for the second-order
+    plant with this $\rho$ --- Theorems D$'''$, \hyperref[res:thmDppp:21]{D$'''$.21} and
+    \hyperref[res:thmDppp:23]{D$'''$.23}, Propositions D$'''$.5, D$'''$.9, D$'''$.12, D$'''$.17,
+    \hyperref[res:thmDppp:24]{D$'''$.24}(i)--(v), \hyperref[res:thmDppp:27]{D$'''$.27} and
+    \hyperref[res:thmDppp:28]{D$'''$.28} --- and the tracking error of the position is the filtered residual of (ii);
+    the real-loop statements (\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(vi), Corollaries D$'''$.14 and
+    \hyperref[res:thmDppp:26]{D$'''$.26}) would need the variational equation of (i).
+  \item \emph{(where the kernels live)} When $f$ depends on one coordinate (a cogging torque on the position, a
+    friction law on the velocity), kernels on that coordinate see the orbit as an interval, and the instance is this
+    section's one-dimensional one with another target. Isotropic Gaussian kernels on the phase plane over a circular
+    orbit ($x_m = R\sin\omega_0t$ with $\omega_0 = 1$ in the units where the kernel is isotropic in $(x,\dot x)$) are
+    over-parametrised: on the circle $z = R(\sin\theta,\cos\theta)$ a kernel restricts to
+    $a\cdot e^{-(R^2 + \abs{c}^2)/(2s^2)}\cdot e^{(R\abs{c}/s^2)\cos(\theta - \theta_c)}$, a von Mises function of
+    three effective parameters for four, so in general position the Gauss--Newton block has a zero eigenvalue for
+    every kernel (more at degenerate atoms, as for kernels centred on the orbit's centre) --- a direction that the
+    fixed prior's leak pins at the rate $\sigma_0$, that an adaptive prior leaves neutral ($\lambda^- = 0$,
+    \hyperref[res:thmDppp:23]{Theorem D$'''$.23}(ii)), and that a projected prior keeps bounded
+    (\hyperref[res:thmDppp:27]{Proposition D$'''$.27}). On other orbits the same directions are weakly excited rather
+    than unexcited: the classical partial excitation of Gaussian networks along an orbit (\cite{R6,R7,R8}).
+\end{enumerate}
+\end{thm}
+
+\begin{proof}
+(i) $\ddot e = f + u - \ddot x_m = r_\Theta(z) - \lambda\dot e - k_s s$, so
+$\dot s = \ddot e + \lambda\dot e = -k_s s + r_\Theta(z)$, and $\dot e = s - \lambda e$ by the definition of $s$. (ii)
+The error subsystem $(s,e)$ is linear, exponentially stable (eigenvalues $-k_s$ and $-\lambda$) and driven by
+$r_\Theta(z)$, while the parameters move at the rate $O(1/k_s)$ (their velocity is $G\nabla_\vartheta(s\tilde\Phi)$
+with $s = O(1/k_s)$). Theorem J's argument --- for the smooth fixed-prior leak near a hyperbolic critical point, using
+the error channel's exponential stability, the regressor's smoothness and its Step~3's normal form --- carries over
+with the fast pair $(s,e)$ once its error-channel steps are redone for it ($s$ slaved at $k_s$, $e$ filtered at the
+fixed $\lambda$: the error channel's multipliers are $e^{-k_sT_0}$ and $e^{-\lambda T_0}$), the separation being
+between $\lambda$ and the parameters' rate; for switching targets (plan and cell switches, adaptive and projected
+priors) not even the first-order loop has more than Theorem D$'''$.18's locally constant case. At the slaved state
+$z = z_m + O(1/k_s)$, and the period average of $G\nabla_\vartheta(s\tilde\Phi(z_m;\vartheta_i))$ with
+$s = r_\Theta(z_m)/k_s$ is $(1/k_s)$ times the averaged learning term. For the $n$-th harmonic of $r$,
+$(\mathrm{d}/\mathrm{d}t + k_s)^{-1}$ has the gain
+$(k_s^2 + n^2\omega_0^2)^{-1/2} = (1/k_s)(1 - n^2\omega_0^2/(2k_s^2) + \dots)$. (iii) The statements of this section
+use the averaged loop only through $\rho$, the target on its support and the network. (iv)
+$\abs{z - c}^2 = R^2 + \abs{c}^2 - 2R\abs{c}\cos(\theta - \theta_c)$ on the circle; the map
+$(a,\abs{c},\theta_c,s)\mapsto(a e^{-(R^2+\abs{c}^2)/(2s^2)},R\abs{c}/s^2,\theta_c)$ has a one-dimensional fibre,
+along which the kernel's restriction, and hence $\fhat$ on $\rho$'s support, is constant.
+\end{proof}
+\status{(i) and (iv) exact; (ii) and (iii) formal --- first-order averaging with the fast pair $(s,e)$, Theorem J's
+steps carrying over for the smooth fixed-prior leak near a hyperbolic critical point once the error-channel steps are
+redone, and switching targets beyond even the first-order theory; (iii) covers the statements about the averaged
+loop, not the real-loop ones (\hyperref[res:thmDppp:24]{Proposition D$'''$.24}(vi) and Corollaries D$'''$.14 and
+\hyperref[res:thmDppp:26]{D$'''$.26} would need the variational equation of (i)). The filtered error is the classical
+construction of adaptive control for higher-order plants, used with Gaussian networks by Sanner and Slotine
+(\cite{sanner1992}); what is added is the transfer of the transport leaks, their floors and the adaptive and projected
+priors to such plants, and the exact fibre of isotropic phase-plane kernels on a circular orbit (the weak excitation
+of the same directions on other orbits being the classical partial excitation \cite{R6,R7,R8}). Checked:
+\code{tests/test_sliding.py} (the phase-plane loop as the gradient flow of $\bar L$; on a circular orbit one zero
+Gauss--Newton eigenvalue per kernel in general position, the next above $10^{-11}$ of the largest; the servo's
+parameter displacement over ten periods within 3\% of the averaged loop's at $k_s = 25$ and closer at $k_s = 50$, and
+its position error within 1\% of both predictions of (ii) at $k_s = 50$).}
+
+% Numerics of Proposition D'''.29 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/servo/servo_cogging.md).
+\paragraph{Numerics} (\code{exp_servo_cogging.py} $\to$ \code{results/servo/servo_cogging.md}). The servo
+$\ddot x = -\tau_{\mathrm{cog}}(x) + u$ with the cogging torque
+$\tau_{\mathrm{cog}}(x) = 0.4\sin(3x + 0.3) + 0.1\sin7x$, $x_m = \sin t$, $\lambda = 5$; $K_0 = 4$ saturated Gaussian
+kernels on the position ($a_{\max} = 4$, $c_{\max} = 1.6$, widths in $[0.05,1]$), masses $1/4$, $\sigma_0 = 0.01$. (A)
+$\vartheta^b(q)$, the nondegenerate local minimum of the unregularised weighted loss that BFGS reaches from a fixed
+start, has the relative fit error $1.46\cdot10^{-2}$, and \hyperref[res:thmDppp:28]{Proposition D$'''$.28} is its
+local analysis: the whitened unregularised Hessian $\tilde A$ spans $2.9\cdot10^{-4}\sigma_0$--$30\sigma_0$ (four
+modes below $0.1\sigma_0$: the adaptive prior's slowest rates $1.4\cdot10^{-4}\sigma_0$ at $\eta = \sigma_0$ and
+$2.9\cdot10^{-4}\sigma_0$ at $\eta = \infty$, against the fixed prior's $\approx\sigma_0$), the residual curvature's
+$\lambda^+_k\le0.0098\sigma_0$ (the adaptive prior's margins positive on all of
+$W_g = \{w > (0.061,0.085,0.119,0.008)\}$), the fixed matching prior's floor law $1.29\cdot10^{-2}$ per unit of
+$1/m - 1/M$ and its margin $+9.9\cdot10^{-3}$ at $w = q$. Globally the loss has its infimum at the saturation: of 120
+BFGS runs from random starts one ends at $\vartheta^b(q)$ and 33 below its fit error, all with saturated amplitudes;
+the best reaches $6.39\cdot10^{-3}$, and with its two saturated amplitudes held at $\abs{\alpha} = 6$, $8$, $10$, $14$
+($\abs{a} = 3.62$--$3.99$) and the rest re-optimised the fit error is $7.14\cdot10^{-3}$, $6.65\cdot10^{-3}$,
+$6.49\cdot10^{-3}$, $6.40\cdot10^{-3}$ --- approached, not attained. Globally the servo is
+\hyperref[res:thmDppp:27]{Proposition D$'''$.27}'s case (critical points at infinity), and the runs below are
+statements about the basin of $\vartheta^b(q)$ and about an engineer's model. A misplaced prior --- the approximant
+of the cogging model with the phase 0.5 in place of 0.3, the engineer's model, its own fit error 0.200 --- has a
+replicated stationary point (the same from its atoms and from $\vartheta^b(q)$) with the fit error $5.45\cdot10^{-2}$
+and the splitting margin $-3.97\cdot10^{-3}$: a D$'''$.5 saddle. (B) The averaged loop ($m = 16$, $64$, $128$ against
+$M = 256$, three seeds, 2000 slow units). From warm clouds around $\vartheta^b(q)$ --- computed from the true torque
+--- with the matching prior $\vartheta^b(q)$: the fixed prior's nearest-atom leak keeps a finite-size floor
+($\norm{\fhat_m - \fhat_M}^2$ $1.85\cdot10^{-3}$, $2.24\cdot10^{-4}$, $4.49\cdot10^{-5}$; fit error 0.174, 0.066,
+0.038 against the approximant's 0.0146); the adaptive prior's floor is 38--780 times lower ($\eta = \infty$:
+$4.85\cdot10^{-5}$, $2.88\cdot10^{-7}$, $6.36\cdot10^{-8}$), with the fit error 0.0298 (the classes not yet replicated
+at $m = 16$ by $s = 2000$), 0.0148, 0.0147; the OT leak toward the matching prior sits at the approximant
+(0.01462, no floor); the $\sigma$-modification toward $\vartheta^0 = 0$ at the same $\sigma_0$ keeps a large bias
+(0.328) --- and no leak at all ($\sigma_0 = 0$) does as well as the best of them (0.0180, 0.0147, 0.0146; floors
+$7.7\cdot10^{-6}$, $2.4\cdot10^{-7}$, $6.6\cdot10^{-8}$). In this noise-free simulation the floors and biases that
+the adaptive and OT leaks remove are those a fixed leak creates; the leaks' purpose --- robustness to noise and
+disturbances, Propositions \hyperref[res:thmDppp:27]{D$'''$.27}, D$'''$.30, D$'''$.31 --- is not exercised here. With
+the misplaced prior from that start, at $\eta = \infty$ the prior never acts (its initial position enters only through
+the first cells: the runs are the matching ones), at $\eta = \sigma_0$ its bias decays (0.035, 0.020, 0.019 at
+$s = 2000$), and the fixed designs keep a bias --- their $m$-systems leave the saddle by splitting their classes
+(diameters 0.32--1.07) and end at 0.048 (OT) and 0.10, 0.060, 0.048 (the nearest atom; above the replicated point's
+0.0545 at $m = 16$ and $64$). From warm clouds around the engineer's model, with the prior at it --- the start an
+engineer has --- the fixed designs stay biased (0.102, 0.060, 0.048; OT 0.048), the adaptive prior removes most of the
+bias but slowly ($\eta = \infty$: 0.027, 0.025, 0.022 at $s = 2000$; $\eta = \sigma_0$: 0.032, 0.028, 0.028), and no
+leak reaches the basin's fit (0.0152, 0.0147, 0.0147): its $m$ particles spread and explore directions that the
+$K_0$-atom structure the leaks impose leaves weakly excited. The collapsed $K_0$-atom flows give the time scale: from
+the engineer's model at $\eta = \infty$ --- where the collapsed flow is the unregularised one --- the fit error is
+0.0297, 0.0213, 0.0169, 0.0155 at $s = 600$, $2000$, $10^4$, $10^5$, still 0.55 from $\vartheta^b(q)$ in the
+parameters ($10^5$ slow units are $2.5\cdot10^6$ time units of the real servo at $k_s = 25$), at $\eta = \sigma_0$
+0.0345, 0.0259, 0.0181, 0.0160; from $\vartheta^b(q)$ toward the misplaced prior at $\eta = \sigma_0$ 0.0240, 0.0183,
+0.0154, 0.0149. (C) The real servo ($k_s = 25$, RK4 at $\mathrm{d}t = 2\cdot10^{-3}$, 1000 time units, $m = 16$ and
+$64$, seed 0) from the oracle-start designs' end states, with each design's leak (its targets refreshed, and the error
+recorded, every 0.02 time units; the finite-$\eta$ prior relaxed in real time): the position error's rms is
+$1.7$--$2.1\cdot10^{-5}$ for the adaptive designs, the matching OT design and no leak, $7.8\cdot10^{-5}$ for the
+misplaced OT design, $9.1\cdot10^{-5}$--$1.8\cdot10^{-4}$ for the fixed nearest-atom prior and
+$5.4$--$5.5\cdot10^{-4}$ for the $\sigma$-modification; it equals the prediction of (ii) with the exact filter to
+1.0001--1.0029 at $t = 500$ and $1000$ in every design (0.990--1.005 over the first five periods, where the
+parameters still move), and with the slaved $s = r/k_s$ to 0.931--0.996, the deficit largest for the adaptive designs,
+whose residual is the approximation error's broad fine scale; over these 40 slow units no design drifts, no leak
+included. (D) Phase-plane kernels (five isotropic kernels in general position, $\sigma_0 = 0.01$): on the circle 5
+exact zero Gauss--Newton eigenvalues (one per kernel) and 8 below $10^{-6}\sigma_0$, the $(K + 1)$-th eigenvalue
+$2.4\cdot10^{-10}$ of the largest; on ellipses with the velocity axis scaled by 1.1 and 2, 8 and 6 below
+$10^{-6}\sigma_0$ and none exact; on the orbit of $1.2\sin t + 0.3\sin2t$ 3; with the five centres at the origin 16
+exact zeros of 20.
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
 \paragraph{Numerics} (\code{exp_chaos_learning.py} $\to$ \code{results/chaos/learning_table.md}). The instance:
