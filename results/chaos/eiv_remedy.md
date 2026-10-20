@@ -4,7 +4,7 @@ The instance of Proposition D‴.30 (σ₀ = 0.00707, x_m = 2 sin t, the lift of
 
 ## A. The second-order force and its stationary responses (no dynamics)
 
-Per unit (Eν²)², function level, the averaged stationary response: the bias of the mean parameters under the fixed prior and under the adaptive prior (every η > 0; = FᵀH⁻¹F, the squared norm of the smallest target perturbation exerting F) for the force of the noise's own second moments (quasi-static, `eiv_force`) and for the full second-order force (the parameters' fluctuation included, `second_order_mean`), the bias of the mean function under the adaptive prior with the full force (‖Ĵȳ + ½D²_Θf̂[Σ_ΘΘ]‖²_ρ), the least-squares bound ‖g‖²_ρ (g = k_eE[e] of the noise part; DR, DR*), the rescaled projected mean tracking error at the adaptive prior's stationary point, k_e²‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁ (F₁ the regressor's errors in variables; zero by construction for DR and DR*), and the mean tracking error itself ‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁/k_e². The last column is the noise variance at which the adaptive prior's full bias equals its floor of the parameters (N₀/2k_e)tr Q, N₀ = 2Eν²/B (std above 0.1 is outside the small-noise regime).
+Per unit (Eν²)², function level, the averaged stationary response: the bias of the mean parameters under the fixed prior and under the adaptive prior (η = ∞, the noise part's for every η > 0; = FᵀH⁻¹F, the squared norm of the smallest target perturbation exerting F) for the force of the noise's own second moments (quasi-static, `eiv_force`) and for the full second-order force (the parameters' fluctuation included, `second_order_mean`), the bias of the mean function under the adaptive prior with the full force (‖Ĵȳ + ½D²_Θf̂[Σ_ΘΘ]‖²_ρ), the least-squares bound ‖g‖²_ρ (g = k_eE[e] of the noise part; DR, DR*), the rescaled projected mean tracking error at the adaptive prior's stationary point, k_e²‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁ (F₁ the regressor's errors in variables; zero by construction for DR and DR*), and the mean tracking error itself ‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁/k_e². The last column is the noise variance at which the adaptive prior's full bias equals its floor of the parameters (N₀/2k_e)tr Q, N₀ = 2Eν²/B (std above 0.1 is outside the small-noise regime).
 
 | k_e | B | law | fixed: noise part | fixed: full | adaptive: noise part | adaptive: full | adaptive: mean function | ‖g‖²_ρ | k_e²‖P E[e]‖²_ρ | ‖P E[e]‖²_ρ | Eν² at bias = floor (std) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -53,14 +53,15 @@ The adaptive prior's full bias, MR over DR: 4.94e+03 (k_e = 25, B = 100), 3.01e+
 
 Along the family the zero-frequency leak S₀ = σ₀κ/(η + κ) trades the anchor's bias for the response to persistent forces, mode by mode, at h_jr_j + b_j = 1; the trade binds on the modes with h_j < σ₀ (3 of 9 here), where 1/h_j exceeds the fixed prior's 1/σ₀. The desired regressor changes the force instead: MR's bias over DR's (noise parts) along the family 5.09e+03, 3.92e+03, 2.37e+03, 2.3e+03, 2.33e+03.
 
-Zero-frequency leaks S₀ that do not commute with H (R = (H + S₀)⁻¹, B = (H + S₀)⁻¹S₀): RH + B = I holds, HR + B = I does not; per mode h_jr_jj + b_jj = 1 holds whatever S₀.
+Priors whose zero-frequency leak S₀ does not commute with H: R and B from the dynamic block of (y, z_f) at zero frequency (`anchored_block`; the block's dimension), against (H + S₀)⁻¹ and (H + S₀)⁻¹S₀ with S₀ = σ₀[E_xE_xᵀ + E_f(ηI + K)⁻¹KE_fᵀ] by elimination of z_f (the largest relative difference of R, the largest difference of B): RH + B = I holds, HR + B = I does not; per mode h_jr_jj + b_jj = 1 holds whatever S₀.
 
-| S₀ | max|HS₀ − S₀H| | max|RH + B − I| | max|HR + B − I| | max_j|h_jr_jj + b_jj − 1| | EIV bias, MR | EIV bias, DR |
-|---|---|---|---|---|---|---|
-| fixed on the amplitudes | 8.86e-05 | 1.3e-14 | 0.785 | 5.2e-15 | 1.5926e+03 | 2.0687e-01 |
-| fixed on the centres | 1.02e-04 | 9.0e-15 | 0.673 | 8.5e-15 | 2.2666e+03 | 4.7051e-01 |
-| one active face (atom 1's amplitude) | 7.57e-05 | 1.4e-14 | 0.575 | 6.0e-15 | 1.9188e+03 | 3.4964e-01 |
-| a random S₀ ⪰ 0 (‖S₀‖ = σ₀) | 1.25e-04 | 2.7e-15 | 0.355 | 4.9e-15 | 8.8254e+02 | 4.0066e-01 |
+| prior | block dimension | block against the definitions | max|HS₀ − S₀H| | max|RH + B − I| | max|HR + B − I| | max_j|h_jr_jj + b_jj − 1| | EIV bias, MR | EIV bias, DR |
+|---|---|---|---|---|---|---|---|---|
+| fixed on the amplitudes, η = σ₀ elsewhere | 15 | 1.9e-15 | 8.86e-05 | 4.2e-15 | 0.785 | 5.9e-15 | 1.5926e+03 | 2.0687e-01 |
+| fixed on the centres, η = σ₀ elsewhere | 15 | 1.7e-15 | 1.02e-04 | 7.3e-15 | 0.673 | 8.9e-15 | 2.2666e+03 | 4.7051e-01 |
+| one active face (atom 1's amplitude), η = ∞ | 9 | 1.1e-16 | 7.57e-05 | 1.4e-14 | 0.575 | 6.0e-15 | 1.9188e+03 | 3.4964e-01 |
+| anchor gain K = ηP_amp | 18 | 6.8e-16 | 4.43e-05 | 5.7e-15 | 0.471 | 6.9e-15 | 1.8371e+03 | 2.9146e-01 |
+| a random anchor gain, K + Kᵀ ⪰ 0, ‖K‖ ≈ η | 18 | 5.5e-16 | 1.47e-04 | 1.2e-15 | 0.495 | 5.8e-15 | 9.4406e+02 | 3.9894e-01 |
 
 ## C. The real loop: MR, DR and DR* driven by the same noise paths (k_e = 25, B = 100, std 0.01, η = ∞, RK4 dt = 0.001)
 

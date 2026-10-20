@@ -150,3 +150,118 @@ def test_a_constant_force_is_answered_by_the_inverse_curvature_under_the_adaptiv
     H = MN.noise_matrices(cv, FPRIME)[0]
     b = MN.mean_biases(H, out)
     assert abs(b['full'] / b['noise'] - 1) < 1e-4 and abs(b['noise'] / MN.equivalent_perturbation(H, Fq) - 1) < 5e-3
+
+
+def _fpp(x):
+    return sum(A * ((x - C) ** 2 / S ** 4 - 1 / S ** 2) * np.exp(-(x - C) ** 2 / (2 * S ** 2)) for A, C, S in BUMPS)
+
+
+def test_the_separation_drift_is_the_quadrature_of_its_two_moments():
+    """S_k = ⟨E[ε_m²]G^{1/2}∂_x∇²_ϑΦ̃G^{1/2} + E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ at the lift against an independent quadrature — the Hessian of the
+    single-particle feature by second differences of f̂ itself, not of its gradient, and the OU moments E[ε_m²] = Eν²(a² + k_eB)/(k_e(k_e + B))
+    and E[e] = −(∂²_xf/(2k_e))Eν²(B − k_e − 2a)/(k_e + B) typed here — to 10⁻⁴. The E[e] term carries at least 2% of every class's drift
+    (all of class 2's), so a dropped term or a rescaled drift is caught; and `separation_drift_series` with these moments is the drift's
+    integrand (round 22 of the review, ID-4)."""
+    net, exact = _setup()
+    cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
+    ke, B, N = 25.0, 100.0, 64
+    S = MN.separation_drift(cv, FPRIME, _fpp, ke, B, 1.0, N=N)
+    phi = lambda x, th: net.f_hat(np.array([x]), th[None, :])[0]
+    E = 1e-3 * np.eye(3)
+    hess = lambda x, th: np.array([[(phi(x, th + E[i] + E[j]) - phi(x, th + E[i] - E[j]) - phi(x, th - E[i] + E[j]) + phi(x, th - E[i] - E[j]))
+                                    / 4e-6 for j in range(3)] for i in range(3)])
+    g = np.sqrt(G)
+    ts = np.arange(N) * PER / N
+    Sx, Se, Ee, Em2 = np.zeros_like(S), np.zeros_like(S), [], []
+    for s in ts:
+        x = 2 * np.sin(s); a = FPRIME(x)
+        Em2.append((a ** 2 + ke * B) / (ke * (ke + B))); Ee.append(-(_fpp(x) / (2 * ke)) * (B - ke - 2 * a) / (ke + B))
+        for k, th in enumerate(exact):
+            Sx[k] += Em2[-1] * g[:, None] * (hess(x + 1e-3, th) - hess(x - 1e-3, th)) / 2e-3 * g[None, :] / N
+            Se[k] += Ee[-1] * g[:, None] * hess(x, th) * g[None, :] / N
+    for k in range(3):
+        assert np.abs(S[k] - Sx[k] - Se[k]).max() < 1e-4 * np.abs(S[k]).max()
+        assert np.abs(Se[k]).max() > 0.02 * np.abs(S[k]).max()
+    assert np.abs(MN.separation_drift_series(cv, ts, np.array(Ee), np.array(Em2)).mean(axis=0) - S).max() < 1e-12 * np.abs(S).max()
+
+
+def test_along_the_transient_the_mean_error_carries_the_tracking_error_of_the_developing_bias():
+    """`second_order_transient` from the lift (round 22, ID-1): after one period the mean parameters have moved by the averaged force,
+    y(T₀) = (I − e^{−HT₀/k_e})H⁻¹F (F the noise part of `second_order_mean`'s force) to 1.5%; E[ε_m²] is the quasi-static second moment to
+    0.5% after the fast transient; and in the third period the mean error is the noise's own quasi-static E[e] plus the tracking error
+    −Ĵȳ/k_e of the developing deviation (the residual, the error filter's lag, below 20% of the tracking part), the tracking part already
+    twice the noise's own — so the lift's drift is not the trajectory's."""
+    net, exact = _setup()
+    cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
+    ke, B, dt = 25.0, 100.0, 0.02
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, ke, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3)
+    o = MN.second_order_transient(cl, cv, FPRIME, B, 1.0, 3 * PER, dt=dt)
+    F = MN.second_order_mean(cl, cv, FPRIME, B, 1.0, N=128)['F_noise']
+    h, V = np.linalg.eigh(MN.noise_matrices(cv, FPRIME)[0])
+    i1 = int(round(PER / dt))
+    pred = V @ ((1 - np.exp(-h * o['t'][i1] / ke)) / h * (V.T @ F))
+    assert np.linalg.norm(o['m'][i1, 1:1 + cv.d] - pred) < 0.015 * np.linalg.norm(pred)
+    t = o['t']; x = 2 * np.sin(t); a = FPRIME(x)
+    after = t > 0.5
+    assert np.abs(o['Eem2'][after] / ((a ** 2 + ke * B) / (ke * (ke + B)))[after] - 1).max() < 5e-3
+    qs = -(_fpp(x) / (2 * ke)) * (B - ke - 2 * a) / (ke + B)
+    track = -np.einsum('ti,ti->t', np.array([cv.J(s)[0] for s in t]), o['m'][:, 1:1 + cv.d]) / ke
+    w = t >= 2 * PER + 0.5
+    rms = lambda v: np.sqrt(np.mean(v[w] ** 2))
+    assert rms(o['Ee'] - qs - track) < 0.2 * rms(track) and rms(track) > 2 * rms(qs)
+
+
+def test_the_exact_periodic_mean_has_the_filtered_gram_stiffness_and_the_fixed_prior_keeps_its_leak():
+    """`second_order_mean(periodic=True)` at k_e = 50 (round 22, ID-4): the exact periodic second-order mean's function-level bias over a period
+    is the response to the averaged force with the filtered Gram H − k_e⁻²⟨Ĵ̇ᵀĴ̇⟩ (Corollary D‴.26(c)) to 0.4% — 2.6% (adaptive) and 0.6% (fixed)
+    away from the plain Gram's — under both priors; the fixed-prior branch's noise force is the quasi-static force; and `mean_biases` with
+    S = σ₀ is the response (H + σ₀I)⁻¹F, not the adaptive prior's H⁻¹F."""
+    net, exact = _setup()
+    cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
+    ke, B = 50.0, 100.0
+    H = MN.noise_matrices(cv, FPRIME)[0]
+    t, K, Lam, om = cv.chang_grid(512)
+    Jd = np.real(np.fft.ifft((1j * om).reshape(-1, 1, 1) * np.fft.fft(K, axis=0), axis=0))[:, 0, :cv.d]
+    Hf = H - Jd.T @ Jd / len(t) / ke ** 2
+    Fq = ke * MN.eiv_force(cv, FPRIME, _fpp, ke, B, 1.0)
+    I = np.eye(cv.d)
+    for eta, S, gap in ((np.inf, 0.0, 0.02), (0.0, SIGMA0, 0.004)):
+        cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, ke, G, SIGMA0, np.arange(3), 3, eta, weights=Q3)
+        out = MN.second_order_mean(cl, cv, FPRIME, B, 1.0, N=128, periodic=True)
+        assert out['per_err'] < 1e-10 and out['m_per_err'] < 1e-10
+        my = out['m'][:, 1:1 + cv.d]
+        ex = np.mean(np.einsum('ti,ij,tj->t', my, H, my))
+        F = out['F_noise'] + out['F_param']
+        bias = lambda Hm: (lambda y: y @ H @ y)(np.linalg.solve(Hm + S * I, F))
+        assert abs(ex / bias(Hf) - 1) < 4e-3 and abs(ex / bias(H) - 1) > gap
+        assert np.linalg.norm(out['F_noise'] - Fq) < 2e-3 * np.linalg.norm(Fq)
+        b = MN.mean_biases(H, out, S=S if eta == 0 else None)
+        assert abs(b['full'] / bias(H) - 1) < 1e-10
+    assert MN.mean_biases(H, out)['full'] > 3 * b['full']                             # without S the fixed prior's response is H⁻¹F's
+
+
+def test_the_mean_function_bias_adds_the_networks_curvature_under_the_parameters_fluctuation():
+    """`mean_biases`' mean-function bias ‖Ĵȳ + c̄‖²_ρ (round 22, ID-4): c̄ = ½D²_Θf̂[Σ̄_ΘΘ] against an independent contraction — the Hessian of
+    the weighted K₀-atom network's output in its nine parameters by second differences — to 10⁻⁴; Ĵȳ against the network's directional
+    derivative along the physical mean deviation; and the mean function's excess over the mean parameters' bias against 2⟨Ĵȳ, c̄⟩ + ‖c̄‖²
+    from these, to 1%."""
+    net, exact = _setup()
+    cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
+    ke, B = 25.0, 100.0
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, ke, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3)
+    out = MN.second_order_mean(cl, cv, FPRIME, B, 1.0, N=128)
+    H = MN.noise_matrices(cv, FPRIME)[0]
+    b = MN.mean_biases(H, out)
+    xs = 2 * np.sin(out['t'])
+    fh = lambda x, Th: cl.f_hat(np.array([x]), Th)[0]
+    Th0 = np.asarray(exact, float)
+    E = 2e-3 * np.eye(9).reshape(9, 3, 3)
+    d2 = lambda x, i, j: (fh(x, Th0 + E[i] + E[j]) - fh(x, Th0 + E[i] - E[j]) - fh(x, Th0 - E[i] + E[j]) + fh(x, Th0 - E[i] - E[j])) / 1.6e-5
+    c_ind = np.array([0.5 * sum(out['Sig'][i, j] * d2(x, i, j) for i in range(9) for j in range(9)) for x in xs])
+    assert np.abs(out['c_bar'] - c_ind).max() < 1e-4 * np.abs(c_ind).max()
+    y = np.linalg.solve(H, out['F_noise'] + out['F_param'])
+    dTh = np.sqrt(G)[None, :] * y.reshape(3, 3) / np.sqrt(Q3)[:, None]                # δϑ_k = G^{1/2}y_k/√w_k
+    Jy = np.array([(fh(x, Th0 + 1e-6 * dTh) - fh(x, Th0 - 1e-6 * dTh)) / 2e-6 for x in xs])
+    assert np.abs(out['J'] @ y - Jy).max() < 1e-6 * np.abs(Jy).max()
+    excess = np.mean((Jy + c_ind) ** 2) - np.mean(Jy ** 2)
+    assert abs((b['function'] - b['full']) / excess - 1) < 0.01

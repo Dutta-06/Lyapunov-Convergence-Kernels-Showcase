@@ -23,8 +23,11 @@ C. The real nonlinear loop (the weighted K₀-atom loop; RK4, dt = 10⁻³, k_e 
    fixed and the adaptive prior (η = ∞). And one run of the lift m = 15 driven by the same noise path as a K₀-atom run: the same f̂ to
    rounding (the noise is coherent: a replicated start stays replicated; f̂ is stored in float32).
 D. Invariance is not attraction: the float64 difference between the lift and the K₀-atom run over 25 time units; and the lift m = 15 from
-   a separation of class 3 of size 10⁻⁶ along S₃'s top eigenvector, N_D noise paths at the stds STDS_D: the separation's growth rate over
-   t ∈ [50, T_D] against −σ₀/k_e + λ_max(S₃)Eν².
+   a separation of class 3 of size 10⁻⁶ along S₃'s top eigenvector, N_D antithetic pairs of noise paths (ν and −ν) at the stds STDS_D: the
+   separation's growth rate over t ∈ [50, T_D] (the pair means cancel its first-order part) and the noise-induced rate
+   λ_eff := (rate + σ₀/k_e)/Eν², against the lift's drift λ_max(S₃) and against the drift along the second-order transient from the lift,
+   whose mean error carries the mean tracking error of the developing errors-in-variables deviation (round 22, ID-1): S₃(t) by
+   `second_order_transient` and `separation_drift_series`, its window averages, and the predicted slope of log‖u‖ for u̇ = (Eν²S₃(t) − σ₀/k_e)u.
 
 Output: results/chaos/measurement_noise.md and measurement_noise_raw.npz (MN_WORKERS, MN_RUNS, MN_TC; `--from-raw` regenerates the md,
 `--only-A`, `--only-B`, `--only-D` recompute that part and merge it).
@@ -59,7 +62,7 @@ KES_B2 = (25.0, 50.0, 100.0, 200.0)
 KES_GROW = (12.5, 25.0, 50.0, 100.0, 200.0, 400.0)
 BS_GROW = (100.0, 1000.0, 10000.0)
 STDS_D = (0.01, 0.03, 0.05)
-N_D = 4
+N_D = 8                                                                    # antithetic pairs per std
 T_D = 300.0
 ETAS_B = (0.0, SIGMA0, np.inf)
 B_OU, DT_C = 100.0, 1e-3
@@ -260,8 +263,8 @@ def job_D0(args):
 
 def job_D(args):
     """The lift m = 15 with class 3's particles (index 2) separated by c_i·10⁻⁶ along G^{1/2}u (u the top eigenvector of S₃, Σc_i = 0), one noise path
-    (std, seed): the separation's norm every 5 time units and its growth rate (least squares over t ≥ 50)."""
-    std, seed = args
+    (std, seed, sign: ±1 the antithetic pair): the separation's norm every 5 time units and its growth rate (least squares over t ≥ 50)."""
+    std, seed, sign = args
     t0 = time.time()
     net, atoms = setup()
     cv = AF.CollapsedVariational(net, xr, PER, G, SIGMA0, np.inf, atoms, Q3)
@@ -276,11 +279,45 @@ def job_D(args):
     def rec(t, z):
         Th = z[1:1 + m * 3].reshape(m, 3)[10:15]
         return np.array([t, np.sqrt(np.sum(((Th - Th.mean(axis=0)) / np.sqrt(G)) ** 2))])
-    out = np.array(MN.simulate_noisy(cl, z0, m, T_D, DT_C, B_OU, std ** 2, np.random.default_rng(3000 + seed), int(round(5.0 / DT_C)), rec))
+    out = np.array(MN.simulate_noisy(cl, z0, m, T_D, DT_C, B_OU, std ** 2, np.random.default_rng(3000 + seed), int(round(5.0 / DT_C)), rec,
+                                     sign=sign))
     msk = out[:, 0] >= 50.0
     rate = float(np.polyfit(out[msk, 0], np.log(out[msk, 1]), 1)[0])
-    print(f"[{time.time() - t0:.0f}s] D std {std:g} seed {seed}", flush=True)
-    return dict(std=std, seed=seed, t=out[:, 0], sep=out[:, 1], rate=rate)
+    print(f"[{time.time() - t0:.0f}s] D std {std:g} seed {seed} sign {sign:+g}", flush=True)
+    return dict(std=std, seed=seed, sign=sign, t=out[:, 0], sep=out[:, 1], rate=rate)
+
+
+def job_D_pred(args):
+    """The drift along the second-order transient from the lift (Eν² = 1; the drift is linear in Eν² at this order): S_k(t) on the grid, its
+    50-unit window averages' largest eigenvalues, the mean error's rms per window, and per std the predicted rate — the least-squares slope of
+    log‖u‖ over t ≥ 50 for u̇ = (Eν²S₃(t) − σ₀/k_e)u from S₃'s top eigenvector at the lift — and the std at which it vanishes."""
+    t0 = time.time()
+    net, atoms = setup()
+    cv = AF.CollapsedVariational(net, xr, PER, G, SIGMA0, np.inf, atoms, Q3)
+    cl = MN.NoisyRealLoop(net, f_vec, xr, xrd, PER, KE, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3)
+    o = MN.second_order_transient(cl, cv, fprime, B_OU, 1.0, T_D, dt=0.05)
+    S = MN.separation_drift_series(cv, o['t'], o['Ee'], o['Eem2'])
+    Slift = MN.separation_drift(cv, fprime, fsecond, KE, B_OU, 1.0)
+    u0 = np.linalg.eigh(Slift[2])[1][:, -1]
+    edges = np.arange(0.0, T_D + 1e-9, 50.0)
+    win = [dict(a=a, b=b, lam=[float(np.linalg.eigvalsh(S[(o['t'] >= a) & (o['t'] < b)].mean(axis=0)[k])[-1]) for k in range(3)],
+                rmsE=float(np.sqrt(np.mean(o['Ee'][(o['t'] >= a) & (o['t'] < b)] ** 2)))) for a, b in zip(edges[:-1], edges[1:])]
+
+    def pred(std):
+        u = u0.copy(); ln = [0.0]; dt = o['t'][1] - o['t'][0]
+        for k in range(len(o['t']) - 1):
+            A1 = std ** 2 * S[k, 2] - SIGMA0 / KE * np.eye(3); A2 = std ** 2 * S[k + 1, 2] - SIGMA0 / KE * np.eye(3); Am = 0.5 * (A1 + A2)
+            k1 = A1 @ u; k2 = Am @ (u + dt / 2 * k1); k3 = Am @ (u + dt / 2 * k2); k4 = A2 @ (u + dt * k3)
+            u = u + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+            nrm = np.linalg.norm(u); ln.append(ln[-1] + np.log(nrm)); u = u / nrm
+        ln = np.array(ln); msk = o['t'] >= 50.0
+        return float(np.polyfit(o['t'][msk], ln[msk], 1)[0])
+    rates = {std: pred(std) for std in STDS_D}
+    lo, hi = 0.01, 0.06
+    for _ in range(40):
+        mid = 0.5 * (lo + hi); lo, hi = (mid, hi) if pred(mid) < 0 else (lo, mid)
+    print(f"[{time.time() - t0:.0f}s] D pred", flush=True)
+    return dict(win=win, rates=rates, lift=[float(np.linalg.eigvalsh(Slift[k])[-1]) for k in range(3)], std_star=0.5 * (lo + hi))
 
 
 # ---------------------------------------------------------------------------- report
@@ -324,7 +361,7 @@ def report(A, Bres, Cres, Cpred, t0=None, B2=None, D=None):
                   "| prior | noise part | full force | mean function | exact periodic mean | periodicity |", "|---|---|---|---|---|---|"]
         for e in (0.0, np.inf):
             r = so[e]
-            lines.append(f"| {'fixed' if e == 0 else 'adaptive (every η > 0)'} | {r['noise']:.6g} | {r['full']:.6g} | {r['function']:.6g} | {r['exact']:.6g} | {r['per']:.1e} |")
+            lines.append(f"| {'fixed' if e == 0 else 'adaptive (η = ∞; the noise part for every η > 0)'} | {r['noise']:.6g} | {r['full']:.6g} | {r['function']:.6g} | {r['exact']:.6g} | {r['per']:.1e} |")
         kg = KES_GROW
         lines += ["", "The adaptive prior's averaged bias per unit (Eν²)² against k_e at the OU rates B, with its local exponents d log/d log k_e between "
                   "successive k_e (→ 2 while k_e ≪ B, saturating for k_e ≫ B).", "",
@@ -421,17 +458,41 @@ def report(A, Bres, Cres, Cpred, t0=None, B2=None, D=None):
                   f"The lift and the K₀-atom run on one noise path (std 0.01, η = ∞, 25 time units) in float64: the largest difference of f̂ on the grid "
                   f"{d0['df']:.1e} (a mean of five against a weighted atom: rounding), the lift's largest within-class spread {d0['spread']:.1e} (identical "
                   "arithmetic per particle, whether or not the replicated state attracts).", "",
-                  f"The lift m = 15 with class 3's particles separated by 10⁻⁶·(2, 1, 0, −1, −2) along S₃'s top eigenvector, {N_D} noise paths per std, "
-                  f"{T_D:g} time units: the separation's growth rate (least squares on log‖separation‖ over t ≥ 50) against −σ₀/k_e + λ_max(S₃)Eν².", "",
-                  "| std | predicted | measured (mean ± s.e.) | per path |", "|---|---|---|---|"]
+                  f"The lift m = 15 with class 3's particles separated by 10⁻⁶·(2, 1, 0, −1, −2) along S₃'s top eigenvector, {N_D} antithetic pairs of noise "
+                  f"paths per std (ν and −ν), {T_D:g} time units: the separation's growth rate (least squares on log‖separation‖ over t ≥ 50) — its pair "
+                  "means cancel the first-order part — and λ_eff = (rate + σ₀/k_e)/Eν², against the lift's drift (−σ₀/k_e + λ_max(S₃)Eν²) and against the "
+                  "drift along the second-order transient from the lift (the slope predicted for u̇ = (Eν²S₃(t) − σ₀/k_e)u).", ""]
+        pr = D.get('pred')
+        if pr is not None:
+            lines += ["The drift along the transient (Eν² = 1): per 50-unit window, the mean error's rms and the largest eigenvalues of the window-averaged "
+                      "S_k (classes 1, 2, 3); at the lift: " + ", ".join(f"{v:.4f}" for v in pr['lift']) + ".", "",
+                      "| window | rms E[e] | λ_max(S₁), λ_max(S₂), λ_max(S₃) |", "|---|---|---|"]
+            for w_ in pr['win']:
+                lines.append(f"| [{w_['a']:g}, {w_['b']:g}) | {w_['rmsE']:.3f} | " + ", ".join(f"{v:.4f}" for v in w_['lam']) + " |")
+            lines += ["", f"The separation's rate vanishes at the std {np.sqrt(SIGMA0 / KE / max(pr['lift'])):.4f} by the lift's drift and at {pr['std_star']:.4f} "
+                      f"by the transient's over t ∈ [50, {T_D:g}].", ""]
+        lines += ["| std | lift's prediction | transient's prediction | measured (pair means ± s.e.) | λ_eff measured | λ_eff: lift; transient |", "|---|---|---|---|---|---|"]
         lm = max(A['sep']) if 'sep' in A else np.nan
+        fit = []
         for std in STDS_D:
             rs = [r for r in D['runs'] if r['std'] == std]
             if not rs:
                 continue
-            rt = np.array([r['rate'] for r in rs])
-            lines.append(f"| {std:g} | {-SIGMA0 / KE + lm * std ** 2:+.3e} | {rt.mean():+.3e} ± {rt.std(ddof=1) / np.sqrt(len(rt)):.1e} | "
-                         + ", ".join(f"{x:+.2e}" for x in rt) + " |")
+            seeds = sorted(set(r['seed'] for r in rs))
+            pm = np.array([np.mean([r['rate'] for r in rs if r['seed'] == sd]) for sd in seeds])
+            se = pm.std(ddof=1) / np.sqrt(len(pm))
+            le = (pm + SIGMA0 / KE) / std ** 2
+            tp = pr['rates'][std] if pr is not None else np.nan
+            fit.append((std ** 2, le.mean(), le.std(ddof=1) / np.sqrt(len(le))))
+            lines.append(f"| {std:g} | {-SIGMA0 / KE + lm * std ** 2:+.3e} | {tp:+.3e} | {pm.mean():+.4e} ± {se:.1e} | {le.mean():.4f} ± {fit[-1][2]:.4f} | "
+                         f"{lm:.4f}; {(tp + SIGMA0 / KE) / std ** 2:.4f} |")
+        if len(fit) >= 3:                                                          # λ_eff = c₀ + c₁Eν², weighted by the standard errors
+            v, le, se = (np.array(c) for c in zip(*fit))
+            (c1, c0), cov = np.polyfit(v, le, 1, w=1.0 / se, cov='unscaled')
+            root = (-c0 + np.sqrt(c0 ** 2 + 4 * c1 * SIGMA0 / KE)) / (2 * c1) if c1 != 0 else SIGMA0 / KE / c0
+            lines += ["", f"The weighted fit λ_eff = c₀ + c₁Eν²: c₀ = {c0:.4f} ± {np.sqrt(cov[1, 1]):.4f} (the small-noise limit; the lift's drift "
+                      f"{lm:.4f}, the transient's {(pr['rates'][STDS_D[0]] + SIGMA0 / KE) / STDS_D[0] ** 2 if pr is not None else np.nan:.4f} at std "
+                      f"{STDS_D[0]:g}), c₁ = {c1:.2f} ± {np.sqrt(cov[0, 0]):.2f} (the next order); the measured rate vanishes at the std {np.sqrt(root):.4f}."]
     lines += ["", "Numbers are produced by `experiments/exp_measurement_noise.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'measurement_noise.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")
@@ -446,7 +507,7 @@ def main():
     raw = os.path.join(OUT, 'measurement_noise_raw.npz')
     jobs_B = [(ke, eta) for ke in KES_B for eta in ETAS_B] + [(ke, eta, 'noslope') for ke in KES_B for eta in (0.0, np.inf)]
     jobs_B2 = [(ke, eta) for ke in KES_B2 for eta in (0.0, np.inf)]
-    jobs_D = [(std, seed) for std in STDS_D for seed in range(N_D)]
+    jobs_D = [(std, seed, sign) for std in STDS_D for seed in range(N_D) for sign in (1.0, -1.0)]
 
     def rep_(save):
         report(save['A'].item(), list(save['B']), list(save['C']), save['P'].item(), t0,
@@ -465,7 +526,9 @@ def main():
                 save['B'] = np.array(pool.map(job_B, jobs_B, chunksize=1), dtype=object)
                 save['B2'] = np.array(pool.map(job_B2, jobs_B2, chunksize=1), dtype=object)
             if '--only-D' in sys.argv:
-                save['D'] = np.array(dict(D0=job_D0(None), runs=pool.map(job_D, jobs_D, chunksize=1)), dtype=object)
+                pr = pool.apply_async(job_D_pred, (None,))
+                runs = pool.map(job_D, jobs_D, chunksize=1)
+                save['D'] = np.array(dict(D0=job_D0(None), runs=runs, pred=pr.get()), dtype=object)
         save_raw(raw, **save)
         rep_(save)
         return
@@ -476,7 +539,7 @@ def main():
         save_raw(raw, A=np.array(A, dtype=object), B=np.array(Bres, dtype=object), B2=np.array(B2, dtype=object))
         jobs = [('K0', eta, std, seed) for std in STDS_C for eta in (0.0, np.inf) for seed in range(N_MC)] + [('lift', np.inf, STDS_C[1], 0)]
         Cres = pool.map(job_C, jobs, chunksize=1)
-        Dd = dict(D0=job_D0(None), runs=pool.map(job_D, jobs_D, chunksize=1))
+        Dd = dict(D0=job_D0(None), runs=pool.map(job_D, jobs_D, chunksize=1), pred=job_D_pred(None))
     Cpred = {(std, eta): predictions_C(std, eta) for std in STDS_C for eta in (0.0, np.inf)}
     save = dict(A=np.array(A, dtype=object), B=np.array(Bres, dtype=object), B2=np.array(B2, dtype=object), C=np.array(Cres, dtype=object),
                 P=np.array(Cpred, dtype=object), D=np.array(Dd, dtype=object))

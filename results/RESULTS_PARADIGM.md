@@ -641,16 +641,27 @@ I, Ā₁ skew in it.
 
 ## Lemma D‴.26a — the exact slow subspace: Corollary D‴.26(c) and Proposition D‴.30(ii) proved for the linearised loop (`exp_adaptive_floquet.py` Part D → `chaos/adaptive_floquet.md`)
 
-- Corollary D‴.26's instance on the asymmetric reference x_m = 2 sin t + 0.8 sin 2t, η = σ₀ and ∞, k_e = 12.5–400.
-- Chang's slow subspace: the contraction in 4–9 iterations to an invariance residual ≤ 3.8·10⁻¹⁵; |P − P₂|/ε³ → 3.3·10³; the slow
-  block's rates the full variational equation's to ≤ 1.5·10⁻⁹.
-- The parity as an identity: the rates at ±ε equal to ≤ 1.6·10⁻¹² while their first-order deviation is 9.5·10⁻²–1.4·10⁻⁴; a mismatch in
-  the error channel breaks the equality at O(1/k_e) (1.1·10⁻² → 3.1·10⁻⁴); the Magnus parameter ≤ 0.48.
-- The slow noise: the decoupling residual ≤ 3·10⁻¹⁶; b against −(K̇ + aK)ᵀ at O(1/k_e) (63% → 3.0%); at t = 0 Cov(v)·2ε³ → 1,
-  E[vY′ᵀ] → −bᵀ at O(1/k_e), Cov(Y′) → Σ̄ (0.36 → 0.0011); the floor at t = 0 at 0.755 → 0.9995 of the slow-plus-fast value.
+- Corollary D‴.26's instance on the asymmetric reference x_m = 2 sin t + 0.8 sin 2t, η = 0 (K = Ĵ, Λ = σ₀I), σ₀ and ∞, k_e = 12.5–1600.
+- Chang's slow subspace: the contraction in 3–9 iterations to an invariance residual ≤ 3.8·10⁻¹⁵ (at η = 0, k_e = 12.5 it stalls at
+  rounding, 499 iterations); |P − P₂|/ε³ → 3.34·10³ and |P − P₍₃₎|/ε⁴ → 5.8·10⁴; the slow block's rates the full variational equation's
+  to ≤ 1.0·10⁻⁸.
+- The parity as an identity: the rates at ±ε equal to ≤ 5.9·10⁻¹² of the largest rate and ≤ 1.1·10⁻⁹ per mode, while their first-order
+  deviation is 9.8·10⁻²–8.9·10⁻⁶ of the largest rate and per mode up to 29.6% (the slowest mode at η = ∞: −29.6%, −12.5%, −4.0%, −1.1%
+  at k_e = 12.5–100); a mismatch in the error channel breaks the equality at O(1/k_e) (1.1·10⁻² → 7.8·10⁻⁵); the Magnus parameter
+  ≤ 0.48 (0.004 at k_e = 1600).
+- The slow noise: the decoupling residual ≤ 3·10⁻¹⁶; b against b₀ = −(K̇ + aK)ᵀ at O(1/k_e) (63% → 0.74%) and against b₀ + εb₁ at
+  O(1/k_e²) (|b − b₀ − εb₁|/ε² → 3.34·10³); at t = 0 Cov(v)·2ε³ → 1, E[vY′ᵀ] → −bᵀ at O(1/k_e), Cov(Y′) → Σ̄ (0.35 → 9.4·10⁻⁵ at η = ∞;
+  O(ε²) to k_e = 200–400, O(ε) beyond). The weakest mode's deviation (−34% → −6.6·10⁻⁵, O(ε²)) is the slow noise's attenuation,
+  ⟨bbᵀ⟩ below Q̄ (−56% → −1.1·10⁻⁴), plus the rate's correction (+49% → +4.6·10⁻⁵): 2.4–2.5 to 1 and of opposite sign at η = ∞ (12–23 to 1
+  at η = 0). Cov(Y) − Cov(Y′) is the jitter (ε/2)K(0)ᵀK(0) at O(ε) and with its next term at O(ε²) (0.30 → 0.001 at k_e = 100–1600).
+- The floor: at t = 0 0.763 → 1.0000 of the slow-plus-fast value; over the period its average 0.766 → 0.99997 of Proposition D‴.30(ii)'s
+  formula, pointwise in [0.9952, 1.0091] of it at k_e = 1600 — the predicted range of the fast jitter (ε/2)tr(HĴ(t)ᵀĴ(t)): the formula
+  holds as the period average.
 
-Tests (`tests/test_adaptive_floquet.py`): Chang's P with the exact slow multipliers and the ε³ truncation; the rates exactly even in ε at
-η = σ₀ and ∞, a mismatch breaking it; the slow noise decoupled and high-passed, the covariances at their leading orders.
+Tests (`tests/test_adaptive_floquet.py`): Chang's P with the exact slow multipliers and the ε³ truncation on the instance; on a synthetic
+block with an O(1), non-symmetric Λ the truncations at ε³ and ε⁴, a flipped Λ and a dropped cubic term caught; the rates exactly even in
+ε at η = σ₀ and ∞, a mismatch breaking it; the slow noise decoupled, b₀ against K̇ by the chain rule and the plant's own slope by
+differences, b₁ at ε², the covariances at their orders.
 
 ## Proposition D‴.27 — a projected adaptive prior (`exp_adaptive_prior.py` Part H → `chaos/adaptive_prior.md`)
 
@@ -746,19 +757,28 @@ kernels in general position have one zero Gauss–Newton eigenvalue each; the se
   B = 8k_e and 4k_e.
 - The exactly linearised loop: its periodic stationary covariance at the prediction to 0.976–0.980 (k_e = 25), 0.994–0.995 (50),
   0.9986–0.9988 (100), 0.9997–0.9998 (200), above 1 at 800 (+1.3·10⁻⁵): the relative error is O(1/k_e), its first-order term from the
-  slope a in the noise input — with the noise input −k_eν the deviation is even in 1/k_e (successive ratios 3.67 → 4.00).
-- Invariance, not attraction: the separations' second-order drift λ_max(S_k) = 0.0148, 0.0101, 0.298 per Eν² in the three classes, the
-  third's separations growing above the noise std 0.031; in the real loop (the lift m = 15, four noise paths of 300 time units) they
-  separate at −2.55·10⁻⁴, −0.9·10⁻⁵ and +4.37·10⁻⁴ per time unit at std 0.01, 0.03, 0.05 (predicted −2.53·10⁻⁴, −1.5·10⁻⁵, +4.62·10⁻⁴).
+  slope a in the noise input — with the noise input −k_eν the deviation is numerically even in 1/k_e (successive ratios 3.67 → 4.00 to
+  k_e = 800; not proved).
+- Invariance, not attraction: at the lift the separations' second-order drift λ_max(S_k) = 0.0148, 0.0101, 0.298 per Eν² in the three
+  classes, the third's separations growing there above the noise std 0.031; along the noisy trajectory the mean error also carries the
+  tracking error of the developing errors-in-variables deviation (rms 0.121 → 0.602 per Eν², λ_max(S₃) 0.307 → 0.349 over 300 time
+  units). In the real loop (the lift m = 15, eight antithetic pairs of noise paths of 300 time units per std) the separations' rates are
+  −2.50·10⁻⁴, +2.74·10⁻⁶ and +4.53·10⁻⁴ per time unit at std 0.01, 0.03, 0.05; λ_eff = (rate + σ₀/k_e)/Eν² is 0.3271 ± 0.0038,
+  0.3175 ± 0.0037, 0.2943 ± 0.0034 against the lift's 0.2981 and the transient's 0.3264, 0.3270, 0.3281; the fit's small-noise limit
+  0.3291 ± 0.0033, the next order −13.8 ± 2.0; the rate vanishes at std 0.0299 over the window (0.0308 by the lift's drift, 0.0294 by the
+  transient's); the long-time threshold is open.
 - The real loop (12 noise paths of 300 time units, common to the four cases): within 1.75 standard errors of the linear prediction plus
   the mean part at both noise levels, the mean part 42% (std 0.003) and 89% (std 0.01) at t = 300, the priors 6.0–6.4% apart (predicted
   5.3–6.1%); the lift m = 15 on a common noise path identical to the K₀-atom run to rounding (5.6·10⁻¹⁶ in float64).
 
 Tests (`tests/test_measurement_noise.py`): the closed form against the Lyapunov solution, the trace identity at η = ∞ and the floor
 increasing in η; the exact periodic floors of the linearised loop at k_e = 100 for η = 0, σ₀, ∞; a lift m = 6 under a noise path staying
-replicated and following the K₀-atom loop; a separation of the weakest class decaying at std 0.01 and growing at 0.05 at its predicted
-rates; the OU noise's stationary variance and correlation, and the law seeing the measurement; the responses (H + σ₀I)⁻¹ and H⁻¹ to a
-constant force, and the quasi-static force against the full second-order mean's noise part.
+replicated and following the K₀-atom loop; a separation of the weakest class decaying at std 0.01 and growing at 0.05 (a sign test);
+the separations' drift against an independent quadrature of its two moments; along the second-order transient the mean parameters moved
+by the averaged force and the mean error carrying the tracking error of the developing deviation; the OU noise's stationary variance and
+correlation, and the law seeing the measurement; the responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the quasi-static force
+against the full second-order mean's noise part; the exact periodic mean against the filtered-Gram response under both priors, the fixed
+prior's branch and its leak in the bias; the mean function's curvature term against an independent contraction.
 
 ## Proposition D‴.31 — the adaptive prior is a washout leak; the desired regressor makes the noise's own persistent force a least-squares force (`exp_eiv_remedy.py` → `chaos/eiv_remedy.md`)
 
@@ -767,20 +787,26 @@ constant force, and the quasi-static force against the full second-order mean's 
 - The adaptive prior's function-level errors-in-variables bias per unit (Eν²)² at k_e = 25, B = 100: from the noise's own moments 2397
   (MR), 0.471 (DR), 0.0526 (DR*); with the parameters' fluctuation (the full second-order mean) 2398, 0.486, 0.0481 — the parameters'
   part ≤ 0.03% for MR, −8.7% to +3.3% for DR and DR* over the grid except +56% for DR at k_e = B = 100, where its noise part nearly
-  cancels; its own response 3.9·10⁻⁴ → 2.9·10⁻⁵ from k_e = 25 to 100. MR over DR 3.0·10³–2.1·10⁸ over k_e = 25–200 and B = 100, 1000;
+  cancels; its own response 3.9·10⁻⁴, 1.1·10⁻⁴, 2.9·10⁻⁵, 7.4·10⁻⁶ at k_e = 25–200 (∝ k_e⁻²: on the one-dimensional reference the law's
+  leading term, a line integral along the orbit, vanishes), its share of DR's bias not falling monotonically. This part is the classical
+  second-order bias of a constant-gain stochastic approximation (Benveniste–Métivier–Priouret, Dieuleveut–Durmus–Bach, Box's curvature
+  bias); the desired regressor does not remove it. MR over DR 3.0·10³–2.1·10⁸ over k_e = 25–200 and B = 100, 1000;
   MR's growing like (k_eB/(k_e + B))², DR's and DR*'s at most 1.18, below ¼‖∂²_xf‖²_ρ = 1.31; DR's noise part at its least-squares bound
   to 0.01%; k_e²‖P E[e]‖²_ρ 2394 for MR (zero by construction for DR, DR*), the mean tracking error itself 3.83 → 0.66 (k_e = 25 → 200).
   The noise std at which the bias reaches the floor: 0.0012 (MR), 0.085 (DR), 0.27 (DR*).
 - The prior family dz/ds = −η(z − T̂) − κ(z − z_a): RH + B = I to 1.1·10⁻¹⁴; the weakest mode's response 3269 → 136 as its bias factor
-  goes 0 → 0.959, the trade binding on the 3 of 9 modes with h_j < σ₀; MR's bias 2397 → 491, DR's 0.471 → 0.211. Non-commuting
-  zero-frequency leaks (fixed amplitudes or centres, an active face, a random S₀): RH + B = I to 1.4·10⁻¹⁴, HR + B − I 0.36–0.79.
+  goes 0 → 0.959, the trade binding on the 3 of 9 modes with h_j < σ₀; MR's bias 2397 → 491, DR's 0.471 → 0.211. Priors whose
+  zero-frequency leak does not commute with H (fixed amplitudes or centres with η = σ₀ elsewhere, an active face at η = ∞, the anchor gain
+  ηP_amp, a random anchor gain with K + Kᵀ ⪰ 0), R and B from their dynamic blocks: equal to (H + S₀)⁻¹ and (H + S₀)⁻¹S₀, S₀ by
+  elimination, to 1.9·10⁻¹⁵; RH + B = I to 1.4·10⁻¹⁴, HR + B − I 0.47–0.79.
 - The real loop on common noise paths (k_e = 25, std 0.01, η = ∞, 12 runs of 300 time units): E‖f̂ − f‖² at t = 300 2.43·10⁻⁶ (MR)
   against 2.80·10⁻⁷ (DR) and 2.75·10⁻⁷ (DR*), DR and DR* at their covariance part; the MR − DR run mean at its prediction to 0.5–5.3%,
   0.43–1.83 times the run mean's sampling error.
 
 Tests (`tests/test_eiv_remedy.py`): the washout identity along a real-loop solution at finite η and across a plan switch of the averaged
-loop; the collective block's transfer function against the washout formula, RH + B = I along the prior family and for non-commuting
-leaks (HR + B = I failing there); the response bound under random leaks S ≥ 0, the smallest equivalent target perturbation and the
+loop; the collective block's transfer function against the washout formula, RH + B = I along the prior family and, R and B from their
+dynamic blocks, for non-commuting leaks (HR + B = I failing there); the response bound under random leaks S ≥ 0, the smallest equivalent
+target perturbation and the
 projection; the lift exact under DR and DR*, on a common noise path DR's run within the second order of MR's (the difference ∝ the
 noise's variance), the regressor's point in the law; DR's and DR*'s noise forces least-squares with their pointwise bounds on g, MR's F₁
 three orders of magnitude above; the quasi-static forces against the full second-order mean, the parameters' part above 1% for DR and

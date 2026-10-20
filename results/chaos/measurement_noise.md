@@ -34,7 +34,7 @@ The full second-order mean (`second_order_mean`: the periodic covariance of the 
 | prior | noise part | full force | mean function | exact periodic mean | periodicity |
 |---|---|---|---|---|---|
 | fixed | 491.112 | 491.11 | 491.114 | 503.72 | 8.9e-13 |
-| adaptive (every η > 0) | 2397.66 | 2397.68 | 2397.65 | 2652.96 | 5.9e-13 |
+| adaptive (η = ∞; the noise part for every η > 0) | 2397.66 | 2397.68 | 2397.65 | 2652.96 | 5.9e-13 |
 
 The adaptive prior's averaged bias per unit (Eν²)² against k_e at the OU rates B, with its local exponents d log/d log k_e between successive k_e (→ 2 while k_e ≪ B, saturating for k_e ≫ B).
 
@@ -198,12 +198,27 @@ The lift m = 15 (counts 5, 5, 5) driven by the same noise path as the K₀-atom 
 
 The lift and the K₀-atom run on one noise path (std 0.01, η = ∞, 25 time units) in float64: the largest difference of f̂ on the grid 5.6e-16 (a mean of five against a weighted atom: rounding), the lift's largest within-class spread 0.0e+00 (identical arithmetic per particle, whether or not the replicated state attracts).
 
-The lift m = 15 with class 3's particles separated by 10⁻⁶·(2, 1, 0, −1, −2) along S₃'s top eigenvector, 4 noise paths per std, 300 time units: the separation's growth rate (least squares on log‖separation‖ over t ≥ 50) against −σ₀/k_e + λ_max(S₃)Eν².
+The lift m = 15 with class 3's particles separated by 10⁻⁶·(2, 1, 0, −1, −2) along S₃'s top eigenvector, 8 antithetic pairs of noise paths per std (ν and −ν), 300 time units: the separation's growth rate (least squares on log‖separation‖ over t ≥ 50) — its pair means cancel the first-order part — and λ_eff = (rate + σ₀/k_e)/Eν², against the lift's drift (−σ₀/k_e + λ_max(S₃)Eν²) and against the drift along the second-order transient from the lift (the slope predicted for u̇ = (Eν²S₃(t) − σ₀/k_e)u).
 
-| std | predicted | measured (mean ± s.e.) | per path |
-|---|---|---|---|
-| 0.01 | -2.532e-04 | -2.549e-04 ± 3.7e-06 | -2.56e-04, -2.45e-04, -2.63e-04, -2.55e-04 |
-| 0.03 | -1.464e-05 | -9.126e-06 ± 1.4e-05 | -1.17e-05, +2.57e-05, -4.23e-05, -8.23e-06 |
-| 0.05 | +4.624e-04 | +4.368e-04 ± 2.6e-05 | +4.37e-04, +5.01e-04, +3.74e-04, +4.35e-04 |
+The drift along the transient (Eν² = 1): per 50-unit window, the mean error's rms and the largest eigenvalues of the window-averaged S_k (classes 1, 2, 3); at the lift: 0.0148, 0.0101, 0.2981.
+
+| window | rms E[e] | λ_max(S₁), λ_max(S₂), λ_max(S₃) |
+|---|---|---|
+| [0, 50) | 0.121 | 0.0095, 0.0013, 0.3069 |
+| [50, 100) | 0.273 | 0.0029, 0.0070, 0.3206 |
+| [100, 150) | 0.393 | 0.0009, 0.0133, 0.3311 |
+| [150, 200) | 0.483 | 0.0002, 0.0143, 0.3391 |
+| [200, 250) | 0.550 | -0.0001, 0.0157, 0.3451 |
+| [250, 300) | 0.602 | 0.0002, 0.0160, 0.3494 |
+
+The separation's rate vanishes at the std 0.0308 by the lift's drift and at 0.0294 by the transient's over t ∈ [50, 300].
+
+| std | lift's prediction | transient's prediction | measured (pair means ± s.e.) | λ_eff measured | λ_eff: lift; transient |
+|---|---|---|---|---|---|
+| 0.01 | -2.532e-04 | -2.503e-04 | -2.5027e-04 ± 3.8e-07 | 0.3271 ± 0.0038 | 0.2981; 0.3264 |
+| 0.03 | -1.464e-05 | +1.132e-05 | +2.7358e-06 ± 3.3e-06 | 0.3175 ± 0.0037 | 0.2981; 0.3270 |
+| 0.05 | +4.624e-04 | +5.372e-04 | +4.5267e-04 ± 8.4e-06 | 0.2943 ± 0.0034 | 0.2981; 0.3281 |
+
+The weighted fit λ_eff = c₀ + c₁Eν²: c₀ = 0.3291 ± 0.0033 (the small-noise limit; the lift's drift 0.2981, the transient's 0.3264 at std 0.01), c₁ = -13.82 ± 2.04 (the next order); the measured rate vanishes at the std 0.0299.
 
 Numbers are produced by `experiments/exp_measurement_noise.py`; nothing is edited by hand.

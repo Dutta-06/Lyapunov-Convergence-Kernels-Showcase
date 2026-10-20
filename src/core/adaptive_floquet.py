@@ -22,8 +22,9 @@ leak and the prior), and the near-identity averaging gives Ā₀ = ⟨B₀⟩, �
 ⟨B₂⟩ + ⟨B₁U₁⟩ + ⟨B₀U₂⟩ (U₁′ = B̃₀, U₂′ = B₁ + B₀U₁ − U₁Ā₀ − Ā₁, zero means).
 
 Lemma D‴.26a: `CollapsedVariational.chang` gives the slaving exactly — the periodic P(t; ε) whose graph δe = εPY is invariant, by the
-contraction P = 𝒢F(P) on a Fourier grid, for either sign of ε — and `slow_generator` the slow block's generator log Φ(ε)/(εT₀), whose
-eigenvalues are exactly the slow Floquet exponents (in slow time) and, at −ε, those at ε (the parity as an identity).
+contraction P = 𝒢F(P) on a Fourier grid, for either sign of ε — and `slow_generator` the slow block's generator log Φ(ε)/(εT₀), the real
+parts of whose eigenvalues are exactly minus the slow Floquet exponents (in slow time) and whose spectrum at −ε is that at ε (the parity as
+an identity).
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -138,7 +139,7 @@ class CollapsedVariational:
 
         δė = −k_eδe − Ĵ(t)y,   ẏ = Ĵ(t)ᵀδe − (σ₀/k_e)(y − ζ),   ζ̇ = −(η/k_e)(ζ − y)      (η = ∞: ζ = y and the leak vanishes),
 
-    Ĵ(t) = whitened_jacobian at x_m(t). It assumes ∂_xf̂ = ∂_xf on the orbit (f̂ = f as functions at an exact representation); otherwise the
+    and at η = 0 the fixed prior at the atoms (no ζ: ẏ = Ĵ(t)ᵀδe − (σ₀/k_e)y). Ĵ(t) = whitened_jacobian at x_m(t). It assumes ∂_xf̂ = ∂_xf on the orbit (f̂ = f as functions at an exact representation); otherwise the
     error equation also carries ∂_x(f − f̂)(x_m(t))δe. `x_ref` returns x_m(t) as an array of shape (n,)."""
 
     def __init__(self, net, x_ref, period, G, sigma0, eta, atoms, w):
@@ -149,13 +150,14 @@ class CollapsedVariational:
         self.w = np.asarray(w, float)
         self.n = net.n
         self.d = self.atoms.size
+        self.fixed = self.eta == 0.0                                          # the fixed prior at the atoms: no ζ, the leak −(σ₀/k_e)y
 
     def J(self, t):
         return whitened_jacobian(self.net, self.xr(t), self.atoms, self.w, self.G)
 
     @property
     def dim(self):
-        return self.n + (self.d if np.isinf(self.eta) else 2 * self.d)
+        return self.n + (self.d if (np.isinf(self.eta) or self.fixed) else 2 * self.d)
 
     def generator(self, t, ke):
         """The matrix of the variational equation at time t (real time)."""
@@ -165,7 +167,9 @@ class CollapsedVariational:
         M[:n, :n] = -ke * np.eye(n)
         M[:n, n:n + d] = -Jt
         M[n:n + d, :n] = Jt.T
-        if not np.isinf(self.eta):
+        if self.fixed:
+            M[n:, n:] = -(self.sigma0 / ke) * np.eye(d)
+        elif not np.isinf(self.eta):
             I = np.eye(d)
             M[n:n + d, n:n + d] = -(self.sigma0 / ke) * I
             M[n:n + d, n + d:] = (self.sigma0 / ke) * I
@@ -185,11 +189,13 @@ class CollapsedVariational:
     def exponents(self, ke, **kw):
         """(the slow Floquet exponents — rates per unit time, ascending — and the error channel's): the slow ones from the multipliers of the
         monodromy (all but the n smallest, ≈ e^{−k_eT₀}, below the resolution), the error channel's by Liouville's formula, the exponents
-        summing to −⟨tr M⟩ = n·k_e + (σ₀ + η)d/k_e (η = ∞: n·k_e)."""
+        summing to −⟨tr M⟩ = n·k_e + (σ₀ + η)d/k_e (η = ∞: n·k_e; η = 0: n·k_e + σ₀d/k_e)."""
         lam = np.linalg.eigvals(self.monodromy(ke, **kw))
         lam = lam[np.argsort(-np.abs(lam))][:self.dim - self.n]
         slow = np.sort(-np.log(np.abs(lam)) / self.T0)
         total = self.n * ke + (0.0 if np.isinf(self.eta) else (self.sigma0 + self.eta) * self.d / ke)
+        if self.fixed:
+            total = self.n * ke + self.sigma0 * self.d / ke
         return slow, (total - slow.sum()) / self.n
 
     def averaged(self, N=1024):
@@ -210,6 +216,8 @@ class CollapsedVariational:
         Jd, Jdd = deriv(J, 1), deriv(J, 2)
         if np.isinf(self.eta):
             E = np.eye(d); C = np.zeros((d, d))
+        elif self.fixed:
+            E = np.eye(d); C = -self.sigma0 * np.eye(d)
         else:
             I = np.eye(d)
             E = np.hstack([I, np.zeros((d, d))]); C = np.block([[-self.sigma0 * I, self.sigma0 * I], [self.eta * I, -self.eta * I]])
@@ -246,18 +254,21 @@ class CollapsedVariational:
         D = len(lam)
         c = np.array([-Q[j, j] - sum(K[j, i] * K[i, j] / (lam[i] - lam[j]) for i in range(D) if i != j) for j in range(D)])
         d = self.d
-        E = np.eye(d) if np.isinf(self.eta) else np.hstack([np.eye(d), np.zeros((d, d))])
+        E = np.eye(d) if (np.isinf(self.eta) or self.fixed) else np.hstack([np.eye(d), np.zeros((d, d))])
         F = Lm @ (E.T @ filt @ E) @ R
         return lam, c, -np.diag(F).real
 
     # ------------------------------------------------------------------ Lemma D‴.26a: the exact slow subspace (Chang's decoupling)
     def chang_grid(self, N=512):
-        """(t, K, Λ, ω): N samples of K = [Ĵ, 0] (η finite) or Ĵ (η = ∞), shape (N, n, q), on t_k = kT₀/N; the leak and the prior's constant
-        block Λ in slow time (Λ = [[σ₀I, −σ₀I], [−ηI, ηI]], η = ∞: 0); the angular frequencies of the grid."""
+        """(t, K, Λ, ω): N samples of K = [Ĵ, 0] (0 < η < ∞) or Ĵ (η = ∞, and η = 0), shape (N, n, q), on t_k = kT₀/N; the leak and the
+        prior's constant block Λ in slow time (Λ = [[σ₀I, −σ₀I], [−ηI, ηI]]; η = ∞: 0; η = 0, the fixed prior: σ₀I); the angular frequencies of
+        the grid."""
         t = np.arange(N) * self.T0 / N
         J = np.array([self.J(s) for s in t])
         if np.isinf(self.eta):
             K, Lam = J, np.zeros((self.d, self.d))
+        elif self.fixed:
+            K, Lam = J, self.sigma0 * np.eye(self.d)
         else:
             I = np.eye(self.d)
             K = np.concatenate([J, np.zeros_like(J)], axis=2)

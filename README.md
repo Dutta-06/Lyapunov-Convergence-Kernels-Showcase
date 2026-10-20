@@ -52,9 +52,10 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   after the transit and the fixed-prior relaxation (Theorem D‴.23); and the finite-size floor of the fitted function is the
   weight-slope of the leak's bias at the sampled weights, so that an adaptive prior removes it without a mass constraint at every
   representable sample, leaving a larger coupled distance of the amplitude–mass gauge in the parameters (Proposition D‴.24, checked in two
-  dimensions as well); perfect tracking with an adaptive prior is exponentially stable in the real loop, with a Floquet spectrum that does
-  not depend on the number of kernels and an expansion in 1/k_e with only even powers, whose second-order term — the error filter's
-  attenuation — is explicit (Corollary D‴.26), the expansion proved with an exact parity by Chang's decoupling (Lemma D‴.26a); a projected adaptive prior restores the leak's a-priori bound (Proposition D‴.27); and the
+  dimensions as well); perfect tracking with an adaptive prior is locally exponentially stable in the real loop, with a Floquet spectrum
+  that does not depend on the number of kernels and, in slow time, an expansion in 1/k_e with only even powers, whose second-order term —
+  the error filter's attenuation — is explicit (Corollary D‴.26), the expansion proved for the linearised loop, with an exact parity, by
+  Chang's decoupling (Lemma D‴.26a); a projected adaptive prior restores the leak's a-priori bound (Proposition D‴.27); and the
   adaptive prior's removal of the floor is a property of the amplitude–mass gauge, so it survives an approximation error, the regime of
   real plants (Proposition D‴.28); and with the sliding variable the averaged loop and all of the above transfer to second-order plants,
   checked on a position servo with an unknown cogging torque (Proposition D‴.29); and measurement noise is coherent across the kernels

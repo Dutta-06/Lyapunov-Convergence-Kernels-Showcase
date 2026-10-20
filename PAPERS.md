@@ -102,12 +102,13 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   prior, convergent at η = ∞).
 - **Rests on.** Theorem D‴.23 ((i)–(iii) proved, (iv) formal, (v) sketched, (vi) partly numerical), Proposition D‴.24 ((i) exact at q
   with the law formal, (ii)–(iii), (vi) proved; the convergence numerical; checked in one and two dimensions), Corollary D‴.26 ((a)–(b)
-  exact, (c) proved by Lemma D‴.26a; the basin open), Proposition D‴.27 ((i), (iii) proved, (ii)'s convergence proved
+  exact, (c) proved for the linearised loop by Lemma D‴.26a, x_m ∈ C⁴; the basin open), Proposition D‴.27 ((i), (iii) proved, (ii)'s convergence proved
   at η = ∞ and formal at finite η), Proposition D‴.28 ((i), (iii) exact, (ii) as D‴.24(i); the dynamics numerical).
 - **Novelty (audit).** D‴.23: standard per-mode formulas (proximal point, iterated Tikhonov, elastic averaging), new transfer to the
   mass-constrained particle system uniformly in m, new failure mode with its remedy; D‴.24: see paper 6, and a learned prior as the way to
   restore the interpolation property under regularisation; D‴.26: classical tools (averaging, the Magnus commutator, e-modification), a
-  new structural statement (the exact m-independent spectrum at every representable sample, the even expansion); D‴.27: classical
+  new structural statement (the exact m-independent spectrum at every representable sample, the even expansion in slow time, proved by
+  Chang's decoupling with its periodic and stochastic precedents — Kokotović–Khalil–O'Reilly, Haddad–Kokotović, Yang–Zhu); D‴.27: classical
   ingredients (projection, the switching σ-modification, which it is at η = ∞), transferred to the learned centre of the mass-constrained
   prior at finite η; D‴.28: a classical symmetry (the conic view's homogeneity), a new identification of the mechanism and an exact margin
   formula.
@@ -176,20 +177,28 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   answers with the inverse excitation spectrum. The adaptive prior is a washout leak — no affine time-invariant prior removes the leak's
   bias and keeps its bound on persistent forces (RH + B = I) — so the remedy acts on the force: with the regressor at the reference, the
   noise's own force becomes a least-squares one, whose response is bounded under every prior, and the trade-off in k_e disappears; the
-  parameters' fluctuation adds a force that is not least-squares, small on the instance and falling with k_e.
-- **Rests on.** Proposition D‴.30 ((i) exact as invariance, its attraction threshold formal; (ii) proved for the linearised loop under white noise
-  (Lemma D‴.26a), (iii) formal, their closed forms exact for the averaged system; (ii) checked against the exact linearised loop, (iii)'s stationary response against its exact periodic mean,
-  the transient in the real loop), Proposition D‴.31 ((i)–(iii) proved; (iv)(a)–(b) proved for the linearised equations, (iv)(c) formal,
+  parameters' fluctuation adds a force that is not the learning force of a mean tracking error (the classical second-order bias of a
+  constant-gain stochastic approximation): small in absolute terms on the instance (≤ 3.9·10⁻⁴ per (Eν²)²), −8.7% to +3.3% of DR's and
+  DR*'s biases and +56% of DR's at k_e = B = 100, its own response falling like k_e⁻² on a one-dimensional reference, where the law's
+  leading term averages out — on a curve in ℝⁿ it need not, which matters for the second-order plants.
+- **Rests on.** Proposition D‴.30 ((i) exact as invariance, its threshold formal at the lift — along the noisy trajectory the separations'
+  drift grows with the developing errors-in-variables deviation, checked on antithetic noise pairs, the long-time threshold open —; (ii)
+  proved for the linearised loop under white noise as a period average (Lemma D‴.26a), (iii) formal, their closed forms exact for the
+  averaged system; (ii) checked against the exact linearised loop, (iii)'s stationary response against its exact periodic mean, the
+  transient in the real loop), Proposition D‴.31 ((i)–(iii) proved, (ii) with R and B from the priors' blocks; (iv)(a)–(b) proved for the
+  linearised equations, (iv)(c) formal,
   the parameters' part numerical; the remedy checked in the real loop on common noise paths through MR − DR), Corollary D‴.26,
   `exp_measurement_noise.py`, `exp_eiv_remedy.py`.
 - **Novelty (audit).** Classical ingredients (the errors-in-variables bias, stochastic averaging and the diffusion approximation, the LMS
   misadjustment and leaky LMS, common noise, the lack-of-excitation drift, washout filters and low-frequency learning, desired
   compensation, the Tikhonov/Kalman split); new, for the mean-field transport-leak setting: the floor's interpolation in the prior's
   mobility, the driving matrix of the sensitivity-filtered measurement, the coherence of the K₀-atom identification with its noise
-  threshold, the washout reading of the adaptive prior uniform in m, and the quantification, including the parameters' own errors in
-  variables.
+  threshold at the lift, the washout reading of the adaptive prior uniform in m, and the quantification; the parameters' own errors in
+  variables is classical (Benveniste–Métivier–Priouret, Dieuleveut–Durmus–Bach, Box), new only the observation that the desired
+  regressor does not remove it.
 - **Missing.** The second-order computation proved (the parameters' part in closed form; the first order is, for the linearised loop under
-  white noise, Lemma D‴.26a); the stationary
-  biases in the real loop (the weak modes equilibrate over ~10⁵ time units); a remedy for the parameters' errors in variables; second-order
+  white noise, Lemma D‴.26a); the long-time noise threshold of the separations (the second-order expansion fails where the mean
+  deviation is O(1)); the stationary biases in the real loop (the weak modes equilibrate over ~10⁵ time units); a remedy for the
+  parameters' errors in variables (Richardson–Romberg extrapolation in k_e or the gain, as for constant-step SGD, is a candidate); second-order
   plants (Proposition D‴.29) and a servo with a realistic sensor (quantisation, delay).
 - **Venue.** IEEE Trans. Automatic Control or Automatica (a technical note); Systems & Control Letters.

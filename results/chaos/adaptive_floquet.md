@@ -87,40 +87,85 @@ At η = 10σ₀ (2 sin t + 0.8 sin 2t), where the metric W = diag(I, (σ₀/η)I
 
 ## D. Lemma D‴.26a: the exact slow subspace (x_m = 2 sin t + 0.8 sin 2t)
 
-Chang's P(t; ε) by its contraction on a 512-point Fourier grid: the iterations to 10⁻¹⁶ and the invariance residual; the truncation |P − P₂|_∞/ε³ (P₂ = −K + εK̇ − ε²(K̈ + KKᵀK + KΛ)); the slow block's slow-time rates (from log Φ(ε)/(εT₀)) against the full variational equation's; the rates at ±ε (the slow block at −ε defined by the same equation) — max|ν(ε) − ν(−ε)|/max|ν| — against their first-order deviation max|ν(ε) − ν₀|/max|ν₀|; the same at ±ε with the plant's slope as a mismatch in the error channel; the Magnus parameter εT₀max‖A‖₂ (the series converges below π).
+Chang's P(t; ε) by its contraction on a 512-point Fourier grid: the iterations to 10⁻¹⁶ and the invariance residual; the truncations |P − P₂|_∞/ε³ (P₂ = −K + εK̇ − ε²(K̈ + KKᵀK + KΛ)) and |P − P₍₃₎|_∞/ε⁴ (P₃ = K⃛ + 2K̇KᵀK + KK̇ᵀK + 2KKᵀK̇ + 2K̇Λ); the slow block's slow-time rates (from log Φ(ε)/(εT₀)) against the full variational equation's; the rates at ±ε (the slow block at −ε defined by the same equation) — max|ν(ε) − ν(−ε)| relative to the largest rate and per mode — against their first-order deviation (relative to the largest rate, per mode, and the slowest mode's signed); the same at ±ε with the plant's slope as a mismatch in the error channel; the Magnus parameter εT₀max‖A‖₂ (the series converges below π).
+
+η = 0.00000 (the fixed prior at the atoms: K = Ĵ, Λ = σ₀I):
+
+| k_e | iterations | invariance residual | |P − P₂|/ε³ | |P − P₍₃₎|/ε⁴ | slow block vs full | ±ε (largest; per mode) | first-order deviation (largest; per mode; slowest) | ±ε with a mismatch (largest; per mode) | Magnus |
+|---|---|---|---|---|---|---|---|---|---|
+| 12.5 | 499 | 3.3e-15 | 1849.7804 | 32124 | 2.9e-13 | 2.3e-14; 2.4e-13 | 9.48e-02; 1.20e-01; -1.725e-02 | 1.08e-02; 4.40e-02 | 0.480 |
+| 25 | 7 | 2.2e-15 | 2621.0622 | 45347 | 7.7e-13 | 4.7e-14; 3.8e-13 | 3.11e-02; 4.21e-02; -7.261e-03 | 5.21e-03; 2.52e-02 | 0.247 |
+| 50 | 6 | 9.2e-16 | 3074.0166 | 53595 | 2.4e-12 | 1.6e-13; 6.1e-13 | 8.71e-03; 1.20e-02; -2.302e-03 | 2.54e-03; 1.32e-02 | 0.125 |
+| 100 | 5 | 5.6e-16 | 3268.2155 | 56809 | 4.9e-12 | 3.1e-13; 3.0e-12 | 2.26e-03; 3.11e-03; -6.219e-04 | 1.25e-03; 6.65e-03 | 0.062 |
+| 200 | 4 | 4.7e-16 | 3305.7286 | 57939 | 3.5e-12 | 3.6e-13; 5.9e-12 | 5.69e-04; 7.85e-04; -1.588e-04 | 6.26e-04; 3.33e-03 | 0.031 |
+| 400 | 4 | 3.3e-16 | 3332.2482 | 58201 | 1.2e-11 | 8.6e-13; 1.5e-11 | 1.43e-04; 1.97e-04; -3.992e-05 | 3.13e-04; 1.67e-03 | 0.016 |
+| 800 | 3 | 3.3e-16 | 3338.9790 | 58199 | 9.3e-11 | 1.0e-12; 1.4e-11 | 3.57e-05; 4.92e-05; -9.992e-06 | 1.56e-04; 8.33e-04 | 0.008 |
+| 1600 | 3 | 4.4e-16 | 3340.6682 | 58163 | 4.1e-11 | 5.9e-12; 6.6e-11 | 8.93e-06; 1.23e-05; -2.499e-06 | 7.82e-05; 4.16e-04 | 0.004 |
+
+Under white measurement noise (N₀ = 1): the second transformation's decoupling residual; the slow noise b against b₀ = −(K̇ + aK)ᵀ (max over the period) and |b − b₀ − εb₁|/ε² (b₁ = −(K̈ + KKᵀK + KΛᵀ + aK̇)ᵀ); the exact periodic covariance at t = 0 in the coordinates (v, Y′) — Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ —; the weakest mode's variance (the y block in H's eigenbasis) relative to Σ̄: exact, with only the slow noise's attenuation (Σ with ⟨bbᵀ⟩ in place of Q̄), with only the rate's correction (Σ with the exact slow generator in place of Ā₀); Cov(Y) − Cov(Y′) against the jitter (ε/2)K(0)ᵀK(0), without and with its next term −(ε²/2)(d(KᵀK)/dt + 2aKᵀK)(0); the floor at t = 0, tr(H Cov(y)), against tr(H(Σ̄ + (ε/2)KᵀK)) (the jitter's share); and the floor tr(H Cov(y(t))) over the period — its average and range — and the predicted tr(H(Σ̄ + (ε/2)Ĵ(t)ᵀĴ(t)))'s range, both relative to Proposition D‴.30(ii)'s formula.
+
+| k_e | decoupling | ‖b − b₀‖/‖b₀‖ | |b − b₀ − εb₁|/ε² | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | weakest mode: exact; noise only; rate only | jitter: rel. error; with the next term | floor at t = 0: ratio; fast share | floor over the period / formula: average; range | predicted range |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 12.5 | 2.9e-16 | 6.271e-01 | 1842 | -9.600e-02 | 1.543e-01 | 3.217e-01 | -5.389e-01; -5.640e-01; +4.702e-02 | 4.604; 4.604 | 0.7511; 0.0007 | 0.75533; [0.7331, 0.7738] | [0.9947, 1.0101] |
+| 25 | 7.7e-17 | 4.023e-01 | 2625 | -2.840e-02 | 7.719e-02 | 1.333e-01 | -2.734e-01; -2.861e-01; +1.605e-02 | 2.886; 2.886 | 0.9008; 0.0007 | 0.90325; [0.8862, 0.9190] | [0.9947, 1.0101] |
+| 50 | 1.8e-17 | 2.244e-01 | 3081 | -7.708e-03 | 3.863e-02 | 4.115e-02 | -9.554e-02; -9.997e-02; +4.677e-03 | 1.071; 1.071 | 0.9698; 0.0007 | 0.97061; [0.9588, 0.9844] | [0.9947, 1.0101] |
+| 100 | 6.4e-18 | 1.168e-01 | 3270 | -2.083e-03 | 1.931e-02 | 1.105e-02 | -2.669e-02; -2.793e-02; +1.234e-03 | 0.315; 0.304 | 0.9919; 0.0007 | 0.99216; [0.9836, 1.0043] | [0.9947, 1.0101] |
+| 200 | 2.8e-18 | 5.874e-02 | 3306 | -5.888e-04 | 9.650e-03 | 2.850e-03 | -6.873e-03; -7.195e-03; +3.138e-04 | 0.162; 0.079 | 0.9979; 0.0007 | 0.99799; [0.9912, 1.0091] | [0.9947, 1.0101] |
+| 400 | 1.1e-18 | 2.950e-02 | 3332 | -1.806e-04 | 4.825e-03 | 9.386e-04 | -1.729e-03; -1.810e-03; +7.911e-05 | 0.081; 0.020 | 0.9995; 0.0007 | 0.99949; [0.9936, 1.0100] | [0.9947, 1.0101] |
+| 800 | 4.7e-19 | 1.477e-02 | 3339 | -6.182e-05 | 2.412e-03 | 4.736e-04 | -4.313e-04; -4.520e-04; +1.997e-05 | 0.041; 0.005 | 0.9999; 0.0007 | 0.99987; [0.9944, 1.0101] | [0.9947, 1.0101] |
+| 1600 | 2.6e-19 | 7.390e-03 | 3341 | -2.379e-05 | 1.206e-03 | 2.378e-04 | -1.070e-04; -1.124e-04; +5.082e-06 | 0.020; 0.001 | 1.0000; 0.0007 | 0.99997; [0.9947, 1.0100] | [0.9947, 1.0101] |
 
 η = 0.00707:
 
-| k_e | iterations | invariance residual | |P − P₂|/ε³ | slow block vs full | rates at ±ε | first-order deviation | ±ε with a mismatch | Magnus |
-|---|---|---|---|---|---|---|---|---|
-| 12.5 | 9 | 3.2e-15 | 1849.7804 | 1.5e-11 | 4.3e-14 | 9.45e-02 | 1.08e-02 | 0.480 |
-| 25 | 7 | 1.9e-15 | 2621.0622 | 3.3e-11 | 7.6e-14 | 3.10e-02 | 5.18e-03 | 0.247 |
-| 50 | 6 | 1.0e-15 | 3074.0166 | 1.7e-11 | 1.4e-13 | 8.68e-03 | 2.52e-03 | 0.125 |
-| 100 | 5 | 6.7e-16 | 3268.2155 | 4.7e-11 | 3.2e-13 | 2.25e-03 | 1.25e-03 | 0.062 |
-| 200 | 4 | 4.8e-16 | 3305.7286 | 1.2e-10 | 9.0e-13 | 5.68e-04 | 6.24e-04 | 0.031 |
-| 400 | 4 | 3.3e-16 | 3332.2482 | 8.2e-10 | 1.6e-12 | 1.42e-04 | 3.12e-04 | 0.016 |
-
-Under white measurement noise (N₀ = 1): the second transformation's decoupling residual, the slow noise b against b₀ = −(K̇ + aK)ᵀ (max over the period), and the exact periodic covariance at t = 0 in the coordinates (v, Y′) — Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ — and the function-level floor at t = 0, tr(H Cov(y)), against tr(H(Σ̄ + (ε/2)KᵀK)) (the fast jitter's share).
-
-| k_e | decoupling residual | ‖b − b₀‖/‖b₀‖ | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | floor at t = 0: exact | predicted | ratio | fast share |
+| k_e | iterations | invariance residual | |P − P₂|/ε³ | |P − P₍₃₎|/ε⁴ | slow block vs full | ±ε (largest; per mode) | first-order deviation (largest; per mode; slowest) | ±ε with a mismatch (largest; per mode) | Magnus |
 |---|---|---|---|---|---|---|---|---|---|
-| 12.5 | 3.0e-16 | 6.271e-01 | -9.600e-02 | 1.543e-01 | 3.581e-01 | 3.23656e-01 | 4.28924e-01 | 0.7546 | 0.001 |
-| 25 | 8.3e-17 | 4.023e-01 | -2.840e-02 | 7.719e-02 | 1.801e-01 | 1.93447e-01 | 2.14462e-01 | 0.9020 | 0.001 |
-| 50 | 2.0e-17 | 2.244e-01 | -7.708e-03 | 3.863e-02 | 6.180e-02 | 1.04025e-01 | 1.07231e-01 | 0.9701 | 0.001 |
-| 100 | 6.9e-18 | 1.168e-01 | -2.083e-03 | 1.931e-02 | 1.714e-02 | 5.31876e-02 | 5.36155e-02 | 0.9920 | 0.001 |
-| 200 | 2.9e-18 | 5.874e-02 | -5.888e-04 | 9.650e-03 | 4.405e-03 | 2.67531e-02 | 2.68078e-02 | 0.9980 | 0.001 |
-| 400 | 1.1e-18 | 2.950e-02 | -1.806e-04 | 4.825e-03 | 1.108e-03 | 1.33969e-02 | 1.34039e-02 | 0.9995 | 0.001 |
+| 12.5 | 9 | 3.2e-15 | 1849.7804 | 32124 | 1.5e-11 | 4.3e-14; 1.8e-11 | 9.45e-02; 2.93e-01; -2.931e-01 | 1.08e-02; 3.63e-02 | 0.480 |
+| 25 | 7 | 1.9e-15 | 2621.0622 | 45347 | 3.3e-11 | 7.6e-14; 8.1e-12 | 3.10e-02; 1.23e-01; -1.231e-01 | 5.18e-03; 2.12e-02 | 0.247 |
+| 50 | 6 | 1.0e-15 | 3074.0166 | 53595 | 1.7e-11 | 1.4e-13; 6.4e-11 | 8.68e-03; 3.90e-02; -3.896e-02 | 2.52e-03; 1.11e-02 | 0.125 |
+| 100 | 5 | 6.7e-16 | 3268.2155 | 56809 | 4.7e-11 | 3.2e-13; 4.9e-11 | 2.25e-03; 1.05e-02; -1.052e-02 | 1.25e-03; 5.64e-03 | 0.062 |
+| 200 | 4 | 4.8e-16 | 3305.7286 | 57939 | 1.2e-10 | 9.0e-13; 3.3e-10 | 5.68e-04; 2.69e-03; -2.686e-03 | 6.24e-04; 2.83e-03 | 0.031 |
+| 400 | 4 | 3.3e-16 | 3332.2482 | 58201 | 8.2e-10 | 1.6e-12; 9.7e-10 | 1.42e-04; 6.75e-04; -6.751e-04 | 3.12e-04; 1.41e-03 | 0.016 |
+| 800 | 3 | 3.3e-16 | 3338.9790 | 58199 | 5.8e-10 | 1.9e-12; 8.4e-10 | 3.56e-05; 1.69e-04; -1.690e-04 | 1.56e-04; 7.07e-04 | 0.008 |
+| 1600 | 3 | 4.4e-16 | 3340.6682 | 58163 | 2.6e-09 | 4.6e-12; 1.1e-09 | 8.90e-06; 4.23e-05; -4.226e-05 | 7.80e-05; 3.53e-04 | 0.004 |
+
+Under white measurement noise (N₀ = 1): the second transformation's decoupling residual; the slow noise b against b₀ = −(K̇ + aK)ᵀ (max over the period) and |b − b₀ − εb₁|/ε² (b₁ = −(K̈ + KKᵀK + KΛᵀ + aK̇)ᵀ); the exact periodic covariance at t = 0 in the coordinates (v, Y′) — Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ —; the weakest mode's variance (the y block in H's eigenbasis) relative to Σ̄: exact, with only the slow noise's attenuation (Σ with ⟨bbᵀ⟩ in place of Q̄), with only the rate's correction (Σ with the exact slow generator in place of Ā₀); Cov(Y) − Cov(Y′) against the jitter (ε/2)K(0)ᵀK(0), without and with its next term −(ε²/2)(d(KᵀK)/dt + 2aKᵀK)(0); the floor at t = 0, tr(H Cov(y)), against tr(H(Σ̄ + (ε/2)KᵀK)) (the jitter's share); and the floor tr(H Cov(y(t))) over the period — its average and range — and the predicted tr(H(Σ̄ + (ε/2)Ĵ(t)ᵀĴ(t)))'s range, both relative to Proposition D‴.30(ii)'s formula.
+
+| k_e | decoupling | ‖b − b₀‖/‖b₀‖ | |b − b₀ − εb₁|/ε² | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | weakest mode: exact; noise only; rate only | jitter: rel. error; with the next term | floor at t = 0: ratio; fast share | floor over the period / formula: average; range | predicted range |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 12.5 | 3.0e-16 | 6.271e-01 | 1842 | -9.600e-02 | 1.543e-01 | 3.581e-01 | -3.485e-01; -5.640e-01; +4.719e-01 | 4.604; 4.604 | 0.7546; 0.0007 | 0.75869; [0.7369, 0.7768] | [0.9948, 1.0099] |
+| 25 | 8.3e-17 | 4.023e-01 | 2625 | -2.840e-02 | 7.719e-02 | 1.801e-01 | -1.770e-01; -2.861e-01; +1.506e-01 | 2.886; 2.886 | 0.9020; 0.0007 | 0.90438; [0.8877, 0.9198] | [0.9948, 1.0099] |
+| 50 | 2.0e-17 | 2.244e-01 | 3081 | -7.708e-03 | 3.863e-02 | 6.180e-02 | -6.111e-02; -9.997e-02; +4.291e-02 | 1.071; 1.071 | 0.9701; 0.0007 | 0.97094; [0.9594, 0.9844] | [0.9948, 1.0099] |
+| 100 | 6.9e-18 | 1.168e-01 | 3270 | -2.083e-03 | 1.931e-02 | 1.714e-02 | -1.698e-02; -2.793e-02; +1.122e-02 | 0.315; 0.304 | 0.9920; 0.0007 | 0.99225; [0.9839, 1.0042] | [0.9948, 1.0099] |
+| 200 | 2.9e-18 | 5.874e-02 | 3306 | -5.888e-04 | 9.650e-03 | 4.405e-03 | -4.363e-03; -7.195e-03; +2.841e-03 | 0.162; 0.079 | 0.9980; 0.0007 | 0.99802; [0.9914, 1.0089] | [0.9948, 1.0099] |
+| 400 | 1.1e-18 | 2.950e-02 | 3332 | -1.806e-04 | 4.825e-03 | 1.108e-03 | -1.096e-03; -1.810e-03; +7.129e-04 | 0.081; 0.020 | 0.9995; 0.0007 | 0.99949; [0.9937, 1.0098] | [0.9948, 1.0099] |
+| 800 | 5.1e-19 | 1.477e-02 | 3339 | -6.182e-05 | 2.412e-03 | 3.290e-04 | -2.727e-04; -4.520e-04; +1.785e-04 | 0.041; 0.005 | 0.9999; 0.0007 | 0.99987; [0.9945, 1.0099] | [0.9948, 1.0099] |
+| 1600 | 2.5e-19 | 7.390e-03 | 3341 | -2.379e-05 | 1.206e-03 | 1.651e-04 | -6.739e-05; -1.124e-04; +4.468e-05 | 0.020; 0.001 | 1.0000; 0.0007 | 0.99997; [0.9948, 1.0098] | [0.9948, 1.0099] |
 
 η = ∞:
 
-| k_e | iterations | invariance residual | |P − P₂|/ε³ | slow block vs full | rates at ±ε | first-order deviation | ±ε with a mismatch | Magnus |
-|---|---|---|---|---|---|---|---|---|
-| 12.5 | 9 | 3.8e-15 | 1849.8753 | 5.7e-12 | 2.8e-14 | 9.84e-02 | 1.13e-02 | 0.476 |
-| 25 | 8 | 2.2e-15 | 2621.2101 | 1.2e-12 | 3.9e-14 | 3.23e-02 | 5.42e-03 | 0.245 |
-| 50 | 6 | 8.9e-16 | 3074.1950 | 2.3e-11 | 6.7e-14 | 9.04e-03 | 2.63e-03 | 0.124 |
-| 100 | 5 | 5.6e-16 | 3268.4044 | 5.7e-11 | 3.0e-13 | 2.34e-03 | 1.30e-03 | 0.062 |
-| 200 | 5 | 4.4e-16 | 3305.9193 | 4.5e-10 | 4.5e-13 | 5.91e-04 | 6.50e-04 | 0.031 |
-| 400 | 4 | 3.3e-16 | 3332.4406 | 1.5e-09 | 9.3e-13 | 1.48e-04 | 3.25e-04 | 0.016 |
+| k_e | iterations | invariance residual | |P − P₂|/ε³ | |P − P₍₃₎|/ε⁴ | slow block vs full | ±ε (largest; per mode) | first-order deviation (largest; per mode; slowest) | ±ε with a mismatch (largest; per mode) | Magnus |
+|---|---|---|---|---|---|---|---|---|---|
+| 12.5 | 9 | 3.8e-15 | 1849.8753 | 32126 | 5.7e-12 | 2.8e-14; 2.1e-12 | 9.84e-02; 2.96e-01; -2.964e-01 | 1.13e-02; 6.07e-02 | 0.476 |
+| 25 | 8 | 2.2e-15 | 2621.2101 | 45349 | 1.2e-12 | 3.9e-14; 3.2e-12 | 3.23e-02; 1.25e-01; -1.248e-01 | 5.42e-03; 3.40e-02 | 0.245 |
+| 50 | 6 | 8.9e-16 | 3074.1950 | 53599 | 2.3e-11 | 6.7e-14; 2.7e-12 | 9.04e-03; 3.96e-02; -3.955e-02 | 2.63e-03; 1.77e-02 | 0.124 |
+| 100 | 5 | 5.6e-16 | 3268.4044 | 56812 | 5.7e-11 | 3.0e-13; 6.7e-11 | 2.34e-03; 1.07e-02; -1.069e-02 | 1.30e-03; 8.91e-03 | 0.062 |
+| 200 | 5 | 4.4e-16 | 3305.9193 | 57942 | 4.5e-10 | 4.5e-13; 4.6e-11 | 5.91e-04; 2.73e-03; -2.729e-03 | 6.50e-04; 4.46e-03 | 0.031 |
+| 400 | 4 | 3.3e-16 | 3332.4406 | 58205 | 1.5e-09 | 9.3e-13; 8.0e-11 | 1.48e-04; 6.86e-04; -6.858e-04 | 3.25e-04; 2.23e-03 | 0.016 |
+| 800 | 3 | 3.3e-16 | 3339.1719 | 58203 | 3.7e-09 | 1.8e-12; 2.4e-10 | 3.71e-05; 1.72e-04; -1.717e-04 | 1.62e-04; 1.11e-03 | 0.008 |
+| 1600 | 3 | 3.3e-16 | 3340.8612 | 58167 | 1.0e-08 | 4.4e-12; 3.6e-10 | 9.27e-06; 4.29e-05; -4.294e-05 | 8.12e-05; 5.57e-04 | 0.004 |
+
+Under white measurement noise (N₀ = 1): the second transformation's decoupling residual; the slow noise b against b₀ = −(K̇ + aK)ᵀ (max over the period) and |b − b₀ − εb₁|/ε² (b₁ = −(K̈ + KKᵀK + KΛᵀ + aK̇)ᵀ); the exact periodic covariance at t = 0 in the coordinates (v, Y′) — Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ —; the weakest mode's variance (the y block in H's eigenbasis) relative to Σ̄: exact, with only the slow noise's attenuation (Σ with ⟨bbᵀ⟩ in place of Q̄), with only the rate's correction (Σ with the exact slow generator in place of Ā₀); Cov(Y) − Cov(Y′) against the jitter (ε/2)K(0)ᵀK(0), without and with its next term −(ε²/2)(d(KᵀK)/dt + 2aKᵀK)(0); the floor at t = 0, tr(H Cov(y)), against tr(H(Σ̄ + (ε/2)KᵀK)) (the jitter's share); and the floor tr(H Cov(y(t))) over the period — its average and range — and the predicted tr(H(Σ̄ + (ε/2)Ĵ(t)ᵀĴ(t)))'s range, both relative to Proposition D‴.30(ii)'s formula.
+
+| k_e | decoupling | ‖b − b₀‖/‖b₀‖ | |b − b₀ − εb₁|/ε² | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | weakest mode: exact; noise only; rate only | jitter: rel. error; with the next term | floor at t = 0: ratio; fast share | floor over the period / formula: average; range | predicted range |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 12.5 | 2.4e-16 | 6.271e-01 | 1842 | -9.600e-02 | 1.543e-01 | 3.512e-01 | -3.425e-01; -5.640e-01; +4.853e-01 | 4.603; 4.603 | 0.7625; 0.0006 | 0.76642; [0.7462, 0.7832] | [0.9952, 1.0091] |
+| 25 | 8.3e-17 | 4.023e-01 | 2626 | -2.840e-02 | 7.719e-02 | 1.768e-01 | -1.740e-01; -2.861e-01; +1.548e-01 | 2.886; 2.886 | 0.9050; 0.0006 | 0.90724; [0.8918, 0.9217] | [0.9952, 1.0091] |
+| 50 | 1.9e-17 | 2.245e-01 | 3081 | -7.708e-03 | 3.863e-02 | 6.066e-02 | -6.003e-02; -9.997e-02; +4.410e-02 | 1.071; 1.071 | 0.9710; 0.0006 | 0.97179; [0.9611, 0.9842] | [0.9952, 1.0091] |
+| 100 | 7.5e-18 | 1.168e-01 | 3270 | -2.083e-03 | 1.931e-02 | 1.682e-02 | -1.667e-02; -2.793e-02; +1.153e-02 | 0.315; 0.304 | 0.9923; 0.0006 | 0.99248; [0.9848, 1.0035] | [0.9952, 1.0091] |
+| 200 | 2.3e-18 | 5.875e-02 | 3306 | -5.888e-04 | 9.650e-03 | 4.324e-03 | -4.285e-03; -7.195e-03; +2.920e-03 | 0.162; 0.079 | 0.9980; 0.0006 | 0.99808; [0.9919, 1.0081] | [0.9952, 1.0091] |
+| 400 | 9.5e-19 | 2.950e-02 | 3332 | -1.806e-04 | 4.825e-03 | 1.088e-03 | -1.076e-03; -1.810e-03; +7.326e-04 | 0.081; 0.020 | 0.9995; 0.0006 | 0.99951; [0.9942, 1.0090] | [0.9952, 1.0091] |
+| 800 | 6.9e-19 | 1.477e-02 | 3339 | -6.182e-05 | 2.412e-03 | 2.719e-04 | -2.678e-04; -4.520e-04; +1.834e-04 | 0.041; 0.005 | 0.9999; 0.0006 | 0.99987; [0.9949, 1.0091] | [0.9952, 1.0091] |
+| 1600 | 2.3e-19 | 7.390e-03 | 3341 | -2.379e-05 | 1.206e-03 | 9.409e-05 | -6.614e-05; -1.124e-04; +4.591e-05 | 0.020; 0.001 | 1.0000; 0.0006 | 0.99997; [0.9952, 1.0091] | [0.9952, 1.0091] |
 
 
 Numbers are produced by `experiments/exp_adaptive_floquet.py`; nothing is edited by hand.

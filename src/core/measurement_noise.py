@@ -11,13 +11,16 @@ whitened weighted coordinates of `adaptive_floquet.CollapsedVariational`,
 
 the measured error's noise is ((d/dt − a)/(d/dt + k_e))ν, high-passed by the loop, and in the slow time s = t/k_e the collective
 coordinates diffuse with the matrix (N₀/k_e)Q, Q := ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + aĴ)⟩ (Proposition D‴.30). Every particle of a class receives the same
-noise increment, so the separations are not excited: the noise is coherent and its floor does not average out with m. This module gives
+noise increment, so the separations are not excited at first order: the noise is coherent and its floor does not average out with m; at
+second order the separations' stability needs the noise below a level (`separation_drift`, `second_order_transient`). This module gives
 Q and H = ⟨ĴᵀĴ⟩, the stationary covariance of the averaged collective block (the Lyapunov equation), the closed-form function-level floors
 (N₀/2k_e)Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) in the eigenbasis of H, and the exact periodic stationary covariance of the linearised loop.
 
 Proposition D‴.31: the adaptive prior is a washout leak — on the class barycentre the leak acts through the high-pass iω/(iω + η) — and
 along the prior family dz/ds = −η(z − T̂) − κ(z − z_a) the zero-frequency response R and bias B satisfy RH + B = I (`collective_block`
-with κ, `zero_frequency_leak`, `stationary_operators`, `washout_transfer`; a general zero-frequency leak: `zero_frequency_operators`); a
+with κ, `zero_frequency_leak`, `stationary_operators`, `washout_transfer`; a prior fixed on some coordinates, an active face or a matrix
+anchor gain, the operators from the block: `anchored_block`, `anchored_operators`, `anchored_leak`; a general zero-frequency leak by its
+definition: `zero_frequency_operators`); a
 persistent force's function-level response is at most FᵀH⁻¹F, the smallest equivalent target perturbation (`equivalent_perturbation`,
 `response_size`); and with the regressor at the reference (`NoisyRealLoop(regressor='reference')`, and the compensation too) the second-
 order force of the noise's own moments is the least-squares force of g = k_eE[e] (`eiv_force(variant=…)`, `mean_error`; the linearisation
@@ -26,8 +29,10 @@ with the compensation at the reference: `reference_compensation`).
 The full second-order mean (round 21 of the review): `second_order_mean` contracts the periodic covariance of the linearised loop (the OU
 noise a state) with the true field's second derivatives — the noise part is the quasi-static force above, the parameters' part the
 compensation's curvature and the law's ∇²_ϑΦ̃E[ε_mδϑ] — and `mean_biases` gives the stationary biases of the mean parameters and of the
-mean function; `separation_drift` the separations' second-order drift S_k, whose largest eigenvalue against σ₀/k_e decides whether the
-replicated configuration attracts under the noise.
+mean function; `separation_drift` the separations' second-order drift S_k at the lift, whose largest eigenvalue against σ₀/k_e decides
+whether the replicated configuration attracts at the start; along the noisy trajectory the mean error also carries the mean tracking error
+of the errors-in-variables deviation as it develops (round 22 of the review, ID-1): `second_order_transient` gives the second-order mean and
+moments from the lift and `separation_drift_series` the drift along them.
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -111,6 +116,46 @@ def zero_frequency_operators(H, S0):
     eigenbasis of H whatever S₀ (r_jj = v_jᵀRv_j, b_jj = v_jᵀBv_j)."""
     R = np.linalg.inv(H + S0)
     return R, R @ S0
+
+
+def anchored_block(H, sigma0, eta, K=None, fixed=None):
+    """The averaged collective block of a prior that is held at its anchor on the coordinates `fixed` (a boolean mask: a prior fixed there,
+    or a projected prior's active face) and elsewhere moves by dz_f/ds = −η(z_f − y_f) − K(z_f − z_a,f), K a (f, f) anchor gain (None: 0),
+    in whitened coordinates (round 22, ID-5). Returns (A, Bin): the drift matrix of (y, z_f) (η = ∞: z_f = y_f, the state y alone) and the
+    input of the anchor displacement δ (the anchor z_a = δ: σ₀δ_x on y through the fixed coordinates, Kδ_f on z_f)."""
+    d = H.shape[0]
+    fixed = np.zeros(d, bool) if fixed is None else np.asarray(fixed, bool)
+    Ex, Ef = np.eye(d)[:, fixed], np.eye(d)[:, ~fixed]
+    f = Ef.shape[1]
+    K = np.zeros((f, f)) if K is None else np.asarray(K, float)
+    if np.isinf(eta):
+        return -(H + sigma0 * Ex @ Ex.T), sigma0 * Ex @ Ex.T
+    A = np.block([[-(H + sigma0 * np.eye(d)), sigma0 * Ef], [eta * Ef.T, -(eta * np.eye(f) + K)]])
+    Bin = np.vstack([sigma0 * Ex @ Ex.T, K @ Ef.T])
+    return A, Bin
+
+
+def anchored_operators(H, sigma0, eta, K=None, fixed=None):
+    """(R, B) of `anchored_block` at zero frequency, from the block itself: the response y = RF to a persistent force F on y and the bias
+    y = Bδ toward the displaced anchor."""
+    d = H.shape[0]
+    A, Bin = anchored_block(H, sigma0, eta, K, fixed)
+    D = A.shape[0]
+    R = -np.linalg.solve(A, np.vstack([np.eye(d), np.zeros((D - d, d))]))[:d]
+    return R, -np.linalg.solve(A, Bin)[:d]
+
+
+def anchored_leak(H, sigma0, eta, K=None, fixed=None):
+    """The zero-frequency leak of `anchored_block` by elimination of z_f: S₀ = σ₀[E_xE_xᵀ + E_f(ηI + K)⁻¹KE_fᵀ] (η = ∞: σ₀E_xE_xᵀ), a matrix
+    that commutes with H only exceptionally; S₀ + S₀ᵀ ⪰ 0 when K + Kᵀ ⪰ 0."""
+    d = H.shape[0]
+    fixed = np.zeros(d, bool) if fixed is None else np.asarray(fixed, bool)
+    Ex, Ef = np.eye(d)[:, fixed], np.eye(d)[:, ~fixed]
+    S0 = sigma0 * Ex @ Ex.T
+    if not np.isinf(eta) and K is not None:
+        f = Ef.shape[1]
+        S0 = S0 + sigma0 * Ef @ np.linalg.solve(eta * np.eye(f) + K, K) @ Ef.T
+    return S0
 
 
 def washout_transfer(h, sigma0, eta, omega, kappa=0.0):
@@ -231,14 +276,14 @@ class NoisyRealLoop(AF.AdaptiveRealLoop):
         return np.concatenate([xdot, Thdot.ravel(), Zdot.ravel()])
 
 
-def simulate_noisy(cl, z0, m, T, dt, B, var, rng, rec_every, record):
+def simulate_noisy(cl, z0, m, T, dt, B, var, rng, rec_every, record, sign=1.0):
     """RK4 with the measurement noise an Ornstein–Uhlenbeck process ν (rate B, stationary variance var, so the low-frequency spectral
     density N₀ = 2var/B), sampled exactly at the steps and held within a step; ν(0) from the stationary law. `record(t, z)` every
-    `rec_every` steps. Returns the list of records."""
+    `rec_every` steps. sign = −1 runs the antithetic path −ν of the same draws (the OU recursion is linear). Returns the list of records."""
     z = np.asarray(z0, float).copy()
     n = cl.net.n
-    rho = np.exp(-B * dt); sd = np.sqrt(var * (1.0 - rho ** 2))
-    nu = np.sqrt(var) * rng.standard_normal(n)
+    rho = np.exp(-B * dt); sd = sign * np.sqrt(var * (1.0 - rho ** 2))
+    nu = sign * np.sqrt(var) * rng.standard_normal(n)
     out = []
     N = int(round(T / dt))
     t = 0.0
@@ -360,9 +405,9 @@ def second_order_mean(cl, cv, fprime, B, var, N=256, h=2e-3, rtol=1e-10, periodi
     slope–parameter term in the error equation, the correlation ∇²_ϑΦ̃E[ε_mδϑ] in the learning law). Returns the slow-time whitened forces,
     each split into the error equation's part ⟨Ĵᵀg⟩, g = k_ef_e/c (c(t) the error channel's rate), and the learning law's k_e⟨f_y⟩
     (Fe_noise, Fl_noise, Fe_param, Fl_param; F_noise and F_param their sums), the samples of g (g_noise, g_param) and of Ĵ (J) at
-    t_k = kT₀/N, the mean function's curvature c̄ = ½D²_Θf̂[Σ̄_ΘΘ] on the orbit's samples x_m(t_k) (Σ̄ the period average), and the relative
-    periodicity error of P; with `periodic`, also the exact periodic second-order mean m(t_k) of the linearised loop (whitened) under the
-    full forcing."""
+    t_k = kT₀/N, the mean function's curvature c̄ = ½D²_Θf̂[Σ̄_ΘΘ] on the orbit's samples x_m(t_k) (Σ̄ the period average, `Sig`, physical
+    coordinates), and the relative periodicity error of P; with `periodic`, also the exact periodic second-order mean m(t_k) of the
+    linearised loop (whitened) under the full forcing."""
     ke, eta = cl.ke, cl.eta
     d = cv.d
     gen = fixed_generator(cv, ke) if eta == 0 else (lambda t: cv.generator(t, ke))
@@ -415,7 +460,7 @@ def second_order_mean(cl, cv, fprime, B, var, N=256, h=2e-3, rtol=1e-10, periodi
     for l, u in zip(lam, U.T):
         c_bar += 0.5 * l * sum(c * (f00 if j == 0 else fh(Th0 + j * h * u.reshape(Th0.shape))) for c, j in zip(w4, (-2, -1, 0, 1, 2))) / h ** 2
     out = dict(Fe_noise=part_e(fn), Fl_noise=part_l(fn), Fe_param=part_e(fp), Fl_param=part_l(fp), g_noise=ke * fn[:, 0] / ck,
-               g_param=ke * fp[:, 0] / ck, c_bar=c_bar, J=Jk, t=tk, per_err=per_err)
+               g_param=ke * fp[:, 0] / ck, c_bar=c_bar, J=Jk, t=tk, per_err=per_err, Sig=Sig)
     out['F_noise'] = out['Fe_noise'] + out['Fl_noise']
     out['F_param'] = out['Fe_param'] + out['Fl_param']
     if periodic:
@@ -449,12 +494,16 @@ def mean_biases(H, out, S=None):
                 param=float(yp @ H @ yp), law=float(yl @ H @ yl), c2=float(np.mean(out['c_bar'] ** 2)))
 
 
-def separation_drift(cv, fprime, fsecond, ke, B, var, N=512, hx=1e-5, hth=1e-5):
-    """S_k (K₀, p, p), real time, per class k: the averaged second-order drift of a separation of class k under the measured regressor,
-    ⟨E[ε_m²]G^{1/2}∂_x∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2} + E[e]G^{1/2}∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2}⟩ (the quasi-static moments of `eiv_force`): a separation
-    u = G^{−1/2}δϑ_i of class k obeys u̇ = (G^{1/2}ε_m∇²_ϑΦ̃(y; ϑ_k)G^{1/2} − σ₀/k_e)u along the noisy class trajectory, so the replicated
-    configuration attracts while σ₀/k_e exceeds the largest eigenvalue of S_k (D3q-3): invariance under every path, attraction only below a
-    noise level."""
+def separation_drift(cv, fprime, fsecond, ke, B, var, N=512, hx=1e-5, hth=1e-5, variant='measured'):
+    """S_k (K₀, p, p), real time, per class k: the averaged second-order drift of a separation of class k under the measured regressor at the
+    lift, ⟨E[ε_m²]G^{1/2}∂_x∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2} + E[e]G^{1/2}∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2}⟩ with the quasi-static moments of `eiv_force` (the
+    noise's own, at fixed parameters): a separation u = G^{−1/2}δϑ_i of class k obeys u̇ = (G^{1/2}ε_m∇²_ϑΦ̃(y; ϑ_k)G^{1/2} − σ₀/k_e)u along
+    the noisy class trajectory, so the replicated configuration attracts at the start while σ₀/k_e exceeds the largest eigenvalue of S_k
+    (D3q-3): invariance under every path, attraction only below a noise level. Along the trajectory E[e] also carries the mean tracking
+    error of the developing errors-in-variables deviation (round 22, ID-1): `separation_drift_series` with `second_order_transient`.
+    `variant` 'reference' (the desired regressor) or 'reference_both' (and the compensation at x_m): the law's Jacobian is then
+    ε_m∇²_ϑΦ̃(x_m; ϑ_k), with no ∂_x term, so S_k = ⟨E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ alone, E[e] the variant's (`mean_error`)."""
+    assert variant in ('measured', 'reference', 'reference_both')
     t = np.arange(N) * cv.T0 / N
     p = cv.atoms.shape[1]
     g = np.sqrt(np.asarray(cv.G, float))
@@ -470,20 +519,92 @@ def separation_drift(cv, fprime, fsecond, ke, B, var, N=512, hx=1e-5, hth=1e-5):
     for s in t:
         x = float(np.atleast_1d(cv.xr(s))[0])
         a = float(np.atleast_1d(fprime(x))[0]); b2 = float(np.atleast_1d(fsecond(x))[0])
-        Ee = mean_error(a, b2, ke, B, var)
-        Eem2 = var * (a ** 2 + ke * B) / (ke * (ke + B))
+        Ee = mean_error(a, b2, ke, B, var, variant)
+        Eem2 = var * (a ** 2 + ke * B) / (ke * (ke + B)) if variant == 'measured' else 0.0
         for k, th in enumerate(cv.atoms):
-            Hx = (hess(x + hx, th) - hess(x - hx, th)) / (2 * hx)
+            Hx = (hess(x + hx, th) - hess(x - hx, th)) / (2 * hx) if Eem2 else 0.0
             S[k] += g[:, None] * (Eem2 * Hx + Ee * hess(x, th)) * g[None, :]
     return S / N
 
 
+def second_order_transient(cl, cv, fprime, B, var, t_end, dt=0.05, h=2e-3, rtol=1e-9):
+    """The second-order small-noise transient of the weighted K₀-atom loop `cl` (one particle per class, as in `second_order_mean`) from its
+    lift, the OU noise (rate B, variance var) stationary at t = 0 and the state's mean and covariance otherwise zero (round 22, ID-1): the
+    covariance P(t) of the augmented linearised loop, the second-order forcing ½∂²F[P(t)] of the true field (the stencil of
+    `second_order_mean`) on the grid t_k = k·dt, and the mean m(t) of ṁ = M(t)m + force(t), m(0) = 0 (RK4 on the grid, the forcing linear
+    in between). Returns dict(t, m (whitened (δe, y[, ζ])), Ee = E[e](t) = m_δe — the noise's own mean error plus the mean tracking error of
+    the developing errors-in-variables deviation —, Eem2 = E[ε_m²](t) = E[(δe + ν)²] at second order)."""
+    ke, eta = cl.ke, cl.eta
+    gen = fixed_generator(cv, ke) if eta == 0 else (lambda t: cv.generator(t, ke))
+    if cl.compensation == 'reference':
+        gen = reference_compensation(gen, cv, fprime, ke)
+    T, Tinv = _whitening(cv, cl)
+    Dp, D = T.shape
+    b0 = collapsed_noise_input(cv, fprime, ke, compensation=cl.compensation)
+    N0 = 2 * var / B
+    Ma, cfun = ou_augmented(gen, lambda t: b0(t)[:D], D, B, N0)
+    n_t = int(round(t_end / dt))
+    tk = np.arange(n_t + 1) * dt
+    P0 = np.zeros((D + 1, D + 1)); P0[D, D] = var
+    _, Ps = transient_covariance(Ma, cfun, D + 1, N0, t_end, tk, P0=P0, rtol=rtol)
+    Ta = np.zeros((Dp + 1, D + 1)); Ta[:Dp, :D] = T; Ta[Dp, D] = 1.0
+    z_lift = cl.lift(cv.atoms)
+    w4 = np.array([-1.0, 16.0, -30.0, 16.0, -1.0]) / 12.0
+    field = lambda t, xi: cl.rhs_noisy(t, xi[:Dp], cl.K0, xi[Dp:Dp + 1])
+    force = np.zeros((len(tk), D))
+    for k, t in enumerate(tk):
+        Pp = Ta @ Ps[k] @ Ta.T
+        xi0 = np.append(z_lift, 0.0); xi0[0] = float(np.atleast_1d(cv.xr(t))[0])
+        F0 = field(t, xi0)
+        lam, U = np.linalg.eigh(0.5 * (Pp + Pp.T))
+        out = np.zeros(Dp)
+        for l, u in zip(lam, U.T):
+            if l > 0.0:
+                out += 0.5 * l * sum(c * (F0 if j == 0 else field(t, xi0 + j * h * u)) for c, j in zip(w4, (-2, -1, 0, 1, 2))) / h ** 2
+        force[k] = Tinv @ out
+    m = np.zeros((len(tk), D))
+    for k in range(n_t):
+        t = tk[k]; fm = 0.5 * (force[k] + force[k + 1])
+        g1 = gen(t) @ m[k] + force[k]
+        g2 = gen(t + dt / 2) @ (m[k] + dt / 2 * g1) + fm
+        g3 = gen(t + dt / 2) @ (m[k] + dt / 2 * g2) + fm
+        g4 = gen(t + dt) @ (m[k] + dt * g3) + force[k + 1]
+        m[k + 1] = m[k] + dt / 6 * (g1 + 2 * g2 + 2 * g3 + g4)
+    Eem2 = np.array([P[0, 0] + 2 * P[0, D] + P[D, D] for P in Ps])
+    return dict(t=tk, m=m, Ee=m[:, 0].copy(), Eem2=Eem2)
+
+
+def separation_drift_series(cv, ts, Ee, Eem2, hx=1e-5, hth=1e-5):
+    """S_k(t) (len(ts), K₀, p, p), real time: the separations' second-order drift E[ε_m²](t)G^{1/2}∂_x∇²_ϑΦ̃(x_m(t); ϑ_k)G^{1/2} +
+    E[e](t)G^{1/2}∇²_ϑΦ̃(x_m(t); ϑ_k)G^{1/2} with the moments given along a trajectory (`second_order_transient`; `separation_drift` is its
+    period average with the noise's own quasi-static moments at the lift). The parameters' cross term Σ_lE[ε_mδϑ_kl]∂_{ϑ_l}(·) is omitted
+    (on the instance below 10⁻³ of the drift, referee round 22)."""
+    p = cv.atoms.shape[1]
+    g = np.sqrt(np.asarray(cv.G, float))
+
+    def hess(x, th):
+        Hm = np.zeros((p, p))
+        for j in range(p):
+            dp = np.zeros(p); dp[j] = hth
+            Hm[:, j] = (cv.net.grad_g(np.array([x]), np.array([1.0]), (th + dp)[None, :])[0]
+                        - cv.net.grad_g(np.array([x]), np.array([1.0]), (th - dp)[None, :])[0]) / (2 * hth)
+        return 0.5 * (Hm + Hm.T)
+    out = np.zeros((len(ts), len(cv.atoms), p, p))
+    for i, s in enumerate(ts):
+        x = float(np.atleast_1d(cv.xr(s))[0])
+        for k, th in enumerate(cv.atoms):
+            Hx = (hess(x + hx, th) - hess(x - hx, th)) / (2 * hx)
+            out[i, k] = g[:, None] * (Eem2[i] * Hx + Ee[i] * hess(x, th)) * g[None, :]
+    return out
+
+
 # ---------------------------------------------------------------------- Lemma D‴.26a(v): the slow noise, decoupled exactly
-def noise_decoupling(cv, fprime, eps, N=512, tol=1e-18, maxit=500):
+def noise_decoupling(cv, fprime, eps, N=512, tol=1e-18, maxit=500, with_b1=False):
     """Chang's second transformation for the linearised loop with white measurement noise (Lemma D‴.26a(v)): S(t; ε), the T₀-periodic
     solution of the anti-causal S − εṠ = εKᵀ − ε²(SPKᵀ + AS) (P, A from `CollapsedVariational.chang`), with which Y′ = Y + εSv (v = w − PY,
-    δe = εw) obeys dY′ = εAY′dt + εb√N₀dW exactly, b = ε⁻¹[Kᵀ − ε⁻¹(1 + εa)S − εSPKᵀ]; and b₀ = −(K̇ + aK)ᵀ, its leading term. Returns
-    (P, S, b, b₀ (N, q, n) each, the coupling residual max|εKᵀ + εṠ − S − ε²(SPKᵀ + AS)|)."""
+    δe = εw) obeys dY′ = εAY′dt + εb√N₀dW exactly — the drift decoupled from v, the noise shared with it —, b = ε⁻¹[Kᵀ − ε⁻¹(1 + εa)S −
+    εSPKᵀ]; and b₀ = −(K̇ + aK)ᵀ, its leading term (the next, εb₁ with b₁ = −(K̈ + KKᵀK + KΛᵀ + aK̇)ᵀ, with with_b1=True: referee round 22,
+    D3s-5). Returns (P, S, b, b₀ (N, q, n) each, the coupling residual max|εKᵀ + εṠ − S − ε²(SPKᵀ + AS)|[, b₁])."""
     t, K, Lam, om = cv.chang_grid(N)
     P, A, _, _ = cv.chang(eps, N)
     Kt = np.transpose(K, (0, 2, 1))
@@ -500,13 +621,22 @@ def noise_decoupling(cv, fprime, eps, N=512, tol=1e-18, maxit=500):
     coupling = float(np.abs(eps * Kt + eps * d(S) - S - eps ** 2 * (np.einsum('tij,tjk->tik', S, PKt) + np.einsum('tij,tjk->tik', A, S))).max())
     b = (Kt - (S / eps) * (1 + eps * a)[:, None, None] - eps * np.einsum('tij,tjk->tik', S, PKt)) / eps
     b0 = -np.transpose(d(K) + a[:, None, None] * K, (0, 2, 1))
+    if with_b1:
+        KKtK = np.einsum('tij,tkj,tkl->til', K, K, K)
+        b1 = -np.transpose(d(d(K)) + KKtK + np.einsum('tij,kj->tik', K, Lam) + a[:, None, None] * d(K), (0, 2, 1))
+        return P, S, b, b0, coupling, b1
     return P, S, b, b0, coupling
 
 
-def decoupled_covariance(cv, fprime, ke, N=512):
+def decoupled_covariance(cv, fprime, ke, N=512, period_average=False, n_avg=256):
     """The exact periodic stationary covariance of the linearised loop under white measurement noise (N₀ = 1) at t = 0, in the coordinates
     (v, Y′) of Lemma D‴.26a(v), against the lemma's leading terms: returns dict(Vv = Cov(v), C = E[vY′ᵀ], CY′ = Cov(Y′), CY = Cov(Y), the
-    averaged slow covariance Σ̄ (Ā₀Σ̄ + Σ̄Ā₀ᵀ + εQ̄ = 0), the fast jitter (ε/2)K(0)ᵀK(0), b(0))."""
+    averaged slow covariance Σ̄ (Ā₀Σ̄ + Σ̄Ā₀ᵀ + εQ̄ = 0), the fast jitter (ε/2)K(0)ᵀK(0), the next term of Cov(Y) − Cov(Y′),
+    −(ε²/2)(d(KᵀK)/dt + 2aKᵀK)(0) — the cross term −ε(SC + CᵀSᵀ) ≈ −ε²(d(KᵀK)/dt + 2aKᵀK) plus the jitter's own next term, half of it with
+    the opposite sign (referee round 22, D3s-2) —, b(0)); with period_average=True also the
+    period average, the minimum and the maximum over n_avg times of the floor tr(H Cov y(t)) and of its prediction tr(H(Σ̄ + (ε/2)Ĵ(t)ᵀĴ(t)))
+    (the lemma's floor is a period average: at time t the fast part is (ε/2)tr(HĴ(t)ᵀĴ(t)), an oscillation of the floor's own order). At
+    η = 0 (the fixed prior) K = Ĵ, Y = y, Λ = σ₀I."""
     eps = 1.0 / ke
     n = cv.n
     P, S, b, b0, _ = noise_decoupling(cv, fprime, eps, N)
@@ -519,7 +649,27 @@ def decoupled_covariance(cv, fprime, ke, N=512):
     H, Q = noise_matrices(cv, fprime)
     A0 = collective_block(H, cv.sigma0, cv.eta)
     Qb = np.zeros_like(A0); Qb[:cv.d, :cv.d] = Q
-    K0 = cv.chang_grid(N)[1][0]
-    return dict(Vv=Cn[:n, :n], C=Cn[:n, n:], CYp=Cn[n:, n:], CY=Pc[n:, n:], Sigma=solve_continuous_lyapunov(A0, -eps * Qb),
-                fast=(eps / 2) * K0.T @ K0, b=b[0], b0=b0[0])
+    tg, Kg, Lam, om = cv.chang_grid(N)
+    K0 = Kg[0]
+    Kd0 = np.real(np.fft.ifft((1j * om)[:, None, None] * np.fft.fft(Kg, axis=0), axis=0))[0]
+    a0 = float(np.atleast_1d(fprime(np.atleast_1d(cv.xr(0.0))[0]))[0])
+    Sigma = solve_continuous_lyapunov(A0, -eps * Qb)
+    out = dict(Vv=Cn[:n, :n], C=Cn[:n, n:], CYp=Cn[n:, n:], CY=Pc[n:, n:], Sigma=Sigma, fast=(eps / 2) * K0.T @ K0,
+               next=-0.5 * eps ** 2 * (Kd0.T @ K0 + K0.T @ Kd0 + 2 * a0 * K0.T @ K0), b=b[0], b0=b0[0])
+    if period_average:
+        d = cv.d
+        gen = lambda t: cv.generator(t, ke)
+        bv = collapsed_noise_input(cv, fprime, ke)
+
+        def rhs(t, p):
+            Pm = p.reshape(D, D); M = gen(t); bb = bv(t)
+            return (M @ Pm + Pm @ M.T + np.outer(bb, bb)).ravel()
+        ts = np.arange(n_avg) * cv.T0 / n_avg
+        sol = solve_ivp(rhs, (0.0, cv.T0), Pc.ravel(), method='DOP853', t_eval=ts, rtol=1e-11, atol=1e-16)
+        Hd = H
+        fl = np.array([np.trace(Hd @ sol.y[:, i].reshape(D, D)[n:n + d, n:n + d]) for i in range(len(ts))])
+        pr = np.array([np.trace(Hd @ (Sigma[:d, :d] + (eps / 2) * cv.J(t).T @ cv.J(t))) for t in ts])
+        out.update(floor_avg=float(fl.mean()), floor_min=float(fl.min()), floor_max=float(fl.max()),
+                   pred_avg=float(pr.mean()), pred_min=float(pr.min()), pred_max=float(pr.max()))
+    return out
 

@@ -21,12 +21,15 @@ dimension and by the symmetry t → π − t) and for the asymmetric x_m = 2 sin
 exponents from the first-order prediction λ_j^±(w)/k_e (O(k_e⁻²) relative) and from the second-order one (O(k_e⁻⁴): the odd orders vanish),
 the second-order coefficients c_j and their error-filter part, and the error channel's exponent by Liouville's formula.
 
-Part D (`--add-D`, Lemma D‴.26a): on the asymmetric reference at η = σ₀ and ∞, k_e = 12.5 … 400 — Chang's slow subspace P(t; ε) by its
-contraction (the iterations and the invariance residual, the truncation |P − P₂| against ε³), the slow block's exponents against the full
-variational equation's, the slow generator at ±ε (the exponents equal: the parity identity; their first-order deviation for comparison),
-the same with a derivative mismatch in the error channel (the parity broken at first order), the Magnus parameter; and under white
-measurement noise (η = σ₀) the second transformation's decoupling residual, the slow noise b against −(K̇ + aK)ᵀ, and the exact periodic
-covariance at t = 0 in the coordinates (v, Y′) against the lemma's leading terms.
+Part D (`--add-D`, Lemma D‴.26a): on the asymmetric reference at η = 0 (the fixed prior at the atoms: K = Ĵ, Λ = σ₀I), σ₀ and ∞, k_e = 12.5
+… 1600 — Chang's slow subspace P(t; ε) by its contraction (the iterations and the invariance residual, the truncations |P − P₂| against ε³ and
+|P − P₍₃₎| against ε⁴), the slow block's exponents against the full variational equation's, the slow generator at ±ε (the exponents equal:
+the parity identity; their first-order deviation for comparison, relative to the largest rate and per mode), the same with a derivative
+mismatch in the error channel (the parity broken at first order), the Magnus parameter; and under white measurement noise the second
+transformation's decoupling residual, the slow noise b against b₀ = −(K̇ + aK)ᵀ and its next term εb₁, the exact periodic covariance at
+t = 0 in the coordinates (v, Y′) against the lemma's leading terms, the weakest mode's variance against Σ̄ split into the slow noise's and the
+rate's corrections, Cov(Y) − Cov(Y′) against the jitter and its next term, and the floor's period average and range over the period against
+Proposition D‴.30(ii)'s formula (referee round 22, D3s-1 to D3s-3, D3s-6, D3s-8).
 
 Output: results/chaos/adaptive_floquet.md and adaptive_floquet_raw.npz (AFL_WORKERS; `--from-raw` regenerates the md).
 """
@@ -201,7 +204,7 @@ def split(r):
 
 
 # ---------------------------------------------------------------------------- D: Lemma D‴.26a
-KES_D = (12.5, 25.0, 50.0, 100.0, 200.0, 400.0)
+KES_D = (12.5, 25.0, 50.0, 100.0, 200.0, 400.0, 800.0, 1600.0)
 
 
 def fprime(x):
@@ -210,7 +213,9 @@ def fprime(x):
 
 def job_D(args):
     """Part D at one η on the asymmetric reference: per k_e the Chang quantities, the slow block against the full equation, the parity
-    identity and its breaking by a mismatch, the Magnus parameter; at η = σ₀ also the noise decoupling and the covariances at t = 0."""
+    identity (relative to the largest rate and per mode) and its breaking by a mismatch, the Magnus parameter; and under white noise the
+    decoupling, the slow noise to first order, the covariances at t = 0, the weakest mode's variance split into its corrections, the jitter
+    with its next term, and the floor's period average and range against Proposition D‴.30(ii)'s formula."""
     eta = args
     t0 = time.time()
     net, w, exact_w, loop = setup()
@@ -220,29 +225,51 @@ def job_D(args):
     a_mis = np.array([fprime(float(cv.xr(t)[0])) for t in tg])
     A0 = cv.averaged()[0]
     nu0 = np.sort(np.linalg.eigvals(-A0).real)
+    Kd, Kdd, Kddd = der(K), der(K, 2), der(K, 3)
+    KKtK = lambda X, Y, Z: np.einsum('tij,tkj,tkl->til', X, Y, Z)
+    P3 = Kddd + 2 * KKtK(Kd, K, K) + KKtK(K, Kd, K) + 2 * KKtK(K, K, Kd) + 2 * Kd @ Lam
+    H, Q = MN.noise_matrices(cv, fprime)
+    d = cv.d
+    hv, Vh = np.linalg.eigh(H)
+    ew = np.zeros(A0.shape[0]); ew[:d] = Vh[:, 0]                           # the weakest mode on the y block
+    trH2 = float(np.trace(H @ H))
     rows = []
     for ke in KES_D:
         eps = 1.0 / ke
         P, A, it, res = cv.chang(eps)
-        P2 = -K + eps * der(K) - eps ** 2 * (der(K, 2) + np.einsum('tij,tkj,tkl->til', K, K, K) + K @ Lam)
+        P2 = -K + eps * Kd - eps ** 2 * (Kdd + KKtK(K, K, K) + K @ Lam)
         rate = lambda Ab: np.sort(np.linalg.eigvals(-Ab).real)
         Ap, mag = cv.slow_generator(eps); Am = cv.slow_generator(-eps)[0]
         sp, sm = rate(Ap), rate(Am)
         full = np.sort(cv.exponents(ke)[0]) * ke
         mp_, mm_ = rate(cv.slow_generator(eps, mismatch=a_mis)[0]), rate(cv.slow_generator(-eps, mismatch=a_mis)[0])
-        row = dict(ke=ke, it=it, res=res, trunc=float(np.abs(P - P2).max() / eps ** 3), vs_full=float(np.abs(sp / full - 1).max()),
+        row = dict(ke=ke, it=it, res=res, trunc=float(np.abs(P - P2).max() / eps ** 3), trunc3=float(np.abs(P - P2 - eps ** 3 * P3).max() / eps ** 4),
+                   vs_full=float(np.abs(sp / full - 1).max()),
                    even=float(np.abs(sp - sm).max() / np.abs(sp).max()), first=float(np.abs(sp - nu0).max() / np.abs(nu0).max()),
-                   even_mis=float(np.abs(mp_ - mm_).max() / np.abs(mp_).max()), magnus=mag)
-        if np.isfinite(eta):
-            P_, S_, b, b0, coup = MN.noise_decoupling(cv, fprime, eps)
-            o = MN.decoupled_covariance(cv, fprime, ke)
-            H = MN.noise_matrices(cv, fprime)[0]
-            d = cv.d
-            row.update(coupling=coup, b_rel=float(np.abs(b - b0).max() / np.abs(b0).max()), Vv=float(o['Vv'][0, 0] * 2 * eps ** 3 - 1),
-                       C_rel=float(np.abs(o['C'] + o['b'].T).max() / np.abs(o['b']).max()),
-                       CYp_rel=float(np.abs(o['CYp'] - o['Sigma']).max() / np.abs(o['Sigma']).max()),
-                       floor0=float(np.trace(H @ o['CY'][:d, :d])), floor0_pred=float(np.trace(H @ (o['Sigma'] + o['fast'])[:d, :d])),
-                       fast_share=float(np.trace(H @ o['fast'][:d, :d]) / np.trace(H @ (o['Sigma'] + o['fast'])[:d, :d])))
+                   even_mode=float(np.max(np.abs(sp - sm) / np.abs(sp))), first_mode=float(np.max(np.abs(sp - nu0) / np.abs(nu0))),
+                   first_slow=float((sp[0] - nu0[0]) / nu0[0]),
+                   even_mis=float(np.abs(mp_ - mm_).max() / np.abs(mp_).max()), even_mis_mode=float(np.max(np.abs(mp_ - mm_) / np.abs(mp_))),
+                   magnus=mag)
+        P_, S_, b, b0, coup, b1 = MN.noise_decoupling(cv, fprime, eps, with_b1=True)
+        o = MN.decoupled_covariance(cv, fprime, ke, period_average=True)
+        Sig = o['Sigma']
+        Qbar = np.zeros_like(A0); Qbar[:d, :d] = Q
+        bb = np.einsum('tin,tjn->ij', b, b) / b.shape[0]
+        Sig_noise = MN.solve_continuous_lyapunov(A0, -eps * bb)
+        Sig_rate = MN.solve_continuous_lyapunov(Ap, -eps * Qbar)
+        wv = lambda X: float(ew @ X @ ew)
+        formula = float(MN.floor_closed_form(H, Q, SIGMA0, eta, 1.0, ke)[0]) + trH2 / (2 * ke)
+        jit = o['fast']; dYY = o['CY'] - o['CYp']
+        row.update(coupling=coup, b_rel=float(np.abs(b - b0).max() / np.abs(b0).max()), b1=float(np.abs(b - b0 - eps * b1).max() / eps ** 2),
+                   Vv=float(o['Vv'][0, 0] * 2 * eps ** 3 - 1),
+                   C_rel=float(np.abs(o['C'] + o['b'].T).max() / np.abs(o['b']).max()),
+                   CYp_rel=float(np.abs(o['CYp'] - Sig).max() / np.abs(Sig).max()),
+                   weak_exact=wv(o['CYp']) / wv(Sig) - 1, weak_noise=wv(Sig_noise) / wv(Sig) - 1, weak_rate=wv(Sig_rate) / wv(Sig) - 1,
+                   jit_rel=float(np.abs(dYY - jit).max() / np.abs(jit).max()), jit_next=float(np.abs(dYY - jit - o['next']).max() / np.abs(jit).max()),
+                   floor0=float(np.trace(H @ o['CY'][:d, :d])), floor0_pred=float(np.trace(H @ (Sig + jit)[:d, :d])),
+                   fast_share=float(np.trace(H @ jit[:d, :d]) / np.trace(H @ (Sig + jit)[:d, :d])),
+                   floor_avg=o['floor_avg'] / formula, floor_min=o['floor_min'] / formula, floor_max=o['floor_max'] / formula,
+                   pred_min=o['pred_min'] / formula, pred_max=o['pred_max'] / formula)
         rows.append(row)
         print(f"[{time.time() - t0:.0f}s] D eta {eta:g} ke {ke:g}", flush=True)
     return dict(eta=eta, rows=rows)
@@ -347,30 +374,35 @@ def report(R, t0=None, RC=None, RG=None, RD=None):
                           + ", ".join(f"{((row['slow'] - row['p1']) / row['p1'])[0]:+.3e}" for row in g['rows']) + ")."]
     if RD:
         lines += ["", "## D. Lemma D‴.26a: the exact slow subspace (x_m = 2 sin t + 0.8 sin 2t)", "",
-                  "Chang's P(t; ε) by its contraction on a 512-point Fourier grid: the iterations to 10⁻¹⁶ and the invariance residual; the truncation "
-                  "|P − P₂|_∞/ε³ (P₂ = −K + εK̇ − ε²(K̈ + KKᵀK + KΛ)); the slow block's slow-time rates (from log Φ(ε)/(εT₀)) against the full variational "
-                  "equation's; the rates at ±ε (the slow block at −ε defined by the same equation) — max|ν(ε) − ν(−ε)|/max|ν| — against their first-order "
-                  "deviation max|ν(ε) − ν₀|/max|ν₀|; the same at ±ε with the plant's slope as a mismatch in the error channel; the Magnus parameter "
+                  "Chang's P(t; ε) by its contraction on a 512-point Fourier grid: the iterations to 10⁻¹⁶ and the invariance residual; the truncations "
+                  "|P − P₂|_∞/ε³ (P₂ = −K + εK̇ − ε²(K̈ + KKᵀK + KΛ)) and |P − P₍₃₎|_∞/ε⁴ (P₃ = K⃛ + 2K̇KᵀK + KK̇ᵀK + 2KKᵀK̇ + 2K̇Λ); the slow block's slow-time "
+                  "rates (from log Φ(ε)/(εT₀)) against the full variational equation's; the rates at ±ε (the slow block at −ε defined by the same equation) "
+                  "— max|ν(ε) − ν(−ε)| relative to the largest rate and per mode — against their first-order deviation (relative to the largest rate, per "
+                  "mode, and the slowest mode's signed); the same at ±ε with the plant's slope as a mismatch in the error channel; the Magnus parameter "
                   "εT₀max‖A‖₂ (the series converges below π).", ""]
         for rd in RD:
-            lines += [f"η = {eta_s(rd['eta'])}:", "",
-                      "| k_e | iterations | invariance residual | |P − P₂|/ε³ | slow block vs full | rates at ±ε | first-order deviation | ±ε with a mismatch | Magnus |",
-                      "|---|---|---|---|---|---|---|---|---|"]
+            lines += [f"η = {eta_s(rd['eta'])}{' (the fixed prior at the atoms: K = Ĵ, Λ = σ₀I)' if rd['eta'] == 0 else ''}:", "",
+                      "| k_e | iterations | invariance residual | |P − P₂|/ε³ | |P − P₍₃₎|/ε⁴ | slow block vs full | ±ε (largest; per mode) | first-order deviation (largest; per mode; slowest) | ±ε with a mismatch (largest; per mode) | Magnus |",
+                      "|---|---|---|---|---|---|---|---|---|---|"]
             for r in rd['rows']:
-                lines.append(f"| {r['ke']:g} | {r['it']} | {r['res']:.1e} | {r['trunc']:.4f} | {r['vs_full']:.1e} | {r['even']:.1e} | {r['first']:.2e} | "
-                             f"{r['even_mis']:.2e} | {r['magnus']:.3f} |")
+                lines.append(f"| {r['ke']:g} | {r['it']} | {r['res']:.1e} | {r['trunc']:.4f} | {r['trunc3']:.0f} | {r['vs_full']:.1e} | {r['even']:.1e}; {r['even_mode']:.1e} | "
+                             f"{r['first']:.2e}; {r['first_mode']:.2e}; {r['first_slow']:+.3e} | {r['even_mis']:.2e}; {r['even_mis_mode']:.2e} | {r['magnus']:.3f} |")
+            lines += ["", "Under white measurement noise (N₀ = 1): the second transformation's decoupling residual; the slow noise b against "
+                      "b₀ = −(K̇ + aK)ᵀ (max over the period) and |b − b₀ − εb₁|/ε² (b₁ = −(K̈ + KKᵀK + KΛᵀ + aK̇)ᵀ); the exact periodic covariance at "
+                      "t = 0 in the coordinates (v, Y′) — Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ —; the weakest mode's variance (the y block "
+                      "in H's eigenbasis) relative to Σ̄: exact, with only the slow noise's attenuation (Σ with ⟨bbᵀ⟩ in place of Q̄), with only the rate's "
+                      "correction (Σ with the exact slow generator in place of Ā₀); Cov(Y) − Cov(Y′) against the jitter (ε/2)K(0)ᵀK(0), without and with "
+                      "its next term −(ε²/2)(d(KᵀK)/dt + 2aKᵀK)(0); the floor at t = 0, tr(H Cov(y)), against tr(H(Σ̄ + (ε/2)KᵀK)) (the jitter's share); "
+                      "and the floor tr(H Cov(y(t))) over the period — its average and range — and the predicted tr(H(Σ̄ + (ε/2)Ĵ(t)ᵀĴ(t)))'s range, both "
+                      "relative to Proposition D‴.30(ii)'s formula.", "",
+                      "| k_e | decoupling | ‖b − b₀‖/‖b₀‖ | |b − b₀ − εb₁|/ε² | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | weakest mode: exact; noise only; rate only | jitter: rel. error; with the next term | floor at t = 0: ratio; fast share | floor over the period / formula: average; range | predicted range |",
+                      "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+            for r in rd['rows']:
+                lines.append(f"| {r['ke']:g} | {r['coupling']:.1e} | {r['b_rel']:.3e} | {r['b1']:.0f} | {r['Vv']:+.3e} | {r['C_rel']:.3e} | {r['CYp_rel']:.3e} | "
+                             f"{r['weak_exact']:+.3e}; {r['weak_noise']:+.3e}; {r['weak_rate']:+.3e} | {r['jit_rel']:.3f}; {r['jit_next']:.3f} | "
+                             f"{r['floor0'] / r['floor0_pred']:.4f}; {r['fast_share']:.4f} | {r['floor_avg']:.5f}; [{r['floor_min']:.4f}, {r['floor_max']:.4f}] | "
+                             f"[{r['pred_min']:.4f}, {r['pred_max']:.4f}] |")
             lines += [""]
-            if 'coupling' in rd['rows'][0]:
-                lines += ["Under white measurement noise (N₀ = 1): the second transformation's decoupling residual, the slow noise b against "
-                          "b₀ = −(K̇ + aK)ᵀ (max over the period), and the exact periodic covariance at t = 0 in the coordinates (v, Y′) — "
-                          "Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ — and the function-level floor at t = 0, tr(H Cov(y)), against "
-                          "tr(H(Σ̄ + (ε/2)KᵀK)) (the fast jitter's share).", "",
-                          "| k_e | decoupling residual | ‖b − b₀‖/‖b₀‖ | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | floor at t = 0: exact | predicted | ratio | fast share |",
-                          "|---|---|---|---|---|---|---|---|---|---|"]
-                for r in rd['rows']:
-                    lines.append(f"| {r['ke']:g} | {r['coupling']:.1e} | {r['b_rel']:.3e} | {r['Vv']:+.3e} | {r['C_rel']:.3e} | {r['CYp_rel']:.3e} | "
-                                 f"{r['floor0']:.5e} | {r['floor0_pred']:.5e} | {r['floor0'] / r['floor0_pred']:.4f} | {r['fast_share']:.3f} |")
-                lines += [""]
     lines += ["", "Numbers are produced by `experiments/exp_adaptive_floquet.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'adaptive_floquet.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(lines) + "\n")
@@ -394,8 +426,8 @@ def main():
     if '--add-D' in sys.argv:                                               # Lemma D‴.26a; the other parts kept
         with np.load(raw, allow_pickle=True) as z:
             save = {k: z[k] for k in z.files}
-        with mp.Pool(min(N_WORKERS, 2)) as pool:
-            save['RD'] = np.array(pool.map(job_D, [SIGMA0, np.inf], chunksize=1), dtype=object)
+        with mp.Pool(min(N_WORKERS, 3)) as pool:
+            save['RD'] = np.array(pool.map(job_D, [0.0, SIGMA0, np.inf], chunksize=1), dtype=object)
         save_raw(raw, **save)
         report(list(save['R']), t0, list(save['RC']), list(save['RG']), list(save['RD']))
         return

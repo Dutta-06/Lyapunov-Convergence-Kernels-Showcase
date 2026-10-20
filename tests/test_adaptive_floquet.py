@@ -170,6 +170,45 @@ def test_chang_slow_subspace_carries_exactly_the_slow_multipliers():
     assert 6 < tr[0] / tr[1] < 10                                                     # O(ε³)
 
 
+class _SyntheticChang(AF.CollapsedVariational):
+    """Lemma D‴.26a(i) on a synthetic K(t) (n = 1, q = 3, low harmonics, O(1)) and an O(1), non-symmetric Λ — where every term of P₂ and P₃
+    is visible at moderate ε (on the instance K̈ and K⃛ dominate the leak's and the cubic terms by orders of magnitude: referee round 22,
+    D3s-6)."""
+
+    def __init__(self):
+        self.T0 = PER
+
+    def chang_grid(self, N=512):
+        t = np.arange(N) * self.T0 / N
+        K = np.stack([np.stack([1.0 + 0.5 * np.sin(t), 0.6 * np.cos(t), 0.4 * np.sin(2 * t) + 0.3], axis=1)], axis=1)   # (N, 1, 3)
+        Lam = np.array([[1.0, -0.5, 0.0], [-0.2, 0.8, 0.3], [0.1, 0.3, 1.2]])
+        om = np.fft.fftfreq(N, d=1.0 / N) * (2 * np.pi / self.T0)
+        return t, K, Lam, om
+
+
+def test_chang_expansion_terms_with_an_order_one_leak():
+    """P = −K + εK̇ − ε²(K̈ + KKᵀK + KΛ) + ε³P₃ + O(ε⁴), P₃ = K⃛ + 2K̇KᵀK + KK̇ᵀK + 2KKᵀK̇ + 2K̇Λ: with an O(1) leak the remainder after P₂ falls
+    like ε³ and after P₍₃₎ like ε⁴, while P₂ with the leak's sign flipped, or without KKᵀK, leaves an ε² term (a ratio near 4 per halving)."""
+    cv = _SyntheticChang()
+    t, K, Lam, om = cv.chang_grid(512)
+    der = lambda X, k=1: np.real(np.fft.ifft(((1j * om) ** k).reshape(-1, 1, 1) * np.fft.fft(X, axis=0), axis=0))
+    Kd, Kdd, Kddd = der(K), der(K, 2), der(K, 3)
+    c3 = lambda X, Y, Z: np.einsum('tij,tkj,tkl->til', X, Y, Z)
+    P3 = Kddd + 2 * c3(Kd, K, K) + c3(K, Kd, K) + 2 * c3(K, K, Kd) + 2 * Kd @ Lam
+    r2, r3, flip, nocub = [], [], [], []
+    for eps in (0.04, 0.02, 0.01):
+        P = cv.chang(eps)[0]
+        base = -K + eps * Kd
+        P2 = base - eps ** 2 * (Kdd + c3(K, K, K) + K @ Lam)
+        r2.append(np.abs(P - P2).max()); r3.append(np.abs(P - P2 - eps ** 3 * P3).max())
+        flip.append(np.abs(P - (base - eps ** 2 * (Kdd + c3(K, K, K) - K @ Lam))).max())
+        nocub.append(np.abs(P - (base - eps ** 2 * (Kdd + K @ Lam))).max())
+    for i in range(2):
+        assert 6.5 < r2[i] / r2[i + 1] < 9.5                                          # O(ε³)
+        assert 13 < r3[i] / r3[i + 1] < 19                                            # O(ε⁴): P₃ and the recursion at k = 3
+        assert 3.5 < flip[i] / flip[i + 1] < 4.6 and 3.5 < nocub[i] / nocub[i + 1] < 4.6   # the mutants leave ε²
+
+
 def test_the_slow_rates_are_exactly_even_in_epsilon_and_a_mismatch_breaks_the_parity():
     """Lemma D‴.26a(iv): the slow block at −ε (the same equation for P) has the slow-time rates of the slow block at ε — exactly, while their
     deviation from the first-order prediction is 12%; with the plant's slope as a mismatch in the error channel the equality fails at first
@@ -190,17 +229,34 @@ def test_the_slow_rates_are_exactly_even_in_epsilon_and_a_mismatch_breaks_the_pa
 
 
 def test_the_slow_noise_is_decoupled_exactly_and_high_passed():
-    """Lemma D‴.26a(v): Y′ = Y + εSv is decoupled from v (the residual at rounding), its noise b → −(K̇ + aK)ᵀ at O(ε) (halving per doubling of
-    k_e), and the exact periodic covariance at t = 0 has Cov(v) → N₀/(2ε³), E[vY′ᵀ] → −N₀bᵀ and Cov(Y′) → Σ̄ (the averaged slow covariance)."""
+    """Lemma D‴.26a(v): Y′ = Y + εSv has its drift decoupled from v (the residual at rounding), its noise b = b₀ + εb₁ + O(ε²) with
+    b₀ = −(K̇ + aK)ᵀ — checked against K̇ by the chain rule and the plant's slope a = f′(x_m) by differences of f itself, not through the
+    derivative handed to the code — and
+    b₁ = −(K̈ + KKᵀK + KΛᵀ + aK̇)ᵀ; and the exact periodic covariance at t = 0 has Cov(v) → N₀/(2ε³), E[vY′ᵀ] → −N₀bᵀ and Cov(Y′) → Σ̄ (the
+    averaged slow covariance with Q = ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + aĴ)⟩, also checked independently), each at its order in ε between k_e = 50 and 100."""
     cv = _asym_cv(SIGMA0)
-    dev = []
+    # the slope and K̇ independently: K = [Ĵ, 0], Ĵ(x_m(t)) differentiated by the chain rule (central differences in x), a = f′(x_m(t))
+    t = cv.chang_grid(512)[0]
+    xm = np.array([cv.xr(s)[0] for s in t]); xmd = 2.0 * np.cos(t) + 1.6 * np.cos(2.0 * t)
+    Jx = lambda x: AF.whitened_jacobian(cv.net, np.array([x]), cv.atoms, cv.w, cv.G)[0]
+    h = 1e-5
+    Jd = np.array([(Jx(x + h) - Jx(x - h)) / (2 * h) * v for x, v in zip(xm, xmd)])
+    Jm = np.array([Jx(x) for x in xm]); a = np.array([(F_VEC(x + h) - F_VEC(x - h)) / (2 * h) for x in xm])   # the plant's own slope
+    b0_ind = -(Jd + a[:, None] * Jm)                                                 # the y block of b₀ (n = 1)
+    Q_ind = (Jd + a[:, None] * Jm).T @ (Jd + a[:, None] * Jm) / len(t)
+    assert np.abs(MN.noise_matrices(cv, FPRIME)[1] - Q_ind).max() < 1e-6 * np.abs(Q_ind).max()
+    dev, dev1, rC, rY = [], [], [], []
     for ke in (50.0, 100.0):
-        P, S, b, b0, coup = MN.noise_decoupling(cv, FPRIME, 1.0 / ke)
+        eps = 1.0 / ke
+        P, S, b, b0, coup, b1 = MN.noise_decoupling(cv, FPRIME, eps, with_b1=True)
         assert coup < 1e-14
-        dev.append(np.abs(b - b0).max() / np.abs(b0).max())
-    assert 1.7 < dev[0] / dev[1] < 2.3 and dev[1] < 0.15
-    o = MN.decoupled_covariance(cv, FPRIME, 100.0)
-    assert abs(o['Vv'][0, 0] * 2e-6 - 1) < 1e-2
-    assert np.abs(o['C'] + o['b'].T).max() < 3e-2 * np.abs(o['b']).max()
-    assert np.abs(o['CYp'] - o['Sigma']).max() < 3e-2 * np.abs(o['Sigma']).max()
+        assert np.abs(b0[:, :cv.d, 0] - b0_ind).max() < 1e-6 * np.abs(b0_ind).max()
+        dev.append(np.abs(b - b0).max() / np.abs(b0).max()); dev1.append(np.abs(b - b0 - eps * b1).max())
+        o = MN.decoupled_covariance(cv, FPRIME, ke)
+        assert abs(o['Vv'][0, 0] * 2 * eps ** 3 - 1) < 3 * eps
+        rC.append(np.abs(o['C'] + o['b'].T).max() / np.abs(o['b']).max())
+        rY.append(np.abs(o['CYp'] - o['Sigma']).max() / np.abs(o['Sigma']).max())
+    assert 1.7 < dev[0] / dev[1] < 2.3 and dev[1] < 0.15                              # b − b₀ = O(ε)
+    assert 3.3 < dev1[0] / dev1[1] < 4.7                                              # b − b₀ − εb₁ = O(ε²)
+    assert rC[0] / rC[1] > 1.7 and rY[0] / rY[1] > 1.7                                 # E[vY′ᵀ] + bᵀ and Cov(Y′) − Σ̄ at least O(ε)
 

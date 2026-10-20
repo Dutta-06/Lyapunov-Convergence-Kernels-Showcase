@@ -98,9 +98,11 @@ def test_the_prior_lags_the_barycentre_across_a_plan_switch():
 def test_the_pair_block_is_the_washed_out_leak_and_the_stationary_identity_holds_along_the_prior_family():
     """(i) linearised: the transfer function of the averaged collective block from a force on y to y is, mode by mode,
     1/(iω + h_j + σ₀(iω + κ)/(iω + η + κ)); (ii) at zero frequency RH + B = I with R = (H + S₀)⁻¹, S₀ = σ₀κ/(η + κ), for the adaptive prior
-    (κ = 0: S₀ = 0, B = 0, R = H⁻¹), the anchored priors and the fixed prior (a scalar S₀: HR + B = I as well); for a zero-frequency leak
-    that does not commute with H (the linearised projected prior with one active face, a prior fixed on the amplitudes) RH + B = I and the
-    per-mode h_jr_jj + b_jj = 1 hold and HR + B = I fails."""
+    (κ = 0: S₀ = 0, B = 0, R = H⁻¹), the anchored priors and the fixed prior (a scalar S₀: HR + B = I as well); for priors whose
+    zero-frequency leak does not commute with H — fixed on the amplitudes (η = σ₀ elsewhere), one active face of the projected adaptive
+    prior (η = ∞), a matrix anchor gain ηP_amp, a random anchor gain with K + Kᵀ ⪰ 0 — R and B from the dynamic block equal (H + S₀)⁻¹ and
+    (H + S₀)⁻¹S₀ with S₀ by elimination, so RH + B = I and the per-mode h_jr_jj + b_jj = 1 hold, and HR + B = I fails (round 22, ID-5:
+    derived from the block, not from the definitions)."""
     net, atoms, cv = _setup()
     H, Q = MN.noise_matrices(cv, FP)
     h, V = np.linalg.eigh(H)
@@ -119,12 +121,19 @@ def test_the_pair_block_is_the_washed_out_leak_and_the_stationary_identity_holds
     assert np.abs(H @ R + Bm - np.eye(d)).max() < 1e-12 and np.abs(Bm - SIGMA0 * np.linalg.inv(H + SIGMA0 * np.eye(d))).max() < 1e-12
     R, Bm = MN.stationary_operators(H, SIGMA0, eta, 0.0)
     assert np.abs(Bm).max() < 1e-12 and np.abs(R - np.linalg.inv(H)).max() < 1e-8 * np.abs(R).max()
-    for idx in ([0], [0, 3, 6]):                                                      # whitened (k, l) ↦ 3k + l, l = 0 the amplitude
-        S0m = SIGMA0 * np.diag(np.isin(np.arange(d), idx).astype(float))
-        R, Bm = MN.zero_frequency_operators(H, S0m)
+    amp = np.isin(np.arange(d), [0, 3, 6])                                            # whitened (k, l) ↦ 3k + l, l = 0 the amplitude
+    Mr = np.random.default_rng(3).standard_normal((d, d))
+    Kr = eta * (Mr @ Mr.T / np.linalg.norm(Mr @ Mr.T, 2) + 0.5 * (Mr - Mr.T) / np.linalg.norm(Mr - Mr.T, 2))
+    for e_, K, fixed in ((eta, None, amp), (np.inf, None, np.arange(d) == 0), (eta, eta * np.diag(amp.astype(float)), None), (eta, Kr, None)):
+        R, Bm = MN.anchored_operators(H, SIGMA0, e_, K, fixed)
+        S0m = MN.anchored_leak(H, SIGMA0, e_, K, fixed)
+        R0, B0 = MN.zero_frequency_operators(H, S0m)
+        assert np.abs(R - R0).max() < 1e-10 * np.abs(R0).max() and np.abs(Bm - B0).max() < 1e-10
         assert np.abs(R @ H + Bm - np.eye(d)).max() < 1e-12
-        assert np.abs(H @ R + Bm - np.eye(d)).max() > 0.1
+        assert np.abs(H @ S0m - S0m @ H).max() > 1e-5 and np.abs(H @ R + Bm - np.eye(d)).max() > 0.1
         assert np.abs(h * np.einsum('ij,ik,kj->j', V, R, V) + np.einsum('ij,ik,kj->j', V, Bm, V) - 1).max() < 1e-10
+    A, Bin = MN.anchored_block(H, SIGMA0, eta, eta * np.eye(d))                      # a scalar anchor gain: the prior family's block
+    assert np.abs(A - MN.collective_block(H, SIGMA0, eta, eta)).max() == 0.0
 
 
 def test_the_response_to_a_force_is_at_most_its_smallest_equivalent_target_perturbation_under_every_leak():
@@ -229,3 +238,31 @@ def test_the_noise_part_of_the_force_is_the_hessian_contraction_and_the_paramete
         else:
             assert abs(b['full'] / b['noise'] - 1) > 0.01
     assert full['reference'] < 1e-3 * full['measured'] and full['reference_both'] < 1e-3 * full['measured']
+
+
+def test_with_the_regressor_at_the_reference_the_separations_drift_is_the_mean_errors_term_alone():
+    """Corollary D‴.33: under DR the separations' second-order drift is ⟨E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ alone — MR's drift minus its regressor term,
+    since DR's mean error is MR's at the lift — negative definite in every class on the instance (no noise threshold), while MR's is 0.30
+    in class 3; under DR* it is positive but O(1/k_e): k_e times its largest eigenvalue is the same at k_e = 25 and 50 (B = 4k_e), so its
+    threshold does not fall with k_e, while MR's largest eigenvalue does not decrease; and at the adaptive prior's stationary point the
+    residual mean error (I − P)g/k_e is below 1% of g/k_e, so the drift there nearly vanishes."""
+    net, atoms, cv = _setup()
+    fpp = lambda x: sum(A * ((x - C) ** 2 / S ** 4 - 1 / S ** 2) * np.exp(-(x - C) ** 2 / (2 * S ** 2)) for A, C, S in BUMPS)
+    S_mr = MN.separation_drift(cv, FP, fpp, 25.0, 100.0, 1.0, N=128)
+    S_dr = MN.separation_drift(cv, FP, fpp, 25.0, 100.0, 1.0, N=128, variant='reference')
+    # MR's E[e] term alone, computed through the series with E[ε_m²] = 0 and MR's quasi-static mean error
+    t = np.arange(128) * PER / 128
+    Ee = np.array([MN.mean_error(FP(2 * np.sin(s)), fpp(2 * np.sin(s)), 25.0, 100.0, 1.0) for s in t])
+    S_e = MN.separation_drift_series(cv, t, Ee, np.zeros(128)).mean(axis=0)
+    assert np.abs(S_dr - S_e).max() < 1e-12 * np.abs(S_mr).max()
+    assert all(np.linalg.eigvalsh(s)[-1] < 0 for s in S_dr) and np.linalg.eigvalsh(S_mr[2])[-1] > 0.25
+    lam = {ke: (max(np.linalg.eigvalsh(s)[-1] for s in MN.separation_drift(cv, FP, fpp, ke, 4 * ke, 1.0, N=128, variant='reference_both')),
+                max(np.linalg.eigvalsh(s)[-1] for s in MN.separation_drift(cv, FP, fpp, ke, 4 * ke, 1.0, N=128))) for ke in (25.0, 50.0)}
+    assert lam[25.0][0] > 0 and abs(50.0 * lam[50.0][0] / (25.0 * lam[25.0][0]) - 1) < 0.01
+    assert lam[50.0][1] > lam[25.0][1] > 0.25
+    H = MN.noise_matrices(cv, FP)[0]
+    F, g = MN.eiv_force(cv, FP, fpp, 25.0, 100.0, 1.0, N=256, variant='reference', return_g=True)
+    t = np.arange(256) * PER / 256
+    J = np.array([AF.whitened_jacobian(net, np.array([2 * np.sin(s)]), cv.atoms, cv.w, cv.G)[0] for s in t])
+    res = g - J @ np.linalg.solve(H, 25.0 * F)
+    assert np.sqrt(np.mean(res ** 2)) < 0.01 * np.sqrt(np.mean(g ** 2))

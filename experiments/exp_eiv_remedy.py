@@ -17,15 +17,22 @@ A. The second-order force and its stationary responses (no dynamics), at k_e = 2
 B. The stationary identity RH + B = I along the prior family dz/ds = −η(z − T̂) − κ(z − z_a) (η = σ₀; κ/η = 0, 0.1, 1, 10, and the fixed
    prior): the leak's zero-frequency gain S₀, the weakest mode's response and bias factor, the errors-in-variables bias of MR and DR, the
    bias of an anchor misplaced by a unit along the weakest and along the strongest mode, and the identity's residual (from the block); and
-   zero-frequency leaks S₀ that do not commute with H (a prior fixed on the amplitudes or on the centres, one active face of the projected
-   prior, a random S₀ ⪰ 0), where RH + B = I holds and HR + B = I does not.
+   priors whose zero-frequency leak S₀ does not commute with H, R and B again from their dynamic blocks (`anchored_block`: a prior fixed on
+   the amplitudes or on the centres and adaptive at η = σ₀ elsewhere, one active face of the projected adaptive prior at η = ∞, a matrix
+   anchor gain K = ηP_amp, a random anchor gain with K + Kᵀ ⪰ 0), against (H + S₀)⁻¹ and (H + S₀)⁻¹S₀ with S₀ by elimination: RH + B = I
+   holds and HR + B = I does not (round 22 of the review, ID-5: the identity derived from the block, not from the definitions).
 C. The real loop (RK4, dt = 10⁻³, k_e = 25, B = 100, the noise's std 0.01, η = ∞, N_RUNS runs of T_C time units): MR, DR and DR* driven by
    the same noise paths (common random numbers). E‖f̂ − f‖²_ρ against the prediction — the transient covariance of the linearised loop
    (MR and DR share it: their linearisations coincide) plus the second-order mean deviation — and the run mean of f̂_MR − f̂_DR on the
    orbit's grid against its prediction Ĵ(ȳ_MR − ȳ_DR) (the first-order responses cancel path by path).
+D. The separations under the desired regressor (Corollary D‴.33): the separations' second-order drift S_k at the lift for MR, DR and DR*
+   (with the regressor at x_m only the mean error's term remains), the noise thresholds under the adaptive prior and the cohesion leak, the
+   drift at DR's and DR*'s stationary points (k_eE[e] = (I − P)g) and along DR's second-order transient; the real loop — the lift m = 15
+   with class 3 separated along MR's top eigenvector, N_D antithetic pairs per law and std (0.05, 0.1) on common paths — the separation's
+   rate under MR and DR.
 
 Output: results/chaos/eiv_remedy.md and eiv_remedy_raw.npz (ER_WORKERS, ER_RUNS, ER_TC; `--from-raw` regenerates the md; `--only-AB`
-recomputes Parts A and B and merges them).
+recomputes Parts A and B and merges them, `--only-B` Part B, `--only-D` Part D; ER_ND the pairs of Part D).
 """
 import os
 import sys
@@ -54,6 +61,8 @@ N_RUNS = int(os.environ.get('ER_RUNS', 12))
 T_C = float(os.environ.get('ER_TC', 300.0))
 REC_C = 25.0
 N_WORKERS = int(os.environ.get('ER_WORKERS', 3))
+STDS_D = (0.05, 0.1)
+N_D = int(os.environ.get('ER_ND', 4))                                 # antithetic pairs per (law, std)
 
 
 def collapsed():
@@ -119,20 +128,29 @@ def part_B():
         anc = [float((Bm @ V[:, j]) @ H @ (Bm @ V[:, j])) for j in (0, len(h) - 1)]
         rows.append(dict(eta=e_, kappa=kap, S0=S0, resid=resid, resid_RH=float(np.abs(R @ H + Bm - np.eye(H.shape[0])).max()), r1=r1, b1=b1,
                          eiv=eiv, anchor=anc))
-    # zero-frequency leaks that do not commute with H (whitened coordinates (k, l) ↦ 3k + l: l = 0 the amplitude, 1 the centre, 2 the width)
+    # priors whose zero-frequency leak does not commute with H, R and B from their dynamic blocks (whitened coordinates (k, l) ↦ 3k + l:
+    # l = 0 the amplitude, 1 the centre, 2 the width), against the definitions with S₀ by elimination (round 22, ID-5)
     d = H.shape[0]
-    pick = lambda idx: X.SIGMA0 * np.diag(np.isin(np.arange(d), idx).astype(float))
+    mask = lambda idx: np.isin(np.arange(d), idx)
     Mr = np.random.default_rng(7).standard_normal((d, d))
-    cases = [('fixed on the amplitudes', pick([0, 3, 6])), ('fixed on the centres', pick([1, 4, 7])),
-             ("one active face (atom 1's amplitude)", pick([0])), ('a random S₀ ⪰ 0 (‖S₀‖ = σ₀)', X.SIGMA0 * (Mr @ Mr.T) / np.linalg.norm(Mr @ Mr.T, 2))]
+    Kr = eta * (Mr @ Mr.T / np.linalg.norm(Mr @ Mr.T, 2) + 0.5 * (Mr - Mr.T) / np.linalg.norm(Mr - Mr.T, 2))   # K + Kᵀ ⪰ 0, not symmetric
+    cases = [('fixed on the amplitudes, η = σ₀ elsewhere', eta, None, mask([0, 3, 6])),
+             ('fixed on the centres, η = σ₀ elsewhere', eta, None, mask([1, 4, 7])),
+             ("one active face (atom 1's amplitude), η = ∞", np.inf, None, mask([0])),
+             ('anchor gain K = ηP_amp', eta, eta * np.diag(mask([0, 3, 6]).astype(float)), None),
+             ('a random anchor gain, K + Kᵀ ⪰ 0, ‖K‖ ≈ η', eta, Kr, None)]
     gen_rows = []
-    for name, S0m in cases:
-        R, Bm = MN.zero_frequency_operators(H, S0m)
-        I = np.eye(d)
+    I = np.eye(d)
+    for name, e_, K, fixed in cases:
+        R, Bm = MN.anchored_operators(H, X.SIGMA0, e_, K, fixed)
+        S0m = MN.anchored_leak(H, X.SIGMA0, e_, K, fixed)
+        R0, B0 = MN.zero_frequency_operators(H, S0m)
         per_mode = np.abs(h * np.einsum('ij,ik,kj->j', V, R, V) + np.einsum('ij,ik,kj->j', V, Bm, V) - 1).max()
         eiv = {v: float((R @ F[v]) @ H @ (R @ F[v])) for v in F}
         gen_rows.append(dict(name=name, RH=float(np.abs(R @ H + Bm - I).max()), HR=float(np.abs(H @ R + Bm - I).max()), per_mode=float(per_mode),
-                             comm=float(np.abs(H @ S0m - S0m @ H).max()), eiv=eiv))
+                             comm=float(np.abs(H @ S0m - S0m @ H).max()), eiv=eiv,
+                             vs_def=float(max(np.abs(R - R0).max() / np.abs(R0).max(), np.abs(Bm - B0).max())),
+                             dim=int(MN.anchored_block(H, X.SIGMA0, e_, K, fixed)[0].shape[0])))
     print("[B]", flush=True)
     return dict(rows=rows, h=h, general=gen_rows, n_weak=int(np.sum(h < X.SIGMA0)))
 
@@ -186,7 +204,75 @@ def predictions_C():
 
 
 # ---------------------------------------------------------------------------- report
-def report(A, Bp, Cres, Cpred, t0=None):
+# ---------------------------------------------------------------------------- D (Corollary D‴.33)
+def part_D_pred():
+    """The separations' second-order drift S_k (real time, per unit Eν²; `separation_drift`) at the lift for MR, DR and DR*: its extreme
+    eigenvalues per class and the noise thresholds — the std at which σ₀/k_e (the adaptive prior) or σ₀w_k/k_e (the cohesion leak of
+    Proposition D‴.32, w_k = 1/3) equals the largest eigenvalue; for DR and DR* at the adaptive prior's stationary point (k_eE[e] = g − Ĵȳ,
+    ȳ = H⁻¹F): the residual mean error and the drift; and along DR's second-order transient from the lift (`second_order_transient`, the
+    regressor at x_m so no ∂_x term) the drift's largest eigenvalue per 50-unit window and its maximum over the samples."""
+    t0 = time.time()
+    net, atoms, cv = collapsed()
+    H, Q = MN.noise_matrices(cv, X.fprime)
+    lift = {}
+    for v in VARIANTS:
+        S = MN.separation_drift(cv, X.fprime, X.fsecond, KE, B_OU, 1.0, variant=v)
+        ev = [np.linalg.eigvalsh(sk) for sk in S]
+        lift[v] = dict(lo=[float(e[0]) for e in ev], hi=[float(e[-1]) for e in ev])
+    scan = {}                                                             # the drift's largest eigenvalue over the classes against k_e (B = 4k_e)
+    for ke in KES_A:
+        for v in VARIANTS:
+            S = MN.separation_drift(cv, X.fprime, X.fsecond, ke, 4 * ke, 1.0, variant=v)
+            scan[(ke, v)] = float(max(np.linalg.eigvalsh(sk)[-1] for sk in S))
+    N = 512
+    t = np.arange(N) * X.PER / N
+    J = np.array([AF.whitened_jacobian(net, np.array([float(X.xr(s_)[0])]), cv.atoms, cv.w, cv.G)[0] for s_ in t])
+    stat = {}
+    for v in ('reference', 'reference_both'):
+        F, g = MN.eiv_force(cv, X.fprime, X.fsecond, KE, B_OU, 1.0, N=N, variant=v, return_g=True)
+        Ee = (g - J @ np.linalg.solve(H, KE * F)) / KE
+        ev = [np.linalg.eigvalsh(sk) for sk in MN.separation_drift_series(cv, t, Ee, np.zeros(N)).mean(axis=0)]
+        stat[v] = dict(rms_lift=float(np.sqrt(np.mean((g / KE) ** 2))), rms=float(np.sqrt(np.mean(Ee ** 2))),
+                       lo=[float(e[0]) for e in ev], hi=[float(e[-1]) for e in ev])
+    reg, comp = LAW['reference']
+    cl = MN.NoisyRealLoop(net, X.f_vec, X.xr, X.xrd, X.PER, KE, X.G, X.SIGMA0, np.arange(3), 3, np.inf, weights=X.Q3, regressor=reg, compensation=comp)
+    o = MN.second_order_transient(cl, cv, X.fprime, B_OU, 1.0, X.T_D, dt=0.05)
+    Sd = MN.separation_drift_series(cv, o['t'], o['Ee'], np.zeros_like(o['Ee']))
+    edges = np.arange(0.0, X.T_D + 1e-9, 50.0)
+    win = [dict(a=a, b=b, lam=[float(np.linalg.eigvalsh(Sd[(o['t'] >= a) & (o['t'] < b)].mean(axis=0)[k])[-1]) for k in range(3)],
+                rmsE=float(np.sqrt(np.mean(o['Ee'][(o['t'] >= a) & (o['t'] < b)] ** 2)))) for a, b in zip(edges[:-1], edges[1:])]
+    pmax = [float(max(np.linalg.eigvalsh(np.mean(Sd[i:i + 126, k], axis=0))[-1] for i in range(0, len(o['t']) - 126, 21))) for k in range(3)]
+    print(f"[{time.time() - t0:.0f}s] D pred", flush=True)
+    return dict(lift=lift, stat=stat, win=win, period_max=pmax, w=X.Q3.tolist(), scan=scan)
+
+
+def job_D(args):
+    """The lift m = 15 with class 3's particles separated by c_i·10⁻⁶ along G^{1/2}u (u the top eigenvector of MR's S₃ at the lift, Part D of
+    `exp_measurement_noise.py`), one noise path under the law v (std, seed, sign: ±1 the antithetic pair; the paths common to the laws): the
+    separation's growth rate, least squares on log‖separation‖ over t ≥ 50."""
+    v, std, seed, sign = args
+    t0 = time.time()
+    net, atoms, cv = collapsed()
+    u = np.linalg.eigh(MN.separation_drift(cv, X.fprime, X.fsecond, KE, B_OU, 1.0)[2])[1][:, -1]
+    labels = np.repeat(np.arange(3), 5); m = 15
+    reg, comp = LAW[v]
+    cl = MN.NoisyRealLoop(net, X.f_vec, X.xr, X.xrd, X.PER, KE, X.G, X.SIGMA0, labels, 3, np.inf, regressor=reg, compensation=comp)
+    z0 = cl.lift(atoms)
+    for i, c in zip(range(10, 15), (2.0, 1.0, 0.0, -1.0, -2.0)):
+        z0[1 + 3 * i:4 + 3 * i] += 1e-6 * c * np.sqrt(X.G) * u
+
+    def rec(t, z):
+        Th = z[1:1 + m * 3].reshape(m, 3)[10:15]
+        return np.array([t, np.sqrt(np.sum(((Th - Th.mean(axis=0)) / np.sqrt(X.G)) ** 2))])
+    out = np.array(MN.simulate_noisy(cl, z0, m, X.T_D, DT_C, B_OU, std ** 2, np.random.default_rng(5000 + seed), int(round(5.0 / DT_C)), rec,
+                                     sign=sign))
+    msk = out[:, 0] >= 50.0
+    rate = float(np.polyfit(out[msk, 0], np.log(out[msk, 1]), 1)[0])
+    print(f"[{time.time() - t0:.0f}s] D {NAMES[v]} std {std:g} seed {seed} sign {sign:+g}", flush=True)
+    return dict(v=v, std=std, seed=seed, sign=sign, rate=rate, t=out[:, 0], sep=out[:, 1])
+
+
+def report(A, Bp, Cres, Cpred, t0=None, D=None):
     es = lambda e: '∞' if np.isinf(e) else ('0 (fixed)' if e == 0 else f'{e:.5f}')
     L = ["# Proposition D‴.31: the adaptive prior is a washout leak; the desired regressor (`exp_eiv_remedy.py`)", "",
          f"The instance of Proposition D‴.30 (σ₀ = {X.SIGMA0:.5f}, x_m = 2 sin t, the lift of the exact representation of q = 1/3 with the prior at its atoms) "
@@ -194,7 +280,7 @@ def report(A, Bp, Cres, Cpred, t0=None):
          "regressor at the reference, the compensation f̂(y); DR*: both at the reference (the desired compensation adaptation law).", "",
          "## A. The second-order force and its stationary responses (no dynamics)", "",
          "Per unit (Eν²)², function level, the averaged stationary response: the bias of the mean parameters under the fixed prior and under the adaptive prior "
-         "(every η > 0; = FᵀH⁻¹F, the squared norm of the smallest target perturbation exerting F) for the force of the noise's own second moments (quasi-static, "
+         "(η = ∞, the noise part's for every η > 0; = FᵀH⁻¹F, the squared norm of the smallest target perturbation exerting F) for the force of the noise's own second moments (quasi-static, "
          "`eiv_force`) and for the full second-order force (the parameters' fluctuation included, `second_order_mean`), the bias of the mean function under the "
          "adaptive prior with the full force (‖Ĵȳ + ½D²_Θf̂[Σ_ΘΘ]‖²_ρ), the least-squares bound ‖g‖²_ρ (g = k_eE[e] of the noise part; DR, DR*), the rescaled "
          "projected mean tracking error at the adaptive prior's stationary point, k_e²‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁ (F₁ the regressor's errors in variables; zero by "
@@ -240,11 +326,22 @@ def report(A, Bp, Cres, Cpred, t0=None):
           "prior's 1/σ₀. The desired regressor changes the force instead: MR's bias over DR's (noise parts) along the family "
           + ", ".join(f"{x:.3g}" for x in ratios) + "."]
     if 'general' in Bp:
-        L += ["", "Zero-frequency leaks S₀ that do not commute with H (R = (H + S₀)⁻¹, B = (H + S₀)⁻¹S₀): RH + B = I holds, HR + B = I does not; per mode "
-              "h_jr_jj + b_jj = 1 holds whatever S₀.", "",
-              "| S₀ | max|HS₀ − S₀H| | max|RH + B − I| | max|HR + B − I| | max_j|h_jr_jj + b_jj − 1| | EIV bias, MR | EIV bias, DR |", "|---|---|---|---|---|---|---|"]
-        for r in Bp['general']:
-            L.append(f"| {r['name']} | {r['comm']:.2e} | {r['RH']:.1e} | {r['HR']:.3f} | {r['per_mode']:.1e} | {r['eiv']['measured']:.4e} | {r['eiv']['reference']:.4e} |")
+        if 'vs_def' in Bp['general'][0]:
+            L += ["", "Priors whose zero-frequency leak S₀ does not commute with H: R and B from the dynamic block of (y, z_f) at zero frequency "
+                  "(`anchored_block`; the block's dimension), against (H + S₀)⁻¹ and (H + S₀)⁻¹S₀ with S₀ = σ₀[E_xE_xᵀ + E_f(ηI + K)⁻¹KE_fᵀ] by "
+                  "elimination of z_f (the largest relative difference of R, the largest difference of B): RH + B = I holds, HR + B = I does not; "
+                  "per mode h_jr_jj + b_jj = 1 holds whatever S₀.", "",
+                  "| prior | block dimension | block against the definitions | max|HS₀ − S₀H| | max|RH + B − I| | max|HR + B − I| | max_j|h_jr_jj + b_jj − 1| | EIV bias, MR | EIV bias, DR |",
+                  "|---|---|---|---|---|---|---|---|---|"]
+            for r in Bp['general']:
+                L.append(f"| {r['name']} | {r['dim']} | {r['vs_def']:.1e} | {r['comm']:.2e} | {r['RH']:.1e} | {r['HR']:.3f} | {r['per_mode']:.1e} | "
+                         f"{r['eiv']['measured']:.4e} | {r['eiv']['reference']:.4e} |")
+        else:
+            L += ["", "Zero-frequency leaks S₀ that do not commute with H (R = (H + S₀)⁻¹, B = (H + S₀)⁻¹S₀): RH + B = I holds, HR + B = I does not; per mode "
+                  "h_jr_jj + b_jj = 1 holds whatever S₀.", "",
+                  "| S₀ | max|HS₀ − S₀H| | max|RH + B − I| | max|HR + B − I| | max_j|h_jr_jj + b_jj − 1| | EIV bias, MR | EIV bias, DR |", "|---|---|---|---|---|---|---|"]
+            for r in Bp['general']:
+                L.append(f"| {r['name']} | {r['comm']:.2e} | {r['RH']:.1e} | {r['HR']:.3f} | {r['per_mode']:.1e} | {r['eiv']['measured']:.4e} | {r['eiv']['reference']:.4e} |")
     if Cres:
         L += ["", f"## C. The real loop: MR, DR and DR* driven by the same noise paths (k_e = {KE:g}, B = {B_OU:g}, std {STD_C:g}, η = ∞, RK4 dt = {DT_C:g})", "",
               f"E‖f̂ − f‖²_ρ at the records (mean ± standard error over {N_RUNS} runs) against the prediction (covariance part + mean part); MR and DR share the "
@@ -274,6 +371,53 @@ def report(A, Bp, Cres, Cpred, t0=None):
             m_ = diff[:, k_].mean(axis=0); se = np.sqrt(np.mean(diff[:, k_].var(axis=0, ddof=1) / len(diff)))
             re_ = np.sqrt(np.mean((m_ - pd[k_]) ** 2) / np.mean(pd[k_] ** 2))
             L.append(f"| {t:g} | {np.mean(m_ ** 2):.4e} | {np.mean(pd[k_] ** 2):.4e} | {re_:.4f} | {se:.2e} | {re_ / (se / np.sqrt(np.mean(pd[k_] ** 2))):.2f} |")
+    if D:
+        pr = D['pred']
+        thr = lambda lam, stiff: np.sqrt(stiff / KE / lam) if lam > 0 else np.inf
+        fs = lambda x: '—' if np.isinf(x) else f'{x:.3f}'
+        L += ["", "## D. The separations under the desired regressor (Corollary D‴.33)", "",
+              f"The separations' second-order drift S_k at the lift (real time, per unit Eν²; k_e = {KE:g}, B = {B_OU:g}): its extreme eigenvalues per class and "
+              "the noise std at which its largest eigenvalue reaches the separations' stiffness — σ₀/k_e under the adaptive prior, σ₀w_k/k_e under the cohesion "
+              "leak (Proposition D‴.32, w_k = 1/3); '—' where every eigenvalue is negative.", "",
+              "| law | class 1: [min, max] | class 2 | class 3 | threshold std, adaptive prior | threshold std, cohesion leak |", "|---|---|---|---|---|---|"]
+        for v in VARIANTS:
+            r = pr['lift'][v]; lam = max(r['hi'])
+            L.append(f"| {NAMES[v]} | " + " | ".join(f"[{lo:+.5f}, {hi:+.5f}]" for lo, hi in zip(r['lo'], r['hi'])) + f" | {fs(thr(lam, X.SIGMA0))} | "
+                     f"{fs(thr(lam, X.SIGMA0 * pr['w'][0]))} |")
+        if 'scan' in pr:
+            L += ["", "The drift's largest eigenvalue over the classes against k_e at B = 4k_e (the noise white over the loop's bandwidth), and k_e times it: "
+                  "the measured regressor's drift is O(1), so its threshold std falls like k_e^{−1/2}; with the regressor at the reference the drift is "
+                  "O(1/k_e), as the stiffness σ₀/k_e is, so the threshold does not fall with k_e.", "",
+                  "| k_e | MR: λ_max | DR: λ_max; k_e·λ_max | DR*: λ_max; k_e·λ_max | threshold std (adaptive prior): MR; DR; DR* |", "|---|---|---|---|---|"]
+            for ke in KES_A:
+                sc = {v: pr['scan'][(ke, v)] for v in VARIANTS}
+                L.append(f"| {ke:g} | {sc['measured']:+.4e} | {sc['reference']:+.3e}; {ke * sc['reference']:+.4f} | {sc['reference_both']:+.3e}; "
+                         f"{ke * sc['reference_both']:+.4f} | " + "; ".join(fs(np.sqrt(X.SIGMA0 / ke / sc[v]) if sc[v] > 0 else np.inf) for v in VARIANTS) + " |")
+        L += ["", "With the regressor at the reference the drift is the mean error's term ⟨E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ alone, and k_eE[e] = g − Ĵȳ moves from g at "
+              "the lift to (I − P)g at the adaptive prior's stationary point (ȳ = H⁻¹F): the rms of E[e] at the lift and at the stationary point, and the "
+              "drift there.", "",
+              "| law | rms E[e]: lift | stationary point | drift at the stationary point: class 1, 2, 3 [min, max] |", "|---|---|---|---|"]
+        for v in ('reference', 'reference_both'):
+            r = pr['stat'][v]
+            L.append(f"| {NAMES[v]} | {r['rms_lift']:.4e} | {r['rms']:.4e} | " + "; ".join(f"[{lo:+.1e}, {hi:+.1e}]" for lo, hi in zip(r['lo'], r['hi'])) + " |")
+        L += ["", f"Along DR's second-order transient from the lift (Eν² = 1): per 50-unit window the mean error's rms and the largest eigenvalue of the "
+              "window-averaged S_k (classes 1, 2, 3); the largest over every one-period average: " + ", ".join(f"{x:+.2e}" for x in pr['period_max']) + ".", "",
+              "| window | rms E[e] | λ_max(S₁), λ_max(S₂), λ_max(S₃) |", "|---|---|---|"]
+        for w_ in pr['win']:
+            L.append(f"| [{w_['a']:g}, {w_['b']:g}) | {w_['rmsE']:.4f} | " + ", ".join(f"{x:+.2e}" for x in w_['lam']) + " |")
+        L += ["", f"The real loop: the lift m = 15 with class 3 separated by 10⁻⁶·(2, 1, 0, −1, −2) along MR's top eigenvector of S₃, {N_D} antithetic pairs per "
+              f"(law, std) on paths common to the laws, {X.T_D:g} time units, the separation's rate (least squares over t ≥ 50) against −σ₀/k_e = "
+              f"{-X.SIGMA0 / KE:.3e} plus Eν² times the largest eigenvalue of the law's S₃ at the lift.", "",
+              "| law | std | measured rate (pair means ± s.e.) | −σ₀/k_e + Eν²λ_max(S₃) | runs growing |", "|---|---|---|---|---|"]
+        for v in ('measured', 'reference'):
+            for std in STDS_D:
+                rs = [r for r in D['runs'] if r['v'] == v and r['std'] == std]
+                if not rs:
+                    continue
+                seeds = sorted(set(r['seed'] for r in rs))
+                pm = np.array([np.mean([r['rate'] for r in rs if r['seed'] == sd]) for sd in seeds])
+                L.append(f"| {NAMES[v]} | {std:g} | {pm.mean():+.4e} ± {pm.std(ddof=1) / np.sqrt(len(pm)):.1e} | "
+                         f"{-X.SIGMA0 / KE + std ** 2 * pr['lift'][v]['hi'][2]:+.4e} | {sum(r['rate'] > 0 for r in rs)} of {len(rs)} |")
     L += ["", "Numbers are produced by `experiments/exp_eiv_remedy.py`; nothing is edited by hand."]
     with open(os.path.join(OUT, 'eiv_remedy.md'), 'w', encoding='utf-8') as f:
         f.write("\n".join(L) + "\n")
@@ -288,7 +432,25 @@ def main():
     raw = os.path.join(OUT, 'eiv_remedy_raw.npz')
     if '--from-raw' in sys.argv:
         with np.load(raw, allow_pickle=True) as z:
-            report(z['A'].item(), z['B'].item(), list(z['C']), z['P'].item(), t0)
+            report(z['A'].item(), z['B'].item(), list(z['C']), z['P'].item(), t0, D=z['D'].item() if 'D' in z.files else None)
+        return
+    if '--only-D' in sys.argv:                                               # Part D (Corollary D‴.33) computed, merged with the stored parts
+        with np.load(raw, allow_pickle=True) as z:
+            save = {k: z[k] for k in z.files}
+        with mp.Pool(N_WORKERS) as pool:
+            pr = pool.apply_async(part_D_pred)
+            runs = pool.map(job_D, [(v, std, seed, sign) for v in ('measured', 'reference') for std in STDS_D for seed in range(N_D)
+                                    for sign in (1.0, -1.0)], chunksize=1)
+            save['D'] = np.array(dict(pred=pr.get(), runs=runs), dtype=object)
+        X.save_raw(raw, **save)
+        report(save['A'].item(), save['B'].item(), list(save['C']), save['P'].item(), t0, D=save['D'].item())
+        return
+    if '--only-B' in sys.argv:                                               # Part B recomputed, merged with the stored A, C and P
+        with np.load(raw, allow_pickle=True) as z:
+            save = {k: z[k] for k in z.files}
+        save['B'] = np.array(part_B(), dtype=object)
+        X.save_raw(raw, **save)
+        report(save['A'].item(), save['B'].item(), list(save['C']), save['P'].item(), t0, D=save['D'].item() if 'D' in save else None)
         return
     if '--only-AB' in sys.argv:                                              # Parts A and B recomputed, merged with the stored C and P
         with np.load(raw, allow_pickle=True) as z:
@@ -297,15 +459,20 @@ def main():
             save['A'] = np.array(part_A(pool), dtype=object)
         save['B'] = np.array(part_B(), dtype=object)
         X.save_raw(raw, **save)
-        report(save['A'].item(), save['B'].item(), list(save['C']), save['P'].item(), t0)
+        report(save['A'].item(), save['B'].item(), list(save['C']), save['P'].item(), t0, D=save['D'].item() if 'D' in save else None)
         return
     with mp.Pool(N_WORKERS) as pool:
         A, Bp = part_A(pool), part_B()
         X.save_raw(raw, A=np.array(A, dtype=object), B=np.array(Bp, dtype=object))
         Cres = pool.map(job_C, [(v, seed) for seed in range(N_RUNS) for v in VARIANTS], chunksize=1)
+        pr = pool.apply_async(part_D_pred)
+        Druns = pool.map(job_D, [(v, std, seed, sign) for v in ('measured', 'reference') for std in STDS_D for seed in range(N_D)
+                                 for sign in (1.0, -1.0)], chunksize=1)
+        Dd = dict(pred=pr.get(), runs=Druns)
     Cpred = predictions_C()
-    X.save_raw(raw, A=np.array(A, dtype=object), B=np.array(Bp, dtype=object), C=np.array(Cres, dtype=object), P=np.array(Cpred, dtype=object))
-    report(A, Bp, Cres, Cpred, t0)
+    X.save_raw(raw, A=np.array(A, dtype=object), B=np.array(Bp, dtype=object), C=np.array(Cres, dtype=object), P=np.array(Cpred, dtype=object),
+               D=np.array(Dd, dtype=object))
+    report(A, Bp, Cres, Cpred, t0, D=Dd)
 
 
 if __name__ == '__main__':
