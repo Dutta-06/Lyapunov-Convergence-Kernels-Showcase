@@ -948,6 +948,19 @@ Tests (`tests/test_gauge_dither.py`): the leak a Fisher–Rao gradient; the two-
 representation stationary and stabilising the gauge; the leak's spread against the two-class closed form; no weight motion at γ = 0; D against the projector of the code's
 drift Jacobian; run_dithered's noise 2τG dt.
 
+## Proposition D‴.37 — the dither's drift along the gauge (`exp_gauge_drift.py` → `chaos/gauge_drift.md`)
+
+- Proposition D‴.36's instance at τ = 10⁻⁴. (A) The drift from the limit map's second-order identities agrees with the integrated limit map
+  to 10⁻³; (B) it is the amplitudes' noise's (each class's drains its own mass), the centres' and widths' 10⁴ times smaller.
+- (C) As γ → 0 the drift over γτ becomes the replicator flow of the entropic free energy (τ/2) log det ∇²_ΘJ (0.3% at γ = 10⁻⁵); (D) a
+  saturation layer of width ∝ √γ stops the descent into the saturation, its zero at 0.57δ* as γ → 0, inside it the amplitude's Itô term.
+- (E) At γ = 10⁻² the drift has three attracting states, each with two classes near their saturation; (F) the 64-seed ensemble mean
+  follows the mean path; (G) the leak's shift is κ⁻¹b for ε ≳ 3τ; (H) without a leak the masses spread toward the saturations over 10⁶
+  slow units, the limit SDE reproducing the means.
+
+Tests (`tests/test_gauge_drift.py`): the identities on flows with known limit maps and on an integrated one; the diffusion against
+D‴.36's projection; the slow limit against the log-determinant law; the split-invariance of the log-determinant within a class.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
