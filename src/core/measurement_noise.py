@@ -407,7 +407,8 @@ def second_order_mean(cl, cv, fprime, B, var, N=256, h=2e-3, rtol=1e-10, periodi
     (Fe_noise, Fl_noise, Fe_param, Fl_param; F_noise and F_param their sums), the samples of g (g_noise, g_param) and of Ĵ (J) at
     t_k = kT₀/N, the mean function's curvature c̄ = ½D²_Θf̂[Σ̄_ΘΘ] on the orbit's samples x_m(t_k) (Σ̄ the period average, `Sig`, physical
     coordinates), and the relative periodicity error of P; with `periodic`, also the exact periodic second-order mean m(t_k) of the
-    linearised loop (whitened) under the full forcing."""
+    linearised loop (whitened) under the full forcing, its noise and parameters' parts (m_noise, m_param: the forcing is linear in P) and
+    E[ε_mδϑ_k](t_k) (Eeth, physical) for the separations' cross term at the stationary point (referee round 23, D3v-1)."""
     ke, eta = cl.ke, cl.eta
     d = cv.d
     gen = fixed_generator(cv, ke) if eta == 0 else (lambda t: cv.generator(t, ke))
@@ -464,17 +465,20 @@ def second_order_mean(cl, cv, fprime, B, var, N=256, h=2e-3, rtol=1e-10, periodi
     out['F_noise'] = out['Fe_noise'] + out['Fl_noise']
     out['F_param'] = out['Fe_param'] + out['Fl_param']
     if periodic:
-        fhat = np.fft.fft(fn + fp, axis=0) / N
         om = np.fft.fftfreq(N, d=1.0 / N) * (2 * np.pi / cv.T0)
-        force = lambda t: np.real(np.exp(1j * om * t) @ fhat)
-        rhs = lambda t, y: np.concatenate([(gen(t) @ y[:D * D].reshape(D, D)).ravel(), gen(t) @ y[D * D:] + force(t)])
-        sol = solve_ivp(rhs, (0.0, cv.T0), np.concatenate([np.eye(D).ravel(), np.zeros(D)]), method='DOP853', rtol=1e-12, atol=1e-16)
-        Phi, pT = sol.y[:D * D, -1].reshape(D, D), sol.y[D * D:, -1]
-        m0 = np.linalg.solve(np.eye(D) - Phi, pT)
-        sol2 = solve_ivp(lambda t, y: gen(t) @ y + force(t), (0.0, cv.T0), m0, method='DOP853', rtol=1e-12, atol=1e-16,
-                         t_eval=np.append(tk, cv.T0))
-        out['m'] = sol2.y.T[:N]
-        out['m_per_err'] = float(np.abs(sol2.y[:, -1] - m0).max() / np.abs(m0).max())
+        for key, f in (('m_noise', fn), ('m_param', fp), ('m', fn + fp)):
+            fhat = np.fft.fft(f, axis=0) / N
+            force = lambda t: np.real(np.exp(1j * om * t) @ fhat)
+            rhs = lambda t, y: np.concatenate([(gen(t) @ y[:D * D].reshape(D, D)).ravel(), gen(t) @ y[D * D:] + force(t)])
+            sol = solve_ivp(rhs, (0.0, cv.T0), np.concatenate([np.eye(D).ravel(), np.zeros(D)]), method='DOP853', rtol=1e-12, atol=1e-16)
+            Phi, pT = sol.y[:D * D, -1].reshape(D, D), sol.y[D * D:, -1]
+            m0 = np.linalg.solve(np.eye(D) - Phi, pT)
+            sol2 = solve_ivp(lambda t, y: gen(t) @ y + force(t), (0.0, cv.T0), m0, method='DOP853', rtol=1e-12, atol=1e-16,
+                             t_eval=np.append(tk, cv.T0))
+            out[key] = sol2.y.T[:N]
+            if key == 'm':
+                out['m_per_err'] = float(np.abs(sol2.y[:, -1] - m0).max() / np.abs(m0).max())
+        out['Eeth'] = np.array([_eps_theta(P, cv, D) for P in Ps[:N]])
     return out
 
 
@@ -494,6 +498,27 @@ def mean_biases(H, out, S=None):
                 param=float(yp @ H @ yp), law=float(yl @ H @ yl), c2=float(np.mean(out['c_bar'] ** 2)))
 
 
+def _feature_hessian(net, x, th, hth=1e-5):
+    """∇²_ϑΦ̃(x; ϑ) (p × p) of the single-particle feature, by central differences of its gradient (`grad_g` with e = 1), symmetrised."""
+    p = th.size
+    Hm = np.zeros((p, p))
+    for j in range(p):
+        dp = np.zeros(p); dp[j] = hth
+        Hm[:, j] = (net.grad_g(np.array([x]), np.array([1.0]), (th + dp)[None, :])[0]
+                    - net.grad_g(np.array([x]), np.array([1.0]), (th - dp)[None, :])[0]) / (2 * hth)
+    return 0.5 * (Hm + Hm.T)
+
+
+def _feature_hessian_gradient(net, x, th, hth=1e-5, hl=1e-4):
+    """∂_{ϑ_l}∇²_ϑΦ̃(x; ϑ) (p, p, p), l first, by central differences (step hl) of `_feature_hessian`."""
+    p = th.size
+    out = np.zeros((p, p, p))
+    for l in range(p):
+        dl = np.zeros(p); dl[l] = hl
+        out[l] = (_feature_hessian(net, x, th + dl, hth) - _feature_hessian(net, x, th - dl, hth)) / (2 * hl)
+    return out
+
+
 def separation_drift(cv, fprime, fsecond, ke, B, var, N=512, hx=1e-5, hth=1e-5, variant='measured'):
     """S_k (K₀, p, p), real time, per class k: the averaged second-order drift of a separation of class k under the measured regressor at the
     lift, ⟨E[ε_m²]G^{1/2}∂_x∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2} + E[e]G^{1/2}∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2}⟩ with the quasi-static moments of `eiv_force` (the
@@ -509,13 +534,7 @@ def separation_drift(cv, fprime, fsecond, ke, B, var, N=512, hx=1e-5, hth=1e-5, 
     g = np.sqrt(np.asarray(cv.G, float))
     S = np.zeros((len(cv.atoms), p, p))
 
-    def hess(x, th):
-        Hm = np.zeros((p, p))
-        for j in range(p):
-            dp = np.zeros(p); dp[j] = hth
-            Hm[:, j] = (cv.net.grad_g(np.array([x]), np.array([1.0]), (th + dp)[None, :])[0]
-                        - cv.net.grad_g(np.array([x]), np.array([1.0]), (th - dp)[None, :])[0]) / (2 * hth)
-        return 0.5 * (Hm + Hm.T)
+    hess = lambda x, th: _feature_hessian(cv.net, x, th, hth)
     for s in t:
         x = float(np.atleast_1d(cv.xr(s))[0])
         a = float(np.atleast_1d(fprime(x))[0]); b2 = float(np.atleast_1d(fsecond(x))[0])
@@ -533,7 +552,8 @@ def second_order_transient(cl, cv, fprime, B, var, t_end, dt=0.05, h=2e-3, rtol=
     covariance P(t) of the augmented linearised loop, the second-order forcing ½∂²F[P(t)] of the true field (the stencil of
     `second_order_mean`) on the grid t_k = k·dt, and the mean m(t) of ṁ = M(t)m + force(t), m(0) = 0 (RK4 on the grid, the forcing linear
     in between). Returns dict(t, m (whitened (δe, y[, ζ])), Ee = E[e](t) = m_δe — the noise's own mean error plus the mean tracking error of
-    the developing errors-in-variables deviation —, Eem2 = E[ε_m²](t) = E[(δe + ν)²] at second order)."""
+    the developing errors-in-variables deviation —, Eem2 = E[ε_m²](t) = E[(δe + ν)²] at second order, Eeth = E[ε_mδϑ_k](t) (physical) for
+    the separations' cross term)."""
     ke, eta = cl.ke, cl.eta
     gen = fixed_generator(cv, ke) if eta == 0 else (lambda t: cv.generator(t, ke))
     if cl.compensation == 'reference':
@@ -571,32 +591,231 @@ def second_order_transient(cl, cv, fprime, B, var, t_end, dt=0.05, h=2e-3, rtol=
         g4 = gen(t + dt) @ (m[k] + dt * g3) + force[k + 1]
         m[k + 1] = m[k] + dt / 6 * (g1 + 2 * g2 + 2 * g3 + g4)
     Eem2 = np.array([P[0, 0] + 2 * P[0, D] + P[D, D] for P in Ps])
-    return dict(t=tk, m=m, Ee=m[:, 0].copy(), Eem2=Eem2)
+    Eeth = np.array([_eps_theta(P, cv, D) for P in Ps])
+    return dict(t=tk, m=m, Ee=m[:, 0].copy(), Eem2=Eem2, Eeth=Eeth)
 
 
-def separation_drift_series(cv, ts, Ee, Eem2, hx=1e-5, hth=1e-5):
+def separation_drift_series(cv, ts, Ee, Eem2, hx=1e-5, hth=1e-5, Eeth=None):
     """S_k(t) (len(ts), K₀, p, p), real time: the separations' second-order drift E[ε_m²](t)G^{1/2}∂_x∇²_ϑΦ̃(x_m(t); ϑ_k)G^{1/2} +
     E[e](t)G^{1/2}∇²_ϑΦ̃(x_m(t); ϑ_k)G^{1/2} with the moments given along a trajectory (`second_order_transient`; `separation_drift` is its
-    period average with the noise's own quasi-static moments at the lift). The parameters' cross term Σ_lE[ε_mδϑ_kl]∂_{ϑ_l}(·) is omitted
-    (on the instance below 10⁻³ of the drift, referee round 22)."""
+    period average with the noise's own quasi-static moments at the lift). The E[ε_m²] term is the measured regressor's: for the desired
+    regressor (DR, DR*) pass Eem2 = 0 (its law has no ∂_x term; the trajectory's own E[ε_m²] would put MR's term back). With `Eeth` —
+    E[ε_mδϑ_k](t) (len(ts), K₀, p), physical coordinates, as `second_order_transient` returns it — the parameters' cross term
+    G^{1/2}Σ_lE[ε_mδϑ_kl]∂_{ϑ_l}∇²_ϑΦ̃G^{1/2} is added: below 10⁻³ of MR's drift on the instance (referee round 22), but of the order of DR's
+    and DR*'s, which are 60–2000 times smaller (referee round 23, D3v-5)."""
     p = cv.atoms.shape[1]
     g = np.sqrt(np.asarray(cv.G, float))
 
-    def hess(x, th):
-        Hm = np.zeros((p, p))
-        for j in range(p):
-            dp = np.zeros(p); dp[j] = hth
-            Hm[:, j] = (cv.net.grad_g(np.array([x]), np.array([1.0]), (th + dp)[None, :])[0]
-                        - cv.net.grad_g(np.array([x]), np.array([1.0]), (th - dp)[None, :])[0]) / (2 * hth)
-        return 0.5 * (Hm + Hm.T)
+    hess = lambda x, th: _feature_hessian(cv.net, x, th, hth)
     out = np.zeros((len(ts), len(cv.atoms), p, p))
     for i, s in enumerate(ts):
         x = float(np.atleast_1d(cv.xr(s))[0])
         for k, th in enumerate(cv.atoms):
             Hx = (hess(x + hx, th) - hess(x - hx, th)) / (2 * hx)
             out[i, k] = g[:, None] * (Eem2[i] * Hx + Ee[i] * hess(x, th)) * g[None, :]
+    if Eeth is not None:
+        out += separation_cross_term(cv, ts, Eeth, hth=hth)
     return out
 
+
+def separation_cross_term(cv, ts, Eeth, hth=1e-5, hl=1e-4):
+    """The parameters' cross term of the separations' second-order drift, C_k(t) = G^{1/2}Σ_lE[ε_mδϑ_kl](t)∂_{ϑ_l}∇²_ϑΦ̃(x_m(t); ϑ_k)G^{1/2}
+    (len(ts), K₀, p, p): the class atom fluctuates with the noise, and its correlation with ε_m moves the Hessian in the law's Jacobian
+    G^{1/2}ε_m∇²_ϑΦ̃(·; ϑ_k + δϑ_k)G^{1/2}. Eeth = E[ε_mδϑ_k](t) in physical coordinates."""
+    p = cv.atoms.shape[1]
+    g = np.sqrt(np.asarray(cv.G, float))
+    out = np.zeros((len(ts), len(cv.atoms), p, p))
+    for i, s in enumerate(ts):
+        x = float(np.atleast_1d(cv.xr(s))[0])
+        for k, th in enumerate(cv.atoms):
+            out[i, k] = g[:, None] * np.einsum('l,lij->ij', Eeth[i, k], _feature_hessian_gradient(cv.net, x, th, hth, hl)) * g[None, :]
+    return out
+
+
+def _eps_theta(Pw, cv, D):
+    """E[ε_mδϑ_k] (K₀, p), physical coordinates, from a whitened augmented covariance Pw of (δe, y[, ζ], ν) (ν last, at index D):
+    ε_m = δe + ν and δϑ_k = √G y_k/√w_k."""
+    p = cv.atoms.shape[1]
+    K0 = len(cv.atoms)
+    sc = np.sqrt(np.asarray(cv.G, float))[None, :] / np.sqrt(np.asarray(cv.w, float))[:, None]
+    row = Pw[0, 1:1 + K0 * p] + Pw[D, 1:1 + K0 * p]
+    return sc * row.reshape(K0, p)
+
+
+
+def _augmented_setup(cl, cv, fprime, B, var):
+    """The pieces shared by the transient computations: the whitened generator, the whitening maps, the augmented (OU) generator and
+    noise input, N₀, and the physical field with the noise as its last argument."""
+    ke, eta = cl.ke, cl.eta
+    gen = fixed_generator(cv, ke) if eta == 0 else (lambda t: cv.generator(t, ke))
+    if cl.compensation == 'reference':
+        gen = reference_compensation(gen, cv, fprime, ke)
+    T, Tinv = _whitening(cv, cl)
+    Dp, D = T.shape
+    b0 = collapsed_noise_input(cv, fprime, ke, compensation=cl.compensation)
+    N0 = 2 * var / B
+    Ma, cfun = ou_augmented(gen, lambda t: b0(t)[:D], D, B, N0)
+    Ta = np.zeros((Dp + 1, D + 1)); Ta[:Dp, :D] = T; Ta[Dp, D] = 1.0
+    field = lambda t, xi: cl.rhs_noisy(t, xi[:Dp], cl.K0, xi[Dp:Dp + 1])
+    return gen, T, Tinv, Ta, Dp, D, Ma, cfun, N0, field
+
+
+def _hessian_tensor(field, t, xi0, F0, U, h, Tinv):
+    """Tinv∂²F[u_a, u_b] (n, n, D) along the columns u_a of U — the fourth-order stencil of `second_order_mean` along u_a and, off the
+    diagonal, the polarisation ¼(D²_{u_a+u_b} − D²_{u_a−u_b}) — so that ½∂²F[UPUᵀ] = ½Σ_abP_ab·(the tensor) for every P."""
+    w4 = np.array([-1.0, 16.0, -30.0, 16.0, -1.0]) / 12.0
+    n = U.shape[1]
+    d2 = lambda u: sum(c * (F0 if j == 0 else field(t, xi0 + j * h * u)) for c, j in zip(w4, (-2, -1, 0, 1, 2))) / h ** 2
+    out = np.zeros((n, n, Tinv.shape[0]))
+    for a in range(n):
+        out[a, a] = Tinv @ d2(U[:, a])
+        for b in range(a):
+            out[a, b] = out[b, a] = Tinv @ (0.25 * (d2(U[:, a] + U[:, b]) - d2(U[:, a] - U[:, b])))
+    return out
+
+
+def long_transient(cl, cv, fprime, B, var, n_periods, N=126, h=2e-3, rtol=1e-11, keep=None, hth=1e-5, chunk=2048):
+    """The second-order small-noise transient of `second_order_transient` (the weighted K₀-atom loop `cl` from its lift, the OU noise
+    stationary at t = 0) carried over n_periods periods by exact one-period maps (referee round 23, D3v-2): the covariance as
+    P(nT₀ + s) = P_per(s) + Φ(s)ΔP_nΦ(s)ᵀ, ΔP_{n+1} = Φ(T₀)ΔP_nΦ(T₀)ᵀ (Φ the augmented loop's fundamental matrix, P_per its periodic
+    covariance); the second-order forcing ½∂²F[P] through the field's second-derivative tensor on the grid s_j = jT₀/N (linear in P, so in
+    ΔP_n); the mean by RK4 on the grid with the forcing linear in between (as `second_order_transient`, here as one-period linear maps:
+    Δm_{n+1} = ΨΔm_n + R[ΔP_n] about the discrete periodic mean). The forcing is split as in `second_order_mean` into the noise part (P's
+    (δe, ν) block) and the parameters' part. Per period n (from t = nT₀) the period-averaged separation drift of each class for the desired
+    regressor (no ∂_x term): the mean error's term ⟨E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ split into the noise and the parameters' parts, and the cross
+    term ⟨G^{1/2}Σ_lE[ε_mδϑ_kl]∂_{ϑ_l}∇²_ϑΦ̃G^{1/2}⟩. Returns dict: t (n·T₀), the largest eigenvalue per class of the total drift (lam_tot)
+    and of the noise part of the mean error's term alone (lam_noise) for every period (float32), the full matrices (S_noise, S_param, C) and
+    the rms of E[e] (total, noise, parameters') at the periods `keep` (default: all of the first 40, then 200 log-spaced), the stationary
+    limits (S_per: the three parts; rms_per), and the grid's E[e] of the first period (Ee0) for checks."""
+    gen, T, Tinv, Ta, Dp, D, Ma, cfun, N0, field = _augmented_setup(cl, cv, fprime, B, var)
+    Da = D + 1
+    T0 = cv.T0
+    dt = T0 / N
+    tk = np.arange(N + 1) * dt
+    P0per = periodic_covariance(Ma, cfun, T0, Da, N0)
+    _, Pper = transient_covariance(Ma, cfun, Da, N0, T0, tk, P0=P0per, rtol=rtol)
+    sol = solve_ivp(lambda t, y: (Ma(t) @ y.reshape(Da, Da)).ravel(), (0.0, T0), np.eye(Da).ravel(), method='DOP853', rtol=1e-12,
+                    atol=1e-15, t_eval=tk)
+    Phi = sol.y.T.reshape(-1, Da, Da)
+    z_lift = cl.lift(cv.atoms)
+    noise = np.zeros((Da, Da), bool); noise[np.ix_([0, D], [0, D])] = True
+    Ln, Lp = np.zeros((N + 1, D, Da * Da)), np.zeros((N + 1, D, Da * Da))         # ΔP ↦ the forcing's deviation at s_j
+    fn, fp = np.zeros((N + 1, D)), np.zeros((N + 1, D))                           # the periodic forcing
+    for j, t in enumerate(tk):
+        xi0 = np.append(z_lift, 0.0); xi0[0] = float(np.atleast_1d(cv.xr(t))[0])
+        Tt = _hessian_tensor(field, t, xi0, field(t, xi0), Ta, h, Tinv)
+        Tn = np.where(noise[:, :, None], Tt, 0.0); Tq = Tt - Tn
+        fn[j] = 0.5 * np.einsum('ab,abi->i', Pper[j], Tn); fp[j] = 0.5 * np.einsum('ab,abi->i', Pper[j], Tq)
+        Ln[j] = 0.5 * np.einsum('ca,db,cdi->iab', Phi[j], Phi[j], Tn).reshape(D, -1)
+        Lp[j] = 0.5 * np.einsum('ca,db,cdi->iab', Phi[j], Phi[j], Tq).reshape(D, -1)
+    I = np.eye(D)
+
+    def rk4(t, m, f0, f1):
+        fm = 0.5 * (f0 + f1)
+        g1 = gen(t) @ m + f0
+        g2 = gen(t + dt / 2) @ (m + dt / 2 * g1) + fm
+        g3 = gen(t + dt / 2) @ (m + dt / 2 * g2) + fm
+        g4 = gen(t + dt) @ (m + dt * g3) + f1
+        return m + dt / 6 * (g1 + 2 * g2 + 2 * g3 + g4)
+    Z = np.zeros((D, D))
+    steps = [(rk4(t, I, Z, Z), rk4(t, Z, I, Z), rk4(t, Z, Z, I)) for t in tk[:-1]]
+    Psi = np.zeros((N + 1, D, D)); Psi[0] = I
+    Rn, Rp = np.zeros((N + 1, D, Da * Da)), np.zeros((N + 1, D, Da * Da))
+    mpn, mpp = np.zeros((N + 1, D)), np.zeros((N + 1, D))                          # particular solutions with the periodic forcing
+    for j, (A, B0, B1) in enumerate(steps):
+        Psi[j + 1] = A @ Psi[j]
+        Rn[j + 1] = A @ Rn[j] + B0 @ Ln[j] + B1 @ Ln[j + 1]
+        Rp[j + 1] = A @ Rp[j] + B0 @ Lp[j] + B1 @ Lp[j + 1]
+        mpn[j + 1] = A @ mpn[j] + B0 @ fn[j] + B1 @ fn[j + 1]
+        mpp[j + 1] = A @ mpp[j] + B0 @ fp[j] + B1 @ fp[j + 1]
+    m0n = np.linalg.solve(I - Psi[N], mpn[N]); m0p = np.linalg.solve(I - Psi[N], mpp[N])
+    e_per_n = np.einsum('jd,d->j', Psi[:N, 0, :], m0n) + mpn[:N, 0]                # the discrete periodic mean error, its two parts
+    e_per_p = np.einsum('jd,d->j', Psi[:N, 0, :], m0p) + mpp[:N, 0]
+    # the separations' drift maps (whitened Hessians on the grid)
+    K0, p = cv.atoms.shape
+    g = np.sqrt(np.asarray(cv.G, float))
+    Mk = np.array([[g[:, None] * _feature_hessian(cv.net, float(np.atleast_1d(cv.xr(t))[0]), th, hth) * g[None, :] for th in cv.atoms]
+                   for t in tk[:N]])                                               # (N, K₀, p, p)
+    DH = np.array([[g[None, :, None] * _feature_hessian_gradient(cv.net, float(np.atleast_1d(cv.xr(t))[0]), th, hth) * g[None, None, :]
+                    for th in cv.atoms] for t in tk[:N]])                          # (N, K₀, l, p, p)
+    S_per_n = np.einsum('j,jkab->kab', e_per_n, Mk) / N
+    S_per_p = np.einsum('j,jkab->kab', e_per_p, Mk) / N
+    aS = np.einsum('jkab,jd->kabd', Mk, Psi[:N, 0, :]) / N
+    bSn = np.einsum('jkab,jq->kabq', Mk, Rn[:N, 0, :]) / N
+    bSp = np.einsum('jkab,jq->kabq', Mk, Rp[:N, 0, :]) / N
+    sc = np.sqrt(np.asarray(cv.G, float))[None, :] / np.sqrt(np.asarray(cv.w, float))[:, None]
+    C_per = np.zeros((K0, p, p)); bC = np.zeros((K0, p, p, Da * Da))
+    r = np.zeros(Da); r[0] = 1.0; r[D] = 1.0
+    for j in range(N):
+        ce = _eps_theta(Pper[j], cv, D)                                             # (K₀, p)
+        C_per += np.einsum('kl,klab->kab', ce, DH[j]) / N
+        rj = Phi[j].T @ r
+        for k in range(K0):
+            for l in range(p):
+                qv = Phi[j].T[:, 1 + k * p + l]
+                bC[k] += sc[k, l] * DH[j, k, l][:, :, None] * np.outer(rj, qv).ravel()[None, None, :] / N
+    # the recursion over periods
+    if keep is None:
+        keep = np.unique(np.concatenate([np.arange(min(40, n_periods)), np.rint(np.logspace(np.log10(40), np.log10(n_periods - 1), 200)).astype(int)]))
+    keep = np.asarray(keep, int)
+    dP = np.zeros((Da, Da)); dP[D, D] = var; dP = dP - P0per
+    dP0 = dP.copy()
+    dmn, dmp = -m0n, -m0p
+    PhiT = Phi[N]
+    lam_tot = np.zeros((n_periods, K0), np.float32); lam_noise = np.zeros((n_periods, K0), np.float32)
+    rec = {}
+    E0n, E0p = Psi[:N, 0, :], (Rn[:N, 0, :], Rp[:N, 0, :])
+    for n0 in range(0, n_periods, chunk):
+        nn = min(chunk, n_periods - n0)
+        DMn, DMp, DPs = np.zeros((nn, D)), np.zeros((nn, D)), np.zeros((nn, Da * Da))
+        for i in range(nn):
+            DMn[i], DMp[i], DPs[i] = dmn, dmp, dP.ravel()
+            dmn, dmp = Psi[N] @ dmn + Rn[N] @ dP.ravel(), Psi[N] @ dmp + Rp[N] @ dP.ravel()
+            dP = PhiT @ dP @ PhiT.T
+        Sn = S_per_n[None] + np.einsum('kabd,id->ikab', aS, DMn) + np.einsum('kabq,iq->ikab', bSn, DPs)
+        Sp = S_per_p[None] + np.einsum('kabd,id->ikab', aS, DMp) + np.einsum('kabq,iq->ikab', bSp, DPs)
+        Cc = C_per[None] + np.einsum('kabq,iq->ikab', bC, DPs)
+        tot = Sn + Sp + Cc
+        lam_tot[n0:n0 + nn] = np.linalg.eigvalsh(0.5 * (tot + np.swapaxes(tot, -1, -2)))[..., -1]
+        lam_noise[n0:n0 + nn] = np.linalg.eigvalsh(0.5 * (Sn + np.swapaxes(Sn, -1, -2)))[..., -1]
+        for i in np.where((keep >= n0) & (keep < n0 + nn))[0]:
+            ii = keep[i] - n0
+            en = e_per_n + E0n @ DMn[ii] + E0p[0] @ DPs[ii]
+            ep = e_per_p + E0n @ DMp[ii] + E0p[1] @ DPs[ii]
+            rec[int(keep[i])] = dict(S_noise=Sn[ii], S_param=Sp[ii], C=Cc[ii], rms=float(np.sqrt(np.mean((en + ep) ** 2))),
+                                     rms_noise=float(np.sqrt(np.mean(en ** 2))), rms_param=float(np.sqrt(np.mean(ep ** 2))))
+    return dict(t=np.arange(n_periods) * T0, lam_tot=lam_tot, lam_noise=lam_noise, keep=keep, rec=[rec[int(k)] for k in keep],
+                S_per=dict(S_noise=S_per_n, S_param=S_per_p, C=C_per), rms_per=float(np.sqrt(np.mean((e_per_n + e_per_p) ** 2))),
+                rms_per_noise=float(np.sqrt(np.mean(e_per_n ** 2))), rms_per_param=float(np.sqrt(np.mean(e_per_p ** 2))),
+                Ee0=e_per_n + e_per_p - Psi[:N, 0, :] @ (m0n + m0p) + (Rn[:N, 0, :] + Rp[:N, 0, :]) @ dP0.ravel(), t_grid=tk[:N])
+
+
+def separation_variance(cl, cv, fprime, B, var, k, theta, t_eval, rtol=1e-9, hth=1e-5):
+    """The variance term of a separation's exponent (referee round 23, D3v-5): a separation of class k along the whitened unit vector θ obeys
+    u̇ = (A₁(t) + A₂(t) − s_k)u with A₁ = ε_m(t)M_k(t), M_k = G^{1/2}∇²_ϑΦ̃(x_m; ϑ_k)G^{1/2} symmetric, ε_m at first order, and A₂ the
+    second-order part, so to second order E log‖u(t)‖/‖u(0)‖ = −s_kt + ∫₀ᵗθᵀE[A₂]θ + E‖P_⊥v₁(t)‖², v₁(t) = ∫₀ᵗε_m(τ)M_k(τ)θdτ, P_⊥ = I − θθᵀ
+    (the A₁A₁ terms combine into ½E‖v₁‖² − ½E⟨θ, v₁⟩² + ½E‖v₁‖², A₁ being symmetric). V(t) = E‖P_⊥v₁(t)‖² at t_eval, from the covariance of
+    the augmented linearised loop extended by v̇₁ = M_k(t)θ(δe + ν), the noise stationary at t = 0 and the rest zero."""
+    gen, T, Tinv, Ta, Dp, D, Ma, cfun, N0, field = _augmented_setup(cl, cv, fprime, B, var)
+    Da = D + 1
+    p = cv.atoms.shape[1]
+    g = np.sqrt(np.asarray(cv.G, float))
+    th = cv.atoms[k]
+    theta = np.asarray(theta, float) / np.linalg.norm(theta)
+    c = np.zeros(Da); c[0] = 1.0; c[D] = 1.0
+
+    def Me(t):
+        out = np.zeros((Da + p, Da + p))
+        out[:Da, :Da] = Ma(t)
+        Mt = g[:, None] * _feature_hessian(cv.net, float(np.atleast_1d(cv.xr(t))[0]), th, hth) * g[None, :]
+        out[Da:, :Da] = np.outer(Mt @ theta, c)
+        return out
+    ce = lambda t: np.append(cfun(t), np.zeros(p))
+    P0 = np.zeros((Da + p, Da + p)); P0[D, D] = var
+    t_eval = np.asarray(t_eval, float)
+    _, Ps = transient_covariance(Me, ce, Da + p, N0, t_eval[-1], t_eval, P0=P0, rtol=rtol)
+    Pp = np.eye(p) - np.outer(theta, theta)
+    return np.array([np.trace(Pp @ P[Da:, Da:]) for P in Ps])
 
 # ---------------------------------------------------------------------- Lemma D‴.26a(v): the slow noise, decoupled exactly
 def noise_decoupling(cv, fprime, eps, N=512, tol=1e-18, maxit=500, with_b1=False):

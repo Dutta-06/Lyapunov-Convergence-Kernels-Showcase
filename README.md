@@ -63,12 +63,12 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   adaptive prior answers with the inverse excitation spectrum (Proposition D‴.30) — the adaptive prior being a washout leak, which
   no prior design makes robust to persistent forces, while evaluating the regressor at the reference turns the noise's own force into a
   bounded least-squares one, the parameters' fluctuation adding a small force that is not (Proposition D‴.31), and keeps the replicated
-  kernels together under the noise — the separations' noise drift reduced to the mean error's term, whose threshold does not fall with the
-  gain (Corollary D‴.33); and a prior-free leak — the kernels attract each other toward the modes of their own distribution — holds the
-  separations without biasing any clustered critical point, splits a class only where the residual's curvature asks for a kernel and merges
-  duplicated or dead ones, so the network selects its number of kernels — the target's on the instance, though a split sheds single
-  particles and the classes' masses are the transit's (Proposition D‴.32); rounds 7–22 of the review log cover all of them up to D‴.31, and
-  their remarks.
+  kernels together under the noise — the regressor's own term leaves the separations' noise drift, whose threshold is then bounded below
+  uniformly in the gain (Corollary D‴.33); and a prior-free leak — the kernels attract each other toward the modes of their own distribution
+  — holds the separations without biasing any clustered critical point, splits a class only where the residual's curvature asks for a kernel
+  and merges duplicated or dead ones, so the network selects its number of kernels — the target's on the instance, though a split sheds
+  single particles and the classes' masses are the transit's (Proposition D‴.32); rounds 7–23 of the review log cover all of them, and their
+  remarks.
 
 ---
 

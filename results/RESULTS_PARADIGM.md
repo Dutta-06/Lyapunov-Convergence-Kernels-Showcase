@@ -846,23 +846,32 @@ range; the real loop's lift is T₀-periodic and a separation contracts by e^{�
 
 ## Corollary D‴.33 — the desired regressor keeps the replicated configuration attracting under measurement noise (`exp_eiv_remedy.py` Part D → `chaos/eiv_remedy.md`)
 
-- Proposition D‴.30's instance (k_e = 25, OU noise B = 100). At the lift the separations' second-order drift (real time, per unit Eν²) has
-  the extreme eigenvalues [−3.7·10⁻¹, +1.5·10⁻²]; [−2.6·10⁻², +1.0·10⁻²]; [−3.5·10⁻², +3.0·10⁻¹] (MR), [−1.1·10⁻², −5.0·10⁻⁴]; [−1.5·10⁻²,
-  −1.5·10⁻⁴]; [−7.2·10⁻³, −3.4·10⁻⁴] (DR) and [+1.6·10⁻⁴, +3.8·10⁻³]; [+5.0·10⁻⁵, +5.0·10⁻³]; [+1.1·10⁻⁴, +2.4·10⁻³] (DR*) in the three
-  classes: DR's negative definite — no threshold at this order —, DR*'s largest 60 times below MR's (the threshold std 0.238 against 0.031
-  under the adaptive prior, 0.138 against 0.018 under the cohesion leak's σ₀w_k).
-- Against k_e (B = 4k_e): MR's largest eigenvalue 0.2982 → 0.3039, its threshold std 0.031 → 0.011 (∝ k_e^{−1/2}); k_e times DR's −0.0038
-  and DR*'s 0.1245–0.1242 at every k_e: thresholds uniform in k_e.
-- At the adaptive prior's stationary point the mean error's rms 2.34·10⁻⁴ (DR) and 2.60·10⁻⁴ (DR*) against 0.0274 and 0.0092 at the lift,
-  the drift ≤ 4.7·10⁻⁶; along DR's transient the window drifts stay negative definite (class 3: −3.21·10⁻⁴ → −2.68·10⁻⁴ over 300 time units;
-  MR's 0.307 → 0.349).
-- The real loop on common noise paths (four antithetic pairs per law and std): MR's separations grow at +4.69·10⁻⁴ and +1.25·10⁻³ per time
-  unit at std 0.05 and 0.1 (all 16 runs growing), DR's decay at −2.965·10⁻⁴ and −3.365·10⁻⁴ (none growing; predicted along the start's
-  direction −2.995·10⁻⁴, −3.492·10⁻⁴): faster than σ₀/k_e — the noise stiffens the separations.
+- Proposition D‴.30's instance (k_e = 25, OU noise B = 100), per unit Eν². At the lift the separations' second-order drift has the extreme
+  eigenvalues [−3.7·10⁻¹, +1.5·10⁻²]; [−2.6·10⁻², +1.0·10⁻²]; [−3.5·10⁻², +3.0·10⁻¹] (MR), [−1.1·10⁻², −5.0·10⁻⁴]; [−1.5·10⁻², −1.5·10⁻⁴];
+  [−7.2·10⁻³, −3.4·10⁻⁴] (DR) and [+1.6·10⁻⁴, +3.8·10⁻³]; [+5.1·10⁻⁵, +5.0·10⁻³]; [+1.1·10⁻⁴, +2.4·10⁻³] (DR*): DR's negative definite on the
+  instance, DR*'s largest 60 times below MR's (the threshold std 0.238 against 0.031 under the adaptive prior, 0.138 against 0.018 under the
+  cohesion leak's σ₀w_k).
+- Against k_e: at B = 4k_e MR's threshold std 0.031 → 0.0054 (∝ k_e^{−1/2}, k_e = 25 → 800), k_e times DR's and DR*'s largest eigenvalue
+  constant (−0.0038, 0.1245–0.1242); at the fixed B = 100 DR's drift positive definite from k_e = 200 (std 0.185 → 0.121), DR*'s threshold
+  0.238 → 0.113, MR's 0.031 → 0.014. ‖S_k‖ ≤ 0.37 of (ii)'s bound: the threshold's floor std 0.069, uniform in k_e.
+- Other targets at the lift: DR's centre entries negative for all six, the whole drift negative definite only for alternating-sign separated
+  kernels (three same-sign bumps +2.9·10⁻⁴; wide, edge and close bumps up to +5.6·10⁻⁴).
+- At the stationary point (the exact periodic second-order mean, adaptive prior): rms E[e] 6.70·10⁻⁴ (DR) and 6.44·10⁻⁴ (DR*), 2.4% and 7.0%
+  of the lift's, its parameters' part 6.32·10⁻⁴ and 6.27·10⁻⁴ (the averaged noise-only residual 2.34·10⁻⁴, 2.60·10⁻⁴); the drift indefinite,
+  DR's largest eigenvalue +3.68·10⁻⁵ (class 1); under the fixed prior DR's drift negative definite and DR*'s positive definite (std 0.435).
+- Along DR's exact second-order transient (5.2·10⁵ time units) the largest eigenvalue turns positive at t = 4103, 2947, 2714 (classes 1–3)
+  and reaches +1.05·10⁻⁴ (t ≈ 3.1·10⁴; formally std 1.64); the cross term −8% (DR) and −17% (DR*) of the class-2 drift over [0, 50), DR*'s
+  threshold std there 0.277.
+- The real loop on common noise paths (four antithetic pairs per family): MR's separations grow (+4.69·10⁻⁴, +1.25·10⁻³ at std 0.05, 0.1;
+  every run), DR's decay faster than σ₀/k_e = 2.83·10⁻⁴ (along u −2.965·10⁻⁴ and −3.365·10⁻⁴, the noise part 0.98 and 0.97 of the
+  transient's prediction, 0.82 and 0.81 of the lift's; along DR's own top eigenvectors faster by 0.14–0.36% at std 0.05), DR*'s slower (by
+  3.2% and 12.6% along its top eigenvector, at the transient's prediction); no DR or DR* run grows.
 
-Tests (`tests/test_eiv_remedy.py`): DR's separation drift equals MR's mean-error term and is negative definite in every class, MR's 0.30
-in class 3; DR*'s drift is O(1/k_e) (k_e times its largest eigenvalue the same at k_e = 25 and 50, B = 4k_e) while MR's does not decrease;
-at the adaptive prior's stationary point the residual mean error is below 1% of g/k_e.
+Tests (`tests/test_eiv_remedy.py`): DR's separation drift equals MR's mean-error term at the lift and is negative definite in every class,
+MR's 0.30 in class 3; DR*'s drift is O(1/k_e) (k_e times its largest eigenvalue the same at k_e = 25 and 50, B = 4k_e) and its independent
+quadrature's to 10⁻⁴; at the adaptive prior's stationary point the exact periodic mean is the sum of its noise and parameters' parts, the
+parameters' part dominant and largely in the tangent space, the drift indefinite; the period maps of `long_transient` continue
+`second_order_transient` to 10⁻⁷, and DR's drift turns indefinite within 800 periods.
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 

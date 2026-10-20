@@ -244,8 +244,9 @@ def test_with_the_regressor_at_the_reference_the_separations_drift_is_the_mean_e
     """Corollary D‴.33: under DR the separations' second-order drift is ⟨E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩ alone — MR's drift minus its regressor term,
     since DR's mean error is MR's at the lift — negative definite in every class on the instance (no noise threshold), while MR's is 0.30
     in class 3; under DR* it is positive but O(1/k_e): k_e times its largest eigenvalue is the same at k_e = 25 and 50 (B = 4k_e), so its
-    threshold does not fall with k_e, while MR's largest eigenvalue does not decrease; and at the adaptive prior's stationary point the
-    residual mean error (I − P)g/k_e is below 1% of g/k_e, so the drift there nearly vanishes."""
+    threshold does not fall with k_e, while MR's largest eigenvalue does not decrease; and the averaged noise-only residual (I − P)g/k_e at
+    the adaptive prior's stationary point is below 1% of g/k_e — so it is the parameters' part, not this residual, that sets the stationary
+    mean error (the next tests; referee round 23, D3v-1)."""
     net, atoms, cv = _setup()
     fpp = lambda x: sum(A * ((x - C) ** 2 / S ** 4 - 1 / S ** 2) * np.exp(-(x - C) ** 2 / (2 * S ** 2)) for A, C, S in BUMPS)
     S_mr = MN.separation_drift(cv, FP, fpp, 25.0, 100.0, 1.0, N=128)
@@ -266,3 +267,61 @@ def test_with_the_regressor_at_the_reference_the_separations_drift_is_the_mean_e
     J = np.array([AF.whitened_jacobian(net, np.array([2 * np.sin(s)]), cv.atoms, cv.w, cv.G)[0] for s in t])
     res = g - J @ np.linalg.solve(H, 25.0 * F)
     assert np.sqrt(np.mean(res ** 2)) < 0.01 * np.sqrt(np.mean(g ** 2))
+
+
+def test_the_desired_compensation_laws_drift_is_the_quadrature_of_its_mean_error():
+    """Corollary D‴.33 (round 23, D3v-7): DR*'s separation drift at the lift against an independent quadrature — the Hessian of the
+    single-particle feature by second differences of f̂ itself, DR*'s mean error ½∂²_xf·Var(e)/(k_e − a) with Var(e) =
+    k_e²Eν²/((k_e − a)(k_e − a + B)) typed here — to 10⁻⁴, so a rescaled DR* drift (the doubled one passed every test of round 22) is caught."""
+    net, atoms, cv = _setup()
+    ke, B, N = 25.0, 100.0, 64
+    S = MN.separation_drift(cv, FP, FPP, ke, B, 1.0, N=N, variant='reference_both')
+    phi = lambda x, th: net.f_hat(np.array([x]), th[None, :])[0]
+    E = 1e-3 * np.eye(3)
+    hess = lambda x, th: np.array([[(phi(x, th + E[i] + E[j]) - phi(x, th + E[i] - E[j]) - phi(x, th - E[i] + E[j]) + phi(x, th - E[i] - E[j]))
+                                    / 4e-6 for j in range(3)] for i in range(3)])
+    g = np.sqrt(G)
+    Sq = np.zeros_like(S)
+    for s_ in np.arange(N) * PER / N:
+        x = 2 * np.sin(s_); c = ke - FP(x)
+        Ee = 0.5 * FPP(x) * (ke ** 2 / (c * (c + B))) / c
+        for k, th in enumerate(atoms):
+            Sq[k] += Ee * g[:, None] * hess(x, th) * g[None, :] / N
+    assert np.abs(S - Sq).max() < 1e-4 * np.abs(S).max()
+    assert all(np.linalg.eigvalsh(sk)[0] > 0 for sk in S)
+
+
+def test_at_the_stationary_point_the_mean_error_carries_the_parameters_part():
+    """Corollary D‴.33(iii) (round 23, D3v-1): the exact periodic second-order mean of DR's K₀-atom loop under the adaptive prior is the sum
+    of its noise part and its parameters' part (the forcing is linear in the covariance); the parameters' part dominates the stationary mean
+    error (its rms more than twice the noise part's) and lies largely in the tangent space, which the balance does not remove; and the
+    drift there, the cross term included, is indefinite."""
+    net, atoms, cv = _setup()
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, KE, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3, regressor='reference')
+    o = MN.second_order_mean(cl, cv, FP, 100.0, 1.0, N=128, periodic=True)
+    e, en, ep = o['m'][:, 0], o['m_noise'][:, 0], o['m_param'][:, 0]
+    rms = lambda v: np.sqrt(np.mean(v ** 2))
+    assert np.abs(e - en - ep).max() < 1e-8 * np.abs(e).max()
+    assert rms(ep) > 2 * rms(en)
+    H = MN.noise_matrices(cv, FP)[0]
+    Fe = o['J'].T @ ep / len(ep)
+    assert np.sqrt(Fe @ np.linalg.solve(H, Fe)) > 0.5 * rms(ep)
+    S = MN.separation_drift_series(cv, o['t'], e, np.zeros_like(e), Eeth=o['Eeth']).mean(axis=0)
+    lam = np.linalg.eigvalsh(S[0])
+    assert lam[0] < 0 < lam[-1]
+
+
+def test_the_period_maps_continue_the_direct_transient_and_drs_drift_turns_indefinite():
+    """`long_transient` (round 23, D3v-2): over the first periods its period-averaged drift (the mean error's two parts and the cross term)
+    is `second_order_transient`'s on the same grid to 10⁻⁷; and along DR's transient the drift, negative definite near the lift, turns
+    indefinite — in class 3 after 300 time units and within 800 periods."""
+    net, atoms, cv = _setup()
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, KE, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3, regressor='reference')
+    lt = MN.long_transient(cl, cv, FP, 100.0, 1.0, 800, N=126, keep=np.arange(4))
+    o = MN.second_order_transient(cl, cv, FP, 100.0, 1.0, 504 * (PER / 126), dt=PER / 126)
+    Sd = MN.separation_drift_series(cv, o['t'], o['Ee'], np.zeros_like(o['Ee']), Eeth=o['Eeth'])
+    for n in range(4):
+        r = lt['rec'][n]
+        assert np.abs(Sd[n * 126:(n + 1) * 126].mean(axis=0) - (r['S_noise'] + r['S_param'] + r['C'])).max() < 1e-7 * np.abs(Sd).max()
+    lam, t = lt['lam_tot'][:, 2], lt['t']
+    assert np.all(lam[t < 300] < 0) and np.any(lam > 0)
