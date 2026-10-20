@@ -591,7 +591,8 @@ Script: \code{exp_ot_basin.py} $\to$ \code{chaos/ot_basin.md}.
 
 % The subsections on Theorem D'''.23 to Proposition D'''.31 mirror the corresponding sections of
 % results/RESULTS_PARADIGM.md as committed at 29f9394, those on Proposition D'''.32 and Corollary D'''.33 as committed
-% at 1ddff8c (manuscript part 4f), that on Proposition D'''.34 as committed at 9d122dd (manuscript part 4g).
+% at 1ddff8c (manuscript part 4f), that on Proposition D'''.34 as committed at 9d122dd (manuscript part 4g), that on
+% Proposition D'''.35 as committed at 2e5eb10 (manuscript part 4h).
 \subsection{Theorem D\texorpdfstring{$'''$}{'''}.23: adaptive priors}
 
 Script: \code{exp_adaptive_prior.py} $\to$ \code{chaos/adaptive_prior.md}.
@@ -1158,6 +1159,33 @@ Script: \code{exp_mass_transfer.py} $\to$ \code{chaos/mass_transfer.md}.
     $\sum\abs{A_k}/a_{\max}>1$; at the lift of an exact representation the zero modes in $(\Theta,\log\beta)$ are the
     predicted $\sum(n_k-1)$ redistributions and $K$ gauges, a separation keeps $-\sigma_0w_k$ with $\gamma>0$, and
     the rest of the spectrum is D$'''$.32's ($\gamma=0$) and stable ($\gamma>0$).
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.35: the split of a class is an
+\texorpdfstring{$S_n$}{S\_n}-symmetric transcritical bifurcation}
+
+Script: \code{exp_split_bifurcation.py} $\to$ \code{chaos/split_bifurcation.md}.
+\begin{itemize}
+  \item Proposition D$'''$.32's resolution instance (the lift of $\vartheta^b(q)$, $m=30$, compact $R=1$). (A) The
+    middle class splits first ($\lambda^+=2.86\cdot10^{-4}$, the threshold $0.1213\sigma_0$); along its splitting
+    direction the residual's third derivative is $c_3=-1.257\cdot10^{-3}$.
+  \item (B) Near the threshold Newton on the full drift finds the $S_q\times S_{n-q}$ split states ($q=1$--4) where
+    the reduced equation puts them (0.3\%--3.0\% at $\mu=5\cdot10^{-7}$), each a saddle, its eigenvalues converging
+    to $\mp\mu n/(n-2q)$ and $-\mu$ as $\mu\to0$.
+  \item (C) The reduced quadratic equation names the first excursion's particle in 12 of 12 runs and its time to
+    1.1\%; the linear equation names it in 6 and misses the time by up to 22.4\%, the flipped one in 2. The first
+    excursion is on the side $\sgn(c_3)v$ in 10 of 12. At $\sigma_0/16$ a bound pair leaves in 3 of 6 runs (the top
+    two within 1.2\%--11\%), a single particle in the others; the cascade stops within a stage once the main piece's
+    margin is positive.
+  \item (D) Under Part G's schedule: 8--10 classes with the cohesion leak, 6--7 with the replicator ($\gamma=0.1$).
+    (E) With the replicator at $\gamma=1$: 5, 6 and 8 classes (the first escapee's mass 0.134--0.136): the rate makes
+    no difference in three seeds. (F) The mass-free leak continued to $\sigma_0/256$: 4 classes at $\sigma_0/64$ in 3
+    of 3 runs (the fit error 0.0149), then 9, 10, 9 at $\sigma_0/128$ and 9, 8, 9 at $\sigma_0/256$, the fit error
+    0.0028 --- the cohesion leak's end state: the 4 classes were where the schedule stopped.
+  \item Tests (\code{tests/test_split_bifurcation.py}): the full drift along $v$ against the reduced quadratic
+    equation (the remainder cubic); the single-particle split state a saddle with the predicted eigenvalues; the
+    predicted particle leaving first, on the predicted side; the reduced crossing against closed forms; the
+    mass-free leak's blocks.
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E

@@ -241,7 +241,8 @@ is a delta-method statement, new in its object.}
     mechanism for a new energy (the counts as the source of uniformity in $m$).
   % The items Theorem D'''.23 to Corollary D'''.33 are LITERATURE_TRANSPORT.md's audit bullets as committed at 1ddff8c
   % (D'''.25 has none), the item Proposition D'''.34 as committed at 9d122dd (manuscript part 4g; the D'''.32 item is
-  % unchanged there). Its references [S..] are the bibitems S.. of refs.tex; [1], [3], [4], [6]--[8], [30], [49]
+  % unchanged there), the item Proposition D'''.35 as committed at 2e5eb10 (manuscript part 4h). Its references
+  % [S..] are the bibitems S.. of refs.tex; [1], [3], [4], [6]--[8], [30], [49]
   % and [55] (review/LITERATURE_refs.md) are sanner1992, x-ioannou1983 (Ioannou--Kokotovic's sigma-modification),
   % ioannou1996, R6--R8, R30, R49 and R55; [S9] (the standard references) is sb1989 where it is cited for
   % Sastry--Bodson and kko1986 where it is cited for Kokotovic--Khalil--O'Reilly and singular perturbations.
@@ -474,6 +475,22 @@ is a delta-method statement, new in its object.}
     numerics (the five-bump and three-heavy-bump targets found with their kernels; bumps closer than the broad scale
     and the shedding not repaired). Numerics: \code{exp_mass_transfer.py}. Verdict: classical ingredients; a new
     remedy for the transit's masses.
+  \item \emph{Proposition D$'''$.35 (the split as an $S_n$-symmetric transcritical bifurcation).} Bifurcation from a
+    fully symmetric state of $N$ identical coupled units is $S_N$-equivariant; the standard representation admits a
+    quadratic equivariant, so the generic bifurcation is transcritical, with branches of isotropy $S_q\times S_{N-q}$
+    and no stable small branch --- the jump of the speciation models of Stewart--Elmhirst--Cohen and
+    Golubitsky--Stewart, the normal forms and stability of Elmhirst, the generic theory with quadratic equivariants of
+    Arjevani--Field, who motivate it by the permutation-symmetric critical points of two-layer networks; duplicated
+    units give such critical points and saddles (Fukumizu--Amari \cite{S60}, Brea et al., \c{S}im\c{s}ek et al.)
+    (\cite{S63}); a cluster splits at a critical parameter set by its covariance in deterministic annealing (Rose,
+    \cite{S60}). Order preservation is a consequence of the equivariance, and the escape time is the Riccati
+    solution. What is specific here: the identification for the cohesion leak --- the quadratic coefficient the
+    residual's third derivative along the splitting direction, the cohesion and the mean term entering only at third
+    order or in the common direction ---, the margin after a departure (the stiffness's drop and the curvature's gauge
+    rise), and the instance's quantification (the extreme particle leaving first, alone or with a near-tied
+    neighbour; the mass-free leak delaying the cascade without stopping it). Numerics:
+    \code{exp_split_bifurcation.py}. Verdict: classical bifurcation theory; a new identification for the cohesion
+    leak's over-splitting.
 \end{itemize}
 
 \begin{proof}
@@ -5079,6 +5096,145 @@ $(6,5,4)$, compact $R = 1$: with $\gamma = 10^{-2}$ 15 eigenvalues below $10^{-9
 3 gauges of (v) --- and the 45 others in $[-0.1834,-3.081\cdot10^{-4}]$; with $\gamma = 0$ the 45 are
 \hyperref[res:thmDppp:32]{Proposition D$'''$.32}'s predicted spectrum to $2.1\cdot10^{-11}$ (the finite differences'
 error).
+\end{sloppypar}
+
+% Proposition D'''.35 with its proof sketch, Status and numerics (PARADIGM.md section 5d, round-25 version, as committed
+% at 2e5eb10; the numbers are PARADIGM's copies of results/chaos/split_bifurcation.md). The anchor res:thmDppp:35 is a
+% \hyperref target, as res:thmDppp:21 is. The reference [S63] (LITERATURE_TRANSPORT.md) is the bibitem S63 of
+% refs.tex; Fukumizu--Amari and Rose are in S60.
+\begin{thm}{Proposition}{D$'''$.35}[the split of a class is an $S_n$-symmetric transcritical bifurcation: shedding, its
+order, its cascade]\phantomsection\label{res:thmDppp:35}%
+In the setting of \hyperref[res:thmDppp:32]{Proposition D$'''$.32} (the finite range), let class $k$ of $n\ge3$
+particles sit at an atom $\vartheta_k$ of a nondegenerate critical point of $L_w$, the classes at least $R$ apart, and
+let $\lambda^+ = \lambda_{\max}(R^G_k)$ be simple with the whitened unit eigenvector $v$. Write the separations along
+$v$ as $u_i = \xi_iG^{1/2}v$ ($\sum_i\xi_i = 0$), $\mu := \lambda^+ - \sigma_0w_k$ (the negative splitting margin), and
+\[
+  c_3 := \partial^3_t\langle r\tilde\Phi(\cdot\,;\vartheta_k + tG^{1/2}v)\rangle_\rho\big|_{t=0}
+  \qquad(\text{$r$ the residual at the critical point, frozen}),
+\]
+the residual's third derivative along the splitting direction.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the reduced equation)} For $\abs{\mu}$ small against the rates of the other modes, the flow has a
+    centre manifold over the separations along $v$ --- the standard representation of the symmetric group $S_n$,
+    which permutes the particles --- and on it
+    \[
+      \frac{\dd\xi_i}{\dd s} = \mu\xi_i + \frac{c_3}2\Big(\xi_i^2 - \frac1n\sum_j\xi_j^2\Big)
+      + O(\abs{\xi}^3 + \abs{\mu}\abs{\xi}^2):
+    \]
+    the quadratic coefficient is the residual's alone, since the cohesion energy is even in the differences
+    ($W(-u) = W(u)$) and the mean term is common to the particles. The splitting margin of
+    \hyperref[res:thmDppp:32]{Proposition D$'''$.32}(iv) is the linear coefficient; the quadratic one identifies the
+    equivariant normal form's coefficient for this flow. At third order the cohesion's concavity, the residual's own
+    cubic term and the slaving of the class mean all enter.
+  \item \emph{(no small split is stable)} If $c_3\ne0$ the bifurcation at $\mu = 0$ is transcritical. Its equilibria
+    near 0 off the $S_{n/2}\times S_{n/2}$ symmetry are the split states with isotropy $S_q\times S_{n-q}$ --- $q$
+    particles at $(n - q)t^*$, $n - q$ at $-qt^*$, $t^* = -2\mu/(c_3(n - 2q))$, $1\le q < n/2$ --- and on the centre
+    manifold each has the eigenvalues $-\mu n/(n - 2q)$ (multiplicity $q - 1$, inside the $q$-group),
+    $+\mu n/(n - 2q)$ (multiplicity $n - q - 1$, inside the other group) and $-\mu$ (along the branch), all to leading
+    order in $\mu$: every one is a saddle, for either sign of $\mu$. For even $n$ the quadratic term vanishes on the
+    $S_{n/2}\times S_{n/2}$ states, which are cubic (at $\abs{\xi}\sim\sqrt{\abs{\mu}}$, on one side of the threshold
+    only). Past the threshold ($\mu > 0$) the class leaves a fixed neighbourhood of the replicated state from almost
+    every initial condition: the split is a jump, not a gradual separation.
+  \item \emph{(who leaves first)} The particles keep their order along $v$ ($\operatorname{Fix}$ of a transposition
+    is invariant under any $S_n$-equivariant flow, so two particles never cross), so the particle with the largest
+    $\sgn(c_3)\xi_i$ is ahead on that side at all times; in the quadratic truncation its excursion
+    $\zeta = \sgn(c_3)\xi$ obeys $\dd\zeta/\dd s = \mu\zeta + (\abs{c_3}/2)\zeta^2$ up to the common term, with the
+    Riccati solution
+    $s = (1/\mu)\ln[\zeta_1(\mu + \abs{c_3}\zeta_0/2)/(\zeta_0(\mu + \abs{c_3}\zeta_1/2))]$ --- the leading behaviour
+    of the departure, which is measured against the class's median. The quadratic term decides once $\zeta$ exceeds
+    $2\mu/\abs{c_3}$: the top-ranked particle then runs away along $\sgn(c_3)v$, alone when its lead is large, with
+    its neighbour as a bound pair when their $\zeta_0$ are nearly tied (within about 11\% on the instance). A split
+    sheds the extreme particle, alone or with a near-tied neighbour, because the quadratic term --- the residual's, not
+    the kernel's --- makes it run away first.
+  \item \emph{(after a departure)} After $k$ particles have left the kernel's range the class has $n - k$, and its
+    margin is $\sigma_0(w_k - k/m) - \lambda^+(r',\vartheta')$, the curvature at the new residual and the remaining
+    particles' raised amplitude (the gauge of \hyperref[res:thmDppp:28]{Proposition D$'''$.28}: by $n/(n - k)$ when the
+    residual is unchanged): both the stiffness's drop and the curvature's gauge rise favour further departures, and
+    the class stops shedding only if the residual's change lowers $\lambda^+$ by more than $\mu + k\sigma_0/m$ plus
+    that rise. On the instance the residual's change dominates and the margin is positive by the end of each stage;
+    the cascade resumes when $\sigma$ is lowered (Numerics (C), (D)).
+  \item \emph{(the mass-free leak)} The mass-free leak $\sigma(m_i - \vartheta_i)$ --- the kernel-normalised mean
+    shift, $\sigma/(\sigma_0\bar\psi_i)$ times the cohesion force --- vanishes at clustered configurations under the
+    finite range as the cohesion leak does and has its blocks with $\sigma$ in place of $\sigma w_k$ on the
+    separations (the class means free), so its thresholds are $\sigma = \lambda^+_k$, lower than the cohesion leak's
+    by the factor $w_k$, and (i)--(iv) hold for it with $\mu = \lambda^+ - \sigma$. It is not a gradient flow, and its
+    forces do not sum to zero. It does not stop the cascade: the curvature's change after a departure is the same.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}[Proof sketch]
+(i) The centre manifold theorem for the $S_n$-equivariant flow; the expansion of the learning drift along $v$ at the
+replicated state (the mean term $(S_2/2m)\langle\Phi''\Phi'\rangle$ is common to the particles and leaves with the
+projection on $\sum\xi = 0$); $W$ even, so $\nabla^3W(0) = 0$. (ii) Substituting the isotropy ansatz gives
+$\mu(n - q)t + (c_3/2)(n - q)(n - 2q)t^2 = 0$; the Jacobian $J_{ij} = (\mu + c_3\xi_i)\delta_{ij} - (c_3/n)\xi_j$ on
+$\{\sum\xi = 0\}$ has the stated eigenvalues on the zero-sum perturbations inside each group and along the branch; on
+$\operatorname{Fix}(S_{n/2}\times S_{n/2})$ $\sum\xi_i^2$ is constant across the groups' values and the quadratic term is
+the common one. (iii) Equivariance under the transposition $(i\;j)$ makes $\{\xi_i = \xi_j\}$ invariant; the Riccati
+solution. (iv) \hyperref[res:thmDppp:32]{Proposition D$'''$.32}(iv) at the new configuration with
+\hyperref[res:thmDppp:28]{Proposition D$'''$.28}'s gauge scaling of $R_k$. (v) Inside a class in range $m_i$ is the
+class mean, so the force is $\sigma(\bar\vartheta_k - \vartheta_i)$, $-\sigma$ on the separations, and nothing on the
+class mean; across classes $\psi = 0$.
+\end{proof}
+\status{(i)--(ii) proved to leading order in $\mu$ (the centre manifold, the $S_n$-equivariant normal form; checked:
+the branches by Newton on the full drift, their eigenvalues converging to the predicted ones as $\mu\to0$); at
+$\sigma_0/16$ three stable modes are slower than $\mu$, so there the reduced equation's agreement (C) reflects the weak
+coupling of those modes, not the centre manifold; (iii) the order by equivariance, the escape time in the quadratic
+truncation (checked); (iv) a statement of the margin, the cascade's extent numerical; (v) the blocks proved, its
+cascade numerical. Classical: $S_n$-equivariant bifurcation theory --- the standard representation's quadratic
+equivariant makes generic symmetry-breaking from the fully symmetric state transcritical, with no stable small branch
+(Elmhirst; Golubitsky--Stewart; Arjevani--Field), the jump of sympatric speciation (Stewart--Elmhirst--Cohen,
+Golubitsky--Stewart), the permutation-symmetric critical points of neural networks (Fukumizu--Amari, Brea et al.,
+\c{S}im\c{s}ek et al., Arjevani--Field), a cluster's split at a critical parameter in deterministic annealing (Rose),
+order preservation (equivariance) and the Riccati escape time (\cite{S63}, \cite{S60}). New: the identification for
+the cohesion leak --- the quadratic coefficient the residual's third derivative along the splitting direction, the
+cohesion and the mean term entering only at third order or in the common direction ---, the margin after a departure,
+and the instance's quantification.}
+
+% Numerics of Proposition D'''.35 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/split_bifurcation.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_split_bifurcation.py} $\to$ \code{results/chaos/split_bifurcation.md};
+\hyperref[res:thmDppp:32]{Proposition D$'''$.32}'s resolution instance: the lift of $\vartheta^b(q)$ with the counts
+$(10,10,10)$, $m = 30$, the compact kernel at $R = 1$). (A) At the lift $\lambda^+ = 1.00\cdot10^{-4}$,
+$2.86\cdot10^{-4}$, $1.08\cdot10^{-4}$ for the three classes, $v$ the centre against the width ($(0,+0.75,-0.66)$,
+$(0,+0.72,-0.70)$, $(0,+0.78,-0.62)$, whitened), $c_3 = 1.42\cdot10^{-5}$, $-1.257\cdot10^{-3}$, $1.20\cdot10^{-4}$
+(two difference steps agreeing to $2\cdot10^{-5}$ relative); the middle class splits first, at
+$\sigma = \lambda^+/w_k = 0.1213\sigma_0$, and leaves on the side $-v$ (its centre lower, its width larger). (B) At
+$\mu = 2\cdot10^{-6}$ and $5\cdot10^{-7}$ Newton on the full particle drift (90 coordinates, the drift to $10^{-17}$)
+finds the four split states $q = 1,\dots,4$ from (ii)'s $t^*$: their positions within 1.3\%, 1.8\%, 3.5\%, 15\% of the
+prediction at $\mu = 2\cdot10^{-6}$ and within 0.3\%, 0.4\%, 0.8\%, 3.0\% at $5\cdot10^{-7}$; on the separations along
+$v$ the eigenvalues are $+1.2544\mu$ ($\times8$) and $-1.094\mu$ for $q = 1$ at $2\cdot10^{-6}$ and $+1.2511\mu$
+($\times8$) and $-1.023\mu$ at $5\cdot10^{-7}$, against $+1.25\mu$ and $-\mu$, and likewise for $q = 2, 3, 4$ (the
+unstable ones $+1.6708\mu$, $+2.5165\mu$, $+5.1444\mu$ at $5\cdot10^{-7}$ against $5\mu/3$, $5\mu/2$, $5\mu$), the
+errors falling about fourfold with $\mu$, as the next order says; every split state is a saddle, with
+$n - q - 1 = 8, 7, 6, 5$ unstable directions of the full Jacobian. (C) From the lift with a jitter $10^{-3}$ (six
+seeds) at $\mu = 5\cdot10^{-5}$ and $1.39\cdot10^{-4}$ ($\sigma_0/16$, Part G's first split), an excursion being a
+particle 0.1 from the class's median (far inside the range $R = 1$): the reduced quadratic equation integrated from the
+measured $\xi(0)$ names the first excursion's particle in 12 of 12 runs and gives its time to 1.1\%
+($\mu = 5\cdot10^{-5}$: $6.61\cdot10^4$--$8.84\cdot10^4$ slow units; $\sigma_0/16$: $2.68\cdot10^4$--$3.35\cdot10^4$);
+the linear equation ($c_3 = 0$) names it in 6 of 12 and misses the time by up to 22.4\%, the equation with $c_3$'s sign
+flipped names it in 2 of 12 --- the ranking, which every equivariant law preserves, does not name the particle by
+itself; the quadratic term does. The first excursion is on the side $\sgn(c_3)v$ in 10 of 12 runs; the two on the
+other side ($\sigma_0/16$, seeds 2 and 4) are the linear growth of a particle whose excursion stays below
+$2\mu/\abs{c_3} = 0.22$, and neither leaves the range. After $10^5$ slow units the pieces beyond the kernel's range
+are, at $\sigma_0/16$, one particle in 3 of 6 runs and a bound pair in 3 of 6 --- the top two of $\sgn(c_3)\xi(0)$
+within 1.2\%, 4.4\% and 11\% of each other; where the lead was 22\% or more the leader went alone ---, at 1.5--1.9
+(single) and 1.1--1.2 (pairs) from the main piece; at $\mu = 5\cdot10^{-5}$ one particle in 3 of 6 runs and none yet in
+the other 3. The main piece at the clustering threshold (0.25) then has 8 or 9 particles and a positive margin
+($7.5\cdot10^{-6}$--$1.6\cdot10^{-4}$): the cascade stops within the stage, and resumes at the next lower $\sigma$.
+(D) Part G's schedule ($\sigma$ halved every $10^5$ slow units, the jitter renewed, seeds 0--2): the cohesion leak ends
+at 8--10 classes at $\sigma_0/64$ (five to seven single particles, the fit error 0.0028--0.0031,
+\hyperref[res:thmDppp:32]{Proposition D$'''$.32} (G)); with the replicator ($\gamma = 0.1$) at 6, 6 and 7, the first
+escapee's mass growing to 0.105--0.106 (three particles' worth) and the later ones to 0.029--0.060, the fit error
+0.0031--0.0032. (E) With the replicator at $\gamma = 1$ the same schedule ends at 5, 6 and 8 classes, the first
+escapee's mass 0.134--0.136 (four particles' worth), the fit error 0.0029--0.0030: with the replicator the cascade ends
+at 5--8 classes against 8--10 without, and the rate makes no difference in three seeds; the jitter's seeds are not
+paired with Part G's. (F) The mass-free leak $\sigma(m_i - \vartheta_i)$ --- the separations' stiffness $\sigma$
+instead of $\sigma w_k$ --- splits later, its threshold $\lambda^+ = 0.040\sigma_0$ instead of
+$\lambda^+/w_k = 0.121\sigma_0$: at $\sigma_0/64$, where Part G's schedule stops, it has 4 classes in 3 of 3 runs (the
+fit error 0.0149); continued to $\sigma_0/256$ it sheds as the cohesion leak does, to 9, 10, 9 classes at
+$\sigma_0/128$ and 9, 8, 9 at $\sigma_0/256$ (four to six single particles, a pair in one run), the fit error 0.0028
+--- the cohesion leak's end state: its 4 classes were where the schedule stopped, not a count the leak selects.
 \end{sloppypar}
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).

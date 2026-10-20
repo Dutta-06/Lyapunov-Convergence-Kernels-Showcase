@@ -93,9 +93,10 @@ In Part~I, every step of the stability argument is either proved or verified num
     perfect tracking in the real loop (Corollary D$'''$.26, Lemma D$'''$.26a), second-order plants and the cogging
     servo (Proposition D$'''$.29), measurement noise (Propositions D$'''$.30 and D$'''$.31, Corollary D$'''$.33),
     the cohesion leak, a leak on the unexcited subspace without a prior that does not select the number of kernels
-    (Proposition D$'''$.32), and a replicator weight law, the mass transfer of the cohesion leak (Proposition
-    D$'''$.34) --- through a seventeenth to a twenty-fourth. Every confirmed issue and its fix is logged in
-    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--24 are kept beside it.
+    (Proposition D$'''$.32), a replicator weight law, the mass transfer of the cohesion leak (Proposition
+    D$'''$.34), and the split of a class, an $S_n$-symmetric transcritical bifurcation that sheds the extreme particle
+    (Proposition D$'''$.35) --- through a seventeenth to a twenty-fifth. Every confirmed issue and its fix is logged in
+    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--25 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -692,6 +693,32 @@ with Bregman Lyapunov functions and the replicator equation's Shahshahani gradie
 (\cite{S62}); new is the replicator as the mass transfer of the cohesion leak in mean-field adaptive control: the
 stationary set unchanged at clustered configurations under the finite range, the saturation trap removed, the
 representability criterion\\
+\addlinespace[0.5pt]
+D$'''$.35 & The split of a class under the cohesion leak is an $S_n$-symmetric transcritical bifurcation: on the
+class's separations along the splitting direction $v$ the flow reduces to
+$\dd\xi_i/\dd s = \mu\xi_i + (c_3/2)(\xi_i^2 - \sum\xi^2/n)$, $\mu$ the negative margin, $c_3$ the residual's third
+derivative along $v$ (the cohesion, even, enters at third order); every small split state ($q$ particles against
+$n - q$) is a saddle with the eigenvalues $\mp\mu n/(n - 2q)$ and $-\mu$, the $S_{n/2}\times S_{n/2}$ states cubic, so
+the split is a jump; the particles keep their order along $v$ (equivariance), and once its excursion exceeds
+$2\mu/\abs{c_3}$ the extreme particle of $\sgn(c_3)\xi$ runs away on the side $\sgn(c_3)v$ --- alone when its lead is
+large, with a near-tied neighbour as a bound pair ---, at a time the reduced equation gives; after a departure the
+margin is $\sigma_0(w_k - k/m) - \lambda^+(r',\vartheta')$, the stiffness's drop and the curvature's gauge rise both
+favouring further departures, the residual's change stopping them; the mass-free leak (the normalised mean shift) has
+the thresholds $\lambda^+_k$, a factor $w_k$ lower, and delays the cascade without stopping it
+& (i)--(ii) proved to leading order in $\mu$ (the centre manifold, the $S_n$ normal form), (iii) the order by
+equivariance, the escape time in the quadratic truncation, (iv) a margin statement, (v) the blocks proved; the
+cascade's extent numerical; numerics: the split states found by Newton within 0.3\%--3.0\% of the prediction at
+$\mu = 5\cdot10^{-7}$, their eigenvalues converging to $\pm\mu n/(n - 2q)$ and $-\mu$ (errors falling fourfold with
+$\mu$); the first excursion's particle the reduced quadratic equation's in 12 of 12 runs (the linear equation's in 6,
+the flipped one's in 2), its time to 1.1\% (the linear equation's to 22.4\%); bound pairs in 3 of 6 runs at
+$\sigma_0/16$; under Part G's schedule 8--10 classes (the cohesion leak), 6--7 with the replicator at $\gamma = 0.1$,
+5--8 at $\gamma = 1$, 9, 8, 9 classes (the fit error 0.0028, the cohesion leak's end state) under the mass-free leak
+continued to $\sigma_0/256$
+& $S_N$-equivariant bifurcation theory --- the standard representation's quadratic equivariant, transcritical
+branches with no stable small branch, the jump of sympatric speciation, the permutation-symmetric critical points of
+networks --- is classical, as are order preservation and the Riccati escape (\cite{S63}); new is the identification
+for the cohesion leak: the quadratic coefficient as the residual's third derivative, the cohesion at third order, the
+margin after a departure, and the instance's quantification\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance

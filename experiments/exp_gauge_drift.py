@@ -16,7 +16,7 @@ D. The saturation layer: the zeros of the first class's drift on the line W_2 = 
    class's saturation |A_1|/a_max = 0.25, against √γ and the rates' crossing δ*; deep inside, the drift against the amplitude's free
    diffusion carried along M, τG_α∂²_αW_1.
 E. The drift field at γ = 10⁻² on a grid of the representable masses (W_k ≥ |A_k|/a_max + 0.004); its zeros (Newton from the grid's
-   twelve smallest drifts and from the three grid points nearest two saturations) and the eigenvalues of its Jacobian there.
+   twelve smallest drifts and from the three points 0.035 inside two saturations) and the eigenvalues of its Jacobian there.
 F. The ensemble mean of exp_gauge_dither.py's Part B (64 seeds, 5·10⁴ slow units, from its raw file) against the mean path dW/ds = b(W).
 G. The entropic leak's pinned state (ε = 10⁻⁴, 3·10⁻⁴, 10⁻³; 16 seeds each, 4·10⁵ slow units, the means over the second half) against
    the shift κ⁻¹b(w) (κ the leak's stiffness along M, Proposition D‴.36(iii)) and the nonlinear fixed point b(W) = κ(W)(W − w).
@@ -152,12 +152,23 @@ def grid_job(w):
 
 def zeros(field):
     from scipy.optimize import fsolve
+
+    def safe(w):                                                             # Newton's trial points outside the representable masses
+        if not np.all(np.r_[w, 1 - np.sum(w)] > W_MIN + 1e-3):
+            return np.full(2, 1e3)
+        try:
+            return drift_at(w)[0] * 1e7
+        except ValueError:
+            return np.full(2, 1e3)
     out = []
     W3 = np.c_[field[:, :2], 1 - field[:, 0] - field[:, 1]] - W_MIN               # distances from the saturations
-    corners = [field[np.argmin(W3[:, i] + W3[:, j]), :2] for i, j in ((0, 1), (0, 2), (1, 2))]   # two classes nearest their saturation
+    corners = []                                                             # two classes 0.035 inside their saturation, the third the rest
+    for i, j in ((0, 1), (0, 2), (1, 2)):
+        c = np.zeros(3); c[i] = W_MIN[i] + 0.035; c[j] = W_MIN[j] + 0.035; c[3 - i - j] = 1 - c[i] - c[j]
+        corners.append(c[:2])
     for w0 in list(field[np.argsort(np.hypot(field[:, 2], field[:, 3]))[:12], :2]) + corners:
-        z, info, ier, msg = fsolve(lambda w: drift_at(w)[0] * 1e7, w0, full_output=True)
-        if ier == 1 and np.all(np.r_[z, 1 - z.sum()] > W_MIN) and not any(np.hypot(*(z - o['w'])) < 1e-4 for o in out):
+        z, info, ier, msg = fsolve(safe, w0, full_output=True)
+        if ier == 1 and np.all(np.r_[z, 1 - z.sum()] > W_MIN + 1e-3) and not any(np.hypot(*(z - o['w'])) < 1e-4 for o in out):
             h = 1e-4
             Jb = np.array([(drift_at(z + h * e)[0] - drift_at(z - h * e)[0]) / (2 * h) for e in np.eye(2)]).T
             out.append(dict(w=z, eig=np.linalg.eigvals(Jb), D=drift_at(z)[1]))

@@ -529,6 +529,27 @@ D$'''$.34 & the instances of D$'''$.32: (A) fixed positions (the five bumps' ato
     $\ell^1$ ball's least error when $\sum\abs{A_k}/a_{\max} > 1$; at the lift the zero modes the predicted vectors
     --- the within-class redistributions and one gauge per class ---, a separation at $-\sigma_0w_k$ with
     $\gamma > 0$, the rest D$'''$.32's spectrum)\\
+D$'''$.35 & Proposition D$'''$.32's resolution instance (the lift of $\vartheta^b(q)$, $(10,10,10)$, compact
+  $R = 1$): (A) $\lambda^+_k = 1.00\cdot10^{-4}$, $2.86\cdot10^{-4}$, $1.08\cdot10^{-4}$, $c_3 = 1.42\cdot10^{-5}$,
+  $-1.257\cdot10^{-3}$, $1.20\cdot10^{-4}$, the middle class first at $0.1213\sigma_0$; (B) the split states
+  $q = 1$--4 by Newton within 1.3\%--15\% ($\mu = 2\cdot10^{-6}$) and 0.3\%--3.0\% ($5\cdot10^{-7}$) of the
+  prediction, the eigenvalues on the separations along $v$ $+1.2511\mu$ ($\times8$) and $-1.023\mu$ for $q = 1$ at
+  $5\cdot10^{-7}$ against $+1.25\mu$ and $-\mu$, 8, 7, 6, 5 unstable directions; (C) six seeds at
+  $\mu = 5\cdot10^{-5}$ and at $\sigma_0/16$: the first excursion's particle the quadratic equation's in 12 of 12
+  (linear 6, flipped $c_3$ 2), its time to 1.1\% (linear 22.4\%), on the side $\sgn(c_3)v$ in 10 of 12 (the other two
+  linear growth below $2\mu/\abs{c_3}$); beyond the range at $\sigma_0/16$ a single particle in 3 of 6 and a bound
+  pair in 3 of 6 (the top two within 1.2\%--11\%), the main piece's margin positive at the end; (D) Part G's schedule,
+  seeds 0--2: 8--10 classes (the cohesion leak), 6--7 (replicator $\gamma = 0.1$, the first escapee's mass
+  0.105--0.106); (E) the replicator at $\gamma = 1$: 5, 6, 8 classes, the first escapee's mass 0.134--0.136, the fit
+  error 0.0029--0.0030; (F) the mass-free leak continued to $\sigma_0/256$: 4 classes at $\sigma_0/64$ in 3 of 3 (the
+  fit error 0.0149), then 9, 10, 9 at $\sigma_0/128$ and 9, 8, 9 at $\sigma_0/256$, the fit error 0.0028 --- the
+  cohesion leak's end state
+  & \code{exp_split_bifurcation.py} (\code{--only}~\code{A,...,F}) $\to$ \code{results/chaos/split_bifurcation.md};
+    \code{tests/test_split_bifurcation.py} (the full drift along $v$ against the reduced quadratic equation with
+    $c_3$, the remainder cubic; the single-particle split state a saddle with $n - 2$ directions at $+\mu n/(n - 2)$
+    and the radial one at $-\mu$; the predicted particle leaving first on the side $\sgn(c_3)v$, at $\mu = 10^{-4}$
+    with the other classes' margins positive; the reduced crossing against the linear closed form and an
+    independent integration; the mass-free leak's blocks)\\
 F(ii) along (L) & particle path length ($\ge$ Wasserstein length) $\le\lambda_G^{1/2}L_1\int\norm{e}$ at every sample
   & \code{T::test_theorem_F_wasserstein_length_bounded_by_integrated_error}\\
 F(ii$'$) along $\Lsig$ & $W(\mu_{t_1},\mu_{t_0})\le\int(\lambda_G^{1/2}L_1\norm{e}+\sigma_mW(\mu_r,\mu^0))$ on a grid
