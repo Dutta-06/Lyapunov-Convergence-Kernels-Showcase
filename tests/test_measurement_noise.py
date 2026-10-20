@@ -1,8 +1,10 @@
 """Proposition D‴.30 (PARADIGM.md §5d): measurement noise at perfect tracking. The averaged collective block's stationary covariance under
 the diffusion (N₀/k_e)Q gives the function-level floor (N₀/2k_e)Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) — at η = ∞ half the trace of Q whatever
-H, increasing in η; the exactly linearised loop with white measurement noise has that floor plus the fast part, up to O(k_e⁻²); the noise is
-coherent (a replicated start stays replicated, for every m, at every order); and a constant force — the errors-in-variables term — is
-answered by (H + σ₀I)⁻¹ under the fixed prior and by H⁻¹ under the adaptive prior for every η > 0."""
+H, increasing in η; the exactly linearised loop with white measurement noise has that floor plus the fast part, at η = 0, σ₀ and ∞; the
+noise is coherent (a replicated start stays replicated, for every m, at every order) but the replicated state attracts only below a noise
+level (the separations' second-order drift); the OU noise of the simulations has its stationary variance and correlation, and the law sees
+the measurement; a constant force — the errors-in-variables term — is answered by (H + σ₀I)⁻¹ under the fixed prior and by H⁻¹ under the
+adaptive prior for every η > 0, and the quasi-static force is the full second-order mean's noise part."""
 import os
 import sys
 
@@ -48,19 +50,21 @@ def test_the_closed_form_floor_is_the_lyapunov_solution_and_the_adaptive_floor_i
 def test_the_linearised_loop_with_white_noise_has_the_predicted_floors():
     net, exact = _setup()
     ke = 100.0
-    cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
-    gen = lambda t: cv.generator(t, ke)
-    b = MN.collapsed_noise_input(cv, FPRIME, ke)
-    P0 = MN.periodic_covariance(gen, b, PER, cv.dim, 1.0)
-    ts = np.linspace(0, PER, 33)
-    tt, Ps = MN.transient_covariance(gen, b, cv.dim, 1.0, PER, ts, P0=P0, rtol=1e-10)
-    H, Q = MN.noise_matrices(cv, FPRIME)
-    trH2, J4 = MN.fast_parts(cv)
-    orbit = np.trapezoid([np.trace(H @ P[1:10, 1:10]) for P in Ps], tt) / PER
-    point = np.trapezoid([cv.J(t)[0] @ P[1:10, 1:10] @ cv.J(t)[0] for t, P in zip(tt, Ps)], tt) / PER
-    po, pp = MN.floors(H, Q, trH2, J4, SIGMA0, np.inf, 1.0, ke)
-    assert abs(orbit / po - 1) < 5e-3 and abs(point / pp - 1) < 5e-3              # the floors to O(k_e⁻²) (0.12% here)
-    assert np.max(np.abs(Ps[-1] - P0)) < 1e-6 * np.abs(P0).max()                     # the covariance is periodic
+    for eta in (0.0, SIGMA0, np.inf):
+        cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf if eta == 0 else eta, exact, Q3)
+        gen, D = (MN.fixed_generator(cv, ke), 1 + cv.d) if eta == 0 else ((lambda t: cv.generator(t, ke)), cv.dim)
+        b0 = MN.collapsed_noise_input(cv, FPRIME, ke)
+        b = lambda t: b0(t)[:D]
+        P0 = MN.periodic_covariance(gen, b, PER, D, 1.0)
+        ts = np.linspace(0, PER, 33)
+        tt, Ps = MN.transient_covariance(gen, b, D, 1.0, PER, ts, P0=P0, rtol=1e-10)
+        H, Q = MN.noise_matrices(cv, FPRIME)
+        trH2, J4 = MN.fast_parts(cv)
+        orbit = np.trapezoid([np.trace(H @ P[1:10, 1:10]) for P in Ps], tt) / PER
+        point = np.trapezoid([cv.J(t)[0] @ P[1:10, 1:10] @ cv.J(t)[0] for t, P in zip(tt, Ps)], tt) / PER
+        po, pp = MN.floors(H, Q, trH2, J4, SIGMA0, eta, 1.0, ke)
+        assert abs(orbit / po - 1) < 5e-3 and abs(point / pp - 1) < 5e-3          # the floors to 0.5% (0.1–0.2% here)
+        assert np.max(np.abs(Ps[-1] - P0)) < 1e-6 * np.abs(P0).max()                 # the covariance is periodic
 
 
 def test_measurement_noise_is_coherent_a_replicated_start_stays_replicated():
@@ -76,6 +80,54 @@ def test_measurement_noise_is_coherent_a_replicated_start_stays_replicated():
     assert np.abs(runs[1][-1] - exact).max() > 1e-6                                # the noise does move the parameters
 
 
+def test_invariance_is_not_attraction_the_separations_grow_above_a_noise_level():
+    """A separation of the third class (m = 6, along the top eigenvector of its second-order drift S₃) decays at σ₀/k_e − λ_max(S₃)Eν²:
+    it decays at the noise std 0.01 and grows at 0.05, both rates within 10⁻⁴ of the prediction (100 time units, one noise path each)."""
+    net, exact = _setup()
+    cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
+    fpp = lambda x: sum(A * ((x - C) ** 2 / S ** 4 - 1 / S ** 2) * np.exp(-(x - C) ** 2 / (2 * S ** 2)) for A, C, S in BUMPS)
+    S3 = MN.separation_drift(cv, FPRIME, fpp, 25.0, 100.0, 1.0, N=256)[2]
+    lam, U = np.linalg.eigh(S3)
+    assert np.allclose(S3, S3.T) and lam[-1] > 0.1                                   # a positive drift on the weakest class
+    labels = np.repeat(np.arange(3), 2)
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, 25.0, G, SIGMA0, labels, 3, np.inf)
+    rates = {}
+    for std in (0.01, 0.05):
+        z0 = cl.lift(exact)
+        z0[13:16] += 1e-6 * np.sqrt(G) * U[:, -1]; z0[16:19] -= 1e-6 * np.sqrt(G) * U[:, -1]
+        rec = lambda t, z: np.sqrt(np.sum(((z[13:16] - z[16:19]) / np.sqrt(G)) ** 2))
+        out = np.array(MN.simulate_noisy(cl, z0, 6, 100.0, 2e-3, 100.0, std ** 2, np.random.default_rng(11), 2500, rec))
+        rates[std] = np.polyfit(np.arange(len(out))[2:] * 5.0, np.log(out[2:]), 1)[0]
+        assert abs(rates[std] - (-SIGMA0 / 25.0 + lam[-1] * std ** 2)) < 1e-4
+    assert rates[0.01] < 0 < rates[0.05]
+
+
+def test_the_ou_noise_has_its_stationary_variance_and_the_law_sees_the_measurement():
+    """`simulate_noisy`'s ν is the OU chain of rate B and variance var held within a step (its sample variance and lag-one correlation
+    e^{−Bdt}); and at the lift the adaptive law's increment under ν is G∇_ϑ(νΦ̃(x_m + ν; ϑ)) — the measured error at the measured point."""
+    class Stub:
+        class net:
+            n = 1
+
+        def __init__(self):
+            self.nus = []
+
+        def rhs_noisy(self, t, z, m, nu):
+            self.nus.append(float(nu[0]))
+            return np.zeros_like(z)
+    st = Stub()
+    MN.simulate_noisy(st, np.zeros(1), 1, 100.0, 1e-3, 100.0, 4e-4, np.random.default_rng(5), 10 ** 9, lambda t, z: None)
+    nu = np.array(st.nus[::4])
+    assert abs(nu.var() / 4e-4 - 1) < 0.08 and abs(np.corrcoef(nu[:-1], nu[1:])[0, 1] - np.exp(-0.1)) < 0.01
+    net, exact = _setup()
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, 25.0, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3)
+    z = cl.lift(exact); t = 1.1; z[0] = XR(t)[0]
+    for nu in (0.0, 0.03):
+        law = cl.rhs_noisy(t, z, 3, np.array([nu]))[1:10].reshape(3, 3)
+        assert np.abs(law - G[None, :] * net.grad_g(XR(t) + nu, np.array([nu]), exact)).max() < 1e-12
+    assert np.abs(law).max() > 1e-4
+
+
 def test_a_constant_force_is_answered_by_the_inverse_curvature_under_the_adaptive_prior():
     rng = np.random.default_rng(1)
     U = np.linalg.qr(rng.standard_normal((6, 6)))[0]
@@ -89,6 +141,12 @@ def test_a_constant_force_is_answered_by_the_inverse_curvature_under_the_adaptiv
     net, exact = _setup()
     cv = AF.CollapsedVariational(net, XR, PER, G, SIGMA0, np.inf, exact, Q3)
     fpp = lambda x: sum(A * ((x - C) ** 2 / S ** 4 - 1 / S ** 2) * np.exp(-(x - C) ** 2 / (2 * S ** 2)) for A, C, S in BUMPS)
-    F1 = MN.eiv_force(cv, FPRIME, fpp, 25.0, 100.0, 1e-4, N=256)
-    F2 = MN.eiv_force(cv, FPRIME, fpp, 25.0, 100.0, 2e-4, N=256)
-    assert np.allclose(F2, 2 * F1, rtol=1e-12) and np.abs(F1).max() > 1e-7      # second order: linear in the noise's variance
+    # the quasi-static force (the closed forms of E[ε_m²] and E[e]) against the full second-order mean's noise part — the periodic covariance
+    # contracted with the true field's second derivatives — and the parameters' fluctuation's part, negligible here for the measured regressor
+    Fq = 25.0 * MN.eiv_force(cv, FPRIME, fpp, 25.0, 100.0, 1.0)
+    cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, 25.0, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3)
+    out = MN.second_order_mean(cl, cv, FPRIME, 100.0, 1.0, N=128)
+    assert np.linalg.norm(out['F_noise'] - Fq) < 2e-3 * np.linalg.norm(Fq)
+    H = MN.noise_matrices(cv, FPRIME)[0]
+    b = MN.mean_biases(H, out)
+    assert abs(b['full'] / b['noise'] - 1) < 1e-4 and abs(b['noise'] / MN.equivalent_perturbation(H, Fq) - 1) < 5e-3

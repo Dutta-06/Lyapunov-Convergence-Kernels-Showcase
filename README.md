@@ -60,8 +60,9 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   checked on a position servo with an unknown cogging torque (Proposition D‴.29); and measurement noise is coherent across the kernels
   (its floor does not average out with their number), high-passed by the loop, and at second order a persistent force to which the
   adaptive prior answers with the inverse excitation spectrum (Proposition D‴.30) — the adaptive prior being a washout leak, which
-  no prior design makes robust to persistent forces, while evaluating the regressor at the reference turns that force into a harmless
-  least-squares one (Proposition D‴.31); rounds 7–20 of the review log cover all of them but the last two, and their remarks.
+  no prior design makes robust to persistent forces, while evaluating the regressor at the reference turns the noise's own force into a
+  bounded least-squares one, the parameters' fluctuation adding a small force that is not (Proposition D‴.31); rounds 7–21 of the review
+  log cover all of them, and their remarks.
 
 ---
 
@@ -171,7 +172,7 @@ n = 3 and NTK results contradict them.
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5–18, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `ot_leak.py` (Proposition D‴.12), `lifted_orbit.py` (Corollary D‴.14, Proposition D‴.15), `entropic_leak.py` (Proposition D‴.20), `ot_basin.py` (Theorem D‴.21), `adaptive_prior.py` (Theorem D‴.23), `floor_bias.py` (Proposition D‴.24), `planar_loop.py` (the averaged loop on ℝⁿ), `adaptive_floquet.py` (Corollary D‴.26), `sliding.py` (Proposition D‴.29: second-order plants, the sliding-variable reduction), `measurement_noise.py` (Propositions D‴.30 and D‴.31), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 150 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 154 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -180,7 +181,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 150 tests, about 20 minutes
+python -m pytest tests                          # 154 tests, about 20 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 

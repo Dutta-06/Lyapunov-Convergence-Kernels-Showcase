@@ -1,9 +1,11 @@
 """Proposition D‴.31 (PARADIGM.md §5d): the adaptive prior is a washout leak — its leak target lags the class barycentre by the barycentre's
 exponentially forgotten increments, so the leak acts on the separations in full and on the barycentre through the high-pass iω/(iω + η) —
-and along every affine time-invariant prior the stationary response R to a persistent force and the bias B toward a misplaced anchor satisfy
-HR + B = I; the function-level response to a force is at most the norm of the smallest target perturbation exerting it, under every leak
-S ≥ 0; and the desired regressor (the adaptive law's regressor at the reference) leaves the lift, the linearisation and the first-order
-noise response unchanged while turning the second-order force into the least-squares force of g = k_eE[e]."""
+across the plan's switches too — and along every affine time-invariant prior the stationary response R to a persistent force and the bias
+B toward a misplaced anchor satisfy RH + B = I (HR + B = I only where the zero-frequency leak commutes with H); the function-level response
+to a force is at most the norm of the smallest target perturbation exerting it, under every leak S ≥ 0; and the desired regressor (the
+adaptive law's regressor at the reference) leaves the lift, the linearisation and the first-order noise response unchanged while turning
+the noise's own second-order force into the least-squares force of g = k_eE[e] — the parameters' fluctuation adding a force of the same
+order that is not of that form."""
 import os
 import sys
 
@@ -13,6 +15,8 @@ from scipy.integrate import solve_ivp
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.core import langevin as L
 from src.core import adaptive_floquet as AF
+from src.core import adaptive_prior as AP
+from src.core import ot_leak as OT
 from src.core import measurement_noise as MN
 
 PER = 2 * np.pi
@@ -64,10 +68,39 @@ def test_the_prior_lags_the_barycentre_by_its_forgotten_increments():
     assert np.abs(lhs - rhs).max() < 1e-9 and np.abs(W).max() > 1e-4
 
 
+def test_the_prior_lags_the_barycentre_across_a_plan_switch():
+    """(i) on the averaged loop with the nearest-atom plan recomputed every step (η = 1, slow time): a particle placed past the bisector of
+    two atoms switches its cell once the prior moves (T̂ jumps by about 0.5), and T̂ − z equals the forgotten increments — the smooth ones
+    and the jump, each at its own time — plus e^{−ηs}(T̂(0) − z(0)), to the midpoint rule's accuracy."""
+    net, atoms, cv = _setup()
+    loop = OT.OTPriorLoop(net, F_VEC, XR, PER, G, SIGMA0, atoms, n_quad=128)
+    eta, dt = 1.0, 0.005
+    a0, a1, a2 = atoms
+    Th0 = np.array([a0, a0, a1, a1, a2 + 0.4 * (a0 - a2), a2 + 0.55 * (a0 - a2)])
+    apl = AP.AdaptivePriorLoop(loop, eta, plan='nearest')
+    rec = []
+    apl.run(Th0, atoms.copy(), 2.0, dt, plan_every=1, rec_every=1, callback=lambda s_, Th, Z, ad: rec.append((s_, Th.copy(), Z.copy())))
+    bary = lambda Th, Z, gam: apl.bary(Th, gam, Z)
+    gams = [AP.nearest_plan(Th, Z, G)[0] for _, Th, Z in rec]
+    smooth = [bary(rec[k + 1][1], rec[k + 1][2], gams[k]) - bary(rec[k][1], rec[k][2], gams[k]) for k in range(len(rec) - 1)]
+    jumps = [bary(rec[k + 1][1], rec[k + 1][2], gams[k + 1]) - bary(rec[k + 1][1], rec[k + 1][2], gams[k]) for k in range(len(rec) - 1)]
+    s_ = np.array([r[0] for r in rec])
+    assert max(np.abs(j).max() for j in jumps) > 0.1                                   # the plan switched
+    T0 = bary(rec[0][1], rec[0][2], gams[0])
+    for n in (200, 300, 400):                                                         # s = 1, 1.5, 2: after the switch at s ≈ 0.6
+        lhs = bary(rec[n][1], rec[n][2], gams[n]) - rec[n][2]
+        rhs = sum(np.exp(-eta * (s_[n] - 0.5 * (s_[k] + s_[k + 1]))) * smooth[k] + np.exp(-eta * (s_[n] - s_[k + 1])) * jumps[k] for k in range(n))
+        rhs = rhs + np.exp(-eta * s_[n]) * (T0 - rec[0][2])
+        jc = sum(np.exp(-eta * (s_[n] - s_[k + 1])) * jumps[k] for k in range(n))
+        assert np.abs(lhs - rhs).max() < 2e-5 and np.abs(jc).max() > 0.05             # the identity (2.4·10⁻⁶ here, the midpoint rule's), the jump's share large
+
+
 def test_the_pair_block_is_the_washed_out_leak_and_the_stationary_identity_holds_along_the_prior_family():
     """(i) linearised: the transfer function of the averaged collective block from a force on y to y is, mode by mode,
-    1/(iω + h_j + σ₀(iω + κ)/(iω + η + κ)); (ii) at zero frequency HR + B = I with R = (H + S₀)⁻¹, S₀ = σ₀κ/(η + κ), for the adaptive prior
-    (κ = 0: S₀ = 0, B = 0, R = H⁻¹), the anchored priors and the fixed prior."""
+    1/(iω + h_j + σ₀(iω + κ)/(iω + η + κ)); (ii) at zero frequency RH + B = I with R = (H + S₀)⁻¹, S₀ = σ₀κ/(η + κ), for the adaptive prior
+    (κ = 0: S₀ = 0, B = 0, R = H⁻¹), the anchored priors and the fixed prior (a scalar S₀: HR + B = I as well); for a zero-frequency leak
+    that does not commute with H (the linearised projected prior with one active face, a prior fixed on the amplitudes) RH + B = I and the
+    per-mode h_jr_jj + b_jj = 1 hold and HR + B = I fails."""
     net, atoms, cv = _setup()
     H, Q = MN.noise_matrices(cv, FP)
     h, V = np.linalg.eigh(H)
@@ -86,6 +119,12 @@ def test_the_pair_block_is_the_washed_out_leak_and_the_stationary_identity_holds
     assert np.abs(H @ R + Bm - np.eye(d)).max() < 1e-12 and np.abs(Bm - SIGMA0 * np.linalg.inv(H + SIGMA0 * np.eye(d))).max() < 1e-12
     R, Bm = MN.stationary_operators(H, SIGMA0, eta, 0.0)
     assert np.abs(Bm).max() < 1e-12 and np.abs(R - np.linalg.inv(H)).max() < 1e-8 * np.abs(R).max()
+    for idx in ([0], [0, 3, 6]):                                                      # whitened (k, l) ↦ 3k + l, l = 0 the amplitude
+        S0m = SIGMA0 * np.diag(np.isin(np.arange(d), idx).astype(float))
+        R, Bm = MN.zero_frequency_operators(H, S0m)
+        assert np.abs(R @ H + Bm - np.eye(d)).max() < 1e-12
+        assert np.abs(H @ R + Bm - np.eye(d)).max() > 0.1
+        assert np.abs(h * np.einsum('ij,ik,kj->j', V, R, V) + np.einsum('ij,ik,kj->j', V, Bm, V) - 1).max() < 1e-10
 
 
 def test_the_response_to_a_force_is_at_most_its_smallest_equivalent_target_perturbation_under_every_leak():
@@ -134,6 +173,16 @@ def test_the_desired_regressor_keeps_the_lift_and_the_first_order_response():
     assert 70 < dif[1e-2] / dif[1e-3] < 140 and dif[1e-3] < 0.05 * dev[1e-3]            # MR − DR: ∝ std², small at small noise
     dif_star = np.sqrt(np.mean((runs[('measured', 'measured', 1e-3)] - runs[('reference', 'reference', 1e-3)]) ** 2))
     assert dif_star < 0.1 * dev[1e-3]                                                 # DR*: the same response up to O(a/k_e)
+    # the regressor's point (ν = 0, x ≠ x_m): DR's law is G∇_ϑ(eΦ̃(x_m; ϑ)), MR's G∇_ϑ(eΦ̃(x; ϑ)); with ν and e = 0, DR's is G∇_ϑ(νΦ̃(x_m; ϑ))
+    for reg in ('measured', 'reference'):
+        cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, KE, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3, regressor=reg)
+        z = cl.lift(atoms); t = 0.7; xm = XR(t); z[0] = xm[0] + 0.3
+        pt = xm if reg == 'reference' else z[:1]
+        law = cl.rhs_noisy(t, z, 3, np.zeros(1))[1:10].reshape(3, 3)
+        assert np.abs(law - G[None, :] * net.grad_g(pt, np.array([0.3]), atoms)).max() < 1e-12
+    z = cl.lift(atoms); z[0] = xm[0]
+    law = cl.rhs_noisy(t, z, 3, np.array([0.02]))[1:10].reshape(3, 3)
+    assert np.abs(law - G[None, :] * net.grad_g(xm, np.array([0.02]), atoms)).max() < 1e-12
 
 
 def test_the_desired_regressor_turns_the_errors_in_variables_force_into_a_least_squares_force():
@@ -157,3 +206,26 @@ def test_the_desired_regressor_turns_the_errors_in_variables_force_into_a_least_
         Fm = MN.eiv_force(cv, FP, FPP, ke, B, 1.0, variant='measured')
         F1 = ke * (Fm - Fr)
         assert MN.equivalent_perturbation(H, F1) > 1e3 * MN.equivalent_perturbation(H, ke * Fr)
+
+
+def test_the_noise_part_of_the_force_is_the_hessian_contraction_and_the_parameters_fluctuation_is_not_least_squares():
+    """The quasi-static forces of `eiv_force` against the full second-order mean of `second_order_mean` (the periodic covariance contracted
+    with the true field's second derivatives, k_e = 25, B = 100, η = ∞): the noise parts agree for MR, DR and DR* (the closed forms of E[ε_m²]
+    and E[e] right, their signs and the regressor's part); the parameters' fluctuation changes MR's bias by less than 10⁻⁵ but DR's and DR*'s
+    by more than 1% (round 21, D3r-1) — and DR's full bias stays three orders of magnitude below MR's."""
+    net, atoms, cv = _setup()
+    H, Q = MN.noise_matrices(cv, FP)
+    full = {}
+    for reg, comp in (('measured', 'measured'), ('reference', 'measured'), ('reference', 'reference')):
+        v = 'measured' if reg == 'measured' else ('reference' if comp == 'measured' else 'reference_both')
+        cl = MN.NoisyRealLoop(net, F_VEC, XR, XRD, PER, KE, G, SIGMA0, np.arange(3), 3, np.inf, weights=Q3, regressor=reg, compensation=comp)
+        out = MN.second_order_mean(cl, cv, FP, 100.0, 1.0, N=128)
+        Fq = KE * MN.eiv_force(cv, FP, FPP, KE, 100.0, 1.0, variant=v)
+        assert np.linalg.norm(out['F_noise'] - Fq) < 3e-3 * np.linalg.norm(Fq)
+        b = MN.mean_biases(H, out)
+        full[v] = b['full']
+        if v == 'measured':
+            assert abs(b['full'] / b['noise'] - 1) < 1e-5
+        else:
+            assert abs(b['full'] / b['noise'] - 1) > 0.01
+    assert full['reference'] < 1e-3 * full['measured'] and full['reference_both'] < 1e-3 * full['measured']

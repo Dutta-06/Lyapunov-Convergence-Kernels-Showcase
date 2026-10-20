@@ -4,50 +4,63 @@ The instance of Proposition D‴.30 (σ₀ = 0.00707, x_m = 2 sin t, the lift of
 
 ## A. The second-order force and its stationary responses (no dynamics)
 
-Per unit (Eν²)², function level: the stationary bias under the fixed prior and under the adaptive prior (every η > 0; = FᵀH⁻¹F, the squared norm of the smallest target perturbation exerting F), the least-squares bound ‖g‖²_ρ (g = k_eE[e]; DR, DR*), and the projected mean tracking error at the adaptive prior's stationary point, ‖P(g − Ĵȳ_∞)‖²_ρ = F₁ᵀH⁻¹F₁ (F₁ the regressor's errors in variables, zero for DR and DR*). The last column is the noise variance at which the adaptive prior's bias equals its floor of the parameters (N₀/2k_e)tr Q, N₀ = 2Eν²/B; the bias dominates above it.
+Per unit (Eν²)², function level, the averaged stationary response: the bias of the mean parameters under the fixed prior and under the adaptive prior (every η > 0; = FᵀH⁻¹F, the squared norm of the smallest target perturbation exerting F) for the force of the noise's own second moments (quasi-static, `eiv_force`) and for the full second-order force (the parameters' fluctuation included, `second_order_mean`), the bias of the mean function under the adaptive prior with the full force (‖Ĵȳ + ½D²_Θf̂[Σ_ΘΘ]‖²_ρ), the least-squares bound ‖g‖²_ρ (g = k_eE[e] of the noise part; DR, DR*), the rescaled projected mean tracking error at the adaptive prior's stationary point, k_e²‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁ (F₁ the regressor's errors in variables; zero by construction for DR and DR*), and the mean tracking error itself ‖P E[e]‖²_ρ = F₁ᵀH⁻¹F₁/k_e². The last column is the noise variance at which the adaptive prior's full bias equals its floor of the parameters (N₀/2k_e)tr Q, N₀ = 2Eν²/B (std above 0.1 is outside the small-noise regime).
 
-| k_e | B | law | fixed prior | adaptive prior | ‖g‖²_ρ | projected mean error (adaptive) | Eν² at bias = floor (std) |
-|---|---|---|---|---|---|---|---|
-| 25 | 100 | MR | 4.9106e+02 | 2.3969e+03 | — | 2.394e+03 | 1.47e-06 (0.0012) |
-| 25 | 100 | DR | 2.1060e-01 | 4.7053e-01 | 4.7057e-01 | 0.000e+00 | 7.47e-03 (0.0864) |
-| 25 | 100 | DR* | 2.3601e-02 | 5.2621e-02 | 5.2663e-02 | 0.000e+00 | 6.68e-02 (0.2584) |
-| 25 | 1000 | MR | 7.2955e+02 | 3.5637e+03 | — | 3.557e+03 | 9.86e-08 (0.0003) |
-| 25 | 1000 | DR | 5.2899e-01 | 1.1821e+00 | 1.1821e+00 | 0.000e+00 | 2.97e-04 (0.0172) |
-| 25 | 1000 | DR* | 3.5056e-04 | 7.8187e-04 | 7.8240e-04 | 0.000e+00 | 4.49e-01 (0.6703) |
-| 50 | 100 | MR | 1.3658e+03 | 6.6485e+03 | — | 6.646e+03 | 2.64e-07 (0.0005) |
-| 50 | 100 | DR | 6.5041e-02 | 1.4529e-01 | 1.4531e-01 | 0.000e+00 | 1.21e-02 (0.1100) |
-| 50 | 100 | DR* | 6.5109e-02 | 1.4542e-01 | 1.4545e-01 | 0.000e+00 | 1.21e-02 (0.1099) |
-| 50 | 1000 | MR | 2.7847e+03 | 1.3569e+04 | — | 1.356e+04 | 1.29e-08 (0.0001) |
-| 50 | 1000 | DR | 4.7858e-01 | 1.0695e+00 | 1.0695e+00 | 0.000e+00 | 1.64e-04 (0.0128) |
-| 50 | 1000 | DR* | 1.3281e-03 | 2.9666e-03 | 2.9671e-03 | 0.000e+00 | 5.92e-02 (0.2433) |
-| 100 | 100 | MR | 3.0756e+03 | 1.4949e+04 | — | 1.495e+04 | 5.88e-08 (0.0002) |
-| 100 | 100 | DR | 3.1075e-05 | 4.5092e-05 | 5.8406e-05 | 0.000e+00 | 1.95e+01 (4.4135) |
-| 100 | 100 | DR* | 1.4623e-01 | 3.2675e-01 | 3.2677e-01 | 0.000e+00 | 2.69e-03 (0.0518) |
-| 100 | 1000 | MR | 1.0158e+04 | 4.9429e+04 | — | 4.941e+04 | 1.78e-09 (0.0000) |
-| 100 | 1000 | DR | 3.9137e-01 | 8.7459e-01 | 8.7459e-01 | 0.000e+00 | 1.00e-04 (0.0100) |
-| 100 | 1000 | DR* | 4.8334e-03 | 1.0800e-02 | 1.0801e-02 | 0.000e+00 | 8.13e-03 (0.0902) |
-| 200 | 100 | MR | 5.4701e+03 | 2.6568e+04 | — | 2.657e+04 | 1.65e-08 (0.0001) |
-| 200 | 100 | DR | 6.4958e-02 | 1.4516e-01 | 1.4517e-01 | 0.000e+00 | 3.03e-03 (0.0550) |
-| 200 | 100 | DR* | 2.5986e-01 | 5.8069e-01 | 5.8070e-01 | 0.000e+00 | 7.56e-04 (0.0275) |
-| 200 | 1000 | MR | 3.4156e+04 | 1.6610e+05 | — | 1.661e+05 | 2.64e-10 (0.0000) |
-| 200 | 1000 | DR | 2.5984e-01 | 5.8066e-01 | 5.8066e-01 | 0.000e+00 | 7.56e-05 (0.0087) |
-| 200 | 1000 | DR* | 1.6240e-02 | 3.6292e-02 | 3.6292e-02 | 0.000e+00 | 1.21e-03 (0.0348) |
+| k_e | B | law | fixed: noise part | fixed: full | adaptive: noise part | adaptive: full | adaptive: mean function | ‖g‖²_ρ | k_e²‖P E[e]‖²_ρ | ‖P E[e]‖²_ρ | Eν² at bias = floor (std) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 25 | 100 | MR | 4.9106e+02 | 4.9111e+02 | 2.3969e+03 | 2.3977e+03 | 2.3977e+03 | — | 2.394e+03 | 3.830e+00 | 1.47e-06 (0.0012) |
+| 25 | 100 | DR | 2.1060e-01 | 2.1469e-01 | 4.7053e-01 | 4.8584e-01 | 4.7591e-01 | 4.7057e-01 | 0.000e+00 | 0.000e+00 | 7.23e-03 (0.0850) |
+| 25 | 100 | DR* | 2.3601e-02 | 2.2303e-02 | 5.2621e-02 | 4.8050e-02 | 5.1114e-02 | 5.2663e-02 | 0.000e+00 | 0.000e+00 | 7.31e-02 (0.2704) |
+| 25 | 1000 | MR | 7.2955e+02 | 7.2956e+02 | 3.5637e+03 | 3.5638e+03 | 3.5638e+03 | — | 3.557e+03 | 5.691e+00 | 9.86e-08 (0.0003) |
+| 25 | 1000 | DR | 5.2899e-01 | 5.2964e-01 | 1.1821e+00 | 1.1845e+00 | 1.1830e+00 | 1.1821e+00 | 0.000e+00 | 0.000e+00 | 2.97e-04 (0.0172) |
+| 25 | 1000 | DR* | 3.5056e-04 | 3.3459e-04 | 7.8187e-04 | 7.2490e-04 | 7.6287e-04 | 7.8240e-04 | 0.000e+00 | 0.000e+00 | 4.85e-01 (0.6962) |
+| 50 | 100 | MR | 1.3658e+03 | 1.3659e+03 | 6.6485e+03 | 6.6494e+03 | 6.6494e+03 | — | 6.646e+03 | 2.658e+00 | 2.64e-07 (0.0005) |
+| 50 | 100 | DR | 6.5041e-02 | 6.6199e-02 | 1.4529e-01 | 1.4971e-01 | 1.4691e-01 | 1.4531e-01 | 0.000e+00 | 0.000e+00 | 1.17e-02 (0.1083) |
+| 50 | 100 | DR* | 6.5109e-02 | 6.3987e-02 | 1.4542e-01 | 1.4122e-01 | 1.4391e-01 | 1.4545e-01 | 0.000e+00 | 0.000e+00 | 1.24e-02 (0.1115) |
+| 50 | 1000 | MR | 2.7847e+03 | 2.7847e+03 | 1.3569e+04 | 1.3569e+04 | 1.3569e+04 | — | 1.356e+04 | 5.423e+00 | 1.29e-08 (0.0001) |
+| 50 | 1000 | DR | 4.7858e-01 | 4.7890e-01 | 1.0695e+00 | 1.0707e+00 | 1.0699e+00 | 1.0695e+00 | 0.000e+00 | 0.000e+00 | 1.64e-04 (0.0128) |
+| 50 | 1000 | DR* | 1.3281e-03 | 1.3120e-03 | 2.9666e-03 | 2.9057e-03 | 2.9447e-03 | 2.9671e-03 | 0.000e+00 | 0.000e+00 | 6.05e-02 (0.2459) |
+| 100 | 100 | MR | 3.0756e+03 | 3.0756e+03 | 1.4949e+04 | 1.4950e+04 | 1.4950e+04 | — | 1.495e+04 | 1.495e+00 | 5.88e-08 (0.0002) |
+| 100 | 100 | DR | 3.1075e-05 | 3.4499e-05 | 4.5092e-05 | 7.0431e-05 | 5.7438e-05 | 5.8406e-05 | 0.000e+00 | 0.000e+00 | 1.25e+01 (3.5315) |
+| 100 | 100 | DR* | 1.4623e-01 | 1.4538e-01 | 3.2675e-01 | 3.2351e-01 | 3.2556e-01 | 3.2677e-01 | 0.000e+00 | 0.000e+00 | 2.72e-03 (0.0521) |
+| 100 | 1000 | MR | 1.0158e+04 | 1.0158e+04 | 4.9429e+04 | 4.9429e+04 | 4.9429e+04 | — | 4.941e+04 | 4.941e+00 | 1.78e-09 (0.0000) |
+| 100 | 1000 | DR | 3.9137e-01 | 3.9151e-01 | 8.7459e-01 | 8.7513e-01 | 8.7479e-01 | 8.7459e-01 | 0.000e+00 | 0.000e+00 | 1.00e-04 (0.0100) |
+| 100 | 1000 | DR* | 4.8334e-03 | 4.8178e-03 | 1.0800e-02 | 1.0741e-02 | 1.0778e-02 | 1.0801e-02 | 0.000e+00 | 0.000e+00 | 8.18e-03 (0.0904) |
+| 200 | 100 | MR | 5.4701e+03 | 5.4701e+03 | 2.6568e+04 | 2.6569e+04 | 2.6569e+04 | — | 2.657e+04 | 6.643e-01 | 1.65e-08 (0.0001) |
+| 200 | 100 | DR | 6.4958e-02 | 6.4671e-02 | 1.4516e-01 | 1.4407e-01 | 1.4476e-01 | 1.4517e-01 | 0.000e+00 | 0.000e+00 | 3.05e-03 (0.0552) |
+| 200 | 100 | DR* | 2.5986e-01 | 2.5928e-01 | 5.8069e-01 | 5.7851e-01 | 5.7988e-01 | 5.8070e-01 | 0.000e+00 | 0.000e+00 | 7.59e-04 (0.0276) |
+| 200 | 1000 | MR | 3.4156e+04 | 3.4156e+04 | 1.6610e+05 | 1.6610e+05 | 1.6610e+05 | — | 1.661e+05 | 4.152e+00 | 2.64e-10 (0.0000) |
+| 200 | 1000 | DR | 2.5984e-01 | 2.5990e-01 | 5.8066e-01 | 5.8088e-01 | 5.8074e-01 | 5.8066e-01 | 0.000e+00 | 0.000e+00 | 7.56e-05 (0.0087) |
+| 200 | 1000 | DR* | 1.6240e-02 | 1.6226e-02 | 3.6292e-02 | 3.6237e-02 | 3.6272e-02 | 3.6292e-02 | 0.000e+00 | 0.000e+00 | 1.21e-03 (0.0348) |
 
-The adaptive prior's bias, MR over DR: 5.09e+03 (k_e = 25, B = 100), 3.01e+03 (k_e = 25, B = 1000), 4.58e+04 (k_e = 50, B = 100), 1.27e+04 (k_e = 50, B = 1000), 3.32e+08 (k_e = 100, B = 100), 5.65e+04 (k_e = 100, B = 1000), 1.83e+05 (k_e = 200, B = 100), 2.86e+05 (k_e = 200, B = 1000). MR's grows like k_e² where B ≫ k_e; DR's and DR*'s stay below ¼‖∂²_xf‖²_ρ(1 + O(1/k_e)) = 1.3065e+00 for every k_e and B.
+The parameters' fluctuation's share of the adaptive prior's bias (full over noise part − 1): MR +0.03%, +0.00%, +0.01%, +0.00%, +0.01%, +0.00%, +0.00%, +0.00%; DR +3.25%, +0.20%, +3.05%, +0.11%, +56.19%, +0.06%, -0.75%, +0.04%; DR* -8.69%, -7.29%, -2.89%, -2.05%, -0.99%, -0.55%, -0.38%, -0.15% (the rows' order); of the mean function's: MR +0.03%, +0.00%, +0.01%, +0.00%, +0.01%, +0.00%, +0.00%, +0.00%; DR +1.14%, +0.07%, +1.12%, +0.04%, +27.38%, +0.02%, -0.28%, +0.01%; DR* -2.86%, -2.43%, -1.03%, -0.74%, -0.36%, -0.20%, -0.14%, -0.06%.
 
-## B. The stationary identity HR + B = I along the prior family dz/ds = −η(z − T̂) − κ(z − z_a)
+The parameters' part's own function-level response under the adaptive prior (and its learning-law part's), per unit (Eν²)²: MR 3.92e-04 (2.10e-04), 4.01e-06 (2.15e-06), 1.13e-04 (6.34e-05), 1.15e-06 (6.51e-07), 2.93e-05 (1.67e-05), 3.00e-07 (1.72e-07), 7.40e-06 (4.23e-06), 7.58e-08 (4.35e-08); DR 3.92e-04 (2.10e-04), 4.01e-06 (2.15e-06), 1.13e-04 (6.34e-05), 1.15e-06 (6.51e-07), 2.93e-05 (1.67e-05), 3.00e-07 (1.72e-07), 7.40e-06 (4.23e-06), 7.58e-08 (4.35e-08); DR* 3.93e-04 (2.11e-04), 4.02e-06 (2.17e-06), 1.13e-04 (6.35e-05), 1.15e-06 (6.52e-07), 2.93e-05 (1.67e-05), 3.00e-07 (1.72e-07), 7.40e-06 (4.24e-06), 7.58e-08 (4.35e-08) (the rows' order) — set by the parameters' covariance, falling with k_e.
+
+The adaptive prior's full bias, MR over DR: 4.94e+03 (k_e = 25, B = 100), 3.01e+03 (k_e = 25, B = 1000), 4.44e+04 (k_e = 50, B = 100), 1.27e+04 (k_e = 50, B = 1000), 2.12e+08 (k_e = 100, B = 100), 5.65e+04 (k_e = 100, B = 1000), 1.84e+05 (k_e = 200, B = 100), 2.86e+05 (k_e = 200, B = 1000). MR's grows from k_e = 25 to 200 at B = 1000 by 46.6 — the law (k_eB/(k_e + B))² gives 46.7, k_e² 64; the noise parts of DR's and DR*'s stay below ¼‖∂²_xf‖²_ρ = 1.3065e+00 for every k_e and B, and their full biases at most 1.1845 here.
+
+## B. The stationary identity RH + B = I along the prior family dz/ds = −η(z − T̂) − κ(z − z_a)
 
 η = σ₀; R and B from the averaged collective block at zero frequency (k_e = 25, B = 100). h₁ = 3.0587e-04, h_max = 1.9521e-01. The errors-in-variables biases are function-level per unit (Eν²)²; the anchor's biases are function-level for a unit misplacement along the weakest and the strongest mode.
 
-| prior | S₀ (zero-frequency leak) | weakest mode: response r₁ | bias factor b₁ | h₁r₁ + b₁ | EIV bias, MR | EIV bias, DR | anchor bias, weakest | anchor bias, strongest | max|HR + B − I| |
+| prior | S₀ (zero-frequency leak) | weakest mode: response r₁ | bias factor b₁ | h₁r₁ + b₁ | EIV bias, MR | EIV bias, DR | anchor bias, weakest | anchor bias, strongest | max|RH + B − I| |
 |---|---|---|---|---|---|---|---|---|---|
-| adaptive, κ = 0 | 0.0000e+00 | 3.2694e+03 | 0.0000 | 1.000000 | 2.3969e+03 | 4.7053e-01 | 0.000e+00 | 0.000e+00 | 2.4e-15 |
-| κ = 0.1η | 6.4313e-04 | 1.0537e+03 | 0.6777 | 1.000000 | 1.5667e+03 | 4.0005e-01 | 1.405e-04 | 2.105e-06 | 1.0e-15 |
-| κ = 1η | 3.5372e-03 | 2.6021e+02 | 0.9204 | 1.000000 | 6.8172e+02 | 2.8736e-01 | 2.591e-04 | 6.183e-05 | 5.6e-16 |
-| κ = 10η | 6.4313e-03 | 1.4843e+02 | 0.9546 | 1.000000 | 5.1129e+02 | 2.2184e-01 | 2.787e-04 | 1.986e-04 | 6.7e-16 |
-| fixed (η = 0) | 7.0744e-03 | 1.3550e+02 | 0.9586 | 1.000000 | 4.9106e+02 | 2.1060e-01 | 2.810e-04 | 2.388e-04 | 4.3e-16 |
+| adaptive, κ = 0 | 0.0000e+00 | 3.2694e+03 | 0.0000 | 1.000000 | 2.3969e+03 | 4.7053e-01 | 0.000e+00 | 0.000e+00 | 1.1e-14 |
+| κ = 0.1η | 6.4313e-04 | 1.0537e+03 | 0.6777 | 1.000000 | 1.5667e+03 | 4.0005e-01 | 1.405e-04 | 2.105e-06 | 2.7e-15 |
+| κ = 1η | 3.5372e-03 | 2.6021e+02 | 0.9204 | 1.000000 | 6.8172e+02 | 2.8736e-01 | 2.591e-04 | 6.183e-05 | 1.1e-15 |
+| κ = 10η | 6.4313e-03 | 1.4843e+02 | 0.9546 | 1.000000 | 5.1129e+02 | 2.2184e-01 | 2.787e-04 | 1.986e-04 | 8.9e-16 |
+| fixed (η = 0) | 7.0744e-03 | 1.3550e+02 | 0.9586 | 1.000000 | 4.9106e+02 | 2.1060e-01 | 2.810e-04 | 2.388e-04 | 4.4e-16 |
 
-Along the family the zero-frequency leak S₀ = σ₀κ/(η + κ) trades the anchor's bias for the response to persistent forces, mode by mode, at h_jr_j + b_j = 1: no prior removes the bias and bounds the response at once. The desired regressor changes the force instead: its bias is three to four orders of magnitude below MR's under every prior of the family.
+Along the family the zero-frequency leak S₀ = σ₀κ/(η + κ) trades the anchor's bias for the response to persistent forces, mode by mode, at h_jr_j + b_j = 1; the trade binds on the modes with h_j < σ₀ (3 of 9 here), where 1/h_j exceeds the fixed prior's 1/σ₀. The desired regressor changes the force instead: MR's bias over DR's (noise parts) along the family 5.09e+03, 3.92e+03, 2.37e+03, 2.3e+03, 2.33e+03.
+
+Zero-frequency leaks S₀ that do not commute with H (R = (H + S₀)⁻¹, B = (H + S₀)⁻¹S₀): RH + B = I holds, HR + B = I does not; per mode h_jr_jj + b_jj = 1 holds whatever S₀.
+
+| S₀ | max|HS₀ − S₀H| | max|RH + B − I| | max|HR + B − I| | max_j|h_jr_jj + b_jj − 1| | EIV bias, MR | EIV bias, DR |
+|---|---|---|---|---|---|---|
+| fixed on the amplitudes | 8.86e-05 | 1.3e-14 | 0.785 | 5.2e-15 | 1.5926e+03 | 2.0687e-01 |
+| fixed on the centres | 1.02e-04 | 9.0e-15 | 0.673 | 8.5e-15 | 2.2666e+03 | 4.7051e-01 |
+| one active face (atom 1's amplitude) | 7.57e-05 | 1.4e-14 | 0.575 | 6.0e-15 | 1.9188e+03 | 3.4964e-01 |
+| a random S₀ ⪰ 0 (‖S₀‖ = σ₀) | 1.25e-04 | 2.7e-15 | 0.355 | 4.9e-15 | 8.8254e+02 | 4.0066e-01 |
 
 ## C. The real loop: MR, DR and DR* driven by the same noise paths (k_e = 25, B = 100, std 0.01, η = ∞, RK4 dt = 0.001)
 
@@ -70,19 +83,19 @@ E‖f̂ − f‖²_ρ at the records (mean ± standard error over 12 runs) again
 
 The run mean of f̂_MR − f̂_DR on the orbit's grid (common random numbers) against Ĵ(ȳ_MR − ȳ_DR): its mean square (with the run-to-run standard error of the mean function, in the same units), the prediction's, and the relative L²_ρ error of the prediction.
 
-| t | ⟨(run mean)²⟩ | predicted | relative error ‖run mean − Ĵ(ȳ_MR − ȳ_DR)‖/‖Ĵ(ȳ_MR − ȳ_DR)‖ | sampling error of the run mean (rms) |
-|---|---|---|---|---|
-| 25 | 7.0616e-08 | 6.9660e-08 | 0.0527 | 1.02e-05 |
-| 50 | 2.3844e-07 | 2.3790e-07 | 0.0283 | 1.15e-05 |
-| 75 | 4.7282e-07 | 4.6016e-07 | 0.0337 | 1.36e-05 |
-| 100 | 7.3366e-07 | 7.0792e-07 | 0.0297 | 1.38e-05 |
-| 125 | 9.9049e-07 | 9.6327e-07 | 0.0215 | 1.47e-05 |
-| 150 | 1.2483e-06 | 1.2153e-06 | 0.0229 | 1.38e-05 |
-| 175 | 1.4628e-06 | 1.4575e-06 | 0.0152 | 1.41e-05 |
-| 200 | 1.6906e-06 | 1.6865e-06 | 0.0146 | 1.33e-05 |
-| 225 | 1.9022e-06 | 1.9007e-06 | 0.0123 | 1.42e-05 |
-| 250 | 2.1028e-06 | 2.0997e-06 | 0.0052 | 1.78e-05 |
-| 275 | 2.2983e-06 | 2.2836e-06 | 0.0070 | 1.42e-05 |
-| 300 | 2.4552e-06 | 2.4532e-06 | 0.0079 | 1.36e-05 |
+| t | ⟨(run mean)²⟩ | predicted | relative error ‖run mean − Ĵ(ȳ_MR − ȳ_DR)‖/‖Ĵ(ȳ_MR − ȳ_DR)‖ | sampling error of the run mean (rms) | relative error over the relative sampling error |
+|---|---|---|---|---|---|
+| 25 | 7.0616e-08 | 6.9660e-08 | 0.0527 | 1.02e-05 | 1.37 |
+| 50 | 2.3844e-07 | 2.3790e-07 | 0.0283 | 1.15e-05 | 1.20 |
+| 75 | 4.7282e-07 | 4.6016e-07 | 0.0337 | 1.36e-05 | 1.68 |
+| 100 | 7.3366e-07 | 7.0792e-07 | 0.0297 | 1.38e-05 | 1.81 |
+| 125 | 9.9049e-07 | 9.6327e-07 | 0.0215 | 1.47e-05 | 1.43 |
+| 150 | 1.2483e-06 | 1.2153e-06 | 0.0229 | 1.38e-05 | 1.83 |
+| 175 | 1.4628e-06 | 1.4575e-06 | 0.0152 | 1.41e-05 | 1.30 |
+| 200 | 1.6906e-06 | 1.6865e-06 | 0.0146 | 1.33e-05 | 1.43 |
+| 225 | 1.9022e-06 | 1.9007e-06 | 0.0123 | 1.42e-05 | 1.19 |
+| 250 | 2.1028e-06 | 2.0997e-06 | 0.0052 | 1.78e-05 | 0.43 |
+| 275 | 2.2983e-06 | 2.2836e-06 | 0.0070 | 1.42e-05 | 0.74 |
+| 300 | 2.4552e-06 | 2.4532e-06 | 0.0079 | 1.36e-05 | 0.90 |
 
 Numbers are produced by `experiments/exp_eiv_remedy.py`; nothing is edited by hand.

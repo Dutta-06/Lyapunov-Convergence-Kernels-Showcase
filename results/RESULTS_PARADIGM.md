@@ -724,37 +724,54 @@ kernels in general position have one zero Gauss–Newton eigenvalue each; the se
 - The three-bump instance at the lift of the exact representation of q = 1/3 (σ₀ = 0.15σ_crit, x_m = 2 sin t, k_e = 25), the measurement
   y = x + ν in the controller and the adaptive law.
 - The linear theory: tr Q = 8.784 (the derivative Gram 8.105, the slope term 0.679); the parameters' floor per unit N₀ 0.1597 (fixed
-  prior), 0.1627 (η = σ₀), 0.1690 (10σ₀), 0.1757 = tr Q/(2k_e) (η = ∞); the weakest mode's parameter variance 0.0865 → 2.09; the fast
-  parts tr H² = 0.0657, ⟨|Ĵ|⁴⟩ = 0.299.
-- The errors in variables (OU noise, B = 100): the stationary function-level bias 491 (fixed) and 2397 (adaptive, every η > 0) per unit
-  (Eν²)², above the floor of the parameters beyond the noise std 0.0026 and 0.0012.
+  prior), 0.1627 (η = σ₀), 0.1690 (10σ₀), 0.1757 = tr Q/(2k_e) (η = ∞); the weakest mode's parameter variance 0.0865 → 2.09 (×24.1;
+  ×28.0 in the exact linearised loop at k_e = 25); the fast parts tr H² = 0.0657, ⟨|Ĵ|⁴⟩ = 0.299.
+- The errors in variables (OU noise, B = 100): the averaged stationary function-level bias 491 (fixed) and 2397 (adaptive, every η > 0)
+  per unit (Eν²)², above the floor of the parameters beyond the noise std 0.0026 and 0.0012; the parameters' fluctuation changes it by
+  less than 10⁻⁵ (2397.68); the exact periodic second-order mean of the linearised loop 504 and 2653, the excess O(k_e⁻²) (10.7%, 2.65%,
+  0.66%, 0.17% at k_e = 25–200, adaptive); the bias's growth in k_e at the local exponent 1.93–1.99 for B ≥ 20k_e, 1.69 and 1.47 at
+  B = 8k_e and 4k_e.
 - The exactly linearised loop: its periodic stationary covariance at the prediction to 0.976–0.980 (k_e = 25), 0.994–0.995 (50),
-  0.9986–0.9988 (100), 0.9997–0.9998 (200).
-- The real loop (12 runs of 300 time units): within 1.75 standard errors of the linear prediction plus the mean part at both noise levels,
-  the mean part 42% (std 0.003) and 89% (std 0.01) at t = 300; the lift m = 15 on a common noise path identical to the K₀-atom run.
+  0.9986–0.9988 (100), 0.9997–0.9998 (200), above 1 at 800 (+1.3·10⁻⁵): the relative error is O(1/k_e), its first-order term from the
+  slope a in the noise input — with the noise input −k_eν the deviation is even in 1/k_e (successive ratios 3.67 → 4.00).
+- Invariance, not attraction: the separations' second-order drift λ_max(S_k) = 0.0148, 0.0101, 0.298 per Eν² in the three classes, the
+  third's separations growing above the noise std 0.031; in the real loop (the lift m = 15, four noise paths of 300 time units) they
+  separate at −2.55·10⁻⁴, −0.9·10⁻⁵ and +4.37·10⁻⁴ per time unit at std 0.01, 0.03, 0.05 (predicted −2.53·10⁻⁴, −1.5·10⁻⁵, +4.62·10⁻⁴).
+- The real loop (12 noise paths of 300 time units, common to the four cases): within 1.75 standard errors of the linear prediction plus
+  the mean part at both noise levels, the mean part 42% (std 0.003) and 89% (std 0.01) at t = 300, the priors 6.0–6.4% apart (predicted
+  5.3–6.1%); the lift m = 15 on a common noise path identical to the K₀-atom run to rounding (5.6·10⁻¹⁶ in float64).
 
 Tests (`tests/test_measurement_noise.py`): the closed form against the Lyapunov solution, the trace identity at η = ∞ and the floor
-increasing in η; the exact periodic floors of the linearised loop at k_e = 100; a lift m = 6 under a noise path staying replicated and
-following the K₀-atom loop; the responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the force linear in the noise's variance.
+increasing in η; the exact periodic floors of the linearised loop at k_e = 100 for η = 0, σ₀, ∞; a lift m = 6 under a noise path staying
+replicated and following the K₀-atom loop; a separation of the weakest class decaying at std 0.01 and growing at 0.05 at its predicted
+rates; the OU noise's stationary variance and correlation, and the law seeing the measurement; the responses (H + σ₀I)⁻¹ and H⁻¹ to a
+constant force, and the quasi-static force against the full second-order mean's noise part.
 
-## Proposition D‴.31 — the adaptive prior is a washout leak; the desired regressor makes the noise's persistent force a least-squares force (`exp_eiv_remedy.py` → `chaos/eiv_remedy.md`)
+## Proposition D‴.31 — the adaptive prior is a washout leak; the desired regressor makes the noise's own persistent force a least-squares force (`exp_eiv_remedy.py` → `chaos/eiv_remedy.md`)
 
 - The instance of Proposition D‴.30 with an Ornstein–Uhlenbeck noise of rate B; MR the measured regressor (Proposition D‴.30), DR the
   regressor at the reference, DR* the regressor and the compensation at the reference (the desired compensation adaptation law).
-- The adaptive prior's function-level errors-in-variables bias per unit (Eν²)²: 2397 (MR), 0.471 (DR), 0.0526 (DR*) at k_e = 25,
-  B = 100; MR over DR 3.0·10³–3.3·10⁸ over k_e = 25–200 and B = 100, 1000; MR's growing like k_e² (B ≫ k_e), DR's and DR*'s at most
-  1.18, below ¼‖∂²_xf‖²_ρ = 1.31; DR at its least-squares bound to 0.01%, with no projected mean tracking error (MR's 2394). The noise
-  std at which the bias reaches the floor: 0.0012 (MR), 0.086 (DR), 0.26 (DR*).
-- The prior family dz/ds = −η(z − T̂) − κ(z − z_a): HR + B = I to 2.4·10⁻¹⁵; the weakest mode's response 3269 → 136 as its bias factor
-  goes 0 → 0.959; MR's bias 2397 → 491, DR's 0.471 → 0.211.
+- The adaptive prior's function-level errors-in-variables bias per unit (Eν²)² at k_e = 25, B = 100: from the noise's own moments 2397
+  (MR), 0.471 (DR), 0.0526 (DR*); with the parameters' fluctuation (the full second-order mean) 2398, 0.486, 0.0481 — the parameters'
+  part ≤ 0.03% for MR, −8.7% to +3.3% for DR and DR* over the grid except +56% for DR at k_e = B = 100, where its noise part nearly
+  cancels; its own response 3.9·10⁻⁴ → 2.9·10⁻⁵ from k_e = 25 to 100. MR over DR 3.0·10³–2.1·10⁸ over k_e = 25–200 and B = 100, 1000;
+  MR's growing like (k_eB/(k_e + B))², DR's and DR*'s at most 1.18, below ¼‖∂²_xf‖²_ρ = 1.31; DR's noise part at its least-squares bound
+  to 0.01%; k_e²‖P E[e]‖²_ρ 2394 for MR (zero by construction for DR, DR*), the mean tracking error itself 3.83 → 0.66 (k_e = 25 → 200).
+  The noise std at which the bias reaches the floor: 0.0012 (MR), 0.085 (DR), 0.27 (DR*).
+- The prior family dz/ds = −η(z − T̂) − κ(z − z_a): RH + B = I to 1.1·10⁻¹⁴; the weakest mode's response 3269 → 136 as its bias factor
+  goes 0 → 0.959, the trade binding on the 3 of 9 modes with h_j < σ₀; MR's bias 2397 → 491, DR's 0.471 → 0.211. Non-commuting
+  zero-frequency leaks (fixed amplitudes or centres, an active face, a random S₀): RH + B = I to 1.4·10⁻¹⁴, HR + B − I 0.36–0.79.
 - The real loop on common noise paths (k_e = 25, std 0.01, η = ∞, 12 runs of 300 time units): E‖f̂ − f‖² at t = 300 2.43·10⁻⁶ (MR)
-  against 2.80·10⁻⁷ (DR) and 2.75·10⁻⁷ (DR*), DR and DR* at their covariance part; the MR − DR run mean at its prediction to 0.5–5.3%.
+  against 2.80·10⁻⁷ (DR) and 2.75·10⁻⁷ (DR*), DR and DR* at their covariance part; the MR − DR run mean at its prediction to 0.5–5.3%,
+  0.43–1.83 times the run mean's sampling error.
 
-Tests (`tests/test_eiv_remedy.py`): the washout identity along a real-loop solution at finite η; the collective block's transfer function
-against the washout formula and HR + B = I along the prior family; the response bound under random leaks S ≥ 0, the smallest equivalent
-target perturbation and the projection; the lift exact under DR and DR*, and on a common noise path DR's run within the second order of
-MR's (the difference ∝ the noise's variance); DR's and DR*'s forces least-squares with their pointwise bounds on g, MR's F₁ three orders
-of magnitude above.
+Tests (`tests/test_eiv_remedy.py`): the washout identity along a real-loop solution at finite η and across a plan switch of the averaged
+loop; the collective block's transfer function against the washout formula, RH + B = I along the prior family and for non-commuting
+leaks (HR + B = I failing there); the response bound under random leaks S ≥ 0, the smallest equivalent target perturbation and the
+projection; the lift exact under DR and DR*, on a common noise path DR's run within the second order of MR's (the difference ∝ the
+noise's variance), the regressor's point in the law; DR's and DR*'s noise forces least-squares with their pointwise bounds on g, MR's F₁
+three orders of magnitude above; the quasi-static forces against the full second-order mean, the parameters' part above 1% for DR and
+DR*, below 10⁻⁵ for MR.
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 

@@ -131,8 +131,8 @@ normalisation. The mean-field normalisation removes it for labelled and label-fr
 | D‴.27 | A projected adaptive prior restores the leak's a-priori bound: with the prior's atoms started in and confined to a compact convex set 𝒵 (the projected flow; at η = ∞ the projected class barycentres), every particle's distance from 𝒵 is at most B/σ₀ + (d(0) − B/σ₀)₊e^{−σ₀s}, B the worst-case learning force, for every m, η and target; 𝒥 is non-increasing (at η = ∞ in its selected form, along a Lloyd-consistent plan; the reduced energy need not decrease); inside 𝒵 nothing changes (Theorem D‴.23's bias removal and linearisation), and where the limit has an atom on the boundary — necessarily when no stationary point has its prior inside — a bounded bias remains; at η = ∞ on collapsed classes the leak is the gradient of the exterior penalty (σ₀/2)dist²(ϑ, 𝒵), a switching σ-modification toward 𝒵 | (i), (iii) proved ((iii)'s local convergence as Theorem D‴.23(v), sketched); (ii) the monotonicity proved, the convergence argued at η = ∞ and formal at finite η; (iv) the identification at η = ∞ proved, the boundary atoms and the bias outside numerical; numerics: beyond the saturation both η converge to the same bounded point (fit error 0.1415; the projected midpoint rule consistent, the trajectory error 6.3·10⁻⁷–3.8·10⁻⁸ at dt = 0.25–0.0625), particles within 0.92 of 𝒵 (bound ≤ 3686); the box's amplitude bound 0.75–0.99 of a_max trading the fit error 0.1676–0.1101 between the fixed prior's 0.1750 and the unprojected limit 0.1050, tighter boxes (which exclude the exact atoms) worse than the fixed prior; at η = ∞ the reduced energy rising by 26% along a Lloyd-consistent plan while the selected energy falls; on the four-bump target the box stops the width's run-off at its face; at the misplaced prior the box never approached | parameter projection, the exterior quadratic penalty and the switching σ-modification (which keeps the ideal properties inside its set) are classical, and at η = ∞ on collapsed classes the construction is the latter; new is its transfer to the learned centre of a mass-constrained K₀-atom prior at finite η, compatible with Theorem D‴.23's bias removal inside 𝒵 |
 | D‴.28 | The adaptive prior's floor removal is a gauge property: the masses enter the network only through w_ka(α_k), so for any nondegenerate critical point ϑ^b(q) of the unregularised loss — exact or not — its gauge transform G_wϑ^b(q) is a critical point at every sampled weight vector of W_g with the same function: at a strict local minimum no function-level floor at the samples of W_g with positive margins, whatever the approximation error; the fixed matching prior's floor is σ₀Ĵ(Ã + σ₀I)⁻¹g̃ with the full Hessian Ã = H_L − R̃; for a scalar amplitude per kernel the residual curvature has a zero amplitude row at a critical point and scales exactly by q_k/w_k under the gauge, so the adaptive prior's splitting margins are σ₀ − (q_k/w_k)λ⁺_k | (i), (iii) proved exactly, about the stationary points; (ii) as D‴.24(i); the dynamics' convergence, and with it the floor's vanishing, numerical; numerics: with a fourth bump that three kernels cannot represent (fit errors 0.4–2.5%), the critical point continued in w from ϑ^b(q) is the gauge transform to 2·10⁻¹¹ with f̂ unchanged to 6·10⁻¹³, the adaptive prior's sensitivity 10⁻¹¹–3·10⁻¹⁰ of the fixed prior's, the fixed prior's equal to the full-Hessian formula to 2·10⁻⁹ (the Gauss–Newton form off by 7·10⁻⁴–5.6·10⁻³), the margin formula exact to 10⁻¹⁴ and the dynamics' separation eigenvalues to 6·10⁻¹²; P(w^m ∈ W_g) = 0.52 at m = 15; the dynamics: under the fixed prior the floor stays and the fit error above the approximant's; under the adaptive priors the floor falls by orders of magnitude and the fit error tends to the approximant's at the samples inside W_g; outside it the systems approach the box minimum on the branch (1.11–1.59 times the approximant's fit error) | the homogeneity of the conic view ([49], [55]) and the rescaling symmetries of networks ([S55]) are classical; new are the gauge as the mechanism of the floor removal, robust to approximation error, and the exact margin formula for a scalar amplitude |
 | D‴.29 | Second-order plants: with the sliding variable s = ė + λe and u = ẍ_m − λė − k_s s − f̂_Θ(z), the error channel is ṡ = −k_s s + r_Θ(z), ė = −λe + s — Theorem J's with s in place of e — so as k_s → ∞ the parameters follow the averaged slow loop along the regressor's orbit z_m(t), every averaged-loop statement of §5d transfers with the occupation measure of z_m, and the position error is the residual filtered by (d/dt + λ)⁻¹(d/dt + k_s)⁻¹; kernels on the coordinate f depends on see the orbit as an interval, while isotropic phase-plane kernels on a circular orbit (ω₀ = 1 in isotropic units) are over-parametrised (von Mises restrictions: in general position one zero Gauss–Newton eigenvalue per kernel; on other orbits weak excitation) | (i), (iv) exact; (ii), (iii) formal (first-order averaging with the fast pair (s, e); Theorem J's steps carry over for the smooth fixed-prior leak once the error-channel steps are redone; switching targets beyond the first-order theory); numerics: a position servo with a cogging torque whose four-kernel local minimum ϑ^b(q) (fit error 1.46%; the loss's infimum lies at the saturation, ≤ 0.64%) is Proposition D‴.28's regime: from clouds around ϑ^b(q) the fixed prior's floor 1.85·10⁻³–4.49·10⁻⁵ (m = 16–128), the adaptive prior's 38–780 times lower, the OT leak at the approximant, σ-modification toward 0 biased (0.328), and no leak as good (0.0180–0.0146); from an engineer's model (fit error 0.200) the fixed designs stay biased (0.048–0.10) and the adaptive prior removes most of the bias, slowly (0.022–0.027 at s = 2000; the K₀-atom flow 0.0155 at s = 10⁵); the real servo's position error at the exactly filtered prediction to 1.0001–1.0029 (the slaved one 0.931–0.996), no design drifting; noise-free, so the leaks' robustness is not exercised | the filtered error and Gaussian networks in adaptive control are classical (Sanner–Slotine), and so is the partial excitation of Gaussian networks along an orbit; new are the transfer of the transport leaks, their floors and the adaptive and projected priors to second-order plants, and the exact fibre of isotropic phase-plane kernels on a circular orbit |
-| D‴.30 | Measurement noise at perfect tracking: the noise is coherent — a replicated start stays replicated under every noise path, so the floor does not average out with m; to first order the loop high-passes the measured error's noise, ((d/dt − a)/(d/dt + k_e))ν, and the function-level floor is (N₀/2k_e)[Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) + tr H²], Q = ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + aĴ)⟩ — the prior's mobility enters the Tikhonov filter factor as h_j + η, and the adaptive prior's floor is (N₀/2k_e)tr Q whatever the spectrum; to second order the noise inside the regressor exerts a mean force (the errors in variables) whose stationary response is (H + σ₀I)⁻¹ under the fixed prior and H⁻¹ under the adaptive prior, for every η > 0 | (i) exact; (ii), (iii) formal, their closed forms exact for the averaged system; numerics: the floor per unit N₀ 0.1597 (fixed) to 0.1757 (η = ∞), the weakest mode's variance ×24; the exact periodic covariance of the linearised loop at the prediction to 0.976–0.9998 (k_e = 25–200, the deficit O(k_e⁻²)); the errors-in-variables bias 491 (fixed) and 2397 (adaptive) per (Eν²)²; the real loop (12 runs, two noise levels) within 1.75 standard errors of the prediction, the mean part 89% at std 0.01; the lift m = 15 identical to the K₀-atom run on a common noise path | measurement noise and the errors-in-variables bias are classical; new are the coherence (a mean-field property), the closed-form floor with the prior's mobility in the filter factor, the loop's high-pass, and the adaptive prior's robustness loss as the H⁻¹ response to the second-order force |
-| D‴.31 | The adaptive prior is a washout leak: the prior lags the class barycentre by its exponentially forgotten increments, so the leak acts in full on the separations and on the barycentre through the high-pass iω/(iω + η) — mode j's stiffness h_j + σ₀iω/(iω + η) — which is its bias removal and its lost robustness to persistent forces; along every affine time-invariant prior the stationary response R and the bias B toward a misplaced anchor satisfy HR + B = I, so no prior gives both; a force's function-level response is at most the norm of its smallest equivalent target perturbation, under every leak S ≥ 0; and the desired regressor (the adaptive law's regressor at the reference) keeps the lift, the linearisation and the first-order noise response while turning the noise's persistent force into the least-squares force of g = k_eE[e], its bias at most ¼‖∂²_xf‖²_ρ(Eν²)² uniformly in k_e, B and the spectrum | (i)–(iii) proved; (iv)(a)–(b) proved at the lift and for the linearised equations, (iv)(c) formal, its consequences exact for the averaged system; numerics: the adaptive prior's errors-in-variables bias 2397 (MR), 0.471 (DR), 0.0526 (DR*) per (Eν²)² at k_e = 25, MR over DR 3.0·10³–3.3·10⁸ over k_e = 25–200; HR + B = I to 2.4·10⁻¹⁵ along the prior family; the real loop on common noise paths: E‖f̂ − f‖² 8.7 times lower under DR (predicted 9.2), the MR − DR mean difference at its prediction to 0.5–5.3% | washout filters and the desired regressor are classical; new are the washout reading of the adaptive prior, the identity HR + B = I making its robustness loss structural, the bound by the smallest equivalent target perturbation, and the split of the noise's persistent force into the regressor's errors in variables proper and a least-squares force |
+| D‴.30 | Measurement noise at perfect tracking: the noise is coherent — a replicated start stays replicated under every noise path, so the floor does not average out with m (invariance, not attraction: above a noise level the separations grow); to first order the loop high-passes the measured error's noise, ((d/dt − a)/(d/dt + k_e))ν, and the function-level floor is (N₀/2k_e)[Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) + tr H²], Q = ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + aĴ)⟩ — the prior's mobility enters the Tikhonov filter factor as h_j + η, and the adaptive prior's floor is (N₀/2k_e)tr Q whatever the spectrum; to second order the noise inside the regressor exerts a mean force (the errors in variables) whose stationary response is (H + σ₀I)⁻¹ under the fixed prior and H⁻¹ under the adaptive prior, for every η > 0 | (i) exact as invariance, its attraction threshold formal; (ii), (iii) formal, their closed forms exact for the averaged system; numerics: the floor per unit N₀ 0.1597 (fixed) to 0.1757 (η = ∞), the weakest mode's variance ×24.1 (×28.0 in the exact linearised loop at k_e = 25); the exact periodic covariance of the linearised loop at the prediction to 0.976–1.00001 (k_e = 25–800: the relative error O(1/k_e), its first-order term from the slope a, the slope-free control even in 1/k_e); the errors-in-variables bias 491 (fixed) and 2397 (adaptive) per (Eν²)² averaged, 504 and 2653 in the exact linearised loop, the parameters' fluctuation negligible; the real loop (12 common noise paths, two noise levels) within 1.75 standard errors of the prediction, the mean part 89% at std 0.01; the lift m = 15 identical to the K₀-atom run to rounding; the separations' threshold std 0.031, the real loop's separation rates at their predictions (−2.55·10⁻⁴ at std 0.01, +4.37·10⁻⁴ at 0.05) | measurement noise, the errors-in-variables bias, the diffusion approximation, the LMS misadjustment, leaky LMS, common noise and the lack-of-excitation drift are classical; new are the floor's interpolation in the prior's mobility (h_j + η in the filter factor), the driving matrix Q of the sensitivity-filtered measurement, and their combination with the coherence of the K₀-atom identification and its noise threshold |
+| D‴.31 | The adaptive prior is a washout leak: the prior lags the class barycentre by its exponentially forgotten increments, so the leak acts in full on the separations and, for integral plans, on the barycentre through the high-pass iω/(iω + η) — mode j's stiffness h_j + σ₀iω/(iω + η) — which is its bias removal and its lost robustness to persistent forces on the barycentres; along every affine time-invariant prior the stationary response R and the bias B toward a misplaced anchor satisfy RH + B = I (per mode h_jr_jj + b_jj = 1), so no prior gives both; a force's function-level response is at most the norm of its smallest equivalent target perturbation, under every leak with S + Sᵀ ⪰ 0; and the desired regressor (the adaptive law's regressor at the reference) keeps the lift, the linearisation and the first-order noise response while turning the noise's own persistent force into the least-squares force of g = k_eE[e], its response at most ¼‖∂²_xf‖²_ρ(Eν²)² uniformly in k_e, B and the spectrum — the parameters' fluctuation adding a force of the same order that is not least-squares | (i)–(iii) proved; (iv)(a)–(b) proved at the lift and for the linearised equations, (iv)(c) formal, its noise part's consequences exact for the averaged system, the parameters' part numerical; numerics: the adaptive prior's bias 2397, 0.471, 0.0526 per (Eν²)² (noise part; MR, DR, DR*) at k_e = 25, with the parameters' fluctuation 2398, 0.486, 0.0481 (DR +56% at k_e = B = 100, where its noise part nearly cancels); MR over DR 3.0·10³–2.1·10⁸ over k_e = 25–200; RH + B = I to 1.4·10⁻¹⁴, HR + B − I up to 0.79 for non-commuting leaks; the real loop on common noise paths: E‖f̂ − f‖² 8.7 times lower under DR (predicted 9.2), the MR − DR mean difference at its prediction to 0.5–5.3% (0.4–1.8 sampling errors) | washout filters, low-frequency learning, the desired regressor, the Tikhonov/Kalman split and the minimum-norm bound are classical; new are their transfer to the transport leaks (the washout reading of the adaptive prior, uniform in m) and the quantification, including the parameters' own errors in variables, which the desired regressor does not remove |
 | J | At finite m, without dither, in the scaling σ = σ₀/k_e: every hyperbolic critical point of the m-particle regularised loss J_m has a unique nearby T₀-periodic orbit of the real closed loop, at distance O(1/k_e), with the same stability type; the parameter Floquet exponents are (1/k_e)λ(G_m^{1/2}∇²J_mG_m^{1/2}) + O(k_e⁻²); the basin of a minimum is uniform in k_e; the period mean is Θ* − J⁻¹(b_frozen + b_osc) + O(k_e⁻²) | proved (tube and slaving, periodic Riccati block-triangularisation, second-order averaging, Poincaré map); checked by Newton shooting for the exact orbit, its monodromy matrix and its period mean against the averaged Hessian and the first-order prediction, at k_e = 10–80 | the first step of §8 branch 1; the tools (two-time-scale averaging under attraction) are classical [Khalil Ch. 10–11; Sanders–Verhulst–Murdock Ch. 5; Sastry–Bodson Ch. 4] |
 | K | At a collapsed critical point (all kernels equal) the Hessian of J_m splits by permutation symmetry into a separation block σ₀G⁻¹ − R₂, with R₂ the Hessian of the first-variation potential at the atom (independent of m), and a collective block; the collapsed configuration is a strict local minimum iff the atom minimises the single-kernel objective and σ₀ > σ_crit := λ_max(G^{1/2}R₂G^{1/2}). The orientation-odd k_e⁻² terms of the real loop (U_odd, b_osc and the third derivative of J_m against the first-order offset) shift the separation Floquet exponents of the collapsed orbit by O(k_e⁻²), identically for the (m − 1)-fold multiplet, and in a window of width O(1/k_e) around σ_crit the direction in which the reference is traversed decides whether the kernels separate | proved ((iii)–(iv) given the second-order normal form, §6e); checked by shooting on instance A: the orientation difference of the softest separation exponent scales like k_e^{−2.18} and matches the prediction from the averaged data to 3% at k_e = 80; at a leak gain computed from that prediction, one traversal leaves the collapsed configuration stable and the other makes it unstable (k_e = 10 and 20) | new as a design statement; the splitting is the isotypic decomposition of the permutation action, and the stability criterion is the local Chizat–Bach condition at a Dirac mass |
 | J′ | At finite m with dither τ = τ₀/k_e and leak σ = σ₀/k_e: the closed loop has an invariant law (unique under a smoothness hypothesis) whose parameter marginal is the Gibbs measure exp(−J_m/τ₀) up to O(1/k_e), with the explicit first-order correction ε∫φ g dπ driven by the first-order drift b of Theorem J as a vector field on parameter space (g solves τ₀∇·(πG∇g) = ∇·(πb)); the stationary tracking error is (2/k_e²)π(L̄_m) + O(k_e⁻³); the stationary parameter process is not reversible, with a circulation ε[∫Θ∧j₁ + π⟨u∧u̇⟩] + O(ε²), where j₁ = π(b − τ₀G∇g) is the first-order stationary current, nonzero exactly when b is not a G-gradient (Proposition J′.2: the finite-m form of Theorem I's reciprocity defect plus a Hessian commutator from second-order averaging; never a gradient for m ≥ 3) | proved (the Poisson-equation expansion of the invariant measure with the fast error and phase eliminated; three standard theorems imported and named); checked on a single-kernel instance: the first-order prediction removes the O(1/k_e) discrepancy between the real loop's stationary means and the Gibbs measure, the orientation-odd part of the means (the dither version of Remark H.7a) matches its prediction, and the current machinery is checked on the first-order averaged SDE | the technique is the Pavliotis–Stuart / Mattingly–Stuart–Tretyakov expansion; new in its object (a hypoelliptic learning loop with a plant) and in the identification of the first-order non-equilibrium current with the reciprocity defect of Theorem I |
@@ -3471,16 +3471,21 @@ ellipses with the velocity axis scaled by 1.1 and 2, 8 and 6 below 10⁻⁶σ₀
 five centres at the origin 16 exact zeros of 20.
 
 **Proposition D‴.30 (measurement noise at perfect tracking: a coherent, high-passed noise, and the errors in variables).** Let (CL) be the
-real loop of Corollary D‴.26 at the lift Γ_w of an exact representation of representable weights w, with the prior at its atoms — fixed
-there (η = 0) or adaptive (0 < η ≤ ∞) — and ∂_xf̂ = ∂_xf on the orbit, and let the controller and the adaptive law use the measurement
+real loop of Corollary D‴.26 (n = 1) at the lift Γ_w of an exact representation of representable weights w, with the prior at its atoms —
+fixed there (η = 0) or adaptive (0 < η ≤ ∞) — and ∂_xf̂ = ∂_xf, ∂²_xf̂ = ∂²_xf on the orbit (an exact representation, an identity of
+functions, supplies both), and let the controller and the adaptive law use the measurement
 y = x + ν in place of x: u = ẋ_m − k_e(y − x_m) − f̂_Θ(y), ϑ̇_i = G∇_ϑ((y − x_m)ᵀΦ̃(y; ϑ_i)) − (σ₀/k_e)(ϑ_i − z_{π(i)}), ν a stationary
 zero-mean noise, independent of the rest, with the spectral density N₀ at the frequencies of the regressor and of the error channel. Let
 H := H_L(w) = ⟨ĴᵀĴ⟩ (the whitened weighted Gauss–Newton matrix, Corollary D‴.26's Ĵ) with the eigenpairs (h_j, v_j), a(t) := ∂_xf̂(x_m(t)),
 Q := ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + aĴ)⟩ and Q_jj := v_jᵀQv_j.
 
 (i) *(coherence)* The particles of a class see the same y, the same error and the same prior atom, so a replicated configuration stays
-replicated under every path of ν: the m-system is the weighted K₀-atom loop driven by the same noise, for every m with these weights, at
-every order in ν. Measurement noise does not average out with m, as the per-particle dither of Theorem J′ does.
+replicated under every path of ν: on the replicated subspace the m-system is the weighted K₀-atom loop driven by the same noise, for every
+m with these weights, at every order in ν. Measurement noise does not average out with m, as the per-particle dither of Theorem J′ does.
+This is invariance, not attraction: a separation of class k decays at σ₀/k_e − Eν²λ_max(S_k) to leading order, S_k the period average of
+the second-order mean of the law's Jacobian G^{1/2}ε_m∇²_ϑΦ̃(y; ϑ_k)G^{1/2} along the noisy class trajectory (the measured regressor:
+⟨E[ε_m²]G^{1/2}∂_x∇²_ϑΦ̃G^{1/2} + E[e]G^{1/2}∇²_ϑΦ̃G^{1/2}⟩), so the replicated configuration attracts — and an m-system started near it
+follows the K₀-atom loop — only below the noise level Eν² = (σ₀/k_e)/max_kλ_max(S_k).
 
 (ii) *(the floor at first order)* To first order in ν the measured error's noise is ((d/dt − a)/(d/dt + k_e))ν — the loop high-passes it —
 and in the slow time the collective coordinates diffuse with the matrix (N₀/k_e)Q; their stationary covariance solves
@@ -3491,16 +3496,20 @@ and in the slow time the collective coordinates diffuse with the matrix (N₀/k_
 the parameters' part, each mode's share multiplied by (h_j + η)/(h_j + η + σ₀) — the fixed prior's Tikhonov filter factor h_j/(h_j + σ₀)
 at η = 0, the factor 1 at η = ∞, where the part is (N₀/2k_e)tr Q whatever the spectrum — and the jitter of the frequencies that the loop
 passes, independent of the prior (the compensation error at the plant's current point has ⟨|Ĵ|⁴⟩ in place of tr H²). Mode j's parameter
-variance is (N₀/2k_e)Q_jj(h_j + η)/(h_j(h_j + η + σ₀)), from Q_jj/(2(h_j + σ₀)) to Q_jj/(2h_j) in units of N₀/k_e.
+variance is (N₀/2k_e)Q_jj(h_j + η)/(h_j(h_j + η + σ₀)) — from Q_jj/(2(h_j + σ₀)) to Q_jj/(2h_j) in units of N₀/k_e — plus the fast part
+(N₀/2k_e)h_j.
 
 (iii) *(the errors in variables)* To second order the noise inside the regressor Φ̃(y) exerts a mean force on the collective
-coordinates, k_eF in the slow time with F := ⟨Ĵ′ᵀE[ε_m²] + ĴᵀE[e]⟩ = O(Eν²) (Ĵ′ := ∂_xĴ, ε_m := y − x_m the measured error; for an
-Ornstein–Uhlenbeck noise of rate B, E[ε_m²] = Eν²(a² + k_eB)/(k_e(k_e + B)) → Eν² as B/k_e → ∞). Its stationary response is
-k_e(H + σ₀I)⁻¹F under the fixed prior and k_eH⁻¹F under the adaptive prior, for every η > 0: the adaptive prior gives up the leak's bound
-on the response to a persistent force in the weakly excited modes — the robustness half of the classical trade-off, here against the
-noise — and its function-level bias k_e²FᵀH⁻¹F grows like k_e²(Eν²)² while the noise is white at the loop's bandwidth (k_e ≪ B), and
-more slowly beyond, where E[ε_m²] → Eν²B/k_e. The part of F that the adaptive prior amplifies is the regressor's own, ⟨Ĵ′ᵀE[ε_m²]⟩;
-evaluating the regressor at the reference removes it and leaves a least-squares force (Proposition D‴.31).
+coordinates. Its part carried by the noise's own second moments, at fixed parameters, is k_eF in the slow time with
+F := ⟨Ĵ′ᵀE[ε_m²] + ĴᵀE[e]⟩ = O(Eν²) (Ĵ′ := ∂_xĴ, ε_m := y − x_m the measured error; for an Ornstein–Uhlenbeck noise of rate B,
+E[ε_m²] = Eν²(a² + k_eB)/(k_e(k_e + B)) → Eν² as B/k_e → ∞); the parameters' first-order fluctuation adds a force of the same order in N₀
+— the compensation's curvature and slope–parameter terms in the error equation, the correlation ∇²_ϑΦ̃E[ε_mδϑ] in the law — negligible
+against F for the measured regressor, not for the desired one (Proposition D‴.31(iv)). The stationary response is k_e(H + σ₀I)⁻¹F under
+the fixed prior and k_eH⁻¹F under the adaptive prior, for every η > 0: the adaptive prior gives up the leak's bound on the response to a
+persistent force in the weakly excited modes — the robustness half of the classical trade-off, here against the noise, and the
+lack-of-excitation drift of adaptive control ([S57]) — and its function-level bias k_e²FᵀH⁻¹F grows like k_e²(Eν²)² while the noise is
+white well beyond the loop's bandwidth (k_e ≪ B), and saturates for k_e ≫ B, where E[ε_m²] → Eν²B/k_e. The part of F that the adaptive
+prior amplifies is the regressor's own, ⟨Ĵ′ᵀE[ε_m²]⟩; evaluating the regressor at the reference removes it (Proposition D‴.31).
 
 Hence η buys the bias-removal rate λ_j^−(η) at the price of the factor (h_j + η)/(h_j + η + σ₀) in the floor and of the H⁻¹ response to
 the errors in variables, and k_e lowers the floor like 1/k_e while it raises the errors-in-variables bias like k_e² (k_e ≪ B).
@@ -3510,54 +3519,86 @@ class mean at η = ∞, the same z_k otherwise) enter them — and so are their 
 are constant near the lift, so the trajectories coincide, and the class means follow the weighted K₀-atom loop with the same noise.
 (ii) Linearised at Γ_w in Corollary D‴.26's whitened coordinates: δė = −k_eδe − Ĵy − (k_e + a)ν (from f(x) − f̂(x + ν) = −Df̂[δΘ] − aν),
 ẏ = Ĵᵀ(δe + ν) − (σ₀/k_e)(y − ζ), ζ̇ = −(η/k_e)(ζ − y) (the regressor's own noise is of second order). The measured error ε_m = δe + ν
-obeys ε̇_m = −k_eε_m − Ĵy + ν̇ − aν, so ε_m = −(d/dt + k_e)⁻¹[Ĵy] + n, n := ((d/dt − a)/(d/dt + k_e))ν: the first part is Corollary D‴.26's
-slaving, the second drives ẏ = Ĵᵀn. At the frequencies ≪ k_e, n ≈ (ν̇ − aν)/k_e and Ĵᵀn = (1/k_e)[d(Ĵᵀν)/dt − (Ĵ̇ + aĴ)ᵀν]: the total
-derivative stays bounded and the rest is white of intensity (N₀/k_e²)Q per unit time, (N₀/k_e)Q in the slow time; the averaged slow
+obeys ε̇_m = −k_eε_m − Ĵy + ν̇ − aν, so ε_m = −(d/dt + k_e)⁻¹[Ĵy] + n, n := (d/dt + k_e)⁻¹[ν̇ − aν] (written ((d/dt − a)/(d/dt + k_e))ν):
+the first part is Corollary D‴.26's slaving, the second drives ẏ = Ĵᵀn. With ξ := (d/dt + k_e)⁻¹ν, of variance N₀/(2k_e) for white noise,
+n = ξ̇ − aξ + (d/dt + k_e)⁻¹[ȧξ] and Ĵᵀn = d(Ĵᵀξ)/dt − (Ĵ̇ + aĴ)ᵀξ + O(ξ/k_e): y = Ĵᵀξ + u, the fast jitter Ĵᵀξ and the slow part u driven
+by −(Ĵ̇ + aĴ)ᵀξ, white at the slow scale with the intensity (N₀/k_e²)Q per unit time, (N₀/k_e)Q in the slow time; the averaged slow
 equation dY = Ā₀Y ds + (N₀/k_e)^{1/2}(Q^{1/2}dW, 0) (stochastic averaging, [S53]) has the stated stationary covariance. In the eigenbasis
 of H the block Ā₀ is a direct sum of the pair blocks [[−(h + σ₀), σ₀], [η, −η]] (η = 0: −(h + σ₀); η = ∞: −h), whose Lyapunov
-equation with the noise q on y gives Σ_ζζ = Σ_yζ = ηΣ_yy/(h + η) and Σ_yy = q(h + η)/(2h(h + η + σ₀)); the floor of the parameters is
-tr(HΣ_yy) = Σ_jh_jΣ_yy,jj. The frequencies near and above k_e pass the loop: there y_fast ≈ Ĵ(t)ᵀξ, ξ the integral of the high-passed
-noise, of variance N₀/(2k_e), so E[y_fastᵀHy_fast] = (N₀/2k_e)tr H² over a period, and E[(Ĵ(t)y_fast)²] = (N₀/2k_e)⟨|Ĵ|⁴⟩. (iii) The
-second-order part of E[ε_m∇_ϑΦ̃(y; ϑ)] at the lift is ∂_x∇_ϑΦ̃·E[ε_m²] + ∇_ϑΦ̃·E[e], E[e] from E[f̂(x + ν)] = f̂(x) + ½∂²_xf̂Eν² + … in
-the error equation; for the Ornstein–Uhlenbeck noise, quasi-statically along the orbit, E[νe] = −(k_e + a)Eν²/(k_e + B) and
+equation with the noise q on y gives Σ_ζζ = Σ_yζ = ηΣ_yy/(h + η) and Σ_yy = q(h + η)/(2h(h + η + σ₀)); Q's off-diagonal entries in that
+basis enter only the covariances of different modes, which tr(HΣ_yy) = Σ_jh_jΣ_yy,jj does not see. The fast jitter gives
+E[(Ĵᵀξ)ᵀH(Ĵᵀξ)] = (N₀/2k_e)tr H² over a period, and E[(Ĵ(t)Ĵ(t)ᵀξ)²] = (N₀/2k_e)⟨|Ĵ|⁴⟩. (iii) At fixed parameters the second-order part
+of E[ε_m∇_ϑΦ̃(y; ϑ)] at the lift is ∂_x∇_ϑΦ̃·E[ε_m²] + ∇_ϑΦ̃·E[e], E[e] from the error equation's second-order terms ½∂²_xf·e² −
+½∂²_xf̂·(e + ν)² — one second derivative for f and f̂, by the hypothesis (otherwise ½(∂²_xf − ∂²_xf̂)Var(e) remains, of the same order);
+the parameters' fluctuation adds ∇²_ϑΦ̃·E[ε_mδϑ] in the law and −∂_xDf̂[E[(δe + ν)δΘ]] − ½E[D²_Θf̂[δΘ, δΘ]] in the error equation, of the
+same order in N₀ (computed in the numerics from the periodic covariance: the full second-order mean). For the Ornstein–Uhlenbeck noise,
+quasi-statically along the orbit, E[νe] = −(k_e + a)Eν²/(k_e + B) and
 Var(e) = (k_e + a)²Eν²/(k_e(k_e + B)), which give E[ε_m²] = Eν² + 2E[νe] + Var(e) as stated and E[e] =
 −(∂²_xf̂/(2k_e))Eν²(B − k_e − 2a)/(k_e + B). A constant slow force F_s on the pair block of a mode has the stationary point ζ = y and
 (h + σ₀)y − σ₀ζ = F_s, i.e. y = F_s/h for every η > 0, and y = F_s/(h + σ₀) under the fixed prior. ∎
 
-*Status.* (i) proved, exactly; (ii) formal — the stochastic averaging of the linearised periodic loop, not carried out in detail; the
-closed form exact for the averaged system — and checked against the exact periodic covariance of the linearised loop (the ratios tending
-to 1 like k_e⁻²); (iii) formal — a quasi-static second-moment computation — its stationary response exact for the averaged system; the real
-nonlinear loop checked by Monte Carlo against the sum of the two. Measurement noise in adaptive control and the errors-in-variables bias
-of estimates from noisy regressors are classical (bias-compensated least squares and instrumental variables in identification; bounded
-disturbances and robust modifications, [4]); and using the reference in the regressor, as the desired compensation adaptation law does,
-removes the noise from the regressor ([S53]). New are the coherence — a mean-field property: the noise floor does not average out with
-m — the closed form of the floor, in which the adaptive prior's mobility η enters the Tikhonov filter factor as h_j + η, the loop's
-high-pass (the floor ∝ 1/k_e, with Q built on Corollary D‴.26's derivative Gram ⟨Ĵ̇ᵀĴ̇⟩), and the identification of the adaptive prior's
-robustness loss under noise as the H⁻¹ response to the second-order force. Checked: `tests/test_measurement_noise.py` (the closed form
-against the Lyapunov solution, the trace identity at η = ∞ and the monotonicity in η; the exact periodic floors of the linearised loop at
-k_e = 100; a lift m = 6 under a noise path staying exactly replicated and following the K₀-atom loop driven by the same path; the
-responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the second-order force linear in the noise's variance).
+*Status.* (i) proved, exactly, as invariance; the attraction threshold formal (the averaged second-order drift of the separations) and
+checked on the real loop; (ii) formal — the stochastic averaging of the linearised periodic loop, not carried out in detail; the closed
+form exact for the averaged system — and checked against the exact periodic covariance of the linearised loop: the deficit 2.4%, 0.61%,
+0.14%, 0.028% at k_e = 25–200 (η = 0) is dominated there by a term in k_e⁻², but the relative error is O(1/k_e) — the slope a in the noise
+input −(k_e + a)ν, a rate that does not change sign under time reversal, breaks the parity of Corollary D‴.26(c) (with the noise input −k_eν
+the deviation is even in 1/k_e) — and the ratio crosses 1 near k_e = 500; (iii) formal — a quasi-static second-moment computation for the
+noise's own moments, the parameters' part computed numerically — its stationary response exact for the averaged system, the exact
+linearised loop's 10.7% (adaptive) and 2.6% (fixed) higher at k_e = 25, an O(k_e⁻²) excess; the real nonlinear loop checked by Monte Carlo
+against the sum of the two. Classical: measurement noise in adaptive control and the errors-in-variables bias of estimates from noisy
+regressors (bias-compensated least squares and instrumental variables in identification; bounded disturbances and robust modifications,
+[4]); using the reference in the regressor, as the desired compensation adaptation law does ([S53]); the Lyapunov covariance of a
+constant-gain adaptive algorithm as its diffusion approximation (Benveniste–Métivier–Priouret), the LMS misadjustment's dependence on the
+input's spectrum through a trace only (Widrow et al.: the η = ∞ floor's tr Q), the leaky LMS's steady state (Mayyas–Aboulnasr: the fixed
+prior's factor h_j/(h_j + σ₀)), the common noise of mean-field theory (Carmona–Delarue–Lacker), of which the coherence is an instance, and
+the drift of the weakly excited directions under a persistent disturbance (Anderson), of which the H⁻¹ response is ([S57]). New, in the
+transport-leak setting: the interpolation (h_j + η)/(h_j + η + σ₀) of the floor in the prior's mobility, the driving matrix
+Q = ⟨(Ĵ̇ + aĴ)ᵀ(Ĵ̇ + aĴ)⟩ — the sensitivity-filtered measurement the law sees, built on Corollary D‴.26's derivative Gram — and their
+combination with the coherence of the K₀-atom identification and its noise threshold. Checked: `tests/test_measurement_noise.py` (the
+closed form against the Lyapunov solution, the trace identity at η = ∞ and the monotonicity in η; the exact periodic floors of the
+linearised loop at k_e = 100 for η = 0, σ₀ and ∞; a lift m = 6 under a noise path staying exactly replicated and following the K₀-atom loop
+driven by the same path; a separation of the weakest class decaying at the noise std 0.01 and growing at 0.05, each at its predicted rate
+to 10⁻⁴; the OU noise's stationary variance and correlation, and the law seeing the measured error at the measured point; the responses
+(H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the quasi-static force against the full second-order mean's noise part to 2·10⁻³, the
+parameters' part below 10⁻⁴ of the bias).
 
 
 *Numerics* (`exp_measurement_noise.py` → `results/chaos/measurement_noise.md`). The three-bump instance (σ₀ = 0.15σ_crit, x_m = 2 sin t,
-k_e = 25) at the lift of the exact representation of the matching weights q = 1/3, the prior at its atoms. (A) The linear theory: H's
-nine eigenvalues span 3.06·10⁻⁴–0.195; tr Q = 8.784, of which 8.105 is the derivative Gram ⟨Ĵ̇ᵀĴ̇⟩ and 0.679 the slope term ⟨a²ĴᵀĴ⟩ (the
-cross term vanishes by the reference's time symmetry); Q_jj/h_j falls from 104 on the weakest mode to 5.5. The parameters' floor per unit
-N₀ is 0.1597 under the fixed prior, 0.1627 at η = σ₀, 0.1690 at 10σ₀ and 0.1757 = tr Q/(2k_e) at η = ∞ — the adaptive prior costs at most
-10% here, the strong modes carrying the floor — while the weakest mode's parameter variance grows from 0.0865 to 2.09, ×24. The fast parts
-are tr H² = 0.0657 and ⟨|Ĵ|⁴⟩ = 0.299. The second-order force (OU noise, B = 100) has the function-level stationary bias 491 (fixed prior)
-and 2397 (adaptive, ×4.88) per unit (Eν²)²: it equals the floor of the parameters at the noise std 0.0026 and 0.0012 respectively, and
-dominates above. (B) The exact periodic stationary covariance of the linearised loop (the monodromy and a discrete Lyapunov equation)
-against the prediction, at η = 0, σ₀, ∞: the function-level floor's ratio 0.976–0.980 at k_e = 25, 0.994–0.995 at 50, 0.9986–0.9988 at 100
-and 0.9997–0.9998 at 200 — the deficit falling like k_e⁻² — and the same at the plant's current point. (C) The real loop (RK4,
-dt = 10⁻³, an OU noise exact at the steps, 12 runs of 300 time units per case) against the transient covariance of the linearised loop plus
-the second-order mean deviation: at the noise std 0.003 within one standard error at every record (z from −0.99 to 0.99), the mean part
-42% of the prediction at t = 300; at std 0.01 within 1.75 standard errors (z from −0.3 to 1.75, the records of a run correlated), the
-mean part 89% at t = 300 and the covariance part alone 8.8–8.9 times below the Monte Carlo — the second-order force is the dominant
-effect of the noise there. Over 300 time units the fixed and the adaptive prior differ by 5–6%: the weak modes, where the two responses
-part, equilibrate over k_e/h₁ ≈ 8·10⁴ time units, so the stationary amplification rests on the averaged equations, which the transient
-checks. The lift m = 15 (classes of five) driven by the same noise path as the K₀-atom run gives the same f̂ on the grid to 0.0 (the
-error's difference 6·10⁻¹⁹): the noise is coherent, as (i) states.
+k_e = 25) at the lift of the exact representation of the matching weights q = 1/3, the prior at its atoms. (A) The linear theory: H's nine
+eigenvalues span 3.06·10⁻⁴–0.195; tr Q = 8.784, of which 8.105 is the derivative Gram ⟨Ĵ̇ᵀĴ̇⟩ and 0.679 the slope term ⟨a²ĴᵀĴ⟩ (the cross
+term vanishes, as on every one-dimensional reference: an exact differential); Q_jj/h_j ranges from 104 (mode 1) to 5.5 (mode 6). The
+parameters' floor per unit N₀ is 0.1597 under the fixed prior, 0.1627 at η = σ₀, 0.1690 at 10σ₀ and 0.1757 = tr Q/(2k_e) at η = ∞ — the
+adaptive prior costs 10% here, the strong modes carrying the floor — while the weakest mode's parameter variance grows from 0.0865 to 2.09,
+×24.1 in the averaged system (×28.0 in the exact linearised loop at k_e = 25, Part B). The fast parts are tr H² = 0.0657 and ⟨|Ĵ|⁴⟩ = 0.299.
+The second-order force of the noise's own moments (OU noise, B = 100) has the averaged function-level stationary bias 491 (fixed prior) and
+2397 (adaptive, ×4.88) per unit (Eν²)², equal to the floor of the parameters at the noise std 0.0026 and 0.0012 respectively and dominant
+above; the full second-order mean (the periodic covariance contracted with the true field's second derivatives) reproduces the force to
+1.7·10⁻⁴, the parameters' fluctuation changing the bias by less than 10⁻⁵ (2397.66 → 2397.68; the mean function's 2397.65), and the exact
+periodic second-order mean of the linearised loop gives 504 and 2653 (×5.27). The averaged bias grows in k_e with the local exponent
+1.93–1.99 for B ≥ 20k_e but 1.69 and 1.47 at B = 8k_e and 4k_e, and saturates beyond. The separations' second-order drift has
+λ_max(S_k) = 0.0148, 0.0101 and 0.298 per unit Eν² (real time) in the three classes: the third class's separations stop decaying at the
+noise std 0.031 (1.5% of the reference's amplitude); at Part C's stds 0.003 and 0.01 the margin σ₀/k_e is used to 0.9% and 10.5%. (B) The
+exact periodic stationary covariance of the linearised loop (the monodromy and a discrete Lyapunov equation) against the prediction, at
+η = 0, σ₀, ∞ and k_e = 25–800: the function-level floor's ratio 0.976–0.980 at k_e = 25, 0.994–0.995 at 50, 0.9986–0.9988 at 100,
+0.9997–0.9998 at 200, and above 1 at 800 (+1.2·10⁻⁵ at η = 0, +1.3·10⁻⁵ at η = ∞); the deviation's successive ratios per doubling are 3.87,
+4.38, 5.26, 11.4 and a change of sign (η = ∞) — a k_e⁻² term dominating to k_e = 200 over a first-order one of the opposite sign — while
+with the noise input −k_eν (the slope removed, the control) they are 3.67, 3.90, 3.98, 3.99, 4.00: without the slope the expansion is even.
+The weakest mode's variance is 0.845 (fixed prior) and 0.980 (adaptive) of its slow-plus-fast prediction at k_e = 25, tending to 1. The
+exact stationary second-order mean of the linearised loop lies 10.7%, 2.65%, 0.66%, 0.17% above the averaged bias under the adaptive prior
+and 2.58%, 0.64%, 0.16%, 0.04% under the fixed one at k_e = 25, 50, 100, 200 — the weak modes' stiffness being the filtered Gram
+H − k_e⁻²⟨Ĵ̇ᵀĴ̇⟩ of Corollary D‴.26(c). (C) The real loop (RK4, dt = 10⁻³, an OU noise exact at the steps, 12 noise paths of 300 time units
+common to the four cases) against the transient covariance of the linearised loop plus the second-order mean deviation: at the noise std
+0.003 within one standard error at every record (z from −0.99 to 0.99), the mean part 42% of the prediction at t = 300; at std 0.01 within
+1.75 standard errors (z from −0.3 to 1.75, the records of a run correlated), the mean part 89% at t = 300 and the covariance part alone
+8.8–8.9 times below the Monte Carlo — the second-order force is the dominant effect of the noise there. The adaptive and the fixed prior
+drift apart, by 6.0% and 6.4% at t = 300 (predicted 5.3% and 6.1%): the weak modes, where the two responses part, equilibrate over k_e/h₁ ≈
+8·10⁴ time units, so over 300 time units the transient checks the force (the weak modes still grow linearly), and the stationary response is
+checked against the exact linearised loop (B). The lift m = 15 (classes of five) driven by the same noise path as the K₀-atom run gives the
+same f̂ to rounding (identical in the stored float32, 5.6·10⁻¹⁶ apart in float64): the noise is coherent, as (i) states. (D) But invariance
+is not attraction: from a separation of size 10⁻⁶ along S₃'s top eigenvector, over four noise paths of 300 time units, the lift's third
+class separates at the rate −2.55·10⁻⁴ ± 0.04·10⁻⁴ at the std 0.01 (predicted −2.53·10⁻⁴), −0.9·10⁻⁵ ± 1.4·10⁻⁵ at 0.03 (−1.5·10⁻⁵: the
+threshold) and +4.37·10⁻⁴ ± 0.26·10⁻⁴ at 0.05 (+4.62·10⁻⁴): above the threshold the replicated configuration repels, its within-class spread
+staying exactly 0.0 from a replicated start only because each particle's update is the same arithmetic.
 
 **Proposition D‴.31 (the adaptive prior is a washout leak; the desired regressor makes the noise's persistent force a least-squares
 force).** Let the leak be Theorem D‴.23's toward an adaptive prior, dz_j/ds = −η(z_j − T̂_j) with 0 < η < ∞ (the nearest-atom form of
@@ -3565,30 +3606,37 @@ Proposition D‴.24(ii) with the class barycentres likewise), in the averaged lo
 at an exact representation of representable weights w let H, Ĵ, a and the mean ⟨·⟩ over a period be Proposition D‴.30's,
 ‖g‖²_ρ := ⟨g²⟩ for a function g along the orbit, and P the L²_ρ-projection onto the span of Ĵ's components.
 
-(i) *(the washout)* Along every solution and every path of the plan, T̂_j(s) − z_j(s) = ∫₀ˢe^{−η(s−τ)}dT̂_j(τ) + e^{−ηs}(T̂_j(0) − z_j(0)):
-the prior lags the barycentre by the barycentre's exponentially forgotten increments. The leak on a particle, −σ₀(ϑ_i − z), is therefore
-the full σ-modification of its offset from the barycentre plus, on the barycentre, the σ-modification passed through the washout filter
-(d/ds)(d/ds + η)⁻¹ — zero at zero frequency, the full leak above η. Linearised at a stationary point, mode j of the collective block has at
-the slow frequency ω the stiffness h_j + σ₀iω/(iω + η): the fixed prior's h_j + σ₀ for ω ≫ η, the bare h_j at ω = 0. This is Theorem
-D‴.23(iii)'s bias removal — feedback through a washout filter leaves the equilibria where they are ([S54]) — and its price: no leak
-opposes a persistent force.
+(i) *(the washout)* Along every solution and every path of the plan with T̂_j of bounded variation, T̂_j(s) − z_j(s) =
+∫₀ˢe^{−η(s−τ)}dT̂_j(τ) + e^{−ηs}(T̂_j(0) − z_j(0)) — and for every measurable T̂_j (a chattering plan included) in the integrated form
+z_j(s) = e^{−ηs}z_j(0) + η∫₀ˢe^{−η(s−τ)}T̂_j(τ)dτ: the prior lags the barycentre by the barycentre's exponentially forgotten increments.
+For integral plans (the nearest-atom cells, the OT plan at a commensurate m) the leak on a particle, −σ₀(ϑ_i − z), is therefore the full
+σ-modification of its offset from the barycentre plus, on the barycentre, the σ-modification passed through the washout filter
+(d/ds)(d/ds + η)⁻¹ — zero at zero frequency, the full leak above η; with split rows (an incommensurate m) the barycentres also feel
+−σ₀(I − M)z, M_jl := (m/q_j)Σ_iγ_ijγ_il, which is not washed out. Linearised at the exact representation, mode j of the collective block
+has at the slow frequency ω the stiffness h_j + σ₀iω/(iω + η): the fixed prior's h_j + σ₀ for ω ≫ η, the bare h_j at ω = 0. This is
+Theorem D‴.23(iii)'s bias removal — feedback through a washout filter leaves the equilibria where they are ([S54]), here the replicated
+ones — and its price: no leak opposes a persistent force on the class barycentres (the separations keep the full leak).
 
 (ii) *(the stationary identity)* Let the prior be an affine time-invariant filter of the barycentre and of a fixed anchor z_a — linearised,
 ζ = 𝒦[y] + (I − 𝒦)[δ] in the whitened weighted coordinates, δ the anchor's misplacement from the representation; for example
 dz/ds = −η(z − T̂) − κ(z − z_a), κ ≥ 0, with 𝒦(0) = η/(η + κ) (κ = 0 the adaptive prior, κ = ∞ the fixed prior at z_a) — and
-S₀ := σ₀(I − 𝒦(0)) the leak's zero-frequency gain. A persistent force F on the collective coordinates and the misplacement δ give the
-stationary deviation y = RF + Bδ with R = (H + S₀)⁻¹ and B = (H + S₀)⁻¹S₀, so
+S₀ := σ₀(I − 𝒦(0)) the leak's zero-frequency gain (the anchor entering through I − 𝒦: the filter returns the anchor when the barycentre
+sits there). A persistent force F on the collective coordinates and the misplacement δ give the stationary deviation y = RF + Bδ with
+R = (H + S₀)⁻¹ and B = (H + S₀)⁻¹S₀, so
 
-    HR + B = I.
+    RH + B = I,    i.e. R = (I − B)H⁻¹:
 
-On every mode a vanishing bias forces the response 1/h_j: no such prior both removes the leak's bias and keeps its bound on the response
-to persistent forces, and a remedy for the robustness loss of Proposition D‴.30(iii) has to change the force.
+the response is the unregularised one times the share not taken by the anchor (HR + B = I as well where S₀ commutes with H, as for the
+family; not for a prior fixed on some coordinates or a projected prior with an active face). On every mode, whatever S₀,
+h_jr_jj + b_jj = 1 (r_jj := v_jᵀRv_j, b_jj := v_jᵀBv_j): a vanishing bias forces the response 1/h_j. So no such prior both removes the
+leak's bias and keeps its bound on the response to persistent forces — the trade binding on the modes with h_j < σ₀, where 1/h_j exceeds
+the fixed prior's 1/σ₀ — and a remedy for the robustness loss of Proposition D‴.30(iii) has to change the force.
 
-(iii) *(least-squares forces)* For every symmetric S ≥ 0, Fᵀ(H + S)⁻¹H(H + S)⁻¹F ≤ FᵀH⁻¹F = min{‖g‖²_ρ : ⟨Ĵᵀg⟩ = F}, with equality at
-S = 0: the function-level stationary response to a persistent force is at most the squared norm of the smallest target perturbation that
-exerts it (⟨Ĵᵀg⟩ is the learning force of the target f + g), and the adaptive prior attains the bound. A least-squares force ⟨Ĵᵀg⟩
-therefore moves the learned function by at most ‖g‖_ρ under every prior — under the adaptive prior by exactly Pg, so that the stationary
-point's projected residual P(g − Ĵy) vanishes.
+(iii) *(least-squares forces)* For H ≻ 0 and every S with S + Sᵀ ⪰ 0, Fᵀ(H + S)⁻ᵀH(H + S)⁻¹F ≤ FᵀH⁻¹F = min{‖g‖²_ρ : ⟨Ĵᵀg⟩ = F},
+with equality at S = 0: the function-level stationary response to a persistent force is at most the squared norm of the smallest target
+perturbation that exerts it (⟨Ĵᵀg⟩ is the learning force of the target f + g), and the adaptive prior attains the bound. A least-squares
+force ⟨Ĵᵀg⟩ therefore moves the learned function by at most ‖g‖_ρ under every prior — under the adaptive prior by exactly Pg, so that
+the stationary point's projected residual P(g − Ĵy) vanishes.
 
 (iv) *(the desired regressor)* Let the adaptive law evaluate its regressor at the reference, ϑ̇_i = G∇_ϑ((y − x_m)ᵀΦ̃(x_m; ϑ_i)) −
 (σ₀/k_e)(ϑ_i − z_{π(i)}) (DR), with the compensation f̂_Θ(y) as before or also at the reference, u = ẋ_m − k_e(y − x_m) − f̂_Θ(x_m) (DR*,
@@ -3598,69 +3646,95 @@ multiplies e ≡ 0), for DR* with −(k_e − a(t)) in place of −k_e in the er
 in 1/k_e (the regressor moves by x − x_m = O(1/k_e));
 (b) to first order in ν, DR is Proposition D‴.30(ii)'s linearised loop driven by the same noise, path by path; DR* has the noise input
 −k_eν in place of −(k_e + a)ν, and the same floor up to a relative O(1/k_e);
-(c) to second order the force is the least-squares force ⟨Ĵᵀg⟩ (slow time) of g := k_eE[e], the rescaled mean tracking error at the
-lift; for an Ornstein–Uhlenbeck noise of rate B, quasi-statically along the orbit, g = −½∂²_xf̂·Eν²(B − k_e − 2a)/(k_e + B) for DR and
-g = ½∂²_xf·Eν²k_e³/((k_e − a)²(k_e − a + B)) for DR*, so |g| ≤ ½|∂²_xf|Eν²(1 + O(|a|/k_e)) for all k_e and B. By (iii) the
-function-level errors-in-variables bias is at most ‖g‖²_ρ ≤ ¼‖∂²_xf‖²_ρ(Eν²)²(1 + O(1/k_e)) under every prior — uniformly in k_e, in B
-and in the spectrum of H — and the adaptive prior's stationary point has no projected mean tracking error. With the measured regressor the
-force is F₁ + ⟨Ĵᵀg⟩, F₁ := k_e⟨Ĵ′ᵀE[ε_m²]⟩ — the regressor's errors in variables proper, the learning force of no mean tracking error —
-and the adaptive prior's stationary point keeps the projected mean tracking error −ĴH⁻¹F₁, of squared norm F₁ᵀH⁻¹F₁, which grows like
-k_e² while k_e ≪ B.
+(c) to second order the part of the force carried by the noise's own second moments (at fixed parameters) is the least-squares force
+⟨Ĵᵀg⟩ (slow time) of g := k_eE[e], the rescaled mean tracking error at the lift; for an Ornstein–Uhlenbeck noise of rate B,
+quasi-statically along the orbit, g = −½∂²_xf̂·Eν²(B − k_e − 2a)/(k_e + B) for DR and g = ½∂²_xf·Eν²k_e³/((k_e − a)²(k_e − a + B)) for
+DR* (k_e > max a), so |g| ≤ ½|∂²_xf|Eν²(1 + O(|a|/k_e)) for all k_e and B. By (iii) its function-level response is at most
+‖g‖²_ρ ≤ ¼‖∂²_xf‖²_ρ(Eν²)²(1 + O(1/k_e)) under every prior — uniformly in k_e, in B and in the spectrum of H — and under the adaptive
+prior it leaves no projected mean tracking error. The parameters' first-order fluctuation adds a second-order force of the same order in
+N₀: in the error equation the compensation's curvature ½D²_Θf̂[Σ_ΘΘ] and its slope–parameter term (a least-squares force again, of a
+perturbation set by the parameters' covariance; the curvature also shifts the mean function, and the loop removes its tangent part), in
+the learning law the correlation ∇²_ϑΦ̃E[ε_mδϑ] of the regressor's parameter dependence with the measured error — an errors-in-variables
+term in the parameters, which the reference in the regressor does not remove and which is not a least-squares force. Its size is set by
+the parameters' stationary covariance (mode j's variance (N₀/2k_e)Q_jj(h_j + η)/(h_j(h_j + η + σ₀)), unbounded as h_j → 0 at η > 0), so
+the bound ‖g‖²_ρ is the noise part's, not the total's. With the measured regressor the noise part is F₁ + ⟨Ĵᵀg⟩, F₁ := k_e⟨Ĵ′ᵀE[ε_m²]⟩ —
+the regressor's errors in variables proper, the learning force of no mean tracking error — and the adaptive prior's stationary point keeps
+the projected mean tracking error P E[e] = −ĴH⁻¹F₁/k_e: what grows like k_e² while k_e ≪ B is k_e times it, of squared norm F₁ᵀH⁻¹F₁, the
+function-level bias; the mean tracking error itself, of squared norm F₁ᵀH⁻¹F₁/k_e² ∝ (B/(k_e + B))², stays bounded.
 
-Hence with the desired regressor the first-order floor still falls like 1/k_e while the errors-in-variables bias stays bounded: the
-trade-off in k_e of Proposition D‴.30 disappears, and what is left is the plant's state jitter E[e²] = Eν²(k_e + a)²/(k_e(k_e + B)) —
-the classical price of a high gain under measurement noise.
+Hence with the desired regressor the first-order floor still falls like 1/k_e while the noise part of the errors-in-variables bias stays
+bounded and the parameters' part falls with k_e (on the instance): the trade-off in k_e of Proposition D‴.30 disappears, and what is left
+is the plant's state jitter E[e²] = Eν²(k_e + a)²/(k_e(k_e + B)) (DR; DR*: k_e²Eν²/((k_e − a)(k_e − a + B))) — the classical price of a
+high gain under measurement noise.
 
-*Proof.* (i) u := T̂_j − z_j satisfies du = dT̂_j − ηu ds (T̂_j has bounded variation in s: it jumps where the plan does), whence
-u(s) = e^{−ηs}u(0) + ∫₀ˢe^{−η(s−τ)}dT̂_j(τ); and ϑ_i − z = (ϑ_i − T̂) + u. Linearised, ζ = η(iω + η)⁻¹y on each mode, so
-σ₀(y − ζ) = σ₀iω(iω + η)⁻¹y. (ii) At zero frequency ζ = 𝒦(0)y + (I − 𝒦(0))δ, so the leak on y is −σ₀(y − ζ) = −S₀(y − δ), and the
-stationary equation Hy + S₀(y − δ) = F gives y = (H + S₀)⁻¹(F + S₀δ). For the family, the prior's stationary equation
-η(y − ζ) = κ(ζ − δ) gives 𝒦(0) = η/(η + κ). (iii) By congruence with H + S, (H + S)⁻¹H(H + S)⁻¹ ≤ H⁻¹ ⇔ H ≤ (H + S)H⁻¹(H + S) =
-H + 2S + SH⁻¹S, true for S ≥ 0. The map g ↦ ⟨Ĵᵀg⟩ has the adjoint F ↦ ĴF, so the smallest g with ⟨Ĵᵀg⟩ = F is ĴH⁻¹F, of squared norm
+*Proof.* (i) The integrated form is the variation of constants for dz_j/ds = −η(z_j − T̂_j); for T̂_j of bounded variation (it jumps
+where the plan does, finitely often on bounded intervals), u := T̂_j − z_j satisfies du = dT̂_j − ηu ds, whence
+u(s) = e^{−ηs}u(0) + ∫₀ˢe^{−η(s−τ)}dT̂_j(τ); and ϑ_i − z = (ϑ_i − T̂) + u for an integral plan (for split rows the targets are mΣ_jγ_ijz_j,
+and averaging the leak over a class gives −σ₀(T̂ − Mz)). Linearised, ζ = η(iω + η)⁻¹y on each mode (the prior and the leak are scalars in
+the whitened weighted coordinates, so they commute with H), and σ₀(y − ζ) = σ₀iω(iω + η)⁻¹y. (ii) At zero frequency
+ζ = 𝒦(0)y + (I − 𝒦(0))δ, so the leak on y is −σ₀(y − ζ) = −S₀(y − δ), and the stationary equation Hy + S₀(y − δ) = F gives
+y = (H + S₀)⁻¹(F + S₀δ); then RH + B = (H + S₀)⁻¹(H + S₀) = I, and on the diagonal in H's eigenbasis h_jr_jj + b_jj = 1. For the family,
+the prior's stationary equation η(y − ζ) = κ(ζ − δ) gives 𝒦(0) = η/(η + κ). (iii) By congruence with H + S, (H + S)⁻ᵀH(H + S)⁻¹ ≤ H⁻¹ ⇔
+H ≤ (H + S)ᵀH⁻¹(H + S) = H + S + Sᵀ + SᵀH⁻¹S, true for S + Sᵀ ⪰ 0. The map g ↦ ⟨Ĵᵀg⟩ has the adjoint F ↦ ĴF, so the smallest g with ⟨Ĵᵀg⟩ = F is ĴH⁻¹F, of squared norm
 FᵀH⁻¹F; for F = ⟨Ĵᵀg⟩, FᵀH⁻¹F = ‖Pg‖²_ρ ≤ ‖g‖²_ρ, and at S = 0, Ĵy = ĴH⁻¹⟨Ĵᵀg⟩ = Pg. (iv) (a) At e = 0 both laws vanish, and
 their variations, δe∇_ϑΦ̃(x; ϑ) + e(⋯), coincide at x = x_m; for DR*, f(x) − f̂(x_m) = aδe − Ĵy to first order. Off the lift e is
 slaved, e = r(x_m)/k_e + O(k_e⁻²), so the two regressors differ by O(1/k_e). (b) The regressor's dependence on y enters the law
-multiplied by ε_m, at second order; for DR* the compensation no longer carries ν. (c) The mean of ε_m∇_ϑΦ̃(x_m; ϑ) is
-∇_ϑΦ̃(x_m)E[e], since Eν = 0. For DR, E[e] is Proposition D‴.30's (the same compensation); for DR*,
+multiplied by ε_m, at second order; for DR* the compensation no longer carries ν. (c) At fixed parameters the mean of ε_m∇_ϑΦ̃(x_m; ϑ)
+is ∇_ϑΦ̃(x_m)E[e], since Eν = 0; the parameters' fluctuation adds ∇²_ϑΦ̃(x_m)E[ε_mδϑ] in the law and the compensation's curvature and
+slope–parameter terms in the error equation (Proposition D‴.30's proof). For DR, E[e] is Proposition D‴.30's (the same compensation); for DR*,
 ė = (a − k_e)e + ½∂²_xf e² − k_eν + O(3), whose linear part has Var(e) = k_e²Eν²/((k_e − a)(k_e − a + B)) for the OU noise, and the
 mean balance is (k_e − a)E[e] = ½∂²_xf Var(e). The bounds: |B − k_e − 2a| ≤ (k_e + B)(1 + 2|a|/(k_e + B)) and
 k_e³/((k_e − a)²(k_e − a + B)) ≤ (k_e/(k_e − a))³. With the measured regressor, at the adaptive prior's stationary point
-⟨Ĵᵀ(g − Ĵy)⟩ + F₁ = 0, so P(g − Ĵy) = −ĴH⁻¹F₁. ∎
+⟨Ĵᵀ(g − Ĵy)⟩ + F₁ = 0 and the mean of the error equation gives k_eE[e] = g − Ĵy at second order, so k_eP E[e] = −ĴH⁻¹F₁. ∎
 
-*Status.* (i) proved, exactly (every solution of the real or the averaged loop, every path of the plan); (ii) and (iii) proved — linear
-algebra on the averaged linearised block; (iv)(a) proved at the lift and for its linearisation, the leading-order equality of the averaged
-loops by Theorem J's averaging argument (not rewritten); (iv)(b) the first-order identity proved for the linearised equations, the floors
-themselves with Proposition D‴.30(ii)'s status; (iv)(c) formal — Proposition D‴.30(iii)'s quasi-static second-moment computation — its
-consequences exact for the averaged system. Reference regressors and the desired compensation adaptation law are classical ([S53]), and so
-are washout filters ([S54]); new are the washout reading of the adaptive prior, which puts its bias removal and its loss of robustness in
-one transfer function, the identity HR + B = I, which makes that loss structural for every affine time-invariant prior, the
-characterisation of the harmless persistent forces as the least-squares ones, with the bound by the smallest equivalent target
-perturbation, and the identification of the measured regressor's errors in variables proper, F₁, as the only part of the noise's
-persistent force that the adaptive prior amplifies. Checked: `tests/test_eiv_remedy.py` (the washout identity along a real-loop solution
-at finite η, the barycentre's velocity integrated alongside; the collective block's transfer function against the washout formula and
-HR + B = I along the prior family; the response bound under random leaks S ≥ 0, the smallest equivalent perturbation and the projection;
-the lift exact under DR and DR*, and on a common noise path DR's run within the second order of MR's — the difference falling like the
-noise's variance, the deviations like its standard deviation; DR's and DR*'s forces least-squares, their pointwise bounds on g, and MR's
-F₁ three orders of magnitude above).
+*Status.* (i) proved, exactly (every solution of the real or the averaged loop; the differential form for T̂ of bounded variation, the
+integrated one always; the leak's decomposition for integral plans); (ii) proved as RH + B = I and per mode — linear algebra on the
+averaged linearised block; HR + B = I where S₀ commutes with H; (iii) proved (S + Sᵀ ⪰ 0, H ≻ 0); (iv)(a) proved at the lift and for its
+linearisation, the leading-order equality of the averaged loops by Theorem J's averaging argument (not rewritten); (iv)(b) the first-order
+identity proved for the linearised equations, the floors themselves with Proposition D‴.30(ii)'s status; (iv)(c) formal and split — the
+noise part by Proposition D‴.30(iii)'s quasi-static second-moment computation, its consequences exact for the averaged system; the
+parameters' part computed numerically (the full second-order mean), not in closed form. Classical: reference regressors and the desired
+compensation adaptation law ([S53]; DR* without Sadegh and Horowitz's nonlinear damping is a local statement), washout filters ([S54]),
+the adaptive law kept near a low-pass filtered copy of itself — Yucelen and Haddad's low-frequency learning, which has the washout
+structure ([S58]) — and elastic averaging's moving-average centre ([S49]); the identity, per mode the Tikhonov filter factor plus the
+residual factor (the Kalman-gain split of a regularised estimate); the bound (iii), the minimum-norm solution with the contraction of the
+regularised fit; and the split of the noise's force into the regressor's errors in variables proper and the output's, of which only the
+mean biases. New are their transfer to the transport leaks — the washout reading of the adaptive prior in the mass-constrained,
+mean-field setting, uniform in m — and the instance's quantification, including the parameters' own errors in variables, which the
+desired regressor does not remove. Checked: `tests/test_eiv_remedy.py` (the washout identity along a real-loop solution at finite η, the
+barycentre's velocity integrated alongside, and on the averaged loop across a plan switch, the jump's share large; the collective block's
+transfer function against the washout formula, RH + B = I along the prior family and for non-commuting leaks — the active face, the prior
+fixed on the amplitudes — where HR + B = I fails; the response bound under random leaks S ≥ 0, the smallest equivalent perturbation and
+the projection; the lift exact under DR and DR*, on a common noise path DR's run within the second order of MR's, and the regressor's
+point in the law; DR's and DR*'s noise forces least-squares, their pointwise bounds on g, MR's F₁ three orders of magnitude above; the
+quasi-static forces against the full second-order mean's noise part, the parameters' part above 1% for DR and DR* and below 10⁻⁵ for MR).
 
 
-*Numerics* (`exp_eiv_remedy.py` → `results/chaos/eiv_remedy.md`). The instance of Proposition D‴.30 with an Ornstein–Uhlenbeck noise of
-rate B; MR the measured regressor and compensation, DR the regressor at the reference, DR* both at the reference. (A) The adaptive
-prior's function-level bias per unit (Eν²)² at k_e = 25, B = 100 is 2397 (MR), 0.471 (DR) and 0.0526 (DR*): MR over DR 5.1·10³, and
-3.0·10³–3.3·10⁸ over k_e = 25–200 and B = 100, 1000 (the largest at k_e = B = 100, where DR's g nearly cancels). MR's grows like k_e²
-for B ≫ k_e (3564 to 1.66·10⁵ from k_e = 25 to 200 at B = 1000), while DR's and DR*'s stay at most 1.18, below ¼‖∂²_xf‖²_ρ = 1.31. DR's
-bias attains the least-squares bound ‖g‖²_ρ to 0.01% at k_e = 25 — g lies almost in the tangent space, the second derivative of a
-Gaussian bump being in the span of its amplitude and width derivatives — and its projected stationary mean tracking error vanishes,
-against MR's 2394. The noise level at which the adaptive prior's bias reaches its floor rises from the std 0.0012 (MR) to 0.086 (DR)
-and 0.26 (DR*) at B = 100. (B) Along the prior family at η = σ₀ (κ/η = 0, 0.1, 1, 10 and the fixed prior; S₀ from 0 to σ₀) the weakest
-mode's response falls from 3269 to 136 while its bias factor rises from 0 to 0.959, with h₁r₁ + b₁ = 1 and max|HR + B − I| ≤ 2.4·10⁻¹⁵;
-MR's errors-in-variables bias falls only from 2397 to 491, and DR's from 0.471 to 0.211 — three to four orders of magnitude below at
-every prior. (C) The real loop (k_e = 25, B = 100, std 0.01, η = ∞, RK4 dt = 10⁻³, 12 runs of 300 time units, the three laws on common
-noise paths): at t = 300, E‖f̂ − f‖²_ρ is 2.43·10⁻⁶ under MR against 2.80·10⁻⁷ under DR and 2.75·10⁻⁷ under DR*, a ratio of 8.7
-(predicted 9.2); DR and DR* sit at their covariance part, their mean parts 0.07% and 0.008% of it. Against the prediction the z-scores
-run from −2.04 to −0.04 (MR; Proposition D‴.30's runs of the same loop, on other paths, lay 7% above it) and from −1.8 to 0.82 (DR,
-DR*). The run mean of f̂_MR − f̂_DR, in which the first-order responses cancel path by path, equals the predicted Ĵ(ȳ_MR − ȳ_DR) to a
-relative L²_ρ error of 0.5–5.3% at every record, the sampling error of the run mean.
+*Numerics* (`exp_eiv_remedy.py` → `results/chaos/eiv_remedy.md`). The instance of Proposition D‴.30 with an Ornstein–Uhlenbeck noise of rate
+B; MR the measured regressor and compensation, DR the regressor at the reference, DR* both at the reference. (A) The averaged system's
+biases per unit (Eν²)². From the noise's own moments, the adaptive prior's function-level bias at k_e = 25, B = 100 is 2397 (MR), 0.471 (DR)
+and 0.0526 (DR*); with the parameters' fluctuation (the full second-order mean) 2398, 0.486 (+3.3%) and 0.0481 (−8.7%), the mean function's
+2398, 0.476 and 0.0511. Over k_e = 25–200 and B = 100, 1000 the parameters' part changes MR's bias by at most 0.03%, DR's by −0.75% to +3.3%
+except at k_e = B = 100 — where DR's noise part nearly cancels (4.5·10⁻⁵) and the parameters' part raises it by 56% — and DR*'s by −8.7% to
+−0.15%; its own response falls from 3.9·10⁻⁴ at k_e = 25 to 2.9·10⁻⁵ at 100 (B = 100). MR over DR (full) is 4.9·10³ at k_e = 25, B = 100,
+and 3.0·10³–2.1·10⁸ over the grid. MR's bias grows like (k_eB/(k_e + B))² (×46.6 from k_e = 25 to 200 at B = 1000, the law ×46.7, k_e² ×64),
+while DR's and DR*'s stay at most 1.18, below ¼‖∂²_xf‖²_ρ = 1.31. DR's noise part attains its bound ‖g‖²_ρ to 0.01% at k_e = 25 — g lies
+almost in the tangent space, the second derivative of a Gaussian bump being in the span of its amplitude and width derivatives. The rescaled
+projected mean tracking error k_e²‖P E[e]‖²_ρ under the adaptive prior is 2394 for MR (0 for DR and DR* by construction), the mean tracking
+error itself 3.83 at k_e = 25 and 0.66 at 200 (B = 100). The noise level at which the adaptive prior's full bias reaches its floor rises
+from the std 0.0012 (MR) to 0.085 (DR) and 0.27 (DR*) at B = 100 (stds above 0.1 lie outside the small-noise regime). (B) Along the prior
+family at η = σ₀ (κ/η = 0, 0.1, 1, 10 and the fixed prior; S₀ from 0 to σ₀) the weakest mode's response falls from 3269 to 136 while its
+bias factor rises from 0 to 0.959, with h₁r₁ + b₁ = 1 and max|RH + B − I| ≤ 1.1·10⁻¹⁴; the trade binds on the 3 of 9 modes with h_j < σ₀;
+MR's errors-in-variables bias falls only from 2397 to 491, and DR's from 0.471 to 0.211 — MR over DR 2.3·10³–5.1·10³ along the family. For
+zero-frequency leaks that do not commute with H — the prior fixed on the amplitudes or on the centres, one active face of the projected
+prior, a random S₀ — RH + B = I holds to 1.4·10⁻¹⁴ and per mode to 8.5·10⁻¹⁵, while max|HR + B − I| is 0.36–0.79. (C) The real loop
+(k_e = 25, B = 100, std 0.01, η = ∞, RK4 dt = 10⁻³, 12 runs of 300 time units, the three laws on common noise paths): at t = 300,
+E‖f̂ − f‖²_ρ is 2.43·10⁻⁶ under MR against 2.80·10⁻⁷ under DR and 2.75·10⁻⁷ under DR*, a ratio of 8.7 (predicted 9.2); DR and DR* sit at
+their covariance part, their mean parts 0.07% and 0.008% of it. Against the prediction the z-scores run from −2.04 to −0.04 (MR; Proposition
+D‴.30's runs of the same loop, on other paths, lay 7% above it) and from −1.8 to 0.82 (DR, DR*). The run mean of f̂_MR − f̂_DR, in which the
+first-order responses cancel path by path, equals the predicted Ĵ(ȳ_MR − ȳ_DR) to a relative L²_ρ error of 0.5–5.3% at every record,
+0.43–1.83 times the run mean's relative sampling error; the averaged prediction carries its own O(1/k_e) error, and the test checks F₁
+(through MR − DR), not DR's own force, whose mean part is 7·10⁻⁴ of its covariance part.
 
 *Numerics* (`exp_chaos_learning.py` → `results/chaos/learning_table.md`). The instance: n = 1, saturated features with a_max = 4,
 c_max = 3, s ∈ [0.3, 2], prior ϑ⁰ = 0, G = diag(1, 0.25, 0.25); a plant of three Gaussian bumps, (A, C, S) = (1, −1.5, 0.5),
@@ -6095,8 +6169,8 @@ Test files are abbreviated: `T` is `tests/test_transport.py`, `Lg` is `tests/tes
 | D‴.27 | the box 𝒵 (amplitudes and centres to 0.9 of a_max, c_max; the width coordinate in [−6, 6]): beyond the saturation (Part G(b)'s target) the projected prior converges at η = σ₀ (the projected midpoint rule, positions projected, dt = 0.25 and 0.125, to s = 10⁵; end states within 3.4·10⁻¹², the trajectory at s = 300 within 6.3·10⁻⁷, 1.9·10⁻⁷, 3.8·10⁻⁸ of a reference for dt = 0.25, 0.125, 0.0625) and η = ∞ (LSODA) to the same bounded stationary point (drift ≤ 3.5·10⁻¹⁵), the prior's amplitude atom on the face, fit error 0.1415; the particles' largest distance from 𝒵 0.92 and 0.89 against B/σ₀ ≤ 3686; the amplitude bound 0.5–0.99 of a_max: fit errors 0.1949–0.1101, between the fixed prior's 0.1750 and the unprojected 0.1050 for 0.7–0.99, above the fixed prior's for 0.5–0.65, the exact atoms outside the boxes up to 0.7; a Lloyd-consistent, non-optimal plan at η = ∞ along which the reduced energy rises from 1.251·10⁻³ to 1.574·10⁻³ while the selected energy falls (largest increment −3.4·10⁻⁶); on Part G(a)'s four-bump target the width coordinate stopped at the face κ = 6 from s = 10⁹ (fit error within 9.3·10⁻⁷ of the face minimiser's); the misplaced-prior run identical with and without 𝒵, the box never approached (margins ≥ 16.9% of its width) | `exp_adaptive_prior.py` Part H → `results/chaos/adaptive_prior.md`; `tests/test_adaptive_prior.py` (the projected prior bounded and convergent at η = ∞, while the unprojected coordinate passes 11 by s = 10⁴; at η = σ₀ and dt = 0.125 the prior in its box with its amplitude atom on the face, the particles bounded and 𝒥 non-increasing; inactive near the exact representation) |
 | D‴.28 | the three-bump instance plus ε·exp(−(x − 0.8)²/(2·0.3²)), ε = 0–0.5: the approximant's fit error 3.6·10⁻³–2.5·10⁻² (ε = 0.05–0.5), the gauge check (the gradient at the gauge transform ≤ 1.6·10⁻¹⁵; Newton continued in w from ϑ^b(q) at it to ≤ 1.7·10⁻¹¹, f̂ to ≤ 5.5·10⁻¹³; plain Newton there in 3–5 of 6 cases), the adaptive prior's sensitivity 1.4·10⁻¹¹–2.7·10⁻¹⁰ of the fixed prior's, P(w^m ∈ W_g) = 0.52–0.64, 0.87–0.88, 0.997 at m = 15, 60, 240 (0.26, 0.71, 0.98 at ε = 0.5), the branch at the saturation near ε = 0.68, the fixed prior's within 2·10⁻⁹ of σ₀Ĵ(Ã + σ₀I)⁻¹g̃ and 7.0·10⁻⁴–5.6·10⁻³ of the Gauss–Newton form, the margins σ₀ − (q_k/w_k)λ⁺_k exact to 10⁻¹⁴ over all count vectors of m = 15, 60 (none negative: λ⁺ ≤ 0.04σ₀ at ε ≤ 0.3, ≤ 0.10σ₀ at ε = 0.5), the dynamics' separation eigenvalues equal to them to ≤ 5.8·10⁻¹²; the dynamics (m = 15, 60, 240 against 510, four seeds, ε = 0.1 and 0.3, 6000 slow units): the fixed prior's floor within 8% of its value at s = 600 (3.1·10⁻⁴–5.9·10⁻³ at m = 15, ε = 0.1) and its fit error above the approximant's, the adaptive priors' floor falling (m = 60, ε = 0.1: to 1.0·10⁻⁹–1.4·10⁻⁸ at η = σ₀, 3.2·10⁻¹¹–3.8·10⁻⁹ at η = ∞) and the fit error to the approximant's (median excess 1.2·10⁻⁴, 1.2·10⁻⁴, 1.6·10⁻⁵ at m = 15, 60, 240 for the samples 0.02 inside W_g); at the sample outside W_g the box minimum on the branch 1.107 and 1.586 times the approximant's fit error, a permuted gauge transform existing | `exp_gauge_floor.py` (`--only-A` recomputes Part A, the branch's end and the outside samples) → `results/chaos/gauge_floor.md`; `tests/test_gauge_floor.py` (the gauge's critical points and function, the continuation from ϑ^b(q), the two sensitivities, the residual curvature's structure, the margins and the dynamics' separation eigenvalues, the adaptive prior's convergence to the gauge transform at η = ∞ and σ₀) |
 | D‴.29 | the servo ẍ = −τ_cog(x) + u, τ_cog = 0.4 sin(3x + 0.3) + 0.1 sin 7x, x_m = sin t, λ = 5, K₀ = 4 kernels on the position, σ₀ = 0.01: ϑ^b(q) (the local minimum BFGS reaches from a fixed start) fit error 1.46·10⁻², Ã spanning 2.9·10⁻⁴σ₀–30σ₀ (four modes below 0.1σ₀), λ⁺_k ≤ 0.0098σ₀, W_g = {w > (0.061, 0.085, 0.119, 0.008)}, the floor law 1.29·10⁻²; 120 random starts: 1 at ϑ^b(q), 33 below it, all saturated, the best 6.39·10⁻³, with its saturated amplitudes held at |α| = 6–14 7.14·10⁻³–6.40·10⁻³; the misplaced prior's (the engineer's model, fit error 0.200) replicated point a saddle (margin −3.97·10⁻³, fit error 0.0545); the averaged loop (m = 16, 64, 128 against 256, three seeds, 2000 slow units) from clouds around ϑ^b(q): fixed nearest atom floor 1.85·10⁻³, 2.24·10⁻⁴, 4.49·10⁻⁵ and fit error 0.174–0.038, adaptive (η = ∞) 4.85·10⁻⁵, 2.88·10⁻⁷, 6.36·10⁻⁸ and 0.0298–0.0147, OT 0.01462 with no floor, σ-modification 0.328, no leak 0.0180, 0.0147, 0.0146 (floors 7.7·10⁻⁶–6.6·10⁻⁸); misplaced: the fixed designs split and end at 0.048–0.10, the adaptive prior unaffected at η = ∞, 0.035–0.019 at η = σ₀; from the engineer's model: fixed 0.102, 0.060, 0.048, OT 0.048, adaptive 0.027–0.022 (η = ∞) and 0.032–0.028 (η = σ₀), no leak 0.0152–0.0147, the K₀-atom flow at η = ∞ 0.0297, 0.0213, 0.0169, 0.0155 at s = 600, 2000, 10⁴, 10⁵; phase-plane kernels: the circle 5 exact zeros and 8 below 10⁻⁶σ₀, ellipses ×1.1 and ×2 8 and 6, a two-harmonic orbit 3, centred kernels 16 exact of 20; the real servo (k_s = 25, 1000 time units, records and targets every 0.02): position-error rms 1.7–2.1·10⁻⁵ (adaptive, matching OT, no leak), 7.8·10⁻⁵ (misplaced OT), 9.1·10⁻⁵–1.8·10⁻⁴ (fixed), 5.4–5.5·10⁻⁴ (σ-modification), at the exactly filtered prediction to 1.0001–1.0029 at t ≥ 500 (the slaved 0.931–0.996) | `exp_servo_cogging.py` (`--only-A` recomputes Parts A and D, `--add-B` adds the missing Part B jobs, `--only-C [designs]` reruns Part C) → `results/servo/servo_cogging.md`; `tests/test_sliding.py` (the phase-plane loop as the gradient flow of L̄, the zero Gauss–Newton eigenvalue per kernel on a circular orbit in general position, the servo following the averaged loop with the position error at both predictions) |
-| D‴.30 | the three-bump instance at the lift of the exact representation of q = 1/3, k_e = 25: h_j = 3.06·10⁻⁴–0.195, tr Q = 8.784 = 8.105 (⟨Ĵ̇ᵀĴ̇⟩) + 0.679 (⟨a²ĴᵀĴ⟩), tr H² = 0.0657, ⟨|Ĵ|⁴⟩ = 0.299; the parameters' floor per unit N₀ 0.15967, 0.16271, 0.16897, 0.17567 at η = 0, σ₀, 10σ₀, ∞, the weakest mode's variance 0.0865–2.09; the second-order force (OU, B = 100) and its stationary biases 491 and 2397 per (Eν²)², equal to the floor at std 0.0026 and 0.0012; the exact periodic covariance of the linearised loop (k_e = 25, 50, 100, 200; η = 0, σ₀, ∞) at the prediction to 0.9762–0.9998, at the current point likewise; the real loop (RK4 dt = 10⁻³, OU B = 100, 12 runs of 300 time units, std 0.003 and 0.01, η = 0 and ∞): z-scores −0.99 to 1.75 against the transient covariance plus the mean part, the mean part 42% and 89% at t = 300; the lift m = 15 on a common noise path identical to rounding | `exp_measurement_noise.py` (`--only-A` recomputes Part A) → `results/chaos/measurement_noise.md`; `tests/test_measurement_noise.py` (the closed form against the Lyapunov solution, the trace identity at η = ∞ and the monotonicity in η; the exact periodic floors at k_e = 100; a lift m = 6 staying replicated under a noise path and following the K₀-atom loop; the responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, and the force linear in the noise's variance) |
-| D‴.31 | the instance of D‴.30 with an OU noise: the adaptive prior's bias per (Eν²)² for MR, DR, DR* at k_e = 25, 50, 100, 200 and B = 100, 1000 (MR 2397–1.66·10⁵, DR and DR* ≤ 1.18 < ¼‖∂²_xf‖²_ρ = 1.31; DR at its bound ‖g‖²_ρ to 0.01% at k_e = 25; the projected mean error 2394 for MR, 0 for DR and DR*; the bias reaching the floor at the std 0.0012, 0.086, 0.26); the prior family at η = σ₀, κ/η = 0, 0.1, 1, 10 and fixed (the weakest mode's response 3269–136, its bias factor 0–0.959, HR + B = I to 2.4·10⁻¹⁵; MR's bias 2397–491, DR's 0.471–0.211); the real loop (RK4 dt = 10⁻³, B = 100, std 0.01, η = ∞, 12 runs of 300 time units, common noise paths): E‖f̂ − f‖² at t = 300 2.43·10⁻⁶ (MR), 2.80·10⁻⁷ (DR), 2.75·10⁻⁷ (DR*), z-scores −2.04 to 0.82; the MR − DR run mean at Ĵ(ȳ_MR − ȳ_DR) to 0.5–5.3% | `exp_eiv_remedy.py` → `results/chaos/eiv_remedy.md`; `tests/test_eiv_remedy.py` (the washout identity along a real-loop solution; the block's transfer function and HR + B = I along the prior family; the response bound under random leaks, the smallest equivalent perturbation and the projection; the lift exact under DR and DR*, DR's run within the second order of MR's on a common path; DR's and DR*'s forces least-squares with their pointwise bounds, MR's F₁ three orders of magnitude above) |
+| D‴.30 | the three-bump instance at the lift of the exact representation of q = 1/3, k_e = 25: h_j = 3.06·10⁻⁴–0.195, tr Q = 8.784 = 8.105 (⟨Ĵ̇ᵀĴ̇⟩) + 0.679 (⟨a²ĴᵀĴ⟩), tr H² = 0.0657, ⟨|Ĵ|⁴⟩ = 0.299; the parameters' floor per unit N₀ 0.15967, 0.16271, 0.16897, 0.17567 at η = 0, σ₀, 10σ₀, ∞, the weakest mode's variance 0.0865–2.09 (×24.1); the second-order force (OU, B = 100) and its averaged stationary biases 491 and 2397 per (Eν²)², equal to the floor at std 0.0026 and 0.0012, the full second-order mean's 2397.68, the exact periodic mean's 504 and 2653; the bias's local exponents in k_e 1.93–1.99 (B ≥ 20k_e), 1.69, 1.47 (B = 8k_e, 4k_e); the separations' drift λ_max(S_k) = 0.0148, 0.0101, 0.298 per Eν², the threshold std 0.031; the exact periodic covariance of the linearised loop (k_e = 25, …, 800; η = 0, σ₀, ∞) at the prediction to 0.9762–1.00001, the control (noise input −k_eν) even in 1/k_e (successive ratios → 4.00), the weakest mode's variance ×28.0 at k_e = 25, the exact stationary mean 10.7%–0.17% above the averaged (adaptive, k_e = 25–200); the real loop (RK4 dt = 10⁻³, OU B = 100, 12 common noise paths of 300 time units, std 0.003 and 0.01, η = 0 and ∞): z-scores −0.99 to 1.75 against the transient covariance plus the mean part, the mean part 42% and 89% at t = 300, the priors 6.0–6.4% apart (predicted 5.3–6.1%); the lift m = 15 on a common noise path identical to rounding (5.6·10⁻¹⁶ in float64); the separations of the lift's third class at −2.55·10⁻⁴, −0.9·10⁻⁵, +4.37·10⁻⁴ per time unit at std 0.01, 0.03, 0.05 (predicted −2.53·10⁻⁴, −1.5·10⁻⁵, +4.62·10⁻⁴) | `exp_measurement_noise.py` (`--only-A`, `--only-B`, `--only-D` recompute a part) → `results/chaos/measurement_noise.md`; `tests/test_measurement_noise.py` (the closed form against the Lyapunov solution, the trace identity at η = ∞ and the monotonicity in η; the exact periodic floors at k_e = 100, η = 0, σ₀, ∞; a lift m = 6 staying replicated under a noise path and following the K₀-atom loop; a separation decaying at std 0.01 and growing at 0.05 at its predicted rates; the OU noise's variance and correlation, the law seeing the measurement; the responses (H + σ₀I)⁻¹ and H⁻¹ to a constant force, the quasi-static force against the full second-order mean's noise part) |
+| D‴.31 | the instance of D‴.30 with an OU noise: the adaptive prior's bias per (Eν²)² for MR, DR, DR* at k_e = 25, 50, 100, 200 and B = 100, 1000, from the noise's own moments and with the parameters' fluctuation (MR 2397–1.66·10⁵, its parameters' part ≤ 0.03%; DR and DR* ≤ 1.18 < ¼‖∂²_xf‖²_ρ = 1.31, their parameters' part −8.7% to +3.3% except +56% for DR at k_e = B = 100, its own response 3.9·10⁻⁴ → 2.9·10⁻⁵ from k_e = 25 to 100; DR's noise part at its bound ‖g‖²_ρ to 0.01% at k_e = 25; k_e²‖P E[e]‖²_ρ 2394 for MR, 0 for DR and DR* by construction, ‖P E[e]‖²_ρ 3.83 → 0.66; the bias reaching the floor at the std 0.0012, 0.085, 0.27); the prior family at η = σ₀, κ/η = 0, 0.1, 1, 10 and fixed (the weakest mode's response 3269–136, its bias factor 0–0.959, RH + B = I to 1.1·10⁻¹⁴; MR's bias 2397–491, DR's 0.471–0.211) and four non-commuting leaks (RH + B = I to 1.4·10⁻¹⁴, HR + B − I 0.36–0.79); the real loop (RK4 dt = 10⁻³, B = 100, std 0.01, η = ∞, 12 runs of 300 time units, common noise paths): E‖f̂ − f‖² at t = 300 2.43·10⁻⁶ (MR), 2.80·10⁻⁷ (DR), 2.75·10⁻⁷ (DR*), z-scores −2.04 to 0.82; the MR − DR run mean at Ĵ(ȳ_MR − ȳ_DR) to 0.5–5.3%, 0.43–1.83 sampling errors | `exp_eiv_remedy.py` (`--only-AB` recomputes Parts A and B) → `results/chaos/eiv_remedy.md`; `tests/test_eiv_remedy.py` (the washout identity along a real-loop solution and across a plan switch of the averaged loop; the block's transfer function, RH + B = I along the prior family and for non-commuting leaks; the response bound under random leaks, the smallest equivalent perturbation and the projection; the lift exact under DR and DR*, DR's run within the second order of MR's on a common path, the regressor's point; DR's and DR*'s noise forces least-squares with their pointwise bounds, MR's F₁ three orders of magnitude above; the quasi-static forces against the full second-order mean) |
 | F (ii) along (L) | particle path length (≥ Wasserstein length) ≤ λ_G^{1/2}L₁∫‖e‖ at every sample | `T::test_theorem_F_wasserstein_length_bounded_by_integrated_error` |
 | F (ii′) along (L_σ) | W(μ_{t₁},μ_{t₀}) ≤ ∫(λ_G^{1/2}L₁‖e‖ + σ_mW(μ_r,μ⁰)) on a grid of pairs; a tight instance with e ≡ 0 (ratio ≥ 0.99), where the motion is W ≈ 1.05 | `T::test_theorem_F_leak_clause_along_ot_sigma_mod`, `T::test_theorem_F_leak_clause_is_tight_when_the_leak_pays_for_all_motion` |
 | E linearisation | Jacobian of the implemented loop equals A(t); QA + AᵀQ = diag(−k_eI, 0) | `T::test_theorem_E_linearisation_and_lyapunov_identity` |
@@ -6356,18 +6430,19 @@ Each branch states what is proved, what is open, and the first concrete step.
    - *Done (Proposition D‴.31):* the adaptive prior is a washout leak, and the remedy for the errors in variables. The prior lags the
      class barycentre by its exponentially forgotten increments, so the leak acts in full on the separations and on the barycentre through
      the high-pass iω/(iω + η) — the bias removal and the lost robustness to persistent forces in one transfer function; along every affine
-     time-invariant prior the stationary response R and the bias B satisfy HR + B = I, so no prior gives both; the response to a force is
+     time-invariant prior the stationary response R and the bias B satisfy RH + B = I, so no prior gives both; the response to a force is
      at most the norm of its smallest equivalent target perturbation, under every leak; and the desired regressor (the adaptive law's
-     regressor at the reference) keeps the lift, the linearisation and the first-order floor while turning the noise's persistent force
-     into a least-squares one, its bias bounded uniformly in k_e and in the spectrum. *Open:* the second-order computation made rigorous;
-     the stationary biases in the real loop (the weak modes need ~10⁵ time units); a sensor model with quantisation and delay.
+     regressor at the reference) keeps the lift, the linearisation and the first-order floor while turning the noise's own persistent force
+     into a least-squares one, bounded uniformly in k_e and in the spectrum — the parameters' fluctuation adding a force that is not, small
+     on the instance and falling with k_e. *Open:* the second-order computation made rigorous, the parameters' part in closed form; the
+     stationary biases in the real loop (the weak modes need ~10⁵ time units); a sensor model with quantisation and delay.
    - *Done (Proposition D‴.30):* measurement noise at perfect tracking. The noise is coherent — a replicated start stays replicated, so
-     its floor does not average out with m; at first order the loop high-passes the measured error's noise and the function-level floor
-     is (N₀/2k_e)[Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) + tr H²], the adaptive prior costing at most the filter factor; at second order the
-     noise inside the regressor exerts a mean force (the errors in variables) whose stationary response is (H + σ₀I)⁻¹ under the fixed
-     prior and H⁻¹ under the adaptive prior for every η > 0 — the robustness half of the leak, lost in the weakly excited modes. *Open:*
-     the stochastic averaging proved; the remedies checked (the reference in the regressor, a projected or partially fixed prior on the
-     weak modes); the optimal k_e and η for a given noise level.
+     its floor does not average out with m (invariance, not attraction: above a noise level the separations grow); at first order the
+     loop high-passes the measured error's noise and the function-level floor is (N₀/2k_e)[Σ_jQ_jj(h_j + η)/(h_j + η + σ₀) + tr H²], the
+     adaptive prior costing at most the filter factor; at second order the noise inside the regressor exerts a mean force (the errors in
+     variables) whose stationary response is (H + σ₀I)⁻¹ under the fixed prior and H⁻¹ under the adaptive prior for every η > 0 — the
+     robustness half of the leak, lost in the weakly excited modes. *Open:* the stochastic averaging proved; a projected or partially fixed
+     prior on the weak modes; the optimal k_e and η for a given noise level.
    - *Done (Proposition D‴.29):* second-order plants. With the sliding variable s = ė + λe the error channel is Theorem J's with s in
      place of e, so the averaged slow loop — and with it every averaged-loop statement of §5d — holds (formally) along the regressor's
      orbit, the position error being the residual filtered by (d/dt + λ)⁻¹(d/dt + k_s)⁻¹. On a cogging-torque servo whose torque four
