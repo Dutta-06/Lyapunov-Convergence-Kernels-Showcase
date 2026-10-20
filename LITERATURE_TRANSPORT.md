@@ -550,16 +550,18 @@ found the construction.
   masses as a leak on the unexcited subspace, which pins the gauge without bias where the particle fractions are representable. Numerics:
   `exp_gauge_dither.py`. Verdict: a classical limit theorem applied; the replicator's unpinned masses under dither, and their remedy.
 - **Proposition D‴.37 (the dither's drift along the gauge).** The second derivative of the limit map and the drift it gives a diffusion
-  forced onto a manifold of equilibria are Katzenberger's, used for SGD's implicit bias by Li–Wang–Arora ([S64]); the averaging of a slow
-  variable over a fast ergodic one is Khasminskii's, and a slow coordinate in equilibrium with fast ones feels their free energy, the
-  potential of mean force ([S65]); that noisy gradient dynamics prefers flat minima — a log-determinant of the Hessian, by Laplace — is the
-  flat-minima picture of Hochreiter–Schmidhuber, and Entropy-SGD makes the local entropy the objective ([S65]). What is specific here: the
-  replicator's masses as the slow variable on the amplitude–mass gauge, whose free energy is the log-determinant of the positions' Hessian
-  (checked to three digits against the exact drift as γ → 0); the consequence that dither drives the masses toward the saturation, where
-  that log-determinant diverges — the trap the replicator removed (Proposition D‴.34) returning through the noise —; the boundary layer of
-  width O(√γ) that stops it, where the replicator outruns the saturating amplitude; the eigenbasis formula for the finite-γ drift; and the
-  entropic leak's bias κ⁻¹b(w). Numerics: `exp_gauge_drift.py`. Verdict: classical averaging and flat-minima reasoning; a new mechanism for
-  the replicator's gauge under dither.
+  forced onto a manifold of equilibria are Katzenberger's; for isotropic noise the drift along a manifold of minima is −½ of the gradient
+  of the log-pseudo-determinant of the Hessian (Li–Wang–Arora's Corollary 5.1, [S64]; checked by round 27's referee on its summary only);
+  the averaging of a slow variable over a fast ergodic one is Khasminskii's, and a slow coordinate in equilibrium with fast ones feels their
+  free energy, the potential of mean force ([S65]); that noisy gradient dynamics prefers flat minima is the flat-minima picture of
+  Hochreiter–Schmidhuber, and Entropy-SGD makes the local entropy the objective ([S65]). Not seen, named by the referee: Fixman's and
+  Bornemann–Schütte's corrections for stiff constraints, the label-noise analyses of Damian–Ma–Lee and HaoChen et al., noisy replicator
+  dynamics (Fudenberg–Harris, Foster–Young), Rose's deterministic annealing. What is specific here: the replicator's masses as the slow
+  variable on the amplitude–mass gauge, with noise on the positions only, and its free energy in closed form (2Σ log(W_ka′_k)); the
+  consequence that dither drives the masses into the saturation — the trap the replicator removed (Proposition D‴.34) returning through the
+  noise —; the boundary layer of width O(√γ), where the replicator outruns the saturating amplitude, which slows but does not stop it; and
+  the entropic leak's bias κ⁻¹b(w). Numerics: `exp_gauge_drift.py`. Verdict: classical limits (Katzenberger, Li–Wang–Arora, averaging)
+  applied; a new mechanism for the replicator's gauge under dither.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 

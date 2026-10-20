@@ -96,4 +96,15 @@ Largest |drift|: 4.83e-7; D_11 from 8.01e-10 to 4.10e-8; the slowest transverse 
 | 300000 | 0.3364 ± 0.0241, 0.3470 ± 0.0223, 0.3166 ± 0.0173 | 0.0835, 0.0773, 0.0601 | 0.42, 0.00, 0.00 | 0.9950, 0.7603, 0.8622 | 0.3276, 0.3504, 0.3220 | 0.0702, 0.0866, 0.0831 | 0.26, 0.05, 0.13 |
 | 1e+06 | 0.3444 ± 0.0419, 0.3905 ± 0.0445, 0.2651 ± 0.0232 | 0.1453, 0.1542, 0.0805 | 0.50, 0.25, 0.33 | 0.9999, 0.9941, 1.0000 | 0.3393, 0.3438, 0.3170 | 0.1001, 0.1274, 0.1172 | 0.30, 0.18, 0.26 |
 
+The full loop's excursions into the saturation, by quarters of the run (the seeds' mean of the largest |α_k| in the quarter; the fraction of records with |α_k| > 10):
+
+| quarter | mean largest |α_1|, |α_2|, |α_3| | fraction |α_k| > 10 |
+|---|---|---|
+| 1 | 6.6, 3.1, 4.6 | 0.02, 0.00, 0.00 |
+| 2 | 10.1, 3.6, 6.2 | 0.21, 0.00, 0.05 |
+| 3 | 10.9, 3.5, 9.4 | 0.29, 0.00, 0.12 |
+| 4 | 11.3, 5.0, 11.5 | 0.26, 0.04, 0.28 |
+
+In the last quarter the masses are below their saturation (off the manifold of exact fits, the fit then not exact) in 0.11, 0.01, 0.12 of the records.
+
 Numbers are produced by `experiments/exp_gauge_drift.py`; nothing is edited by hand.

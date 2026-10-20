@@ -97,3 +97,27 @@ def test_the_log_determinant_does_not_see_the_split_within_a_class():
                 H[i, j] = H[j, i] = (J(x0 + I[i] + I[j]) - J(x0 + I[i] - I[j]) - J(x0 - I[i] + I[j]) + J(x0 - I[i] - I[j])) / (4 * h * h)
         out.append(np.linalg.slogdet(H))
     assert out[0][0] > 0 and out[1][0] > 0 and abs(out[0][1] - out[1][1]) < 1e-5
+
+
+def test_the_ito_term_of_a_nonlinear_observable():
+    # round 27 (D3z-8): on the first toy, observe w = u²: dw = 2u·(−κΣ_vv) + ½·2·Σ_uu (the Itô term of the observable)
+    lam, kap, u0 = 0.7, 0.4, 0.2
+    F = lambda y: np.array([-2 * kap * lam * y[1] ** 2, -lam * y[1]])
+    chart = lambda w: np.array([np.sqrt(w[0]), 0.0])
+    coords = lambda y: np.array([y[0] ** 2])
+    S = np.diag([3e-4, 2e-4])
+    d, D, _ = GDR.limit_drift(F, chart, coords, np.array([u0 ** 2]), S)
+    assert abs(d[0] / (2 * u0 * (-kap * S[1, 1]) + S[0, 0]) - 1) < 1e-5 and abs(D[0, 0] / (4 * u0 ** 2 * S[0, 0]) - 1) < 1e-6
+
+
+def test_the_instance_at_gamma_1e2_against_the_integrated_limit_map():
+    # round 27 (D3z-8): Part A's brute-force value at W = 1/3 (LSODA to 1.2·10⁵, second differences at ±0.02), drift of (W_1, W_2)
+    d = X.drift_at(np.array([1 / 3, 1 / 3]))[0]
+    assert np.abs(d - np.array([-2.05497e-7, 1.57975e-7])).max() < 2e-3 * 2.05e-7
+
+
+def test_the_log_determinant_closed_form():
+    # round 27 (D3z-6): with one particle per class ℓ = 2Σ log(W_k − W_min,k²/W_k) + const
+    Wm = X.W_MIN
+    vals = [X.log_det(3 * W) - 2 * np.sum(np.log(W - Wm ** 2 / W)) for W in (np.ones(3) / 3, np.array([0.27, 0.36, 0.37]))]
+    assert abs(vals[0] - vals[1]) < 1e-6

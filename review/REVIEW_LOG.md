@@ -1205,3 +1205,31 @@ Lyapunov equation right (0.5% and 4% against the full linear covariance), the O(
 
 **Lesson.** Four seeds can agree with a prediction to 10% by chance when their own scatter is 20%: an agreement is only as good as the
 sample's error bar, and the referee's 64 seeds turned the best-looking number into the one that failed.
+
+## Round 27 (adversarial review of Proposition D‴.37, the dither's drift along the gauge, 2026-10-20)
+
+**Design.** One referee, not modifying the repository. D3z: Proposition D‴.37 on a snapshot of 391b29f (`review/REVIEW_round27_D3z.md`;
+ID-1–ID-10 are D3z-1–D3z-10 here): the identities re-derived and implemented without the eigenbasis (a Lyapunov solve and the group
+inverse), an independent brute-force limit map (BDF, Richardson) at two new points, one inside the layer; the slow limit to γ = 10⁻⁷; the
+split invariance under compact and Gaussian kernels; a 2556-point independent zero search; the full loop's records; mutants.
+
+**Verdicts (D3z).** (i) correct (≤ 6·10⁻⁶ against the independent implementation, 5.9·10⁻⁵ against the brute force inside the layer);
+(ii) correct, with the closed form ℓ = 2Σ log(W_k − W_min,k²/W_k) + const, the O(γ) convergence and D = O(γ²τ) confirmed; (iii) the
+divergence, the rates, δ* and the inside law right, "stops it / the masses settle there" wrong; (iv) the formula fine, its validity
+generous; Part E's seven zeros confirmed; the md regenerates byte-identically.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3z-1 | major ((iii), title, §0, §8, RESULTS, PAPERS, README, audit) | inside the layer α diffuses without drift, so the zero-flux density in W ∝ 1/(W − W_min) is not normalisable; the full loop's excursions grow and 11–12% of the last quarter is beyond the saturation | (iii) restated: the layer slows but does not stop; E's nodes "attractors of the mean drift, not settling states"; H reports the excursions by quarters and the fraction beyond the saturation (`exp_gauge_drift.py`, recomputed from the stored records) |
+| D3z-2 | major (Status, audit) | Li–Wang–Arora's Corollary 5.1 already gives the log-pseudo-determinant drift for isotropic noise; Fixman, Bornemann–Schütte, Damian–Ma–Lee, HaoChen et al., noisy replicators, Rose missing | "New:" narrowed; the audit names them (not seen) |
+| D3z-3 | minor ((A)) | the quoted differences were stale (2.2·10⁻⁵, 1.1·10⁻⁴ after the steps' refinement) | fixed |
+| D3z-4 | minor ((H)) | "means within errors at all three times" false (1.55, 2.23 s.e.); the SDE cannot test the saturation | restated |
+| D3z-5 | minor ((iv), (G)) | W_2 above κ⁻¹b at every ε (2.8, 2.1, 1.7 s.e.; the same seeds); the window τ ≪ ε ≪ 3·10⁻⁴ barely met | (iv) and (G) restated |
+| D3z-6 | minor ((ii)) | the closed form of ℓ; "converge toward its minimisers" empty (no minimiser) | the closed form stated, the sentence replaced; a test |
+| D3z-7 | minor ((ii)) | the Gibbs law is the local well's quasi-stationary law | said |
+| D3z-8 | minor (tests) | no test of the Itô term; none at γ = 10⁻² | a nonlinear-observable test; the instance against the brute force |
+| D3z-9 | minor ((iii)) | within ≈ 0.1δ* the transverse mass fluctuations equal the distance | said |
+| D3z-10 | cosmetic | 5.35 → 5.34; "10⁴ times" → 10³; 0.57 still decreasing | fixed |
+
+**Lesson.** A zero of the drift is not a resting place when the diffusion vanishes there too: in the coordinate where the noise is
+regular the "restoring" drift was only an Itô term, and the masses kept going. The drift field alone does not decide recurrence.

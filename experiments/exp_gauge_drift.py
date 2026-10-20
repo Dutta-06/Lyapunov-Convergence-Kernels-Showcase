@@ -259,6 +259,10 @@ def part_H(R, field):
                         sde_mean=sde[t].mean(axis=0), sde_std=sde[t].std(axis=0, ddof=1),
                         sat=np.abs(np.tanh(al[:, i] / A_MAX)).max(axis=0), near=np.mean(W[:, i] - W_MIN < 0.02, axis=0),
                         sde_near=np.mean(sde[t] - W_MIN < 0.02, axis=0)))
+    q = np.array_split(np.arange(R.shape[1]), 4)                             # round 27 (D3z-1): the excursions into the saturation by quarters
+    out.append(dict(quarters=np.array([np.abs(al[:, ix]).max(axis=1).mean(axis=0) for ix in q]),
+                    big=np.array([np.mean(np.abs(al[:, ix]) > 10, axis=(0, 1)) for ix in q]),
+                    below=np.mean(W[:, q[-1]] < W_MIN, axis=(0, 1))))
     return out
 
 
@@ -334,10 +338,19 @@ def report(A=None, B=None, C=None, D=None, Ef=None, Ff=None, Gg=None, Hh=None):
         L_ += [f"## H. Without a leak: the full loop ({len(SEEDS_H)} seeds) against the limit SDE on M ({N_PATHS} paths)", "",
                "| s | full loop: mean of W_1, W_2, W_3 (± s.e.) | std | within 0.02 of the saturation (fraction of seeds) | the largest |a|/a_max | limit SDE: mean | std | within 0.02 |",
                "|---|---|---|---|---|---|---|---|"]
-        for r in Hh:
+        for r in [r for r in Hh if 's' in r]:
             L_.append(f"| {r['s']:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(r['mean'], r['se']))} | {', '.join(f'{v:.4f}' for v in r['std'])} | "
                       f"{', '.join(f'{v:.2f}' for v in r['near'])} | {', '.join(f'{v:.4f}' for v in r['sat'])} | {', '.join(f'{v:.4f}' for v in r['sde_mean'])} | "
                       f"{', '.join(f'{v:.4f}' for v in r['sde_std'])} | {', '.join(f'{v:.2f}' for v in r['sde_near'])} |")
+        ex = [r for r in Hh if 'quarters' in r]
+        if ex:
+            ex = ex[0]
+            L_ += ["", "The full loop's excursions into the saturation, by quarters of the run (the seeds' mean of the largest |α_k| in the quarter; the "
+                   "fraction of records with |α_k| > 10):", "", "| quarter | mean largest |α_1|, |α_2|, |α_3| | fraction |α_k| > 10 |", "|---|---|---|"]
+            for i_, (qa, qb) in enumerate(zip(ex['quarters'], ex['big'])):
+                L_.append(f"| {i_ + 1} | {', '.join(f'{v:.1f}' for v in qa)} | {', '.join(f'{v:.2f}' for v in qb)} |")
+            L_ += ["", "In the last quarter the masses are below their saturation (off the manifold of exact fits, the fit then not exact) in "
+                   + ', '.join(f'{v:.2f}' for v in ex['below']) + " of the records."]
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_drift.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -397,7 +410,7 @@ def main():
             res['H_rec'] = np.array([r['rec'] for r in h['H'].get()])
             res['H'] = part_H(res['H_rec'], field); E.save(raw, **res); log('H')
         elif 'S' in parts:                                                   # the limit SDE again, on the stored full-loop records
-            res['H'] = part_H(res['H_rec'], field); E.save(raw, **res); log('H (SDE)')
+            res['H'] = part_H(np.asarray(res['H_rec'], float), field); E.save(raw, **res); log('H (SDE)')
     open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEFGH']))
 
 
