@@ -18,6 +18,11 @@ E. The real loop at the instance's atoms (m = 3, the replicator on the weights f
    loop (Θ, log β) at the lift of the exact representation (counts (6, 5, 4), compact R = 1): its zero modes and the rest of its spectrum
    against Proposition D‴.32's.
 
+G. (referee round 24) The stationary points under the Gaussian kernel: at the class level (a run's classes replicated, equal weights inside
+   each) the stationarity conditions solved by least squares under both kernels at R = 1, with the masses held and with the replicator's
+   u_k = λ — Part B's seed 1 (γ = 10⁻²) and Proposition D‴.32's Part L three equal bumps; Part B's seed 1 continued 10⁵ slow units under the
+   Gaussian kernel and 4·10⁴ under the compact one; Part A's least fit errors at the held masses (a box) and over the ℓ¹ ball Σ|p_k| ≤ a_max.
+
 Output: results/chaos/mass_transfer.md and mass_transfer_raw.npz (MT_WORKERS; `--from-raw` regenerates the md; `--only A,B,…` recomputes parts).
 """
 import os
@@ -113,6 +118,101 @@ def broad_job(args):
     return dict(part=part, name=name, gamma=gamma, seed=seed, mid=dict(K=mid['K'], fit=mid['fit']), end=summary(net, loop, Th, beta), rec=np.array(rec))
 
 
+# ---------------------------------------------------------------------------- G. the stationary points under the Gaussian kernel (round 24)
+S_G_CONT, S_G_COMPACT = 100000.0, 40000.0
+
+
+def class_stationary(net, base, atoms, counts, R, kind, W0, free_masses):
+    """The replicated stationary point near (atoms, W0): classes of counts n_k with equal weights β_k = W_k/w_k inside each, f̂ = Σ_kW_kΦ̃_k;
+    per class β_kG⟨r∇Φ̃_k⟩ − σ₀Σ_lw_lψ(d²_kl/R²)(ϑ_k − ϑ_l) = 0, and with `free_masses` also u_k = λ (the replicator's condition), ΣW = 1.
+    Least squares to rounding; returns (atoms, W, fit error, the largest residual)."""
+    from scipy.optimize import least_squares
+    K = len(counts); w = np.asarray(counts, float) / np.sum(counts)
+    G = E.G
+
+    def unpack(x):
+        A = x[:3 * K].reshape(K, 3)
+        W = np.exp(x[3 * K:]) if free_masses else np.asarray(W0, float)
+        return A, W
+
+    def eqs(x):
+        A, W = unpack(x)
+        a, c, s_, diff, phi = base.features(A)
+        r = base.F - phi @ (W * a)
+        g = base.grad_weighted(r, A)
+        D = A[:, None, :] - A[None, :, :]
+        d2 = np.sum(D ** 2 / G[None, None, :], axis=2)
+        coh = -base.sigma0 * np.einsum('kl,kld->kd', CO.psi(d2 / R ** 2, kind) * w[None, :], D)
+        pos = (W / w)[:, None] * G[None, :] * g + coh
+        out = [pos.ravel() / base.sigma0]
+        if free_masses:
+            u = a * (phi.T @ r) / base.N
+            out += [(u - W @ u) / base.sigma0, [W.sum() - 1.0]]
+        return np.concatenate(out)
+    x0 = np.concatenate([np.asarray(atoms, float).ravel()] + ([np.log(W0)] if free_masses else []))
+    sol = least_squares(eqs, x0, xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=20000, x_scale='jac', method='lm')
+    A, W = unpack(sol.x)
+    a, c, s_, diff, phi = base.features(A)
+    r = base.F - phi @ (W * a)
+    return A, W, float(np.sqrt(np.mean(r ** 2) / np.mean(base.F ** 2))), float(np.abs(eqs(sol.x)).max() * base.sigma0)
+
+
+def l1_infimum(scale):
+    """Part A's target at fixed centres and widths: the least fit error over Σ_k|p_k| ≤ a_max (the masses free, every class saturated or
+    massless), and over the box |p_k| ≤ W0_ka_max (the masses fixed at W0_A)."""
+    from scipy.optimize import lsq_linear, minimize
+    bumps = [(scale * A, C, S) for A, C, S in E.TARGETS_H['five']]
+    net, base = target_loop(bumps, s_min=0.2)
+    Th = net.unconstrained(np.ones((len(bumps), 1)), np.array([[C] for A, C, S in bumps]), np.array([S for A, C, S in bumps]))
+    a, c, s_, diff, phi = base.features(Th)
+    Phi = phi * a[None, :]                                                   # unit amplitudes
+    nF = np.sqrt(np.mean(base.F ** 2))
+    fit = lambda p: float(np.sqrt(np.mean((base.F - Phi @ p) ** 2)) / nF)
+    box = lsq_linear(Phi, base.F, bounds=(-W0_A * net.a_max, W0_A * net.a_max), tol=1e-14).x
+    K = len(bumps)
+    pq = lambda q: q[:K] - q[K:]                                             # p = p⁺ − p⁻, p^± ≥ 0, Σ(p⁺ + p⁻) ≤ a_max: the ℓ¹ ball
+    res = minimize(lambda q: fit(pq(q)) ** 2, np.r_[np.maximum(box, 0), np.maximum(-box, 0)], method='SLSQP', bounds=[(0, None)] * (2 * K),
+                   constraints=[dict(type='ineq', fun=lambda q: net.a_max - q.sum())], options=dict(ftol=1e-16, maxiter=1000))
+    p_ = pq(res.x)
+    return dict(scale=scale, box=fit(box), l1=fit(p_), W_l1=np.abs(p_) / net.a_max)
+
+
+def g_job(name):
+    t0 = time.time()
+    if name == 'five':
+        net, base = target_loop(E.TARGETS_H['five'], s_min=0.2)
+        Th, beta = E.broad(net, E.M_H, 1), np.ones(E.M_H)
+        Th, beta = MT.ReplicatorCohesionLoop(base, E.R_BROAD, 'gauss', gamma=1e-2).run(Th, beta, E.S_C1, E.DT)
+        Th, beta = MT.ReplicatorCohesionLoop(base, E.R_FINE, 'gauss', gamma=1e-2).run(Th, beta, E.S_C2, E.DT)
+        start = summary(net, MT.ReplicatorCohesionLoop(base, 1.0), Th, beta)
+        rec_g, rec_c = [], []
+        loop = MT.ReplicatorCohesionLoop(base, E.R_FINE, 'gauss', gamma=1e-2)
+        loop.run(Th, beta, S_G_CONT, E.DT, rec_every=40000, callback=lambda s_, T, b: rec_g.append((s_, loop.fit_error(T, b))))
+        loopc = MT.ReplicatorCohesionLoop(base, E.R_FINE, 'compact', gamma=1e-2)
+        loopc.run(Th, beta, S_G_COMPACT, E.DT, rec_every=40000, callback=lambda s_, T, b: rec_c.append((s_, loopc.fit_error(T, b))))
+        lab, W, A = MT.class_masses(Th, beta, E.G, E.CLUSTER_THR)
+        counts = np.bincount(lab)
+        out = dict(name=name, start=start, rec_gauss=np.array(rec_g), rec_compact=np.array(rec_c), counts=counts)
+    else:                                                                    # 'three equal': D‴.32 Part L's end, from its raw file
+        bumps = E.TARGETS_K['three equal']
+        net, base = target_loop(bumps)
+        z = E.load(os.path.join(E.OUT, 'cohesion_leak_raw.npz'))
+        cl = np.asarray(next(r for r in z['L'] if r['name'] == name)['gauss_end']['clusters'])
+        counts = np.rint(cl[:, 0] * E.M_H).astype(int)
+        A = net.unconstrained(cl[:, 1:2], cl[:, 2:3], cl[:, 3])
+        W = counts / counts.sum()
+        out = dict(name=name, counts=counts)
+    rows = {}
+    for kind in ('gauss', 'compact'):
+        for free in (False, True):
+            At, Wt, fe, resid = class_stationary(net, base, A, counts, E.R_FINE, kind, W, free)
+            a, c, s_ = net.physical(At)
+            rows[(kind, free)] = dict(W=Wt, fit=fe, resid=resid, a=a[:, 0], c=c[:, 0])
+    out.update(rows=rows, W0=W)
+    print(f"[{time.time() - t0:.0f}s] G {name}", flush=True)
+    return out
+
+
 # ---------------------------------------------------------------------------- C. the finest resolution stage
 def c_job(args):
     gamma, seed = args
@@ -174,7 +274,7 @@ def part_E():
     return dict(real=real, lin={g: dict(ev=o['ev'], drift=o['drift'], zero=n0[g]) for g, o in out.items()}, pred=pred)
 
 
-def report(A=None, B=None, C=None, D=None, Ep=None, F=None):
+def report(A=None, B=None, C=None, D=None, Ep=None, F=None, Gp=None):
     fmt = E.fmt
     L_ = ["# Proposition D‴.34: mass transfer — the replicator weight law with the cohesion leak (`exp_mass_transfer.py`)", "",
           f"The instances of `exp_cohesion_leak.py` (σ₀ = {E.SIGMA0:.6g}); the weighted network f̂ = (1/m)Σβ_iΦ̃(·;ϑ_i), Σβ = m, the replicator law "
@@ -237,6 +337,25 @@ def report(A=None, B=None, C=None, D=None, Ep=None, F=None):
         err = fmt(float(np.abs(nz0 - pr).max())) if len(nz0) == len(pr) else '— (counts differ)'
         L_.append(f"- At γ = 0 the {len(nz0)} nonzero eigenvalues are Proposition D‴.32's predicted spectrum (the separations at −σ₀w_k, the collective modes) to {err}.")
         L_.append("")
+    if Gp is not None:
+        L_ += ["## G. The stationary points under the Gaussian kernel, and Part A's infima", "",
+               "Class level (the classes of a run replicated, equal weights inside each, least squares on the stationarity conditions to rounding), at R = 1: "
+               "the masses held at the run's, or freed by the replicator's condition u_k = λ.", "",
+               "| target | kernel | masses | stationary masses | fit error | |a|/a_max | largest residual |", "|---|---|---|---|---|---|---|"]
+        for r in Gp['runs']:
+            for (kind, free), o in r['rows'].items():
+                L_.append(f"| {r['name']} (counts {', '.join(str(int(x)) for x in r['counts'])}) | {kind} | {'free (u_k = λ)' if free else 'held'} | "
+                          f"{', '.join(f'{v:.4f}' for v in o['W'])} | {fmt(o['fit'])} | {', '.join(f'{abs(v) / 4:.4f}' for v in o['a'])} | {fmt(o['resid'])} |")
+        for r in Gp['runs']:
+            if 'rec_gauss' in r:
+                L_ += ["", f"- Part B's seed 1 (γ = 10⁻², the fit error {fmt(r['start']['fit'])} at its end) continued: under the Gaussian kernel at R = 1 the fit error "
+                       + ', '.join(f"{fmt(x[1])} (s = {int(x[0])})" for x in r['rec_gauss']) + "; under the compact kernel at R = 1 from the same state "
+                       + ', '.join(f"{fmt(x[1])} (s = {int(x[0])})" for x in r['rec_compact']) + "."]
+        for q in Gp['A']:
+            L_.append(f"- Part A's target with the amplitudes scaled by {q['scale']:g} at fixed centres and widths: the least fit error with the masses held at "
+                      f"(0.15, 0.30, 0.20, 0.25, 0.10) {fmt(q['box'])}; over the ℓ¹ ball Σ_k|p_k| ≤ a_max (the masses free) {fmt(q['l1'])}, at |p_k|/a_max "
+                      + ', '.join(f'{v:.3f}' for v in q['W_l1']) + ".")
+        L_.append("")
     L_ += ["Numbers are produced by `experiments/exp_mass_transfer.py`; nothing is edited by hand."]
     return '\n'.join(L_) + '\n'
 
@@ -246,9 +365,9 @@ def main():
     md = os.path.join(OUT, 'mass_transfer.md')
     old = E.load(raw)
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F'), old.get('G')))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEFG')
     from multiprocessing import Pool
     res = dict(old)
     with Pool(N_WORKERS) as pool:
@@ -265,11 +384,16 @@ def main():
             h['E'] = pool.apply_async(part_E)
         if 'F' in parts:
             h['F'] = pool.map_async(broad_job, [('F', 1e-2, s, name) for name in ('three heavy', 'two close') for s in SEEDS])
+        if 'G' in parts:
+            h['G'] = pool.map_async(g_job, ['five', 'three equal'], chunksize=1)
         for k in 'ABCDEF':
             if k in h:
                 res[k] = h[k].get()
                 E.save(raw, **res)
-    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F')))
+        if 'G' in h:
+            res['G'] = dict(runs=h['G'].get(), A=[l1_infimum(sc) for sc in (1.0, 1.25)])
+            E.save(raw, **res)
+    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F'), res.get('G')))
 
 
 if __name__ == '__main__':

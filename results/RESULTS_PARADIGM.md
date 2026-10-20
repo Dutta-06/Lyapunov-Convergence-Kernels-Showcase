@@ -892,12 +892,16 @@ parameters' part dominant and largely in the tangent space, the drift indefinite
 - Proposition D‴.32's instances, the weighted network f̂ = (1/m)Σβ_iΦ̃_i, the replicator law dβ_i/ds = γβ_i(u_i − λ) beside the transport
   law. (A) At fixed positions (the five bumps' atoms, two classes short of mass) the transport alone stalls at the fit error 0.388; with the
   replicator it reaches 2.9·10⁻⁴ (γ = 10⁻³) and 3.0·10⁻¹⁴ (γ = 10⁻²) at s = 4·10⁴; with the amplitudes scaled by 1.25 (Σ_k|A_k|/a_max = 1.094)
-  it stalls at 0.071 with every class saturating — the representability criterion (iv).
+  it stalls at 0.071 with every class saturating, creeping toward the ℓ¹ ball's least error 0.0684 — the representability criterion (iv)
+  for bounded trajectories.
 - (B) The five-bump target from broad starts (m = 60, the annealed Gaussian schedule): 6–9 biased classes without the replicator
-  (0.045–0.118), 5–7 at γ = 10⁻³ (0.0076–0.0139), five at the bumps in 3 of 3 runs at γ = 10⁻² (6.0·10⁻⁴–1.4·10⁻³, still falling).
+  (0.045–0.118), 5–7 at γ = 10⁻³ (0.0076–0.0139), five at the bumps in 3 of 3 runs at γ = 10⁻² (6.0·10⁻⁴–1.4·10⁻³; continued, seed 1 levels off at 2.8·10⁻⁴).
   (F) The three heavy bumps of D‴.32 (K) (Σ_k|A_k|/a_max = 0.95): three classes in 3 of 3, 7.8·10⁻⁸–1.6·10⁻⁷ (3–5 biased without); two
   bumps closer than the broad scale stay merged (0.068–0.13): the scale's obstruction is not the masses'. (D) The instance: three
   classes, 2.4·10⁻⁷–9.7·10⁻⁷, as without.
+- (G) At the class level under the Gaussian kernel the replicator selects the masses and moves the bias (B's seed 1: 3.85·10⁻⁴ with the
+  masses held, 2.63·10⁻⁴ with them free; three equal bumps: 9.39·10⁻⁵ and 9.17·10⁻⁵); under the compact kernel the stationary points are
+  exact either way.
 - (C) The finest resolution stage (σ₀/64): the same 8–10 classes with and without the replicator — the fitness vanishes at a critical
   point, so the shedding of D‴.32 (G) is untouched.
 - (E) The real loop at the instance's atoms (k_e = 25, γ = 2): V = ½e² + (1/(γm))Σβ*log(β*/β) from 0.0418 to 2.1·10⁻⁷, monotone, V̇ = −k_ee²
@@ -905,10 +909,10 @@ parameters' part dominant and largely in the tangent space, the drift indefinite
   (Θ, log β) — the 12 within-class redistributions and 3 gauges — the rest stable, at γ = 0 Proposition D‴.32's spectrum to 2.1·10⁻¹¹.
 
 Tests (`tests/test_mass_transfer.py`): the weighted loop's drift equals the gradient of its energy in the Euclidean–Fisher–Rao metric (central
-differences) and is Proposition D‴.32's at γ = 0; in the real loop at fixed positions V̇ = −k_ee² pointwise from the vector field and Σβ is
-conserved; at fixed positions the exact fit is reached with the replicator and not without it, and not when Σ|A_k|/a_max > 1; at the lift
-of an exact representation the weights add exactly Σ(n_k − 1) + K zero modes in (Θ, log β), the rest of the spectrum D‴.32's (γ = 0) and
-stable (γ > 0).
+differences) and is Proposition D‴.32's at γ = 0; the weights' drift matches an independent quadrature of the fitness; in the real loop at fixed positions V̇ = −k_ee² pointwise from the vector field and Σβ is
+conserved; at fixed positions Σβ = m is kept and the exact fit is reached with the replicator and not without it, and not below the ℓ¹ ball's
+least error when Σ|A_k|/a_max > 1; at the lift of an exact representation the zero modes in (Θ, log β) are the predicted Σ(n_k − 1)
+redistributions and K gauges, a separation keeps −σ₀w_k with γ > 0, and the rest of the spectrum is D‴.32's (γ = 0) and stable (γ > 0).
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 

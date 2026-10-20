@@ -65,4 +65,23 @@ The real loop (k_e = 25, γ = 2, the positions at the instance's atoms, β(0) = 
 - The averaged loop's linearisation in (Θ, log β) at the lift of ϑ^e(w), counts (6, 5, 4), γ = 0.01: the largest drift 2.45e-17; 15 eigenvalues below 10⁻⁹ in modulus; the others from -1.8337e-01 to -3.0812e-04.
 - At γ = 0 the 45 nonzero eigenvalues are Proposition D‴.32's predicted spectrum (the separations at −σ₀w_k, the collective modes) to 2.08e-11.
 
+## G. The stationary points under the Gaussian kernel, and Part A's infima
+
+Class level (the classes of a run replicated, equal weights inside each, least squares on the stationarity conditions to rounding), at R = 1: the masses held at the run's, or freed by the replicator's condition u_k = λ.
+
+| target | kernel | masses | stationary masses | fit error | |a|/a_max | largest residual |
+|---|---|---|---|---|---|---|
+| five (counts 6, 6, 20, 10, 18) | gauss | held | 0.1573, 0.1330, 0.2618, 0.2060, 0.2419 | 3.85e-4 | 0.9582, 0.9514, 0.8596, 0.8525, 0.8285 | 2.50e-17 |
+| five (counts 6, 6, 20, 10, 18) | gauss | free (u_k = λ) | 0.1579, 0.1318, 0.2661, 0.2076, 0.2366 | 2.63e-4 | 0.9578, 0.9578, 0.8464, 0.8464, 0.8464 | 5.17e-17 |
+| five (counts 6, 6, 20, 10, 18) | compact | held | 0.1573, 0.1330, 0.2618, 0.2060, 0.2419 | 2.46e-16 | 0.9538, 0.9396, 0.8594, 0.8495, 0.8268 | 3.47e-17 |
+| five (counts 6, 6, 20, 10, 18) | compact | free (u_k = λ) | 0.1575, 0.1325, 0.2621, 0.2062, 0.2418 | 2.42e-16 | 0.9525, 0.9437, 0.8585, 0.8488, 0.8271 | 6.79e-17 |
+| three equal (counts 28, 16, 16) | gauss | held | 0.4667, 0.2667, 0.2667 | 9.39e-5 | 0.4286, 0.7499, 0.7500 | 2.25e-17 |
+| three equal (counts 28, 16, 16) | gauss | free (u_k = λ) | 0.5666, 0.2167, 0.2167 | 9.17e-5 | 0.3529, 0.9231, 0.9231 | 1.68e-10 |
+| three equal (counts 28, 16, 16) | compact | held | 0.4667, 0.2667, 0.2667 | 7.32e-17 | 0.4286, 0.7500, 0.7500 | 4.25e-18 |
+| three equal (counts 28, 16, 16) | compact | free (u_k = λ) | 0.4667, 0.2667, 0.2666 | 1.40e-16 | 0.4285, 0.7500, 0.7502 | 1.94e-17 |
+
+- Part B's seed 1 (γ = 10⁻², the fit error 5.99e-4 at its end) continued: under the Gaussian kernel at R = 1 the fit error 5.99e-4 (s = 0), 4.45e-4 (s = 10000), 3.62e-4 (s = 20000), 3.20e-4 (s = 30000), 3.01e-4 (s = 40000), 2.91e-4 (s = 50000), 2.87e-4 (s = 60000), 2.84e-4 (s = 70000), 2.82e-4 (s = 80000), 2.81e-4 (s = 90000), 2.80e-4 (s = 100000); under the compact kernel at R = 1 from the same state 5.99e-4 (s = 0), 4.46e-4 (s = 10000), 3.59e-4 (s = 20000), 3.11e-4 (s = 30000), 2.85e-4 (s = 40000).
+- Part A's target with the amplitudes scaled by 1 at fixed centres and widths: the least fit error with the masses held at (0.15, 0.30, 0.20, 0.25, 0.10) 0.387; over the ℓ¹ ball Σ_k|p_k| ≤ a_max (the masses free) 1.85e-8, at |p_k|/a_max 0.225, 0.150, 0.175, 0.125, 0.200.
+- Part A's target with the amplitudes scaled by 1.25 at fixed centres and widths: the least fit error with the masses held at (0.15, 0.30, 0.20, 0.25, 0.10) 0.494; over the ℓ¹ ball Σ_k|p_k| ≤ a_max (the masses free) 0.0684, at |p_k|/a_max 0.270, 0.164, 0.194, 0.132, 0.239.
+
 Numbers are produced by `experiments/exp_mass_transfer.py`; nothing is edited by hand.

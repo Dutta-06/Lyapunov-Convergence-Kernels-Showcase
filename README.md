@@ -64,15 +64,15 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   no prior design makes robust to persistent forces, while evaluating the regressor at the reference turns the noise's own force into a
   bounded least-squares one, the parameters' fluctuation adding a small force that is not (Proposition D‴.31), and keeps the replicated
   kernels together under the noise — the regressor's own term leaves the separations' noise drift, whose threshold is then bounded below
-  uniformly in the gain (Corollary D‴.33); and a prior-free leak — the kernels attract each other toward the modes of their own distribution
-  — whose finite-range form holds the separations without biasing any clustered critical point and splits a class only where the residual's curvature asks for a kernel,
-  while its Gaussian form pays an exponentially small bias for merging duplicated kernels at a computed rate when no third class is
-  within reach; the number of kernels is not selected but is the transit's and the schedule's — an annealed scale found the target's
-  count where the transit's masses were representable, not on close or heavy bumps (Proposition D‴.32) — and a replicator law on the
-  kernels' weights, a Fisher–Rao mass transfer with the relative entropy as its Lyapunov function, removes the masses' obstruction without
-  changing the stationary set: at fixed positions the exact fit is reached iff the target is representable, and from broad starts the
-  five-bump target is found with its five kernels (Proposition D‴.34); rounds 7–23 of the review log cover all of them up to D‴.33, and
-  their remarks.
+  uniformly in the gain (Corollary D‴.33); and a prior-free leak — the kernels attract each other toward the modes of their own
+  distribution — whose finite-range form holds the separations without biasing any clustered critical point and splits a class only where
+  the residual's curvature asks for a kernel, while its Gaussian form pays an exponentially small bias for merging duplicated kernels at a
+  computed rate when no third class is within reach; the number of kernels is not selected but is the transit's and the schedule's — an
+  annealed scale found the target's count where the transit's masses were representable, not on close or heavy bumps (Proposition D‴.32) —
+  and a replicator law on the kernels' weights, a Fisher–Rao mass transfer with the relative entropy as its Lyapunov function, removes the
+  masses' obstruction without changing the stationary set under the finite range: at fixed positions bounded trajectories reach the exact
+  fit iff the target is representable, and from broad starts the five-bump target is found with its five kernels (Proposition D‴.34);
+  rounds 7–24 of the review log cover all of them, and their remarks.
 
 ---
 

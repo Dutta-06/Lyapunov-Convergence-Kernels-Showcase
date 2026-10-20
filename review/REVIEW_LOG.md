@@ -1110,3 +1110,35 @@ leak's stationary set holds every clustered critical point, so what it ends at i
 was a property of one target and one schedule, and two more targets and a fixed scale undid it. An energy argument along a neutral curve
 must look at every class within reach, not only at the pair that defines the curve. And a numerical check placed outside the hypothesis's
 regime (the dead class at R = 2, where the live classes overlap) checks something else.
+
+## Round 24 (adversarial review of Proposition D‴.34, the replicator weight law, and of Proposition D‴.32's round-23 revisions, 2026-10-20)
+
+**Design.** One referee, not modifying the repository. D3w: Proposition D‴.34 and the round-23 revisions of D‴.32 on a snapshot of 1ddff8c
+(`review/REVIEW_round24_D3w.md`; its issues ID-1–ID-9 are D3w-1–D3w-9 here): an independent implementation of the weighted loop, its energy
+and the real loop; the gradient-flow identity in the Euclidean–Fisher–Rao metric and the √β form; the relative-entropy identity off its
+stated hypotheses; the class-level stationary points under both kernels with the masses held and freed; Parts A, B (seed 1), C (seed 0),
+E and F (three heavy bumps, seed 0) reproduced to the printed digits; a continuation of Part B; the zero modes against the predicted
+vectors; nine code mutants against the tests; D‴.32's twins' rate, time scales and Parts I–L.
+
+**Verdicts (D3w).** (i) holds (the identity to 9·10⁻¹⁰, the √β form with the step γ/4); (ii) holds (V̇ = −k_e|e|² to 1.1·10⁻¹⁶), with
+other hypotheses than stated; (iii) holds at clustered configurations under the finite range, not under the Gaussian kernel, where the
+stationarity condition's factor β_i and the condition u_k = λ fix the masses; (iv) holds for bounded trajectories; (v) holds exactly (the 15
+zero modes are the 12 redistributions and 3 gauges, 14 on Σβ = m); every reproduced number matches; the md regenerates byte-identically;
+D‴.32's round-23 fixes are applied correctly where checked.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3w-1 | major ((iii), Status, §0, §8, PAPERS, README, the audit) | "the stationary points are D‴.32's for every vector of masses", "the stationary set unchanged" hold only at clustered configurations under the finite range: the positions' condition carries β_i on the fit and not on the cohesion, and under the Gaussian kernel u_k = λ fixes the masses (five bumps: the masses move and the fit error 2.63·10⁻⁴; three equal bumps: (0.267, 0.267, 0.467) → (0.22, 0.22, 0.56), 9.17·10⁻⁵) | (iii) restated with the factor β_i; "there the stationary points are D‴.32's" restricted to the finite range at classes R apart; under the Gaussian kernel the replicator selects the masses and moves the bias; Part G: class-level stationary points under both kernels with the masses held and freed (B's seed 1: 3.85·10⁻⁴ with the masses held, 2.63·10⁻⁴ freed; three equal bumps 9.39·10⁻⁵ and 9.17·10⁻⁵, the masses toward (0.567, 0.217, 0.217); the compact kernel exact either way); the §0 row, the Status, the §8 bullet, PAPERS 13, README and the audit qualified |
+| D3w-2 | minor (*Numerics* (B), §0, RESULTS) | "still falling at the end (by 3–4% per 1000 slow units)": the rates are 2–4%, and the fit levels off near the Gaussian stationary point; under the compact kernel a slow mode of the nearly saturated classes holds it | (B) the rates per seed and Part G's continuation of seed 1 (2.80·10⁻⁴ after 10⁵ more slow units under the Gaussian kernel, 2.85·10⁻⁴ after 4·10⁴ under the compact one) |
+| D3w-3 | minor ((iv), proof, §0, §8, PAPERS, README, RESULTS, *Numerics* (A)) | "the exact fit is reached iff representable" unproved in the "if" direction (boundedness numerical); f in the span and one particle per atom assumed; the unbounded case needs the ω-limit argument; classes may lose their mass instead of saturating; Part A's 0.071 creeps to the ℓ¹ infimum 0.0684 | (iv): "bounded trajectories reach the exact fit iff …", the hypotheses stated, the ω-limit argument in the proof, "each class saturating or losing its mass", the ℓ¹ bound; Part G prints the infima (0.0684 with the masses free, 0.387 and 0.494 at the held masses); the summaries "for bounded trajectories"; the test asserts the fit above the infimum |
+| D3w-4 | cosmetic ((i)) | the WFR remark omits that WFR divides the cohesion by β_i and that J is not a functional of μ_{Θ,β}; r_i clashes with the residual; the output weights are r_i²/m; the step γ/4 | (i) rewritten: ϱ_i := √β_i, the step γ/4, ϱ_i²/m the output weights, the WFR metric's two differences |
+| D3w-5 | cosmetic ((ii), proof, (𝔉)) | (ii)'s hypotheses are not the needed ones (Σβ* = m and the pointwise representation suffice; V ≥ 0 needs Σβ = m, invariant, not attracting); (𝔉)'s λ and the code's agree on Σβ = m only; β → β* needs persistent excitation | (𝔉) with λ := Σβu/Σβ (the code's: Σβ conserved from every start); (ii) restated with its hypotheses, V ≥ 0 by the relative entropy on Σβ = m, "β → β* is not claimed" |
+| D3w-6 | minor (tests, RESULTS, §7) | every drift mutant caught only by the gradient identity (the code against its own J); the fixed-position test passes with λ = 0; the zero-mode test passes every mutant | the fixed-position test asserts Σβ = m and the fit above the ℓ¹ infimum; the zero-mode test checks the predicted null vectors (the redistributions, one gauge per class) and a separation's −σ₀w_k with γ > 0; a new test checks the weights' drift against an independent quadrature of the fitness |
+| D3w-7 | minor ([S62], the audit, Status) | Kondratyev–Monsaingeon–Vorotnikov and Chizat–Peyré–Schmitzer–Vialard (WFR), Chizat–Bach (the √β lift), Shahshahani's metric and EM's multiplicative weights omitted; (ii) is the negative-entropy instance of Boffi–Slotine's mirror-descent laws | [S62] extended (KMV, CPSV and Shahshahani checked by a web search); the Status and the audit name (ii) as that instance |
+| D3w-8 | cosmetic ((iii), *Numerics* (C)) | "whose amplitudes are not saturated" vacuous; the bias at fixed positions is permanent, not "for times exponential"; the rate exact only with the class's particles coincident and the others critical; (C)'s "the same splits at the same times" differs at 3 of 51 records | (iii) rewritten; (C) "at nearly the same times (3 of 51 records differ by one class)" |
+| D3w-9 | cosmetic (D‴.32 *Numerics* (A); D‴.34 (D)) | the dead class's mass is 2/15 (4/15 is the nearest live class's, the w of the time scale); (D) compared with six seeds instead of seeds 0–2 | "(amplitude 0, mass 2/15, at 5.19 from the nearest live class, of mass 4/15)"; (D) against seeds 0–2 (1.9·10⁻⁷–9.0·10⁻⁷) |
+
+**Lesson.** A stationary set is a property of the whole law. The weights entered the positions' drift through the fit and not through the
+cohesion, so the clean reduction held only where the cohesion vanishes — and every broad run used the kernel under which it does not.
+And a claim of reaching a target needs the trajectory bounded; a theorem about bounded trajectories says nothing about the ones that run
+to the boundary, where the saturated classes live.

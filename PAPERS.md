@@ -223,9 +223,7 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   σ₀w_k/k_e and the η = ∞ adaptive prior's collective spectrum, and with the desired regressor (Corollary D‴.33) the classes' noise
   threshold is bounded below uniformly in the gain. The number of kernels is not selected by the leak: it is the transit's and the
   schedule's. A replicator law on the kernels' weights (Proposition D‴.34) — the Fisher–Rao part of a Wasserstein–Fisher–Rao gradient
-  flow, in real time an exponentiated-gradient law with the relative entropy as its Lyapunov function — keeps the stationary set and the
-  saturation's bound and removes the transit's mass obstruction: at fixed positions the exact fit is reached iff the target is
-  representable.
+  flow, in real time an exponentiated-gradient law with the relative entropy as its Lyapunov function — keeps the stationary set at clustered configurations under the finite range (under the Gaussian kernel it selects the masses) and the saturation's bound, and removes the transit's mass obstruction: at fixed positions bounded trajectories reach the exact fit iff the target is representable.
 - **Rests on.** Proposition D‴.32 ((i)–(iii) proved; (iv) proved for the stationary points and their linearisation; (v) the twins' rate
   to leading order, the merger only without a third class within reach; (vi) the lift exact, the collapsed exponents by Corollary D‴.26
   and Lemma D‴.26a), Corollary D‴.33, Proposition D‴.34, `exp_cohesion_leak.py` (the linear theory, warm and broad starts, the real loop,
@@ -235,11 +233,10 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   identification, deterministic annealing and self-organising RBF networks are classical ([S60]), as are Wasserstein–Fisher–Rao flows,
   conic particle gradient descent, neuron birth–death and exponentiated-gradient laws ([S62]); new is their combination as a leak in
   mean-field adaptive control: the exact blocks at clustered configurations with the mass factor, the gauge-scaled splitting margin, the
-  twins' rate, the real loop's exponents, and the replicator's removal of the saturation trap with the representability criterion.
+  twins' rate, the real loop's exponents, and the replicator's removal of the saturation trap with the representability criterion (for bounded trajectories).
 - **Missing.** The transit from a spread cloud (which classes form, with which masses) and any selection of the number of kernels; the
   shedding of single particles below the resolution's threshold (the replicator does not remove it); a scale R chosen from the data (at a
   fixed scale the broad starts do not end at the target's count, Part J); the basin uniform in m; the a-priori bound under the transport
-  (the leak is internal — a projection, Proposition D‴.27, is the remedy); the replicator's neutral directions under noise (the gauge and
-  the redistributions) and the real loop with transport and replicator together.
+  (the leak is internal — a projection, Proposition D‴.27, is the remedy); the replicator's neutral directions under noise (the gauge and the redistributions), boundedness at fixed positions, and the real loop with transport and replicator together.
 - **Venue.** SIAM J. Control Optim. or IEEE TAC (theory); NeurIPS/ICML-style venues for the mean-field network regulariser and the mass
   transfer.

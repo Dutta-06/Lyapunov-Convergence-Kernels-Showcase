@@ -92,10 +92,12 @@ def test_at_fixed_positions_the_replicator_reaches_the_exact_fit_iff_the_masses_
             fl = Frozen(base, 1.0, 'compact', sigma0=0.0, gamma=gamma)
             Th, beta = fl.run(Th0, 5 * W0, 20000.0, 0.25)
             fits[(scale, gamma)] = fl.fit_error(Th, beta)
+            assert abs(beta.sum() - 5.0) < 1e-9                              # Σβ = m along the run (the balanced λ)
+            assert abs(fl.drift(Th, beta)[1].sum()) < 1e-15 * 5
             if scale == 1.0 and gamma > 0:
                 assert np.all(beta / 5 > np.array([abs(A) for A, C, S in bumps]) / 4)
     assert fits[(1.0, 1e-2)] < 1e-6 and fits[(1.0, 0.0)] > 0.3
-    assert fits[(1.25, 1e-2)] > 0.05 and fits[(1.25, 0.0)] > 0.3
+    assert fits[(1.25, 1e-2)] > 0.0683 and fits[(1.25, 0.0)] > 0.3        # above the ℓ¹-ball infimum 0.0684 (round 24, ID-3)
 
 
 def test_at_an_exact_representation_the_weights_add_only_neutral_directions():
@@ -122,3 +124,46 @@ def test_at_an_exact_representation_the_weights_add_only_neutral_directions():
     nz = ev[0.0][np.abs(ev[0.0]) >= 1e-9]
     assert np.abs(nz - np.sort(np.concatenate([sep, coll]))).max() < 1e-9
     assert np.all(ev[1e-2][np.abs(ev[1e-2]) >= 1e-9] < 0)
+    # round 24 (ID-6): the zero modes are the predicted vectors, and the separations keep −σ₀w_k with γ > 0
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2)
+
+    def F(x):
+        T = x[:21].reshape(7, 3); b = np.exp(x[21:])
+        dT, db = loop.drift(T, b)
+        return np.concatenate([dT.ravel(), db / b])
+    x0 = np.concatenate([Th0.ravel(), np.zeros(7)])
+    Jv = lambda v: (F(x0 + 1e-6 * v) - F(x0 - 1e-6 * v)) / 2e-6
+    lab = np.repeat(np.arange(3), counts)
+    a_k = net.physical(atoms)[0][:, 0]
+    da_k = 1.0 - (a_k / net.a_max) ** 2
+    for k in range(3):
+        idx = np.where(lab == k)[0]
+        for j in idx[1:]:                                                   # redistributions inside class k
+            v = np.zeros(28); v[21 + idx[0]] = 1.0; v[21 + j] = -1.0
+            assert np.abs(Jv(v)).max() < 1e-9
+        v = np.zeros(28); v[21 + idx] = 1.0                                 # the gauge of class k: δlog β against δα = −δβ a_k/a′_k
+        for i in idx:
+            v[3 * i] = -a_k[k] / da_k[k]
+        assert np.abs(Jv(v)).max() < 1e-9
+        if len(idx) >= 2:                                                   # a separation: −σ₀w_k exactly, no weight response
+            v = np.zeros(28); v[3 * idx[0] + 1] = 1.0; v[3 * idx[1] + 1] = -1.0
+            out = Jv(v)
+            assert np.abs(out[:21] + SIGMA0 * w[k] * v[:21]).max() < 1e-9 and np.abs(out[21:]).max() < 1e-9
+
+
+def test_the_fitness_against_an_independent_quadrature():
+    """Round 24 (ID-6): the weights' drift γβ_i(u_i − λ) at an off-equilibrium configuration against u_i computed independently from the
+    features a(α)e^{−(x−c)²/(2s²)} on the loop's quadrature (not through the module's features)."""
+    net, base, fv = _loop(BUMPS)
+    rng = np.random.default_rng(11)
+    m = 6
+    Th = net.unconstrained(rng.uniform(-2, 2, (m, 1)), rng.uniform(-2, 2, (m, 1)), rng.uniform(0.4, 0.9, m))
+    beta = rng.uniform(0.5, 1.5, m); beta *= m / beta.sum()
+    loop = MT.ReplicatorCohesionLoop(base, 1.5, 'gauss', gamma=0.7)
+    a, c, s_ = net.physical(Th)
+    X = base.X
+    Phi = a[:, 0][None, :] * np.exp(-(X[:, None] - c[None, :, 0]) ** 2 / (2 * s_[None, :] ** 2))
+    r = fv(X) - Phi @ beta / m
+    u = (Phi.T @ r) / X.size
+    lam = beta @ u / beta.sum()
+    assert np.abs(loop.drift(Th, beta)[1] - 0.7 * beta * (u - lam)).max() < 1e-12
