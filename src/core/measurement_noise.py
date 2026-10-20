@@ -476,3 +476,50 @@ def separation_drift(cv, fprime, fsecond, ke, B, var, N=512, hx=1e-5, hth=1e-5):
             Hx = (hess(x + hx, th) - hess(x - hx, th)) / (2 * hx)
             S[k] += g[:, None] * (Eem2 * Hx + Ee * hess(x, th)) * g[None, :]
     return S / N
+
+
+# ---------------------------------------------------------------------- Lemma D‴.26a(v): the slow noise, decoupled exactly
+def noise_decoupling(cv, fprime, eps, N=512, tol=1e-18, maxit=500):
+    """Chang's second transformation for the linearised loop with white measurement noise (Lemma D‴.26a(v)): S(t; ε), the T₀-periodic
+    solution of the anti-causal S − εṠ = εKᵀ − ε²(SPKᵀ + AS) (P, A from `CollapsedVariational.chang`), with which Y′ = Y + εSv (v = w − PY,
+    δe = εw) obeys dY′ = εAY′dt + εb√N₀dW exactly, b = ε⁻¹[Kᵀ − ε⁻¹(1 + εa)S − εSPKᵀ]; and b₀ = −(K̇ + aK)ᵀ, its leading term. Returns
+    (P, S, b, b₀ (N, q, n) each, the coupling residual max|εKᵀ + εṠ − S − ε²(SPKᵀ + AS)|)."""
+    t, K, Lam, om = cv.chang_grid(N)
+    P, A, _, _ = cv.chang(eps, N)
+    Kt = np.transpose(K, (0, 2, 1))
+    PKt = np.einsum('tij,tkj->tik', P, K)
+    a = np.array([float(np.atleast_1d(fprime(np.atleast_1d(cv.xr(s))[0]))[0]) for s in t])
+    S = eps * Kt.copy()
+    for it in range(maxit):
+        rhs = eps * Kt - eps ** 2 * (np.einsum('tij,tjk->tik', S, PKt) + np.einsum('tij,tjk->tik', A, S))
+        Sn = np.real(np.fft.ifft(np.fft.fft(rhs, axis=0) / (1 - 1j * eps * om)[:, None, None], axis=0))
+        dS = np.abs(Sn - S).max(); S = Sn
+        if dS < tol:
+            break
+    d = lambda X: np.real(np.fft.ifft((1j * om).reshape(-1, 1, 1) * np.fft.fft(X, axis=0), axis=0))
+    coupling = float(np.abs(eps * Kt + eps * d(S) - S - eps ** 2 * (np.einsum('tij,tjk->tik', S, PKt) + np.einsum('tij,tjk->tik', A, S))).max())
+    b = (Kt - (S / eps) * (1 + eps * a)[:, None, None] - eps * np.einsum('tij,tjk->tik', S, PKt)) / eps
+    b0 = -np.transpose(d(K) + a[:, None, None] * K, (0, 2, 1))
+    return P, S, b, b0, coupling
+
+
+def decoupled_covariance(cv, fprime, ke, N=512):
+    """The exact periodic stationary covariance of the linearised loop under white measurement noise (N₀ = 1) at t = 0, in the coordinates
+    (v, Y′) of Lemma D‴.26a(v), against the lemma's leading terms: returns dict(Vv = Cov(v), C = E[vY′ᵀ], CY′ = Cov(Y′), CY = Cov(Y), the
+    averaged slow covariance Σ̄ (Ā₀Σ̄ + Σ̄Ā₀ᵀ + εQ̄ = 0), the fast jitter (ε/2)K(0)ᵀK(0), b(0))."""
+    eps = 1.0 / ke
+    n = cv.n
+    P, S, b, b0, _ = noise_decoupling(cv, fprime, eps, N)
+    D = cv.dim
+    Pc = periodic_covariance(lambda t: cv.generator(t, ke), collapsed_noise_input(cv, fprime, ke), cv.T0, D, 1.0)
+    Tm = np.zeros((D, D))
+    Tm[:n, :n] = np.eye(n) / eps; Tm[:n, n:] = -P[0]
+    Tm[n:, :n] = S[0]; Tm[n:, n:] = np.eye(D - n) - eps * S[0] @ P[0]
+    Cn = Tm @ Pc @ Tm.T
+    H, Q = noise_matrices(cv, fprime)
+    A0 = collective_block(H, cv.sigma0, cv.eta)
+    Qb = np.zeros_like(A0); Qb[:cv.d, :cv.d] = Q
+    K0 = cv.chang_grid(N)[1][0]
+    return dict(Vv=Cn[:n, :n], C=Cn[:n, n:], CYp=Cn[n:, n:], CY=Pc[n:, n:], Sigma=solve_continuous_lyapunov(A0, -eps * Qb),
+                fast=(eps / 2) * K0.T @ K0, b=b[0], b0=b0[0])
+

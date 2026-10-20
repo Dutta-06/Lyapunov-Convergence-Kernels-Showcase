@@ -102,7 +102,7 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   prior, convergent at η = ∞).
 - **Rests on.** Theorem D‴.23 ((i)–(iii) proved, (iv) formal, (v) sketched, (vi) partly numerical), Proposition D‴.24 ((i) exact at q
   with the law formal, (ii)–(iii), (vi) proved; the convergence numerical; checked in one and two dimensions), Corollary D‴.26 ((a)–(b)
-  exact, (c) a formal expansion with its structure proved; the basin open), Proposition D‴.27 ((i), (iii) proved, (ii)'s convergence proved
+  exact, (c) proved by Lemma D‴.26a; the basin open), Proposition D‴.27 ((i), (iii) proved, (ii)'s convergence proved
   at η = ∞ and formal at finite η), Proposition D‴.28 ((i), (iii) exact, (ii) as D‴.24(i); the dynamics numerical).
 - **Novelty (audit).** D‴.23: standard per-mode formulas (proximal point, iterated Tikhonov, elastic averaging), new transfer to the
   mass-constrained particle system uniformly in m, new failure mode with its remedy; D‴.24: see paper 6, and a learned prior as the way to
@@ -111,7 +111,7 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   ingredients (projection, the switching σ-modification, which it is at η = ∞), transferred to the learned centre of the mass-constrained
   prior at finite η; D‴.28: a classical symmetry (the conic view's homogeneity), a new identification of the mechanism and an exact margin
   formula.
-- **Missing.** The constants of D‴.23(v); the nonlinear basin of D‴.26 and a bound on its O(k_e⁻⁴) remainder; the convergence of D‴.27 at
+- **Missing.** The constants of D‴.23(v); the nonlinear basin of D‴.26 (its O(k_e⁻⁴) remainder bounded by Lemma D‴.26a, the constants not explicit); the convergence of D‴.27 at
   finite η; critical points at infinity for D‴.28 (best approximants on the saturation boundary); the choice of the projection's set as a
   design input; the
   instance's samples without an exact representation are not rare at small m (0.36 at m = 15), so a paper should treat them (the
@@ -177,8 +177,8 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   bias and keeps its bound on persistent forces (RH + B = I) — so the remedy acts on the force: with the regressor at the reference, the
   noise's own force becomes a least-squares one, whose response is bounded under every prior, and the trade-off in k_e disappears; the
   parameters' fluctuation adds a force that is not least-squares, small on the instance and falling with k_e.
-- **Rests on.** Proposition D‴.30 ((i) exact as invariance, its attraction threshold formal; (ii)–(iii) formal, their closed forms exact
-  for the averaged system; (ii) checked against the exact linearised loop, (iii)'s stationary response against its exact periodic mean,
+- **Rests on.** Proposition D‴.30 ((i) exact as invariance, its attraction threshold formal; (ii) proved for the linearised loop under white noise
+  (Lemma D‴.26a), (iii) formal, their closed forms exact for the averaged system; (ii) checked against the exact linearised loop, (iii)'s stationary response against its exact periodic mean,
   the transient in the real loop), Proposition D‴.31 ((i)–(iii) proved; (iv)(a)–(b) proved for the linearised equations, (iv)(c) formal,
   the parameters' part numerical; the remedy checked in the real loop on common noise paths through MR − DR), Corollary D‴.26,
   `exp_measurement_noise.py`, `exp_eiv_remedy.py`.
@@ -188,7 +188,8 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   mobility, the driving matrix of the sensitivity-filtered measurement, the coherence of the K₀-atom identification with its noise
   threshold, the washout reading of the adaptive prior uniform in m, and the quantification, including the parameters' own errors in
   variables.
-- **Missing.** The stochastic averaging and the second-order computation proved (the parameters' part in closed form); the stationary
+- **Missing.** The second-order computation proved (the parameters' part in closed form; the first order is, for the linearised loop under
+  white noise, Lemma D‴.26a); the stationary
   biases in the real loop (the weak modes equilibrate over ~10⁵ time units); a remedy for the parameters' errors in variables; second-order
   plants (Proposition D‴.29) and a servo with a realistic sensor (quantisation, delay).
 - **Venue.** IEEE Trans. Automatic Control or Automatica (a technical note); Systems & Control Letters.

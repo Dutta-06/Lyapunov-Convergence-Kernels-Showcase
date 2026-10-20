@@ -1,4 +1,4 @@
-"""Corollary D‴.26 (PARADIGM.md §5d): perfect tracking with an adaptive prior in the real closed loop. At the lift of an exact
+"""Corollary D‴.26 and Lemma D‴.26a (PARADIGM.md §5d): perfect tracking with an adaptive prior in the real closed loop. At the lift of an exact
 representation with the prior at its atoms and the plant on the reference, one period returns the state; the Floquet exponents of the lift
 are σ₀/k_e exactly on the (m − K₀)p separations and the weighted K₀-atom loop's on the collapsed subspace; and the K₀-atom loop's are the
 averaged prediction (1/k_e)λ_j^± of Theorem D‴.23(ii) up to a correction of second order in 1/k_e (slow time), explicit to that order with
@@ -15,6 +15,7 @@ from src.core import langevin as L
 from src.core import ot_leak as OT
 from src.core import adaptive_prior as AP
 from src.core import adaptive_floquet as AF
+from src.core import measurement_noise as MN
 from src.core.periodic import floquet_exponents
 
 PER = 2 * np.pi
@@ -138,3 +139,68 @@ def test_the_collective_exponents_are_even_in_one_over_ke_with_the_explicit_seco
     W10 = np.diag(np.r_[np.ones(9), np.full(9, 0.1)])
     assert np.abs(W10 @ B0 - (W10 @ B0).T).max() < 1e-12 * np.abs(B0).max() and np.abs(B0 - B0.T).max() > 0.1 * np.abs(B0).max()
     assert np.abs(W10 @ B1 + (W10 @ B1).T).max() < 1e-12 and np.abs(B1).max() > 1e-3
+
+
+FPRIME = lambda x: sum(-A * (x - C) / S ** 2 * np.exp(-(x - C) ** 2 / (2 * S ** 2)) for A, C, S in BUMPS)
+
+
+def _asym_cv(eta):
+    net = L.SaturatedLiftedNetwork(1, a_max=4.0, c_max=3.0, s_min=0.3, s_max=2.0)
+    e = _exact(net, W211)
+    xr = lambda t: np.array([2.0 * np.sin(t) + 0.8 * np.sin(2.0 * t)])
+    return AF.CollapsedVariational(net, xr, PER, G, SIGMA0, eta, e, W211)
+
+
+def test_chang_slow_subspace_carries_exactly_the_slow_multipliers():
+    """Lemma D‴.26a(i)–(ii): the contraction gives the periodic P with an invariance residual at rounding; the slow block's exponents are the
+    full variational equation's (to the monodromies' accuracy), and P − P₂ scales like ε³ (the expansion of (i))."""
+    cv = _asym_cv(SIGMA0)
+    t, K, Lam, om = cv.chang_grid(512)
+    der = lambda X, k=1: np.real(np.fft.ifft(((1j * om) ** k).reshape(-1, 1, 1) * np.fft.fft(X, axis=0), axis=0))
+    tr = []
+    for ke in (25.0, 50.0):
+        eps = 1.0 / ke
+        P, A, it, res = cv.chang(eps)
+        assert res < 1e-12 and it < 60
+        rates = np.sort(np.linalg.eigvals(-cv.slow_generator(eps)[0]).real)
+        full = np.sort(cv.exponents(ke)[0]) * ke
+        assert np.abs(rates / full - 1).max() < 1e-8
+        P2 = -K + eps * der(K) - eps ** 2 * (der(K, 2) + np.einsum('tij,tkj,tkl->til', K, K, K) + K @ Lam)
+        tr.append(np.abs(P - P2).max())
+    assert 6 < tr[0] / tr[1] < 10                                                     # O(ε³)
+
+
+def test_the_slow_rates_are_exactly_even_in_epsilon_and_a_mismatch_breaks_the_parity():
+    """Lemma D‴.26a(iv): the slow block at −ε (the same equation for P) has the slow-time rates of the slow block at ε — exactly, while their
+    deviation from the first-order prediction is 12%; with the plant's slope as a mismatch in the error channel the equality fails at first
+    order. At η = ∞ as well."""
+    for eta in (SIGMA0, np.inf):
+        cv = _asym_cv(eta)
+        A0 = cv.averaged()[0]
+        nu0 = np.sort(np.linalg.eigvals(-A0).real)
+        eps = 1.0 / 25.0
+        rp = np.sort(np.linalg.eigvals(-cv.slow_generator(eps)[0]).real)
+        rm = np.sort(np.linalg.eigvals(-cv.slow_generator(-eps)[0]).real)
+        assert np.abs(rp - rm).max() < 1e-10 * np.abs(rp).max() and np.abs(rp - nu0).max() > 1e-2 * np.abs(nu0).max()
+        tg = cv.chang_grid(512)[0]
+        a = np.array([FPRIME(float(cv.xr(s)[0])) for s in tg])
+        mp = np.sort(np.linalg.eigvals(-cv.slow_generator(eps, mismatch=a)[0]).real)
+        mm = np.sort(np.linalg.eigvals(-cv.slow_generator(-eps, mismatch=a)[0]).real)
+        assert np.abs(mp - mm).max() > 1e-2 * np.abs(mp).max()
+
+
+def test_the_slow_noise_is_decoupled_exactly_and_high_passed():
+    """Lemma D‴.26a(v): Y′ = Y + εSv is decoupled from v (the residual at rounding), its noise b → −(K̇ + aK)ᵀ at O(ε) (halving per doubling of
+    k_e), and the exact periodic covariance at t = 0 has Cov(v) → N₀/(2ε³), E[vY′ᵀ] → −N₀bᵀ and Cov(Y′) → Σ̄ (the averaged slow covariance)."""
+    cv = _asym_cv(SIGMA0)
+    dev = []
+    for ke in (50.0, 100.0):
+        P, S, b, b0, coup = MN.noise_decoupling(cv, FPRIME, 1.0 / ke)
+        assert coup < 1e-14
+        dev.append(np.abs(b - b0).max() / np.abs(b0).max())
+    assert 1.7 < dev[0] / dev[1] < 2.3 and dev[1] < 0.15
+    o = MN.decoupled_covariance(cv, FPRIME, 100.0)
+    assert abs(o['Vv'][0, 0] * 2e-6 - 1) < 1e-2
+    assert np.abs(o['C'] + o['b'].T).max() < 3e-2 * np.abs(o['b']).max()
+    assert np.abs(o['CYp'] - o['Sigma']).max() < 3e-2 * np.abs(o['Sigma']).max()
+

@@ -85,4 +85,42 @@ At η = 10σ₀ (2 sin t), where the metric W = diag(I, (σ₀/η)I) is not the 
 
 At η = 10σ₀ (2 sin t + 0.8 sin 2t), where the metric W = diag(I, (σ₀/η)I) is not the identity: |WĀ₀ − (WĀ₀)ᵀ| = 8.7e-18 against |Ā₀ − Ā₀ᵀ| = 6.4e-02 (|Ā₀| = 1.7e-01): Ā₀ is self-adjoint in W only; |WĀ₁ + (WĀ₁)ᵀ| = 1.4e-16 (|Ā₁| = 5.6e-03).
 
+## D. Lemma D‴.26a: the exact slow subspace (x_m = 2 sin t + 0.8 sin 2t)
+
+Chang's P(t; ε) by its contraction on a 512-point Fourier grid: the iterations to 10⁻¹⁶ and the invariance residual; the truncation |P − P₂|_∞/ε³ (P₂ = −K + εK̇ − ε²(K̈ + KKᵀK + KΛ)); the slow block's slow-time rates (from log Φ(ε)/(εT₀)) against the full variational equation's; the rates at ±ε (the slow block at −ε defined by the same equation) — max|ν(ε) − ν(−ε)|/max|ν| — against their first-order deviation max|ν(ε) − ν₀|/max|ν₀|; the same at ±ε with the plant's slope as a mismatch in the error channel; the Magnus parameter εT₀max‖A‖₂ (the series converges below π).
+
+η = 0.00707:
+
+| k_e | iterations | invariance residual | |P − P₂|/ε³ | slow block vs full | rates at ±ε | first-order deviation | ±ε with a mismatch | Magnus |
+|---|---|---|---|---|---|---|---|---|
+| 12.5 | 9 | 3.2e-15 | 1849.7804 | 1.5e-11 | 4.3e-14 | 9.45e-02 | 1.08e-02 | 0.480 |
+| 25 | 7 | 1.9e-15 | 2621.0622 | 3.3e-11 | 7.6e-14 | 3.10e-02 | 5.18e-03 | 0.247 |
+| 50 | 6 | 1.0e-15 | 3074.0166 | 1.7e-11 | 1.4e-13 | 8.68e-03 | 2.52e-03 | 0.125 |
+| 100 | 5 | 6.7e-16 | 3268.2155 | 4.7e-11 | 3.2e-13 | 2.25e-03 | 1.25e-03 | 0.062 |
+| 200 | 4 | 4.8e-16 | 3305.7286 | 1.2e-10 | 9.0e-13 | 5.68e-04 | 6.24e-04 | 0.031 |
+| 400 | 4 | 3.3e-16 | 3332.2482 | 8.2e-10 | 1.6e-12 | 1.42e-04 | 3.12e-04 | 0.016 |
+
+Under white measurement noise (N₀ = 1): the second transformation's decoupling residual, the slow noise b against b₀ = −(K̇ + aK)ᵀ (max over the period), and the exact periodic covariance at t = 0 in the coordinates (v, Y′) — Cov(v)·2ε³ − 1, ‖E[vY′ᵀ] + bᵀ‖/‖b‖, ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ — and the function-level floor at t = 0, tr(H Cov(y)), against tr(H(Σ̄ + (ε/2)KᵀK)) (the fast jitter's share).
+
+| k_e | decoupling residual | ‖b − b₀‖/‖b₀‖ | Cov(v)·2ε³ − 1 | ‖E[vY′ᵀ] + bᵀ‖/‖b‖ | ‖Cov(Y′) − Σ̄‖/‖Σ̄‖ | floor at t = 0: exact | predicted | ratio | fast share |
+|---|---|---|---|---|---|---|---|---|---|
+| 12.5 | 3.0e-16 | 6.271e-01 | -9.600e-02 | 1.543e-01 | 3.581e-01 | 3.23656e-01 | 4.28924e-01 | 0.7546 | 0.001 |
+| 25 | 8.3e-17 | 4.023e-01 | -2.840e-02 | 7.719e-02 | 1.801e-01 | 1.93447e-01 | 2.14462e-01 | 0.9020 | 0.001 |
+| 50 | 2.0e-17 | 2.244e-01 | -7.708e-03 | 3.863e-02 | 6.180e-02 | 1.04025e-01 | 1.07231e-01 | 0.9701 | 0.001 |
+| 100 | 6.9e-18 | 1.168e-01 | -2.083e-03 | 1.931e-02 | 1.714e-02 | 5.31876e-02 | 5.36155e-02 | 0.9920 | 0.001 |
+| 200 | 2.9e-18 | 5.874e-02 | -5.888e-04 | 9.650e-03 | 4.405e-03 | 2.67531e-02 | 2.68078e-02 | 0.9980 | 0.001 |
+| 400 | 1.1e-18 | 2.950e-02 | -1.806e-04 | 4.825e-03 | 1.108e-03 | 1.33969e-02 | 1.34039e-02 | 0.9995 | 0.001 |
+
+η = ∞:
+
+| k_e | iterations | invariance residual | |P − P₂|/ε³ | slow block vs full | rates at ±ε | first-order deviation | ±ε with a mismatch | Magnus |
+|---|---|---|---|---|---|---|---|---|
+| 12.5 | 9 | 3.8e-15 | 1849.8753 | 5.7e-12 | 2.8e-14 | 9.84e-02 | 1.13e-02 | 0.476 |
+| 25 | 8 | 2.2e-15 | 2621.2101 | 1.2e-12 | 3.9e-14 | 3.23e-02 | 5.42e-03 | 0.245 |
+| 50 | 6 | 8.9e-16 | 3074.1950 | 2.3e-11 | 6.7e-14 | 9.04e-03 | 2.63e-03 | 0.124 |
+| 100 | 5 | 5.6e-16 | 3268.4044 | 5.7e-11 | 3.0e-13 | 2.34e-03 | 1.30e-03 | 0.062 |
+| 200 | 5 | 4.4e-16 | 3305.9193 | 4.5e-10 | 4.5e-13 | 5.91e-04 | 6.50e-04 | 0.031 |
+| 400 | 4 | 3.3e-16 | 3332.4406 | 1.5e-09 | 9.3e-13 | 1.48e-04 | 3.25e-04 | 0.016 |
+
+
 Numbers are produced by `experiments/exp_adaptive_floquet.py`; nothing is edited by hand.

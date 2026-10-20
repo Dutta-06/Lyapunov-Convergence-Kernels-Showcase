@@ -20,6 +20,10 @@ formula, and the averaged generator of the slow block to second order in 1/k_e (
 dY/ds = (B₀ + εB₁ + ε²B₂)Y in slow time (ε = 1/k_e), B₀ = C − J̄ᵀJ̄, B₁ = J̄ᵀJ̄̇, B₂ = −J̄ᵀJ̄̈ + J̄ᵀJ̄C − (J̄ᵀJ̄)² (J̄ = Ĵ on the y block, C the
 leak and the prior), and the near-identity averaging gives Ā₀ = ⟨B₀⟩, Ā₁ = ⟨B₁⟩ + ⟨B̃₀U₁⟩ (skew in the metric diag(I, (σ₀/η)I)), Ā₂ =
 ⟨B₂⟩ + ⟨B₁U₁⟩ + ⟨B₀U₂⟩ (U₁′ = B̃₀, U₂′ = B₁ + B₀U₁ − U₁Ā₀ − Ā₁, zero means).
+
+Lemma D‴.26a: `CollapsedVariational.chang` gives the slaving exactly — the periodic P(t; ε) whose graph δe = εPY is invariant, by the
+contraction P = 𝒢F(P) on a Fourier grid, for either sign of ε — and `slow_generator` the slow block's generator log Φ(ε)/(εT₀), whose
+eigenvalues are exactly the slow Floquet exponents (in slow time) and, at −ε, those at ε (the parity as an identity).
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -245,3 +249,54 @@ class CollapsedVariational:
         E = np.eye(d) if np.isinf(self.eta) else np.hstack([np.eye(d), np.zeros((d, d))])
         F = Lm @ (E.T @ filt @ E) @ R
         return lam, c, -np.diag(F).real
+
+    # ------------------------------------------------------------------ Lemma D‴.26a: the exact slow subspace (Chang's decoupling)
+    def chang_grid(self, N=512):
+        """(t, K, Λ, ω): N samples of K = [Ĵ, 0] (η finite) or Ĵ (η = ∞), shape (N, n, q), on t_k = kT₀/N; the leak and the prior's constant
+        block Λ in slow time (Λ = [[σ₀I, −σ₀I], [−ηI, ηI]], η = ∞: 0); the angular frequencies of the grid."""
+        t = np.arange(N) * self.T0 / N
+        J = np.array([self.J(s) for s in t])
+        if np.isinf(self.eta):
+            K, Lam = J, np.zeros((self.d, self.d))
+        else:
+            I = np.eye(self.d)
+            K = np.concatenate([J, np.zeros_like(J)], axis=2)
+            Lam = np.block([[self.sigma0 * I, -self.sigma0 * I], [-self.eta * I, self.eta * I]])
+        om = np.fft.fftfreq(N, d=1.0 / N) * (2 * np.pi / self.T0)
+        return t, K, Lam, om
+
+    def chang(self, eps, N=512, mismatch=None, tol=1e-16, maxit=500):
+        """Lemma D‴.26a(i): the T₀-periodic P(t; ε) whose graph w = PY is invariant under εẇ = −(1 − εa_mis)w − KY, Ẏ = ε(Kᵀw − ΛY) (δe = εw,
+        ε = 1/k_e): εṖ + P = −K + εa_misP − ε²P(KᵀP − Λ), by the contraction P ← 𝒢F(P), 𝒢 the periodic solution of εu̇ + u = g (a division by
+        1 + iεω on the Fourier grid; anti-causal for ε < 0, where the same equation defines the slow block at negative ε). `mismatch`: the
+        samples of a derivative mismatch a_mis(t) in the error channel (default none). Returns (P (N, n, q), A = KᵀP − Λ (N, q, q), the
+        iterations, the invariance residual max|εṖ + P − F(P)|)."""
+        t, K, Lam, om = self.chang_grid(N)
+        F = lambda P: (-K - eps ** 2 * np.einsum('tij,tjk->tik', P, np.einsum('tji,tjk->tik', K, P) - Lam[None])
+                       + (0.0 if mismatch is None else eps * np.asarray(mismatch)[:, None, None] * P))
+        P = -K.copy()
+        for it in range(maxit):
+            Pn = np.real(np.fft.ifft(np.fft.fft(F(P), axis=0) / (1 + 1j * eps * om)[:, None, None], axis=0))
+            dP = np.abs(Pn - P).max(); P = Pn
+            if dP < tol:
+                break
+        Pd = np.real(np.fft.ifft((1j * om)[:, None, None] * np.fft.fft(P, axis=0), axis=0))
+        res = float(np.abs(eps * Pd + P - F(P)).max())
+        A = np.einsum('tji,tjk->tik', K, P) - Lam[None]
+        return P, A, it, res
+
+    def slow_generator(self, eps, N=512, mismatch=None, rtol=1e-13):
+        """Lemma D‴.26a(iii): Ā(ε) = log Φ(ε)/(εT₀), Φ the monodromy of the slow block Ẏ = εA(t)Y (A from `chang`, interpolated
+        trigonometrically), whose eigenvalues' real parts are minus the slow-time rates; and the Magnus parameter εT₀max_t‖A‖₂ (the full
+        Magnus series converges below π). Returns (Ā, the parameter)."""
+        from scipy.linalg import logm
+        t, K, Lam, om = self.chang_grid(N)
+        A = self.chang(eps, N, mismatch)[1]
+        q = A.shape[1]
+        Ah = np.fft.fft(A, axis=0) / N
+        Aat = lambda s: np.real(np.einsum('k,kij->ij', np.exp(1j * om * s), Ah))
+        sol = solve_ivp(lambda s, y: (eps * Aat(s) @ y.reshape(q, q)).ravel(), (0.0, self.T0), np.eye(q).ravel(), method='DOP853',
+                        rtol=rtol, atol=1e-16)
+        Phi = sol.y[:, -1].reshape(q, q)
+        return np.real(logm(Phi)) / (eps * self.T0), float(abs(eps) * self.T0 * max(np.linalg.norm(a, 2) for a in A))
+

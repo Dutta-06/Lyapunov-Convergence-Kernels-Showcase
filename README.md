@@ -54,7 +54,7 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   representable sample, leaving a larger coupled distance of the amplitude–mass gauge in the parameters (Proposition D‴.24, checked in two
   dimensions as well); perfect tracking with an adaptive prior is exponentially stable in the real loop, with a Floquet spectrum that does
   not depend on the number of kernels and an expansion in 1/k_e with only even powers, whose second-order term — the error filter's
-  attenuation — is explicit (Corollary D‴.26); a projected adaptive prior restores the leak's a-priori bound (Proposition D‴.27); and the
+  attenuation — is explicit (Corollary D‴.26), the expansion proved with an exact parity by Chang's decoupling (Lemma D‴.26a); a projected adaptive prior restores the leak's a-priori bound (Proposition D‴.27); and the
   adaptive prior's removal of the floor is a property of the amplitude–mass gauge, so it survives an approximation error, the regime of
   real plants (Proposition D‴.28); and with the sliding variable the averaged loop and all of the above transfer to second-order plants,
   checked on a position servo with an unknown cogging torque (Proposition D‴.29); and measurement noise is coherent across the kernels
@@ -172,7 +172,7 @@ n = 3 and NTK results contradict them.
 | [review/](review) | review log, raw adversarial-review reports for rounds 1–3 and 5–18, archived version 2 of the theory |
 | `src/core/` | `transport.py` (laws (L), (L_σ), OT assignment, and the barycentric leak of Theorem C′), `langevin.py` (Theorem H), `chaos_learning.py` (Theorem D‴), `prior_design.py` (Proposition D‴.9), `ot_leak.py` (Proposition D‴.12), `lifted_orbit.py` (Corollary D‴.14, Proposition D‴.15), `entropic_leak.py` (Proposition D‴.20), `ot_basin.py` (Theorem D‴.21), `adaptive_prior.py` (Theorem D‴.23), `floor_bias.py` (Proposition D‴.24), `planar_loop.py` (the averaged loop on ℝⁿ), `adaptive_floquet.py` (Corollary D‴.26), `sliding.py` (Proposition D‴.29: second-order plants, the sliding-variable reduction), `measurement_noise.py` (Propositions D‴.30 and D‴.31), `averaging.py` (Proposition H.7), `excitation.py` (Lemma E.0, the explicit constants of Theorem E), `nonreciprocity.py` (Theorem I), `periodic.py` (Theorem J and Proposition K), `dither.py` (Theorem J′: the single-kernel instance, the Gibbs grid with its Poisson and Fokker–Planck solvers, the vectorised dithered loop), and the original controller, projection, kernel and plant code |
 | `src/baselines/` | σ- and e-modification baselines |
-| [tests/](tests) | 154 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
+| [tests/](tests) | 157 tests that evaluate the theorems' inequalities on simulated trajectories and sampled states |
 | [experiments/](experiments) | one script per table or figure; outputs go to `results/<name>/` |
 | [results/](results) | tables, figures and saved raw runs |
 
@@ -181,7 +181,7 @@ n = 3 and NTK results contradict them.
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt        # Windows: venv\Scripts\pip install -r requirements.txt
-python -m pytest tests                          # 154 tests, about 20 minutes
+python -m pytest tests                          # 157 tests, about 20 minutes
 python experiments/exp_transport_permutation.py # each experiment writes results/<name>/
 ```
 

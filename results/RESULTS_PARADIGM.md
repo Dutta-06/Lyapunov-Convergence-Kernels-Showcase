@@ -639,6 +639,19 @@ property). On an asymmetric reference: Ā₁ non-zero and skew, ℓ_jĀ₁r_j = 
 second-order coefficient the explicit c₁, the error channel by Liouville's formula; at η = 10σ₀ Ā₀ self-adjoint in the metric and not in
 I, Ā₁ skew in it.
 
+## Lemma D‴.26a — the exact slow subspace: Corollary D‴.26(c) and Proposition D‴.30(ii) proved for the linearised loop (`exp_adaptive_floquet.py` Part D → `chaos/adaptive_floquet.md`)
+
+- Corollary D‴.26's instance on the asymmetric reference x_m = 2 sin t + 0.8 sin 2t, η = σ₀ and ∞, k_e = 12.5–400.
+- Chang's slow subspace: the contraction in 4–9 iterations to an invariance residual ≤ 3.8·10⁻¹⁵; |P − P₂|/ε³ → 3.3·10³; the slow
+  block's rates the full variational equation's to ≤ 1.5·10⁻⁹.
+- The parity as an identity: the rates at ±ε equal to ≤ 1.6·10⁻¹² while their first-order deviation is 9.5·10⁻²–1.4·10⁻⁴; a mismatch in
+  the error channel breaks the equality at O(1/k_e) (1.1·10⁻² → 3.1·10⁻⁴); the Magnus parameter ≤ 0.48.
+- The slow noise: the decoupling residual ≤ 3·10⁻¹⁶; b against −(K̇ + aK)ᵀ at O(1/k_e) (63% → 3.0%); at t = 0 Cov(v)·2ε³ → 1,
+  E[vY′ᵀ] → −bᵀ at O(1/k_e), Cov(Y′) → Σ̄ (0.36 → 0.0011); the floor at t = 0 at 0.755 → 0.9995 of the slow-plus-fast value.
+
+Tests (`tests/test_adaptive_floquet.py`): Chang's P with the exact slow multipliers and the ε³ truncation; the rates exactly even in ε at
+η = σ₀ and ∞, a mismatch breaking it; the slow noise decoupled and high-passed, the covariances at their leading orders.
+
 ## Proposition D‴.27 — a projected adaptive prior (`exp_adaptive_prior.py` Part H → `chaos/adaptive_prior.md`)
 
 - The box 𝒵 (unconstrained coordinates): α ∈ [−5.889, 5.889], γ ∈ [−4.417, 4.417] (amplitudes and centres to 0.9 of a_max and c_max),
