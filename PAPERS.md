@@ -207,3 +207,29 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   parameters' errors in variables (Richardson–Romberg extrapolation in k_e or the gain, as for constant-step SGD, is a candidate); second-order
   plants (Proposition D‴.29) and a servo with a realistic sensor (quantisation, delay).
 - **Venue.** IEEE Trans. Automatic Control or Automatica (a technical note); Systems & Control Letters.
+
+### 13. Prior-free kernel selection: a cohesion leak for mean-field adaptive networks
+
+- **Claim.** A leak that pulls each kernel toward the mean shift of the network's own parameter distribution — the particles attract
+  each other with a finite-range or Gaussian kernel, no prior, no atom count, no plan — is the gradient flow of the fit plus an
+  aggregation energy and acts exactly on the unexcited subspace at clustered configurations: there it has no bias (finite range), so
+  every critical point of the unregularised weighted loss is stationary, for every number of classes and every set of masses; it holds
+  the separations at σ₀w_k and leaves the collective modes to the fit; a class splits exactly when its residual curvature exceeds σ₀w_k
+  (an exact representation is never over-split), so σ₀ sets the resolution; and under the Gaussian kernel duplicated and dead kernels
+  merge. In the real loop the lift of an exact representation is periodic with the separation exponents σ₀w_k/k_e and the η = ∞
+  adaptive prior's collective spectrum, and with the desired regressor (Corollary D‴.33) the classes' noise threshold is bounded below
+  uniformly in the gain.
+- **Rests on.** Proposition D‴.32 ((i)–(iii) proved; (iv) proved for the stationary points and their linearisation; (v) proved for twins,
+  the dead class via the modes of a separated Gaussian mixture; (vi) the lift exact, the collapsed exponents by Corollary D‴.26 and
+  Lemma D‴.26a), Corollary D‴.33, `exp_cohesion_leak.py` (the linear theory, warm and broad starts, the real loop, dither, the cogging
+  servo, the σ₀ sweep, other targets).
+- **Novelty (audit).** Mean shift, aggregation equations, bounded-confidence clustering, splitting steepest descent and self-organising
+  RBF networks are classical ([S60]); new is their use as a leak in mean-field adaptive control: the exact action on the unexcited
+  subspace, the absence of bias at every clustered critical point, the splitting margin σ₀w_k − (q_k/w_k)λ⁺_k as a resolution law, the
+  merging of degenerate classes, and the real-loop spectrum.
+- **Missing.** The transit from a spread cloud (which classes form, with which masses — the memory of the transit: a split sheds single
+  particles, so below the resolution's threshold the count overshoots, and on a five-bump target the transit's masses are not
+  representable); a mass transfer between classes (a Fisher–Rao or birth–death component) as its remedy; the basin uniform in m; a scale R
+  chosen from the data (the count depends on R through the merging, Part C); the a-priori bound (the leak is internal — a projection,
+  Proposition D‴.27, is the remedy).
+- **Venue.** SIAM J. Control Optim. or IEEE TAC (theory); NeurIPS/ICML-style venues for the mean-field network regulariser.

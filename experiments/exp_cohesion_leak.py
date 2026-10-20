@@ -51,8 +51,14 @@ G. The resolution: the model order against σ₀. The fourth bump (ε = 0.3) and
    class means with the current residual (a class splits iff its margin is negative, Proposition D‴.32(iv)), at its end the clusters
    and the fit error.
 
-Output: results/chaos/cohesion_leak.md and cohesion_leak_raw.npz (CO_WORKERS, CO_OUT; `--only A,B,C,D,E,F,G` runs the listed parts and
-merges them into the raw file; `--from-raw` regenerates the md).
+H. Other targets: two, four and five bumps (the four-bump target is Part A3's and G's f_ε; the five-bump one has narrower bumps, s_min =
+   0.2), the annealed Gaussian schedule of Part C (R = 2, then R = 1, 20000 slow units each) from broad starts, m = 60, three seeds: the
+   number of clusters and the fit error after each stage, the classes at the end (masses, centres, widths, |a|/a_max), against the target's
+   bump count and the best K-atom fit error at the target's count.
+
+Output: results/chaos/cohesion_leak.md and cohesion_leak_raw.npz (CO_WORKERS, CO_OUT; `--only A,B,C,D,E,F,G,H` runs the listed parts and
+merges them into the raw file; `--from-raw` regenerates the md; `--merge raw1,raw2,…` merges the parts stored in other raw files —
+written with CO_OUT pointing elsewhere — into this one and regenerates the md).
 """
 import os
 import sys
@@ -533,6 +539,29 @@ def g_job(seed):
     return dict(seed=seed, stages=stages)
 
 
+# ---------------------------------------------------------------------------- H. other targets
+TARGETS_H = {'two': [(1.0, -1.0, 0.5), (-0.8, 1.0, 0.45)],
+             'four': BUMPS + [(0.3, EXTRA[0], EXTRA[1])],                       # Part A3's and G's f_ε, ε = 0.3
+             'five': [(0.9, -1.6, 0.35), (-0.6, -0.8, 0.3), (0.7, 0.0, 0.35), (-0.5, 0.8, 0.3), (0.8, 1.6, 0.35)]}
+SEEDS_H, M_H = (0, 1, 2), 60
+
+
+def h_job(args):
+    """A broad start (Part C's distribution, the seed) under the annealed Gaussian cohesion leak (R_BROAD then R_FINE) on target `name`."""
+    name, seed = args
+    t0 = time.time()
+    bumps = TARGETS_H[name]
+    fv = lambda X: sum(A * np.exp(-(np.asarray(X, float) - C) ** 2 / (2 * S ** 2)) for A, C, S in bumps)
+    net = L.SaturatedLiftedNetwork(1, **dict(NET_KW, s_min=0.2 if name == 'five' else NET_KW['s_min']))
+    base = AveragedSlowLoop(net, fv, x_ref, PER, G, SIGMA0, n_quad=N_Q)
+    Th = CO.CohesionLoop(base, R_BROAD, 'gauss').run(broad(net, M_H, seed), S_C1, DT)
+    mid = describe(net, base, Th)
+    Th = CO.CohesionLoop(base, R_FINE, 'gauss').run(Th, S_C2, DT)
+    print(f"[{time.time() - t0:.0f}s] H {name} seed {seed}", flush=True)
+    return dict(name=name, seed=seed, K_true=len(bumps), mid=dict(K=mid['K'], fit=mid['fit']), end=describe(net, base, Th),
+                need=float(sum(abs(b[0]) for b in bumps) / net.a_max))
+
+
 # ---------------------------------------------------------------------------- F. the cogging servo
 SV_NET = dict(a_max=4.0, c_max=1.6, s_min=0.05, s_max=1.0)
 SV_SIGMA0, SV_NQ, SV_R0, SV_R1, SV_S1, SV_S2, SV_M = 0.01, 400, 0.7, 0.35, 20000.0, 60000.0, 64
@@ -592,7 +621,7 @@ def fmt(x, p=3):
     return f'{x:.{p}g}' if abs(x) >= 1e-3 or x == 0 else f'{x:.{p - 1}e}'.replace('e-0', 'e-').replace('e+0', 'e+')
 
 
-def report(A, B, C, D, E=None, F=None, Gs=None):
+def report(A, B, C, D, E=None, F=None, Gs=None, H=None):
     L_ = ['# Proposition D‴.32: the cohesion leak — a leak on the unexcited subspace, without a prior', '',
           f'The three-bump instance (σ₀ = 0.15σ_crit = {SIGMA0:.6g}); the averaged slow loop with the cohesion leak dϑ_i/ds = G⟨∇(r Φ̃)⟩ − (σ₀/m)Σ_jψ(‖ϑ_i − ϑ_j‖²/R²)(ϑ_i − ϑ_j), ψ compact (1 − z)³₊ or Gaussian e^(−z/2); midpoint rule dt = {DT}.', '']
     if A is not None:
@@ -652,14 +681,14 @@ def report(A, B, C, D, E=None, F=None, Gs=None):
             L_.append(f"| {r['leak']} | {r['m']} | {r['seed']} | {e['K']} | {fmt(e['fit'])} | {', '.join(f'{v:.3f}' for v in show[:, 0])}{' …' if len(cl) > 6 else ''} | {np.abs(cl[:, 1]).max() / NET_KW['a_max']:.3f} | {', '.join(f'{v:+.3f}' for v in show[:, 2])} | {', '.join(f'{v:.3f}' for v in show[:, 3])} |")
         L_.append('')
     if D is not None:
-        F = D['floquet']
+        FQ = D['floquet']
         L_ += ['## D. The real closed loop (k_e = 25)', '', f"### D1. The Floquet exponents of the lift (counts (6, 5, 4), compact R = {R_WARM:g})", '',
-               f"The lift returns after one period to {fmt(F['ret'])}. Slow exponents (rates per unit time):", '']
-        rates = F['rates']
-        sep = F['sep_pred']; nsep = len(sep)
+               f"The lift returns after one period to {fmt(FQ['ret'])}. Slow exponents (rates per unit time):", '']
+        rates = FQ['rates']
+        sep = FQ['sep_pred']; nsep = len(sep)
         slow = rates[rates < 1.0]
         # the separations: the exponents nearest σ₀w_k/k_e
-        coll = F['coll']; ncoll = len(coll[coll < 1.0])
+        coll = FQ['coll']; ncoll = len(coll[coll < 1.0])
         L_.append(f"- {len(slow)} slow exponents ({nsep} separations predicted at σ₀w_k/k_e = {', '.join(fmt(v) for v in sorted(set(np.round(sep, 12))))}, {ncoll} collective).")
         # match: sort the slow exponents and the predictions together
         pred = np.sort(np.concatenate([sep, coll[coll < 1.0]]))
@@ -701,13 +730,24 @@ def report(A, B, C, D, E=None, F=None, Gs=None):
     if Gs is not None:
         L_ += ['## G. The resolution: the model order against σ₀ (the fourth bump, m = 30, compact R = 1)', '',
                f'σ₀ lowered stage by stage ({S_G:g} slow units each, the jitter 10⁻³ renewed at each start). Per stage: the clusters at its start, their '
-               'masses and the predicted margins σw_k − λ_max(R^G_k) (negative: the class splits), the clusters and the fit error at its end.', '',
-               '| seed | σ/σ₀ | clusters at the start | masses | margins | negative | clusters at the end | fit error |', '|---|---|---|---|---|---|---|---|']
+               'masses and the predicted margins σw_k − λ_max(R^G_k) (negative: the class is unstable; a class of one particle has no separations), the number of classes of two or more particles with a negative margin, the clusters and the fit error at its end.', '',
+               '| seed | σ/σ₀ | clusters at the start | masses | margins | negative (n_k ≥ 2) | clusters at the end | fit error |', '|---|---|---|---|---|---|---|---|']
         for r in sorted(Gs, key=lambda r: r['seed']):
             for st in r['stages']:
                 order = np.argsort(-st['masses'])
                 L_.append(f"| {r['seed']} | {st['frac']:g} | {st['K_start']} | {', '.join(f'{v:.3f}' for v in st['masses'][order])} | "
-                          f"{', '.join(fmt(v) for v in st['margins'][order])} | {int(np.sum(st['margins'] < 0))} | {st['K_end']} | {fmt(st['fit'])} |")
+                          f"{', '.join(fmt(v) for v in st['margins'][order])} | {int(np.sum((st['margins'] < 0) & (st['masses'] * M_G > 1.5)))} | {st['K_end']} | {fmt(st['fit'])} |")
+        L_.append('')
+    if H is not None:
+        L_ += ['## H. Other targets (the annealed Gaussian schedule, broad starts, m = 60)', '',
+               'Σ_k|A_k|/a_max is the least total mass with which the target is representable (an exact representation needs w_k ≥ |A_k|/a_max).', '',
+               '| target | bumps | Σ|A_k|/a_max | seed | clusters after R = 2 | fit error | clusters at the end | fit error | masses | centres | widths | |a|/a_max (max) |',
+               '|---|---|---|---|---|---|---|---|---|---|---|---|']
+        for r in sorted(H, key=lambda r: (r['K_true'], r['seed'])):
+            cl = r['end']['clusters']
+            L_.append(f"| {r['name']} | {r['K_true']} | {r['need']:.3f} | {r['seed']} | {r['mid']['K']} | {fmt(r['mid']['fit'])} | {r['end']['K']} | {fmt(r['end']['fit'])} | "
+                      f"{', '.join(f'{v:.3f}' for v in cl[:8, 0])}{' …' if len(cl) > 8 else ''} | {', '.join(f'{v:+.3f}' for v in cl[:8, 2])}{' …' if len(cl) > 8 else ''} | "
+                      f"{', '.join(f'{v:.3f}' for v in cl[:8, 3])}{' …' if len(cl) > 8 else ''} | {np.abs(cl[:, 1]).max() / NET_KW['a_max']:.3f} |")
         L_.append('')
     return '\n'.join(L_) + '\n'
 
@@ -729,10 +769,20 @@ def main():
     md = os.path.join(OUT, 'cohesion_leak.md')
     args = sys.argv[1:]
     old = load(raw)
+    if '--merge' in args:                                                    # parts computed elsewhere (CO_OUT=… --only X) merged into this raw
+        merged = dict(old)
+        for path in args[args.index('--merge') + 1].split(','):
+            other = load(path)
+            assert other, path
+            merged.update(other)
+            print(f"merged {sorted(other)} from {path}", flush=True)
+        save(raw, **merged)
+        old = merged
+        args = args + ['--from-raw']
     if '--from-raw' in args:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F'), old.get('G')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('D'), old.get('E'), old.get('F'), old.get('G'), old.get('H')))
         return
-    parts = set('ABCDEFG')
+    parts = set('ABCDEFGH')
     if '--only' in args:
         parts = set(args[args.index('--only') + 1].split(','))
     from multiprocessing import Pool
@@ -753,6 +803,8 @@ def main():
             asyncs['F'] = pool.map_async(f_job, [('coh', s) for s in (0, 1, 2)] + [('best', K) for K in (4, 6, 8)])
         if 'G' in parts:
             asyncs['G'] = pool.map_async(g_job, list(SEEDS_G))
+        if 'H' in parts:
+            asyncs['H'] = pool.map_async(h_job, [(name, s) for name in TARGETS_H for s in SEEDS_H])
         if 'A' in parts:
             res['A'] = part_A()
             save(raw, **res)
@@ -769,7 +821,9 @@ def main():
             res['F'] = asyncs['F'].get(); save(raw, **res)
         if 'G' in parts:
             res['G'] = asyncs['G'].get(); save(raw, **res)
-    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F'), res.get('G')))
+        if 'H' in parts:
+            res['H'] = asyncs['H'].get(); save(raw, **res)
+    open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('D'), res.get('E'), res.get('F'), res.get('G'), res.get('H')))
 
 
 if __name__ == '__main__':

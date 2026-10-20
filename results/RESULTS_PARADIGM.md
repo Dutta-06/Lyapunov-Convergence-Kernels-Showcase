@@ -812,6 +812,38 @@ noise's variance), the regressor's point in the law; DR's and DR*'s noise forces
 three orders of magnitude above; the quasi-static forces against the full second-order mean, the parameters' part above 1% for DR and
 DR*, below 10⁻⁵ for MR.
 
+## Proposition D‴.32 — the cohesion leak: a leak on the unexcited subspace, without a prior (`exp_cohesion_leak.py` → `chaos/cohesion_leak.md`)
+
+- The three-bump instance (σ₀ = 0.15σ_crit), the averaged slow loop. (A) At each of the 15 count vectors of m = 15 the lift of ϑ^e(w) is
+  stationary (the largest drift 2.8·10⁻¹⁷ under the compact kernel, 6.2·10⁻¹⁰ under the Gaussian) with (iii)'s spectrum to 2.8·10⁻¹¹ and
+  4.6·10⁻⁹: the separations at σ₀w_k, the collective modes the unregularised flow's. The Gaussian kernel's bias is 2.1·10⁻⁸, 1.3·10⁻³ and
+  0.068 (whitened) at R = 1, 1.5, 2, at its first order to 6·10⁻⁸–1.0% (56% off at R = 3, where the classes overlap). The splitting margins
+  σ₀w_k − (q_k/w_k)λ⁺_k are the Jacobian's to 2·10⁻¹¹; at σ₀/8 the class with the margin −1.22·10⁻⁴ splits (3 → 4 classes, the fit error
+  0.017 → 0.0148). Twins and a dead class merge under the Gaussian kernel and persist under the compact one.
+- (B) From warm clouds (m = 15, 60, 240) both kernels remove the floor as the adaptive prior does (‖f̂_m − f̂_M‖² at s = 6000 within its
+  ranges, against the fixed prior's floor 3.0·10⁻⁴–5.5·10⁻³ at m = 15).
+- (C) From broad starts the annealed Gaussian kernel (R = 2, then R = 1) ends at the target's three classes in 9 of 9 runs, the fit error
+  1.8·10⁻⁷–2.3·10⁻⁶ — as the adaptive prior told K₀ = 3 (4.2·10⁻⁹–2.1·10⁻⁶); told K₀ = 2 it ends biased (0.13–0.19), told K₀ = 4 with a bump
+  split (5.4·10⁻⁴–5.6·10⁻³); the σ-modification ends at 0.24, no leak at 40–48 classes, the compact kernel without the broad stage at 17–22.
+- (D) The real loop (k_e = 25): the lift returns after a period to 7.8·10⁻¹⁶, and its 45 slow Floquet exponents (36 separations at
+  σ₀w_k/k_e) are the predicted ones to 5.5·10⁻⁶; from warm clouds the rms tracking error at t ≈ 2900 is 5.8·10⁻⁴ (m = 15) and 2.4·10⁻⁴
+  (m = 60), against the fixed prior's 1.3·10⁻³ and 3.9·10⁻⁴.
+- (E) Under the dither τ = 10⁻⁵ the within-class spread settles at 0.066–0.077 against τ/(σ₀w_k)'s 0.065 (the fixed prior's 0.035–0.040
+  against τ/σ₀'s 0.038; without a leak it diffuses, 0.44–0.56).
+- (F) On the cogging servo the leak settles on 7–8 classes with the fit error 0.14%–0.35%, below the four-kernel designs of Proposition D‴.29
+  (1.46%, 0.64%) and above the best equal-weight six- and eight-kernel fits.
+- (G) σ halved stage by stage from σ₀ to σ₀/64 (the fourth bump, m = 30): no split down to σ₀/8 (the predicted threshold 0.121σ₀), the
+  middle class splitting at σ₀/16 in every seed; no class with a positive margin split, all 8 with a margin below −5·10⁻⁵ did. A split
+  sheds single particles: 8–10 classes at σ₀/64, five to seven of them of one particle, the fit error 0.0028–0.0031.
+- (H) Two bumps: two classes, the fit error ≤ 1.6·10⁻⁸; the four-bump f_ε: three classes (0.0174), the fourth bump below the resolution;
+  five bumps (Σ_k|A_k|/a_max = 0.875): 6–9 classes, biased (0.045–0.118) — the transit's masses are not representable.
+
+Tests (`tests/test_cohesion_leak.py`): the drift equals −G∇J^coh_m (central differences) and J^coh_m decreases along the flow, for both
+kernels; the forces sum to zero and equal σ₀ × the kernel mass × the mean-shift vector; at the exact representation for the counts
+(3, 2, 2) and (4, 3, 3) the drift vanishes and the Jacobian's spectrum is the predicted one to 10⁻⁹; at the best one-atom fit the top
+separation eigenvalue is λ⁺ − σ₀w, stable at σ₀ and split at λ⁺/2; twins merge under the Gaussian kernel and persist beyond the compact
+range; the real loop's lift is T₀-periodic and a separation contracts by e^{−σ₀w_kT₀/k_e} per period to 10⁻⁶.
+
 ## Corollary D‴.33 — the desired regressor keeps the replicated configuration attracting under measurement noise (`exp_eiv_remedy.py` Part D → `chaos/eiv_remedy.md`)
 
 - Proposition D‴.30's instance (k_e = 25, OU noise B = 100). At the lift the separations' second-order drift (real time, per unit Eν²) has
