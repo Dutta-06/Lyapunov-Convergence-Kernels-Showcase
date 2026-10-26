@@ -73,3 +73,14 @@ def test_only_each_amplitudes_own_noise_variance_drives_its_class():
         tau_k = np.diag(S)[0::3] / (2 * G9[0])
         ub = GN.averaged_fitness(gradJ, u, t, S, G9)[0]
         assert np.abs(ub / (-(tau_k / 3) * (1 + q) / (W * (1 - q))) - 1).max() < 1e-5
+
+
+def test_the_weighted_analytic_centre():
+    import exp_gauge_fixman as Q
+    import exp_gauge_noise as N
+    assert np.abs(N.w_sharp_weighted([1.0, 1.0, 1.0]) - Q.w_sharp()).max() < 1e-12
+    tk = N.levels(N.noises()['correlated 1'])
+    w = N.w_sharp_weighted(tk)
+    Wm = np.abs(E.A_BUMP) / 4.0
+    grad = tk * (1 + Wm ** 2 / w ** 2) / (w - Wm ** 2 / w)                   # Lagrange: the weighted partials equal
+    assert abs(w.sum() - 1) < 1e-12 and np.ptp(grad) < 1e-9 * grad.mean()
