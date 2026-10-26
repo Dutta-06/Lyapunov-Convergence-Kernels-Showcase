@@ -55,3 +55,21 @@ def test_the_trace_formula_reduces_to_the_log_determinant_for_isotropic_noise_an
     assert np.abs(flow(amp) - flow(iso)).max() < 1e-5 * np.abs(flow(iso)).max()
     cs = GN.averaged_fitness(gradJ, u, t, 2 * tau * np.diag(np.tile([0.0, 0.25, 0.25], 3)), G9)[0]
     assert np.abs(flow(cs)).max() < 1e-5 * np.abs(flow(iso)).max()
+
+
+def test_only_each_amplitudes_own_noise_variance_drives_its_class():
+    # the generator identity: ū_k = −τ_k E[g′_k(α_k)], τ_k = Σ_{α_kα_k}/(2G_α), g_k = a_k/(β_k a′_k), so to leading order
+    # ū_k = −(τ_k/m)(1 + (a_k/a_max)²)/(W_k a′_k) — for a correlated noise on all nine coordinates, the correlations and the centres' and
+    # widths' noise dropping out
+    W = np.array([0.30, 0.35, 0.35])
+    net, base, loop, beta, G9, gradJ, u = _instance(W)
+    t = E.exact_rep(net, W).ravel()
+    a = base.features(E.exact_rep(net, W))[0]
+    q = (a / net.a_max) ** 2
+    rng = np.random.default_rng(11)
+    for _ in range(2):
+        L = rng.standard_normal((9, 9))
+        S = 2e-4 * 0.3 * (L @ L.T)
+        tau_k = np.diag(S)[0::3] / (2 * G9[0])
+        ub = GN.averaged_fitness(gradJ, u, t, S, G9)[0]
+        assert np.abs(ub / (-(tau_k / 3) * (1 + q) / (W * (1 - q))) - 1).max() < 1e-5

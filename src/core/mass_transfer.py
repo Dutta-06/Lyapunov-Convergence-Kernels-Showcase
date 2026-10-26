@@ -38,7 +38,8 @@ class ReplicatorCohesionLoop:
         self.sigma0 = base.sigma0 if sigma0 is None else float(sigma0)
         self.gamma, self.balanced = float(gamma), bool(balanced)
         self.eps = float(eps)                     # Proposition D‴.36: the entropic leak on the masses, energy (ε/γ)Σβ_i log β_i
-        self.fixman, self.fixman_tau = float(fixman), float(fixman_tau)   # Proposition D‴.38: the gain κ_F and the dither's τ
+        self.fixman = float(fixman)                                       # Proposition D‴.38: the gain κ_F,
+        self.fixman_tau = np.asarray(fixman_tau, float)                   # the dither's τ, or the classes' amplitude-noise levels τ_k (D‴.40)
         self.fixman_A = None if fixman_A is None else np.array(fixman_A, float)   # the classes' contributions Â_k (the masses form)
         self.fixman_TA = fixman_TA                                        # their running average's time constant (None: fixed)
         self.box = None if box is None else np.asarray(box, float)          # Proposition D‴.39: the dead zone's half-widths (L_α, L_γ, L_κ)
@@ -126,15 +127,18 @@ class ReplicatorCohesionLoop:
         return Th, np.exp(lb)
 
 
-    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None, mask=None):
+    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None, mask=None, noise_L=None):
         """Proposition D‴.36: the positions dithered (Euler–Maruyama, the noise √(2τG) per particle), the weights by the midpoint-free Euler
         step of (𝔉) on log β, renormalised to Σβ = m; callback(s, Θ, β) at the records. `mask` (p,) scales the noise per coordinate
-        (Proposition D‴.40: (0, 1, 1) dithers the centres and widths only); the random draws are the same with or without it."""
+        (Proposition D‴.40: (0, 1, 1) dithers the centres and widths only); the random draws are the same with or without it. `noise_L`
+        (mp × mp) replaces the noise by √dt·L ξ, covariance Σ = LLᵀ per unit time on the flattened positions (τ and mask then unused)."""
         Th, lb = np.array(Th, float), np.log(np.array(beta, float))
         m = Th.shape[0]
         sq = np.sqrt(2.0 * tau * dt * self.G)[None, :]
         if mask is not None:
             sq = sq * np.asarray(mask, float)[None, :]
+        if noise_L is not None:
+            Ld = np.sqrt(dt) * np.asarray(noise_L, float)
         n = int(round(S_end / dt))
         for k in range(n + 1):
             b = np.exp(lb)
@@ -145,7 +149,7 @@ class ReplicatorCohesionLoop:
             dT, db = self.drift(Th, b)
             if self.fixman_A is not None and self.fixman_TA:                  # the contributions' running average (Proposition D‴.38)
                 self.fixman_A = self.fixman_A + (dt / self.fixman_TA) * (b / m * self.base.features(Th)[0] - self.fixman_A)
-            Th = Th + dt * dT + sq * rng.standard_normal(Th.shape)
+            Th = Th + dt * dT + (sq * rng.standard_normal(Th.shape) if noise_L is None else (Ld @ rng.standard_normal(Th.size)).reshape(Th.shape))
             lb = lb + dt * db / b
             if self.balanced:
                 lb = lb - np.log(np.exp(lb).sum() / m)
