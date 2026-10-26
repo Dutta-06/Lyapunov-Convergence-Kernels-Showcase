@@ -1,6 +1,6 @@
 # Proposition D‴.38: a Fixman correction for the replicator under dither (`exp_gauge_fixman.py`)
 
-Proposition D‴.36's instance (three bumps, one particle per class at an exact representation, m = 3, the positions dithered at τ = 0.0001); the correction adds κ_F(τ/m)(1 + (a_k/a_max)²)/(W_k a′_k) to the replicator's fitness; drifts per unit slow time, W_k = β_k/3.
+Proposition D‴.36's instance (three bumps, one particle per class at an exact representation, m = 3, the positions dithered at τ = 0.0001); the correction adds κ_F(τ/m)(1 + W_min,k²/W_k²)/(W_k − W_min,k²/W_k) to the replicator's fitness, with W_min,k = W_k|a_k|/a_max at the current amplitudes (the plug-in form, κ_F(τ/m)(1 + (a_k/a_max)²)/(W_k a′_k)) or W_min,k = |Â_k|/a_max from the classes' contributions (the masses form), equal on the manifold of exact fits (Parts A–C hold for both); drifts per unit slow time, W_k = β_k/3.
 
 ## A. The cancellation (κ_F = 1)
 
@@ -41,14 +41,14 @@ Proposition D‴.36's instance (three bumps, one particle per class at an exact 
 
 W♯ = argmax ℓ on the simplex: 0.37652, 0.29876, 0.32472 (|a|/a_max there 0.664, 0.586, 0.616).
 
-| κ_F | γ | the zero (Newton from W♯) | its distance from W♯ | the Jacobian's eigenvalues (per unit slow time) | the residual |
-|---|---|---|---|---|---|
-| 1 | 0.01 | 0.37857, 0.29714, 0.32429 | 2.0e-03 | -5.47e-7, -4.53e-7 | 4.7e-10 |
-| 1 | 0.001 | 0.39147, 0.28607, 0.32246 | 1.5e-02 | 1.93e-9, 1.60e-9 | 7.4e-11 |
-| 1 | 0.0001 | 0.38806, 0.28925, 0.32269 | 1.2e-02 | 3.04e-11, 2.86e-11 | 4.7e-11 |
-| 2 | 0.01 | 0.37670, 0.29862, 0.32468 | 1.8e-04 | -6.37e-6, -5.69e-6 | 7.1e-10 |
-| 2 | 0.001 | 0.37648, 0.29879, 0.32473 | 4.4e-05 | -6.72e-7, -5.93e-7 | 3.6e-10 |
-| 2 | 0.0001 | 0.37652, 0.29876, 0.32472 | 5.4e-06 | -6.84e-8, -6.03e-8 | 4.2e-11 |
+| κ_F | γ | the zero (Newton from W♯) | its distance from W♯ | the Jacobian's eigenvalues (per unit slow time) | the residual | the stationary std of the limit SDE linearised there |
+|---|---|---|---|---|---|---|
+| 1 | 0.01 | 0.37857, 0.29714, 0.32429 | 2.0e-03 | -5.47e-7, -4.53e-7 | 4.7e-10 | — |
+| 1 | 0.001 | 0.39147, 0.28607, 0.32246 | 1.5e-02 | 1.93e-9, 1.60e-9 | 7.4e-11 | — |
+| 1 | 0.0001 | 0.38806, 0.28925, 0.32269 | 1.2e-02 | 3.04e-11, 2.86e-11 | 4.7e-11 | — |
+| 2 | 0.01 | 0.37670, 0.29862, 0.32468 | 1.8e-04 | -6.37e-6, -5.69e-6 | 7.1e-10 | — |
+| 2 | 0.001 | 0.37648, 0.29879, 0.32473 | 4.4e-05 | -6.72e-7, -5.93e-7 | 3.6e-10 | — |
+| 2 | 0.0001 | 0.37652, 0.29876, 0.32472 | 5.4e-06 | -6.84e-8, -6.03e-8 | 4.2e-11 | — |
 
 ## C. The saturation: the density's exponent near the first class's saturation (γ = 0.01, W_2 = W_3)
 
@@ -58,7 +58,7 @@ W♯ = argmax ℓ on the simplex: 0.37652, 0.29876, 0.32472 (|a|/a_max there 0.6
 | 1 | -0.001, -0.003, -0.004, -0.003 | +0 |
 | 2 | +0.987, +0.983, +0.980, +0.977 | +1 |
 
-## D. The full loop over 1e+06 slow units (γ = 0.01, 12 seeds; κ_F = 0 from exp_gauge_drift.py's Part H, the same seeds)
+## D. The full loop over 1e+06 slow units, the plug-in form (γ = 0.01, 12 seeds; κ_F = 0 from exp_gauge_drift.py's Part H, the same seeds)
 
 | κ_F | s | mean of W_1, W_2, W_3 (± s.e.) | std | the largest |a|/a_max |
 |---|---|---|---|---|
@@ -78,14 +78,26 @@ W♯ = argmax ℓ on the simplex: 0.37652, 0.29876, 0.32472 (|a|/a_max there 0.6
 | 1 | 5.0, 3.3, 3.7; 5.7, 3.5, 4.5; 5.1, 3.7, 5.3; 4.5, 3.7, 5.5 | 0.00, 0.00, 0.01 | 0.00, 0.00, 0.00 | 0.3728 ± 0.0110, 0.3139 ± 0.0122, 0.3133 ± 0.0112 | 0.3765, 0.2988, 0.3247 | 0.0259 |
 | 2 | 4.5, 3.4, 3.5; 4.7, 3.6, 3.9; 4.4, 3.8, 4.4; 4.1, 3.6, 4.3 | 0.00, 0.00, 0.00 | 0.00, 0.00, 0.00 | 0.3777 ± 0.0056, 0.3041 ± 0.0053, 0.3182 ± 0.0061 | 0.3765, 0.2988, 0.3247 | 0.026 |
 
-Equipartition: at fixed masses the positions' law is Gibbs, each position coordinate that holds fit energy stores τ/2 of J = (m/2)⟨r²⟩, so the fit error is √(pτ/(m⟨F²⟩)) with p such coordinates — 9: 0.0267, 8: 0.0252, 7: 0.0236 (⟨F²⟩ = 0.4204); a saturated amplitude (a′ → 0) holds none.
+Equipartition: at fixed masses the positions' law is Gibbs, each position coordinate that holds fit energy stores τ/2 of J = (m/2)⟨r²⟩, so the fit error is √(pτ/(m⟨F²⟩)) with p such coordinates — 9: 0.0267, 8: 0.0252, 7: 0.0236 (⟨F²⟩ = 0.4204); a saturated amplitude (a′ → 0) holds none. Read backwards, the dither's level from the fit error e: τ̂ = m⟨F²⟩e²/9 = 8.42e-05 (κ_F = 0), 9.4e-05 (κ_F = 1), 9.48e-05 (κ_F = 2) against τ = 0.0001.
 
-## E. With the entropic leak (γ = 0.003, ε = 0.0001, 16 seeds, 400000 slow units, the second half)
+## E. The full loop over 1e+06 slow units, the masses form with Â fixed at the initial exact fit (γ = 0.01, the seeds of D)
 
-| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b | std | the fit error |
+| κ_F | s | mean of W_1, W_2, W_3 (± s.e.) | std | the largest |a|/a_max |
 |---|---|---|---|---|
-| 0 | -0.00049 ± 0.00034, +0.00012 ± 0.00042, +0.00038 ± 0.00037 | -0.00106, +0.00072, +0.00035 | 0.0050, 0.0040, 0.0037 | 0.0286 |
-| 1 | +0.00499 ± 0.00594, +0.00249 ± 0.00534, -0.00748 ± 0.00493 | +0.00002, -0.00001, -0.00001 | 0.0427, 0.0549, 0.0363 | 0.0352 |
-| 2 | +0.00050 ± 0.00795, +0.00296 ± 0.00604, -0.00346 ± 0.00314 | +0.00111, -0.00073, -0.00037 | 0.0564, 0.0596, 0.0280 | 0.0383 |
+| 0 | 100000 | 0.3465 ± 0.0144, 0.3329 ± 0.0108, 0.3206 ± 0.0139 | 0.0498, 0.0374, 0.0481 | 0.9346, 0.6199, 0.7845 |
+| 0 | 300000 | 0.3364 ± 0.0241, 0.3470 ± 0.0223, 0.3166 ± 0.0173 | 0.0835, 0.0773, 0.0601 | 0.9950, 0.7603, 0.8622 |
+| 0 | 1e+06 | 0.3444 ± 0.0419, 0.3905 ± 0.0445, 0.2651 ± 0.0232 | 0.1453, 0.1542, 0.0805 | 0.9999, 0.9941, 1.0000 |
+| 1 | 100000 | 0.3602 ± 0.0107, 0.3172 ± 0.0088, 0.3226 ± 0.0102 | 0.0370, 0.0306, 0.0354 | 0.8300, 0.6410, 0.7382 |
+| 1 | 300000 | 0.3570 ± 0.0161, 0.3154 ± 0.0141, 0.3276 ± 0.0089 | 0.0556, 0.0489, 0.0307 | 0.9334, 0.7096, 0.7043 |
+| 1 | 1e+06 | 0.3842 ± 0.0164, 0.3029 ± 0.0155, 0.3129 ± 0.0143 | 0.0567, 0.0538, 0.0495 | 0.9499, 0.7444, 0.9910 |
+| 2 | 100000 | 0.3680 ± 0.0080, 0.3077 ± 0.0074, 0.3243 ± 0.0078 | 0.0276, 0.0255, 0.0269 | 0.7692, 0.6528, 0.7072 |
+| 2 | 300000 | 0.3666 ± 0.0112, 0.3036 ± 0.0102, 0.3298 ± 0.0070 | 0.0389, 0.0353, 0.0244 | 0.8365, 0.6737, 0.6911 |
+| 2 | 1e+06 | 0.3799 ± 0.0093, 0.2970 ± 0.0122, 0.3230 ± 0.0107 | 0.0321, 0.0424, 0.0370 | 0.8288, 0.7450, 0.8432 |
+
+| κ_F | mean largest |α_1|, |α_2|, |α_3| by quarters | fraction |α_k| > 10 in the last quarter | beyond the saturation (last quarter) | the second half's mean (± s.e. over the seeds) | W♯ | the fit error (second half) |
+|---|---|---|---|---|---|---|
+| 0 | 6.6, 3.1, 4.6; 10.1, 3.6, 6.2; 10.9, 3.5, 9.4; 11.3, 5.0, 11.5 | 0.26, 0.04, 0.28 | 0.11, 0.01, 0.12 | 0.3412 ± 0.0364, 0.3789 ± 0.0343, 0.2799 ± 0.0247 | 0.3765, 0.2988, 0.3247 | 0.0245 |
+| 1 | 5.0, 3.3, 3.7; 5.7, 3.5, 4.5; 5.1, 3.7, 5.5; 4.5, 3.7, 5.8 | 0.00, 0.00, 0.02 | 0.00, 0.00, 0.00 | 0.3746 ± 0.0115, 0.3136 ± 0.0127, 0.3118 ± 0.0116 | 0.3765, 0.2988, 0.3247 | 0.0258 |
+| 2 | 4.5, 3.4, 3.5; 4.7, 3.6, 3.9; 4.3, 3.8, 4.4; 4.1, 3.6, 4.4 | 0.00, 0.00, 0.00 | 0.00, 0.00, 0.00 | 0.3784 ± 0.0057, 0.3030 ± 0.0056, 0.3186 ± 0.0063 | 0.3765, 0.2988, 0.3247 | 0.026 |
 
 Numbers are produced by `experiments/exp_gauge_fixman.py`; nothing is edited by hand.
