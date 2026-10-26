@@ -5,9 +5,12 @@ fit; the saturation made non-attracting
 
 Proposition D‴.36's instance (Proposition D‴.32's three bumps, one particle per class at an exact representation, the replicator at γ, the
 positions dithered at τ = 10⁻⁴). The correction adds κ_F(τ/2)∂_{β_k}ℓ to the replicator's fitness, ℓ = log det ∇²_ΘJ along the manifold M of
-exact fits, in Proposition D‴.37's closed form at the current amplitudes: κ_F(τ/m)(1 + (a_k/a_max)²)/(W_k a′_k)
-(`ReplicatorCohesionLoop(fixman=κ_F, fixman_tau=τ)`). On the slow time scale an O(τ) perturbation F₁ of the drift adds ∂W·P·F₁ to
-Katzenberger's drift (`gauge_drift.limit_drift(F1=…)`); here F₁ is the corrected flow minus the uncorrected one.
+exact fits = 2Σ log(W_k − W_min,k²/W_k) + const (Proposition D‴.37), in one of two forms that agree on M: the plug-in form takes
+W_min,k = W_k|a_k|/a_max at the current amplitudes, κ_F(τ/m)(1 + (a_k/a_max)²)/(W_k a′_k) (`ReplicatorCohesionLoop(fixman=κ_F,
+fixman_tau=τ)`); the masses form takes W_min,k = |Â_k|/a_max from the classes' contributions Â_k, fixed at the initial exact fit (Â = A) or
+tracked by a running average of W_k a_k (`fixman_A=Â`, `fixman_TA`). On the slow time scale an O(τ) perturbation F₁ of the drift adds
+∂W·P·F₁ to Katzenberger's drift (`gauge_drift.limit_drift(F1=…)`), F₁ evaluated on M; here F₁ is the corrected flow minus the uncorrected one,
+so Parts A–C hold for both forms.
 
 A. The cancellation (κ_F = 1): the uncorrected drift over γτ against the log-determinant law, and the corrected drift over γτ, at three
    points for γ = 2·10⁻², …, 10⁻⁴.
@@ -15,11 +18,14 @@ B. The gain: the zero of the corrected field (Newton from W♯) and the eigenval
    against W♯ = argmax ℓ on the simplex (ℓ = 2Σ log(W_k − W_min,k²/W_k), strictly concave).
 C. The saturation: along W_2 = W_3 near the first class's saturation (W_1 − 0.25 = 0.002–0.004, γ = 10⁻², inside its layer), the
    exponent d log p/d log δ of the one-dimensional zero-flux density p ∝ D⁻¹exp∫2b/D for κ_F = 0, 1, 2 (predicted κ_F − 1).
-D. The full loop over 10⁶ slow units at γ = 10⁻² (12 seeds, the seeds of exp_gauge_drift.py's Part H, whose records are the κ_F = 0 runs):
-   κ_F = 1, 2 — the excursions into the saturation by quarters, the fraction of records beyond the saturation, the masses' means and
-   spreads at 10⁵, 3·10⁵, 10⁶, the second half's mean against W♯, the fit error against equipartition's √(pτ/(m⟨F²⟩)).
-E. With the entropic leak at γ = 3·10⁻³, ε = 10⁻⁴ (16 seeds, 4·10⁵ slow units, the second half): the pinned state's shift for κ_F = 0, 1, 2
-   against κ⁻¹b (b the corrected drift at w = 1/3, κ the leak's stiffness along M).
+D. The full loop over 10⁶ slow units at γ = 10⁻², the plug-in form (12 seeds, the seeds of exp_gauge_drift.py's Part H, whose records are the
+   κ_F = 0 runs): κ_F = 1, 2 — the excursions into the saturation by quarters, the fraction of records beyond the saturation, the masses'
+   means and spreads at 10⁵, 3·10⁵, 10⁶, the second half's mean against W♯, the fit error against equipartition's √(pτ/(m⟨F²⟩)).
+E. As D with the masses form, Â fixed at the initial exact fit (the same seeds).
+F. With the entropic leak at γ = 3·10⁻³, ε = 10⁻⁴ (16 seeds, 4·10⁵ slow units, the second half): no correction, the plug-in form at
+   κ_F = 1, 2, the masses form at κ_F = 1, 2 with Â fixed and at κ_F = 2 with Â tracked (T_A = 10⁵) — the seeds whose amplitudes escape
+   up the positions' plateau (some |α_k| > 10), the masses' range, the pinned state's shift (all seeds, and the seeds without an escape)
+   against κ⁻¹b (b the corrected drift at w = 1/3, κ the leak's stiffness along M), the fit error.
 
 Output: results/chaos/gauge_fixman.md and gauge_fixman_raw.npz (GF_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
 """
@@ -49,7 +55,9 @@ GAMMAS_B, GAINS_B = (1e-2, 1e-3, 1e-4), (1.0, 2.0)
 DELTAS_C, GAINS_C, GAMMA_C = (0.002, 0.0025, 0.003, 0.004), (0.0, 1.0, 2.0), 1e-2
 GAMMA_D, GAINS_D, S_D, SEEDS_D = 1e-2, (1.0, 2.0), 1e6, X.SEEDS_H
 T_D = X.T_H
-GAMMA_E, EPS_E, GAINS_E, SEEDS_E, S_E = 3e-3, 1e-4, (0.0, 1.0, 2.0), tuple(range(400, 416)), 4e5
+GAMMA_F, EPS_F, SEEDS_F, S_F, TA_F = 3e-3, 1e-4, tuple(range(400, 416)), 4e5, 1e5
+MODES_F = (('none', 0.0), ('plug-in', 1.0), ('plug-in', 2.0), ('masses', 1.0), ('masses', 2.0), ('tracked', 2.0))
+ESCAPE = 10.0                                                              # |α_k| beyond it: up the positions' plateau (|a_k|/a_max > 0.986)
 REC = GD.REC
 
 
@@ -119,17 +127,22 @@ def c_job(args):
 
 
 def series(args):
-    """GD.series with the correction: records (s, α_1..3, W_1..3, the fit error) every REC steps."""
-    gamma, eps, kF, seed, S = args
+    """GD.series with the correction in the given form ('none', 'plug-in', 'masses' with Â fixed at the initial exact fit, 'tracked' with Â
+    the running average of W_k a_k over T_A): records (s, α_1..3, W_1..3, the fit error) every REC steps, and Â_1..3 for the masses forms."""
+    gamma, eps, kF, seed, S = args[:5]
+    form = args[5] if len(args) > 5 else 'plug-in'
     t0 = time.time()
     net, base = E.setup()
     Th = E.exact_rep(net, np.ones(3) / 3).copy()
-    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=gamma, eps=eps, fixman=kF, fixman_tau=TAU)
+    A0 = base.features(Th)[0] / 3 if form in ('masses', 'tracked') else None          # Â = W_k a_k at the start: the bumps' amplitudes
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=gamma, eps=eps, fixman=(0.0 if form == 'none' else kF), fixman_tau=TAU,
+                                     fixman_A=A0, fixman_TA=(TA_F if form == 'tracked' else None))
     rec = []
+    extra = (lambda: loop.fixman_A) if A0 is not None else (lambda: np.empty(0))
     loop.run_dithered(Th, np.ones(3), S, DT, TAU, np.random.default_rng(seed), rec_every=REC,
-                      callback=lambda s_, T, b: rec.append(np.r_[s_, T[:, 0], b / 3, loop.fit_error(T, b)]))
-    print(f"[{time.time() - t0:.0f}s] gamma {gamma:g} eps {eps:g} kF {kF:g} seed {seed}", flush=True)
-    return dict(gamma=gamma, eps=eps, kF=kF, seed=seed, rec=np.array(rec))
+                      callback=lambda s_, T, b: rec.append(np.r_[s_, T[:, 0], b / 3, loop.fit_error(T, b), extra()]))
+    print(f"[{time.time() - t0:.0f}s] gamma {gamma:g} eps {eps:g} {form} kF {kF:g} seed {seed}", flush=True)
+    return dict(gamma=gamma, eps=eps, kF=kF, form=form, seed=seed, rec=np.array(rec))
 
 
 def summarise_long(R):
@@ -156,25 +169,57 @@ def kappa(W, eps, gamma):
     return np.linalg.solve(T.T @ g @ T, T.T @ np.diag(np.r_[np.zeros(K), eps * m / (gamma * W)]) @ T)
 
 
-def part_E(runs):
+def part_F(rec):
+    """rec: {(form, κ_F): records (seeds, n, 8 or 11)}. Per mode: the seeds with an escape up the positions' plateau (some |α_k| > ESCAPE)
+    and the first such record, the masses' range, the second half's shift of the masses from 1/3 over all seeds and over the seeds without
+    an escape (± s.e. over the seeds), the pooled within-seed std, the fit error, and the predicted shift κ⁻¹b."""
     w = np.ones(3) / 3
+    pred = {}
     out = []
-    for kF in GAINS_E:
-        Rr = np.array([r['rec'] for r in runs if r['kF'] == kF]); h = Rr.shape[1] // 2
-        means = Rr[:, h:, 4:7].mean(axis=1)
-        b = drift(w[:2], GAMMA_E, kF)[0]
-        c = np.linalg.solve(kappa(w, EPS_E, GAMMA_E), b)
-        out.append(dict(kF=kF, shift=means.mean(axis=0) - 1 / 3, se=means.std(axis=0, ddof=1) / np.sqrt(len(means)), pred=np.r_[c, -c.sum()],
-                        std=Rr[:, h:, 4:7].std(axis=(0, 1)), fit=Rr[:, h:, 7].mean()))
+    for form, kF in MODES_F:
+        R = np.asarray(rec[(form, kF)], float); h = R.shape[1] // 2
+        k_eff = 0.0 if form == 'none' else kF
+        if k_eff not in pred:
+            c = np.linalg.solve(kappa(w, EPS_F, GAMMA_F), drift(w[:2], GAMMA_F, k_eff)[0]); pred[k_eff] = np.r_[c, -c.sum()]
+        esc = np.abs(R[:, :, 1:4]).max(axis=(1, 2)) > ESCAPE
+        first = [float(R[i, np.argmax(np.abs(R[i, :, 1:4]).max(axis=1) > ESCAPE), 0]) for i in np.flatnonzero(esc)]
+        means = R[:, h:, 4:7].mean(axis=1); ok = ~esc
+        se = lambda M: M.std(axis=0, ddof=1) / np.sqrt(len(M)) if len(M) > 1 else np.full(3, np.nan)
+        out.append(dict(form=form, kF=kF, seeds_esc=[SEEDS_F[i] for i in np.flatnonzero(esc)], first=first,
+                        Wmin=R[:, :, 4:7].min(axis=(0, 1)), Wmax=R[:, :, 4:7].max(axis=(0, 1)), almax=np.abs(R[:, :, 1:4]).max(),
+                        shift=means.mean(axis=0) - 1 / 3, se=se(means), shift_ok=means[ok].mean(axis=0) - 1 / 3, se_ok=se(means[ok]),
+                        std_ok=R[ok][:, h:, 4:7].std(axis=1).mean(axis=0), fit=R[:, h:, 7].mean(), fit_ok=R[ok][:, h:, 7].mean(),
+                        fit_esc=(R[esc][:, h:, 7].mean() if esc.any() else np.nan), pred=pred[k_eff],
+                        A_end=(R[:, -1, 8:11] if R.shape[2] > 8 else None)))
     return out
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None):
+def long_tables(D, title):
+    fmt = E.fmt
+    ws = w_sharp()
+    L_ = [title, "", "| κ_F | s | mean of W_1, W_2, W_3 (± s.e.) | std | the largest |a|/a_max |", "|---|---|---|---|---|"]
+    for r in D:
+        for t in r['sum']['times']:
+            L_.append(f"| {r['kF']:g} | {t['s']:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(t['mean'], t['se']))} | "
+                      f"{', '.join(f'{v:.4f}' for v in t['std'])} | {', '.join(f'{v:.4f}' for v in t['sat'])} |")
+    L_ += ["", "| κ_F | mean largest |α_1|, |α_2|, |α_3| by quarters | fraction |α_k| > 10 in the last quarter | beyond the saturation (last quarter) | "
+           "the second half's mean (± s.e. over the seeds) | W♯ | the fit error (second half) |", "|---|---|---|---|---|---|---|"]
+    for r in D:
+        sm = r['sum']; hm = sm['half']
+        L_.append(f"| {r['kF']:g} | {'; '.join(', '.join(f'{v:.1f}' for v in q) for q in sm['quarters'])} | {', '.join(f'{v:.2f}' for v in sm['big'][-1])} | "
+                  f"{', '.join(f'{v:.2f}' for v in sm['below'])} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(hm.mean(axis=0), hm.std(axis=0, ddof=1) / np.sqrt(len(hm))))} | "
+                  f"{', '.join(f'{v:.4f}' for v in ws)} | {fmt(sm['fit'])} |")
+    return L_
+
+
+def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
     fmt = E.fmt
     w3 = lambda w: ', '.join(f'{v:.3f}' for v in np.r_[w, 1 - sum(w)])
     L_ = ["# Proposition D‴.38: a Fixman correction for the replicator under dither (`exp_gauge_fixman.py`)", "",
           f"Proposition D‴.36's instance (three bumps, one particle per class at an exact representation, m = 3, the positions dithered at τ = {TAU:g}); "
-          "the correction adds κ_F(τ/m)(1 + (a_k/a_max)²)/(W_k a′_k) to the replicator's fitness; drifts per unit slow time, W_k = β_k/3.", ""]
+          "the correction adds κ_F(τ/m)(1 + W_min,k²/W_k²)/(W_k − W_min,k²/W_k) to the replicator's fitness, with W_min,k = W_k|a_k|/a_max at the current "
+          "amplitudes (the plug-in form, κ_F(τ/m)(1 + (a_k/a_max)²)/(W_k a′_k)) or W_min,k = |Â_k|/a_max from the classes' contributions (the masses form), "
+          "equal on the manifold of exact fits (Parts A–C hold for both); drifts per unit slow time, W_k = β_k/3.", ""]
     if A is not None:
         L_ += ["## A. The cancellation (κ_F = 1)", "",
                "| W | γ | uncorrected drift / γτ | its distance from the log-determinant law | corrected drift / γτ | the corrected over the uncorrected (largest components) |",
@@ -200,20 +245,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
             L_.append(f"| {kF:g} | {', '.join(f'{v:+.3f}' for v in ex)} | {kF - 1:+g} |")
         L_.append("")
     if D is not None:
-        ws = w_sharp()
-        L_ += [f"## D. The full loop over {S_D:g} slow units (γ = {GAMMA_D:g}, {len(SEEDS_D)} seeds; κ_F = 0 from exp_gauge_drift.py's Part H, the same seeds)", "",
-               "| κ_F | s | mean of W_1, W_2, W_3 (± s.e.) | std | the largest |a|/a_max |", "|---|---|---|---|---|"]
-        for r in D:
-            for t in r['sum']['times']:
-                L_.append(f"| {r['kF']:g} | {t['s']:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(t['mean'], t['se']))} | "
-                          f"{', '.join(f'{v:.4f}' for v in t['std'])} | {', '.join(f'{v:.4f}' for v in t['sat'])} |")
-        L_ += ["", "| κ_F | mean largest |α_1|, |α_2|, |α_3| by quarters | fraction |α_k| > 10 in the last quarter | beyond the saturation (last quarter) | "
-               "the second half's mean (± s.e. over the seeds) | W♯ | the fit error (second half) |", "|---|---|---|---|---|---|---|"]
-        for r in D:
-            sm = r['sum']; hm = sm['half']
-            L_.append(f"| {r['kF']:g} | {'; '.join(', '.join(f'{v:.1f}' for v in q) for q in sm['quarters'])} | {', '.join(f'{v:.2f}' for v in sm['big'][-1])} | "
-                      f"{', '.join(f'{v:.2f}' for v in sm['below'])} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(hm.mean(axis=0), hm.std(axis=0, ddof=1) / np.sqrt(len(hm))))} | "
-                      f"{', '.join(f'{v:.4f}' for v in ws)} | {fmt(sm['fit'])} |")
+        L_ += long_tables(D, f"## D. The full loop over {S_D:g} slow units, the plug-in form (γ = {GAMMA_D:g}, {len(SEEDS_D)} seeds; κ_F = 0 from "
+                             "exp_gauge_drift.py's Part H, the same seeds)")
         net, base = E.setup()
         F2 = float(np.mean(base.F ** 2))
         L_ += ["", "Equipartition: at fixed masses the positions' law is Gibbs, each position coordinate that holds fit energy stores τ/2 of "
@@ -221,11 +254,31 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                + f" (⟨F²⟩ = {F2:.4f}); a saturated amplitude (a′ → 0) holds none."]
         L_.append("")
     if Ee is not None:
-        L_ += [f"## E. With the entropic leak (γ = {GAMMA_E:g}, ε = {EPS_E:g}, {len(SEEDS_E)} seeds, {S_E:g} slow units, the second half)", "",
-               "| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b | std | the fit error |", "|---|---|---|---|---|"]
-        for r in Ee:
-            L_.append(f"| {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
-                      f"{', '.join(f'{v:.4f}' for v in r['std'])} | {fmt(r['fit'])} |")
+        L_ += long_tables(Ee, f"## E. The full loop over {S_D:g} slow units, the masses form with Â fixed at the initial exact fit (γ = {GAMMA_D:g}, "
+                              f"the seeds of D)")
+        L_.append("")
+    if Ff is not None:
+        L_ += [f"## F. With the entropic leak (γ = {GAMMA_F:g}, ε = {EPS_F:g}, {len(SEEDS_F)} seeds, {S_F:g} slow units): the forms against the "
+               f"positions' plateau", "",
+               f"An escape: some |α_k| > {ESCAPE:g} (|a_k|/a_max > {np.tanh(ESCAPE / A_MAX):.3f}) in a record; the tracked form's T_A = {TA_F:g}.", "",
+               "| correction | κ_F | seeds with an escape (first record beyond, slow units) | the largest |α| | the masses' range (min; max over the records) | "
+               "the fit error: all seeds; without an escape; with one |", "|---|---|---|---|---|---|"]
+        for r in Ff:
+            esc = ', '.join(f"{s} ({t:g})" for s, t in zip(r['seeds_esc'], r['first'])) or 'none'
+            L_.append(f"| {r['form']} | {r['kF']:g} | {esc} | {r['almax']:.1f} | {', '.join(f'{v:.3f}' for v in r['Wmin'])}; "
+                      f"{', '.join(f'{v:.3f}' for v in r['Wmax'])} | {fmt(r['fit'])}; {fmt(r['fit_ok'])}; {fmt(r['fit_esc'])} |")
+        L_ += ["", "| correction | κ_F | the masses' mean − 1/3, all seeds (± s.e.) | the seeds without an escape (± s.e.) | predicted κ⁻¹b | "
+               "the within-seed std (without an escape) |", "|---|---|---|---|---|---|"]
+        for r in Ff:
+            L_.append(f"| {r['form']} | {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} | "
+                      f"{', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift_ok'], r['se_ok']))} | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
+                      f"{', '.join(f'{v:.4f}' for v in r['std_ok'])} |")
+        tr = [r for r in Ff if r['form'] == 'tracked']
+        if tr:
+            Ae = tr[0]['A_end']; esc = np.isin(SEEDS_F, tr[0]['seeds_esc'])
+            L_ += ["", f"The tracked contributions Â at {S_F:g} (the bumps' amplitudes {', '.join(f'{v:+.3f}' for v in E.A_BUMP)}): the seeds without an "
+                   f"escape {', '.join(f'{v:+.3f}' for v in Ae[~esc].mean(axis=0))} (mean)"
+                   + (f"; with one {'; '.join(', '.join(f'{v:+.3f}' for v in a) for a in Ae[esc])}" if esc.any() else '') + "."]
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_fixman.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -237,9 +290,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -255,20 +308,25 @@ def main():
         if 'D' in parts:
             h['D'] = pool.map_async(series, [(GAMMA_D, 0.0, k, s, S_D) for k in GAINS_D for s in SEEDS_D], chunksize=1)
         if 'E' in parts:
-            h['E'] = pool.map_async(series, [(GAMMA_E, EPS_E, k, s, S_E) for k in GAINS_E for s in SEEDS_E], chunksize=1)
+            h['E'] = pool.map_async(series, [(GAMMA_D, 0.0, k, s, S_D, 'masses') for k in GAINS_D for s in SEEDS_D], chunksize=1)
+        if 'F' in parts:
+            h['F'] = pool.map_async(series, [(GAMMA_F, EPS_F, k, s, S_F, f) for f, k in MODES_F for s in SEEDS_F], chunksize=1)
         for k in 'ABC':
             if k in h:
                 res[k] = h[k].get(); E.save(raw, **res); log(k)
-        if 'D' in h:
-            runs = h['D'].get()
-            z = E.load(os.path.join(OUT, 'gauge_drift_raw.npz'))
-            res['D_rec'] = {k: np.array([r['rec'] for r in runs if r['kF'] == k]) for k in GAINS_D}
-            res['D'] = [dict(kF=0.0, sum=summarise_long(np.asarray(z['H_rec'], float)))] + \
-                       [dict(kF=k, sum=summarise_long(res['D_rec'][k])) for k in GAINS_D]
-            E.save(raw, **res); log('D')
-        if 'E' in h:
-            res['E'] = part_E(h['E'].get()); E.save(raw, **res); log('E')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+        z = E.load(os.path.join(OUT, 'gauge_drift_raw.npz')) if ('D' in h or 'E' in h) else None
+        for k, key in (('D', 'D_rec'), ('E', 'E_rec')):
+            if k in h:
+                runs = h[k].get()
+                res[key] = {g: np.array([r['rec'] for r in runs if r['kF'] == g]) for g in GAINS_D}
+                res[k] = [dict(kF=0.0, sum=summarise_long(np.asarray(z['H_rec'], float)))] + \
+                         [dict(kF=g, sum=summarise_long(res[key][g])) for g in GAINS_D]
+                E.save(raw, **res); log(k)
+        if 'F' in h:
+            runs = h['F'].get()
+            res['F_rec'] = {(f, k): np.array([r['rec'] for r in runs if r['form'] == f and r['kF'] == k]) for f, k in MODES_F}
+            res['F'] = part_F(res['F_rec']); E.save(raw, **res); log('F')
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
 
 
 if __name__ == '__main__':

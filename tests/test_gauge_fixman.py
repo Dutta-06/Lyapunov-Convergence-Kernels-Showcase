@@ -13,6 +13,7 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
 import exp_cohesion_leak as E                                            # noqa: E402
+import exp_gauge_dither as GDD                                           # noqa: E402
 import exp_gauge_drift as X                                              # noqa: E402
 import exp_gauge_fixman as Q                                             # noqa: E402
 from src.core import mass_transfer as MT                                 # noqa: E402
@@ -87,3 +88,32 @@ def test_the_general_form_reduces_to_the_closed_form():
     general = 0.5 * tau * (dl_dB - dl_dT @ np.linalg.solve(H, Hmix))
     closed = loop.fixman_correction(Th.reshape(3, 3), beta)
     assert np.abs(general / closed - 1).max() < 2e-3
+
+
+def test_the_masses_form_equals_the_plug_in_on_the_manifold_and_ignores_the_amplitudes_off_it():
+    # the masses form takes W_min,k = |Â_k|/a_max from the classes' contributions Â_k: on M (Â_k = W_k a_k) it is the plug-in form; at fixed
+    # masses it does not see an amplitude's excursion, which the plug-in form reads as a mass at its saturation
+    net, base = E.setup()
+    tau = 1e-4
+    beta = 3 * np.array([0.30, 0.35, 0.35])
+    Th = E.exact_rep(net, beta / 3)
+    A_hat = beta / 3 * base.features(Th)[0]
+    assert np.allclose(A_hat, E.A_BUMP, rtol=1e-12)
+    plug = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2, fixman=2.0, fixman_tau=tau)
+    mass = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2, fixman=2.0, fixman_tau=tau, fixman_A=A_hat)
+    assert np.abs(mass.fixman_correction(Th, beta) / plug.fixman_correction(Th, beta) - 1).max() < 1e-12
+    Tx = Th.copy(); Tx[0, 0] += 8.0                                           # the first amplitude far up its plateau, the masses fixed
+    assert np.array_equal(mass.fixman_correction(Tx, beta), mass.fixman_correction(Th, beta))
+    assert plug.fixman_correction(Tx, beta)[0] > 20 * plug.fixman_correction(Th, beta)[0]
+    W_min = np.abs(E.A_BUMP) / net.a_max                                    # the closed form's derivative, (τ/2)∂_βℓ(W)
+    W = beta / 3
+    assert np.allclose(mass.fixman_correction(Tx, beta), 2.0 * (tau / 3) * (1 + W_min ** 2 / W ** 2) / (W - W_min ** 2 / W), rtol=1e-12)
+
+
+def test_the_tracked_contributions_stay_put_on_the_manifold():
+    net, base = E.setup()
+    W = np.array([0.30, 0.35, 0.35])
+    Th = E.exact_rep(net, W)
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2, fixman=2.0, fixman_tau=0.0, fixman_A=E.A_BUMP.copy(), fixman_TA=1.0)
+    loop.run_dithered(Th, 3 * W, 20.0, GDD.DT, 0.0, np.random.default_rng(0))
+    assert np.abs(loop.fixman_A - E.A_BUMP).max() < 1e-6
