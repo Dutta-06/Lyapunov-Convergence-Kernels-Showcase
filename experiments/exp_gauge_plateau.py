@@ -10,11 +10,12 @@ unconstrained coordinates (α, γ, κ)) makes it normalisable and leaves everyth
 
 A. The plateau: at the masses 1/3 and W♯ (Proposition D‴.38), for each class k the lowest configuration with α_k fixed at ±20 (the sign of
    A_k; L-BFGS over the other eight coordinates from N_A perturbed exact fits), its level ΔJ/τ above the exact fit (τ = 10⁻⁴) and its fit
-   error; and with the box, α_k fixed at its edge ±L_α.
+   error; with α_k at ±ESC (the escape set's boundary, Part C's ΔJ); and with the box, α_k at its edge ±L_α.
 B. The minimum-energy path from the exact fit to the plateau (the string method in the G⁻¹ metric, N_B images, the endpoint the lowest
    plateau of A with its saturated amplitude set to 10 and the rest relaxed): the profile ΔJ/τ along it.
 C. The escapes at fixed masses (γ = 0, W = 1/3, τ = 1.5, 2, 3·10⁻⁴, 24 seeds, at most S_C slow units): the first time max_k|α_k| > ESC; the
-   escape rate (escapes over the total time of the runs, censored runs included) against e^{−ΔJ/τ}, ΔJ the plateau's level from B.
+   escape rate (escapes over the total time of the runs, censored runs included) against e^{−ΔJ/τ}, ΔJ the lowest level of J on the escape
+   set's boundary {max_k|α_k| = ESC} (A; Freidlin–Wentzell: τ log of the mean exit time tends to it).
 D. The dead zone at fixed masses (γ = 0, W = 1/3, τ = 2·10⁻⁴, 16 seeds, S_D slow units): without and with the box L = BOX (σ_B = 1): the
    fraction of the records with max|α| > ESC and the fit error by quarters, the largest |α|.
 E. The full loop with the box (γ = 10⁻², τ = 10⁻⁴, the 12 seeds of exp_gauge_drift.py's Part H, 10⁶ slow units): κ_F = 0, and the masses
@@ -47,6 +48,7 @@ BOX, SIGMA_B = (5.0, 3.0, 4.0), 1.0                                         # L_
 AL_SAT, N_A = 20.0, 200
 N_B, IT_B, DT_B, AL_B = 40, 30000, 0.5, 10.0
 ESC = 6.0                                                                    # |a|/a_max > 0.905; in the well |α_k| < 4.5
+S2_PLATEAU = 0.6                                                             # the second width on the plateaus' family (exact fit 0.4)
 TAUS_C, SEEDS_C, S_C, REC_C = (1.5e-4, 2e-4, 3e-4), tuple(range(500, 524)), 4e5, 40
 TAU_D, SEEDS_D, S_D = 2e-4, tuple(range(600, 616)), 4e5
 GAMMA_E, SEEDS_E, S_E, T_E = 1e-2, X.SEEDS_H, 1e6, X.T_H
@@ -61,14 +63,15 @@ def masses(which):
 def plateau_job(args):
     """The lowest J with α_k fixed at al (with the box: J + V), over N_A L-BFGS runs from the exact fit perturbed (seeded)."""
     from scipy.optimize import minimize
-    which, k, boxed = args
+    which, k, at = args
+    boxed = at == 'box'
     net, base = E.setup()
     W = masses(which); beta = 3 * W
     loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2, box=(BOX if boxed else None), box_sigma=SIGMA_B)
     Th0 = E.exact_rep(net, W); J0 = loop.J(Th0, beta)
-    al = np.sign(E.A_BUMP[k]) * (BOX[0] if boxed else AL_SAT)
+    al = np.sign(E.A_BUMP[k]) * dict(sat=AL_SAT, esc=ESC, box=BOX[0])[at]
     f = lambda x: loop.J(np.insert(x, 3 * k, al).reshape(3, 3), beta)
-    rng = np.random.default_rng(1000 + 10 * k + boxed)
+    rng = np.random.default_rng(1000 + 10 * k + ('sat', 'esc', 'box').index(at))
     best = None
     for _ in range(N_A):
         x0 = np.delete(Th0.ravel(), 3 * k) + rng.normal(0, 1.5, 8) * rng.uniform(0.2, 1.5)
@@ -77,7 +80,7 @@ def plateau_job(args):
             best = r
     T = np.insert(best.x, 3 * k, al).reshape(3, 3)
     a, c, s = net.physical(T)
-    return dict(which=which, k=k, boxed=boxed, dJ=(best.fun - J0) / TAU, fit=loop.fit_error(T, beta), a=a[:, 0], c=c[:, 0], s=s, Th=T)
+    return dict(which=which, k=k, at=at, dJ=(best.fun - J0) / TAU, fit=loop.fit_error(T, beta), a=a[:, 0], c=c[:, 0], s=s, Th=T)
 
 
 def string_job(args):
@@ -168,9 +171,10 @@ def part_D(runs):
     out = []
     for boxed in (False, True):
         R = np.array([r['rec'] for r in runs if r['boxed'] == boxed]); q = np.array_split(np.arange(R.shape[1]), 4)
-        al = np.abs(R[:, :, 1:4]).max(axis=2)
-        out.append(dict(boxed=boxed, frac=[float(np.mean(al[:, ix] > ESC)) for ix in q], fit=[float(R[:, ix, 7].mean()) for ix in q],
-                        almax=[float(al[:, ix].max()) for ix in q], seeds=int(np.sum(al.max(axis=1) > ESC)), N=len(R)))
+        al = np.abs(R[:, :, 1:4]).max(axis=2); pl = R[:, :, 12] > S2_PLATEAU
+        out.append(dict(boxed=boxed, frac=[float(np.mean(al[:, ix] > ESC)) for ix in q], plat=[float(np.mean(pl[:, ix])) for ix in q],
+                        fit=[float(R[:, ix, 7].mean()) for ix in q], almax=[float(al[:, ix].max()) for ix in q],
+                        seeds=int(np.sum(pl.any(axis=1))), N=len(R)))
     return out
 
 
@@ -197,31 +201,34 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
           f"L = ({v3(BOX, 1)}) in (α, γ, κ), σ_B = {SIGMA_B:g}: |a| ≤ {A_MAX * np.tanh(BOX[0] / A_MAX):.3f}, the representable masses "
           f"W_k ≥ {v3(W_BOX, 4)} (the saturation's {v3(W_MIN, 4)}).", ""]
     if A is not None:
-        L_ += ["## A. The plateau: the lowest configuration with one amplitude saturated", "",
+        L_ += ["## A. The plateau: the lowest configuration with one amplitude fixed far out", "",
                "| masses | class | α_k | ΔJ/τ above the exact fit | fit error | a | c | s |", "|---|---|---|---|---|---|---|---|"]
         for r in A:
-            L_.append(f"| {r['which']} | {r['k'] + 1} | {'±L_α (box)' if r['boxed'] else '±20'} | {r['dJ']:.3f} | {r['fit']:.4f} | {v3(r['a'], 2)} | "
+            L_.append(f"| {r['which']} | {r['k'] + 1} | {dict(sat=f'±{AL_SAT:g}', esc=f'±{ESC:g}', box='±L_α (box)')[r['at']]} | {r['dJ']:.3f} | {r['fit']:.4f} | {v3(r['a'], 2)} | "
                       f"{v3(r['c'], 2)} | {v3(r['s'], 2)} |")
         L_.append("")
     if B is not None:
         L_ += ["## B. The minimum-energy path from the exact fit to the plateau (string method)", ""]
         for r in B:
             p = r['prof']
+            s2 = [E.setup()[0].physical(T)[2][1] for T in r['images'][::4]]
             L_ += [f"Masses {r['which']}, toward class {r['k'] + 1}'s saturation: the largest ΔJ/τ along the path {p.max():.3f} (image {int(p.argmax())} of "
-                   f"{len(p) - 1}); the profile at every fourth image: {', '.join(f'{v:.2f}' for v in p[::4])}; the fit error "
-                   f"{', '.join(f'{v:.4f}' for v in r['fits'][::4])}.", ""]
+                   f"{len(p) - 1}); at every fourth image the profile {', '.join(f'{v:.2f}' for v in p[::4])}, the fit error "
+                   f"{', '.join(f'{v:.4f}' for v in r['fits'][::4])}, the second width {', '.join(f'{v:.2f}' for v in s2)}.", ""]
     if C is not None:
         L_ += [f"## C. The escapes at fixed masses 1/3 (γ = 0; {len(SEEDS_C)} seeds, at most {S_C:g} slow units; an escape: max|α_k| > {ESC:g})", "",
                "| τ | escapes | the rate (per slow unit, ± s.e.) | the median time | the rate × e^{ΔJ/τ} | the fit error at the escape |", "|---|---|---|---|---|---|"]
         for r in C['rows']:
             L_.append(f"| {r['tau']:g} | {r['n']}/{r['N']} | {fmt(r['rate'])} ± {fmt(r['rate_se'])} | {r['med']:.3g} | {fmt(r['scaled'])} | {fmt(r['fit'])} |")
-        L_ += ["", f"The slope of log(rate) against 1/τ: {fmt(-C['slope'])} (the plateau's level ΔJ = {fmt(C['dJ'])}).", ""]
+        L_ += ["", f"The slope of log(rate) against 1/τ: {fmt(-C['slope'])} (the lowest J on the escape set's boundary, ΔJ = {fmt(C['dJ'])}).", ""]
     if D is not None:
         L_ += [f"## D. The dead zone at fixed masses 1/3 (γ = 0, τ = {TAU_D:g}, {len(SEEDS_D)} seeds, {S_D:g} slow units)", "",
-               "| box | seeds with an escape | fraction of the records with max|α| > 6, by quarters | the largest |α|, by quarters | the fit error, by quarters |",
-               "|---|---|---|---|---|"]
+               f"A record is on the plateau when its second width exceeds {S2_PLATEAU:g} (A and B: the plateaus' configurations and the path's).", "",
+               f"| box | seeds that reach the plateau | fraction of the records on it (s_2 > {S2_PLATEAU:g}), by quarters | fraction with max|α| > {ESC:g} | "
+               "the largest |α|, by quarters | the fit error, by quarters |", "|---|---|---|---|---|---|"]
         for r in D:
-            L_.append(f"| {'L = (' + v3(BOX, 1) + ')' if r['boxed'] else 'none'} | {r['seeds']}/{r['N']} | {', '.join(f'{v:.3f}' for v in r['frac'])} | "
+            L_.append(f"| {'L = (' + v3(BOX, 1) + ')' if r['boxed'] else 'none'} | {r['seeds']}/{r['N']} | {', '.join(f'{v:.3f}' for v in r['plat'])} | "
+                      f"{', '.join(f'{v:.3f}' for v in r['frac'])} | "
                       f"{', '.join(f'{v:.1f}' for v in r['almax'])} | {', '.join(f'{v:.4f}' for v in r['fit'])} |")
         L_.append("")
     if Ee is not None:
@@ -263,14 +270,14 @@ def main():
     with Pool(N_WORKERS) as pool:
         h = {}
         if 'A' in parts:
-            res['A'] = pool.map(plateau_job, [(w, k, b) for b in (False, True) for w in ('uniform', 'sharp') for k in range(3)], chunksize=1)
+            res['A'] = pool.map(plateau_job, [(w, k, at) for at in ('sat', 'esc', 'box') for w in ('uniform', 'sharp') for k in range(3)], chunksize=1)
             E.save(raw, **res); log('A')
         if 'E' in parts:
             h['E'] = pool.map_async(series, [(GAMMA_E, TAU, k, f, True, s, S_E) for k, f in ((0.0, 'none'), (2.0, 'masses')) for s in SEEDS_E], chunksize=1)
         if 'B' in parts:
             ends = []
             for w in ('uniform', 'sharp'):
-                rr = [r for r in res['A'] if r['which'] == w and not r['boxed']]
+                rr = [r for r in res['A'] if r['which'] == w and r['at'] == 'sat']
                 best = min(rr, key=lambda r: r['dJ']); ends.append((w, best['k'], best['Th']))
             h['B'] = pool.map_async(string_job, ends, chunksize=1)
         if 'D' in parts:
@@ -280,7 +287,7 @@ def main():
         if 'B' in h:
             res['B'] = h['B'].get(); E.save(raw, **res); log('B')
         if 'C' in h:
-            dJ = min(r['prof'][-1] for r in res['B'] if r['which'] == 'uniform')
+            dJ = min(r['dJ'] for r in res['A'] if r['which'] == 'uniform' and r['at'] == 'esc')
             res['C_runs'] = h['C'].get(); res['C'] = part_C(res['C_runs'], dJ); E.save(raw, **res); log('C')
         if 'D' in h:
             res['D_rec'] = h['D'].get(); res['D'] = part_D(res['D_rec']); E.save(raw, **res); log('D')
