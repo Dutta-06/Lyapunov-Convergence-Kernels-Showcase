@@ -22,8 +22,8 @@ D. The full loop over 10⁶ slow units at γ = 10⁻², the plug-in form (12 see
    κ_F = 0 runs): κ_F = 1, 2 — the excursions into the saturation by quarters, the fraction of records beyond the saturation, the masses'
    means and spreads at 10⁵, 3·10⁵, 10⁶, the second half's mean against W♯, the fit error against equipartition's √(pτ/(m⟨F²⟩)).
 E. As D with the masses form, Â fixed at the initial exact fit (the same seeds).
-F. With the entropic leak at γ = 3·10⁻³, ε = 10⁻⁴ (16 seeds, 4·10⁵ slow units, the second half): no correction, the plug-in form at
-   κ_F = 1, 2, the masses form at κ_F = 1, 2 with Â fixed and at κ_F = 2 with Â tracked (T_A = 10⁵) — the seeds whose amplitudes escape
+F. With the entropic leak at γ = 3·10⁻³, ε = 10⁻⁴ (16 seeds, 4·10⁵ slow units, the second half): no correction, and at κ_F = 2 the plug-in
+   form, the masses form with Â fixed and with Â tracked (T_A = 10⁵) — the seeds whose amplitudes escape
    up the positions' plateau (some |α_k| > 10), the masses' range, the pinned state's shift (all seeds, and the seeds without an escape)
    against κ⁻¹b (b the corrected drift at w = 1/3, κ the leak's stiffness along M), the fit error.
 G. With the entropic leak at γ = 10⁻², ε = 3·10⁻⁴ (inside Proposition D‴.37(iv)'s window; the 16 seeds of exp_gauge_drift.py's Part G, whose
@@ -44,6 +44,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from src.core import mass_transfer as MT
 from src.core import gauge_drift as GDR
+from src.core.runcache import cached
 import exp_cohesion_leak as E
 import exp_gauge_dither as GD
 import exp_gauge_drift as X
@@ -58,7 +59,7 @@ DELTAS_C, GAINS_C, GAMMA_C = (0.002, 0.0025, 0.003, 0.004), (0.0, 1.0, 2.0), 1e-
 GAMMA_D, GAINS_D, S_D, SEEDS_D = 1e-2, (1.0, 2.0), 1e6, X.SEEDS_H
 T_D = X.T_H
 GAMMA_F, EPS_F, SEEDS_F, S_F, TA_F = 3e-3, 1e-4, tuple(range(400, 416)), 4e5, 1e5
-MODES_F = (('none', 0.0), ('plug-in', 1.0), ('plug-in', 2.0), ('masses', 1.0), ('masses', 2.0), ('tracked', 2.0))
+MODES_F = (('none', 0.0), ('plug-in', 2.0), ('masses', 2.0), ('tracked', 2.0))
 ESCAPE = 10.0                                                              # |α_k| beyond it: up the positions' plateau (|a_k|/a_max > 0.986)
 GAMMA_G, EPS_G, GAINS_G, SEEDS_G, S_G = 1e-2, 3e-4, (0.0, 1.0, 2.0), tuple(range(200, 216)), 4e5   # exp_gauge_drift.py's Part G at ε = 3·10⁻⁴
 REC = GD.REC
@@ -134,6 +135,7 @@ def c_job(args):
     return dict(kF=kF, delta=dl, expo=dl * 2 * b[0] / D[0, 0] - dl * dlogD)
 
 
+@cached
 def series(args):
     """GD.series with the correction in the given form ('none', 'plug-in', 'masses' with Â fixed at the initial exact fit, 'tracked' with Â
     the running average of W_k a_k over T_A): records (s, α_1..3, W_1..3, the fit error) every REC steps, and Â_1..3 for the masses forms."""

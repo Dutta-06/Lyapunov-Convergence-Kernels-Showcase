@@ -41,6 +41,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from src.core import mass_transfer as MT
 from src.core import gauge_drift as GDR
 from src.core import gauge_noise as GN
+from src.core.runcache import cached
 import exp_cohesion_leak as E
 import exp_gauge_dither as GD
 import exp_gauge_drift as X
@@ -93,6 +94,7 @@ def w_sharp_weighted(tk):
     return np.array([W_of(mu, k) for k in range(3)])
 
 
+@cached
 def a_job(args):
     name, w = args
     W = np.r_[w, 1 - sum(w)]
@@ -109,6 +111,7 @@ def a_job(args):
                 flow=flow(ub) / TAU)
 
 
+@cached
 def b_job(args):
     name, w = args
     Sig = noises()[name]
@@ -120,6 +123,7 @@ def b_job(args):
     return dict(name=name, w=w, b=np.r_[b, -b.sum()], pred=pred, D=D)
 
 
+@cached
 def c_job(args):
     gamma, w = args
     F, chart, coords, S = X.instance(gamma)
@@ -131,6 +135,7 @@ def c_job(args):
     return dict(gamma=gamma, w=w, **out)
 
 
+@cached
 def d_job(args):
     """Fixed masses 1/3, the box, the noise Σ(τ): the time averages (by batches) of u_k and of −τ_k g′_k(α_k) + g_k ∂_{α_k}V, and the
     quadratic variation of the amplitudes."""
@@ -163,6 +168,7 @@ def d_job(args):
     return dict(name=name, tau=tau, tk=tk, U=U, Rhs=Rhs, tk_hat=qv / (2 * E.G[0] * nb * N_BATCH * DT), closed=closed(W, tk))
 
 
+@cached
 def e_series(args):
     """The full loop: (variant, seed) → records (s, α_1..3, W_1..3, the fit error)."""
     variant, seed = args

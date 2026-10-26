@@ -40,6 +40,7 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from src.core import mass_transfer as MT
+from src.core.runcache import cached
 import exp_cohesion_leak as E
 import exp_gauge_dither as GD
 import exp_gauge_drift as X
@@ -64,6 +65,7 @@ def masses(which):
     return np.ones(3) / 3 if which == 'uniform' else Q.w_sharp()
 
 
+@cached
 def plateau_job(args):
     """The lowest J with α_k fixed at al (with the box: J + V), over N_A L-BFGS runs from the exact fit perturbed (seeded)."""
     from scipy.optimize import minimize
@@ -87,6 +89,7 @@ def plateau_job(args):
     return dict(which=which, k=k, at=at, dJ=(best.fun - J0) / TAU, fit=loop.fit_error(T, beta), a=a[:, 0], c=c[:, 0], s=s, Th=T)
 
 
+@cached
 def string_job(args):
     """The string method (the simplified string method of E–Ren–Vanden-Eijnden) in the G⁻¹ metric between the exact fit and the plateau's
     point `end`, the end relaxed with its saturated amplitude fixed at AL_B: the profile ΔJ/τ and the images."""
@@ -119,6 +122,7 @@ class Escaped(Exception):
     pass
 
 
+@cached
 def escape_job(args):
     """The first record (every REC_C steps) with max|α_k| > ESC at fixed masses 1/3 (γ = 0), or None by S_C."""
     tau, seed = args
@@ -138,6 +142,7 @@ def escape_job(args):
     return out
 
 
+@cached
 def series(args):
     """Records (s, α_1..3, W_1..3, the fit error, c_1..3, s_1..3) every REC steps: (γ, τ, κ_F, form, boxed, seed, S)."""
     gamma, tau, kF, form, boxed, seed, S = args
