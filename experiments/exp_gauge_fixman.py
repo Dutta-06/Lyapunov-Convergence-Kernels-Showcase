@@ -117,7 +117,12 @@ def b_job(args):
     z, info, ier, msg = fsolve(f, ws[:2], full_output=True)
     h = 1e-4
     Jb = np.array([(f(z + h * e) - f(z - h * e)) / (2 * h) for e in np.eye(2)]).T * gamma * TAU
-    return dict(gamma=gamma, kF=kF, zero=np.r_[z, 1 - z.sum()], ier=int(ier), eig=np.linalg.eigvals(Jb), resid=np.abs(f(z)).max())
+    std = None
+    if np.all(np.linalg.eigvals(Jb).real < 0):                                # the linearised limit SDE's stationary spread there
+        from scipy.linalg import solve_continuous_lyapunov
+        Cw = solve_continuous_lyapunov(Jb, -drift(z, gamma, kF)[1])
+        T3 = np.array([[1.0, 0.0], [0.0, 1.0], [-1.0, -1.0]]); std = np.sqrt(np.diag(T3 @ Cw @ T3.T))
+    return dict(gamma=gamma, kF=kF, zero=np.r_[z, 1 - z.sum()], ier=int(ier), eig=np.linalg.eigvals(Jb), resid=np.abs(f(z)).max(), std=std)
 
 
 def c_job(args):
@@ -254,10 +259,13 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, Gg=None):
         ws = w_sharp()
         L_ += ["## B. The gain: the corrected field's zero", "", f"W♯ = argmax ℓ on the simplex: {', '.join(f'{v:.5f}' for v in ws)} "
                f"(|a|/a_max there {', '.join(f'{v:.3f}' for v in W_MIN / ws)}).", "",
-               "| κ_F | γ | the zero (Newton from W♯) | its distance from W♯ | the Jacobian's eigenvalues (per unit slow time) | the residual |", "|---|---|---|---|---|---|"]
+               "| κ_F | γ | the zero (Newton from W♯) | its distance from W♯ | the Jacobian's eigenvalues (per unit slow time) | the residual | "
+               "the stationary std of the limit SDE linearised there |", "|---|---|---|---|---|---|---|"]
         for r in B:
+            sd = r.get('std')
             L_.append(f"| {r['kF']:g} | {r['gamma']:g} | {', '.join(f'{v:.5f}' for v in r['zero'])}{'' if r['ier'] == 1 else ' (no convergence)'} | "
-                      f"{np.abs(r['zero'] - ws).max():.1e} | {', '.join(fmt(v.real) for v in r['eig'])} | {r['resid']:.1e} |")
+                      f"{np.abs(r['zero'] - ws).max():.1e} | {', '.join(fmt(v.real) for v in r['eig'])} | {r['resid']:.1e} | "
+                      f"{'—' if sd is None else ', '.join(f'{v:.4f}' for v in sd)} |")
         L_.append("")
     if C is not None:
         L_ += [f"## C. The saturation: the density's exponent near the first class's saturation (γ = {GAMMA_C:g}, W_2 = W_3)", "",
