@@ -281,7 +281,9 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, Gg=None):
         F2 = float(np.mean(base.F ** 2))
         L_ += ["", "Equipartition: at fixed masses the positions' law is Gibbs, each position coordinate that holds fit energy stores τ/2 of "
                "J = (m/2)⟨r²⟩, so the fit error is √(pτ/(m⟨F²⟩)) with p such coordinates — " + ', '.join(f"{p_}: {np.sqrt(p_ * TAU / (3 * F2)):.4f}" for p_ in (9, 8, 7))
-               + f" (⟨F²⟩ = {F2:.4f}); a saturated amplitude (a′ → 0) holds none."]
+               + f" (⟨F²⟩ = {F2:.4f}); a saturated amplitude (a′ → 0) holds none. Read backwards, the dither's level from the fit error e: "
+               "τ̂ = m⟨F²⟩e²/9 = " + ', '.join(f"{m_ * F2 * r['sum']['fit'] ** 2 / 9:.3g} (κ_F = {r['kF']:g})" for r in D for m_ in (3,))
+               + f" against τ = {TAU:g}."]
         L_.append("")
     if Ee is not None:
         L_ += long_tables(Ee, f"## E. The full loop over {S_D:g} slow units, the masses form with Â fixed at the initial exact fit (γ = {GAMMA_D:g}, "
