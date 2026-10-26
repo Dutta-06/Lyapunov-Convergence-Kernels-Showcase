@@ -77,7 +77,9 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   departure the stiffness's drop and the curvature's gauge rise favour more (Proposition D‴.35); and under dither the replicator's masses diffuse along the manifold of exact fits (Katzenberger's limit) and their amplitudes run into
   the saturation, which an entropic leak on the masses prevents, without bias where the target's fractions are
   representable (Proposition D‴.36); and the masses drift too, along the replicator flow of the entropic free energy (τ/2) log det of the positions' Hessian, toward the
-  saturation — a layer of width O(√γ) slows but does not stop them (Proposition D‴.37); rounds 7–27 of the review log cover all of them up to D‴.37, and their remarks.
+  saturation — a layer of width O(√γ) slows but does not stop them (Proposition D‴.37); and a Fixman correction on the masses — a
+  log-barrier on the representable masses — cancels that drift or, with a gain above one, selects the best-conditioned exact fit, the
+  saturation no longer attracting (Proposition D‴.38); rounds 7–27 of the review log cover all of them up to D‴.37, and their remarks.
 
 ---
 

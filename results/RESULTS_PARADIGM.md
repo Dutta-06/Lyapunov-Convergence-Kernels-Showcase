@@ -963,6 +963,31 @@ drift Jacobian; run_dithered's noise 2τG dt.
 Tests (`tests/test_gauge_drift.py`): the identities on flows with known limit maps and on an integrated one; the diffusion against
 D‴.36's projection; the slow limit against the log-determinant law; the split-invariance of the log-determinant within a class.
 
+## Proposition D‴.38 — a Fixman correction for the replicator under dither (`exp_gauge_fixman.py` → `chaos/gauge_fixman.md`)
+
+- Proposition D‴.36's instance at τ = 10⁻⁴; the correction κ_F(τ/m)(1 + Ŵ_k²/W_k²)/(W_k − Ŵ_k²/W_k) on the replicator's fitness, Ŵ_k from the
+  classes' contributions (the masses form) or from the current amplitudes (the plug-in form), equal on M. (A) At κ_F = 1 the corrected drift
+  is 0.31, 0.07, 2·10⁻³ and 7·10⁻⁴ of the uncorrected at W = 1/3 for γ = 10⁻², 5·10⁻³, 10⁻³, 10⁻⁴ (O(γ²τ) against O(γτ)); at γ = 2·10⁻²
+  it over-compensates (1.6).
+- (B) At κ_F = 2 the corrected field's zero is the best-conditioned fit W♯ = (0.3765, 0.2988, 0.3247) to 2·10⁻⁴ or better, attracting, the
+  linearised spread there 0.040, 0.014, 0.0045 at γ = 10⁻², 10⁻³, 10⁻⁴ (∝ √γ); at κ_F = 1 the remainder's zero is attracting at γ = 10⁻² but
+  repelling at 10⁻³ and 10⁻⁴ — the neutral gain does not control it. (C) Near the saturation the density's exponent is −0.99, −0.00, +0.98
+  for κ_F = 0, 1, 2 (predicted κ_F − 1).
+- (D, E) The full loop over 10⁶ slow units (γ = 10⁻², 12 seeds): with either form no excursion into the saturation (without the correction
+  11–12% of the last quarter beyond it), the second half's mean within 1.3 (κ_F = 1) and 1.1 (κ_F = 2) standard errors of W♯, the spread
+  at κ_F = 2 the linearised limit's; the fit error 0.026 against 0.0245 without — the price of keeping every amplitude coupled to the fit
+  (equipartition), and the dither's level read back from it, 9.4·10⁻⁵.
+- (F) With the leak (γ = 3·10⁻³, ε = 10⁻⁴, 16 seeds): two seeds' positions escape the exact fit's well in every form; the masses form keeps
+  the masses where the leak holds them (0.31–0.35), the plug-in form moves them over 0.21–0.46, a running average of Â drifts with the
+  escape; on the other 14 seeds the bias reverses as predicted (within 1.1 s.e.).
+- (G) Inside the leak's first-order window (γ = 10⁻², ε = 3·10⁻⁴, 16 seeds): the bias (−0.0013, +0.0011, +0.0002) without the correction is
+  gone at κ_F = 1 (all components ≤ 0.0003) and reversed at κ_F = 2 (+0.0012, −0.0005, −0.0007); on paired seeds the correction's own shift
+  agrees with the first order to 10% (κ_F = 1) and 4% (κ_F = 2).
+
+Tests (`tests/test_gauge_fixman.py`): the correction as (τ/2)∂_βℓ along M; no correction without dither; the slow-limit cancellation; the
+gain's zero at W♯; the density exponents; the general form reducing to the closed form; the masses form equal to the plug-in form on M and
+blind to an amplitude's excursion at fixed masses; the tracked contributions fixed on M.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
