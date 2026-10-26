@@ -86,3 +86,4 @@ def test_a_dithered_run_inside_the_box_is_the_unboxed_run():
                           callback=lambda s_, T, b: rec.append(np.r_[T.ravel(), b]))
         out.append(np.array(rec))
     assert np.all(np.abs(out[0][:, :9]).reshape(-1, 3, 3) < np.array(BOX)) and np.array_equal(out[0], out[1])
+

@@ -126,12 +126,15 @@ class ReplicatorCohesionLoop:
         return Th, np.exp(lb)
 
 
-    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None):
+    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None, mask=None):
         """Proposition D‴.36: the positions dithered (Euler–Maruyama, the noise √(2τG) per particle), the weights by the midpoint-free Euler
-        step of (𝔉) on log β, renormalised to Σβ = m; callback(s, Θ, β) at the records."""
+        step of (𝔉) on log β, renormalised to Σβ = m; callback(s, Θ, β) at the records. `mask` (p,) scales the noise per coordinate
+        (Proposition D‴.40: (0, 1, 1) dithers the centres and widths only); the random draws are the same with or without it."""
         Th, lb = np.array(Th, float), np.log(np.array(beta, float))
         m = Th.shape[0]
         sq = np.sqrt(2.0 * tau * dt * self.G)[None, :]
+        if mask is not None:
+            sq = sq * np.asarray(mask, float)[None, :]
         n = int(round(S_end / dt))
         for k in range(n + 1):
             b = np.exp(lb)
