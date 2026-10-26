@@ -2,7 +2,8 @@
 Proposition D‴.38 (PARADIGM.md §5d): a Fixman correction for the replicator under dither. Checked here: the loop's correction equals
 (τ/2)∂_βℓ along the manifold of exact fits (ℓ = log det ∇²_ΘJ, by finite differences of the Hessian's determinant); it vanishes without
 dither and keeps Σβ = m; in the slow-replicator limit it cancels the dither's drift; with κ_F = 2 the corrected field's zero is the unique
-maximiser W♯ of ℓ; near a saturation the one-dimensional zero-flux density behaves like δ^{κ_F − 1}.
+maximiser W♯ of ℓ; near a saturation the one-dimensional zero-flux density behaves like δ^{κ_F − 1}; the correction's general form,
+through the exact fit's implicit function and computed from the current point only, reduces to the closed form.
 """
 import os
 import sys
@@ -56,3 +57,33 @@ def test_the_gain_selects_the_best_conditioned_fit():
 def test_the_density_exponent_near_the_saturation():
     for kF in (0.0, 1.0, 2.0):
         assert abs(Q.c_job((kF, 0.003))['expo'] - (kF - 1)) < 0.03
+
+
+def test_the_general_form_reduces_to_the_closed_form():
+    # the correction's general form at a point of M: (τ/2)[∂_βℓ̂ − ∂_Θℓ̂ (∇²_ΘJ)⁻¹ ∇²_{Θβ}J], ℓ̂(Θ, β) = log det ∇²_ΘJ — the derivative of ℓ
+    # along M through the exact fit's implicit function Θ*(β) — computed from the current point only; the closed form is its evaluation
+    net, base = E.setup()
+    tau = 1e-4
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2, fixman=1.0, fixman_tau=tau)
+    beta = 3 * np.array([0.30, 0.35, 0.35])
+    Th = E.exact_rep(net, beta / 3).ravel()
+    J = lambda t, b: loop.J(t.reshape(3, 3), b)
+    h = 1e-4
+
+    def hess(t, b):
+        I = np.eye(9) * h; H = np.zeros((9, 9))
+        for i in range(9):
+            for j in range(i, 9):
+                H[i, j] = H[j, i] = (J(t + I[i] + I[j], b) - J(t + I[i] - I[j], b) - J(t - I[i] + I[j], b) + J(t - I[i] - I[j], b)) / (4 * h * h)
+        return H
+    lhat = lambda t, b: np.linalg.slogdet(hess(t, b))[1]
+    H = hess(Th, beta)
+    hm = 1e-4                                                                 # the mixed Hessian ∇²_{Θβ}J by central differences of ∇_ΘJ
+    gradT = lambda t, b: np.array([(J(t + hm * e, b) - J(t - hm * e, b)) / (2 * hm) for e in np.eye(9)])
+    Hmix = np.array([(gradT(Th, beta + hm * e) - gradT(Th, beta - hm * e)) / (2 * hm) for e in np.eye(3)]).T     # 9 × 3
+    hl = 2e-3
+    dl_dT = np.array([(lhat(Th + hl * e, beta) - lhat(Th - hl * e, beta)) / (2 * hl) for e in np.eye(9)])
+    dl_dB = np.array([(lhat(Th, beta + hl * e) - lhat(Th, beta - hl * e)) / (2 * hl) for e in np.eye(3)])
+    general = 0.5 * tau * (dl_dB - dl_dT @ np.linalg.solve(H, Hmix))
+    closed = loop.fixman_correction(Th.reshape(3, 3), beta)
+    assert np.abs(general / closed - 1).max() < 2e-3
