@@ -26,6 +26,8 @@ F. With the entropic leak at γ = 3·10⁻³, ε = 10⁻⁴ (16 seeds, 4·10⁵ 
    κ_F = 1, 2, the masses form at κ_F = 1, 2 with Â fixed and at κ_F = 2 with Â tracked (T_A = 10⁵) — the seeds whose amplitudes escape
    up the positions' plateau (some |α_k| > 10), the masses' range, the pinned state's shift (all seeds, and the seeds without an escape)
    against κ⁻¹b (b the corrected drift at w = 1/3, κ the leak's stiffness along M), the fit error.
+G. With the entropic leak at γ = 10⁻², ε = 3·10⁻⁴ (inside Proposition D‴.37(iv)'s window; the 16 seeds of exp_gauge_drift.py's Part G, whose
+   κ_F = 0 runs this repeats bit for bit), the masses form at κ_F = 1, 2: the shift against κ⁻¹b_c, and the paired differences from κ_F = 0.
 
 Output: results/chaos/gauge_fixman.md and gauge_fixman_raw.npz (GF_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
 """
@@ -58,6 +60,7 @@ T_D = X.T_H
 GAMMA_F, EPS_F, SEEDS_F, S_F, TA_F = 3e-3, 1e-4, tuple(range(400, 416)), 4e5, 1e5
 MODES_F = (('none', 0.0), ('plug-in', 1.0), ('plug-in', 2.0), ('masses', 1.0), ('masses', 2.0), ('tracked', 2.0))
 ESCAPE = 10.0                                                              # |α_k| beyond it: up the positions' plateau (|a_k|/a_max > 0.986)
+GAMMA_G, EPS_G, GAINS_G, SEEDS_G, S_G = 1e-2, 3e-4, (0.0, 1.0, 2.0), tuple(range(200, 216)), 4e5   # exp_gauge_drift.py's Part G at ε = 3·10⁻⁴
 REC = GD.REC
 
 
@@ -212,7 +215,26 @@ def long_tables(D, title):
     return L_
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
+def part_G(rec):
+    """rec: {κ_F: records (seeds, n, 8 or 11)} (κ_F = 0 uncorrected, else the masses form, the same seeds). The second half's shift of the
+    masses from 1/3 (± s.e. over the seeds) against κ⁻¹b_c(w), and the paired differences from κ_F = 0 against κ⁻¹(b_c − b)."""
+    w = np.ones(3) / 3
+    K = kappa(w, EPS_G, GAMMA_G)
+    pred = {}
+    for k in rec:
+        c = np.linalg.solve(K, drift(w[:2], GAMMA_G, k)[0]); pred[k] = np.r_[c, -c.sum()]
+    R0 = np.asarray(rec[0.0], float); h = R0.shape[1] // 2; m0 = R0[:, h:, 4:7].mean(axis=1)
+    out = []
+    for k in sorted(rec):
+        R = np.asarray(rec[k], float); means = R[:, h:, 4:7].mean(axis=1); d = means - m0
+        esc = np.abs(R[:, :, 1:4]).max(axis=(1, 2)) > ESCAPE
+        out.append(dict(kF=k, shift=means.mean(axis=0) - 1 / 3, se=means.std(axis=0, ddof=1) / np.sqrt(len(means)), pred=pred[k],
+                        diff=d.mean(axis=0), dse=d.std(axis=0, ddof=1) / np.sqrt(len(d)), dpred=pred[k] - pred[0.0],
+                        esc=[SEEDS_G[i] for i in np.flatnonzero(esc)], std=R[:, h:, 4:7].std(axis=1).mean(axis=0), fit=R[:, h:, 7].mean()))
+    return out
+
+
+def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, Gg=None):
     fmt = E.fmt
     w3 = lambda w: ', '.join(f'{v:.3f}' for v in np.r_[w, 1 - sum(w)])
     L_ = ["# Proposition D‴.38: a Fixman correction for the replicator under dither (`exp_gauge_fixman.py`)", "",
@@ -280,6 +302,22 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
                    f"escape {', '.join(f'{v:+.3f}' for v in Ae[~esc].mean(axis=0))} (mean)"
                    + (f"; with one {'; '.join(', '.join(f'{v:+.3f}' for v in a) for a in Ae[esc])}" if esc.any() else '') + "."]
         L_.append("")
+    if Gg is not None:
+        L_ += [f"## G. With the entropic leak at γ = {GAMMA_G:g}, ε = {EPS_G:g} (the seeds of exp_gauge_drift.py's Part G, {S_G:g} slow units, the second "
+               "half): the masses form, and its difference from κ_F = 0 on the same seeds", "",
+               "| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b_c | the difference from κ_F = 0, the same seeds (± s.e.) | predicted κ⁻¹(b_c − b) | "
+               "the within-seed std | seeds with an escape | the fit error |", "|---|---|---|---|---|---|---|---|"]
+        for r in Gg:
+            L_.append(f"| {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
+                      f"{', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['diff'], r['dse']))} | {', '.join(f'{v:+.5f}' for v in r['dpred'])} | "
+                      f"{', '.join(f'{v:.4f}' for v in r['std'])} | {', '.join(str(x) for x in r['esc']) or 'none'} | {fmt(r['fit'])} |")
+        zg = E.load(os.path.join(OUT, 'gauge_drift_raw.npz')).get('G')
+        old = [g for g in (zg if zg is not None else []) if g['eps'] == EPS_G]
+        if old:
+            d = np.abs(Gg[0]['shift'] - old[0]['shift']).max()
+            L_ += ["", f"κ_F = 0 repeats exp_gauge_drift.py's Part G at ε = {EPS_G:g} (the same seeds and steps): its stored shift "
+                   f"{', '.join(f'{v:+.5f}' for v in old[0]['shift'])}, the largest difference {d:.1e}."]
+        L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_fixman.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -290,9 +328,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEFG']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEFG')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -311,6 +349,9 @@ def main():
             h['E'] = pool.map_async(series, [(GAMMA_D, 0.0, k, s, S_D, 'masses') for k in GAINS_D for s in SEEDS_D], chunksize=1)
         if 'F' in parts:
             h['F'] = pool.map_async(series, [(GAMMA_F, EPS_F, k, s, S_F, f) for f, k in MODES_F for s in SEEDS_F], chunksize=1)
+        if 'G' in parts:
+            h['G'] = pool.map_async(series, [(GAMMA_G, EPS_G, k, s, S_G, 'none' if k == 0 else 'masses') for k in GAINS_G for s in SEEDS_G],
+                                    chunksize=1)
         for k in 'ABC':
             if k in h:
                 res[k] = h[k].get(); E.save(raw, **res); log(k)
@@ -326,7 +367,11 @@ def main():
             runs = h['F'].get()
             res['F_rec'] = {(f, k): np.array([r['rec'] for r in runs if r['form'] == f and r['kF'] == k]) for f, k in MODES_F}
             res['F'] = part_F(res['F_rec']); E.save(raw, **res); log('F')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
+        if 'G' in h:
+            runs = h['G'].get()
+            res['G_rec'] = {k: np.array([r['rec'] for r in runs if r['kF'] == k]) for k in GAINS_G}
+            res['G'] = part_G(res['G_rec']); E.save(raw, **res); log('G')
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEFG']))
 
 
 if __name__ == '__main__':
