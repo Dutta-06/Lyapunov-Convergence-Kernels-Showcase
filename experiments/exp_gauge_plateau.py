@@ -18,6 +18,10 @@ C. The escapes at fixed masses (γ = 0, W = 1/3, τ = 1.5, 2, 3·10⁻⁴, 24 se
    set's boundary {max_k|α_k| = ESC} (A; Freidlin–Wentzell: τ log of the mean exit time tends to it).
 D. The dead zone at fixed masses (γ = 0, W = 1/3, τ = 2·10⁻⁴, 16 seeds, S_D slow units): without and with the box L = BOX (σ_B = 1): the
    fraction of the records with max|α| > ESC and the fit error by quarters, the largest |α|.
+F. The two channels to the saturation in the stored runs (no new runs): in exp_gauge_drift.py's Part H (no leak) and in exp_gauge_fixman.py's
+   Part F without the correction (the masses held at 1/3 by the leak), the records with some |α_k| > 10 — their mass's distance from the
+   saturation |A_k|/a_max and their fit error: at the saturation with the exact fit's error, the gauge's channel (Proposition D‴.37); away from
+   it with the plateau's error, the positions' own (ii).
 E. The full loop with the box (γ = 10⁻², τ = 10⁻⁴, the 12 seeds of exp_gauge_drift.py's Part H, 10⁶ slow units): κ_F = 0, and the masses
    form at κ_F = 2: the masses at 10⁵, 3·10⁵, 10⁶ against the vertices of the box's representable masses {W_k ≥ |A_k|/(a_max tanh(L_α/a_max))}
    (κ_F = 0) and W♯ (κ_F = 2); κ_F = 0 without the box is exp_gauge_drift.py's Part H.
@@ -194,12 +198,33 @@ def summarise_E(R, ref=None):
     return out
 
 
+def part_F():
+    """The records with some |α_k| > 10 in the stored no-leak runs (exp_gauge_drift.py's H) and leak runs without the correction
+    (exp_gauge_fixman.py's F, 'none'): per class, their number, how many have W_k − W_min,k < 0.01 and > 0.05, their mean fit error."""
+    out = []
+    zh = E.load(os.path.join(OUT, 'gauge_drift_raw.npz')).get('H_rec')
+    zf = E.load(os.path.join(OUT, 'gauge_fixman_raw.npz')).get('F_rec')
+    srcs = [('no leak (exp_gauge_drift.py H)', zh), ('the leak, no correction (exp_gauge_fixman.py F)', None if zf is None else zf.get(('none', 0.0)))]
+    for name, R in srcs:
+        if R is None:
+            continue
+        R = np.asarray(R, float)
+        al, W, fit = np.abs(R[:, :, 1:4]), R[:, :, 4:7], R[:, :, 7]
+        rows = []
+        for k in range(3):
+            big = al[:, :, k] > 10; d = W[:, :, k] - W_MIN[k]
+            rows.append(dict(n=int(big.sum()), near=int((big & (d < 0.01)).sum()), far=int((big & (d > 0.05)).sum()),
+                             fit=float(fit[big].mean()) if big.any() else np.nan, seeds=int(big.any(axis=1).sum())))
+        out.append(dict(src=name, rows=rows, N=R.shape[0], fit_all=float(fit[:, R.shape[1] // 2:].mean())))
+    return out
+
+
 def vertices():
     return np.array([[1 - W_BOX[1] - W_BOX[2], W_BOX[1], W_BOX[2]], [W_BOX[0], 1 - W_BOX[0] - W_BOX[2], W_BOX[2]],
                      [W_BOX[0], W_BOX[1], 1 - W_BOX[0] - W_BOX[1]]])
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
     fmt = E.fmt
     v3 = lambda v, p=3: ', '.join(f'{x:.{p}f}' for x in v)
     L_ = ["# Proposition D‴.39: dissipativity of the dithered gauge (`exp_gauge_plateau.py`)", "",
@@ -262,6 +287,14 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                 L_ += ["", f"κ_F = {r['kF']:g}: the records coincide with {src} (the same seeds without the box) up to the first record at which a "
                        f"coordinate has left B: {', '.join('never' if v is None else f'{v:g}' for v in sp)}."]
         L_.append("")
+    if Ff is not None:
+        L_ += ["## F. The two channels to the saturation in the stored runs", "",
+               "| runs | class | seeds with records at |α_k| > 10 | such records | of them with W_k − |A_k|/a_max < 0.01 | > 0.05 | their mean fit error |",
+               "|---|---|---|---|---|---|---|"]
+        for r in Ff:
+            for k, q in enumerate(r['rows']):
+                L_.append(f"| {r['src']} | {k + 1} | {q['seeds']}/{r['N']} | {q['n']} | {q['near']} | {q['far']} | {fmt(q['fit'])} |")
+        L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_plateau.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -272,9 +305,11 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
+    if 'F' in parts:
+        old['F'] = part_F(); E.save(raw, **old)
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -310,7 +345,7 @@ def main():
                     2.0: (E.load(os.path.join(OUT, 'gauge_fixman_raw.npz')).get('E_rec') or {}).get(2.0)}
             res['E'] = [dict(kF=k, sum=summarise_E(res['E_rec'][k], refs[k])) for k in (0.0, 2.0)]
             E.save(raw, **res); log('E')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
 
 
 if __name__ == '__main__':
