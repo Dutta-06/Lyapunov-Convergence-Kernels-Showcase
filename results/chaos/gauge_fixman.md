@@ -80,4 +80,12 @@ W♯ = argmax ℓ on the simplex: 0.37652, 0.29876, 0.32472 (|a|/a_max there 0.6
 
 Equipartition: at fixed masses the positions' law is Gibbs, each position coordinate that holds fit energy stores τ/2 of J = (m/2)⟨r²⟩, so the fit error is √(pτ/(m⟨F²⟩)) with p such coordinates — 9: 0.0267, 8: 0.0252, 7: 0.0236 (⟨F²⟩ = 0.4204); a saturated amplitude (a′ → 0) holds none.
 
+## E. With the entropic leak (γ = 0.003, ε = 0.0001, 16 seeds, 400000 slow units, the second half)
+
+| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b | std | the fit error |
+|---|---|---|---|---|
+| 0 | -0.00049 ± 0.00034, +0.00012 ± 0.00042, +0.00038 ± 0.00037 | -0.00106, +0.00072, +0.00035 | 0.0050, 0.0040, 0.0037 | 0.0286 |
+| 1 | +0.00499 ± 0.00594, +0.00249 ± 0.00534, -0.00748 ± 0.00493 | +0.00002, -0.00001, -0.00001 | 0.0427, 0.0549, 0.0363 | 0.0352 |
+| 2 | +0.00050 ± 0.00795, +0.00296 ± 0.00604, -0.00346 ± 0.00314 | +0.00111, -0.00073, -0.00037 | 0.0564, 0.0596, 0.0280 | 0.0383 |
+
 Numbers are produced by `experiments/exp_gauge_fixman.py`; nothing is edited by hand.

@@ -30,7 +30,8 @@ class ReplicatorCohesionLoop:
     """The cohesion leak (range R, kind, strength σ₀) with the replicator weight law of rate γ on top of an `AveragedSlowLoop` `base`;
     `balanced` keeps Σβ = m (λ the β-mean of u), otherwise λ = 0."""
 
-    def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0, fixman=0.0, fixman_tau=0.0):
+    def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0, fixman=0.0, fixman_tau=0.0, fixman_A=None,
+                 fixman_TA=None):
         self.base = base
         self.G = base.G
         self.R, self.kind = float(R), kind
@@ -38,6 +39,8 @@ class ReplicatorCohesionLoop:
         self.gamma, self.balanced = float(gamma), bool(balanced)
         self.eps = float(eps)                     # Proposition D‴.36: the entropic leak on the masses, energy (ε/γ)Σβ_i log β_i
         self.fixman, self.fixman_tau = float(fixman), float(fixman_tau)   # Proposition D‴.38: the gain κ_F and the dither's τ
+        self.fixman_A = None if fixman_A is None else np.array(fixman_A, float)   # the classes' contributions Â_k (the masses form)
+        self.fixman_TA = fixman_TA                                        # their running average's time constant (None: fixed)
 
     def f_hat(self, Th, beta):
         a, c, s, diff, phi = self.base.features(Th)
@@ -63,13 +66,21 @@ class ReplicatorCohesionLoop:
         return dTh, self.gamma * beta * (u - lam)
 
     def fixman_correction(self, Th, beta):
-        """Proposition D‴.38: κ_F(τ/2)∂_{β_i}ℓ along the manifold of exact fits, ℓ = log det ∇²_ΘJ, for one particle per class in the closed
-        form of Proposition D‴.37 evaluated at the current amplitudes: κ_F(τ/m)(1 + (a_i/a_max)²)/(W_i a′_i), W_i = β_i/m,
-        a′_i = 1 − (a_i/a_max)². It vanishes without dither (τ = 0) and acts on the masses only; it is not a gradient."""
-        a = self.base.features(Th)[0]
+        """Proposition D‴.38: κ_F(τ/2)∂_{β_i}ℓ along the manifold of exact fits, ℓ = log det ∇²_ΘJ = 2Σ log(W_i − W_min,i²/W_i) + const for
+        one particle per class (Proposition D‴.37), W_i = β_i/m: κ_F(τ/m)(1 + W_min,i²/W_i²)/(W_i − W_min,i²/W_i). The masses form takes
+        W_min,i = |Â_i|/a_max from the classes' contributions Â_i (`fixman_A`; on M, Â_i = W_i a_i = A_i), so it depends on the masses only;
+        the plug-in form (no `fixman_A`) takes W_min,i = W_i|a_i|/a_max at the current amplitudes, i.e. κ_F(τ/m)(1 + (a_i/a_max)²)/(W_i a′_i) —
+        equal on M, but off M it reads an amplitude's excursion as a mass at its saturation. Both vanish without dither and act on the masses
+        only; neither is a gradient. The denominator is floored at 0.01 W_i."""
         amax = self.base.net.a_max
         m = Th.shape[0]
-        return self.fixman * (self.fixman_tau / m) * (1 + (a / amax) ** 2) / ((beta / m) * (1 - (a / amax) ** 2))
+        W = beta / m
+        if self.fixman_A is None:
+            a = self.base.features(Th)[0]
+            q = (a / amax) ** 2                                               # (W_min/W)² at the current amplitudes
+        else:
+            q = (np.abs(self.fixman_A) / amax / W) ** 2
+        return self.fixman * (self.fixman_tau / m) * (1 + q) / np.maximum(W * (1 - q), 0.01 * W)
 
     def J(self, Th, beta):
         m = Th.shape[0]
@@ -118,6 +129,8 @@ class ReplicatorCohesionLoop:
             if k == n:
                 break
             dT, db = self.drift(Th, b)
+            if self.fixman_A is not None and self.fixman_TA:                  # the contributions' running average (Proposition D‴.38)
+                self.fixman_A = self.fixman_A + (dt / self.fixman_TA) * (b / m * self.base.features(Th)[0] - self.fixman_A)
             Th = Th + dt * dT + sq * rng.standard_normal(Th.shape)
             lb = lb + dt * db / b
             if self.balanced:
