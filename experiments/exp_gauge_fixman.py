@@ -225,18 +225,21 @@ def long_tables(D, title):
 def part_G(rec):
     """rec: {κ_F: records (seeds, n, 8 or 11)} (κ_F = 0 uncorrected, else the masses form, the same seeds). The second half's shift of the
     masses from 1/3 (± s.e. over the seeds) against κ⁻¹b_c(w), and the paired differences from κ_F = 0 against κ⁻¹(b_c − b)."""
+    from scipy.optimize import fsolve
     w = np.ones(3) / 3
     K = kappa(w, EPS_G, GAMMA_G)
-    pred = {}
+    pred, nl = {}, {}
     for k in rec:
         c = np.linalg.solve(K, drift(w[:2], GAMMA_G, k)[0]); pred[k] = np.r_[c, -c.sum()]
+        f = lambda c_: (drift(w[:2] + c_, GAMMA_G, k)[0] - kappa(np.r_[w[:2] + c_, 1 - (w[:2] + c_).sum()], EPS_G, GAMMA_G) @ c_) * 1e7
+        cn = fsolve(f, c); nl[k] = np.r_[cn, -cn.sum()]                     # the nonlinear fixed point b_c(W) = κ(W)(W − w)
     R0 = np.asarray(rec[0.0], float); h = R0.shape[1] // 2; m0 = R0[:, h:, 4:7].mean(axis=1)
     out = []
     for k in sorted(rec):
         R = np.asarray(rec[k], float); means = R[:, h:, 4:7].mean(axis=1); d = means - m0
         esc = np.abs(R[:, :, 1:4]).max(axis=(1, 2)) > ESCAPE
-        out.append(dict(kF=k, shift=means.mean(axis=0) - 1 / 3, se=means.std(axis=0, ddof=1) / np.sqrt(len(means)), pred=pred[k],
-                        diff=d.mean(axis=0), dse=d.std(axis=0, ddof=1) / np.sqrt(len(d)), dpred=pred[k] - pred[0.0],
+        out.append(dict(kF=k, shift=means.mean(axis=0) - 1 / 3, se=means.std(axis=0, ddof=1) / np.sqrt(len(means)), pred=pred[k], nl=nl[k],
+                        diff=d.mean(axis=0), dse=d.std(axis=0, ddof=1) / np.sqrt(len(d)), dpred=pred[k] - pred[0.0], dnl=nl[k] - nl[0.0],
                         esc=[SEEDS_G[i] for i in np.flatnonzero(esc)], std=R[:, h:, 4:7].std(axis=1).mean(axis=0), fit=R[:, h:, 7].mean()))
     return out
 
@@ -317,13 +320,15 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, Gg=None):
     if Gg is not None:
         L_ += [f"## G. With the entropic leak at γ = {GAMMA_G:g}, ε = {EPS_G:g} (the seeds of exp_gauge_drift.py's Part G, {S_G:g} slow units, the second "
                "half): the masses form, and its difference from κ_F = 0 on the same seeds", "",
-               "| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b_c | the difference from κ_F = 0, the same seeds (± s.e.) | predicted κ⁻¹(b_c − b) | "
-               "the within-seed std | seeds with an escape | the fit error |", "|---|---|---|---|---|---|---|---|"]
+               "| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b_c (the nonlinear fixed point) | the difference from κ_F = 0, the same seeds (± s.e.) | "
+               "predicted κ⁻¹(b_c − b) (nonlinear) | the within-seed std | seeds with an escape | the fit error |", "|---|---|---|---|---|---|---|---|"]
         for r in Gg:
             L_.append(f"| {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} "
-                      f"({', '.join(f'{v:+.2f}' for v in (r['shift'] - r['pred']) / r['se'])} s.e.) | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
+                      f"({', '.join(f'{v:+.2f}' for v in (r['shift'] - r['pred']) / r['se'])} s.e.) | {', '.join(f'{v:+.5f}' for v in r['pred'])} "
+                      f"({', '.join(f'{v:+.5f}' for v in r['nl'])}) | "
                       f"{', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['diff'], r['dse']))}"
-                      f"{'' if r['kF'] == 0 else ' (' + ', '.join(f'{v:+.2f}' for v in (r['diff'] - r['dpred']) / r['dse']) + ' s.e.)'} | {', '.join(f'{v:+.5f}' for v in r['dpred'])} | "
+                      f"{'' if r['kF'] == 0 else ' (' + ', '.join(f'{v:+.2f}' for v in (r['diff'] - r['dpred']) / r['dse']) + ' s.e.; from the nonlinear ' + ', '.join(f'{v:+.2f}' for v in (r['diff'] - r['dnl']) / r['dse']) + ')'} | "
+                      f"{', '.join(f'{v:+.5f}' for v in r['dpred'])} ({', '.join(f'{v:+.5f}' for v in r['dnl'])}) | "
                       f"{', '.join(f'{v:.4f}' for v in r['std'])} | {', '.join(str(x) for x in r['esc']) or 'none'} | {fmt(r['fit'])} |")
         zg = E.load(os.path.join(OUT, 'gauge_drift_raw.npz')).get('G')
         old = [g for g in (zg if zg is not None else []) if g['eps'] == EPS_G]
