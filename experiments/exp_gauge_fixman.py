@@ -302,11 +302,11 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, Gg=None):
             L_.append(f"| {r['form']} | {r['kF']:g} | {esc} | {r['almax']:.1f} | {', '.join(f'{v:.3f}' for v in r['Wmin'])}; "
                       f"{', '.join(f'{v:.3f}' for v in r['Wmax'])} | {fmt(r['fit'])}; {fmt(r['fit_ok'])}; {fmt(r['fit_esc'])} |")
         L_ += ["", "| correction | κ_F | the masses' mean − 1/3, all seeds (± s.e.) | the seeds without an escape (± s.e.) | predicted κ⁻¹b | "
-               "the within-seed std (without an escape) |", "|---|---|---|---|---|---|"]
+               "its distance from the prediction in s.e. (without an escape) | the within-seed std (without an escape) |", "|---|---|---|---|---|---|---|"]
         for r in Ff:
             L_.append(f"| {r['form']} | {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} | "
                       f"{', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift_ok'], r['se_ok']))} | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
-                      f"{', '.join(f'{v:.4f}' for v in r['std_ok'])} |")
+                      f"{', '.join(f'{v:+.2f}' for v in (r['shift_ok'] - r['pred']) / r['se_ok'])} | {', '.join(f'{v:.4f}' for v in r['std_ok'])} |")
         tr = [r for r in Ff if r['form'] == 'tracked']
         if tr:
             Ae = tr[0]['A_end']; esc = np.isin(SEEDS_F, tr[0]['seeds_esc'])
@@ -320,8 +320,10 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, Gg=None):
                "| κ_F | the masses' mean − 1/3 (± s.e.) | predicted κ⁻¹b_c | the difference from κ_F = 0, the same seeds (± s.e.) | predicted κ⁻¹(b_c − b) | "
                "the within-seed std | seeds with an escape | the fit error |", "|---|---|---|---|---|---|---|---|"]
         for r in Gg:
-            L_.append(f"| {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
-                      f"{', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['diff'], r['dse']))} | {', '.join(f'{v:+.5f}' for v in r['dpred'])} | "
+            L_.append(f"| {r['kF']:g} | {', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['shift'], r['se']))} "
+                      f"({', '.join(f'{v:+.2f}' for v in (r['shift'] - r['pred']) / r['se'])} s.e.) | {', '.join(f'{v:+.5f}' for v in r['pred'])} | "
+                      f"{', '.join(f'{a:+.5f} ± {b:.5f}' for a, b in zip(r['diff'], r['dse']))}"
+                      f"{'' if r['kF'] == 0 else ' (' + ', '.join(f'{v:+.2f}' for v in (r['diff'] - r['dpred']) / r['dse']) + ' s.e.)'} | {', '.join(f'{v:+.5f}' for v in r['dpred'])} | "
                       f"{', '.join(f'{v:.4f}' for v in r['std'])} | {', '.join(str(x) for x in r['esc']) or 'none'} | {fmt(r['fit'])} |")
         zg = E.load(os.path.join(OUT, 'gauge_drift_raw.npz')).get('G')
         old = [g for g in (zg if zg is not None else []) if g['eps'] == EPS_G]
