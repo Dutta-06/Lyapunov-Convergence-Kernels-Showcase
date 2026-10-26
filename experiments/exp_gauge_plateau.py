@@ -178,10 +178,16 @@ def part_D(runs):
     return out
 
 
-def summarise_E(R):
+def summarise_E(R, ref=None):
+    """The masses' statistics; with `ref` (the same seeds without the box: records (s, α, W, the fit error, …)) the first record at which the
+    two differ — inside B the dynamics are identical, so this is the box's first action, to within a record."""
     s = R[0, :, 0]; W = R[:, :, 4:7]; al = R[:, :, 1:4]
     out = dict(times=[], half=W[:, R.shape[1] // 2:].mean(axis=1), fit=R[:, R.shape[1] // 2:, 7].mean(), almax=float(np.abs(al).max()),
-               end=W[:, -1])
+               end=W[:, -1], split=None)
+    if ref is not None:
+        ref = np.asarray(ref, float)[:, :R.shape[1], :8]
+        diff = np.abs(R[:, :ref.shape[1], :8] - ref).max(axis=2) > 0
+        out['split'] = [float(s[np.argmax(d)]) if d.any() else None for d in diff]
     for t in T_E:
         i = int(np.argmin(np.abs(s - t)))
         out['times'].append(dict(s=s[i], mean=W[:, i].mean(axis=0), se=W[:, i].std(axis=0, ddof=1) / np.sqrt(len(W)), std=W[:, i].std(axis=0, ddof=1)))
@@ -249,6 +255,12 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
             else:
                 cell = '; '.join(f"{v3(w, 3)} ({np.abs(w - ws).max():.3f})" for w in sm['end'])
             L_.append(f"| {r['kF']:g} | {cell} | {sm['almax']:.2f} | {fmt(sm['fit'])} |")
+        for r in Ee:
+            sp = r['sum']['split']
+            if sp is not None:
+                src = "exp_gauge_drift.py's Part H" if r['kF'] == 0 else "exp_gauge_fixman.py's Part E"
+                L_ += ["", f"κ_F = {r['kF']:g}: the records coincide with {src} (the same seeds without the box) up to the first record at which a "
+                       f"coordinate has left B: {', '.join('never' if v is None else f'{v:g}' for v in sp)}."]
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_plateau.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -294,7 +306,9 @@ def main():
         if 'E' in h:
             runs = h['E'].get()
             res['E_rec'] = {k: np.array([r['rec'] for r in runs if r['kF'] == k]) for k in (0.0, 2.0)}
-            res['E'] = [dict(kF=k, sum=summarise_E(res['E_rec'][k])) for k in (0.0, 2.0)]
+            refs = {0.0: E.load(os.path.join(OUT, 'gauge_drift_raw.npz')).get('H_rec'),
+                    2.0: (E.load(os.path.join(OUT, 'gauge_fixman_raw.npz')).get('E_rec') or {}).get(2.0)}
+            res['E'] = [dict(kF=k, sum=summarise_E(res['E_rec'][k], refs[k])) for k in (0.0, 2.0)]
             E.save(raw, **res); log('E')
     open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
 
