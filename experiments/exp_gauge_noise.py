@@ -293,8 +293,6 @@ def main():
     names = list(noises())
     with Pool(N_WORKERS) as pool:
         h = {}
-        if 'E' in parts:
-            h['E'] = pool.map_async(e_series, [(v, s) for v in VARIANTS_E for s in SEEDS_E], chunksize=1)
         if 'A' in parts:
             h['A'] = pool.map_async(a_job, [(n, w) for n in names for w in W_A], chunksize=1)
         if 'B' in parts:
@@ -303,6 +301,8 @@ def main():
             h['C'] = pool.map_async(c_job, [(g, w) for g in GAMMAS_C for w in W_B], chunksize=1)
         if 'D' in parts:
             h['D'] = pool.map_async(d_job, [(n, t) for n in ('isotropic', 'correlated 1') for t in TAUS_D], chunksize=1)
+        if 'E' in parts:
+            h['E'] = pool.map_async(e_series, [(v, s) for v in VARIANTS_E for s in SEEDS_E], chunksize=1)
         for k in 'ABCD':
             if k in h:
                 res[k] = h[k].get(); E.save(raw, **res); log(k)
