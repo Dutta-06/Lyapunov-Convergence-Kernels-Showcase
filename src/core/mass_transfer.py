@@ -30,13 +30,14 @@ class ReplicatorCohesionLoop:
     """The cohesion leak (range R, kind, strength σ₀) with the replicator weight law of rate γ on top of an `AveragedSlowLoop` `base`;
     `balanced` keeps Σβ = m (λ the β-mean of u), otherwise λ = 0."""
 
-    def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0):
+    def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0, fixman=0.0, fixman_tau=0.0):
         self.base = base
         self.G = base.G
         self.R, self.kind = float(R), kind
         self.sigma0 = base.sigma0 if sigma0 is None else float(sigma0)
         self.gamma, self.balanced = float(gamma), bool(balanced)
         self.eps = float(eps)                     # Proposition D‴.36: the entropic leak on the masses, energy (ε/γ)Σβ_i log β_i
+        self.fixman, self.fixman_tau = float(fixman), float(fixman_tau)   # Proposition D‴.38: the gain κ_F and the dither's τ
 
     def f_hat(self, Th, beta):
         a, c, s, diff, phi = self.base.features(Th)
@@ -56,8 +57,19 @@ class ReplicatorCohesionLoop:
         u = self.fitness(r, Th)
         if self.eps:                              # −∂_β of (ε/γ)Σβ log β, up to the multiplier
             u = u - (self.eps / self.gamma) * np.log(beta)
+        if self.fixman:
+            u = u + self.fixman_correction(Th, beta)
         lam = float(beta @ u / beta.sum()) if self.balanced else 0.0
         return dTh, self.gamma * beta * (u - lam)
+
+    def fixman_correction(self, Th, beta):
+        """Proposition D‴.38: κ_F(τ/2)∂_{β_i}ℓ along the manifold of exact fits, ℓ = log det ∇²_ΘJ, for one particle per class in the closed
+        form of Proposition D‴.37 evaluated at the current amplitudes: κ_F(τ/m)(1 + (a_i/a_max)²)/(W_i a′_i), W_i = β_i/m,
+        a′_i = 1 − (a_i/a_max)². It vanishes without dither (τ = 0) and acts on the masses only; it is not a gradient."""
+        a = self.base.features(Th)[0]
+        amax = self.base.net.a_max
+        m = Th.shape[0]
+        return self.fixman * (self.fixman_tau / m) * (1 + (a / amax) ** 2) / ((beta / m) * (1 - (a / amax) ** 2))
 
     def J(self, Th, beta):
         m = Th.shape[0]

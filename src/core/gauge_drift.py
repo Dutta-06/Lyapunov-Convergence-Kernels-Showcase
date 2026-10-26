@@ -12,7 +12,8 @@ M the flow converges to) has ∂Φ = P, the spectral projection onto T along ran
 
 Under the dither dx = F ds + √Σ dB with Σ = O(τ), Katzenberger's limit on the time scale 1/τ is dY = P√Σ dB + ½∂²Φ[Σ] ds on M, and an
 observable w(x) (the chart's coordinates, read off by `coords`) moves by dw = ∂w·dY + ½∂²w[PΣPᵀ] ds: its drift is
-∂w ½∂²Φ[Σ] + ½∂²w[PΣPᵀ], its diffusion ∂w PΣPᵀ ∂wᵀ.
+∂w ½∂²Φ[Σ] + ½∂²w[PΣPᵀ], its diffusion ∂w PΣPᵀ ∂wᵀ. A deterministic perturbation of the same order, dx = (F + F₁) ds + √Σ dB with
+F₁ = O(τ) (Proposition D‴.38's correction), adds ∂w P F₁ to the drift: on the slow time scale ∂Φ F₁ = P F₁ is its part along M.
 
 This module: that drift and diffusion from F, the chart and Σ, by finite differences (`limit_drift`), and the limit map itself by integrating
 the flow (`limit_map`, for checks).
@@ -29,10 +30,11 @@ def _d2(f, x, u, v, h):
     return (f(x + h * (u + v)) - f(x + h * (u - v)) - f(x - h * (u - v)) + f(x - h * (u + v))) / (4 * h * h)
 
 
-def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False):
+def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False, F1=None):
     """The drift and the diffusion of the coordinates w = coords(x) of Katzenberger's limit at the point chart(w0) of M, for the noise
-    covariance Sigma (per unit time). Returns (drift (dim w), diffusion (dim w × dim w), the nonzero eigenvalues of A); with `by_noise` the
-    drift is also split by the noise coordinates (Sigma diagonal), as a (n, dim w) array."""
+    covariance Sigma (per unit time) and an optional perturbation F1 of the drift of the same order (its part ∂w P F1(x0) is added).
+    Returns (drift (dim w), diffusion (dim w × dim w), the nonzero eigenvalues of A); with `by_noise` the drift is also split by the noise
+    coordinates (Sigma diagonal), as a (n, dim w) array (F1's part not included in the split)."""
     w0 = np.asarray(w0, float)
     x0 = chart(w0)
     n, k = len(x0), len(w0)
@@ -75,6 +77,8 @@ def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False):
         return Jw @ d2P + ito
 
     drift = drift_for(Sigma)
+    if F1 is not None:
+        drift = drift + Jw @ P @ F1(x0)
     diff = Jw @ P @ Sigma @ P.T @ Jw.T
     if by_noise:
         parts = np.array([drift_for(np.diag(np.eye(n)[i] * Sigma[i, i])) for i in range(n)])
