@@ -73,3 +73,16 @@ def test_the_box_keeps_the_best_conditioned_fit_and_moves_the_wall_inside_the_sa
     V = P.vertices()
     assert np.allclose(V.sum(axis=1), 1) and np.all(V >= P.W_BOX[None, :] - 1e-15)
     assert np.allclose(np.sort(V, axis=None)[:6], np.sort(np.r_[P.W_BOX, P.W_BOX]))
+
+
+def test_a_dithered_run_inside_the_box_is_the_unboxed_run():
+    # inside B the dead zone adds exactly zero, so with the same noise the two runs agree to the last bit until a coordinate leaves B
+    net, base = E.setup()
+    out = []
+    for box in (None, BOX):
+        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=1e-2, fixman=2.0, fixman_tau=1e-4, fixman_A=E.A_BUMP.copy(), box=box)
+        rec = []
+        loop.run_dithered(E.exact_rep(net, np.ones(3) / 3), np.ones(3), 500.0, 0.25, 1e-4, np.random.default_rng(7), rec_every=200,
+                          callback=lambda s_, T, b: rec.append(np.r_[T.ravel(), b]))
+        out.append(np.array(rec))
+    assert np.all(np.abs(out[0][:, :9]).reshape(-1, 3, 3) < np.array(BOX)) and np.array_equal(out[0], out[1])
