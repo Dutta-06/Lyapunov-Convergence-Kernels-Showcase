@@ -211,12 +211,12 @@ def long_tables(D, title):
             L_.append(f"| {r['kF']:g} | {t['s']:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(t['mean'], t['se']))} | "
                       f"{', '.join(f'{v:.4f}' for v in t['std'])} | {', '.join(f'{v:.4f}' for v in t['sat'])} |")
     L_ += ["", "| κ_F | mean largest |α_1|, |α_2|, |α_3| by quarters | fraction |α_k| > 10 in the last quarter | beyond the saturation (last quarter) | "
-           "the second half's mean (± s.e. over the seeds) | W♯ | the fit error (second half) |", "|---|---|---|---|---|---|---|"]
+           "the second half's mean (± s.e. over the seeds) | W♯ | its distance from W♯ in s.e. | the fit error (second half) |", "|---|---|---|---|---|---|---|---|"]
     for r in D:
-        sm = r['sum']; hm = sm['half']
+        sm = r['sum']; hm = sm['half']; se = hm.std(axis=0, ddof=1) / np.sqrt(len(hm))
         L_.append(f"| {r['kF']:g} | {'; '.join(', '.join(f'{v:.1f}' for v in q) for q in sm['quarters'])} | {', '.join(f'{v:.2f}' for v in sm['big'][-1])} | "
-                  f"{', '.join(f'{v:.2f}' for v in sm['below'])} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(hm.mean(axis=0), hm.std(axis=0, ddof=1) / np.sqrt(len(hm))))} | "
-                  f"{', '.join(f'{v:.4f}' for v in ws)} | {fmt(sm['fit'])} |")
+                  f"{', '.join(f'{v:.2f}' for v in sm['below'])} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(hm.mean(axis=0), se))} | "
+                  f"{', '.join(f'{v:.4f}' for v in ws)} | {', '.join(f'{v:+.2f}' for v in (hm.mean(axis=0) - ws) / se)} | {fmt(sm['fit'])} |")
     return L_
 
 
