@@ -31,7 +31,7 @@ class ReplicatorCohesionLoop:
     `balanced` keeps Σβ = m (λ the β-mean of u), otherwise λ = 0."""
 
     def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0, fixman=0.0, fixman_tau=0.0, fixman_A=None,
-                 fixman_TA=None):
+                 fixman_TA=None, box=None, box_sigma=1.0):
         self.base = base
         self.G = base.G
         self.R, self.kind = float(R), kind
@@ -41,6 +41,8 @@ class ReplicatorCohesionLoop:
         self.fixman, self.fixman_tau = float(fixman), float(fixman_tau)   # Proposition D‴.38: the gain κ_F and the dither's τ
         self.fixman_A = None if fixman_A is None else np.array(fixman_A, float)   # the classes' contributions Â_k (the masses form)
         self.fixman_TA = fixman_TA                                        # their running average's time constant (None: fixed)
+        self.box = None if box is None else np.asarray(box, float)          # Proposition D‴.39: the dead zone's half-widths (L_α, L_γ, L_κ)
+        self.box_sigma = float(box_sigma)                                   # and its stiffness σ_B
 
     def f_hat(self, Th, beta):
         a, c, s, diff, phi = self.base.features(Th)
@@ -57,6 +59,8 @@ class ReplicatorCohesionLoop:
     def drift(self, Th, beta):
         r = self.residual(Th, beta)
         dTh = beta[:, None] * self.G[None, :] * self.base.grad_weighted(r, Th) + CO.cohesion_force(Th, self.G, self.R, self.sigma0, self.kind)
+        if self.box is not None:
+            dTh = dTh - self.box_sigma * self.box_excess(Th)
         u = self.fitness(r, Th)
         if self.eps:                              # −∂_β of (ε/γ)Σβ log β, up to the multiplier
             u = u - (self.eps / self.gamma) * np.log(beta)
@@ -82,10 +86,17 @@ class ReplicatorCohesionLoop:
             q = (np.abs(self.fixman_A) / amax / W) ** 2
         return self.fixman * (self.fixman_tau / m) * (1 + q) / np.maximum(W * (1 - q), 0.01 * W)
 
+    def box_excess(self, Th):
+        """Proposition D‴.39: ϑ_i − Π_B(ϑ_i), the excess of the unconstrained coordinates over the box B = Π_j[−L_j, L_j]; the dead zone
+        V = (σ_B/2)Σ_i‖ϑ_i − Π_B(ϑ_i)‖²_{G⁻¹} has the G-gradient σ_B(ϑ_i − Π_B(ϑ_i)), zero inside B."""
+        return Th - np.clip(Th, -self.box[None, :], self.box[None, :])
+
     def J(self, Th, beta):
         m = Th.shape[0]
         r = self.residual(Th, beta)
         out = 0.5 * m * float(np.mean(r ** 2)) + 0.5 * self.sigma0 * m * CO.interaction_energy(Th, self.G, self.R, self.kind)
+        if self.box is not None:
+            out += 0.5 * self.box_sigma * float(np.sum(self.box_excess(Th) ** 2 / self.G[None, :]))
         if self.eps:
             out += (self.eps / self.gamma) * float(np.sum(beta * np.log(beta)))
         return out
