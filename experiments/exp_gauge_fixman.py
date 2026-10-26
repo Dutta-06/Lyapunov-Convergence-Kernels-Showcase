@@ -17,7 +17,7 @@ C. The saturation: along W_2 = W_3 near the first class's saturation (W_1 − 0.
    exponent d log p/d log δ of the one-dimensional zero-flux density p ∝ D⁻¹exp∫2b/D for κ_F = 0, 1, 2 (predicted κ_F − 1).
 D. The full loop over 10⁶ slow units at γ = 10⁻² (12 seeds, the seeds of exp_gauge_drift.py's Part H, whose records are the κ_F = 0 runs):
    κ_F = 1, 2 — the excursions into the saturation by quarters, the fraction of records beyond the saturation, the masses' means and
-   spreads at 10⁵, 3·10⁵, 10⁶, the second half's mean against W♯, the fit error.
+   spreads at 10⁵, 3·10⁵, 10⁶, the second half's mean against W♯, the fit error against equipartition's √(pτ/(m⟨F²⟩)).
 E. With the entropic leak at γ = 3·10⁻³, ε = 10⁻⁴ (16 seeds, 4·10⁵ slow units, the second half): the pinned state's shift for κ_F = 0, 1, 2
    against κ⁻¹b (b the corrected drift at w = 1/3, κ the leak's stiffness along M).
 
@@ -214,6 +214,11 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
             L_.append(f"| {r['kF']:g} | {'; '.join(', '.join(f'{v:.1f}' for v in q) for q in sm['quarters'])} | {', '.join(f'{v:.2f}' for v in sm['big'][-1])} | "
                       f"{', '.join(f'{v:.2f}' for v in sm['below'])} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(hm.mean(axis=0), hm.std(axis=0, ddof=1) / np.sqrt(len(hm))))} | "
                       f"{', '.join(f'{v:.4f}' for v in ws)} | {fmt(sm['fit'])} |")
+        net, base = E.setup()
+        F2 = float(np.mean(base.F ** 2))
+        L_ += ["", "Equipartition: at fixed masses the positions' law is Gibbs, each position coordinate that holds fit energy stores τ/2 of "
+               "J = (m/2)⟨r²⟩, so the fit error is √(pτ/(m⟨F²⟩)) with p such coordinates — " + ', '.join(f"{p_}: {np.sqrt(p_ * TAU / (3 * F2)):.4f}" for p_ in (9, 8, 7))
+               + f" (⟨F²⟩ = {F2:.4f}); a saturated amplitude (a′ → 0) holds none."]
         L_.append("")
     if Ee is not None:
         L_ += [f"## E. With the entropic leak (γ = {GAMMA_E:g}, ε = {EPS_E:g}, {len(SEEDS_E)} seeds, {S_E:g} slow units, the second half)", "",
