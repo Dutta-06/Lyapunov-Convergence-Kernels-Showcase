@@ -822,8 +822,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None, C2
                "|---|---|---|---|" + ("---|" if has_lr else "") + "---|---|"]
         for r in D:
             rec = r['rec']
-            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.4f} | "
-                      f"{', '.join(f'{x:.4f}' for x in rec[::2, 1])} | {r['rate']:+.4f} | " + (f"{r['lr']:+.4f} | " if has_lr else "") +
+            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.4g} | "
+                      f"{', '.join(f'{x:.4f}' for x in rec[::2, 1])} | {r['rate']:+.4g} | " + (f"{r['lr']:+.4g} | " if has_lr else "") +
                       f"{rec[-1, 3]:.2e} | {rec[-1, 4]:.4f} |")
         L_ += ["", "For noise drawn afresh at each step the Itô SDE's E[Q] decays exactly as e^{−σ²t} (dQ = −σ²Q dt + 0·dW); Heun's scheme keeps "
                "every path's Q to its discretisation error, with fresh or with correlated draws.", ""]
@@ -838,17 +838,19 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None, C2
         for r in Ee:
             lrc = ""
             if has_lr:
-                lrc = (f"{r['lr'].mean():+.4f} ({r['lr'].min():+.4f} … {r['lr'].max():+.4f}) | " +
+                lrc = (f"{r['lr'].mean():+.4g} ({r['lr'].min():+.4g} … {r['lr'].max():+.4g}) | " +
                        ("— | " if r['scheme'] == 'heun' else f"{(r['ratio'] / r['lr']).mean():.4f} ({(r['ratio'] / r['lr']).min():.4f} … {(r['ratio'] / r['lr']).max():.4f}) | "))
-            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.4f} | {r['ratio'].mean():+.4f} "
-                      f"({r['ratio'].min():+.4f} … {r['ratio'].max():+.4f}) | " + lrc + f"{r['start']['tr']:.4f} → {r['end']['tr']:.4f} | "
+            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.4g} | {r['ratio'].mean():+.4g} "
+                      f"({r['ratio'].min():+.4g} … {r['ratio'].max():+.4g}) | " + lrc + f"{r['start']['tr']:.4f} → {r['end']['tr']:.4f} | "
                       f"{r['start']['err']:.4f} → {r['end']['err']:.4f} | {r['start']['l1']:.4f} → {r['end']['l1']:.4f} | {r['end']['res']:.1e} |")
         L_ += ["", f"‖w*‖₁ = {np.abs(diag_problem()[2]).sum():g}. The interpolant: the noiseless gradient flow from the state (at the start, after the "
                "gradient flow from u = v = α; at the end, after the noisy phase). The Euler step multiplies each P_i by exactly "
                "1 − 4h²(g_i − ξ̃_i)²: the label noise's selection — the effective initialisation scale shrinking, the interpolant descending "
                "tr ∇²L = (4/n)Σ_ic_i√(w_i² + 4P_i²), a weighted ℓ¹ norm Σ_ic_i|w_i| as P → 0 — runs at 4h²E[(X_iᵀe)²]/n² per step, e = r − ξ: the per-step "
                "variance times Σ_jφ(hκ_j)(X_iᵀq_j)²/c_i over the residual's modes (κ_j, q_j) of K = (4/n)X diag(u² + v²)Xᵀ, a factor that "
-               "differs from coordinate to coordinate when the noise is slow; Heun's scheme keeps the P_i, and the interpolant does not move.", ""]
+               "differs from coordinate to coordinate when the noise is slow; Heun's scheme keeps the P_i, and the interpolant does not move." +
+               (" The prediction's largest over smallest coordinate: " + ', '.join(f"{name_C(r['scheme'], r['rho'], DT)} {r['lr'].max() / r['lr'].min():.3f}"
+                                                                                for r in Ee if r['scheme'] != 'heun') + "." if has_lr else ""), ""]
     if Ff is not None:
         pr = Ff['pred']
         has_lr = 'lr' in pr
@@ -860,15 +862,18 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None, C2
                "over the Itô prediction | over the measured Itô slope | " + ("the linear-response slope | measured over it | " if has_lr else ""),
                "|---|---|---|---|---|---|" + ("---|---|" if has_lr else "")]
         s0 = next(r['slope'] for r in Ff['runs'] if r['scheme'] == 'ito')
+        floor = max(abs(r['slope']) for r in Ff['runs'] if r['scheme'] == 'heun')         # Heun's slopes: zero predicted, the resolution
         for i_, r in enumerate(Ff['runs']):
             lrc = ""
             if has_lr:
                 lr_ = pr['lr'][[k for k, sc in enumerate(SCHEMES_D) if sc == (r['scheme'], r['rho'])][0]]
-                lrc = f"{lr_:+.3e} | " + ("— | " if r['scheme'] == 'heun' else f"{r['slope'] / lr_:+.3f} | ")
+                lrc = f"{lr_:+.3e} | " + ("— | " if r['scheme'] == 'heun' else
+                                          (f"{r['slope'] / lr_:+.3f} | " if abs(lr_) > 10 * floor else f"{r['slope'] / lr_:+.3f} (below the floor) | "))
             L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.4f} | {', '.join(f'{x:.5f}' for x in r['rec'][::2, 1])} | "
                       f"{r['slope']:+.3e} | {r['slope'] / pr['slope']:+.3f} | {r['slope'] / s0:+.3f} | " + lrc)
         L_ += ["", "No exact identity holds here: the leading-order law (the per-step factor times the linear-response weights, Heun's zero) on a "
-               "generic network.", ""]
+               f"generic network. The measurement's floor: the largest |slope| of Heun's rows (zero predicted), {floor:.1e}; a prediction below ten "
+               "times it is not resolved (referee round 30).", ""]
     if G is not None:
         L_ += [f"## G. The noise's colour on the gauge: one target for fresh draws, several for slow ones (AR(1) draws of correlation time τ_c, step {DT:g})", "",
                f"G1a. The zero of the per-update selection on the simplex continued in τ_c from τ_c = 0 (fresh draws), with its two stability exponents "

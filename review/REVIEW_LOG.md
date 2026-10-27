@@ -1266,3 +1266,67 @@ term; Part D not reproducible by the current code (run before the floor); 11 of 
 scale of the distance to a boundary, its fluctuation term is of the same order as the drift balance, and a paired design resolves exactly
 that term. A limit statement must be made for the object the code implements, cap included; and a name ("best-conditioned") is checked
 by computing the quantity it names.
+
+## Round 29 (adversarial review of Propositions D‴.41 and D‴.42, measurement noise on the gauge and several particles per class, 2026-10-26)
+
+**Design.** One referee, not modifying the repository. D3ab: the drafts of Propositions D‴.41 and D‴.42 at 74e955e
+(`review/REVIEW_round29_D3ab.md`): the per-step expansion of the correlated-draw selection term by term; the scalar and replicator
+selection against the per-step law at λτ_c up to 4; node covariances other than white; the coordinates of the update; D‴.42 under masked
+dither and measurement noise per component; `limit_drift` at degenerate eigenvalues; 21 mutants.
+
+**Verdicts (D3ab).** D‴.41: (i)–(iii) right at leading order; (iv)'s per-step-variance law false beyond λ_maxτ_c ≪ 1 (the cross term
+h²∂²Φ[F, ⟨Uξ⟩] dropped); the heteroscedastic and orbit-correlated caveats O(γ), not "needs homoscedasticity". D‴.42: the frozen split
+and the per-class law false for a non-isotropic dither; the measurement-noise residual 0.7–9.6% per component at unequal splits.
+`limit_drift` silently wrong at degenerate eigenvalues; 11 of 21 mutants surviving.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ab-1 | major ((iv)) | the cross term dropped; the per-step law only for hλ_max ≪ 1 − ρ | the linear-response filter f_il with the cross term (vanishing in mean by the antisymmetry), `label_noise.lr_factor`, `filtered_covariance`; Part C's prediction column, D–F's ρ to 0.999 |
+| D3ab-2 | major (D‴.42 (ii), (iii)) | the frozen split and the per-class law fail for masked dither | (ii), (iii) restricted to the isotropic dither, the anisotropic mechanism (three couplings, a non-product law); Part F (masks) |
+| D3ab-3 | major (D‴.42 (iv)) | the residual normalised by the fractions' drift; per component up to 9.6%, not vanishing as γ → 0 | Part D per component; the pieces corrected |
+| D3ab-4 | major | 11 of 21 mutants survive (Heun's shared draw, the AR(1) normalisation, the weights) | tests of the draws, a Heun step, the weighted and covariance Wong–Zakai terms, the classes' masses form |
+| D3ab-5 | major | `limit_drift` garbage at degenerate eigenvalues | the Schur path (spectral projection without eigenvectors), automatic at cond(V) > 10⁸; n = 3 equal-split rows; a test |
+| D3ab-6–7 | minor | the node-covariance caveats' γ-scaling; "any spectrum" overstated | (ii): white on the orbit's resolution in the hypothesis, the O(γ) residual and its second mechanism; Part A2 |
+| D3ab-8 | minor | the Itô selection depends on the update's coordinates | (iii): the a-coordinate factor (1 − q)(1 + 3q) and its target |
+| D3ab-9–10 | minor | D‴.42's Itô potential and the equal split's m-independence | the full trace; the invariant-subspace argument |
+| D3ab-11 | minor | literature missing (Ziyin et al., Pillaud-Vivien et al., Kupferman–Pavliotis–Stuart, Kühn–Rosenow, Woodworth et al.) | [S69] and the audit, the novelty narrowed |
+| D3ab-12–18 | minor/cosmetic | W_ℓ is the slow limit's target; numerics only where trivial; the saturation's qualification; numbers, notation; Heun's predictor unnormalised | fixed (the γ = 10⁻² zero; ρ to 0.999; (iii), (v); the predictor renormalised) |
+
+**Lesson.** Each major failure promoted a leading-order identity to a universal quantifier without testing it where its assumptions are
+weakest — a term dropped as O(h²|F|²) that is O(h²|F||ξ|), a Gibbs free energy borrowed for a non-isotropic noise, a caveat resting on
+one profile at one γ; and the tests pinned only the degenerate reductions of the code paths that carry the novelty.
+
+## Round 30 (adversarial review of the revised Propositions D‴.41 and D‴.42, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ac: the drafts revised after round 29 and the code at 9143f28
+(`review/REVIEW_round30_D3ac.md`): the per-step expansion's completeness at O(v); the filter against the full loop at ρ = 0.9, 0.95 and
+at hλ_max = 1.56 (8 seeds); the scalar model to hλ = 1.78; the second mechanism's γ-scaling; the slow-noise selection's zero set and
+basins (multi-start, flows), smooth against AR(1) noise; D‴.42's equal-split law in the finite differences' step; the Schur path; 45
+mutants.
+
+**Verdicts (D3ac).** The filter complete at O(v) and confirmed everywhere tested (hλ_max = 1.56 included, with a path-averaged prediction
+and enough seeds); the second mechanism right at leading order. Overstated: (iv)(e) and Part G — the slow-noise selection is multistable
+(three stable zeros, W♯ an unstable node) and at Part C's γ its targets are interior; (c) and (e) hold for Markov (AR(1), block) noise
+only — a smooth noise has f ≈ (λτ_c)⁻² and a bounded Ψ; D‴.42's "internal differences' contribution" is the finite differences'
+O(h2²) error. 38 of 45 mutants killed.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ac-1 | major ((iv)(e), Part G) | the selection multistable; "the target moves continuously" one branch of several | Part G: the whole zero set (fsolve and flows from 21 starts), stability, the basins of W₀; (e) restricted, the multistability stated ((c)'s concavity) |
+| D3ac-2 | major ((c), (e)) | the log-determinant and the dither identity AR(1)-specific | (c): the Markov noise's; f = ∫ŝω²/(λ² + ω²) decreasing for every colour, Ψ concave, a smooth noise's bounded; `corr_sums`' Gaussian correlations; G2's smooth row |
+| D3ac-3 | major (D‴.42 (ii)) | the equal split's "internal differences' contribution" a truncation error | Part F Richardson-extrapolated in h2 with its resolution (ratios 1.0000–1.0004 at γ ≥ 10⁻⁵); the claim removed, a proof open |
+| D3ac-4 | minor | (e)'s limit only as h → 0 (2/(2 − hλ)) and away from the saturation | the finite-step limit X_h − BX_hBᵀ = 2hS, proved and in G2 (7·10⁻⁴); λ_soft·τ_c reported along the branch |
+| D3ac-5 | minor | G1's guard stopped the branch | the guard 1 + 10⁻⁶ and a finer τ_c grid (to 10⁵) |
+| D3ac-6 | minor | (e)'s effect ∝ vh/τ_c², unreachable | stated |
+| D3ac-7 | minor | Heun's zero only as h → 0 | (iv)(d): its selection (hλ)²/4 of Euler's, from the scalar identity |
+| D3ac-8 | minor | the second mechanism's constant ∝ 1/a′; O(γ) only for γ ≲ 10⁻³ | (ii) and the numerics |
+| D3ac-9 | minor | Part F cannot resolve ρ ≥ 0.99 | the floor printed, such rows marked; (vi) "checked for ρ ≤ 0.9" |
+| D3ac-10 | minor | the prediction at W₀ only; no large-step test with enough seeds | the path-averaged prediction (`--reanalyse-C`); C2 at h = 8, 8 seeds (0.979–1.049) |
+| D3ac-11 | minor | mutants A1, A2, H9 survive | tests of the amplitude coordinates' target and of Heun with dither; Gaussian sums; the finite-step slow limit |
+| D3ac-12 | minor | literature (Lucchi et al., Beneventano, Kim et al., AOUP/UCNA, Li–Wang–Arora's log-det) | [S69], the audit; "new" narrowed to the coloured filter of the drift along M |
+| D3ac-13–14 | minor/cosmetic | "a few percent" is 9.6%; "any step" is h < 2/λ_max; Part D's digits | fixed |
+
+**Lesson.** The derivations held; the failures came from reading a global statement off a few points — a target named from one
+continued branch, a limit's direction from three cosines, a sub-percent residual given a mechanism without varying the step. Map the whole
+zero set and its basins before naming a target, vary the noise's spectrum and not only its correlation time, and extrapolate any small
+numerical effect in the step of the computation that produced it.
