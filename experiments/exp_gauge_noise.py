@@ -168,6 +168,16 @@ def d_job(args):
     return dict(name=name, tau=tau, tk=tk, U=U, Rhs=Rhs, tk_hat=qv / (2 * E.G[0] * nb * N_BATCH * DT), closed=closed(W, tk))
 
 
+def d_rates():
+    """Part D's Euler-bias scale: G_α∂²_{α_kα_k}J at the fit (masses 1/3, the box), from the positions' drift's Jacobian."""
+    net, base = E.setup()
+    W = np.ones(3) / 3; beta = 3 * W
+    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=0.0, box=P.BOX, box_sigma=P.SIGMA_B)
+    x0 = E.exact_rep(net, W).ravel().copy(); h = 1e-6
+    f = lambda x: loop.drift(x.reshape(3, 3), beta)[0].ravel()
+    return np.array([-(f(x0 + h * np.eye(9)[3 * k]) - f(x0 - h * np.eye(9)[3 * k]))[3 * k] / (2 * h) for k in range(3)])
+
+
 @cached
 def e_series(args):
     """The full loop: (variant, seed) → records (s, α_1..3, W_1..3, the fit error)."""
@@ -247,14 +257,19 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
         L_ += [f"## D. The identity in simulation (fixed masses 1/3, the box, {S_D:g} slow units, {N_BATCH} batches)", "",
                "| noise | τ | E[u_k] (± s.e.) | E[−τ_kg′_k(α_k) + g_k∂_{α_k}(J_coh + V)] (± s.e.) | the difference (± s.e.) | the closed form at the fit | τ_k / τ̂_k (quadratic variation) |",
                "|---|---|---|---|---|---|---|"]
+        z = []
         for r in D:
             se = lambda M: M.std(axis=0, ddof=1) / np.sqrt(len(M))
             U, Rh = r['U'], r['Rhs']
+            z += list((U - Rh).mean(axis=0) / se(U - Rh))
             L_.append(f"| {r['name']} | {r['tau']:g} | {', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(U.mean(axis=0), se(U)))} | "
                       f"{', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(Rh.mean(axis=0), se(Rh)))} | "
                       f"{', '.join(f'{a:+.1e} ± {b:.1e}' for a, b in zip((U - Rh).mean(axis=0), se(U - Rh)))} | {', '.join(f'{v:+.3e}' for v in r['closed'])} | "
                       f"{', '.join(f'{a:.4g} / {b:.4g}' for a, b in zip(r['tk'], r['tk_hat']))} |")
-        L_.append("")
+        z = np.array(z); lam = d_rates()
+        L_ += ["", f"The differences over their batch-means errors: χ² = {float(z @ z):.1f} for {len(z)} values, the largest |z| {np.abs(z).max():.2f}. "
+               f"The Euler step's own bias of the identity, ½Δt·G_α∂²_{{α_kα_k}}J relative to τ_kg′_k (the stationary chain's E[Ψ(α_(n+1)) − Ψ(α_n)] = 0 "
+               f"expanded in Δt), is at most {0.5 * DT * lam.max():.1e} here (G_α∂²_{{α_kα_k}}J = {', '.join(f'{v:.4f}' for v in lam)} at the fit, Δt = {DT:g}).", ""]
     if Ee is not None:
         ws = Q.w_sharp(); wt = w_sharp_weighted(levels(noises()['correlated 1']))
         target = {'nonlinear only': np.ones(3) / 3, 'nonlinear only + barrier': ws, 'correlated': None, 'correlated + class levels': wt}
