@@ -1013,6 +1013,128 @@ key carries the code's version).
 Tests (`tests/test_gauge_plateau.py`): the dead zone inactive inside the box, minus its G-gradient outside; J bounded on the unconstrained
 coordinates and J + V coercive; the box's wall and vertices; a run inside the box bit for bit the unboxed one.
 
+
+## Proposition D‴.45 — the free mass–amplitude law as a mirror flow (`exp_mirror_free.py` → `chaos/mirror_free.md`)
+
+- (A) Unless stated: 5 × 12 Gaussian designs with unit columns, 2- or 3-sparse truths, m = 12, G = 1, γ = 0.1, a_max = 1 (c = 0.025); no
+  projection failed. η's closed form agrees with the quadrature of dα/(Gβa′) to 1.5·10⁻¹⁴ (relative, free curves and a branch), (ψ*)′ = w
+  and dw/dη = mD to 7.2·10⁻¹¹ and 4.3·10⁻¹⁰. Along the loop Q moves by at most 1.4·10⁻¹¹ noiseless and 3.6·10⁻¹⁰ under a smooth noise of 30
+  sinusoids mixed over the nodes (the integrator's tolerance); the conserved law's shift equals the quadrature of −γβ_iλ to 1.5–4.4·10⁻⁷;
+  along D‴.44's reduced flow dQ/ds is (iv)(b)'s closed form to 9.1·10⁻¹⁶.
+- (B) From α = 0 and equal masses s·m/d the noiseless loop's end at t = 10⁷ is the Bregman projection to 4.7·10⁻¹¹ (20 instances per k). For
+  k = 2 the projection is 0.5% from the minimum-norm fit at s = 10 and its ‖w‖₁ 1.0004 times basis pursuit's at s = 10⁻⁴, the truth
+  recovered nearly as often as by basis pursuit (0.75 against 0.80); at s = 10⁻³ the loop is within 10⁻⁸ of its projection only from t ≈
+  8.5·10⁶. Unequal masses s·r_i: weighted basis pursuit to 1.7·10⁻⁹ and 2.1·10⁻⁸ (k = 2, 3) at s = 10⁻⁷, the weighted minimum norm to
+  2.4–2.5·10⁻⁹ at s = 10⁴; from small random amplitudes at s = 10⁻⁶ the particles sit on branches, the bias the sign-constrained one
+  (D‴.47). (F) At N-atom vertices the leading order from the certificate agrees with the projection to the rounding floor (1.8·10⁻¹³,
+  2.6·10⁻¹¹ at ε = 10⁻⁷) and the distance falls by 1068 and 984 from 10⁻⁷ to 10⁻⁹ (ε^{3/2}: 1000); a small slack (μ_min = 2.7·10⁻⁴) keeps a
+  sixth atom, 0.17 away at 10⁻⁷.
+- (C) White label noise (σ = 0.3, 64 paths): Euler–Maruyama changes Q on average by its Itô correction's integral (ratios 1.0106, 1.0037,
+  1.0011 at h = 0.1, 0.03, 0.01), Heun's (Stratonovich) mean change is 1.4·10⁻⁵, 4.1·10⁻⁶, 1.4·10⁻⁶, the mirror update keeps Q to 2.2·10⁻¹⁶;
+  the Euler step's exact mean change is the closed form's to 0.029–0.036% at h = 0.005. Along D‴.44's reduced flow from the lazy projection
+  ‖w‖₁ first rises, then Q's mean falls to −0.021 by its time s = 10⁸ (no atom yet extinct): the state ends on basis pursuit where it is the
+  truth (6 instances), elsewhere on its support (two) or on another sparse fit of larger ℓ¹ norm (two). At h = 0.5 the paradigm's Euler
+  update lowers Q by 0.34–0.36 and moves the projection by 0.030–0.043, as the reduced flow does; the mirror update keeps it to 9.0·10⁻¹².
+- (D) The real loop (k_e = 5, m = 6, six Gaussian atoms, a second particle on the third, 2000 time units): noiseless, V falls monotonically
+  from 0.175 to 0.022 with V̇ = −k_ee² to 3.0·10⁻⁹, Q kept to 7.6·10⁻¹⁵ and the pair's mirror coordinates moving together to 2.4·10⁻¹⁵;
+  under a smooth noise in the adaptation, or a sensor noise, V is no longer monotone (0.175 → 0.136, 0.377) while Q is kept to 6.8·10⁻¹² and
+  4.9·10⁻¹³; at t = 2000 the noiseless coefficients are still 0.048 (the distinct atoms) and 0.027 (the pair's sum) from w*. (E) The
+  conserved law (Σβ = m) from the same starts reaches exact fits 1.6–4.1·10⁻³ from the free law's projections, its Q moving by 0.058–0.22.
+
+Tests (`tests/test_mirror_free.py`): η against quadrature in the three cases, on both sides of a branch and on the critical curve, and
+against a 60-digit reference near κ = 1 and |t| = 1; the inverse's round trips and its range errors; the conjugate (ψ*)′ = w and the
+metric dw/dη = mD; Q under a smooth node-correlated noise and the conserved law's shift dQ = −γβλ dt; the noiseless limit equal to the
+Bregman projection; the rich projection converging to weighted basis pursuit; the Euler step's second-order change of Q; V̇ = −k_ee² in
+the real loop (and a wrong mass law seen by V); the mirror update keeping Q and moving η by hg, on branches too.
+
+
+## Proposition D‴.46 — a leak in the mirror coordinates (`exp_mirror_leak.py` → `chaos/mirror_leak.md`)
+
+- (A) The identity of (i) — the leak with a disturbance and a measurement noise — holds to 9.5·10⁻¹¹ (relative) at twelve random states of
+  the real loop (σ = 0 and 0.3). On random positive definite H (10 × 10, k_e = 2, four draws) the averaged equilibrium is the ridge with ρ =
+  k_eσm/(Gβ⁰²) = 0.5, which moves w by 31–55%, to 1.3·10⁻⁸ (β⁰ = 10⁴) and 1.3·10⁻⁴ (10²), but departs from it by 0.15 at β⁰ = 3, where the
+  saturation's wall w_⊓ = 0.25 lies inside the coefficients' range: a ridge only below the wall; at small masses it is the LASSO of penalty
+  σλ₁ = 0.02 to 0.015, 1.5·10⁻³, 1.5·10⁻⁴ (β⁰ = 10⁻⁴, 10⁻⁶, 10⁻⁸; the remainder ∝ β⁰^{1/2}), with the LASSO's support in every draw.
+- (B) On a persistently exciting orbit (the filtered Gram's eigenvalues 2.7·10⁻³ to 0.68) under an approximation error and a biased
+  disturbance the free law without the leak creeps toward the biased fit w* + H_L⁻¹d̄_L (its largest coefficient 0.309, 0.330, 0.337, 0.341
+  by quarters, V rising from 0.40 to 0.45); σ = 0.01 and 0.1 hold the coefficients at 0.081 and 0.040 and V at 0.085 and 0.13, below C/λ =
+  1.74 and 0.30 and the comparison bound at every sample, the late means within 2.5·10⁻³ and 6.5·10⁻⁴ of w_σ^L, the rms error rising from
+  0.024 to 0.031 and 0.037. Without persistent excitation the free law's coefficient grows as constructed, 0.70, 2.31, 7.37, 23.3 at t = 1,
+  10², 10⁴, 10⁶, while σ = 0.01 and 0.1 bound it (0.46 at t = 10⁶).
+- (C) Slow adaptation (k_e = 20): the error filter's Gram is 0.89% from the idealised ⟨φφᵀ⟩, symmetric to 3·10⁻¹⁴; started at the averaged
+  equilibrium w_σ^L, the real loop's last period means lie within 1.6·10⁻⁴ (lazy start) and 1.7·10⁻⁴ (intermediate) of it, 4.4 and 2.6 times
+  closer than to the idealised equilibrium (the leak's bias 0.038 and 0.12). (D) On an orbit's Gram the rich start's equilibrium is the
+  LASSO to 3.7·10⁻⁶–6.5·10⁻⁴, keeping exactly the truth's three atoms for μ ≤ 10⁻² (one dropped at 3·10⁻²), the lazy start's the ridge to
+  3.9·10⁻⁶–2.5·10⁻⁴, dense; over all 1760 3-sparse patterns the support is exactly the truth's for 415, the LASSO's prediction holds for
+  416, the two agree on 1745; with a correlated disturbance bias the equilibrium tends to w* + H⁻¹d̄ as σ → 0, linearly; from the rich start
+  it is reached at t ≈ 3.2·10⁵, at 2·10⁶ where the irrepresentable condition fails (five atoms kept).
+
+Tests (`tests/test_mirror_free.py`): the Lyapunov identity with the leak, a disturbance and a measurement noise; Q kept by the leak; the
+equilibrium's ridge limit, its biased limit w* + H⁻¹d̄ and its LASSO limit (same support) at k_e ≠ 1, the solver's residual asserted; the
+comparison bound under a worst-case disturbance, coming within a factor 2 of its ultimate value; the filtered Gram's expansion
+H − ⟨φ̇φ̇ᵀ⟩/k_e² + O(k_e⁻³) and its O(k_e⁻³) asymmetry.
+
+
+## Proposition D‴.47 — the free law's branches (`exp_mirror_branch.py` → `chaos/mirror_branch.md`)
+
+- (A) The slope dη/dlog|w| = a/(γa² + Gβa′²) holds to 2.3·10⁻⁹ (40 random states, free and on branches); at the branch point the temperature
+  is 1/(γa₀) to ten digits (α₀ = 0.05, 0.3, 1, 2); B(w̄, w) → β/(γm) as w̄ → 0 (2·10⁻⁴ relative at δ̄ = 10⁻⁶, 5·10⁻¹⁰ at 10⁻¹²); with α(0)
+  uniform on [−0.3, 0.3] the fraction of starts on branches is 0.52, 0.95, 0.995, 0.9996 at β(0) = 10⁻³, 10⁻⁵, 10⁻⁷, 10⁻⁹; a ± pair's
+  coefficient follows 2u sinh(γa₀Δ) to 2·10⁻⁵ for Δ ≤ 10 (6·10⁻⁴ at Δ = 120, where the members leave their branch points); on the critical
+  curve η·w^{1/3} → −K = −3.218 (−3.2182 at α = 10⁻⁴).
+- (B) Random 6 × 12 Gaussian designs (the target on four atoms, masses 10⁻³, amplitudes 0.2–0.4, 8 seeds for each of three sign patterns):
+  the flow at t = 3·10⁷ is the Bregman projection onto S, computed independently, to 5.0·10⁻¹⁰; where the frozen signs cannot fit y (5 of 8
+  positive starts, 2 of 8 random ones) J reaches its sign-constrained minimum and the wrong-signed particles go extinct (masses below
+  10⁻¹⁰³) at the rates γa₀|g(∞)| to 0.5–10%, B(w̄, w(t)) never increasing by more than 2.2·10⁻¹⁶; the mixed starts fit exactly. With
+  duplicated atoms (S not a point; 8 seeds) the flow is the Bregman projection to 6.4·10⁻¹⁰, 1.6·10⁻⁴–0.20 from the equal split of the
+  duplicates: the selection with extinction is the Bregman one, not the symmetric one.
+- (C) On one 8 × 20 design: from branches (amplitudes 0.2–0.6, masses ε) the projection's distance to the sign-constrained basis pursuit
+  weighted by 1/|a(0)| is 0.23, 0.030, 1.3·10⁻³, 5.1·10⁻⁶, 1.1·10⁻⁹ at ε = 10⁻⁴, 10⁻⁸, 10⁻¹⁶, 10⁻³², 10⁻⁶⁴, the leading order agreeing to
+  4.1·10⁻⁴, 2.4·10⁻⁹, 3.4·10⁻¹⁴ from 10⁻¹⁶ on (μ_min = 0.104): the approach ε^{μ_j}; from α(0) = 0 the distance to basis pursuit is 0.29,
+  0.14, 4.0·10⁻⁴, 5.2·10⁻⁸, 4.3·10⁻¹¹ at ε = 10⁻², …, 10⁻¹⁰: ε^{3/2}. In a mixed start the free particles carry ≈ ε² — or, where the branch
+  atoms' frozen signs cannot fit, 2.27 on the power scale, the projection failing at ε = 10⁻¹² (residual 1.95). (D) A ± pair per atom tends
+  to basis pursuit weighted by 1/a₀, slowly (slacks 0.016, 0.020): 0.29 at u = 10⁻⁴, 2.6·10⁻⁴ at 10⁻¹²⁸, 1.9·10⁻⁶ at 10⁻²⁵⁶; never are both
+  members of an atom active.
+- (E) Positive Gaussian dictionaries, positive branches: with 21 atoms of width 0.15 and 7 samples (margin μ = 0.015) the loop reaches the
+  target from every start scale, β(0) = 10⁻⁶ to 10, within 6.0·10⁻⁵ at t = 10⁹, where from α(0) = 0 the rich start ends on a seven-atom fit
+  1 away and the lazy one spreads over all 21 atoms; at μ = 0.003 it is still 1.0–1.3·10⁻³ away at 10⁹, at μ = 0.027 on the target's atoms;
+  the decay is algebraic (t^{−0.9}–t^{−1}). Over all three-atom supports the median margins are 4.0·10⁻⁶, 3.8·10⁻⁹, 1.2·10⁻³ (25%, 45%, 4%
+  at most 10⁻⁹); the loop reaches the supports at the quantiles whose margins exceed 10⁻³ by t = 10⁹, and on those below 10⁻⁴ is still
+  0.37–0.83 away: the selection's speed is the margin. (F) The real loop on positive branches: V̇ = −k_ee² to 1.7·10⁻⁸, V falls
+  monotonically from 3.64 while the unused atoms' masses rise to 0.78; after 4000 time units the coefficients are still 0.080 from w*.
+
+Tests (`tests/test_mirror_free.py`): the branch criterion and δ(0) solved from β(0) (masses far below c's precision kept), η's inverse to
+any depth, the temperature 1/(γa₀) at a branch point, B(w̄, w) → β/(γm) as w̄ → 0, a ± pair's W(Δ) = 2u sinh(γa₀Δ) at leading order;
+the limit theorem: from positive branches that cannot fit the labels the loop converges to the projection onto the sign-constrained
+fits (computed independently), the vanishing coordinates' masses below 10⁻³⁰.
+
+
+## Proposition D‴.48 — the rich transit (`exp_mirror_transit.py` → `chaos/mirror_transit.md`)
+
+- (A) From α = 0 on three 6 × 14 Gaussian designs (3-sparse truths, masses εb_i, b_i log-uniform in [1/4, 4]) the adaptive inverse scale
+  space path of Σ|w_i|/√b_i ends at weighted basis pursuit after 3, 8 and 10 events, and the loop in τ = t/Λ(ε) follows it: sup_τ|u − u_ISS|
+  falls from 0.54, 0.61, 1.15 at ε = 10⁻² to 6.7·10⁻⁶, 8.8·10⁻⁶, 2.0·10⁻⁵ at 10⁻¹² (log-log slopes 0.500 between 10⁻⁶ and 10⁻⁸: 1/Λ ∝
+  ε^{1/2}); the entry times converge at that rate down to the grid's step; the residual's difference is O(1) at an event over a τ-width ∝
+  ε^{1/2} and O(ε^{3/2}) away from the events (median slopes 1.51, 1.69, 1.46); the end at 1.5τ* is weighted basis pursuit to
+  1.1·10⁻¹⁶–6.1·10⁻¹⁵ at 10⁻¹².
+- (B) On branches (amplitudes 0.2–0.6) the loop follows the one-sided path in τ = t/log(1/ε): sup|u − u_ISS| = 15.7, 8.0, 4.0, 2.0, 1.0 and
+  the entry times' largest difference 55, 28, 14, 7.0, 3.5 at ε = 10⁻⁴, 10⁻⁸, 10⁻¹⁶, 10⁻³², 10⁻⁶⁴, exactly ∝ 1/log(1/ε) (the path's weights
+  1/(γ|a(0)|) ≈ 17–50), ending at the sign-constrained weighted basis pursuit (to 1.3·10⁻⁵ at ε = 10⁻⁴, below 10⁻¹⁴ from 10⁻¹⁶ on); ± pairs
+  follow the two-sided path the same way (21, 7.9, 4.0, 2.0, 0.99 at u = 10⁻⁴ … 10⁻⁶⁴).
+- (C) Moving centres: the sliding path enters three kernels that slide onto the three bumps and fit them exactly; the loop with the
+  paradigm's metric forms 8 kernels at ε = 10⁻³, 4 at 10⁻⁴ and exactly these three for ε ≤ 10⁻⁵, the others displaced ∝ ε; with the
+  Wasserstein–Fisher–Rao metric the centres follow (iv)'s limit and the loop forms 15, 12, 8, 3, 3 kernels at ε = 10⁻⁴, 10⁻⁵, 10⁻⁶, 10⁻⁸,
+  10⁻¹⁰; with the centres held on the grid it forms 5 kernels, 0.019 from the target. On sixteen random targets the loop forms exactly three
+  kernels at the bumps on 11, 13, 16 at ε = 10⁻⁵, 10⁻⁶, 10⁻⁸ (Wasserstein–Fisher–Rao: none at 10⁻⁶, all at 10⁻¹⁰); a tie is shared (0.4,
+  0.4), a near tie takes two kernels at ε = 10⁻⁶; the creep's speed is the profile's to 0.990–0.996 (ε = 10⁻⁸) and 0.9999–1.0000 (10⁻¹⁰);
+  wider bumps are fitted along a staircase. (D) Moving widths fit bumps of widths 0.2 and 0.08 with exactly three kernels at ε = 10⁻⁶, where
+  fixed widths need six kernels or miss the amplitudes (0.71, −0.48, 0.59).
+
+Tests (`tests/test_rich_transit.py`, `tests/test_mirror_free.py`): the critical curve's coefficient and its depth-3 form; the sliding
+path recovers three bumps exactly; the loop at ε = 10⁻⁵ forms the same three kernels at the path's entry times; the inactive kernels'
+coefficients below the core's bound before the first entry; the Wasserstein–Fisher–Rao metric's centres on their limit; the inverse
+scale space path ends at weighted basis pursuit (one-sided: the sign-constrained one) and the loop at ε = 10⁻⁶ follows it.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

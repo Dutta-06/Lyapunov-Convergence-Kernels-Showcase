@@ -82,7 +82,14 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   exact fit, the saturation repelling (Proposition D‴.38); and without the prior the dithered loop has no stationary law — the energy is bounded on the unconstrained coordinates, and the
   positions climb, at a rate e^{−ΔJ/τ}, onto a plateau of approximate fits with saturated amplitudes — which a dead zone on a box of
   the unconstrained coordinates restores — without bias for the exact fits inside it, though the stationary averages still weigh the
-  plateau where it meets the box —, the gauge's saturation becoming a wall where the drift ends (Proposition D‴.39); rounds 7–31 of the
+  plateau where it meets the box —, the gauge's saturation becoming a wall where the drift ends (Proposition D‴.39); with free masses the mass–amplitude law is a mirror flow — a conserved quantity per kernel, an explicit potential, the implicit bias a
+  Bregman projection set by the starting masses (from the minimum-norm fit to weighted basis pursuit), noise with smooth paths
+  (Stratonovich) unable to move it, and a Lyapunov function of the real loop's joint adaptation (Proposition D‴.45); a leak written in those mirror coordinates keeps the certificate under disturbances and makes the loop's bias an explicit
+  Bregman-regularised fit — a ridge from large starting masses, a LASSO from small ones that keeps the target's kernels under the
+  irrepresentable condition (Proposition D‴.46); small starts put the kernels on branches where their signs freeze and the law becomes an exponentiated gradient: the limit is the
+  start's projection onto the sign-constrained least-squares fits, wrong-signed kernels dying out (Proposition D‴.47); from small masses the kernels enter one at a time — the inverse scale space flow, on the scale (mass)^{−1/2} from zero amplitudes and
+  log(1/mass) on branches —, and with the paradigm's moving centres the entered kernels slide onto the target's features while the others
+  stay put: one kernel per feature (Proposition D‴.48); rounds 7–31 of the
   review log cover all of them up to D‴.39, and their remarks.
 
 ---
