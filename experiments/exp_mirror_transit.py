@@ -16,9 +16,11 @@ C. Moving centres (Gaussian kernels of width 0.12 on 61 samples of [−1, 1]; 21
    10⁻⁷ — entries, the formed kernels, the inactive kernels' displacement and mass; (2) the Wasserstein–Fisher–Rao metric (ċ = Ga⟨r∂_cφ⟩):
    the inactive kernels' centres against their limit (`wfr_inactive_rhs`) before the first entry — condensation —, the formed kernels;
    (3) the centres held fixed (the grid dictionary's transit); (4) random three-bump targets: the formed kernels under each metric and with
-   fixed centres; (5) two bumps closer than the kernels' width, and a target of wider bumps than the kernels.
+   fixed centres; (5) two bumps closer than the kernels' width, and a target of wider bumps than the kernels; (6) a lost near-tie's creep.
+D. Moving widths too (the paradigm's full kernel law, `moving_rhs_widths`): targets of bumps wider (0.2) and narrower (0.08) than the
+   kernels' starting width 0.12, ε = 10⁻⁵, 10⁻⁶, against fixed widths.
 
-Output: results/chaos/mirror_transit.md and mirror_transit_raw.npz (`--from-raw` regenerates the md; `--only A,B,C`).
+Output: results/chaos/mirror_transit.md and mirror_transit_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D`).
 """
 import os
 import sys
@@ -50,6 +52,7 @@ TAU_PRE = 10.0                                                        # before t
 N_RAND, EPS_RAND, EPS_RAND2, EPS_RAND3 = 16, 1e-5, 1e-6, 1e-8                # C4: the paradigm at all three, WFR and fixed at the second
 CREEP_TARGET, EPS_CREEP = 10, (1e-8, 1e-10)                                  # C6: a lost near-tie's creep
 TH_ACT = 1e-2                                                         # a formed kernel: |w| > TH_ACT·max|A*|
+WIDTHS_D, EPS_D, TAU_D = (0.2, 0.08), (1e-5, 1e-6), 60.0                    # D: the targets' widths, the masses, the horizon
 
 
 def law():
@@ -324,7 +327,38 @@ def part_C():
     return out
 
 
-def report(A=None, B=None, C=None):
+def part_D():
+    """Moving widths: the free law with moving centres and widths against fixed widths, on bumps wider and narrower than the kernels."""
+    warnings.filterwarnings('ignore')
+    L = law()
+    K = RT.Bumps(np.linspace(-1, 1, NS_C), SIG_C)
+    c0 = np.linspace(-1, 1, D_C)
+    th = TH_ACT * np.abs(ASTAR).max()
+    rows = []
+    for wid in WIDTHS_D:
+        fs = RT.Bumps(K.xs, wid).phi(np.asarray(CSTAR)) @ np.asarray(ASTAR)
+        for eps in EPS_D:
+            for moving in (True, False):
+                Lam = RT.transit_scale(L, eps)
+                taus = np.linspace(0, TAU_D, 601)
+                z0 = np.r_[np.zeros(D_C), np.log(np.full(D_C, eps)), c0, np.full(D_C, SIG_C)]
+                f = RT.moving_rhs_widths(L, K, fs)
+                rhs = f if moving else (lambda t, z, f=f: np.r_[f(t, z)[:3 * D_C], np.zeros(D_C)])
+                sol = solve_ivp(rhs, (0, Lam * TAU_D), z0, method='LSODA', rtol=1e-9, atol=1e-12, t_eval=Lam * taus)
+                W = np.exp(sol.y[D_C:2 * D_C].T) * L.amp(sol.y[:D_C].T)[0] / L.m
+                cc, sg = sol.y[2 * D_C:3 * D_C].T, sol.y[3 * D_C:].T
+                act = np.abs(W[-1]) > th
+                Ph = np.exp(-(K.xs[:, None] - cc[-1][None, :]) ** 2 / (2 * sg[-1] ** 2))
+                o = np.argsort(cc[-1][act])
+                rows.append(dict(wid=wid, eps=eps, moving=moving, n_act=int(act.sum()), centres=cc[-1][act][o].tolist(),
+                                 widths=sg[-1][act][o].tolist(), w=W[-1][act][o].tolist(),
+                                 rms=float(np.sqrt(np.mean((fs - Ph @ W[-1]) ** 2))),
+                                 order=[i for t, i in sorted((taus[np.flatnonzero(np.abs(W[:, i]) > th)[0]], i) for i in range(D_C)
+                                                             if (np.abs(W[:, i]) > th).any())]))
+    return rows
+
+
+def report(A=None, B=None, C=None, D=None):
     fmt = E.fmt
     L = law()
     L_ = ["# Proposition D‴.48: the rich transit (`exp_mirror_transit.py`)", "",
@@ -422,6 +456,14 @@ def report(A=None, B=None, C=None):
         L_ += [f"| {r['eps']:g} | " + '; '.join(f"{n['j']}: {fmt(n['mu'])}, {fmt(n['h'])}, {fmt(n['speed'])}, {fmt(n['disp'])}" for n in r['near'])
                + f" | {r['order']} | {[round(v, 4) for v in r['centres']]} |" for r in c6['rows']]
         L_.append("")
+    if D is not None:
+        L_ += ["## D. Moving widths (σ̇ = Gβa⟨r∂_σφ⟩ beside ċ = Gβa⟨r∂_cφ⟩; kernels started at width 0.12)", "",
+               f"The target: the three bumps of C at widths {list(WIDTHS_D)}; τ ≤ {TAU_D:g}.", "",
+               "| the bumps' width | ε | widths | entrants | formed | centres | widths | coefficients | rms residual |", "|---|---|---|---|---|---|---|---|---|"]
+        L_ += [f"| {r['wid']:g} | {r['eps']:g} | {'moving' if r['moving'] else 'fixed'} | {r['order']} | {r['n_act']} | "
+               f"{[round(v, 4) for v in r['centres']]} | {[round(v, 4) for v in r['widths']]} | {[round(v, 4) for v in r['w']]} | {fmt(r['rms'])} |"
+               for r in D]
+        L_.append("")
     L_.append("Numbers are produced by `experiments/exp_mirror_transit.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -432,15 +474,15 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABC']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCD']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABC')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCD')
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C)):
+    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABC']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCD']))
 
 
 if __name__ == '__main__':
