@@ -430,3 +430,100 @@ def test_iss_path_and_the_rich_transit():
                     t_eval=Lam * taus)
     err = max(np.abs(L.eta(sol.y[:d, k], q) / Lam - MF.iss_eval(path, t, Phi, y)[0]).max() for k, t in enumerate(taus))
     assert err < 0.02
+
+
+def _iss_stepping(Phi, y, rho, signs=None, dtau=2e-4, tau_end=10.0):
+    """An independent inverse scale space integrator (round 37): forward steps of the dual u in τ, clipped to the box (one-sided:
+    s_iu_i ≤ ρ_i), w the (sign-constrained) least-squares fit on the atoms at their walls; events read off w's support."""
+    from scipy.optimize import nnls
+    N, d = Phi.shape
+    one = signs is not None
+    u = np.zeros(d)
+    supp = np.zeros(d, bool)
+    events = []
+    for k in range(int(round(tau_end / dtau))):
+        sg = np.asarray(signs, float) if one else np.sign(u)
+        wall = (sg * u >= rho * (1 - 1e-12)) & (sg != 0)
+        w = np.zeros(d)
+        idx = np.flatnonzero(wall)
+        if idx.size:
+            w[idx] = sg[idx] * nnls(Phi[:, idx] * sg[idx], y, maxiter=50 * d)[0]
+        nz = np.abs(w) > 1e-12
+        for i in np.flatnonzero(nz & ~supp):
+            events.append((k * dtau, int(i), 'enter'))
+        for i in np.flatnonzero(supp & ~nz):
+            events.append((k * dtau, int(i), 'exit'))
+        supp = nz
+        u = u + dtau * Phi.T @ (y - Phi @ w) / N
+        u = np.minimum(u, rho) if one else np.clip(u, -rho, rho)
+        if one:
+            u = np.where(sg > 0, np.minimum(u, rho), np.maximum(u, -rho))
+    return events, w
+
+
+@pytest.mark.parametrize('seed', [4, 5])
+def test_iss_path_events_against_an_independent_integrator(seed):
+    """Proposition D‴.48(i), round 37: on designs with exits, `iss_path`'s entries and exits (atom, kind, time) are those of a forward-stepping
+    integrator of the dual clipped to the box (the times to its O(dτ) per event), and both end at weighted basis pursuit."""
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
+    import exp_mirror_transit as X
+    Phi, ws, b = X.design(seed); y = Phi @ ws
+    rho = b ** -0.5
+    path = MF.iss_path(Phi, y, rho)
+    assert any(k == 'exit' for t, i, k in path['events'])
+    dtau = 2e-4
+    ev, w = _iss_stepping(Phi, y, rho, dtau=dtau, tau_end=path['taus'][-1] * 1.05)
+    assert [(i, k) for t, i, k in ev] == [(i, k) for t, i, k in path['events']]
+    # the clipped Euler's O(dτ) error in u becomes δτ = δu/|du_j/dτ| at an entry — large where the entrant approaches its wall slowly
+    # (design 4: |du/dτ| = 0.0015 at τ = 55.5) —, so the times are compared in u: |δτ|·|du_j/dτ| (an exit at an entry's time: the entry's)
+    N = Phi.shape[0]
+    vel = {}
+    for k, t in enumerate(path['taus'][1:]):
+        v = Phi.T @ (y - Phi @ path['W'][k]) / N
+        for tt, i, kind in path['events']:
+            if kind == 'enter' and tt == t:
+                vel[t] = abs(v[i])
+    for (t1, i1, k1), (t2, i2, k2) in zip(ev, path['events']):
+        assert abs(t1 - t2) * vel[t2] < 2 * dtau
+    assert np.abs(path['w_end'] - MF.weighted_bp(Phi, y, rho)).max() < 1e-12
+    assert np.abs(w - path['w_end']).max() < 1e-6
+
+
+def test_one_sided_iss_where_the_sign_constraint_binds():
+    """Proposition D‴.48(ii), round 37: with frozen signs (Part B's instance) the one-sided path differs from the two-sided one — an atom the
+    two-sided path enters at its wrong wall — and matches the independent integrator with one-sided boxes."""
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
+    import exp_mirror_transit as X
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    Phi, ws, b = X.design(X.SEEDS_A[0]); y = Phi @ ws
+    rng = np.random.default_rng(11)
+    s = rng.choice([-1.0, 1.0], X.DA); s[ws != 0] = np.sign(ws[ws != 0])
+    amp = rng.uniform(0.2, 0.6, X.DA)
+    rho = 1 / (L.gamma * L.A * np.tanh(amp / L.A))
+    one = MF.iss_path(Phi, y, rho, signs=s)
+    two = MF.iss_path(Phi, y, rho)
+    wrong = [i for t, i, k in two['events'] if k == 'enter' and np.sign(two['W'][-1][i] if two['W'][-1][i] != 0 else 1) != s[i]]
+    assert [(i, k) for t, i, k in one['events']] != [(i, k) for t, i, k in two['events']]
+    ev, w = _iss_stepping(Phi, y, rho, signs=s, dtau=5e-3, tau_end=one['taus'][-1] * 1.05)
+    assert [(i, k) for t, i, k in ev] == [(i, k) for t, i, k in one['events']]
+    assert np.abs(one['w_end'] - MF.weighted_bp(Phi, y, rho, signs=s)).max() < 1e-10
+    assert np.all(s * one['w_end'] >= 0)
+
+
+def test_particle_set_free_drive():
+    """The free particles' drive (round 37: an a′ mutant survived): α̇ = Gβa′g, β on the curve, against FreeLaw's closed forms, and the
+    branch particles' u̇ = sGβa′g/δ against a finite difference of δ along the flow."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    al = np.array([0.0, 0.7, -1.3, 2.4])
+    P = MF.ParticleSet(L, al, np.array([0.2, 0.5, 1.0, 3.0]))
+    assert not P.br.any()
+    g = np.array([0.3, -0.2, 0.5, 0.1])
+    a, da = L.amp(al)
+    assert np.allclose(P._dstate(P.x0, g), L.G * P.beta(P.x0) * da * g, rtol=1e-13, atol=0)
+    assert np.allclose(P._dstate(P.x0, g), L.G * L.beta(al, P.q) * (1 - np.tanh(al / L.A) ** 2) * g, rtol=1e-12, atol=0)
+    Pb = MF.ParticleSet(L, np.array([0.4]), np.array([1e-4]))
+    assert Pb.br.all()
+    x = Pb.x0 + 0.3
+    h = 1e-7
+    deta = Pb.eta(x + h) - Pb.eta(x - h)
+    assert abs(float(Pb._dstate(x, np.array([1.0]))[0]) * float(deta[0]) / (2 * h) - 1) < 1e-6

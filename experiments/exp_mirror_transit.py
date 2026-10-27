@@ -42,14 +42,17 @@ import exp_cohesion_leak as E
 OUT = os.environ.get('MT_OUT', os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos'))
 LAW = dict(m=12.0, G=1.0, gamma=0.1, a_max=1.0)                       # c = 0.025
 NA, DA, SEEDS_A = 6, 14, (3, 4, 5)
-EPS_A = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8)
+EPS_A = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-10, 1e-12)
 NT_A = 2001                                                           # τ-grid points on [0, 1.5τ*]
 EPS_B, U_B = (1e-4, 1e-8, 1e-16, 1e-32, 1e-64), (1e-4, 1e-8, 1e-16, 1e-32, 1e-64)
 NS_C, SIG_C, D_C = 61, 0.12, 21
 CSTAR, ASTAR = (-0.52, 0.07, 0.61), (0.9, -0.6, 0.75)
-EPS_C1, EPS_C2 = (1e-3, 1e-4, 1e-5, 1e-6, 1e-7), (1e-4, 1e-5, 1e-6)
+EPS_C1, EPS_C2 = (1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8), (1e-4, 1e-5, 1e-6, 1e-8, 1e-10)
 TAU_PRE = 10.0                                                        # before the first entry (C2)
-N_RAND, EPS_RAND, EPS_RAND2, EPS_RAND3 = 16, 1e-5, 1e-6, 1e-8                # C4: the paradigm at all three, WFR and fixed at the second
+N_RAND, EPS_RAND, EPS_RAND2, EPS_RAND3 = 16, 1e-5, 1e-6, 1e-8                # C4: the paradigm at all three, fixed centres at the second
+EPS_WFR_RAND = (1e-6, 1e-8, 1e-10)                                          # C4: the WFR metric's count as ε → 0 (round 37)
+EPS_C2B = 1e-6                                                              # C2: the WFR limit with unequal masses
+EPS_C5 = (1e-6, 1e-8, 1e-10)                                                # C5: ties, near ties, close off-grid bumps
 CREEP_TARGET, EPS_CREEP = 10, (1e-8, 1e-10)                                  # C6: a lost near-tie's creep
 TH_ACT = 1e-2                                                         # a formed kernel: |w| > TH_ACT·max|A*|
 WIDTHS_D, EPS_D, TAU_D = (0.2, 0.08), (1e-5, 1e-6), 60.0                    # D: the targets' widths, the masses, the horizon
@@ -98,9 +101,9 @@ def part_A():
             t0 = time.time()
             Lam = RT.transit_scale(L, eps)
             b0 = eps * b; q = L.Q(np.zeros(DA), b0)
-            sol = solve_ivp(L.rhs(Phi, y), (0, Lam * tau_end), np.r_[np.zeros(DA), np.log(b0)], method='LSODA', rtol=1e-10, atol=1e-13,
-                            t_eval=Lam * taus)
-            al = sol.y[:DA].T
+            sol = solve_ivp(L.rhs_curve(Phi, y, b0), (0, Lam * tau_end), np.zeros(DA), method='LSODA', rtol=1e-10, atol=1e-13,
+                            t_eval=Lam * taus)                                  # α alone, β on its curve: Q kept exactly (round 37)
+            al = sol.y.T
             U = np.array([L.eta(al[k], q) for k in range(len(taus))]) / Lam
             W = np.array([L.w(al[k], q) for k in range(len(taus))])
             ent = entries_of(W, taus, th)
@@ -184,21 +187,20 @@ def bumps_target(K, cstar, astar):
     return K.phi(np.asarray(cstar, float)) @ np.asarray(astar, float)
 
 
-def run_moving(L, K, fstar, c0, eps, tau_end, metric, n_t=441, fixed=False):
-    """The free law with moving (or fixed) centres from α = 0, masses ε, to τ_end in τ = t/Λ(ε)."""
+def run_moving(L, K, fstar, c0, eps, tau_end, metric, n_t=441, fixed=False, b=None, full=False):
+    """The free law with moving (or fixed) centres from α = 0, masses εb (b = 1 by default), to τ_end in τ = t/Λ(ε): the state (α, c), each
+    kernel kept on its curve β = εb + 2c sinh²(α/a_max) (`critical_rhs` with b0 = εb; round 37)."""
     d = len(c0)
+    b0 = eps * (np.ones(d) if b is None else np.asarray(b, float))
     Lam = RT.transit_scale(L, eps)
     taus = np.linspace(0, tau_end, n_t)
-    z0 = np.r_[np.zeros(d), np.log(np.full(d, eps)), c0]
-    if fixed:                                                          # L.rhs: g = Φᵀr/N, N the samples — the same mean
-        f0 = L.rhs(K.phi(np.asarray(c0, float)), fstar)
-        rhs = lambda t, z: np.r_[f0(t, z[:2 * d]), np.zeros(d)]
-    else:
-        rhs = RT.moving_rhs(L, K, fstar, metric)
-    sol = solve_ivp(rhs, (0, Lam * tau_end), z0, method='LSODA', rtol=1e-9, atol=1e-12, t_eval=Lam * taus)
-    al, lb, cc = sol.y[:d].T, sol.y[d:2 * d].T, sol.y[2 * d:].T
-    W = np.exp(lb) * L.amp(al)[0] / L.m
-    return taus, W, cc, Lam
+    f = RT.critical_rhs(L, K, fstar, metric, b0=b0)
+    rhs = (lambda t, z: np.r_[f(t, z)[:d], np.zeros(d)]) if fixed else f
+    sol = solve_ivp(rhs, (0, Lam * tau_end), np.r_[np.zeros(d), c0], method='LSODA', rtol=1e-9, atol=1e-12, t_eval=Lam * taus)
+    al, cc = sol.y[:d].T, sol.y[d:].T
+    if full:
+        return taus, RT.critical_w(L, al, b0), cc, Lam, al
+    return taus, RT.critical_w(L, al, b0), cc, Lam
 
 
 def summarize(K, fstar, c0, taus, W, cc, th):
@@ -211,6 +213,55 @@ def summarize(K, fstar, c0, taus, W, cc, th):
     return dict(n_act=int(act.sum()), centres=cc[-1][act].tolist(), w=W[-1][act].tolist(), order=order, ent=[float(ent[i]) for i in order],
                 rms=float(np.sqrt(np.mean(r ** 2))), disp_in=float(np.abs(cc[-1] - c0)[~act].max()) if (~act).any() else 0.0,
                 w_in=float(np.abs(W[-1][~act]).max()) if (~act).any() else 0.0, clusters=clusters)
+
+
+def net_entries(R):
+    """A sliding path's formed kernels in the order of their (last) entry — exit/re-entry pairs removed (round 37)."""
+    last = {}
+    for t, j, k, c in R['events']:
+        if k == 'enter':
+            last[j] = t
+    return [int(j) for j, t in sorted(last.items(), key=lambda kv: kv[1]) if R['act'][j]]
+
+
+def creep_case(L, K, c0, cs, As):
+    # (6) a lost near-tie: the target C4's CREEP_TARGET; the kernel left just inside its wall creeps — its instantaneous speed against
+    # (πa_max²/(4c))εb^{3/2}cos(πμ/2)/sin³(πμ/2)·s⟨r∂_cφ⟩ (the core's profile; round 37) and against the bound's μ^{−3} form
+    f_c = bumps_target(K, cs, As)
+    Rc = RT.sliding_iss(L, K, f_c, c0, np.ones(D_C))
+    te = 1.3 * Rc['events'][-1][0]
+    creep = dict(slide_order=net_entries(Rc), slide_tau=[float(e[0]) for e in Rc['events']], rows=[])
+    t2 = Rc['events'][1][0]; t3 = Rc['events'][2][0]
+    kc = np.pi * L.A ** 2 / (4 * L.c)
+    for eps in EPS_CREEP:
+        b0 = np.full(D_C, eps)
+        taus, W, cc, Lam, AL = run_moving(L, K, f_c, c0, eps, te, 'paradigm', n_t=881, full=True)
+        q = L.Q(np.zeros(D_C), b0)
+        lam1 = np.pi * L.A * np.sqrt((L.c - q) / (q + L.c)) / (4 * L.G * L.c)
+        ent = entries_of(W, taus, TH_ACT * np.abs(As).max())
+        order = [int(i) for i in np.argsort(ent) if np.isfinite(ent[i])]
+        k2 = int(np.searchsorted(taus, t2 + 0.2)); kb = int(np.searchsorted(taus, min(t3, ent[order[2]]) - 0.1))
+        f = RT.critical_rhs(L, K, f_c, 'paradigm', b0=b0)
+        al2 = AL[k2]
+        mu = 1 - np.abs(L.eta(al2, q)) / lam1
+        near = [int(j) for j in np.flatnonzero((np.abs(W[k2]) < 1e-3) & (mu < 0.01))]   # the inactive kernels lingering at their walls
+        rows_near = []
+        for j in near:
+            pts = []
+            for kk in np.linspace(k2, kb, 4).astype(int):
+                alk = AL[kk]
+                dz = f(0.0, np.r_[alk, cc[kk]])
+                rk = f_c - K.phi(cc[kk]) @ W[kk]
+                hk = float((K.dphi(cc[kk][j:j + 1]).T @ rk)[0] / K.xs.size)
+                muk = float(1 - abs(L.eta(alk[j:j + 1], q[j:j + 1])[0]) / lam1[j])
+                sk = float(np.sign(W[kk, j]))
+                pts.append(dict(tau=float(taus[kk]), mu=muk, h=hk, ode=float(Lam * dz[D_C + j]),
+                                profile=float(kc * eps * np.cos(np.pi * muk / 2) / np.sin(np.pi * muk / 2) ** 3 * sk * hk),
+                                old=float(kc * eps * muk ** -3 * abs(hk))))
+            rows_near.append(dict(j=j, mu=float(mu[j]), pts=pts, disp_window=float(cc[kb, j] - cc[k2, j]), disp_c0=float(cc[kb, j] - c0[j])))
+        creep['rows'].append(dict(eps=eps, order=order, centres=np.sort(cc[-1][np.abs(W[-1]) > TH_ACT * np.abs(As).max()]).tolist(),
+                                  near=rows_near))
+    return creep
 
 
 def part_C():
@@ -233,20 +284,33 @@ def part_C():
         rows.append(dict(eps=eps, Lam=float(Lam), secs=time.time() - t0, **summarize(K, fstar, c0, taus, W, cc, th)))
     out['c1'] = rows
     out['dtau1'] = float(tau_end / 440)
-    # (2) the Wasserstein–Fisher–Rao metric: condensation before the first entry, against the limit
-    lim = solve_ivp(RT.wfr_inactive_rhs(L, K, fstar, np.ones(D_C)), (0, TAU_PRE), np.r_[np.zeros(D_C), c0], method='LSODA', rtol=1e-10,
-                    atol=1e-12)
-    c_lim = lim.y[D_C:, -1]
-    g_peaks = K.phi(c_lim).T @ fstar / K.xs.size
-    rows = []
-    for eps in EPS_C2:
-        t0 = time.time()
-        taus, W, cc, Lam = run_moving(L, K, fstar, c0, eps, tau_end, 'wfr')
-        k = int(np.searchsorted(taus, TAU_PRE))
-        rows.append(dict(eps=eps, d_pre=float(np.abs(cc[k] - c_lim).max()), w_pre=float(np.abs(W[k]).max()), secs=time.time() - t0,
-                         **summarize(K, fstar, c0, taus, W, cc, th)))
+    # (2) the Wasserstein–Fisher–Rao metric: the inactive kernels against their limit along the trajectory before the first entry (equal
+    # and unequal masses), and the formed kernels as ε → 0 (round 37: the count falls to one per feature)
+    def wfr_case(b, eps_list, tau_end_w):
+        rho = b ** -0.5
+        lim = solve_ivp(RT.wfr_inactive_rhs(L, K, fstar, rho), (0, tau_end_w), np.r_[np.zeros(D_C), c0], method='LSODA', rtol=1e-10,
+                        atol=1e-12, dense_output=True)
+        lim1 = solve_ivp(RT.wfr_inactive_rhs(L, K, fstar, np.ones(D_C)), (0, tau_end_w), np.r_[np.zeros(D_C), c0], method='LSODA',
+                         rtol=1e-10, atol=1e-12, dense_output=True)          # the masses ignored (ρ = 1): a wrong limit, for contrast
+        rows = []
+        for eps in eps_list:
+            t0 = time.time()
+            taus, W, cc, Lam = run_moving(L, K, fstar, c0, eps, tau_end_w, 'wfr', n_t=881, b=b)
+            first = np.flatnonzero((np.abs(W) > th).any(axis=1))
+            t_first = taus[first[0]] if first.size else taus[-1]
+            pre = taus < 0.9 * t_first
+            cl = lim.sol(taus[pre])[D_C:].T
+            rows.append(dict(eps=eps, t_first=float(t_first), d_pre=float(np.abs(cc[pre] - cl).max()),
+                             d_pre_rho1=float(np.abs(cc[pre] - lim1.sol(taus[pre])[D_C:].T).max()), w_pre=float(np.abs(W[pre]).max()),
+                             secs=time.time() - t0, **summarize(K, fstar, c0, taus, W, cc, th)))
+        return rows, lim
+    rows, lim = wfr_case(np.ones(D_C), EPS_C2, tau_end)
+    c_lim = lim.sol(TAU_PRE)[D_C:]
     cl = np.sort(c_lim)
-    out['c2'] = dict(rows=rows, c_lim=c_lim.tolist(), lim_clusters=int(np.sum(np.diff(cl) > 1e-3) + 1))
+    b_un = np.exp(np.random.default_rng(31).uniform(np.log(0.25), np.log(4.0), D_C))
+    rows_b, lim_b = wfr_case(b_un, (EPS_C2B,), tau_end)
+    out['c2'] = dict(rows=rows, c_lim=c_lim.tolist(), lim_clusters=int(np.sum(np.diff(cl) > 1e-3) + 1), unequal=rows_b,
+                     b_range=[float(b_un.min()), float(b_un.max())])
     # (3) fixed centres (the grid dictionary)
     taus, W, cc, Lam = run_moving(L, K, fstar, c0, EPS_RAND2, tau_end * 3, 'paradigm', fixed=True)
     Phi = K.phi(c0)
@@ -268,9 +332,11 @@ def part_C():
         te = 1.3 * Rn['events'][-1][0]
         rec = dict(cs=cs.tolist(), As=As.tolist(), slide_n=int(Rn['act'].sum()), slide_rms=Rn['hist'][-1][3],
                    slide_err=float(np.abs(np.sort(Rn['c'][Rn['act']]) - cs).max()) if Rn['act'].sum() == 3 else np.inf)
-        rec['slide_order'] = [int(e[1]) for e in Rn['events'] if e[2] == 'enter']
-        for key, metric, eps_n in (('paradigm', 'paradigm', EPS_RAND), ('paradigm2', 'paradigm', EPS_RAND2),
-                                   ('paradigm3', 'paradigm', EPS_RAND3), ('wfr', 'wfr', EPS_RAND2)):
+        rec['slide_order'] = net_entries(Rn)
+        rec['slide_exits'] = sum(1 for e in Rn['events'] if e[2] == 'exit')
+        runs = [('paradigm', 'paradigm', EPS_RAND), ('paradigm2', 'paradigm', EPS_RAND2), ('paradigm3', 'paradigm', EPS_RAND3)]
+        runs += [(f'wfr{k}', 'wfr', e) for k, e in enumerate(EPS_WFR_RAND)]
+        for key, metric, eps_n in runs:
             taus, W, cc, Lam = run_moving(L, K, f_n, c0, eps_n, te, metric)
             sm = summarize(K, f_n, c0, taus, W, cc, th_n)
             rec[key] = dict(n_act=sm['n_act'], clusters=sm['clusters'], rms=sm['rms'], disp_in=sm['disp_in'], order=sm['order'],
@@ -280,49 +346,33 @@ def part_C():
         rec['fixed'] = dict(n_act=sm['n_act'], rms=sm['rms'])
         rnd.append(rec)
         print(f"  C4 target {n}: slide {rec['slide_n']} paradigm {rec['paradigm']['n_act']}, {rec['paradigm2']['n_act']}, "
-              f"{rec['paradigm3']['n_act']} wfr {rec['wfr']['n_act']} fixed {rec['fixed']['n_act']}", flush=True)
+              f"{rec['paradigm3']['n_act']} wfr {[rec[f'wfr{k}']['n_act'] for k in range(len(EPS_WFR_RAND))]} fixed {rec['fixed']['n_act']}",
+              flush=True)
     out['c4'] = rnd
-    # (5) two close bumps; a target wider than the kernels
+    # (5) ties and near ties (round 37), close bumps off the grid, a target wider than the kernels
     hard = []
-    for lab, cs, As, wid in (('two bumps 0.2 apart', (-0.1, 0.1), (0.8, 0.6), SIG_C), ('two bumps 0.3 apart', (-0.15, 0.15), (0.8, 0.6), SIG_C),
-                             ('three wider bumps (width 0.2)', CSTAR, ASTAR, 0.2)):
+    for lab, cs, As, wid, eps_h in (('one bump midway between two kernels (a tie)', (0.05,), (0.8,), SIG_C, EPS_C5),
+                                    ('one bump 0.001 off the midpoint (a near tie)', (0.051,), (0.8,), SIG_C, EPS_C5),
+                                    ('three bumps, one at a midpoint', (-0.52, 0.05, 0.61), ASTAR, SIG_C, EPS_C5),
+                                    ('two bumps 0.15 apart, off the grid', (-0.03, 0.12), (0.8, 0.6), SIG_C, EPS_C5),
+                                    ('two bumps 0.25 apart, off the grid', (-0.07, 0.18), (0.8, 0.6), SIG_C, EPS_C5),
+                                    ('three wider bumps (width 0.2)', CSTAR, ASTAR, 0.2, (EPS_RAND,))):
         Kt = RT.Bumps(K.xs, wid)
         f_h = bumps_target(Kt, cs, As)
         Rh = RT.sliding_iss(L, K, f_h, c0, np.ones(D_C), max_events=30)
         te = 1.3 * Rh['events'][-1][0]
-        taus, W, cc, Lam = run_moving(L, K, f_h, c0, EPS_RAND, te, 'paradigm')
-        sm = summarize(K, f_h, c0, taus, W, cc, TH_ACT * np.abs(As).max())
-        hard.append(dict(lab=lab, slide_n=int(Rh['act'].sum()), slide_c=Rh['c'][Rh['act']].tolist(), slide_rms=Rh['hist'][-1][3],
-                         slide_events=len(Rh['events']), slide_done=bool(Rh['hist'][-1][3] < 1e-9),
-                         **{k: sm[k] for k in ('n_act', 'centres', 'w', 'rms', 'clusters')}))
+        rec = dict(lab=lab, slide_n=int(Rh['act'].sum()), slide_c=Rh['c'][Rh['act']].tolist(), slide_w=Rh['w'][Rh['act']].tolist(),
+                   slide_rms=Rh['hist'][-1][3], slide_events=len(Rh['events']), slide_done=bool(Rh['hist'][-1][3] < 1e-9),
+                   slide_entries=[(float(t), int(jj)) for t, jj, k, c in Rh['events'] if k == 'enter'], loops=[])
+        for eps in eps_h:
+            taus, W, cc, Lam = run_moving(L, K, f_h, c0, eps, te, 'paradigm', n_t=1761)
+            sm = summarize(K, f_h, c0, taus, W, cc, TH_ACT * np.abs(As).max())
+            rec['loops'].append(dict(eps=eps, **{k: sm[k] for k in ('n_act', 'centres', 'w', 'rms', 'clusters', 'order', 'ent')}))
+        hard.append(rec)
+        print(f"  C5 {lab}: slide {rec['slide_n']}, loop {[r['n_act'] for r in rec['loops']]}", flush=True)
     out['c5'] = hard
-    # (6) a lost near-tie: the target C4's CREEP_TARGET, the kernel left just inside its wall creeps at (πa_max²/(4c))εμ^{−3}⟨r∂_cφ⟩
     rc = rnd[CREEP_TARGET]
-    cs, As = np.array(rc['cs']), np.array(rc['As'])
-    f_c = bumps_target(K, cs, As)
-    Rc = RT.sliding_iss(L, K, f_c, c0, np.ones(D_C))
-    te = 1.3 * Rc['events'][-1][0]
-    creep = dict(slide_order=[int(e[1]) for e in Rc['events'] if e[2] == 'enter'], slide_tau=[float(e[0]) for e in Rc['events']], rows=[])
-    t2 = Rc['events'][1][0]; t3 = Rc['events'][2][0]
-    for eps in EPS_CREEP:
-        Lam = RT.transit_scale(L, eps)
-        taus = np.linspace(0, te, 881)
-        sol = solve_ivp(RT.moving_rhs(L, K, f_c, 'paradigm'), (0, Lam * te), np.r_[np.zeros(D_C), np.log(np.full(D_C, eps)), c0],
-                        method='LSODA', rtol=1e-10, atol=1e-13, t_eval=Lam * taus)
-        al, cc = sol.y[:D_C].T, sol.y[2 * D_C:].T
-        W = np.exp(sol.y[D_C:2 * D_C].T) * L.amp(al)[0] / L.m
-        q = L.Q(np.zeros(D_C), np.full(D_C, eps))
-        lam1 = np.pi * L.A * np.sqrt((L.c - q) / (q + L.c)) / (4 * L.G * L.c)
-        ent = entries_of(W, taus, TH_ACT * np.abs(As).max())
-        order = [int(i) for i in np.argsort(ent) if np.isfinite(ent[i])]
-        k2 = int(np.searchsorted(taus, t2 + 0.2)); kb = int(np.searchsorted(taus, min(t3, ent[order[2]]) - 0.1))
-        mu = 1 - np.abs(L.eta(al[k2], q)) / lam1
-        r2 = f_c - K.phi(cc[k2]) @ W[k2]
-        h2 = K.dphi(cc[k2]).T @ r2 / K.xs.size
-        near = [int(j) for j in np.flatnonzero((np.abs(W[k2]) < 1e-3) & (mu < 0.01))]   # the inactive kernels lingering at their wall
-        creep['rows'].append(dict(eps=eps, order=order, centres=np.sort(cc[-1][np.abs(W[-1]) > TH_ACT * np.abs(As).max()]).tolist(),
-                                  near=[dict(j=j, mu=float(mu[j]), h=float(h2[j]), disp=float(abs(cc[kb, j] - c0[j])),
-                                             speed=float(np.pi * L.A ** 2 / (4 * L.c) * eps * mu[j] ** -3 * abs(h2[j]))) for j in near]))
+    creep = creep_case(L, K, c0, np.array(rc['cs']), np.array(rc['As']))
     out['c6'] = creep
     return out
 
@@ -378,8 +428,11 @@ def report(A=None, B=None, C=None, D=None):
             L_ += [f"| {r['eps']:g} | {r['Lam']:.4g} | {fmt(r['du'])} | {fmt(r['dres'])} | {fmt(r['dent'])} ({r['n_only']}) | {fmt(r['dend'])} |"
                    for r in a['rows']]
             du = {r['eps']: r['du'] for r in a['rows']}
-            L_ += ["", f"sup|u − u_ISS| between ε = 10⁻⁶ and 10⁻⁸: the slope {np.log(du[1e-6] / du[1e-8]) / np.log(100):.3f} in log ε (1/Λ ∝ ε^{{1/2}}: "
-                   "0.5).", ""]
+            sl = f"the slope {np.log(du[1e-6] / du[1e-8]) / np.log(100):.3f} between ε = 10⁻⁶ and 10⁻⁸"
+            if 1e-12 in du:
+                sl += f", {np.log(du[1e-8] / du[1e-12]) / np.log(1e4):.3f} between 10⁻⁸ and 10⁻¹²"
+            L_ += ["", f"sup|u − u_ISS| in log ε: {sl} (1/Λ ∝ ε^{{1/2}}: 0.5). Each atom is integrated on its own curve (α alone, "
+                   "β = εb + 2c sinh²(α/a_max)), so Q is kept exactly.", ""]
     if B is not None:
         L_ += ["## B. On branches: the logarithmic scale", "",
                f"Design {SEEDS_A[0]} of A; amplitudes s_i·U(0.2, 0.6) (the truth's signs on its atoms, random elsewhere), masses ε; the one-sided "
@@ -412,48 +465,65 @@ def report(A=None, B=None, C=None, D=None):
             L_.append(f"| {r['eps']:g} | {r['Lam']:.4g} | {ent} | {r['n_act']} | {[round(v, 4) for v in r['centres']]} | {[round(v, 4) for v in r['w']]} | "
                       f"{fmt(r['rms'])} | {fmt(r['disp_in'])}, {fmt(r['w_in'])} |")
         c2 = C['c2']
-        L_ += ["", f"(2) The Wasserstein–Fisher–Rao metric (ċ = Ga⟨r∂_cφ⟩): before the first entry (τ = {TAU_PRE:g}) the inactive kernels' limit "
-               f"(du/dτ = ⟨f*φ⟩, dc/dτ = (πa_max²/(4cρ))tan(πu/(2ρ))⟨f*∂_cφ⟩) gathers the {D_C} kernels at {c2['lim_clusters']} positions "
-               f"{sorted(set(round(v, 3) for v in c2['c_lim']))}; the loop's centres at τ = {TAU_PRE:g} against that limit, and its end:", "",
-               "| ε | max |c − c_lim| at τ = 10 | max |w| at τ = 10 | formed | their positions (clusters) | rms residual |", "|---|---|---|---|---|---|"]
+        L_ += ["", f"(2) The Wasserstein–Fisher–Rao metric (ċ = Ga⟨r∂_cφ⟩). The inactive kernels' limit (du/dτ = ⟨f*φ⟩, dc/dτ = "
+               f"(πa_max²/(4cρ))tan(πu/(2ρ))⟨f*∂_cφ⟩) gathers the {D_C} kernels at {c2['lim_clusters']} positions by τ = {TAU_PRE:g} "
+               f"{sorted(set(round(v, 3) for v in c2['c_lim']))}. The loop against that limit along the trajectory (the largest |c − c_lim| over "
+               "τ < 0.9τ_first, τ_first the first time a kernel's |w| exceeds the threshold), and its end:", "",
+               "| ε | τ_first | max |c − c_lim| before | max |w| before | formed | their positions (clusters) | rms residual |", "|---|---|---|---|---|---|---|"]
         for r in c2['rows']:
-            L_.append(f"| {r['eps']:g} | {fmt(r['d_pre'])} | {fmt(r['w_pre'])} | {r['n_act']} | {sorted(set(round(v, 3) for v in r['centres']))} "
-                      f"({r['clusters']}) | {fmt(r['rms'])} |")
+            L_.append(f"| {r['eps']:g} | {r['t_first']:.4g} | {fmt(r['d_pre'])} | {fmt(r['w_pre'])} | {r['n_act']} | "
+                      f"{sorted(set(round(v, 3) for v in r['centres']))} ({r['clusters']}) | {fmt(r['rms'])} |")
+        for r in c2['unequal']:
+            L_ += ["", f"Unequal masses (εb_i, b_i log-uniform in [{c2['b_range'][0]:.3g}, {c2['b_range'][1]:.3g}], ε = {r['eps']:g}): the "
+                   f"limit with ρ_i = b_i^{{−1/2}} followed to {fmt(r['d_pre'])} before τ_first = {r['t_first']:.4g} (the limit with the masses "
+                   f"ignored, ρ = 1: {fmt(r['d_pre_rho1'])}); formed {r['n_act']} kernels in {r['clusters']} clusters."]
         c3 = C['c3']
         L_ += ["", f"(3) The centres held on the grid (ε = {c3['eps']:g}, to τ = {c3['tau']:.3g}): {c3['n_act']} kernels formed, rms residual "
                f"{fmt(c3['rms'])} (the grid's least-squares fit: {fmt(c3['rms_ls'])}).", ""]
         c4 = C['c4']
         n = len(c4)
         ok_s = sum(1 for r in c4 if r['slide_n'] == 3 and r['slide_err'] < 1e-3)
-        ok = {k: sum(1 for r in c4 if r[k]['n_act'] == 3 and r[k]['err'] < 1e-3) for k in ('paradigm', 'paradigm2')}
+        ok = {k: sum(1 for r in c4 if r[k]['n_act'] == 3 and r[k]['err'] < 1e-3) for k in ('paradigm', 'paradigm2', 'paradigm3')}
+        wfr = '; '.join(f"ε = {e:g}: {sorted(r[f'wfr{k}']['n_act'] for r in c4)} kernels, exactly three at the bumps on "
+                        f"{sum(1 for r in c4 if r[f'wfr{k}']['n_act'] == 3 and r[f'wfr{k}']['err'] < 1e-3)} of {n}"
+                        for k, e in enumerate(EPS_WFR_RAND))
         L_ += [f"(4) {n} random targets (three bumps of the kernels' width, centres in [−0.8, 0.8] at least 0.3 apart, amplitudes ±U(0.4, 1)): "
-               f"the sliding inverse scale space ends with exactly three kernels within 10⁻³ of the bumps' centres on {ok_s} of {n}; the loop with "
-               f"the paradigm's metric on {ok['paradigm']} of {n} at ε = {EPS_RAND:g} (formed kernels {sorted(r['paradigm']['n_act'] for r in c4)}, "
-               f"the inactive kernels' largest displacement {fmt(max(r['paradigm']['disp_in'] for r in c4))}) and on {ok['paradigm2']} of {n} at "
-               f"ε = {EPS_RAND2:g} (formed kernels {sorted(r['paradigm2']['n_act'] for r in c4)}, the inactive kernels' largest displacement "
-               f"{fmt(max(r['paradigm2']['disp_in'] for r in c4))}; largest rms residual {fmt(max(r['paradigm2']['rms'] for r in c4))}) and on "
-               f"{sum(1 for r in c4 if r['paradigm3']['n_act'] == 3 and r['paradigm3']['err'] < 1e-3)} of {n} at ε = {EPS_RAND3:g} (the entering "
-               f"kernels those of the sliding path on {sum(1 for r in c4 if r['paradigm3']['order'] == r['slide_order'])} of {n}); with the "
-               f"Wasserstein–Fisher–Rao metric (ε = {EPS_RAND2:g}) it forms {sorted(r['wfr']['n_act'] for r in c4)} kernels in "
-               f"{sorted(r['wfr']['clusters'] for r in c4)} clusters (largest rms residual {fmt(max(r['wfr']['rms'] for r in c4))}); with the centres "
-               f"held on the grid {sorted(r['fixed']['n_act'] for r in c4)} kernels (rms residual {fmt(min(r['fixed']['rms'] for r in c4))}–"
-               f"{fmt(max(r['fixed']['rms'] for r in c4))}).", ""]
-        L_ += ["(5) Harder targets (ε = 10⁻⁵, the paradigm's metric):", "",
-               "| target | sliding ISS: kernels, their centres, rms residual (events) | loop: formed, centres, coefficients (clusters) | rms residual |",
-               "|---|---|---|---|"]
+               f"the sliding inverse scale space ends with exactly three kernels within 10⁻³ of the bumps' centres on {ok_s} of {n} "
+               f"({sum(r['slide_exits'] for r in c4)} exits in all); the loop with the paradigm's metric on {ok['paradigm']}, {ok['paradigm2']} and "
+               f"{ok['paradigm3']} of {n} at ε = {EPS_RAND:g}, {EPS_RAND2:g}, {EPS_RAND3:g} (formed kernels {sorted(r['paradigm']['n_act'] for r in c4)}, "
+               f"{sorted(r['paradigm2']['n_act'] for r in c4)}, {sorted(r['paradigm3']['n_act'] for r in c4)}; the inactive kernels' largest "
+               f"displacement {fmt(max(r['paradigm']['disp_in'] for r in c4))}, {fmt(max(r['paradigm2']['disp_in'] for r in c4))}, "
+               f"{fmt(max(r['paradigm3']['disp_in'] for r in c4))}), the formed kernels those of the sliding path, in its order, on "
+               f"{sum(1 for r in c4 if r['paradigm3']['order'] == r['slide_order'])} of {n} at ε = {EPS_RAND3:g}; with the Wasserstein–Fisher–Rao "
+               f"metric {wfr}; with the centres held on the grid {sorted(r['fixed']['n_act'] for r in c4)} kernels (rms residual "
+               f"{fmt(min(r['fixed']['rms'] for r in c4))}–{fmt(max(r['fixed']['rms'] for r in c4))}).", ""]
+        L_ += ["(5) Ties, near ties, close bumps off the grid, wider bumps (the paradigm's metric): the sliding inverse scale space (its "
+               "entries; a tie enters together), and the loop at each ε:", "",
+               "| target | sliding ISS: entries (τ, kernel), kernels, centres, coefficients, rms residual | ε | loop: entries (kernel: τ), formed, "
+               "centres, coefficients (clusters), rms residual |", "|---|---|---|---|"]
         for r in C['c5']:
-            L_.append(f"| {r['lab']} | {r['slide_n']}, {[round(v, 3) for v in r['slide_c']]}, {fmt(r['slide_rms'])} ({r['slide_events']}"
-                      f"{'' if r['slide_done'] else ', not terminated'}) | "
-                      f"{r['n_act']}, {[round(v, 3) for v in r['centres']]}, {[round(v, 3) for v in r['w']]} ({r['clusters']}) | {fmt(r['rms'])} |")
+            sl = (f"{[(round(t, 3), jj) for t, jj in r['slide_entries']][:8]}, {r['slide_n']}, {[round(v, 3) for v in r['slide_c']]}, "
+                  f"{[round(v, 3) for v in r['slide_w']]}, {fmt(r['slide_rms'])}{'' if r['slide_done'] else ' (not terminated)'}")
+            for k, lp in enumerate(r['loops']):
+                ent = ', '.join(f"{i}: {t:.4g}" for i, t in zip(lp['order'], lp['ent']))
+                L_.append(f"| {r['lab'] if k == 0 else ''} | {sl if k == 0 else ''} | {lp['eps']:g} | {ent}; {lp['n_act']}, "
+                          f"{[round(v, 3) for v in lp['centres']]}, {[round(v, 3) for v in lp['w']]} ({lp['clusters']}), {fmt(lp['rms'])} |")
         L_.append("")
     if C is not None and 'c6' in C:
         c6 = C['c6']
         L_ += ["", f"(6) A lost near-tie (target {CREEP_TARGET} of (4)): the sliding path enters kernels {c6['slide_order']} at τ = "
-               f"{[round(t, 3) for t in c6['slide_tau']]}. After the second entry the inactive kernels left near their walls linger at their margins μ "
-               "and creep at ≈ (πa_max²/(4c))εμ^{−3}|⟨r∂_cφ⟩| in τ ((iii)(a)'s bound):", "",
-               "| ε | the lingering kernels (margin < 0.01 after the second entry): kernel, μ, ⟨r∂_cφ⟩, the speed (πa_max²/(4c))εμ^{−3}|⟨r∂_cφ⟩|, the "
-               "displacement before the third entry | the loop's entrants | the formed kernels' centres |", "|---|---|---|---|"]
-        L_ += [f"| {r['eps']:g} | " + '; '.join(f"{n['j']}: {fmt(n['mu'])}, {fmt(n['h'])}, {fmt(n['speed'])}, {fmt(n['disp'])}" for n in r['near'])
+               f"{[round(t, 3) for t in c6['slide_tau']]}. After the second entry an inactive kernel left near its wall lingers at a small margin μ "
+               "and creeps; its instantaneous speed dc/dτ (the loop's own right-hand side) against the core's profile "
+               "(πa_max²/(4c))εb^{3/2}cos(πμ/2)/sin³(πμ/2)·s⟨r∂_cφ⟩ and against the bound's μ^{−3} form (πa_max²/(4c))εμ^{−3}|⟨r∂_cφ⟩|:", "",
+               "| ε | kernel | τ | μ | ⟨r∂_cφ⟩ | dc/dτ | the profile's speed (ratio) | the μ^{−3} form (ratio) |", "|---|---|---|---|---|---|---|---|"]
+        for r in c6['rows']:
+            for nn in r['near']:
+                for p in nn['pts']:
+                    L_.append(f"| {r['eps']:g} | {nn['j']} | {p['tau']:.4g} | {fmt(p['mu'])} | {fmt(p['h'])} | {fmt(p['ode'])} | {fmt(p['profile'])} "
+                              f"({p['ode'] / p['profile']:.4f}) | {fmt(p['old'])} ({abs(p['ode']) / p['old']:.4f}) |")
+        L_ += ["", "| ε | kernel: displacement over the window (since τ_2 + 0.2), since its start | the loop's entrants | the formed kernels' centres |",
+               "|---|---|---|---|"]
+        L_ += [f"| {r['eps']:g} | " + '; '.join(f"{nn['j']}: {fmt(nn['disp_window'])}, {fmt(nn['disp_c0'])}" for nn in r['near'])
                + f" | {r['order']} | {[round(v, 4) for v in r['centres']]} |" for r in c6['rows']]
         L_.append("")
     if D is not None:

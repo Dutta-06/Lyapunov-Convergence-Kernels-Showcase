@@ -101,38 +101,59 @@ def moving_rhs_widths(L, K, fstar):
     return f
 
 
-def critical_w(L, al):
-    """The coefficient on the critical curve Q = −c: β = 2c sinh²(α/a_max), w = βa/m (≈ 2cα³/(ma_max²) at small α)."""
-    return 2 * L.c * np.sinh(al / L.A) ** 2 * L.A * np.tanh(al / L.A) / L.m
+def critical_w(L, al, b0=0.0):
+    """The coefficient on the curve from α = 0 with the mass b0 (b0 = 0: the critical curve Q = −c): β = b0 + 2c sinh²(α/a_max) — Q kept
+    exactly, without cancellation —, w = βa/m (≈ 2cα³/(ma_max²) at small α on the critical curve)."""
+    return (b0 + 2 * L.c * np.sinh(al / L.A) ** 2) * L.A * np.tanh(al / L.A) / L.m
 
 
-def critical_rhs(L, K, fstar, metric='paradigm'):
-    """The active block's fast flow on the critical curve, z = (α, c): α̇ = Gβa′g, ċ = Gβa⟨r∂_cφ⟩ (or Ga⟨r∂_cφ⟩), β = 2c sinh²(α/a_max)."""
+def curve_mobility(L, al, b0=0.0):
+    """dα/dη = Gβa′ on the curve from α = 0 with the mass b0: G(b0 sech²(α/a_max) + 2c tanh²(α/a_max)), no cancellation at large α."""
+    x = np.minimum(np.abs(al) / L.A, 350.0)
+    return L.G * (b0 / np.cosh(x) ** 2 + 2 * L.c * np.tanh(x) ** 2)
+
+
+def critical_rhs(L, K, fstar, metric='paradigm', b0=0.0):
+    """The free law with moving centres on its curves, z = (α, c): α̇ = Gβa′g, ċ = Gβa⟨r∂_cφ⟩ (metric 'paradigm') or Ga⟨r∂_cφ⟩ ('wfr'),
+    β = b0 + 2c sinh²(α/a_max) — each kernel kept on its curve exactly (round 37: integrating (α, log β) drifts off Q at small masses).
+    b0 = 0: the active block's fast flow on the critical curve; b0 = εb: the whole loop from α = 0 with the masses εb."""
+    if metric not in ('paradigm', 'wfr'):
+        raise ValueError(metric)
+
     def f(t, z):
         d = z.size // 2
         al, c = z[:d], z[d:]
-        b = 2 * L.c * np.sinh(al / L.A) ** 2
-        a, da = L.amp(al)
+        b = b0 + 2 * L.c * np.sinh(al / L.A) ** 2
+        a = L.A * np.tanh(al / L.A)
         Ph = K.phi(c)
         r = K.filt(fstar - Ph @ (b * a / L.m))
         g = Ph.T @ r / K.xs.size
         h = K.dphi(c).T @ r / K.xs.size
         speed = L.G * b * a if metric == 'paradigm' else L.G * a
-        return np.r_[L.G * b * da * g, speed * h]
+        return np.r_[curve_mobility(L, al, b0) * g, speed * h]
     return f
 
 
-def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60):
-    """The sliding inverse scale space (the paradigm's metric): the inactive kernels fixed where they are, their u_j growing at
-    ⟨rφ(c_j)⟩ (r the active block's residual); an entrant (|u_j| = ρ_j) joins the active block with the coefficient `seed` (sign of
-    u_j), the block relaxing by `critical_rhs` over t_fast; an active kernel whose coefficient falls below exit_tol·max leaves, frozen where
-    it is. Stops when the rms residual is below tol. Returns dict(events = [(τ, j, 'enter'/'exit', c_j)], hist = [(τ, c, w, rms)],
-    c, w, act)."""
+def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
+                max_doublings=14):
+    """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
+    left the block), their u_j growing at ⟨rφ(c_j)⟩ (r the active block's residual); the entrants — every kernel whose |u_j| reaches ρ_j
+    within the relative tie_tol of the first, so that exact ties enter together — join the active block with the coefficient `seed` (the
+    sign of u_j); the block relaxes by `critical_rhs` (the fast flow on the critical curve) over t_fast, then over the elapsed time again
+    (doubling it) until it is stationary — on every kernel of the block with a coefficient above exit_tol·max, |⟨rφ_i⟩| and
+    |w_i⟨r∂_cφ_i⟩| below gtol·max_j|⟨f*φ_j⟩|; on the others, no outward correlation (s_i⟨rφ_i⟩ ≤ gtol·max) — or max_doublings is reached.
+    A kernel of the block whose coefficient has fallen below exit_tol·max leaves, frozen where it is, only if its correlation points into
+    its box (s_i⟨rφ_i⟩ < 0); one with an outward correlation stays on its wall. Stops when the rms residual is below tol. Returns
+    dict(events = [(τ, j, 'enter'/'exit', c_j)], hist = [(τ, c, w, rms)], c, w, act, relaxed = [whether each relaxation became
+    stationary])."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
     act = np.zeros(d, bool)
-    tau, ev, hist = 0.0, [], []
+    tau, ev, hist, relaxed = 0.0, [], [], []
+    nx = K.xs.size
+    scale = float(np.abs(K.phi(c).T @ K.filt(fstar)).max()) / nx
+    rhs = critical_rhs(L, K, fstar)
     for _ in range(max_events):
         w = np.where(act, critical_w(L, al), 0.0)
         r = fstar - K.phi(c) @ w
@@ -140,28 +161,47 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         hist.append((tau, c.copy(), w.copy(), rms))
         if rms < tol:
             break
-        v = K.phi(c).T @ K.filt(r) / K.xs.size
+        v = K.phi(c).T @ K.filt(r) / nx
         dt = np.full(d, np.inf)
         ina = ~act & (v != 0)
         dt[ina] = (rho[ina] - np.sign(v[ina]) * u[ina]) / np.abs(v[ina])
-        j = int(np.argmin(dt))
-        if not np.isfinite(dt[j]):
+        dmin = dt.min()
+        if not np.isfinite(dmin):
             break
-        u[~act] += dt[j] * v[~act]
-        tau += dt[j]
-        u[j] = np.sign(v[j]) * rho[j]
-        act[j] = True
-        al[j] = np.sign(v[j]) * (seed * L.m * L.A ** 2 / (2 * L.c)) ** (1 / 3)
-        ev.append((tau, j, 'enter', float(c[j])))
+        ent = np.flatnonzero(dt <= dmin * (1 + tie_tol) + tie_tol * np.finfo(float).tiny)
+        u[~act] += dmin * v[~act]
+        tau += dmin
+        for j in ent:
+            u[j] = np.sign(v[j]) * rho[j]
+            act[j] = True
+            al[j] = np.sign(v[j]) * (seed * L.m * L.A ** 2 / (2 * L.c)) ** (1 / 3)
+            ev.append((tau, int(j), 'enter', float(c[j])))
         idx = np.flatnonzero(act)
-        sol = solve_ivp(critical_rhs(L, K, fstar), (0, t_fast), np.r_[al[idx], c[idx]], method='LSODA', rtol=1e-10, atol=1e-13)
-        al[idx] = sol.y[:idx.size, -1]; c[idx] = sol.y[idx.size:, -1]
-        wa = np.abs(critical_w(L, al[idx]))
+        n = idx.size
+        z = np.r_[al[idx], c[idx]]
+        elapsed, chunk, ok = 0.0, float(t_fast), False
+        for _k in range(max_doublings + 1):
+            sol = solve_ivp(rhs, (0, chunk), z, method='LSODA', rtol=1e-10, atol=1e-13)
+            z = sol.y[:, -1]
+            elapsed += chunk
+            wi = critical_w(L, z[:n])
+            ri = K.filt(fstar - K.phi(z[n:]) @ wi)
+            g = K.phi(z[n:]).T @ ri / nx
+            h = K.dphi(z[n:]).T @ ri / nx
+            big = np.abs(wi) > exit_tol * np.abs(wi).max()
+            si = np.sign(u[idx])
+            if (np.all(np.abs(g[big]) <= gtol * scale) and np.all(np.abs(wi[big] * h[big]) <= gtol * scale)
+                    and np.all(si[~big] * g[~big] <= gtol * scale)):
+                ok = True
+                break
+            chunk = elapsed
+        relaxed.append(ok)
+        al[idx] = z[:n]; c[idx] = z[n:]
         for k, i in enumerate(idx):
-            if wa[k] < exit_tol * wa.max():
+            if not big[k] and si[k] * g[k] < 0:
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', float(c[i])))
-    return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act)
+    return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed)
 
 
 def wfr_inactive_rhs(L, K, fstar, rho):

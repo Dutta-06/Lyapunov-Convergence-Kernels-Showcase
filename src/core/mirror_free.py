@@ -272,6 +272,20 @@ class FreeLaw:
             return np.r_[G * b * da * g, gam * (u - lam)]
         return f
 
+    def rhs_curve(self, Phi, y, b0):
+        """The loop from α = 0 with the masses b0 on the design Phi, the state α alone: β = b0 + 2c sinh²(α/a_max) keeps Q exactly
+        (Proposition D‴.48, round 37 — integrating (α, log β) drifts off the curves at small masses), α̇ = G(b0 sech² + 2c tanh²)(α/a_max)
+        ·Φᵀr/N."""
+        N, d = Phi.shape
+        b0 = np.asarray(b0, float)
+
+        def f(t, al):
+            x = np.minimum(np.abs(al) / self.A, 350.0)
+            b = b0 + 2 * self.c * np.sinh(al / self.A) ** 2
+            r = y - Phi @ (b * self.A * np.tanh(al / self.A) / self.m)
+            return self.G * (b0 / np.cosh(x) ** 2 + 2 * self.c * np.tanh(x) ** 2) * (Phi.T @ r) / N
+        return f
+
     def bregman_projection(self, Phi, y, q, eta0, sgn=None, tol=1e-12, it_max=4000):
         """argmin{Σψ_{q_i}(w_i) − ⟨η0, w⟩ : Φw = y} (each particle within its curve's range): w_i = w(α(η0_i + (Φᵀz)_i)) at the
         minimiser of the convex dual 𝒟(z) = Σψ*_{q_i}(η0_i + (Φᵀz)_i) − yᵀz, by `dual_newton`. Returns (w, α, iterations, the residual's
@@ -822,21 +836,40 @@ class ParticleSet:
 
 
 def sign_ls_set(Phi, y, s, tol=1e-9):
-    """The sign-constrained least-squares fits S = argmin{|Φw − y|² : s_iw_i ≥ 0 where s_i ≠ 0}: ŷ (Φw on S), Z (the constrained
-    coordinates vanishing on all of S, by a linear program per coordinate) and one point of S."""
-    d = Phi.shape[1]
+    """The sign-constrained least-squares fits S = argmin{|Φw − y|² : s_iw_i ≥ 0 where s_i ≠ 0}: ŷ (Φw on S, unique), Z (the constrained
+    coordinates vanishing on all of S, by a linear program per coordinate) and one point of S. The point by Lawson–Hanson's active set (nnls
+    on the columns s_iφ_i and ±φ_j for the free coordinates) — exact whatever the rank —, its KKT conditions then checked (round 36:
+    lsq_linear's status was never read, and it failed silently on rank-deficient and duplicated designs); raises when they fail or a
+    linear program does not solve."""
+    from scipy.optimize import nnls
+    N, d = Phi.shape
     s = np.asarray(s, float)
-    lb = np.where(s > 0, 0.0, -np.inf); ub = np.where(s < 0, 0.0, np.inf)
-    r = lsq_linear(Phi, y, bounds=(lb, ub), tol=1e-15, lsmr_tol='auto', max_iter=20000)
-    yh = Phi @ r.x
+    con, fre = np.flatnonzero(s != 0), np.flatnonzero(s == 0)
+    B = np.hstack([Phi[:, con] * s[con], Phi[:, fre], -Phi[:, fre]])
+    x = nnls(B, y, maxiter=100 * max(B.shape[1], 1))[0]
+    w = np.zeros(d)
+    w[con] = s[con] * x[:con.size]
+    w[fre] = x[con.size:con.size + fre.size] - x[con.size + fre.size:]
+    yh = Phi @ w
+    g = Phi.T @ (yh - y)                                                          # ∇½|Φw − y|²
+    scale = 1.0 + np.abs(Phi).max() * (np.linalg.norm(y) + np.linalg.norm(yh))
+    on = np.abs(w) > tol * (1.0 + np.abs(w).max())
+    viol = max(np.abs(g[fre]).max(initial=0.0), np.abs(g[con[on[con]]]).max(initial=0.0),
+               (-s[con] * g[con])[~on[con]].max(initial=0.0))
+    if viol > 1e3 * tol * scale:
+        raise RuntimeError(f'sign_ls_set: KKT violated by {viol:.3g}')
     bounds = [(0, None) if s[j] > 0 else ((None, 0) if s[j] < 0 else (None, None)) for j in range(d)]
     Z = []
-    for i in np.flatnonzero(s != 0):
+    for i in con:
         cc = np.zeros(d); cc[i] = -s[i]
         res = linprog(cc, A_eq=Phi, b_eq=yh, bounds=bounds, method='highs')
-        if res.status == 0 and -res.fun < tol * (1 + np.abs(r.x).max()):
-            Z.append(i)
-    return yh, np.array(Z, int), r.x
+        if res.status == 3:                                                       # s_iw_i unbounded on S: not in Z
+            continue
+        if res.status != 0:
+            raise RuntimeError(f'sign_ls_set: the linear program for coordinate {i} failed ({res.message})')
+        if -res.fun < tol * (1 + np.abs(w).max()):
+            Z.append(int(i))
+    return yh, np.array(Z, int), w
 
 
 def projection(P, Phi, yh, eta0, keep=None, tol=1e-12, it_max=4000, exact=False):

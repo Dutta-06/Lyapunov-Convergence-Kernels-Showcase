@@ -59,17 +59,23 @@ def test_paradigm_flow_follows_the_sliding_path():
 
 
 def test_inactive_kernels_obey_the_frozen_bound():
-    """Proposition D‴.48(iii)(a): before the first entry each kernel's coefficient is below a_max ε^{3/2}μ^{−3}/(m(2c)^{1/2}) (μ its dual
-    coordinate's margin), so its centre hardly moves."""
+    """Proposition D‴.48(iii)(a): before the first entry each kernel's coefficient is the core's profile
+    a_max(εb)^{3/2}cos(πμ/2)/(m(2c)^{1/2}sin³(πμ/2)) (μ its dual coordinate's margin; within 3% where μ ≥ 10ε^{1/2} — round 37: the μ^{−3}
+    bound is 4 times looser), so its centre hardly moves."""
     eps = 1e-5
     taus, W, cc, al, Lam = flow(eps, 9.0, 'paradigm', n_t=91)
     q = L.Q(np.zeros(D), np.full(D, eps))
     lam1 = np.pi * L.A * np.sqrt((L.c - q) / (q + L.c)) / (4 * L.G * L.c)
+    n_checked = 0
     for k in range(1, len(taus)):
         mu = 1 - np.abs(L.eta(al[k], q)) / lam1
         assert mu.min() > 0
-        bound = L.A * eps ** 1.5 / (L.m * np.sqrt(2 * L.c)) / mu ** 3
-        assert np.all(np.abs(W[k]) <= 1.05 * bound)
+        prof = L.core_tail(eps, mu)
+        assert np.all(np.abs(W[k]) <= L.A * eps ** 1.5 / (L.m * np.sqrt(2 * L.c)) / mu ** 3)
+        ok = mu >= 10 * np.sqrt(eps)
+        assert np.abs(np.abs(W[k][ok]) / prof[ok] - 1).max() < 0.03
+        n_checked += ok.sum()
+    assert n_checked > 1000
     assert np.abs(cc[-1] - C0).max() < 1e-2
 
 
@@ -113,3 +119,76 @@ def test_moving_widths_identify_wider_bumps():
     assert np.abs(z[2 * D:3 * D][act][o] - CSTAR).max() < 1e-3
     assert np.abs(z[3 * D:][act][o] - 0.2).max() < 1e-3
     assert np.abs(W[act][o] - ASTAR).max() < 1e-3
+
+
+def test_position_laws_and_mobility():
+    """The drifts at a random state (round 37: the metric's mass factor and a′ survived): α̇ = Gβa′g, ċ = Gβa⟨r∂_cφ⟩ (the paradigm's metric)
+    or Ga⟨r∂_cφ⟩ (WFR); on the curves (critical_rhs with b0) the same with β = b0 + 2c sinh²(α/a_max)."""
+    rng = np.random.default_rng(4)
+    al, c = rng.uniform(-2, 2, D), C0 + rng.uniform(-0.03, 0.03, D)
+    b0 = rng.uniform(0.5, 2.0, D) * 1e-3
+    b = b0 + 2 * L.c * np.sinh(al / L.A) ** 2
+    a = L.A * np.tanh(al / L.A); da = 1 - np.tanh(al / L.A) ** 2
+    r = FSTAR - K.phi(c) @ (b * a / L.m)
+    g = K.phi(c).T @ r / K.xs.size
+    h = K.dphi(c).T @ r / K.xs.size
+    for metric, speed in (('paradigm', L.G * b * a), ('wfr', L.G * a)):
+        z = RT.moving_rhs(L, K, FSTAR, metric)(0.0, np.r_[al, np.log(b), c])
+        assert np.allclose(z[:D], L.G * b * da * g, rtol=1e-12, atol=1e-15)
+        assert np.allclose(z[D:2 * D], L.gamma * a * g, rtol=1e-12, atol=1e-15)
+        assert np.allclose(z[2 * D:], speed * h, rtol=1e-12, atol=1e-15)
+        zc = RT.critical_rhs(L, K, FSTAR, metric, b0=b0)(0.0, np.r_[al, c])
+        assert np.allclose(zc[:D], L.G * b * da * g, rtol=1e-11, atol=1e-15)
+        assert np.allclose(zc[D:], speed * h, rtol=1e-12, atol=1e-15)
+    assert np.allclose(RT.critical_w(L, al, b0), b * a / L.m, rtol=1e-13)
+
+
+def test_creep_speed_is_the_core_profile():
+    """Proposition D‴.48(iii)(a), round 37: an inactive kernel with the mass εb whose dual coordinate sits at (1 − μ)λ₁ creeps at
+    dc/dτ = (πa_max²/(4c))εb^{3/2}cos(πμ/2)/sin³(πμ/2)·s⟨r∂_cφ⟩ — not at the bound's μ^{−3} form (larger by π³/8 as μ → 0)."""
+    eps, bj, mu = 1e-8, 2.5, np.array([0.3, 0.1, 0.03])
+    Lam = RT.transit_scale(L, eps)
+    q = L.Q(0.0, eps * bj)
+    lam1 = np.pi * L.A * np.sqrt((L.c - q) / (q + L.c)) / (4 * L.G * L.c)
+    al = L.alpha_of_eta((1 - mu) * lam1, np.full(3, q))
+    c = np.array([-0.4, 0.05, 0.5])
+    f = RT.critical_rhs(L, K, FSTAR, 'paradigm', b0=np.full(3, eps * bj))
+    dc = Lam * f(0.0, np.r_[al, c])[3:]
+    r = FSTAR - K.phi(c) @ RT.critical_w(L, al, eps * bj)
+    h = K.dphi(c).T @ r / K.xs.size
+    prof = np.pi * L.A ** 2 / (4 * L.c) * eps * bj ** 1.5 * np.cos(np.pi * mu / 2) / np.sin(np.pi * mu / 2) ** 3 * h
+    assert np.abs(dc / prof - 1).max() < 2e-3
+    old = np.pi * L.A ** 2 / (4 * L.c) * eps * mu ** -3 * np.abs(h)
+    assert np.abs(np.abs(dc[-1]) / old[-1] * np.pi ** 3 / 8 / bj ** 1.5 - 1) < 0.01
+
+
+def test_wfr_limit_along_the_trajectory_with_unequal_masses():
+    """Proposition D‴.48(iv), round 37: with the masses εb_i (ρ_i = b_i^{−1/2} ≠ 1) the loop's centres under the WFR metric follow the
+    limit dc/dτ = (πa_max²/(4cρ))tan(πu/(2ρ))⟨f*∂_cφ⟩ along the way (τ = 3, 5, 7), where the limit with the masses ignored (ρ = 1) does not."""
+    b = np.exp(np.random.default_rng(31).uniform(np.log(0.25), np.log(4.0), D))
+    eps = 1e-6
+    Lam = RT.transit_scale(L, eps)
+    taus = np.array([3.0, 5.0, 7.0])
+    sol = solve_ivp(RT.critical_rhs(L, K, FSTAR, 'wfr', b0=eps * b), (0, Lam * taus[-1]), np.r_[np.zeros(D), C0], method='LSODA',
+                    rtol=1e-10, atol=1e-13, t_eval=Lam * taus)
+    lim = solve_ivp(RT.wfr_inactive_rhs(L, K, FSTAR, b ** -0.5), (0, taus[-1]), np.r_[np.zeros(D), C0], method='LSODA', rtol=1e-11,
+                    atol=1e-13, t_eval=taus)
+    lim1 = solve_ivp(RT.wfr_inactive_rhs(L, K, FSTAR, np.ones(D)), (0, taus[-1]), np.r_[np.zeros(D), C0], method='LSODA', rtol=1e-11,
+                     atol=1e-13, t_eval=taus)
+    assert np.abs(RT.critical_w(L, sol.y[:D], (eps * b)[:, None])).max() < 1e-3          # before any entry
+    assert np.abs(sol.y[D:] - lim.y[D:]).max() < 1e-5
+    assert np.abs(sol.y[D:] - lim1.y[D:]).max() > 1e-3
+
+
+def test_sliding_iss_ties_and_seeds():
+    """Round 37: a bump midway between two kernels is a tie — both enter together and share it (0.4 each at its centre), as the loop does
+    at every ε; the sliding path does not depend on the entrants' seed (10⁻³ … 10⁻¹¹) or on the fast flow's first horizon."""
+    R = RT.sliding_iss(L, K, K.phi(np.array([0.05])) @ np.array([0.8]), C0, np.ones(D))
+    assert [(e[1], e[2]) for e in R['events']] == [(10, 'enter'), (11, 'enter')] and R['events'][0][0] == R['events'][1][0]
+    assert np.allclose(R['c'][R['act']], 0.05, atol=1e-6) and np.allclose(R['w'][R['act']], 0.4, atol=1e-6)
+    ref = RT.sliding_iss(L, K, FSTAR, C0, np.ones(D))
+    for kw in (dict(seed=1e-3), dict(seed=1e-11), dict(t_fast=1e3)):
+        R = RT.sliding_iss(L, K, FSTAR, C0, np.ones(D), **kw)
+        assert [(e[1], e[2]) for e in R['events']] == [(e[1], e[2]) for e in ref['events']] and all(R['relaxed'])
+        assert max(abs(e1[0] - e2[0]) for e1, e2 in zip(R['events'], ref['events'])) < 1e-6
+        assert np.abs(np.sort(R['c'][R['act']]) - CSTAR).max() < 1e-6
