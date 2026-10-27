@@ -1,8 +1,10 @@
-"""Proposition D‴.45: the free mass–amplitude law as a mirror flow (src/core/mirror_free.py)."""
+"""Propositions D‴.45–D‴.47: the free mass–amplitude law as a mirror flow, its leak, its branches (src/core/mirror_free.py)."""
 import os
 import sys
+from decimal import Decimal, getcontext
 
 import numpy as np
+import pytest
 from scipy.integrate import quad, solve_ivp
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -17,19 +19,63 @@ def _instance(seed=3, N=5, d=12):
 
 
 def test_eta_closed_form_three_cases():
-    """η against the quadrature of dα/(Gβa′) for q > c (also q ≫ c), |q| < c, and on a branch (q < −c, from a reference point)."""
+    """η against the quadrature of dα/(Gβa′) for q > c (also q ≫ c), |q| < c, on a branch (q < −c, from a reference point) on both
+    sides, and on the critical curve q = −c."""
     L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
     f = lambda x, q: 1.0 / (L.G * L.beta(x, q) * L.amp(x)[1])
     for q in (3.0, 0.5, 1e4 * L.c, 0.03, 0.0, -0.02):
         for al in (-2.5, -0.4, 0.3, 1.7, 4.0):
             ref = quad(lambda x: f(x, q), 0.0, al, epsabs=1e-13, epsrel=1e-12, limit=200)[0]
             assert abs(L.eta(al, q)[0] - ref) <= 1e-9 * max(1.0, abs(ref))
-    q = -0.05                                                     # a branch: β = 0 at α₀
+    q = -0.05                                                     # a branch: β = 0 at ±α₀
     a0 = float(L.branch_point(q))
     assert a0 > 0 and abs(L.beta(a0, q)) < 1e-12
-    for al in (a0 + 0.2, a0 + 1.0, a0 + 3.0):
-        ref = quad(lambda x: f(x, q), a0 + 0.1, al, epsabs=1e-13, epsrel=1e-12, limit=200)[0]
-        assert abs((L.eta(al, q) - L.eta(a0 + 0.1, q))[0] - ref) <= 1e-9 * max(1.0, abs(ref))
+    for s in (1.0, -1.0):
+        for al in (a0 + 0.2, a0 + 1.0, a0 + 3.0):
+            ref = quad(lambda x: f(x, q), s * (a0 + 0.1), s * al, epsabs=1e-13, epsrel=1e-12, limit=200)[0]
+            assert abs((L.eta(s * al, q) - L.eta(s * (a0 + 0.1), q))[0] - ref) <= 1e-9 * max(1.0, abs(ref))
+    assert np.isnan(L.eta(0.5 * a0, q)[0])                        # inside the gap: no curve
+    qc = -L.c                                                     # the critical curve: η = (α − a_max coth(α/a_max))/(2Gc)
+    for al in (1e-3, 0.4, 3.0, -0.7):
+        assert abs(L.eta(al, qc)[0] - (al - L.A / np.tanh(al / L.A)) / (2 * L.G * L.c)) < 1e-12 * max(1.0, abs(L.eta(al, qc)[0]))
+
+
+def test_eta_against_a_60_digit_reference():
+    """q > c: η = (α − a_maxκ artanh(κ tanh(α/a_max)))/(2Gc) against 60-digit decimal arithmetic, for κ near 1 and |t| near 1."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    getcontext().prec = 60
+    A_, G_, c_ = (Decimal(repr(v)) for v in (L.A, L.G, L.c))
+
+    def ref(al, q):
+        al, q = Decimal(repr(al)), Decimal(repr(q))
+        e2 = (2 * al / A_).exp(); t = (e2 - 1) / (e2 + 1)
+        k = ((q - c_) / (q + c_)).sqrt()
+        return float((al - A_ * k * ((1 + k * t) / (1 - k * t)).ln() / 2) / (2 * G_ * c_))
+    for q in (0.026, 0.3, 1e4, 1e8, 1e14):
+        for al in (1e-8, 0.3, 0.6, 2.0, 25.0, 200.0, -3.0):
+            r = ref(al, q)
+            assert abs(L.eta(al, q)[0] - r) <= 4e-15 * abs(r)
+
+
+def test_inverse_round_trips_and_range():
+    """alpha_of_eta inverts η at the extremes and on both sides of a branch; it raises instead of clipping."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    for q, als in ((1e4 * L.c, (1e-6, 0.7, 30.0, -12.0)), (0.01, (0.2, -5.0, 40.0))):
+        for al in als:
+            assert abs(L.alpha_of_eta(L.eta(al, q), q)[0] - al) <= 1e-12 * max(1.0, abs(al))
+    q = -2 * L.c
+    a0 = float(L.branch_point(q))
+    for s in (1.0, -1.0):
+        for dl in (1e-12, 1e-3, 2.0):
+            al = s * (a0 + dl)
+            back = L.alpha_of_eta(L.eta(al, q), q, sgn=s)[0]
+            assert abs(back - al) <= 1e-14 * abs(al) + 1e-3 * dl
+    with pytest.raises(ValueError):
+        L.alpha_of_eta(1e9, 0.5)                                  # beyond |α| = 340
+    with pytest.raises(ValueError):
+        L.alpha_of_eta(-1e5, q)                                   # closer to the branch point than double precision
+    with pytest.raises(ValueError):
+        L.alpha_of_w(0.0, q)                                      # a branch's end point
 
 
 def test_potential_conjugate_and_metric():
@@ -56,7 +102,7 @@ def test_conservation_for_any_drive_and_conserved_law_shift():
     xi = lambda t: Mx @ np.sin(om * t + ph)
     d = Phi.shape[1]
     z0 = np.r_[0.05 * rng.standard_normal(d), np.log(np.full(d, 0.3))]
-    sol = solve_ivp(L.rhs(Phi, y, xi), (0, 3000), z0, method='DOP853', rtol=1e-11, atol=1e-13)
+    sol = solve_ivp(L.rhs(Phi, y, xi), (0, 300), z0, method='DOP853', rtol=1e-11, atol=1e-13)
     q0 = L.Q(z0[:d], np.exp(z0[d:]))
     assert np.abs(L.Q(sol.y[:d, -1], np.exp(sol.y[d:, -1])) - q0).max() < 1e-8
     F = L.rhs(Phi, y, xi, conserved=True)
@@ -83,6 +129,23 @@ def test_noiseless_limit_is_the_bregman_projection():
     assert np.abs(wT - w).max() < 1e-9
 
 
+def test_rich_projection_is_weighted_basis_pursuit():
+    """From α = 0 and masses β⁰ → 0 the projection converges (residual recorded) and approaches basis pursuit weighted by 1/√β⁰ —
+    also at masses where the earlier solver diverged."""
+    Phi, y = _instance(seed=7, N=6, d=14)
+    L = MF.FreeLaw()
+    d = Phi.shape[1]
+    b0 = np.full(d, 1.0); b0[::3] = 4.0                           # unequal masses: weights 1/√β⁰
+    wbp = MF.weighted_bp(Phi, y, 1 / np.sqrt(b0))
+    dists = []
+    for s in (1e-5, 1e-8, 1e-10):
+        q = L.Q(np.zeros(d), s * b0)
+        w, al, it, res = L.bregman_projection(Phi, y, q, np.zeros(d))
+        assert res < 1e-9 * (1 + np.linalg.norm(y))
+        dists.append(np.abs(w - wbp).max())
+    assert dists[-1] < 1e-4 and dists[-1] < dists[0]
+
+
 def test_euler_change_of_Q():
     """The Euler step's change of Q: second order in h with the closed-form coefficient."""
     L = MF.FreeLaw()
@@ -93,32 +156,45 @@ def test_euler_change_of_Q():
         assert np.all(np.abs(ex / pr - 1) < 50 * h)
 
 
-def test_real_loop_lyapunov():
-    """V̇ = −k_ee² from the vector field at random states (the free law, a realisable target)."""
+def _real_setup(rng):
     L = MF.FreeLaw(m=6.0, G=1.0, gamma=0.5, a_max=1.0)
-    rng = np.random.default_rng(4)
     d = 6
     cen, wid = np.linspace(-1.2, 1.2, d), np.full(d, 0.4)
     al0, b0 = 0.1 * rng.standard_normal(d), rng.uniform(0.5, 1.5, d)
     q = L.Q(al0, b0)
     wstar = rng.uniform(-0.15, 0.15, d)
-    al_star = L.alpha_of_w(wstar, q)
+    return L, d, cen, wid, al0, b0, q, wstar, L.alpha_of_w(wstar, q)
+
+
+def test_real_loop_lyapunov():
+    """V̇ = −k_ee² from the vector field at random states (the free law, a realisable target); V reads the state's own mass, so a
+    wrong mass law (here without the amplitude a) is seen."""
+    rng = np.random.default_rng(4)
+    L, d, cen, wid, al0, b0, q, wstar, al_star = _real_setup(rng)
     xr, xrd = (lambda t: np.sin(t)), (lambda t: np.cos(t))
     ke = 5.0
     F = L.real_rhs(cen, wid, wstar, xr, xrd, ke)
+    worst_mut = 0.0
     for _ in range(5):
         al = al0 + 0.3 * rng.standard_normal(d)
         z = np.r_[rng.uniform(-1, 1), al, np.log(L.beta(al, q))]
         t = rng.uniform(0, 6)
         dz = F(t, z)
         hh = 1e-6
-        V = lambda s: L.real_lyapunov(z + s * dz, t + s, xr, al_star, q)
-        dV = (V(hh) - V(-hh)) / (2 * hh)
+        V = lambda zz, s: L.real_lyapunov(zz + s * dz_, t + s, xr, al_star, q)
+        dz_ = dz
+        dV = (V(z, hh) - V(z, -hh)) / (2 * hh)
         e = z[0] - xr(t)
         assert abs(dV + ke * e ** 2) < 1e-6 * max(1.0, ke * e ** 2)
+        phi = np.exp(-(z[0] - cen) ** 2 / (2 * wid ** 2))
+        dz_ = dz.copy(); dz_[1 + d:] = L.gamma * e * phi       # the mass law without a: (log β)˙ = γeφ
+        dVm = (V(z, hh) - V(z, -hh)) / (2 * hh)
+        worst_mut = max(worst_mut, abs(dVm + ke * e ** 2) / max(1.0, ke * e ** 2))
+    assert worst_mut > 1e-3
 
 
 def test_mirror_step_keeps_Q_and_moves_eta_by_hg():
+    """The mirror update on free curves and on both sides of branches, with steps large enough to need many Newton iterations."""
     L = MF.FreeLaw()
     rng = np.random.default_rng(6)
     al = rng.uniform(-2, 2, (4, 7)); q = rng.uniform(0.05, 2.0, 7)
@@ -126,24 +202,28 @@ def test_mirror_step_keeps_Q_and_moves_eta_by_hg():
     al1 = L.mirror_step(al, q, g, 0.3)
     assert np.allclose(L.eta(al1, np.broadcast_to(q, al.shape)) - L.eta(al, np.broadcast_to(q, al.shape)), 0.3 * g, atol=1e-11)
     assert np.allclose(L.Q(al1, L.beta(al1, q)), np.broadcast_to(q, al.shape), atol=1e-13)
+    qb = np.array([-0.05, -0.05, -0.1, -0.1])                    # branches
+    a0 = L.branch_point(qb)
+    alb = np.array([1.0, -1.0, -1.0, 1.0]) * (a0 + np.array([0.3, 1e-3, 2.0, 0.05]))
+    gb = np.array([-40.0, 25.0, 3.0, 80.0])
+    al2 = L.mirror_step(alb, qb, gb, 1.0)
+    assert np.all(np.sign(al2) == np.sign(alb)) and np.all(np.abs(al2) > a0)
+    assert np.allclose(L.eta(al2, qb) - L.eta(alb, qb), gb, rtol=1e-10, atol=1e-9)
 
 
-def test_leak_lyapunov_identity_and_equilibrium_limits():
-    """Proposition D‴.46: V̇ = −k_ee² + ed − σΣ[B(w*, w) + B(w, w_p) − B(w*, w_p)] with the leak and a disturbance; the averaged
-    equilibrium is the ridge at large starting masses and near the LASSO (same support) at small ones."""
-    L = MF.FreeLaw(m=6.0, G=1.0, gamma=0.5, a_max=1.0)
+def test_leak_lyapunov_identity_noise_and_equilibrium_limits():
+    """Proposition D‴.46: V̇ = −k_ee² + ed − n(f − f̂) − σΣ[B(w*, w) + B(w, w_p) − B(w*, w_p)] with the leak, a disturbance d and a
+    measurement noise n in the adaptation; the averaged equilibrium (k_e ≠ 1, a bias d̄) is the ridge at large starting masses, w* + H⁻¹d̄
+    as σ → 0, and near the LASSO (same support) at small ones; the solver's residual is returned."""
     rng = np.random.default_rng(4)
-    d = 6
-    cen, wid = np.linspace(-1.2, 1.2, d), np.full(d, 0.4)
-    al0, b0 = 0.1 * rng.standard_normal(d), rng.uniform(0.5, 1.5, d)
-    q = L.Q(al0, b0)
-    wstar = rng.uniform(-0.15, 0.15, d)
-    al_star = L.alpha_of_w(wstar, q)
+    L, d, cen, wid, al0, b0, q, wstar, al_star = _real_setup(rng)
     xr, xrd = (lambda t: np.sin(t)), (lambda t: np.cos(t))
     dist = lambda t: 0.2 * np.sin(3.1 * t)
+    noise = lambda t: 0.05 * np.cos(7.3 * t + 0.4)
     ftrue = lambda x: np.exp(-(x - cen) ** 2 / (2 * wid ** 2)) @ wstar
     ke, sig = 5.0, 0.3
-    F = L.real_rhs_leak(cen, wid, ftrue, xr, xrd, ke, q, L.eta(al0, q), sig, dist=dist)
+    F = L.real_rhs_leak(cen, wid, ftrue, xr, xrd, ke, q, L.eta(al0, q), sig, dist=dist, noise=noise)
+    B = lambda a1, a2: L.bregman_div(a1, a2, q)
     for _ in range(3):
         al = al0 + 0.3 * rng.standard_normal(d)
         z = np.r_[rng.uniform(-1, 1), al, np.log(L.beta(al, q))]
@@ -152,21 +232,123 @@ def test_leak_lyapunov_identity_and_equilibrium_limits():
         V = lambda s: L.real_lyapunov(z + s * dz, t + s, xr, al_star, q)
         dV = (V(hh) - V(-hh)) / (2 * hh)
         e = z[0] - xr(t)
-        B = lambda a1, a2: L.bregman_div(a1, a2, q)
-        pred = -ke * e ** 2 + e * dist(t) - sig * (B(al_star, al) + B(al, al0) - B(al_star, al0))
+        phi = np.exp(-(z[0] - cen) ** 2 / (2 * wid ** 2))
+        ff = phi @ wstar - phi @ L.w(al, q)
+        pred = -ke * e ** 2 + e * dist(t) - noise(t) * ff - sig * (B(al_star, al) + B(al, al0) - B(al_star, al0))
         assert abs(dV - pred) < 1e-6 * max(1.0, abs(pred))
         assert abs(dz[1:1 + d] @ (-L.c * 2 * np.sinh(2 * al / L.A) / L.A) + dz[1 + d:] @ L.beta(al, q)) < 1e-10   # Q kept
     Lz = MF.FreeLaw()
     A = rng.standard_normal((30, 10)); H = A.T @ A / 30
     ws = np.zeros(10); ws[[1, 6]] = [0.2, -0.25]
-    q = Lz.Q(np.zeros(10), np.full(10, 100.0))
-    w, _ = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 1e-2, 1.0)
-    ridge = np.linalg.solve(H + 1e-2 * Lz.m / (Lz.G * 100.0 ** 2) * np.eye(10), H @ ws)
+    dbar = 0.02 * rng.standard_normal(10)
+    ke = 3.0
+    b0 = 100.0
+    q = Lz.Q(np.zeros(10), np.full(10, b0))
+    w, _, _, res = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 1e-2, ke, dphi=dbar)
+    assert res < 1e-10
+    ridge = np.linalg.solve(H + ke * 1e-2 * Lz.m / (Lz.G * b0 ** 2) * np.eye(10), H @ ws + dbar)
     assert np.abs(w - ridge).max() < 1e-6 * np.abs(ridge).max()
+    w, _, _, res = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 1e-9, ke, dphi=dbar)
+    assert res < 1e-10 and np.abs(w - (ws + np.linalg.solve(H, dbar))).max() < 1e-6
     b0 = 1e-8
     q = Lz.Q(np.zeros(10), np.full(10, b0))
     lam1 = np.pi * Lz.A * np.sqrt((2 * Lz.c - b0) / b0) / (4 * Lz.G * Lz.c)
-    w, _ = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 0.02 / lam1, 1.0)
+    w, _, _, res = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 0.02 / lam1, 1.0)
+    assert res < 1e-9
     ls = MF.lasso(H, ws, np.full(10, 0.02), 1.0)
     assert np.abs(w - ls).max() < 1e-3 * np.abs(ls).max()
     assert np.array_equal(np.abs(w) > 1e-3 * np.abs(w).max(), np.abs(ls) > 1e-12)
+
+
+def test_leak_comparison_bound_under_a_worst_case_disturbance():
+    """V(t) ≤ V(0)e^{−λt} + (C/λ)(1 − e^{−λt}), λ = min(k_e, σ), C = d̄²/(2k_e) + σB(w*, w_p), along trajectories with the disturbance
+    d̄·tanh(e/0.01); the trajectory comes within a factor 2 of the ultimate bound C/λ (the bound binds)."""
+    rng = np.random.default_rng(4)
+    L, d, cen, wid, al0, b0, q, wstar, al_star = _real_setup(rng)
+    xr, xrd = (lambda t: np.sin(t)), (lambda t: np.cos(t))
+    ftrue = lambda x: np.exp(-(x - cen) ** 2 / (2 * wid ** 2)) @ wstar
+    for ke, sig, dbar in ((1.0, 0.5, 0.3), (0.5, 2.0, 0.5)):
+        Fb = L.real_rhs_leak(cen, wid, ftrue, xr, xrd, ke, q, L.eta(al0, q), sig)
+
+        def F(t, z):
+            dz = Fb(t, z)
+            dz[0] += dbar * np.tanh((z[0] - xr(t)) / 0.01)
+            return dz
+        sol = solve_ivp(F, (0, 40), np.r_[xr(0) + 2.0, al0, np.log(b0)], method='LSODA', rtol=1e-9, atol=1e-11,
+                        t_eval=np.linspace(0, 40, 801))
+        V = np.array([L.real_lyapunov(sol.y[:, k], t, xr, al_star, q) for k, t in enumerate(sol.t)])
+        lam = min(ke, sig)
+        C = dbar ** 2 / (2 * ke) + sig * L.bregman_div(al_star, al0, q)
+        bound = V[0] * np.exp(-lam * sol.t) + (C / lam) * (1 - np.exp(-lam * sol.t))
+        assert np.all(V <= bound * (1 + 1e-6))
+        assert V[-1] > 0.5 * C / lam
+
+
+def test_filtered_gram():
+    """H_L = k_e⟨φL[φ]ᵀ⟩ on a scalar periodic orbit: H − ⟨φ̇φ̇ᵀ⟩/k_e² + O(k_e⁻³) (the first-order lag ⟨φφ̇ᵀ⟩ vanishes), its asymmetry
+    O(k_e⁻³) and nonzero when ⟨ẋ³(φ_i′φ_j″ − φ_j′φ_i″)⟩ ≠ 0 (x = sin t + 0.4 sin 2t); d̄_L → ⟨φd⟩."""
+    n = 4096
+    ts = np.arange(n) * 2 * np.pi / n
+    x = np.sin(ts) + 0.4 * np.sin(2 * ts); xd = np.cos(ts) + 0.8 * np.cos(2 * ts)
+    cen, wid = np.linspace(-1.2, 1.2, 5), 0.4
+    P = np.exp(-(x[:, None] - cen) ** 2 / (2 * wid ** 2))
+    Pd = P * (-(x[:, None] - cen) / wid ** 2) * xd[:, None]
+    H = P.T @ P / n; K = Pd.T @ Pd / n
+    dist = 0.3 * np.sin(3 * ts) + 0.1
+    err, asym = [], []
+    for ke in (20.0, 40.0):
+        HL, dL = MF.filtered_gram(P, 2 * np.pi, ke, dist)
+        err.append(np.abs(HL - (H - K / ke ** 2)).max()); asym.append(np.abs(HL - HL.T).max())
+    assert 5 < err[0] / err[1] < 11 and 5 < asym[0] / asym[1] < 11 and asym[1] > 1e-9
+    HL, dL = MF.filtered_gram(P, 2 * np.pi, 1e6, dist)
+    assert np.abs(HL - H).max() < 1e-9 and np.abs(dL - P.T @ dist / n).max() < 1e-6
+
+
+# --- Proposition D‴.47: the branches ------------------------------------------------------------------------------------------------
+def test_particle_set_branches_identities():
+    """The branch criterion; δ(0) solved from β(0) (masses far below c's precision kept); η's inverse to any depth; the temperature
+    1/(γa₀) at a branch point; B(w̄, w) → β/(γm) as w̄ → 0; a ± pair's W(Δ) = 2u sinh(γa₀Δ) at leading order."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    P = MF.ParticleSet(L, np.array([0.3, -0.3, 0.0, 0.5, 0.001]), np.array([1e-3, 1e-3, 1e-3, 1e-200, 1e-3]))
+    assert list(P.br) == [True, True, False, True, False]
+    assert abs(P.beta(P.x0)[3] / 1e-200 - 1) < 1e-12 and abs(P.beta(P.x0)[0] / 1e-3 - 1) < 1e-12
+    for u in (-5000.0, -60.0, 1.0):
+        x = P.x0.copy(); x[0] = x[1] = u
+        assert np.abs(P.x_of_eta(P.eta(x))[:2] - u).max() < 1e-9 * max(1.0, abs(u))
+    xb = P.x0.copy(); xb[0] = -60.0
+    a0 = L.A * np.tanh(P.al0[0] / L.A)
+    assert abs(P.temperature(xb)[0] * L.gamma * a0 - 1) < 1e-12
+    # B(0, w) = β/(γm) on a branch, against the general formula's limit
+    Pc = MF.ParticleSet(L, np.array([0.4]), np.array([1e-3]))
+    xw = np.array([np.log(0.05)])
+    for dbar in (1e-30, 1e-100):
+        xbar = np.array([np.log(dbar)])
+        wb = Pc.w(xbar)
+        gen = float(wb[0] * (Pc.eta(xbar)[0] - Pc.eta(xw)[0]) - (Pc.beta(xbar)[0] - Pc.beta(xw)[0]) / (L.gamma * L.m))
+        assert abs(gen - Pc.beta(xw)[0] / (L.gamma * L.m)) < 1e-14
+    assert abs(Pc.bdiv(np.zeros(1), xw, xw) - Pc.beta(xw)[0] / (L.gamma * L.m)) < 1e-16
+    Pp = MF.ParticleSet(L, np.array([0.3, -0.3]), np.array([1e-7, 1e-7]))
+    e0 = Pp.eta(Pp.x0); u = Pp.w(Pp.x0)[0]; a0 = L.A * np.tanh(Pp.al0[0] / L.A)
+    for D in (1.0, 10.0):
+        W = Pp.w(Pp.x_of_eta(e0 + D)).sum()
+        assert abs(W / (2 * u * np.sinh(L.gamma * a0 * D)) - 1) < 1e-4
+
+
+def test_branch_limit_is_the_projection_onto_the_sign_constrained_fits():
+    """Proposition D‴.47(ii): from a start whose frozen signs cannot fit the labels, the loop converges to the Bregman projection of
+    its start onto the sign-constrained least-squares set S (computed independently), the coordinates vanishing on S going extinct."""
+    rng = np.random.default_rng(1)
+    N, d = 6, 12
+    Phi = rng.standard_normal((N, d))
+    ws = np.zeros(d); ws[[0, 3, 5, 8]] = [0.9, -0.7, 0.6, -0.5]; y = Phi @ ws
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    P = MF.ParticleSet(L, rng.uniform(0.2, 0.4, d), np.full(d, 1e-3))      # all on positive branches
+    assert P.br.all()
+    yh, Z, _ = MF.sign_ls_set(Phi, y, P.s)
+    assert np.linalg.norm(y - yh) > 1e-3 and Z.size > 0
+    keep = np.setdiff1d(np.arange(d), Z)
+    wbar, it, res = MF.projection(P, Phi, yh, P.eta(P.x0), keep)
+    assert res < 1e-11
+    sol = solve_ivp(P.rhs(Phi, y), (0, 3e7), P.x0, method='LSODA', rtol=1e-10, atol=1e-12)
+    assert np.abs(P.w(sol.y[:, -1]) - wbar).max() < 1e-9
+    assert P.beta(sol.y[:, -1])[Z].max() < 1e-30

@@ -9,19 +9,28 @@ dictionary w = β⊙a/m is the mirror flow dη = Φᵀ(r + ξ)dt/N of the potent
 (`mirror_free`).
 
 A. Identities: η's closed form against quadrature (the three cases and the branch); the conjugate and the metric; Q along the loop,
-   noiseless and driven by a smooth node-correlated coloured noise; the conserved law's shift dQ_i = −γβ_iλ dt; Q's drift along
-   Proposition D‴.44's reduced flow (free masses, white noise, the paradigm's update) against the Euler step's closed form.
-B. The implicit bias: from α = 0 and equal masses s·m/d, the noiseless loop's end against the Bregman projection, and the projection
-   against the minimum-norm fit (the lazy regime) and basis pursuit (the rich regime), for s = 10 … 10⁻⁴ (N × d = 5 × 12, 2- and 3-sparse
-   truths); and from small random amplitudes at tiny masses (the branches q < −c: the signs frozen).
-C. Noise: (1) in continuous time a smooth noise of large amplitude, correlated over the nodes and coloured, moves neither Q nor the state's
-   projection; (2) the Euler step's mean change of Q against the closed form; (3) along the paradigm's reduced flow (D‴.44's selection,
-   free masses, white noise) from the lazy start: Q decreases and the state moves toward basis pursuit; (4) the sampled-data loop with
-   label noise: the paradigm's Euler update moves Q and the projection, the mirror update on the curves moves neither.
-D. The real loop (a scalar plant, Gaussian atoms at fixed centres, two particles on one atom, x_m = sin t + 0.4 sin 2.7t): V = ½e² + Σ Bregman divergences monotone
-   with V̇ = −k_ee²; the pair's mirror coordinates move together (η_i − η_i⁰ = η_j − η_j⁰), with and without a smooth sensor noise; the
-   pair's split at the end against the Bregman split.
-E. The conserved law (Σβ = m) from the same start: not a mirror flow — Q moves, and its end differs from the free law's projection.
+   noiseless and driven by a smooth node-correlated coloured noise; the conserved law's shift dQ_i = −γβ_iλ dt, integrated (ΔQ_i along
+   the conserved law's trajectory against the quadrature of −γβ_iλ, λ = Σ_jw_jg_j from the state); Q's drift along Proposition D‴.44's
+   reduced flow (free masses, white noise, the paradigm's update) against the Euler step's closed form.
+B. The implicit bias: from α = 0 and equal masses s·m/d, the Bregman projection (its residual recorded; a projection whose residual
+   exceeds 10⁻⁹(1 + |y|) counts as a failure and is left out of every aggregate) against the minimum-norm fit (the lazy regime) and basis
+   pursuit (the rich regime), for s = 10 … 10⁻⁴ (N × d = 5 × 12, 2- and 3-sparse truths), medians and largest values; the noiseless
+   loop's end for s ≥ 10⁻², and once at s = 10⁻³ (the time to reach the projection); unequal masses (weighted basis pursuit, weighted
+   minimum norm); and from small random amplitudes at tiny masses (the branches Q < −c, Proposition D‴.47): whether the frozen signs
+   still admit an exact fit, the coordinates vanishing on the sign-constrained fits, the truth's atoms on a wrong-signed branch, the
+   distance to basis pursuit — as distributions.
+C. Noise: (1) white label noise at a fixed intensity as the step h → 0: Euler–Maruyama on (α, log β) (Itô), Heun (Stratonovich) and the
+   mirror update — Q's change against the Itô correction's time integral (Itô keeps a drift as h → 0, Stratonovich's vanishes like h, the
+   mirror update keeps Q exactly); (2) the Euler step's exact mean change of Q (Gauss–Hermite over each particle's Gaussian drive) against
+   the closed form at h = 0.5, 0.05, 0.005; (3) along the paradigm's reduced flow (D‴.44's selection, free masses, white noise) from the
+   lazy start, on instances where basis pursuit is the truth and where it is not, from s = 10² to 10⁸: ‖w‖₁, the distance to basis
+   pursuit, the end support against basis pursuit's, Q; (4) the sampled-data loop with label noise: the paradigm's Euler update moves Q and
+   the projection, the mirror update on the curves moves neither.
+D. The real loop (a scalar plant, Gaussian atoms at fixed centres, two particles on one atom without cohesion between them,
+   x_m = sin t + 0.4 sin 2.7t): V = ½e² + Σ Bregman divergences monotone with V̇ = −k_ee²; the pair's mirror coordinates move together
+   (η_i − η_i⁰ = η_j − η_j⁰) under any common drive — noiseless, with a smooth noise in the adaptation only, and with a sensor noise in
+   the feedback, the regressor and the adaptation.
+E. The conserved law (Σβ = m) from the same start: Q moves, and its end differs from the free law's projection.
 
 Output: results/chaos/mirror_free.md and mirror_free_raw.npz (MF_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D,E`).
 """
@@ -50,7 +59,12 @@ N_I, D_I, M_I, G_I, GAM_I, AMAX = 5, 12, 12.0, 1.0, 0.1, 1.0
 SCALES_B, KS_B, N_INST_B, T_B = (10.0, 1.0, 0.1, 1e-2, 1e-3, 1e-4), (2, 3), 20, 1e7
 EPS_RICH, SCALES_LAZY = (1e-3, 1e-5, 1e-7), (1e2, 1e4)                     # unequal masses: ε·r and scale·r
 FLOW_MIN_B = 1e-2                                                           # the flow is integrated for s ≥ this (slower below)
-S_C3, N_INST_C3 = (0.0, 1e5, 1e6, 1e7, 1e8), 6
+FLOW_S3, T_S3 = 1e-3, 3e7                                                   # one instance's flow at s = 10⁻³ (k = 2, instance 0)
+OK_TOL = 1e-9                                                               # a projection fails when |Φw − y| > OK_TOL(1 + |y|)
+S_BR = (1e-2, 1e-4, 1e-6)                                                   # the branches' start scales
+S_C3 = (0.0, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8)
+I_C3 = (0, 1, 2, 3, 4, 5, 8, 9, 13, 17)                                     # k = 2; 8, 9, 13, 17: basis pursuit ≠ the truth
+H_C1, SIG_C1, T_C1, P_C1 = (0.1, 0.03, 0.01), 0.3, 200.0, 64
 KE_D, GAM_D, M_D, T_D = 5.0, 0.5, 6.0, 2000.0
 H_C4, SIG_C4, N_C4, P_C4 = 0.5, 0.3, 20000, 16
 
@@ -112,14 +126,21 @@ def part_A():
             sol = solve_ivp(L.rhs(Phi, y, xi), (0.0, T), z0, method='DOP853', rtol=1e-11, atol=1e-13, dense_output=True)
             ts = np.linspace(0, T, 60)
             out[lab] = float(max(np.abs(L.Q(sol.sol(t)[:d], np.exp(sol.sol(t)[d:])) - q0).max() for t in ts))
-        Fc = L.rhs(Phi, y, smooth_noise(np.random.default_rng(9), N_I), conserved=True)
-        z = sol.y[:, -1]; dz = Fc(1.0, z); al, b = z[:d], np.exp(z[d:])
-        dQ = b * dz[d:] - L.c * (2 / L.A) * np.sinh(2 * al / L.A) * dz[:d]
-        a = L.amp(al)[0]
+        # the conserved law, integrated: ΔQ_i along its trajectory against the quadrature of −γβ_iλ, λ = Σ_jβ_ja_jg_j/Σ_jβ_j from the state
         xi9 = smooth_noise(np.random.default_rng(9), N_I)
-        g = Phi.T @ (y - Phi @ (b * a / L.m) + xi9(1.0)) / N_I
-        lam = b @ (a * g) / b.sum()
-        out['shift'] = float(np.abs(dQ + L.gamma * b * lam).max() / np.abs(L.gamma * b * lam).max())
+        Tc = 200.0
+        solc = solve_ivp(L.rhs(Phi, y, xi9, conserved=True), (0.0, Tc), z0, method='DOP853', rtol=1e-12, atol=1e-14, dense_output=True)
+        tg = np.linspace(0.0, Tc, 20001)
+        Zc = solc.sol(tg)
+        al_c, b_c = Zc[:d], np.exp(Zc[d:])
+        a_c = L.amp(al_c)[0]
+        r_c = y[:, None] - Phi @ (b_c * a_c / L.m) + np.array([xi9(t) for t in tg]).T
+        g_c = Phi.T @ r_c / N_I
+        lam_c = (b_c * a_c * g_c).sum(axis=0) / b_c.sum(axis=0)
+        integrand = -L.gamma * b_c * lam_c[None, :]
+        quadQ = np.sum(0.5 * (integrand[:, 1:] + integrand[:, :-1]) * np.diff(tg)[None, :], axis=1)
+        dQc = L.Q(al_c[:, -1], b_c[:, -1]) - L.Q(al_c[:, 0], b_c[:, 0])
+        out['shift'] = float(np.abs(dQc - quadQ).max() / np.abs(dQc).max())
         cons.append(out)
     # Q's drift along D‴.44's reduced flow (free masses, white noise, the paradigm's update) against the Euler step's closed form
     red = []
@@ -139,12 +160,14 @@ def part_A():
 
 @cached
 def b_job(args):
-    """Part B, one (k, instance): the projection for every start scale, the flow's end for s ≥ FLOW_MIN_B; the branches' variant."""
+    """Part B, one (k, instance): the projection (its residual recorded) for every start scale, the flow's end for s ≥ FLOW_MIN_B (and
+    the time to reach the projection at s = FLOW_S3 for k = 2, instance 0); unequal masses; the branches (Proposition D‴.47)."""
     warnings.filterwarnings('ignore')
     k, i = args
     t0 = time.time()
     L = law()
     Phi, ws = instance(k, i); y = Phi @ ws
+    tol_y = OK_TOL * (1 + np.linalg.norm(y))
     wbp = CS.basis_pursuit(Phi, y, (Phi ** 2).sum(axis=0))
     wl2 = np.linalg.pinv(Phi) @ y
     out = dict(k=k, i=i, bp_ok=bool(np.abs(wbp - ws).max() < 1e-4 * np.abs(ws).max()), l1_bp=float(np.abs(wbp).sum()))
@@ -152,7 +175,7 @@ def b_job(args):
         al0 = np.zeros(D_I); b0 = np.full(D_I, s * M_I / D_I)
         q = L.Q(al0, b0)
         w, al, it, res = L.bregman_projection(Phi, y, q, L.eta(al0, q))
-        r = dict(l1=float(np.abs(w).sum()), used=int((np.abs(w) > 1e-3).sum()), res=res, it=it,
+        r = dict(conv=bool(res <= tol_y), res=res, it=it, l1=float(np.abs(w).sum()), used=int((np.abs(w) > 1e-3).sum()),
                  d_bp=float(np.abs(w - wbp).max()), d_l2=float(np.abs(w - wl2).max() / np.abs(wl2).max()),
                  ok=bool(np.abs(w - ws).max() < 1e-3 * np.abs(ws).max()), amax=float(np.abs(L.amp(al)[0]).max() / AMAX),
                  bmax=float(L.beta(al, q).max()))
@@ -161,71 +184,98 @@ def b_job(args):
             wT = np.exp(z[D_I:]) * L.amp(z[:D_I])[0] / L.m
             r.update(flow_res=float(np.linalg.norm(Phi @ wT - y)), flow_d=float(np.abs(wT - w).max()))
         out[s] = r
-    # the branches: small random amplitudes at tiny masses
-    for s in (1e-2, 1e-4):
+    if (k, i) == (2, 0):                                                         # the loop at s = 10⁻³: the time to reach the projection
+        al0 = np.zeros(D_I); b0 = np.full(D_I, FLOW_S3 * M_I / D_I); q = L.Q(al0, b0)
+        w, al, it, res = L.bregman_projection(Phi, y, q, L.eta(al0, q))
+        ts = np.geomspace(1e2, T_S3, 41)
+        sol = solve_ivp(L.rhs(Phi, y), (0.0, T_S3), np.r_[al0, np.log(b0)], method='LSODA', rtol=1e-10, atol=1e-14, t_eval=ts)
+        dist = [float(np.abs(np.exp(sol.y[D_I:, j]) * L.amp(sol.y[:D_I, j])[0] / L.m - w).max()) for j in range(sol.y.shape[1])]
+        out['flow3'] = dict(t=sol.t.tolist(), d=dist, res=res, status=int(sol.status))
+    # the branches (Proposition D‴.47): small random amplitudes at tiny masses — the frozen signs, the sign-constrained fits S, the
+    # projection onto S
+    for s in S_BR:
         al0 = 0.05 * np.random.default_rng(900 + 100 * k + i).standard_normal(D_I); b0 = np.full(D_I, s * M_I / D_I)
-        q = L.Q(al0, b0); br = q + L.c < 0
-        w, al, it, res = L.bregman_projection(Phi, y, q, L.eta(al0, q), sgn=np.sign(al0))
-        out[('branch', s)] = dict(n_branch=int(br.sum()), used=int((np.abs(w) > 1e-3).sum()),
-                                  used_br=int(((np.abs(w) > 1e-3) & br).sum()), res=res,
-                                  signs_kept=bool(np.all((np.sign(w[br]) == np.sign(al0[br])) | (np.abs(w[br]) < 1e-12))),
-                                  d_bp=float(np.abs(w - wbp).max()))
+        P = MF.ParticleSet(L, al0, b0)
+        yh, Z, _ = MF.sign_ls_set(Phi, y, P.s)
+        keep = np.setdiff1d(np.arange(D_I), Z)
+        w, it, res = MF.projection(P, Phi, yh, P.eta(P.x0), keep)
+        truth = np.flatnonzero(ws)
+        out[('branch', s)] = dict(n_branch=int(P.br.sum()), yres=float(np.linalg.norm(y - yh)), exact=bool(np.linalg.norm(y - yh) <= tol_y),
+                                  nZ=int(Z.size), wrong=int(sum(bool(P.br[j]) and P.s[j] != np.sign(ws[j]) for j in truth)),
+                                  conv=bool(res <= OK_TOL * (1 + np.linalg.norm(yh))), res=res, it=it,
+                                  used=int((np.abs(w) > 1e-3).sum()), d_bp=float(np.abs(w - wbp).max()))
     # unequal masses (ratios r in [1/4, 4]): the rich limit against weighted basis pursuit (weights 1/√β⁰), the lazy one against the
     # weighted minimum norm (weights 1/β⁰²)
-    from scipy.optimize import linprog
     r = np.exp(np.random.default_rng(800 + 100 * k + i).uniform(np.log(0.25), np.log(4.0), D_I))
-    cw = 1.0 / np.sqrt(r)
-    lp = linprog(np.r_[cw, cw], A_eq=np.c_[Phi, -Phi], b_eq=y, bounds=(0, None), method='highs')
-    wl1 = lp.x[:D_I] - lp.x[D_I:]
+    wl1 = MF.weighted_bp(Phi, y, 1.0 / np.sqrt(r))
     for eps in EPS_RICH:
         q = L.Q(np.zeros(D_I), eps * r)
-        w = L.bregman_projection(Phi, y, q, L.eta(np.zeros(D_I), q))[0]
-        out[('rich', eps)] = dict(d=float(np.abs(w - wl1).max()), d_unw=float(np.abs(w - wbp).max()))
+        w, _, it, res = L.bregman_projection(Phi, y, q, L.eta(np.zeros(D_I), q))
+        out[('rich', eps)] = dict(d=float(np.abs(w - wl1).max()), d_unw=float(np.abs(w - wbp).max()), res=res, conv=bool(res <= tol_y))
     for big in SCALES_LAZY:
         b0 = big * r; q = L.Q(np.zeros(D_I), b0)
-        w = L.bregman_projection(Phi, y, q, L.eta(np.zeros(D_I), q))[0]
+        w, _, it, res = L.bregman_projection(Phi, y, q, L.eta(np.zeros(D_I), q))
         wl2 = b0 ** 2 * (Phi.T @ np.linalg.solve(Phi @ ((b0 ** 2)[:, None] * Phi.T), y))
-        out[('lazy', big)] = dict(d=float(np.abs(w - wl2).max() / np.abs(wl2).max()))
+        out[('lazy', big)] = dict(d=float(np.abs(w - wl2).max() / np.abs(wl2).max()), res=res, conv=bool(res <= tol_y))
     print(f"[{time.time() - t0:.0f}s] B k {k} instance {i}", flush=True)
     return out
 
 
 def part_C12():
-    """C1: the smooth noise in continuous time; C2: the Euler step's mean change of Q."""
+    """C1: white label noise at a fixed intensity as h → 0 — Euler–Maruyama on (α, log β) (Itô), Heun (Stratonovich) and the mirror
+    update: Q's change against the time integral of the Itô correction (γβ_i/2)(γa_i² − Gβ_ia′_i(1 + a_i²/a_max²))σ²|φ_i|²/N² along each
+    path. C2: the Euler step's exact mean change of Q (Gauss–Hermite over each particle's Gaussian drive) against the closed form."""
     warnings.filterwarnings('ignore')
     L = law()
     c1 = []
-    for i in range(4):
+    for i in range(3):
         Phi, ws = instance(2, i); y = Phi @ ws; d = D_I
-        rng = np.random.default_rng(400 + i)
-        al0 = np.zeros(d); b0 = np.full(d, 0.1 * M_I / d); z0 = np.r_[al0, np.log(b0)]
-        q = L.Q(al0, b0)
-        w_ref = L.bregman_projection(Phi, y, q, L.eta(al0, q))[0]
-        xi = smooth_noise(rng, N_I)
-        sol = solve_ivp(L.rhs(Phi, y, xi), (0.0, 3e4), z0, method='DOP853', rtol=1e-11, atol=1e-13, dense_output=True)
-        rows = []
-        for t in (1e3, 1e4, 3e4):
-            z = sol.sol(t); al = z[:d]
-            wi = L.bregman_projection(Phi, y, q, L.eta(al, q), sgn=np.sign(al))[0]
-            rows.append(dict(t=t, dQ=float(np.abs(L.Q(al, np.exp(z[d:])) - q).max()),
-                             res=float(np.linalg.norm(Phi @ (np.exp(z[d:]) * L.amp(al)[0] / L.m) - y)), d_int=float(np.abs(wi - w_ref).max())))
-        c1.append(rows)
+        rng0 = np.random.default_rng(400 + i)
+        al_s = 0.3 * rng0.standard_normal(d); b_s = rng0.uniform(0.2, 2.0, d)
+        q = L.Q(al_s, b_s)
+        phi2 = (Phi ** 2).sum(axis=0)
+        F = lambda al, b: (L.G * b * L.amp(al)[1], L.gamma * L.amp(al)[0])
+        gdet = lambda al, b: (y[None, :] - (b * L.amp(al)[0] / L.m) @ Phi.T) @ Phi / N_I
+        rate = lambda al, b: 0.5 * L.gamma * b * (L.gamma * L.amp(al)[0] ** 2 - L.G * b * L.amp(al)[1] * (1 + (L.amp(al)[0] / L.A) ** 2)) \
+            * SIG_C1 ** 2 * phi2 / N_I ** 2
+        for h in H_C1:
+            n = int(round(T_C1 / h))
+            for scheme in ('Euler (Itô)', 'Heun (Stratonovich)', 'mirror'):
+                rng = np.random.default_rng(4100 + i)                           # the same noise paths for every scheme
+                al = np.tile(al_s, (P_C1, 1)); b = np.tile(b_s, (P_C1, 1)); pred = np.zeros((P_C1, d))
+                for _ in range(n):
+                    pred += rate(al, b) * h
+                    dxi = (SIG_C1 * np.sqrt(h) / N_I) * (rng.standard_normal((P_C1, N_I)) @ Phi)
+                    de1 = gdet(al, b) * h + dxi
+                    if scheme == 'Euler (Itô)':
+                        fa, fb = F(al, b)
+                        al, b = al + fa * de1, b * np.exp(fb * de1)
+                    elif scheme == 'Heun (Stratonovich)':
+                        fa, fb = F(al, b)
+                        al1, b1 = al + fa * de1, b * np.exp(fb * de1)
+                        de2 = gdet(al1, b1) * h + dxi
+                        fa1, fb1 = F(al1, b1)
+                        al, b = al + 0.5 * (fa * de1 + fa1 * de2), b * np.exp(0.5 * (fb * de1 + fb1 * de2))
+                    else:
+                        al = L.mirror_step(al, q, de1 / h, h); b = L.beta(al, q)
+                dQ = L.Q(al, b) - q[None, :]
+                c1.append(dict(i=i, h=h, scheme=scheme, dQ=float(dQ.mean()), pred=float(pred.mean()),
+                               ratio=float(dQ.mean() / pred.mean()), dQmax=float(np.abs(dQ).max())))
     c2 = []
-    for h in (0.5, 0.05):
+    xg, wg = np.polynomial.hermite.hermgauss(80)
+    for h in (0.5, 0.05, 0.005):
         for i in range(3):
             Phi, ws = instance(2, i); y = Phi @ ws; d = D_I
             rng = np.random.default_rng(500 + i)
             al = 0.4 * rng.standard_normal(d); b = rng.uniform(0.2, 2.0, d)
-            sig, P = 0.3, 400000
+            sig = 0.3
             a, da = L.amp(al)
             r0 = y - Phi @ (b * a / L.m)
-            g = (Phi.T @ (r0[:, None] + sig * rng.standard_normal((N_I, P)))) / N_I
-            dQ = L.dQ_exact(al[:, None], b[:, None], g, h)
-            Eg2 = (Phi.T @ r0 / N_I) ** 2 + sig ** 2 * (Phi ** 2).sum(axis=0) / N_I ** 2
-            pred = L.dQ_euler(al, b, Eg2, h)
-            se = dQ.std(axis=1) / np.sqrt(P)
-            c2.append(dict(h=h, rel=float(np.abs(dQ.mean(axis=1) - pred).max() / np.abs(pred).max()),
-                           z=float(np.abs((dQ.mean(axis=1) - pred) / se).max())))
+            mu = Phi.T @ r0 / N_I; sd = sig * np.sqrt((Phi ** 2).sum(axis=0)) / N_I
+            g = mu[:, None] + np.sqrt(2) * sd[:, None] * xg[None, :]
+            EdQ = (L.dQ_exact(al[:, None], b[:, None], g, h) * wg[None, :]).sum(axis=1) / np.sqrt(np.pi)
+            pred = L.dQ_euler(al, b, mu ** 2 + sd ** 2, h)
+            c2.append(dict(h=h, rel=float(np.abs(EdQ - pred).max() / np.abs(pred).max())))
     return dict(c1=c1, c2=c2)
 
 
@@ -291,13 +341,17 @@ def c3_job(i):
     for th in Th:
         alx, _, b, a, _, _ = X.parts(th); w = X.w(th); Qx = L.Q(alx, b)
         rows.append(dict(l1=float(np.abs(w).sum()), d_bp=float(np.abs(w - wbp).max()), used=int((np.abs(w) > 1e-3).sum()),
-                         qmean=float(Qx.mean()), qmin=float(Qx.min()), qmax=float(Qx.max())))
+                         qmean=float(Qx.mean()), qmin=float(Qx.min()), qmax=float(Qx.max()), dead=int((Qx <= -L.c).sum()),
+                         supp=[int(j) for j in np.flatnonzero(np.abs(w) > 1e-3)]))
+    supp_bp = [int(j) for j in np.flatnonzero(np.abs(wbp) > 1e-3)]
     print(f"[{time.time() - t0:.0f}s] C3 instance {i}", flush=True)
-    return dict(i=i, rows=rows, bp_ok=bool(np.abs(wbp - ws).max() < 1e-4 * np.abs(ws).max()))
+    return dict(i=i, rows=rows, bp_ok=bool(np.abs(wbp - ws).max() < 1e-4 * np.abs(ws).max()), supp_bp=supp_bp,
+                l1_bp=float(np.abs(wbp).sum()), end_is_bp=bool(rows[-1]['supp'] == supp_bp))
 
 
 def part_D():
-    """The real loop: Gaussian atoms at fixed centres (six, width 0.4) plus a second particle on the third atom; x_m = sin t."""
+    """The real loop: Gaussian atoms at fixed centres (six, width 0.4) plus a second particle on the third atom (no cohesion between
+    them, σ₀ = 0); x_m = sin t + 0.4 sin 2.7t."""
     warnings.filterwarnings('ignore')
     L = MF.FreeLaw(M_D, G_I, GAM_D, AMAX)
     rng = np.random.default_rng(11)
@@ -317,36 +371,48 @@ def part_D():
     al_star = L.alpha_of_w(wstar, q)
     xr, xrd = (lambda t: np.sin(t) + 0.4 * np.sin(2.7 * t)), (lambda t: np.cos(t) + 1.08 * np.cos(2.7 * t))
     out = {}
-    for lab, noise in (('noiseless', None), ('smooth sensor noise', smooth_noise(np.random.default_rng(12), 1, K=20, amp=0.1, lo=0.05, hi=20.0))):
+    nz = smooth_noise(np.random.default_rng(12), 1, K=20, amp=0.1, lo=0.05, hi=20.0)
+    for lab, noise in (('noiseless', None), ('a smooth noise in the adaptation only', nz), ('a sensor noise (feedback, regressor, adaptation)', nz)):
         F0 = L.real_rhs(cen, wid, wstar, xr, xrd, KE_D)
         if noise is None:
             F = F0
-        else:
+        elif lab.startswith('a smooth'):
             def F(t, z, F0=F0, noise=noise):                                 # the adaptation sees e + n(t); the plant does not
                 x, al, lb = z[0], z[1:8], z[8:]
                 b = np.exp(lb); a, da = L.amp(al)
                 phi = np.exp(-(x - cen) ** 2 / (2 * wid ** 2))
                 em = x - xr(t) + noise(t)[0]
                 return np.r_[F0(t, z)[0], L.G * b * da * em * phi, L.gamma * a * em * phi]
+        else:
+            def F(t, z, noise=noise):                                         # the measured state x + n in the feedback, f̂ and the adaptation
+                x, al, lb = z[0], z[1:8], z[8:]
+                b = np.exp(lb); a, da = L.amp(al)
+                xm_ = x + noise(t)[0]
+                phi = np.exp(-(xm_ - cen) ** 2 / (2 * wid ** 2))
+                em = xm_ - xr(t)
+                f_true = np.exp(-(x - cen) ** 2 / (2 * wid ** 2)) @ wstar
+                return np.r_[f_true + xrd(t) - KE_D * em - phi @ (b * a / L.m), L.G * b * da * em * phi, L.gamma * a * em * phi]
         z0 = np.r_[xr(0.0) + 0.3, al0, np.log(b0)]
         ts = np.linspace(0, T_D, 8001)
         sol = solve_ivp(F, (0, T_D), z0, method='DOP853', rtol=1e-12, atol=1e-14, t_eval=ts)
         Z = sol.y
         V = np.array([L.real_lyapunov(Z[:, j], t, xr, al_star, q) for j, t in enumerate(ts)])
         e = Z[0] - xr(ts)
-        dV = np.empty_like(ts)
-        for j, t in enumerate(ts):
-            zd = F0(t, Z[:, j]); hh = 1e-6
-            dV[j] = (L.real_lyapunov(Z[:, j] + hh * zd, t + hh, xr, al_star, q) - L.real_lyapunov(Z[:, j] - hh * zd, t - hh, xr, al_star, q)) / (2 * hh)
+        dVerr = np.nan
+        if noise is None:
+            dV = np.empty_like(ts)
+            for j, t in enumerate(ts):
+                zd = F0(t, Z[:, j]); hh = 1e-6
+                dV[j] = (L.real_lyapunov(Z[:, j] + hh * zd, t + hh, xr, al_star, q) - L.real_lyapunov(Z[:, j] - hh * zd, t - hh, xr, al_star, q)) / (2 * hh)
+            dVerr = float(np.abs(dV + KE_D * e ** 2).max() / np.abs(KE_D * e ** 2).max())
         etas = np.array([L.eta(Z[1:8, j], q) for j in range(len(ts))])
         pair = np.abs((etas[:, 2] - e0[2]) - (etas[:, 6] - e0[6])).max() / max(1.0, np.abs(etas[:, 2] - e0[2]).max())
         Qs = np.array([L.Q(Z[1:8, j], np.exp(Z[8:, j])) for j in range(len(ts))])
         wend = np.exp(Z[8:, -1]) * L.amp(Z[1:8, -1])[0] / L.m
-        out[lab] = dict(V0=float(V[0]), Vend=float(V[-1]), monotone=bool(np.all(np.diff(V) <= 1e-12 * max(1.0, V[0]))),
-                        dVerr=float(np.abs(dV + KE_D * e ** 2).max() / np.abs(KE_D * e ** 2).max()) if noise is None else np.nan,
+        out[lab] = dict(V0=float(V[0]), Vend=float(V[-1]), monotone=bool(np.all(np.diff(V) <= 1e-12 * max(1.0, V[0]))), dVerr=dVerr,
                         pair=float(pair), dQ=float(np.abs(Qs - q).max()), e_end=float(np.abs(e[-400:]).max()),
                         d6=float(np.abs(np.r_[wend[:2], wend[3:6]] - np.r_[wtrue6[:2], wtrue6[3:]]).max()),
-                        dsum=float(abs(wend[2] + wend[6] - wtrue6[2])), dsplit=float(abs(wend[2] - wi)))
+                        dsum=float(abs(wend[2] + wend[6] - wtrue6[2])))
     return dict(out=out, wi=float(wi), wj=float(wj), wsum=float(wtrue6[2]))
 
 
@@ -380,7 +446,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                f"relative difference {fmt(A['eta_err'])}; (ψ*)′ = w against finite differences {fmt(A['conj_err'])}; dw/dη = mD "
                f"{fmt(A['metric_err'])}.", "",
                "Q along the loop (5 × 12, 2-sparse truths, β(0) = 0.3, α(0) ~ N(0, 0.05²)), largest |Q(t) − Q(0)| over 60 times; the "
-               "conserved law's shift dQ_i/dt = −γβ_iλ at the end state (relative):", "",
+               "conserved law's shift: ΔQ_i along its integrated trajectory (t ≤ 200, the smooth noise) against the quadrature of −γβ_iλ, "
+               "λ from the state (relative):", "",
                "| instance | noiseless, t ≤ 10⁴ | a smooth noise (30 sinusoids, frequencies 10⁻³–3, mixed over the nodes, amplitude 0.3), t ≤ 3·10⁴ "
                "| the conserved law's shift |", "|---|---|---|---|"]
         for j, r in enumerate(A['cons']):
@@ -389,61 +456,89 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                "against the Euler step's closed form (2|φ_i|²/(mN))γβ_i(γa_i² − Gβ_ia′_i(1 + a_i²/a_max²)) per unit s: largest relative "
                "difference " + ', '.join(fmt(x) for x in A['red']) + ".", ""]
     if B is not None:
+        nfail = lambda xs: sum(1 for x in xs if not x['conv'])
+        med = lambda v: fmt(float(np.median(v))) if len(v) else '—'
+        mx = lambda v: fmt(float(np.max(v))) if len(v) else '—'
         L_ += [f"## B. The implicit bias: the start's masses set the regime ({N_I} × {D_I}, {N_INST_B} instances per k)", "",
-               "From α = 0 and equal masses β = s·m/d: the Bregman projection (Newton on the dual) — ‖w‖₁ over basis pursuit's, the atoms "
-               "used (|w| > 10⁻³), the fraction recovering the truth (10⁻³·max|w*|), the median distances to basis pursuit and (relative) to "
-               f"the minimum-norm fit Φ⁺y, the largest |a|/a_max and β; for s ≥ {FLOW_MIN_B:g} the noiseless loop's end at t = {T_B:.0e} "
-               "against the projection (its largest residual and distance).", "",
-               "| k | s | ‖w‖₁/‖w_bp‖₁ | used | the truth | median ‖w − w_bp‖∞ | median ‖w − Φ⁺y‖∞/‖Φ⁺y‖∞ | max |a|/a_max, max β | the loop's end: "
-               "residual, distance to the projection |", "|---|---|---|---|---|---|---|---|---|"]
+               "From α = 0 and equal masses β = s·m/d: the Bregman projection (Newton on the dual; a projection whose residual exceeds "
+               f"{OK_TOL:g}(1 + |y|) is a failure, counted and left out of every aggregate) — ‖w‖₁ over basis pursuit's, the atoms used "
+               "(|w| > 10⁻³), the fraction recovering the truth (10⁻³·max|w*|), the median and largest distances to basis pursuit, the "
+               f"median relative distance to the minimum-norm fit Φ⁺y, the largest |a|/a_max and β; for s ≥ {FLOW_MIN_B:g} the noiseless "
+               f"loop's end at t = {T_B:.0e} against the projection (its largest residual and distance).", "",
+               "| k | s | failures | ‖w‖₁/‖w_bp‖₁ | used | the truth | ‖w − w_bp‖∞: median, largest | median ‖w − Φ⁺y‖∞/‖Φ⁺y‖∞ | max |a|/a_max, max β | "
+               "the loop's end: residual, distance to the projection |", "|---|---|---|---|---|---|---|---|---|---|"]
         for k in KS_B:
             rs = [r for r in B if r['k'] == k]
-            L_.append(f"| {k} | basis pursuit | 1 | | {np.mean([r['bp_ok'] for r in rs]):.2f} | | | | |")
-            for s in SCALES_B:
-                q = [r[s] for r in rs]
-                fl = (f"{fmt(max(x['flow_res'] for x in q))}, {fmt(max(x['flow_d'] for x in q))}" if 'flow_d' in q[0] else "—")
-                L_.append(f"| {k} | {s:g} | {np.mean([x['l1'] / r['l1_bp'] for x, r in zip(q, rs)]):.4f} | {np.mean([x['used'] for x in q]):.1f} | "
-                          f"{np.mean([x['ok'] for x in q]):.2f} | {fmt(np.median([x['d_bp'] for x in q]))} | {fmt(np.median([x['d_l2'] for x in q]))} | "
-                          f"{np.max([x['amax'] for x in q]):.3f}, {np.max([x['bmax'] for x in q]):.3g} | {fl} |")
-        L_ += ["", "Small random amplitudes (α(0) ~ N(0, 0.05²)) at tiny masses: the particles with q < −c sit on a branch (the sign of w "
-               "frozen); the projection's atoms used, those on a branch, the fraction of instances whose branches kept their start's signs, "
-               "the distance to basis pursuit:", "",
-               "| k | s | branches (mean) | used | used on a branch | signs kept | median ‖w − w_bp‖∞ |",
-               "|---|---|---|---|---|---|---|"]
+            L_.append(f"| {k} | basis pursuit | | 1 | | {np.mean([r['bp_ok'] for r in rs]):.2f} | | | | |")
+            for s_ in SCALES_B:
+                allq = [r[s_] for r in rs]; q = [x for x in allq if x['conv']]; rq = [r for r in rs if r[s_]['conv']]
+                fl = (f"{fmt(max(x['flow_res'] for x in allq))}, {fmt(max(x['flow_d'] for x in allq))}" if 'flow_d' in allq[0] else "—")
+                L_.append(f"| {k} | {s_:g} | {nfail(allq)} | {np.mean([x['l1'] / r['l1_bp'] for x, r in zip(q, rq)]):.4f} | "
+                          f"{np.mean([x['used'] for x in q]):.1f} | {np.mean([x['ok'] for x in q]):.2f} | {med([x['d_bp'] for x in q])}, "
+                          f"{mx([x['d_bp'] for x in q])} | {med([x['d_l2'] for x in q])} | {np.max([x['amax'] for x in q]):.3f}, "
+                          f"{np.max([x['bmax'] for x in q]):.3g} | {fl} |")
+        f3 = [r['flow3'] for r in B if 'flow3' in r]
+        if f3:
+            f3 = f3[0]
+            reach = next((t for t, d_ in zip(f3['t'], f3['d']) if d_ < 1e-8), None)
+            L_ += ["", f"The loop at s = {FLOW_S3:g} (k = 2, instance 0): distance to its projection "
+                   + ", ".join(f"{fmt(d_)} at t = {t:.0e}" for t, d_ in list(zip(f3['t'], f3['d']))[::8])
+                   + (f"; below 10⁻⁸ from t ≈ {reach:.1e}." if reach else "; not below 10⁻⁸ by the end.")]
+        L_ += ["", "Small random amplitudes (α(0) ~ N(0, 0.05²)) at tiny masses: the particles with Q < −c sit on branches (Proposition "
+               "D‴.47) — the sign-constrained fits S, the coordinates vanishing on S (|Z|), the instances with a truth atom on a "
+               "wrong-signed branch, whether the frozen signs still fit y exactly, and the distribution of the projection's distance to "
+               "basis pursuit:", "",
+               "| k | s | branches (mean) | failures | exact fit kept | a truth atom on a wrong-signed branch | |Z| (mean) | ‖w − w_bp‖∞: "
+               "≤ 10⁻³, median, largest |", "|---|---|---|---|---|---|---|---|"]
         for k in KS_B:
             rs = [r for r in B if r['k'] == k]
-            for s in (1e-2, 1e-4):
-                q = [r[('branch', s)] for r in rs]
-                L_.append(f"| {k} | {s:g} | {np.mean([x['n_branch'] for x in q]):.1f} | {np.mean([x['used'] for x in q]):.1f} | "
-                          f"{np.mean([x['used_br'] for x in q]):.2f} | {np.mean([x['signs_kept'] for x in q]):.2f} | {fmt(np.median([x['d_bp'] for x in q]))} |")
+            for s_ in S_BR:
+                allq = [r[('branch', s_)] for r in rs]; q = [x for x in allq if x['conv']]
+                db = [x['d_bp'] for x in q]
+                L_.append(f"| {k} | {s_:g} | {np.mean([x['n_branch'] for x in allq]):.1f} | {nfail(allq)} | "
+                          f"{sum(x['exact'] for x in allq)}/{len(allq)} | {sum(x['wrong'] > 0 for x in allq)}/{len(allq)} | "
+                          f"{np.mean([x['nZ'] for x in allq]):.1f} | {sum(d_ <= 1e-3 for d_ in db)}/{len(db)}, {med(db)}, {mx(db)} |")
         L_ += ["", "Unequal masses β⁰_i = s·r_i (r_i log-uniform in [1/4, 4]), α = 0: the projection against weighted basis pursuit "
                "(min Σ|w_i|/√r_i) as s → 0 — and against the unweighted one — and against the weighted minimum norm (min Σw_i²/r_i²) as "
-               "s → ∞ (relative), medians over the instances:", "", "| k | " + " | ".join(f"s = {e:g}: weighted, unweighted ℓ¹" for e in EPS_RICH)
-               + " | " + " | ".join(f"s = {b:g}: weighted ℓ²" for b in SCALES_LAZY) + " |", "|---|" + "---|" * (len(EPS_RICH) + len(SCALES_LAZY))]
+               "s → ∞ (relative); median and largest over the converged projections (failures in brackets):", "",
+               "| k | " + " | ".join(f"s = {e:g}: weighted (median, largest), unweighted (median)" for e in EPS_RICH)
+               + " | " + " | ".join(f"s = {b_:g}: weighted ℓ² (median, largest)" for b_ in SCALES_LAZY) + " |",
+               "|---|" + "---|" * (len(EPS_RICH) + len(SCALES_LAZY))]
         for k in KS_B:
             rs = [r for r in B if r['k'] == k]
-            L_.append(f"| {k} | " + " | ".join(f"{fmt(np.median([r[('rich', e)]['d'] for r in rs]))}, {fmt(np.median([r[('rich', e)]['d_unw'] for r in rs]))}"
-                                               for e in EPS_RICH) + " | "
-                      + " | ".join(fmt(np.median([r[('lazy', b)]['d'] for r in rs])) for b in SCALES_LAZY) + " |")
+            cells = []
+            for e in EPS_RICH:
+                q = [r[('rich', e)] for r in rs if r[('rich', e)]['conv']]
+                cells.append(f"{med([x['d'] for x in q])}, {mx([x['d'] for x in q])}, {med([x['d_unw'] for x in q])} [{len(rs) - len(q)}]")
+            for b_ in SCALES_LAZY:
+                q = [r[('lazy', b_)] for r in rs if r[('lazy', b_)]['conv']]
+                cells.append(f"{med([x['d'] for x in q])}, {mx([x['d'] for x in q])} [{len(rs) - len(q)}]")
+            L_.append(f"| {k} | " + " | ".join(cells) + " |")
         L_.append("")
     if C is not None:
-        L_ += ["## C. Noise", "", "(1) Continuous time: the loop from α = 0, β = 0.1·m/d driven by a smooth noise (30 sinusoids, frequencies "
-               "10⁻³–3, mixed over the nodes, amplitude 0.3) — |Q − Q(0)|, the residual, and the distance of the state's projection to the "
-               "noiseless loop's limit:", "", "| instance | t | max |Q − Q(0)| | |Φw − y| | the projection's distance |", "|---|---|---|---|---|"]
-        for j, rows in enumerate(C['c1']):
-            for r in rows:
-                L_.append(f"| {j} | {r['t']:g} | {fmt(r['dQ'])} | {r['res']:.3f} | {fmt(r['d_int'])} |")
-        L_ += ["", "(2) The Euler step on (α, log β) with label noise (σ = 0.3, 4·10⁵ draws at random states): the mean change of Q against "
-               "the closed form (h²E[g²]γβ/2)(γa² − Gβa′(1 + a²/a_max²)) — largest relative difference (largest deviation in standard errors): "
-               + '; '.join(f"h = {r['h']:g}: {fmt(r['rel'])} ({r['z']:.1f})" for r in C['c2']) + ".", ""]
+        L_ += ["## C. Noise", "", f"(1) White label noise at the intensity σ = {SIG_C1:g} (dη_i = (Φᵀr)_idt/N + σ(ΦᵀdW)_i/N), {P_C1} paths "
+               f"to t = {T_C1:g} from random states (α ~ N(0, 0.3²), β ~ U(0.2, 2)): Q's mean change against the mean time integral of the "
+               "Itô correction (γβ_i/2)(γa_i² − Gβ_ia′_i(1 + a_i²/a_max²))σ²|φ_i|²/N² along the same paths, for three schemes as the step h → 0:", "",
+               "| instance | h | scheme | mean ΔQ | the Itô integral | ratio | max |ΔQ| |", "|---|---|---|---|---|---|---|"]
+        for r in C['c1']:
+            L_.append(f"| {r['i']} | {r['h']:g} | {r['scheme']} | {r['dQ']:+.4e} | {r['pred']:+.4e} | {r['ratio']:.4f} | {fmt(r['dQmax'])} |")
+        L_ += ["", "(2) The Euler step on (α, log β) with label noise (σ = 0.3, at random states): its exact mean change of Q (Gauss–Hermite, "
+               "80 nodes, over each particle's Gaussian drive) against the closed form (h²E[g²]γβ/2)(γa² − Gβa′(1 + a²/a_max²)) — largest "
+               "relative difference over the particles, three instances per h: "
+               + '; '.join(f"h = {h_:g}: " + ', '.join(fmt(r['rel']) for r in C['c2'] if r['h'] == h_) for h_ in sorted({r['h'] for r in C['c2']}, reverse=True))
+               + ".", ""]
         if 'c3' in C:
             L_ += ["(3) The selection in the mirror coordinates: Proposition D‴.44's reduced flow (free masses, white noise, the paradigm's "
-                   "update) from the lazy projection (s = 1) — ‖w‖₁, the distance to basis pursuit, the atoms used, Q's mean and range:", "",
-                   "| instance (basis pursuit = truth) | s | ‖w‖₁ | ‖w − w_bp‖∞ | used | Q: mean, min, max |", "|---|---|---|---|---|---|"]
+                   "update) from the lazy projection (s = 1) — ‖w‖₁, the distance to basis pursuit, the atoms used, the dead atoms (Q ≤ −c), "
+                   "Q's mean and range; at the end the support against basis pursuit's:", "",
+                   "| instance (basis pursuit = truth) | s | ‖w‖₁ | ‖w − w_bp‖∞ | used | dead | Q: mean, min, max |", "|---|---|---|---|---|---|---|"]
             for r in C['c3']:
-                for s, x in zip(S_C3, r['rows']):
-                    L_.append(f"| {r['i']} ({'yes' if r['bp_ok'] else 'no'}) | {s:.0e} | {x['l1']:.4f} | {fmt(x['d_bp'])} | {x['used']} | "
-                              f"{x['qmean']:.4g}, {x['qmin']:.4g}, {x['qmax']:.4g} |")
+                for s_, x in zip(S_C3, r['rows']):
+                    L_.append(f"| {r['i']} ({'yes' if r['bp_ok'] else 'no'}) | {s_:.0e} | {x['l1']:.4f} | {fmt(x['d_bp'])} | {x['used']} | "
+                              f"{x.get('dead', '—')} | {x['qmean']:.4g}, {x['qmin']:.4g}, {x['qmax']:.4g} |")
+            L_ += ["", "The end supports: " + "; ".join(
+                f"instance {r['i']}: {r['rows'][-1].get('supp')} against basis pursuit's {r.get('supp_bp')} (‖w‖₁ {r['rows'][-1]['l1']:.4f} "
+                f"against {r.get('l1_bp', float('nan')):.4f}) — {'equal' if r.get('end_is_bp') else 'different'}" for r in C['c3']) + "."]
             L_.append("")
         if 'c4' in C:
             L_ += [f"(4) The sampled-data loop at the step h = {H_C4:g} with label noise drawn afresh (σ = {SIG_C4:g}, {P_C4} paths, "
@@ -464,14 +559,15 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
             L_.append("")
     if D is not None:
         L_ += [f"## D. The real loop (k_e = {KE_D:g}, γ = {GAM_D:g}, m = {M_D:g}, six Gaussian atoms of width 0.4 on [−1.2, 1.2] and a second "
-               f"particle on the third; x_m = sin t + 0.4 sin 2.7t; {T_D:g} time units)", "",
-               f"The pair's Bregman split of w*₃ = {D['wsum']:.5f}: {D['wi']:.5f} + {D['wj']:.5f}.", "",
-               "| the adaptation's error | V(0) | V(T) | V monotone | max |V̇ + k_ee²|/max k_ee² | the pair's mirror coordinates "
-               "(max |Δη_i − Δη_j|, relative) | max |Q − Q(0)| | max |e| (last 10%) | the distinct atoms' |w − w*| | the pair's sum, split |",
+               f"particle on the third, without cohesion between them; x_m = sin t + 0.4 sin 2.7t; {T_D:g} time units)", "",
+               f"The target's coefficient on the shared atom w*₃ = {D['wsum']:.5f}, at the pair's Bregman split {D['wi']:.5f} + {D['wj']:.5f} "
+               "(V's reference).", "",
+               "| the noise | V(0) | V(T) | V monotone | max |V̇ + k_ee²|/max k_ee² | the pair's mirror coordinates "
+               "(max |Δη_i − Δη_j|, relative) | max |Q − Q(0)| | max |e| (last 10%) | the distinct atoms' |w − w*| | the pair's sum's error |",
                "|---|---|---|---|---|---|---|---|---|---|"]
         for lab, r in D['out'].items():
             L_.append(f"| {lab} | {fmt(r['V0'])} | {fmt(r['Vend'])} | {'yes' if r['monotone'] else 'no'} | {fmt(r['dVerr'])} | {fmt(r['pair'])} | "
-                      f"{fmt(r['dQ'])} | {fmt(r['e_end'])} | {fmt(r['d6'])} | {fmt(r['dsum'])}, {fmt(r['dsplit'])} |")
+                      f"{fmt(r['dQ'])} | {fmt(r['e_end'])} | {fmt(r['d6'])} | {fmt(r['dsum'])} |")
         L_.append("")
     if Ee is not None:
         L_ += ["## E. The conserved law (Σβ = m) from the same start (α = 0, β = m/d; t = 10⁶)", "",
@@ -501,7 +597,7 @@ def main():
         if 'B' in parts:
             h['B'] = pool.map_async(b_job, [(k, i) for k in KS_B for i in range(N_INST_B)], chunksize=1)
         if 'C' in parts:
-            h['C3'] = pool.map_async(c3_job, list(range(N_INST_C3)), chunksize=1)
+            h['C3'] = pool.map_async(c3_job, list(I_C3), chunksize=1)
         if 'A' in parts:
             res['A'] = part_A(); E.save(raw, **res); log('A')
         if 'D' in parts:
