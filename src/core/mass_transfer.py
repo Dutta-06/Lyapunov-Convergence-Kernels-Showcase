@@ -31,7 +31,7 @@ class ReplicatorCohesionLoop:
     `balanced` keeps Σβ = m (λ the β-mean of u), otherwise λ = 0."""
 
     def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0, fixman=0.0, fixman_tau=0.0, fixman_A=None,
-                 fixman_TA=None, box=None, box_sigma=1.0, fixman_floor=0.01):
+                 fixman_TA=None, box=None, box_sigma=1.0, fixman_floor=0.01, fixman_classes=None):
         self.base = base
         self.G = base.G
         self.R, self.kind = float(R), kind
@@ -43,6 +43,8 @@ class ReplicatorCohesionLoop:
         self.fixman_A = None if fixman_A is None else np.array(fixman_A, float)   # the classes' contributions Â_k (the masses form)
         self.fixman_TA = fixman_TA                                        # their running average's time constant (None: fixed)
         self.fixman_floor = float(fixman_floor)                           # the denominator's floor, a fraction of W_i
+        self.fixman_classes = None if fixman_classes is None else np.asarray(fixman_classes, int)   # Proposition D‴.42: the particles'
+        # classes; the correction is then the class's (W_k = Σ_{i∈k}β_i/m, Â_k per class), given to each of its particles
         self.box = None if box is None else np.asarray(box, float)          # Proposition D‴.39: the dead zone's half-widths (L_α, L_γ, L_κ)
         self.box_sigma = float(box_sigma)                                   # and its stiffness σ_B
 
@@ -86,6 +88,13 @@ class ReplicatorCohesionLoop:
         δ_cap = W_min,i(1/√0.99 − 1) of the saturation, where the correction stops growing — Proposition D‴.38(iii) with the floor)."""
         amax = self.base.net.a_max
         m = Th.shape[0]
+        if self.fixman_classes is not None:                                 # Proposition D‴.42: per class
+            lab = self.fixman_classes; K = int(lab.max()) + 1
+            Wc = np.bincount(lab, beta, K) / m
+            Ac = np.bincount(lab, beta * self.base.features(Th)[0], K) / m if self.fixman_A is None else self.fixman_A
+            q = (np.abs(Ac) / amax / Wc) ** 2
+            ck = self.fixman * (self.fixman_tau / m) * (1 + q) / np.maximum(Wc * (1 - q), self.fixman_floor * Wc)
+            return ck[lab]
         W = beta / m
         if self.fixman_A is None:
             a = self.base.features(Th)[0]
@@ -170,7 +179,10 @@ class ReplicatorCohesionLoop:
                 xi = rho * xi + np.sqrt(1 - rho ** 2) * s_xi * rng.standard_normal(self.base.N)
             dT, db = self.drift(Th, b, xi if label_v else None)
             if self.fixman_A is not None and self.fixman_TA:                  # the contributions' running average (Proposition D‴.38)
-                self.fixman_A = self.fixman_A + (dt / self.fixman_TA) * (b / m * self.base.features(Th)[0] - self.fixman_A)
+                ba = b / m * self.base.features(Th)[0]
+                if self.fixman_classes is not None:
+                    ba = np.bincount(self.fixman_classes, ba, len(self.fixman_A))
+                self.fixman_A = self.fixman_A + (dt / self.fixman_TA) * (ba - self.fixman_A)
             dW = sq * rng.standard_normal(Th.shape) if noise_L is None else (Ld @ rng.standard_normal(Th.size)).reshape(Th.shape)
             if label_v and label_scheme == 'heun':
                 Tp, lp = Th + dt * dT + dW, lb + dt * db / b
