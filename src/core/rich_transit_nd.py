@@ -205,12 +205,13 @@ def polish_block_nd(K, fstar, w, c, s):
 
 
 def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
-                   max_doublings=14, polish=True):
+                   max_doublings=14, polish=True, max_entries=None):
     """The sliding inverse scale space in ℝⁿ (`rich_transit.sliding_iss` with the centres c (d, n)): the inactive kernels stay where they
     are, their u_j growing at ⟨rφ(c_j)⟩; the entrants (every kernel whose |u_j| reaches ρ_j within tie_tol of the first: ties enter
     together) join the block with the coefficient `seed`; the block relaxes by the fast flow (polished by least squares after the first
     t_fast, then checked) until stationary; a kernel whose coefficient falls below exit_tol·max leaves if its correlation points into its
-    box. Returns dict(events = [(τ, j, 'enter'/'exit', c_j)], hist = [(τ, c, w, rms)], c, w, act, relaxed)."""
+    box. Returns dict(events = [(τ, j, 'enter'/'exit', c_j)], hist = [(τ, c, w, rms)], c, w, act, relaxed). max_entries: stop as soon
+    as that many kernels have entered, before the block relaxes."""
     c0 = np.atleast_2d(np.asarray(c0, float))
     d, n = c0.shape
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
@@ -241,6 +242,8 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
             act[j] = True
             al[j] = np.sign(v[j]) * (seed * L.m * L.A ** 2 / (2 * L.c)) ** (1 / 3)
             ev.append((tau, int(j), 'enter', c[j].copy()))
+        if max_entries is not None and sum(e[2] == 'enter' for e in ev) >= max_entries:
+            break
         idx = np.flatnonzero(act)
         k = idx.size
         z = np.r_[al[idx], c[idx].ravel()]
@@ -271,12 +274,73 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
     return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed)
 
 
-def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max_doublings=12):
+def path_duals_nd(K, fstar, R):
+    """`rich_transit.path_duals` in ℝⁿ: the sliding path's duals (`sliding_iss_nd`) reconstructed at its event times — on each interval the
+    block's residual r_k is fixed, the inactive kernels' u grows at ⟨r_kφ(c_j)⟩, an entrant is pinned at its wall (±1: equal masses).
+    Returns dict(taus, res, centres, U, ever)."""
+    hist = R['hist']
+    taus = [h[0] for h in hist]
+    res = [fstar - K.synth(h[1], h[2]) for h in hist]
+    cs = [h[1] for h in hist]
+    d = len(cs[0])
+    ever = sorted({j for t, j, k, c in R['events'] if k == 'enter'})
+    u = np.zeros(d); act = np.zeros(d, bool); U = [u.copy()]
+    ev = R['events']; e = 0
+    for k in range(len(taus) - 1):
+        v = K.corr(cs[k], res[k])[0]
+        u = u + np.where(act, 0.0, (taus[k + 1] - taus[k]) * v)
+        while e < len(ev) and ev[e][0] <= taus[k + 1] + 1e-12:
+            t, j, kind, c = ev[e]
+            if kind == 'enter':
+                act[j] = True; u[j] = np.sign(u[j])
+            else:
+                act[j] = False
+            e += 1
+        U.append(u.copy())
+    return dict(taus=taus, res=res, centres=cs, U=np.array(U), ever=ever)
+
+
+def creep_constants_nd(L, K, P, j, c0j, taus, b=1.0):
+    """`rich_transit.creep_constants` in ℝⁿ: the leading-order displacement of a kernel that does not enter, a vector, c_j = c0j + εC_j(τ)
+    with dC_j/dτ = κ(μ_j)s_j⟨r_k∇_cφ(c0j)⟩ (κ(μ) = (πa_max²/(4c))b^{3/2}cos(πμ/2)/sin³(πμ/2), μ_j = 1 − |u_j| the path's margin), and its
+    dual's gain εD_j, dD_j/dτ = C_j·⟨r_k∇_cφ(c0j)⟩, on each of the path's intervals (P from `path_duals_nd`). Returns (C (len(taus), n),
+    D (len(taus)))."""
+    pref = np.pi * L.A ** 2 / (4 * L.c) * b ** 1.5
+    c0j = np.atleast_2d(np.asarray(c0j, float))
+    n = c0j.shape[1]
+    T = list(P['taus'])
+    taus = np.asarray(taus, float)
+    C, D = np.full((taus.size, n), np.nan), np.full(taus.size, np.nan)
+    z = np.zeros(n + 1)
+    for k in range(len(T)):
+        t0 = T[k]
+        t1 = T[k + 1] if k + 1 < len(T) else max(taus.max(), t0) + 1e-12
+        g, h = K.corr(c0j, P['res'][k])
+        v, gp = float(g[0]), h[0]
+        u0 = P['U'][k][j]
+
+        def f(t, z, u0=u0, v=v, gp=gp, t0=t0):
+            u = u0 + (t - t0) * v
+            mu = 1 - abs(u)
+            return np.r_[pref * np.cos(np.pi * mu / 2) / np.sin(np.pi * mu / 2) ** 3 * np.sign(u) * gp, z[:n] @ gp]
+        sel = (taus >= t0) & (taus <= t1)
+        if t1 > t0:
+            sol = solve_ivp(f, (t0, t1), z, method='LSODA', rtol=1e-10, atol=1e-14, dense_output=True)
+            if sel.any():
+                y = sol.sol(taus[sel]).T
+                C[sel], D[sel] = y[:, :n], y[:, n]
+            z = sol.y[:, -1]
+    return C, D
+
+
+def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max_doublings=12, share_tol=None):
     """The ε-free inner problem of k kernels entering one feature together (D‴.51(ii) with k kernels; Lemma D‴.53a: a gradient flow of the
     fit): the kernels at the centres cs (k, n), the first (the entrant) from the inner coordinate xi0 behind its wall and the j-th x_j
     behind the entrant (x_0 = 0), in s = (τ − τ_e)/ε^{1/2}: the fast flow on the critical curve times Λ₀ (dα/ds = Λ₀·2Gc tanh²(α/a)⟨rφ⟩,
     dc/ds = Λ₀Gmw⟨r∇_cφ⟩), the residual the feature fstar (nothing else fitted). Integrated over xi0/(the entrant's correlation) + s_end,
-    then doubling until every rate is below tol·max|f*|. Returns dict(w, c, shares |w_j|/Σ|w|, stationary, s)."""
+    then doubling until every rate is below tol·max|f*| — and, with share_tol, until the shares moved by less than share_tol over the last
+    doubling (the absolute rates pass early while a tail kernel's tiny coefficient still slides: referee round 42). Returns dict(w, c,
+    shares |w_j|/Σ|w|, stationary, s, drift: the shares' largest change over the last doubling)."""
     lam0 = transit_scale(L, 1.0)
     cs = np.atleast_2d(np.asarray(cs, float))
     k, n = cs.shape
@@ -288,15 +352,20 @@ def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max
     v_e = abs(float(K.corr(cs[:1], fstar)[0][0]))
     s_, chunk, ok = 0.0, xi0 * rho / v_e + float(s_end), False
     scale = tol * float(np.abs(fstar).max())
+    sh_prev, drift = None, np.inf
     for _ in range(max_doublings + 1):
         sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', jac=jac, rtol=1e-10, atol=1e-13)
         z, s_ = sol.y[:, -1], s_ + chunk
-        if np.all(np.abs(rhs(s_, z)) <= scale):
+        w_ = np.abs(critical_w(L, z[:k]))
+        sh = w_ / w_.sum()
+        drift = float(np.abs(sh - sh_prev).max()) if sh_prev is not None else np.inf
+        sh_prev = sh
+        if np.all(np.abs(rhs(s_, z)) <= scale) and (share_tol is None or drift <= share_tol):
             ok = True
             break
         chunk = s_
     w = critical_w(L, z[:k])
-    return dict(w=w, c=z[k:].reshape(k, n), shares=np.abs(w) / np.abs(w).sum(), stationary=ok, s=s_)
+    return dict(w=w, c=z[k:].reshape(k, n), shares=np.abs(w) / np.abs(w).sum(), stationary=ok, s=s_, drift=drift)
 
 
 def profile_split(L, A, x, rho=1.0):

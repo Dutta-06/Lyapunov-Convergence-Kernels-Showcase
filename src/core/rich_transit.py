@@ -216,7 +216,7 @@ def polish_block(K, fstar, w, c, s):
 
 
 def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
-                max_doublings=14, polish=False):
+                max_doublings=14, polish=False, max_entries=None):
     """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
     left the block), their u_j growing at ⟨rφ(c_j)⟩ (r the active block's residual); the entrants — every kernel whose |u_j| reaches ρ_j
     within the relative tie_tol of the first, so that exact ties enter together — join the active block with the coefficient `seed` (the
@@ -227,7 +227,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     its box (s_i⟨rφ_i⟩ < 0); one with an outward correlation stays on its wall. Stops when the rms residual is below tol. Returns
     dict(events = [(τ, j, 'enter'/'exit', c_j)], hist = [(τ, c, w, rms)], c, w, act, relaxed = [whether each relaxation became
     stationary]). polish=True (a dictionary only): after the first t_fast the block is moved to its fit's stationary point by
-    `polish_block` — the flow's end when no other stationary point lies on its way — and checked there, the flow resuming if needed."""
+    `polish_block` — the flow's end when no other stationary point lies on its way — and checked there, the flow resuming if needed.
+    max_entries: stop as soon as that many kernels have entered, before the block relaxes (the path's events up to that entry)."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
@@ -260,6 +261,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
             act[j] = True
             al[j] = np.sign(v[j]) * (seed * L.m * L.A ** 2 / (2 * L.c)) ** (1 / 3)
             ev.append((tau, int(j), 'enter', float(c[j])))
+        if max_entries is not None and sum(e[2] == 'enter' for e in ev) >= max_entries:
+            break
         idx = np.flatnonzero(act)
         n = idx.size
         z = np.r_[al[idx], c[idx]]
@@ -360,8 +363,9 @@ def near_tie_inner(L, K, A, cstar, c_e, c_r, x, rho=1.0, xi0=400.0, s_end=5000.0
     s = (τ − τ_e)/ε^{1/2} and ξ_i = (ρ − s_Au_i)/(ρε^{1/2}) (s_A the bump's sign): dξ_i/ds = −s_A⟨rφ_i⟩/ρ, dc_i/ds = Λ₀Gm w_i⟨r∂_cφ_i⟩,
     w_i = s_A𝒲(ξ_i), r = Aφ(c*) − Σ_iw_iφ(c_i); the runner-up starts x behind the entrant (ξ_r − ξ_e = x, from ξ_e = xi0). both=False
     freezes the runner-up (its coefficient dropped): the entrant alone, the runner-up's ξ then recording the pull. The start xi0 behind the
-    wall truncates the entrant's approach, where its core coefficient 𝒲 ∝ ξ⁻³ already acts on the runner-up: an error ∝ xi0⁻² in the
-    pull. Integrated over the entrant's outer arrival time s₀ = xi0ρ/|⟨fφ_e⟩| plus s_end, then over the elapsed time again (doubling) until
+    wall truncates the entrant's approach, where its core coefficient 𝒲 ∝ ξ⁻³ already acts: an error ∝ 1/xi0 in the pull — the entrant's
+    centre creeps by O(xi0⁻²) in that far field, which shifts its arrival by O(1/xi0) (the coefficient's direct action on the runner-up
+    is O(xi0⁻²)); Richardson extrapolation in xi0 removes it. Integrated over the entrant's outer arrival time s₀ = xi0ρ/|⟨fφ_e⟩| plus s_end, then over the elapsed time again (doubling) until
     stationary — every rate below tol·|A| (a small |A| relaxes slowly) — or max_doublings is reached. Returns the end state with the
     runner-up's share |w_r|/(|w_e| + |w_r|), whether it became stationary, and (both=False) the matched pull — the runner-up's outer margin
     at the entrant's arrival, x + s₀(d_e − d_r) (d the drifts before the entry), less ξ_r at the end, its drift after the entry (the
@@ -429,6 +433,82 @@ def path_duals(K, fstar, R):
     return dict(taus=taus, res=res, centres=cs, U=np.array(U), ever=ever)
 
 
+def fit_hessian(K, fstar, w, c):
+    """The fit E = ½⟨(f* − Φ(c)w)²⟩ at (w, c): its Jacobian J = [Φ(c), Φ′(c)diag(w)] on the samples and its Hessian in (w, c),
+    H = (JᵀJ − Σ_x r(x)∇²f(x))/N — the residual's curvature included (∂²f/∂w_i∂c_i = ∂_cφ_i, ∂²f/∂c_i² = w_i∂²_cφ_i). Returns (J, H)."""
+    n, nx = w.size, K.xs.size
+    P, D = K.phi(c), K.dphi(c)
+    D2 = P * (((K.xs[:, None] - c[None, :]) / K.sig ** 2) ** 2 - 1 / K.sig ** 2)
+    r = fstar - P @ w
+    J = np.c_[P, D * w[None, :]]
+    C = np.zeros((2 * n, 2 * n))
+    i = np.arange(n)
+    C[i, n + i] = C[n + i, i] = r @ D
+    C[n + i, n + i] = w * (r @ D2)
+    return J, (J.T @ J - C) / nx
+
+
+def block_response(K, fstar, w, c):
+    """The residual's first-order response to a perturbation ξ of the data at a stationary point (w, c) of the block's fit
+    ½⟨(f* − Φ(c)w)²⟩: δr = Rξ, R = I − JH⁻¹Jᵀ/N (`fit_hessian`; a nondegenerate stationary point). At an exact fit R is the projection off
+    the tangent space. A dictionary only (the identity filter)."""
+    nx = K.xs.size
+    if w.size == 0:
+        return np.eye(nx)
+    J, H = fit_hessian(K, fstar, w, c)
+    return np.eye(nx) - J @ np.linalg.solve(H, J.T) / nx
+
+
+def block_rate(L, K, fstar, w, c, rho=1.0):
+    """The slowest relaxation rate, in the inner time s, of the block's fast flow at its stationary point (w, c) (Lemma D‴.53a: a gradient
+    flow of the fit with the mobilities |𝒲′(ξ_i)|/ρ for the coefficients and Λ₀Gm for the centres): the smallest eigenvalue of
+    M^{1/2}HM^{1/2}."""
+    J, H = fit_hessian(K, fstar, w, c)
+    xi = inner_xi(L, w, rho)
+    h = 1e-6 * np.maximum(1.0, np.abs(xi))
+    dW = np.abs(inner_coef(L, xi + h, rho) - inner_coef(L, xi - h, rho)) / (2 * h)
+    m = np.sqrt(np.r_[dW / rho, np.full(w.size, transit_scale(L, 1.0) * L.G * L.m)])
+    return float(np.linalg.eigvalsh(m[:, None] * H * m[None, :]).min())
+
+
+def path_response(K, fstar, R, c0):
+    """Proposition D‴.56: the sliding path's first-order response to a perturbation ξ of the data (measurement noise). Along the path R
+    (`sliding_iss` on f* with polish: entries only, at distinct times, each block relaxed to a nondegenerate stationary point of its fit)
+    block i's residual moves by R_iξ (`block_response`), the inactive kernels' velocities v_j = ⟨r_iφ_j⟩ by δv_j = ⟨R_iξ, φ_j⟩, and so
+    the entry times and the duals: the entrant j* reaches its wall at δτ_{i+1} = δτ_i − (δu_{j*}(τ_i) + (τ_{i+1} − τ_i)δv_{j*})/v_{j*},
+    the others' duals move by δu_j(τ_{i+1}) = δu_j(τ_i) + (δτ_{i+1} − δτ_i)v_j + (τ_{i+1} − τ_i)δv_j. Returns dict(taus (the entry
+    times), entrants, u (the duals at the last entry), U (d, N): ξ ↦ δu there, as rows — zero on the entered kernels —, u_all, U_all
+    (the same at every entry: the duals are piecewise linear in τ, so their extremes over the path lie at the entries), T (M, N): the
+    entry times' rows, Rlast: the residual's response at the last block relaxed, None if R stopped before relaxing it)."""
+    if type(K).filt.__qualname__ != 'Bumps.filt':
+        raise ValueError('path_response needs a dictionary (the identity filter)')
+    ev, hist, nx = R['events'], R['hist'], K.xs.size
+    if any(e[2] != 'enter' for e in ev):
+        raise ValueError('path_response: the path has exits')
+    taus, ent = np.array([e[0] for e in ev]), [e[1] for e in ev]
+    if np.any(np.diff(taus) <= 0):
+        raise ValueError('path_response: simultaneous entries')
+    Phi0 = K.phi(np.asarray(c0, float))                                 # the inactive kernels never moved
+    d, M = Phi0.shape[1], len(ev)
+    u, U, T = np.zeros(d), np.zeros((d, nx)), np.zeros((M, nx))
+    u_all, U_all = [], []
+    t_prev, tau_prev = np.zeros(nx), 0.0
+    for i in range(M):
+        c, w, A = hist[i][1], hist[i][2], ent[:i]
+        v = Phi0.T @ (fstar - K.phi(c) @ w) / nx
+        dv = Phi0.T @ block_response(K, fstar, w[A], c[A]) / nx
+        dt, j = taus[i] - tau_prev, ent[i]
+        T[i] = t_prev - (U[j] + dt * dv[j]) / v[j]
+        on = np.ones(d, bool); on[A] = False
+        U[on] += np.outer(v[on], T[i] - t_prev) + dt * dv[on]
+        u[on] += dt * v[on]
+        U[j] = 0.0; u[j] = np.sign(v[j])
+        u_all.append(u.copy()); U_all.append(U.copy())
+        t_prev, tau_prev = T[i], taus[i]
+    Rlast = block_response(K, fstar, hist[M][2][ent], hist[M][1][ent]) if len(hist) > M else None
+    return dict(taus=taus, entrants=ent, u=u, U=U, u_all=u_all, U_all=U_all, T=T, Rlast=Rlast)
+
+
 def creep_reaches(L, K, P, j, eps, c0j, b=1.0):
     """Whether kernel j (never entering on the path), started at c0j and integrated along the path's residuals with its creep law
     dc/dτ = ε(πa²/(4c))b^{3/2}cos(πμ/2)/sin³(πμ/2)·s⟨r∂_cφ⟩ (Proposition D‴.48(iii)(a)) and du/dτ = ⟨rφ(c)⟩, comes within the inner
@@ -456,7 +536,8 @@ def creep_reaches(L, K, P, j, eps, c0j, b=1.0):
     return False
 
 
-def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0, tol=1e-10, max_doublings=12, cross=None):
+def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0, tol=1e-10, max_doublings=12, cross=None,
+               rtol=1e-9, method='LSODA', scale_alpha=False, deviation=False):
     """The pull an entry exerts on kernels that do not enter, measured on the entry's ε-free inner problem (Proposition D‴.51(iv)): in
     s = (τ − τ_e)/ε^{1/2} the active block of the path before the event k (index into P's times) and the entrant i follow the loop on the
     critical curve — dα/ds = Λ₀·2Gc tanh²(α/a)⟨rφ⟩, dc/ds = Λ₀Gm w⟨r∂_cφ⟩, w = 2c sinh²(α/a)·a tanh(α/a)/m —, the block from its
@@ -464,9 +545,17 @@ def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0
     move), their inner coordinates ξ_j = μ_j/ε^{1/2} moving at dξ_j/ds = −s_j⟨rφ_j⟩/ρ. The pull Δ_j = lim_s (ξ_j^out(s) − ξ_j(s)), ξ_j^out
     the outer solution — the drift of the residual before the entry until the entrant's outer arrival at its wall, s₀ = xi0ρ/(s_i⟨r⁻φ_i⟩),
     the inner problem's final residual's after: kernel j forms at the mass ε iff μ_j/ε^{1/2} − Δ_j < ξ_θ (𝒲(ξ_θ) = θ). Integrated over
-    s₀ + s_end, then doubling until the block's rates fall below tol (or max_doublings). Returns dict(pull = {j: Δ_j}, stationary, s,
-    w_end (the block's and the entrant's coefficients at the end)); with cross = θ also s_cross, the time at which the entrant's |w| first
-    reaches θ, measured from its outer arrival s₀ (Theorem D‴.53(c): the loop's crossing at τ_e + ε^{1/2}s_cross)."""
+    s₀ + s_end, then doubling until the block's rates fall below tol (or max_doublings); rtol the integrator's relative tolerance (its
+    absolute one 10⁻¹²), method its scheme. scale_alpha: the coefficients' coordinates α get the absolute tolerance 10⁻¹² times the
+    entrant's starting |α| — in the far field α ≈ (m𝒲/(2c))^{1/3}a^{2/3} is small (≈ 2·10⁻³ at xi0 = 1600) and ξ ∝ 1/α there, so a fixed
+    10⁻¹² limits ξ's accuracy to ~xi0·10⁻⁹ per step. deviation=True integrates instead the entrant's and the tracers' departures from
+    their outer solutions — ζ_e = ξ_e − (xi0 − v₀min(s, s₀)) (the entrant's α from ξ_e by Newton on x − coth x = −(2Gc/a)Λ₀ρξ) and
+    ζ_j = ξ_j − ξ_j^out(s), the outer rates after the entry the path's (⟨r_kφ_j⟩, the limit of the inner problem's by (H3)) — so that
+    the pulls, Δ_j = −lim ζ_j, are O(1) quantities rather than differences of O(xi0) ones: the relative tolerance then bounds their error
+    by ~rtol·|Δ| instead of rtol·xi0 accumulated over the steps (s_θ moved by 10⁻³ between rtol 10⁻⁹ and 10⁻¹⁰ in the plain form:
+    referee round 41's unconverged predictions); [0, s₀] and the rest are integrated separately (the outer rates jump at s₀). Returns dict(pull = {j: Δ_j}, stationary, s, w_end, c_end (the block's and the entrant's coefficients and centres
+    at the end)); with cross = θ also s_cross, the time at which the entrant's |w| first reaches θ, measured from its outer arrival s₀
+    (Theorem D‴.53(c): the loop's crossing at τ_e + ε^{1/2}s_cross)."""
     lam0 = transit_scale(L, 1.0)
     nx = K.xs.size
     hist = R['hist']
@@ -500,9 +589,13 @@ def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0
     def hit(s, z):
         return coef_crit(L, z[n - 1]) - cross
     hit.direction = 1
+    if deviation:
+        return _entry_pull_deviation(L, K, fstar, R, k, i, idx, blk, si, tr, st, Ptr, cb, al0, r_pre, d_pre, s0, rho, xi0, s_end, tol,
+                                     max_doublings, cross, rtol, method)
+    atol = np.r_[np.full(n, 1e-12 * (min(1.0, abs(al0[-1])) if scale_alpha else 1.0)), np.full(n + len(tr), 1e-12)]
     z, s_, chunk, ok, s_cross = z0, 0.0, s0 + float(s_end), False, None
     for _ in range(max_doublings + 1):
-        sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', rtol=1e-9, atol=1e-12, events=hit if cross is not None else None)
+        sol = solve_ivp(rhs, (s_, s_ + chunk), z, method=method, rtol=rtol, atol=atol, events=hit if cross is not None else None)
         if cross is not None and s_cross is None and sol.t_events[0].size:
             s_cross = float(sol.t_events[0][0]) - s0
         z, s_ = sol.y[:, -1], s_ + chunk
@@ -514,7 +607,77 @@ def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0
     d_post = st * (Ptr.T @ r_end) / nx / rho
     xi_out = -(d_pre * min(s_, s0) + d_post * max(s_ - s0, 0.0))
     pull = {j: float(xi_out[q] - z[2 * n + q]) for q, j in enumerate(tr)}
-    return dict(pull=pull, stationary=ok, s=s_, w_end=dict(zip(idx, w.tolist())), s_cross=s_cross)
+    return dict(pull=pull, stationary=ok, s=s_, w_end=dict(zip(idx, w.tolist())), c_end=dict(zip(idx, c.tolist())), s_cross=s_cross)
+
+
+def _alpha_from_xi(L, xi, rho, lam0):
+    """The critical curve's α ≥ 0 at the inner dual coordinate ξ (η_c(α) = −Λ₀ρξ): x = α/a solves x − coth x = y = −(2Gc/a)Λ₀ρξ;
+    Newton from the root of x − 1/x = y, below the root (x − coth x is increasing and concave), converging monotonically."""
+    y = -(2 * L.G * L.c / L.A) * lam0 * rho * np.asarray(xi, float)
+    x = 0.5 * (y + np.sqrt(y * y + 4.0))
+    for _ in range(60):
+        th = np.tanh(x)
+        dx = (x - 1.0 / th - y) * th * th
+        x = x - dx
+        if np.all(np.abs(dx) <= 1e-15 * np.maximum(x, 1e-300)):
+            break
+    return L.A * x
+
+
+def _entry_pull_deviation(L, K, fstar, R, k, i, idx, blk, si, tr, st, Ptr, cb, al0, r_pre, d_pre, s0, rho, xi0, s_end, tol,
+                          max_doublings, cross, rtol, method):
+    """`entry_pull` with deviation=True: the state (α of the block, ζ_e, the centres, ζ_tracers)."""
+    lam0 = transit_scale(L, 1.0)
+    nx, n, nb = K.xs.size, len(idx), len(idx) - 1
+    hk = R['hist'][k]
+    d_post = st * (Ptr.T @ K.filt(fstar - K.phi(hk[1]) @ hk[2])) / nx / rho
+    v0 = xi0 / s0
+
+    def unpack(s, z, pre):
+        xi_e = z[nb] + (xi0 - v0 * s if pre else 0.0)
+        al = np.r_[z[:nb], si * _alpha_from_xi(L, xi_e, rho, lam0)]
+        c = z[n:2 * n]
+        w = coef_crit(L, al) * np.sign(al)
+        return al, c, w, K.filt(fstar - K.phi(c) @ w)
+
+    def rates(s, z, pre):
+        al, c, w, r = unpack(s, z, pre)
+        g = K.phi(c).T @ r / nx
+        h = K.dphi(c).T @ r / nx
+        x = np.minimum(np.abs(al) / L.A, 350.0)
+        return al, c, w, r, g, lam0 * 2 * L.G * L.c * np.tanh(x) ** 2 * g, lam0 * L.G * L.m * w * h
+
+    def make(pre):                                                     # the outer rates jump at s₀: one right-hand side per side
+        def rhs(s, z):
+            al, c, w, r, g, dal, dc = rates(s, z, pre)
+            return np.r_[dal[:nb], -si * g[nb] / rho + (v0 if pre else 0.0), dc,
+                         -st * (Ptr.T @ r) / nx / rho + (d_pre if pre else d_post)]
+
+        def hit(s, z):
+            return float(coef_crit(L, _alpha_from_xi(L, z[nb] + (xi0 - v0 * s if pre else 0.0), rho, lam0))) - cross
+        hit.direction = 1
+        return rhs, hit
+    z = np.r_[al0[:nb], 0.0, [cb[j] for j in idx], np.zeros(len(tr))]
+    atol = np.r_[np.full(nb, 1e-12), 1e-12, np.full(n + len(tr), 1e-12)]
+    s_, ok, s_cross = 0.0, False, None
+    spans = [s0, s0 + float(s_end)]
+    for q in range(max_doublings + 2):
+        s1 = spans[q] if q < 2 else 2 * s_
+        rhs, hit = make(q == 0)
+        sol = solve_ivp(rhs, (s_, s1), z, method=method, rtol=rtol, atol=atol, events=hit if cross is not None else None)
+        if sol.status < 0:
+            raise RuntimeError(f'entry_pull (deviation): {sol.message}')
+        if cross is not None and s_cross is None and sol.t_events[0].size:
+            s_cross = float(sol.t_events[0][0]) - s0
+        z, s_ = sol.y[:, -1], s1
+        if q >= 1:
+            al, c, w, r, g, dal, dc = rates(s_, z, False)
+            if np.all(np.abs(np.r_[dal, dc]) <= tol):
+                ok = True
+                break
+    al, c, w, r = unpack(s_, z, False)
+    pull = {j: float(-z[2 * n + q]) for q, j in enumerate(tr)}
+    return dict(pull=pull, stationary=ok, s=s_, w_end=dict(zip(idx, w.tolist())), c_end=dict(zip(idx, c.tolist())), s_cross=s_cross)
 
 
 def recovery_threshold(L, K, fstar, c0, R, th_abs, n_creep=4, eps_lo=1e-14, eps_hi=1e-3, n_bisect=14, measured_pull=True):
@@ -591,9 +754,12 @@ def loop_with_duals(L, K, fstar, c0, eps, taus, b=None, levels=None, P=None, rto
     intervals (⟨r_kφ(c_i^k)⟩ for its inactive kernels, 0 on its walls) — a well-scaled deviation (O(1) where η is O(Λ)), split at the path's
     events. The tolerances are per component: α's absolute tolerance atol times the core's scale a_max(εb/(2c))^{1/2}, the centres' atol·10⁻²,
     δη's atol. Records on the grid `taus` (in τ = t/Λ(ε)) the coefficients, centres, u = u^path + δη/Λ and du = δη/Λ; with
-    levels = {i: θ_i} the first time each |w_i| reaches θ_i. Returns dict(taus, w, c, u, du, cross = {i: τ or None}, Lam)."""
+    levels = {i: θ_i} the first time each |w_i| reaches θ_i. Returns dict(taus, w, c, u, du, cross = {i: τ or None}, Lam). The path's duals
+    (`path_duals`) are pinned at ±1, i.e. in units of ρ for equal masses: with P, b must be uniform."""
     d = len(c0)
     bb = np.ones(d) if b is None else np.asarray(b, float)
+    if P is not None and np.ptp(bb) > 0:
+        raise ValueError('loop_with_duals: the path\'s duals are for equal masses')
     b0 = eps * bb
     Lam = transit_scale(L, eps)
     taus = np.asarray(taus, float)
@@ -637,6 +803,8 @@ def loop_with_duals(L, K, fstar, c0, eps, taus, b=None, levels=None, P=None, rto
             sel = (Lam * taus >= t0)
         te = np.unique(np.r_[Lam * taus[sel], t1])                       # the segment's end always evaluated: the next one starts there
         sol = solve_ivp(make(rates[k]), (t0, t1), z, method='LSODA', rtol=rtol, atol=tol, t_eval=te, events=evs or None)
+        if sol.status < 0:
+            raise RuntimeError(f'loop_with_duals: the segment [{t0 / Lam:.6g}, {t1 / Lam:.6g}] failed: {sol.message}')
         if sel.any():
             Y[sel] = sol.y.T[np.searchsorted(te, Lam * taus[sel])]
         for qq, i in enumerate(lev):

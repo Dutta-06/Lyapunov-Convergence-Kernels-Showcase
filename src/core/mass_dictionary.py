@@ -168,6 +168,11 @@ class MassDictionary:
             want = t_eval[(t_eval >= lo) & ((t_eval <= hi) if last else (t_eval < hi))]
             sol = solve_ivp(rhs, (lo, hi), to_z(th), method=method, rtol=rtol, atol=atol, t_eval=np.unique(np.r_[want, hi]))
             th = self.retract(to_th(sol.y[:, -1]))
+            # the retraction's correction is additive in β (the metric's mass block is constant), so on an atom the selection has
+            # dropped (β ≈ e^{−700}) it can cross zero; such an atom is kept at the floor, a change far below the constraint's tolerance
+            th[d:] = np.maximum(th[d:], np.exp(0.5 * lfloor))
+            if not np.all(np.isfinite(th)):
+                raise FloatingPointError(f'flow: non-finite state at s = {hi:g}')
             for s_, z_ in zip(sol.t, sol.y.T):
                 if np.any(np.isclose(s_, want)):
                     ts.append(s_); ys.append(self.retract(to_th(z_)))
