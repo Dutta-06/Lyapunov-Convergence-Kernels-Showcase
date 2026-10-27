@@ -13,7 +13,9 @@ averaged over these fluctuations is
     ū_k = ∇u_k·μ + ½ tr(∇²u_k C),
 
 and in the slow-replicator limit the masses follow the replicator flow of ū (dW_k/ds = γW_k(ū_k − Σ_lW_lū_l)) — for Σ = 2τ diag(G) the
-descent of the entropic free energy (τ/2) log det H (Proposition D‴.37(ii)), for other Σ a different selection, in general not a gradient.
+descent of the entropic free energy (τ/2) log det H (Proposition D‴.37(ii)); for any Σ, at this order, ū_k = −(τ_k/m)(1 + (a_k/a_max)²)/
+(W_ka′_k) with τ_k = Σ_{α_kα_k}/(2G_α) only (Proposition D‴.40: the gauge identity makes ū_k the generator's image of a function of α_k),
+the Shahshahani gradient flow descending Σ_kτ_k log(W_k a′_k); beyond this order the averages depend on all of Σ.
 
 This module: the averaged fitness by central differences (`averaged_fitness`), from callables for ∇_ΘJ and the fitness vector.
 """

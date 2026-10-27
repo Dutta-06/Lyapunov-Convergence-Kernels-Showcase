@@ -58,9 +58,9 @@ def test_the_trace_formula_reduces_to_the_log_determinant_for_isotropic_noise_an
 
 
 def test_only_each_amplitudes_own_noise_variance_drives_its_class():
-    # the generator identity: ū_k = −τ_k E[g′_k(α_k)], τ_k = Σ_{α_kα_k}/(2G_α), g_k = a_k/(β_k a′_k), so to leading order
-    # ū_k = −(τ_k/m)(1 + (a_k/a_max)²)/(W_k a′_k) — for a correlated noise on all nine coordinates, the correlations and the centres' and
-    # widths' noise dropping out
+    # the generator identity (Proposition D‴.40(i)) at leading order: ū_k = −τ_k g′_k at the fit, τ_k = Σ_{α_kα_k}/(2G_α), g_k = a_k/(β_k a′_k),
+    # i.e. ū_k = −(τ_k/m)(1 + (a_k/a_max)²)/(W_k a′_k) — for a correlated noise on all nine coordinates, the correlations and the centres'
+    # and widths' noise dropping out at this order (beyond it E[g′_k] depends on all of Σ)
     W = np.array([0.30, 0.35, 0.35])
     net, base, loop, beta, G9, gradJ, u = _instance(W)
     t = E.exact_rep(net, W).ravel()

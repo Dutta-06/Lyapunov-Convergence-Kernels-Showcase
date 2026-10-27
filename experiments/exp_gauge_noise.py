@@ -1,12 +1,12 @@
 """
-Proposition D‴.40: the gauge under general noise — only each amplitude's own noise intensity drives its class's mass
-====================================================================================================================
+Proposition D‴.40: the gauge under general noise — the replicator's averaged fitness is the generator's image of one coordinate
+==========================================================================================================================
 
 Proposition D‴.36's instance (Proposition D‴.32's three bumps, one particle per class, m = 3). With white noise of covariance Σ (per unit slow
-time) on the positions, the masses' fitness averaged over the positions' stationary fluctuations at fixed masses is, exactly,
-ū_k = −τ_k E[g′_k(α_k)], τ_k := Σ_{α_kα_k}/(2G_α), g_k = a_k/(β_k a′_k) (the generator identity through the gauge identity
-u_k = −g_k∂_{α_k}J), to leading order ū_k = −(τ_k/m)(1 + (a_k/a_max)²)/(W_k a′_k): the replicator flow of the weighted log-determinant
-Σ_kτ_k log(W_k a′_k).
+time) on the positions, the gauge identity u_k = −g_k∂_{α_k}J_fit (g_k = a_k/(β_k a′_k)) makes the masses' fitness the generator's image of
+ψ_k = ∫g_k dα_k/G_α: in a stationary law of the positions at fixed masses (with Proposition D‴.39's box) E[u_k] = −τ_kE[g′_k(α_k)] +
+E[g_k∂_{α_k}(J_coh + V)], τ_k := Σ_{α_kα_k}/(2G_α); at leading order ū_k = −(τ_k/m)(1 + (a_k/a_max)²)/(W_k a′_k), only each amplitude's own
+level entering — the replicator flow of the weighted log-determinant Σ_kτ_k log(W_k a′_k).
 
 A. The trace formula (`gauge_noise.averaged_fitness`: ū = ∇u·μ + ½tr(∇²u C), C the Lyapunov solution, μ the mean shift) against the
    closed form, for isotropic noise, noise on the amplitudes only, on the centres and widths only, per-class amplitude levels and three
@@ -14,7 +14,7 @@ A. The trace formula (`gauge_noise.averaged_fitness`: ū = ∇u·μ + ½tr(∇²
 B. Katzenberger's limit drift at γ = 10⁻⁵ (`gauge_drift.limit_drift` with the noise Σ) against the replicator flow of the closed form,
    for the same noises at two points; and its diffusion.
 C. Noise on the centres and widths only at γ = 10⁻², 10⁻³, 10⁻⁴, 10⁻⁵: the masses' diffusion (zero: the gauge's tangent lies in the
-   amplitude–mass coordinates and the metric is diagonal) and drift (O(γ)), against the isotropic noise's.
+   amplitude–mass coordinates and the metric has no block coupling them to the centres and widths) and drift (O(γ)), against the isotropic noise's.
 D. The identity in simulation at fixed masses 1/3 (γ = 0), inside the box of Proposition D‴.39 (so the stationary law exists): the time
    averages of u_k and of each term of the generator identity E[u_k] = −τ_kE[g′_k] + E[g_k∂_{α_k}J_coh] + E[g_k∂_{α_k}V] + E[Lψ_k] (ψ_k =
    ∫g_k dα_k/G_α; the last term the Euler chain's bias, measured exactly from the Gaussian increment's closed-form expectation), with
