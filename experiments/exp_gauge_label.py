@@ -62,7 +62,7 @@ SEEDS_C = tuple(range(800, 804))
 SCHEMES_C = (('ito', 0.0, DT), ('ito', 0.0, DT / 2), ('ar1', -0.5, DT), ('ar1', -1 / 3, DT), ('ar1', 1 / 3, DT), ('ar1', 0.6, DT),
              ('ar1', 0.8, DT), ('heun', 0.0, DT))
 SIG2_D, DT_D, T_D, N_PATHS_D, UV0_D, SEED_D = 0.01, 1e-3, 100.0, 400, (2.0, 0.5), 900
-SCHEMES_D = (('ito', 0.0), ('ar1', -1 / 3), ('ar1', 1 / 3), ('ar1', 0.6), ('heun', 0.0))
+SCHEMES_D = (('ito', 0.0), ('ar1', -1 / 3), ('ar1', 1 / 3), ('ar1', 0.6), ('block', 4), ('heun', 0.0))   # 'block': redrawn every k steps
 D_E, N_E, ALPHA_E, V_E, DT_E, T_E, P_E, SEED_E = 40, 10, 0.5, 0.001, 1e-3, 250.0, 8, 950
 L_MAP = 5e4                                                                    # the limit map's horizon (the slowest normal rate ≈ 3·10⁻⁴: e⁻¹⁵)
 
@@ -148,7 +148,8 @@ def d_job(args):
     n = int(round(T_D / DT_D)); h = DT_D
     u = np.full(N_PATHS_D, UV0_D[0]); v = np.full(N_PATHS_D, UV0_D[1])
     rho_ = rho if scheme == 'ar1' else 0.0
-    sx = np.sqrt(SIG2_D / h * (1 - rho_) / (1 + rho_))
+    kb = int(rho) if scheme == 'block' else 1
+    sx = np.sqrt(SIG2_D / h * (1 - rho_) / (1 + rho_) / kb)               # the same intensity σ² for every scheme
     xi = sx * rng.standard_normal(N_PATHS_D)
     Q0 = UV0_D[0] ** 2 - UV0_D[1] ** 2
     every = int(round(10.0 / h)); rec = []
@@ -158,7 +159,7 @@ def d_job(args):
             rec.append((k * h, Q.mean(), Q.std(), np.abs(Q - Q0).max(), np.abs(u * v - 1).mean()))
         if k == n:
             break
-        if k > 0:
+        if k > 0 and k % kb == 0:
             xi = rho_ * xi + np.sqrt(1 - rho_ ** 2) * sx * rng.standard_normal(N_PATHS_D)
         c = xi - (u * v - 1.0)
         if scheme == 'heun':
@@ -199,7 +200,8 @@ def e_job(args):
     u, v = flow(u, v)
     rng = np.random.default_rng(SEED_E + 1)
     rho_ = rho if scheme == 'ar1' else 0.0
-    sx = np.sqrt(V_E * n / h * (1 - rho_) / (1 + rho_))
+    kb = int(rho) if scheme == 'block' else 1
+    sx = np.sqrt(V_E * n / h * (1 - rho_) / (1 + rho_) / kb)
     xi = sx * rng.standard_normal((P_E, n))
     P0 = (u * v).mean(axis=0); w0 = (u * u - v * v)
     c = (X ** 2).sum(axis=0)
@@ -207,7 +209,7 @@ def e_job(args):
     st = dict(l1=float(np.abs(w0).sum(axis=1).mean()), err=float(np.abs(w0 - ws).sum(axis=1).mean()), res=float(np.abs(w0 @ X.T - y).max()),
               tr=trH(u, v))
     for k in range(int(round(T_E / h))):
-        if k > 0:
+        if k > 0 and k % kb == 0:
             xi = rho_ * xi + np.sqrt(1 - rho_ ** 2) * sx * rng.standard_normal((P_E, n))
         gu, gv = grad(u, v, xi)
         if scheme == 'heun':
@@ -225,12 +227,12 @@ def e_job(args):
 
 
 def name_C(scheme, rho, dt):
-    out = {'ito': 'afresh each step', 'heun': 'Heun (Stratonovich)'}.get(scheme, f'AR(1), ρ = {rho:+.3f}')
+    out = {'ito': 'afresh each step', 'heun': 'Heun (Stratonovich)', 'block': f'redrawn every {int(rho)} steps'}.get(scheme, f'AR(1), ρ = {rho:+.3f}')
     return out if dt == DT else f'{out}, step {dt:g}'
 
 
 def factor_C(scheme, rho):
-    return 0.0 if scheme == 'heun' else LN.ar1_factor(rho)
+    return 0.0 if scheme == 'heun' else (1.0 / int(rho) if scheme == 'block' else LN.ar1_factor(rho))
 
 
 def summarise_C(runs, ito0):
@@ -298,7 +300,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                f"(u, v)(0) = {UV0_D})", "",
                "Q = u² − v², Q(0) = " + f"{UV0_D[0] ** 2 - UV0_D[1] ** 2:g}" + ". The Euler step gives Q_{n+1} = Q_n(1 − (ξ_n − r_n)²h²) exactly: the decay is set by "
                "the per-step variance.", "",
-               "| noise | (1 − ρ)/(1 + ρ) | E[Q] at t = 0, 20, 40, …, 100 | the decay rate −log(E[Q(T)]/Q(0))/(σ²T) | the largest |Q − Q(0)| of a path | "
+               "| noise | the predicted factor | E[Q] at t = 0, 20, 40, …, 100 | the decay rate −log(E[Q(T)]/Q(0))/(σ²T) | the largest |Q − Q(0)| of a path | "
                "the mean |uv − 1| at T |", "|---|---|---|---|---|---|"]
         for r in D:
             rec = r['rec']
@@ -309,7 +311,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
     if Ee is not None:
         L_ += [f"## E. A diagonal linear network with label noise (d = {D_E}, n = {N_E}, α = {ALPHA_E:g}, V = {V_E:g}, step {DT_E:g}, T = {T_E:g}, "
                f"{P_E} paths)", "",
-               "| noise | (1 − ρ)/(1 + ρ) | the decay rates of P_i = u_iv_i over 4Vc_i/n: mean (range over i) | the interpolant's tr ∇²L: start → end | "
+               "| noise | the predicted factor | the decay rates of P_i = u_iv_i over 4Vc_i/n: mean (range over i) | the interpolant's tr ∇²L: start → end | "
                "its ‖w − w*‖₁: start → end | its ‖w‖₁: start → end | its residual |", "|---|---|---|---|---|---|---|"]
         for r in Ee:
             L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.3f} | {r['ratio'].mean():+.4f} "
