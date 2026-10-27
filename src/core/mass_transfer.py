@@ -31,7 +31,7 @@ class ReplicatorCohesionLoop:
     `balanced` keeps Σβ = m (λ the β-mean of u), otherwise λ = 0."""
 
     def __init__(self, base, R, kind='gauss', sigma0=None, gamma=1.0, balanced=True, eps=0.0, fixman=0.0, fixman_tau=0.0, fixman_A=None,
-                 fixman_TA=None, box=None, box_sigma=1.0):
+                 fixman_TA=None, box=None, box_sigma=1.0, fixman_floor=0.01):
         self.base = base
         self.G = base.G
         self.R, self.kind = float(R), kind
@@ -42,6 +42,7 @@ class ReplicatorCohesionLoop:
         self.fixman_tau = np.asarray(fixman_tau, float)                   # the dither's τ, or the classes' amplitude-noise levels τ_k (D‴.40)
         self.fixman_A = None if fixman_A is None else np.array(fixman_A, float)   # the classes' contributions Â_k (the masses form)
         self.fixman_TA = fixman_TA                                        # their running average's time constant (None: fixed)
+        self.fixman_floor = float(fixman_floor)                           # the denominator's floor, a fraction of W_i
         self.box = None if box is None else np.asarray(box, float)          # Proposition D‴.39: the dead zone's half-widths (L_α, L_γ, L_κ)
         self.box_sigma = float(box_sigma)                                   # and its stiffness σ_B
 
@@ -57,8 +58,12 @@ class ReplicatorCohesionLoop:
         a, c, s, diff, phi = self.base.features(Th)
         return a * (phi.T @ r) / self.base.N
 
-    def drift(self, Th, beta):
+    def drift(self, Th, beta, xi=None):
+        """The drift of (𝔉) with the transport law; `xi` (N,) is added to the residual (Proposition D‴.41: the measured error r + ξ drives
+        both laws)."""
         r = self.residual(Th, beta)
+        if xi is not None:
+            r = r + xi
         dTh = beta[:, None] * self.G[None, :] * self.base.grad_weighted(r, Th) + CO.cohesion_force(Th, self.G, self.R, self.sigma0, self.kind)
         if self.box is not None:
             dTh = dTh - self.box_sigma * self.box_excess(Th)
@@ -76,7 +81,9 @@ class ReplicatorCohesionLoop:
         W_min,i = |Â_i|/a_max from the classes' contributions Â_i (`fixman_A`; on M, Â_i = W_i a_i = A_i), so it depends on the masses only;
         the plug-in form (no `fixman_A`) takes W_min,i = W_i|a_i|/a_max at the current amplitudes, i.e. κ_F(τ/m)(1 + (a_i/a_max)²)/(W_i a′_i) —
         equal on M, but off M it reads an amplitude's excursion as a mass at its saturation. Both vanish without dither and act on the masses
-        only; neither is a gradient. The denominator is floored at 0.01 W_i."""
+        only. With Â fixed the masses form is the gradient of a separable function of W (of −κ_F(τ/2)ℓ where the floor is inactive); the
+        plug-in form depends on the amplitudes. The denominator is floored at `fixman_floor`·W_i (0.01: the cap binds within
+        δ_cap = W_min,i(1/√0.99 − 1) of the saturation, where the correction stops growing — Proposition D‴.38(iii) with the floor)."""
         amax = self.base.net.a_max
         m = Th.shape[0]
         W = beta / m
@@ -85,7 +92,7 @@ class ReplicatorCohesionLoop:
             q = (a / amax) ** 2                                               # (W_min/W)² at the current amplitudes
         else:
             q = (np.abs(self.fixman_A) / amax / W) ** 2
-        return self.fixman * (self.fixman_tau / m) * (1 + q) / np.maximum(W * (1 - q), 0.01 * W)
+        return self.fixman * (self.fixman_tau / m) * (1 + q) / np.maximum(W * (1 - q), self.fixman_floor * W)
 
     def box_excess(self, Th):
         """Proposition D‴.39: ϑ_i − Π_B(ϑ_i), the excess of the unconstrained coordinates over the box B = Π_j[−L_j, L_j]; the dead zone
@@ -127,11 +134,16 @@ class ReplicatorCohesionLoop:
         return Th, np.exp(lb)
 
 
-    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None, mask=None, noise_L=None):
+    def run_dithered(self, Th, beta, S_end, dt, tau, rng, rec_every=4000, callback=None, mask=None, noise_L=None, label_v=0.0,
+                     label_scheme='ito', label_rho=0.0):
         """Proposition D‴.36: the positions dithered (Euler–Maruyama, the noise √(2τG) per particle), the weights by the midpoint-free Euler
         step of (𝔉) on log β, renormalised to Σβ = m; callback(s, Θ, β) at the records. `mask` (p,) scales the noise per coordinate
         (Proposition D‴.40: (0, 1, 1) dithers the centres and widths only); the random draws are the same with or without it. `noise_L`
-        (mp × mp) replaces the noise by √dt·L ξ, covariance Σ = LLᵀ per unit time on the flattened positions (τ and mask then unused)."""
+        (mp × mp) replaces the noise by √dt·L ξ, covariance Σ = LLᵀ per unit time on the flattened positions (τ and mask then unused).
+        Proposition D‴.41: `label_v` > 0 adds measurement noise ξ to the residual that drives both laws, independent over the quadrature
+        nodes, of intensity v (⟨ξh⟩_ρ has the variance v⟨h²⟩_ρ per unit time): 'ito' draws it afresh at each step (variance vN/dt), 'ar1'
+        correlates successive draws by ρ = `label_rho` at the same intensity (per-step variance vN(1 − ρ)/((1 + ρ)dt), started stationary),
+        'heun' is Heun's predictor–corrector with the same draw in both stages (the Stratonovich interpretation)."""
         Th, lb = np.array(Th, float), np.log(np.array(beta, float))
         m = Th.shape[0]
         sq = np.sqrt(2.0 * tau * dt * self.G)[None, :]
@@ -139,6 +151,14 @@ class ReplicatorCohesionLoop:
             sq = sq * np.asarray(mask, float)[None, :]
         if noise_L is not None:
             Ld = np.sqrt(dt) * np.asarray(noise_L, float)
+        if label_v:
+            if label_scheme not in ('ito', 'ar1', 'heun'):
+                raise ValueError(label_scheme)
+            if label_scheme == 'heun' and self.fixman_A is not None and self.fixman_TA:
+                raise NotImplementedError("the tracked contributions with Heun's scheme")
+            rho = float(label_rho) if label_scheme == 'ar1' else 0.0
+            s_xi = np.sqrt(label_v * self.base.N / dt * (1 - rho) / (1 + rho))
+            xi = s_xi * rng.standard_normal(self.base.N)
         n = int(round(S_end / dt))
         for k in range(n + 1):
             b = np.exp(lb)
@@ -146,11 +166,19 @@ class ReplicatorCohesionLoop:
                 callback(k * dt, Th, b)
             if k == n:
                 break
-            dT, db = self.drift(Th, b)
+            if label_v and k > 0:
+                xi = rho * xi + np.sqrt(1 - rho ** 2) * s_xi * rng.standard_normal(self.base.N)
+            dT, db = self.drift(Th, b, xi if label_v else None)
             if self.fixman_A is not None and self.fixman_TA:                  # the contributions' running average (Proposition D‴.38)
                 self.fixman_A = self.fixman_A + (dt / self.fixman_TA) * (b / m * self.base.features(Th)[0] - self.fixman_A)
-            Th = Th + dt * dT + (sq * rng.standard_normal(Th.shape) if noise_L is None else (Ld @ rng.standard_normal(Th.size)).reshape(Th.shape))
-            lb = lb + dt * db / b
+            dW = sq * rng.standard_normal(Th.shape) if noise_L is None else (Ld @ rng.standard_normal(Th.size)).reshape(Th.shape)
+            if label_v and label_scheme == 'heun':
+                Tp, lp = Th + dt * dT + dW, lb + dt * db / b
+                dT2, db2 = self.drift(Tp, np.exp(lp), xi)
+                Th, lb = Th + 0.5 * dt * (dT + dT2) + dW, lb + 0.5 * dt * (db / b + db2 / np.exp(lp))
+            else:
+                Th = Th + dt * dT + dW
+                lb = lb + dt * db / b
             if self.balanced:
                 lb = lb - np.log(np.exp(lb).sum() / m)
         return Th, np.exp(lb)
