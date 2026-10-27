@@ -139,3 +139,50 @@ def test_heun_follows_the_mirror_update_pathwise():
         ts2, A, B = DL.primal_sde(L, Phi, y, np.zeros(4), np.log(2.0 * b), 0.7, h, 20.0, seed=5, rec_every=int(round(1 / h)))
         err[h] = np.abs(F.eta(np.abs(A)) * np.sign(A) - Z @ Phi).max()
     assert err[0.0025] < 5e-3 and err[0.01] / err[0.0025] > 2.5
+
+
+def test_gibbs_identity_pins_the_temperature():
+    """The exact identity E_π[∇F∇Fᵀ] = T·E_π[∇²F] — Cov_π(Φw) = T·ΦE_π[D]Φᵀ at every noise level, linear in T — holds on the Metropolis
+    sampler's draws to a few per cent and rejects the same draws read at 1.15T: the sampler's temperature is pinned, not only its law's
+    shape (Proposition D‴.50(i), round 40)."""
+    Phi, y, q, b = well_conditioned()
+    N, d = Phi.shape
+    T = 0.7 ** 2 / (2 * N)
+    F = DL.FastFree(L, q)
+    ts, Z, W, al = DL.mirror_update(F, Phi, y, 0.0, 0.05, 1000.0, rec_every=10 ** 9)
+    Dm = F.dw(al)
+    cov = (2.38 ** 2 / N) * T * np.linalg.inv(Phi @ (Dm[:, None] * Phi.T))
+    Zs, Wr, acc = DL.gibbs_rwm(F, Phi, y, T, Z[-1], cov, 100_000, seed=11, thin=5)
+    Wr = Wr[len(Wr) // 10:]
+    C = np.cov((Wr @ Phi.T).T)
+    ED = np.array([F.dw(F.inv(e)) for e in (Zs[len(Zs) // 10:] @ Phi)]).mean(0)
+    pred = T * Phi @ (ED[:, None] * Phi.T)
+    rel = lambda P: np.linalg.norm(C - P) / np.linalg.norm(P)
+    assert rel(pred) < 0.04
+    assert rel(1.15 * pred) > 0.08
+
+
+def test_linear_response_is_the_projected_noise_on_an_entries_only_path():
+    """On an inverse scale space path of entries only the transit's first-order response is δν(τ) = κP_{T(τ)}W(τ) at every grid point —
+    the accumulated deviation projected at each entry onto the nested tangent spaces (Proposition D‴.50(iv))."""
+    rng = np.random.default_rng(4)
+    N, d = 3, 6
+    Phi = rng.standard_normal((N, d))
+    path = MF.iss_path(Phi, Phi @ np.r_[0.8, -0.5, 0.0, 0.0, 0.0, 0.0], np.ones(d))
+    assert all(kind == 'enter' for t, i, kind in path['events']) and len(path['events']) >= 2
+    taus = np.linspace(0.0, 1.5 * path['taus'][-1], 3001)
+    xi = rng.standard_normal((taus.size - 1, N)) * np.sqrt(np.diff(taus))[:, None]
+    kap = 0.37
+    dnu = DL.linear_response(path, Phi, taus, xi, kap, return_nu=True)
+    P = DL.tangent_projectors(path, Phi)
+    Wb = np.vstack([np.zeros(N), np.cumsum(xi, 0)])
+    seg = np.clip(np.searchsorted(path['taus'], taus, side='right') - 1, 0, len(P) - 1)
+    closed = np.array([kap * P[seg[i]] @ Wb[i] for i in range(taus.size)])
+    assert np.abs(dnu[1:] - closed[1:]).max() < 1e-12 * np.abs(closed).max()
+    assert np.allclose(DL.linear_response(path, Phi, taus, xi, kap), dnu @ Phi, rtol=0, atol=1e-14)
+    exits = dict(path, events=list(path['events']) + [(path['taus'][-1], path['events'][0][1], 'exit')])
+    try:
+        DL.linear_response(exits, Phi, taus, xi, kap)
+        raise AssertionError('a path with exits must be refused')
+    except ValueError:
+        pass

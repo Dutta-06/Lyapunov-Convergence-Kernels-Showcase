@@ -101,10 +101,12 @@ def potential(F, Phi, y, zeta, eta0=None, al0=None):
     return float(F.psi_star(al).sum() - y @ zeta), Phi @ w - y, al
 
 
-def mirror_update(F, Phi, y, sig, h, t_end, seed=0, rec_every=1, zeta0=None, al0=None, eta0=None, noise=None):
+def mirror_update(F, Phi, y, sig, h, t_end, seed=0, rec_every=1, zeta0=None, al0=None, eta0=None, noise=None, rec_al=False):
     """ζ ← ζ + h(y − Φw)/N + (σ/N)√h ξ, w = w(η(0) + Φᵀζ): the mirror update under isotropic label noise (each particle exactly on its
-    curve). Returns (t, ζ, w) at every rec_every-th step and the last α. `noise(k)` may supply the standard normals ξ_k (else a
-    generator seeded by `seed`)."""
+    curve) — the unadjusted Langevin algorithm on F, whose law is π + O(h) over practical horizons (the potential's gradient grows
+    exponentially, so the scheme is not globally stable in the strict sense). Returns (t, ζ, w) at every rec_every-th step and the last α
+    (with rec_al, the recorded α instead — for dw/dη along the run). `noise(k)` may supply the standard normals ξ_k (else a generator
+    seeded by `seed`)."""
     N, d = Phi.shape
     rng = np.random.default_rng(seed)
     z = np.zeros(N) if zeta0 is None else np.array(zeta0, float)
@@ -112,16 +114,18 @@ def mirror_update(F, Phi, y, sig, h, t_end, seed=0, rec_every=1, zeta0=None, al0
     al = np.zeros(d) if al0 is None else np.array(al0, float)
     nst = int(round(t_end / h))
     sq = (sig / N) * np.sqrt(h)
-    ts, Z, W = [], [], []
+    ts, Z, W, AL = [], [], [], []
     for k in range(nst + 1):
         al = F.inv(e0 + Phi.T @ z, al)
         w = F.w(al)
         if k % rec_every == 0 or k == nst:
             ts.append(k * h); Z.append(z.copy()); W.append(w)
+            if rec_al:
+                AL.append(al.copy())
         if k < nst:
             xi = rng.standard_normal(N) if noise is None else noise(k)
             z = z + (y - Phi @ w) * (h / N) + sq * xi
-    return np.array(ts), np.array(Z), np.array(W), al
+    return np.array(ts), np.array(Z), np.array(W), (np.array(AL) if rec_al else al)
 
 
 def primal_sde(L, Phi, y, al0, lb0, sig, h, t_end, seed=0, rec_every=1, scheme='stratonovich'):
@@ -218,13 +222,31 @@ def tangent_projectors(path, Phi, tol=0.0):
     return out
 
 
-def linear_response(path, Phi, taus, xi_tau, kappa):
-    """The transit's noise to first order along an `iss_path`: δν ← P_{T(τ)}(δν + κΔW) on the grid `taus` (increments xi_tau ~ N(0, Δτ))
-    — the active face's normal part absorbed by the active kernels at every step, the accumulated deviation projected at each entry; for
-    a path of entries only δν(τ) = κP_{T(τ)}W(τ). Returns δu = Φᵀδν on the grid."""
+def linear_response(path, Phi, taus, xi_tau, kappa, return_nu=False):
+    """The transit's noise to first order along an `iss_path` of entries only: δν ← P_{T(τ)}(δν + κΔW) on the grid `taus` (increments
+    xi_tau ~ N(0, Δτ)) — the active face's normal part absorbed by the active kernels at every step, the accumulated deviation projected
+    at each entry, so that δν(τ) = κP_{T(τ)}W(τ). An exit adds a first-order jump this response does not carry: a path with exits is
+    refused. Returns δu = Φᵀδν on the grid (with return_nu, δν)."""
+    if any(kind != 'enter' for t, i, kind in path['events']):
+        raise ValueError('linear_response: the path has exits, whose first-order jump is not included')
     P = tangent_projectors(path, Phi)
     seg = np.clip(np.searchsorted(path['taus'], taus[1:], side='right') - 1, 0, len(P) - 1)
     dnu = np.zeros((taus.size, Phi.shape[0]))
     for k in range(taus.size - 1):
         dnu[k + 1] = P[seg[k]] @ (dnu[k] + kappa * xi_tau[k])
-    return dnu @ Phi
+    return dnu if return_nu else dnu @ Phi
+
+
+def normal_ou_var(Phi, D, act, kappa, Lam):
+    """The finite-ε residual of the first-order response: the active block absorbs the noise's normal part on the time scale of its
+    relaxation, not at once, so the dual keeps an Ornstein–Uhlenbeck component in range(Φ_A) — dν_n = −Λ(Φ_AD_AΦ_Aᵀ/N)ν_ndτ + κP_ndW —
+    with the stationary variance tr((Φ_AD_AΦ_Aᵀ/N)⁺)κ²/(2Λ) = κ²Σ_i 1/(2Λλ_i) (λ_i the nonzero eigenvalues). Returns that trace (the
+    predicted mean square of |δν − δν_lin|)."""
+    A = np.flatnonzero(act)
+    if A.size == 0:
+        return 0.0
+    N = Phi.shape[0]
+    M = Phi[:, A] @ (np.asarray(D, float)[A][:, None] * Phi[:, A].T) / N
+    lam = np.linalg.eigvalsh(M)
+    lam = lam[lam > 1e-12 * lam.max()]
+    return float(kappa ** 2 * np.sum(1.0 / (2 * Lam * lam)))
