@@ -14,9 +14,9 @@ amplitude is O(ε^{1/2}) and its centre moves at O(1) in τ — dc/dτ = (πa_ma
 the kernels climb the correlation's peaks before entering — condensation.
 
 This module: Gaussian kernels on a sample grid (`Bumps`; on a reference orbit with the closed loop's error filter, `OrbitBumps` —
-Proposition D‴.49), the free law with moving centres under either metric (`moving_rhs`), the active block's fast flow on the critical
-curve (`critical_rhs`), the sliding inverse scale space (`sliding_iss`) and the inactive kernels' limit under the Wasserstein–Fisher–Rao
-metric (`wfr_inactive_rhs`).
+Proposition D‴.49), the free law with moving centres under either metric (`moving_rhs`) and with moving widths too
+(`moving_rhs_widths`), the active block's fast flow on the critical curve (`critical_rhs`), the sliding inverse scale space
+(`sliding_iss`) and the inactive kernels' limit under the Wasserstein–Fisher–Rao metric (`wfr_inactive_rhs`).
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -80,6 +80,24 @@ def moving_rhs(L, K, fstar, metric='paradigm'):
         h = K.dphi(c).T @ r / K.xs.size
         speed = L.G * b * a if metric == 'paradigm' else L.G * a
         return np.r_[L.G * b * da * g, L.gamma * a * g, speed * h]
+    return f
+
+
+def moving_rhs_widths(L, K, fstar):
+    """The free law with moving centres and widths (the paradigm's metric), z = (α, log β, c, σ): ċ = Gβa⟨r∂_cφ⟩, σ̇ = Gβa⟨r∂_σφ⟩,
+    φ_i = exp(−(x − c_i)²/(2σ_i²)) on K's samples (K's own width unused)."""
+    def f(t, z):
+        d = z.size // 4
+        al, lb, c, sg = z[:d], z[d:2 * d], z[2 * d:3 * d], z[3 * d:]
+        b = np.exp(lb); a, da = L.amp(al)
+        dx = K.xs[:, None] - c[None, :]
+        Ph = np.exp(-dx ** 2 / (2 * sg ** 2))
+        r = K.filt(fstar - Ph @ (b * a / L.m))
+        g = Ph.T @ r / K.xs.size
+        h = (Ph * dx / sg ** 2).T @ r / K.xs.size
+        hs = (Ph * dx ** 2 / sg ** 3).T @ r / K.xs.size
+        sp = L.G * b * a
+        return np.r_[L.G * b * da * g, L.gamma * a * g, sp * h, sp * hs]
     return f
 
 

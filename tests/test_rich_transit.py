@@ -95,3 +95,21 @@ def test_orbit_filter_is_the_periodic_error():
     e = K.filt(np.sin(om * ts))
     assert np.abs(e - (ke * np.sin(om * ts) - om * np.cos(om * ts)) / (ke ** 2 + om ** 2)).max() < 1e-12
     assert np.allclose(K.xs, np.sin(om * ts))
+
+
+def test_moving_widths_identify_wider_bumps():
+    """Proposition D‴.48 with moving widths: three bumps of width 0.2 (wider than the kernels' 0.12) are formed at ε = 10⁻⁶ by exactly
+    three kernels, at the bumps' centres, widths and amplitudes."""
+    fs = np.exp(-(K.xs[:, None] - CSTAR[None, :]) ** 2 / (2 * 0.2 ** 2)) @ ASTAR
+    eps, tau = 1e-6, 30.0
+    Lam = RT.transit_scale(L, eps)
+    sol = solve_ivp(RT.moving_rhs_widths(L, K, fs), (0, Lam * tau), np.r_[np.zeros(D), np.log(np.full(D, eps)), C0, np.full(D, 0.12)],
+                    method='LSODA', rtol=1e-9, atol=1e-12)
+    z = sol.y[:, -1]
+    W = np.exp(z[D:2 * D]) * L.amp(z[:D])[0] / L.m
+    act = np.abs(W) > 1e-2 * np.abs(ASTAR).max()
+    assert act.sum() == 3
+    o = np.argsort(z[2 * D:3 * D][act])
+    assert np.abs(z[2 * D:3 * D][act][o] - CSTAR).max() < 1e-3
+    assert np.abs(z[3 * D:][act][o] - 0.2).max() < 1e-3
+    assert np.abs(W[act][o] - ASTAR).max() < 1e-3
