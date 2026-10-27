@@ -79,7 +79,10 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   representable (Proposition D‴.36); and the masses drift too, along the replicator flow of the entropic free energy (τ/2) log det of the positions' Hessian, toward the
   saturation — a layer of width O(√γ) slows but does not stop them (Proposition D‴.37); and a Fixman correction on the masses — a
   log-barrier on the representable masses — cancels that drift or, with a gain above one, selects the D-optimal (largest-determinant)
-  exact fit, the saturation repelling (Proposition D‴.38); rounds 7–28 of the review log cover all of them up to D‴.38, and their remarks.
+  exact fit, the saturation repelling (Proposition D‴.38); and without the prior the dithered loop has no stationary law — the energy is bounded on the unconstrained coordinates, and the
+  positions climb, at a rate e^{−ΔJ/τ}, onto a plateau of approximate fits with saturated amplitudes — which a dead zone on a box of
+  the unconstrained coordinates restores without bias inside it, the gauge's saturation becoming a wall where the drift ends
+  (Proposition D‴.39); rounds 7–28 of the review log cover all of them up to D‴.38, and their remarks.
 
 ---
 

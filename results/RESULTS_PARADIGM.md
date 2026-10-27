@@ -995,6 +995,23 @@ plug-in form on M and blind to an amplitude's excursion at fixed masses; the tra
 constant; kappa() as the leak's projected stiffness; the analysis' statistics on synthetic records (`tests/test_runcache.py`: the cache
 key carries the code's version).
 
+
+## Proposition D‴.39 — dissipativity of the dithered gauge (`exp_gauge_plateau.py` → `chaos/gauge_plateau.md`)
+
+- Proposition D‴.36's instance at τ = 10⁻⁴; the box L = (5, 3, 4) in the unconstrained coordinates (α, γ, κ), σ_B = 1. (A) The plateau of
+  approximate fits with one amplitude saturated lies 7.6–7.8τ above the exact fit at W = 1/3 and at W♯ (fit error 0.035), 7.66τ at the
+  box's edge: the box bounds the plateau, it does not raise it. (B) At W = 1/3 the minimum-energy path climbs to it monotonically.
+- (C) At fixed masses the escapes occur at (1.33, 4.06, 10.9)·10⁻⁶ per slow unit for τ = 1.5, 2, 3·10⁻⁴ (10, 19, 24 of 24 seeds within
+  4·10⁵), the Arrhenius slope 82% of ΔJ = 7.69·10⁻⁴ at ΔJ/τ = 2.6–5.1. (D) Without the box the plateau's occupation grows (0.18 → 0.57
+  of the records by quarters, the largest |α| to 27.6); with it it stays at 0.09–0.19 and |α| ≤ 5. (E) In the full loop with the box
+  (γ = 10⁻², 12 seeds, 10⁶ slow units) each run is the unboxed one until a coordinate leaves B; at κ_F = 0 the masses' spread at 10⁶ is
+  0.05–0.075 against 0.08–0.15 without the box, on their way to P_B's vertices; at κ_F = 2 within 0.41 s.e. of W♯. (F) Without a leak
+  all but one of the records with |α_k| > 10 have their mass within 0.01 of the saturation and the exact fit's error; with the leak
+  every such record is off M (W_k more than 0.05 above the saturation, the fit error 0.041–0.043).
+
+Tests (`tests/test_gauge_plateau.py`): the dead zone inactive inside the box, minus its G-gradient outside; J bounded on the unconstrained
+coordinates and J + V coercive; the box's wall and vertices; a run inside the box bit for bit the unboxed one.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,
