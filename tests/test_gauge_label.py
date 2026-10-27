@@ -95,3 +95,17 @@ def test_the_schemes_reduce_as_they_should():
         lb = lb - np.log(np.exp(lb).sum() / 3)
     assert np.allclose(T_h, Th, rtol=0, atol=1e-12) and np.allclose(b_h, np.exp(lb), rtol=0, atol=1e-12)
     assert LN.ar1_factor(0.0) == 1.0 and abs(LN.ar1_factor(1 / 3) - 0.5) < 1e-15 and abs(LN.ar1_factor(-1 / 3) - 2.0) < 1e-15
+
+
+def test_the_scalar_factorisation_example():
+    # f = uv, label noise: an Euler step multiplies Q = u² − v² by exactly 1 − (ξ − r)²h² for any draw; Heun's step keeps Q to O(h³)
+    rng = np.random.default_rng(6)
+    u, v = 1.0 + rng.random(50), 0.3 + rng.random(50)
+    xi, h = 3.0 * rng.standard_normal(50), 1e-2
+    c = xi - (u * v - 1)
+    un, vn = u + h * c * v, v + h * c * u
+    assert np.allclose(un ** 2 - vn ** 2, (u ** 2 - v ** 2) * (1 - (c * h) ** 2), rtol=1e-12, atol=1e-14)
+    up, vp = u + h * c * v, v + h * c * u
+    cp = xi - (up * vp - 1)
+    uh, vh = u + 0.5 * h * (c * v + cp * vp), v + 0.5 * h * (c * u + cp * up)
+    assert np.abs((uh ** 2 - vh ** 2) - (u ** 2 - v ** 2)).max() < 50 * h ** 3 * np.abs(c).max() ** 3

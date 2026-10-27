@@ -17,8 +17,13 @@ C. The full loop with measurement noise only (τ = 0, γ = 10⁻², v = V_C, fro
    and Heun's scheme (Stratonovich). The gauge coordinate y(s) = Φ(z(s)) (the limit map of the noiseless flow from the state, every
    REC_PHI slow units): its least-squares slope and its end displacement, against (1 − ρ)/(1 + ρ) times part A's Itô drift at W₀ (zero
    for Heun). (The raw masses' window means carry the O(v) shift of the normal fluctuations' mean, which builds up from the start on M.)
+D. The example: the scalar factorisation f(u, v) = uv fitted to y = 1 with label noise, u̇ = (ξ − r)v, v̇ = (ξ − r)u, r = uv − y. The
+   rescaling symmetry's Noether charge Q = u² − v² is conserved by the gradient flow and, pathwise, by every noise field (v, u) — so by the
+   Stratonovich (Heun) dynamics —; an Euler step gives exactly Q_{n+1} = Q_n(1 − (ξ_n − r_n)²h²) whatever the noise sequence, so E[Q]
+   decays at the rate set by the per-step variance: σ² for noise drawn afresh (the Itô SDE's exact rate), (1 − ρ)/(1 + ρ)σ² for AR(1)
+   noise at the same intensity; N_PATHS_D paths, the decay rate −log(E[Q(T)]/Q(0))/(σ²T) against the factor.
 
-Output: results/chaos/gauge_label.md and gauge_label_raw.npz (GL_WORKERS; `--from-raw` regenerates the md; `--only A,B,C`).
+Output: results/chaos/gauge_label.md and gauge_label_raw.npz (GL_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D`).
 """
 import os
 import sys
@@ -49,6 +54,8 @@ GAMMA_C, V_C, W0_C, S_C, REC_S, REC_PHI = 1e-2, 5e-5, (0.40, 0.25, 0.35), 2e5, 1
 SEEDS_C = tuple(range(800, 804))
 SCHEMES_C = (('ito', 0.0, DT), ('ito', 0.0, DT / 2), ('ar1', -0.5, DT), ('ar1', -1 / 3, DT), ('ar1', 1 / 3, DT), ('ar1', 0.6, DT),
              ('ar1', 0.8, DT), ('heun', 0.0, DT))
+SIG2_D, DT_D, T_D, N_PATHS_D, UV0_D, SEED_D = 0.01, 1e-3, 100.0, 400, (2.0, 0.5), 900
+SCHEMES_D = (('ito', 0.0), ('ar1', -1 / 3), ('ar1', 1 / 3), ('ar1', 0.6), ('heun', 0.0))
 L_MAP = 5e4                                                                    # the limit map's horizon (the slowest normal rate ≈ 3·10⁻⁴: e⁻¹⁵)
 
 
@@ -125,6 +132,37 @@ def c_series(args):
     return dict(scheme=scheme, rho=rho, dt=dt, seed=seed, rec=np.array(rec), y=np.array(y), res=res)
 
 
+def d_job(args):
+    """Part D: the scalar factorisation with label noise, one scheme: the paths' mean of Q = u² − v² every 10 time units, its std, and the
+    largest |Q − Q(0)| of a path (for Heun)."""
+    scheme, rho = args
+    rng = np.random.default_rng(SEED_D)
+    n = int(round(T_D / DT_D)); h = DT_D
+    u = np.full(N_PATHS_D, UV0_D[0]); v = np.full(N_PATHS_D, UV0_D[1])
+    rho_ = rho if scheme == 'ar1' else 0.0
+    sx = np.sqrt(SIG2_D / h * (1 - rho_) / (1 + rho_))
+    xi = sx * rng.standard_normal(N_PATHS_D)
+    Q0 = UV0_D[0] ** 2 - UV0_D[1] ** 2
+    every = int(round(10.0 / h)); rec = []
+    for k in range(n + 1):
+        if k % every == 0:
+            Q = u * u - v * v
+            rec.append((k * h, Q.mean(), Q.std(), np.abs(Q - Q0).max(), np.abs(u * v - 1).mean()))
+        if k == n:
+            break
+        if k > 0:
+            xi = rho_ * xi + np.sqrt(1 - rho_ ** 2) * sx * rng.standard_normal(N_PATHS_D)
+        c = xi - (u * v - 1.0)
+        if scheme == 'heun':
+            up, vp = u + h * c * v, v + h * c * u
+            cp = xi - (up * vp - 1.0)
+            u, v = u + 0.5 * h * (c * v + cp * vp), v + 0.5 * h * (c * u + cp * up)
+        else:
+            u, v = u + h * c * v, v + h * c * u
+    rec = np.array(rec)
+    return dict(scheme=scheme, rho=rho, rec=rec, rate=-np.log(rec[-1, 1] / Q0) / (SIG2_D * T_D))
+
+
 def name_C(scheme, rho, dt):
     out = {'ito': 'afresh each step', 'heun': 'Heun (Stratonovich)'}.get(scheme, f'AR(1), ρ = {rho:+.3f}')
     return out if dt == DT else f'{out}, step {dt:g}'
@@ -154,7 +192,7 @@ def summarise_C(runs, ito0):
     return out
 
 
-def report(A=None, B=None, C=None):
+def report(A=None, B=None, C=None, D=None):
     fmt = E.fmt
     v3 = lambda v, p=4: ', '.join(f'{x:.{p}f}' for x in v)
     L_ = ["# Proposition D‴.41: measurement noise on the gauge (`exp_gauge_label.py`)", "",
@@ -194,6 +232,19 @@ def report(A=None, B=None, C=None):
                       f"{', '.join(f'{v:+.3e}' for v in r['pred'])} | {r['ratio']:+.4f} ± {r['ratio_se']:.4f} | "
                       f"{', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(r['end'], r['end_se']))} | {r['almax']:.2f} | {fmt(r['fit'])} |")
         L_ += ["", f"The limit map's residual drift at its end: at most {max(r['res'] for r in Ci):.1e}.", ""]
+    if D is not None:
+        L_ += [f"## D. The example: the scalar factorisation f = uv with label noise (σ² = {SIG2_D:g}, step {DT_D:g}, T = {T_D:g}, {N_PATHS_D} paths, "
+               f"(u, v)(0) = {UV0_D})", "",
+               "Q = u² − v², Q(0) = " + f"{UV0_D[0] ** 2 - UV0_D[1] ** 2:g}" + ". The Euler step gives Q_{n+1} = Q_n(1 − (ξ_n − r_n)²h²) exactly: the decay is set by "
+               "the per-step variance.", "",
+               "| noise | (1 − ρ)/(1 + ρ) | E[Q] at t = 0, 20, 40, …, 100 | the decay rate −log(E[Q(T)]/Q(0))/(σ²T) | the largest |Q − Q(0)| of a path | "
+               "the mean |uv − 1| at T |", "|---|---|---|---|---|---|"]
+        for r in D:
+            rec = r['rec']
+            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.3f} | "
+                      f"{', '.join(f'{x:.4f}' for x in rec[::2, 1])} | {r['rate']:+.4f} | {rec[-1, 3]:.2e} | {rec[-1, 4]:.4f} |")
+        L_ += ["", "For noise drawn afresh at each step the Itô SDE's E[Q] decays exactly as e^{−σ²t} (dQ = −σ²Q dt + 0·dW); Heun's scheme keeps "
+               "every path's Q to its discretisation error.", ""]
     L_.append("Numbers are produced by `experiments/exp_gauge_label.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -204,9 +255,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABC']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCD']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABC')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCD')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -216,19 +267,23 @@ def main():
         if 'C' in parts:
             h['C'] = pool.map_async(c_series, [(sc, rho, dt, sd, S_C, V_C, GAMMA_C, W0_C) for sc, rho, dt in SCHEMES_C for sd in SEEDS_C],
                                     chunksize=1)
+        if 'D' in parts:
+            h['D'] = pool.map_async(d_job, list(SCHEMES_D), chunksize=1)
         if 'A' in parts or 'C' in parts:
             h['A'] = pool.map_async(a_job, [(g, w) for g in GAMMAS_A for w in W_A], chunksize=1)
         if 'A' in h:
             res['A'] = h['A'].get(); E.save(raw, **res); log('A')
         if 'B' in parts:
             res['B'] = part_B(); E.save(raw, **res); log('B')
+        if 'D' in h:
+            res['D'] = h['D'].get(); E.save(raw, **res); log('D')
         if 'C' in h:
             runs = h['C'].get()
             ito0 = next(r['ito'] for r in res['A'] if r['gamma'] == GAMMA_C and np.allclose(np.r_[r['w'], 1 - r['w'].sum()], W0_C))
             res['C_runs'] = runs
             res['C'] = dict(ito0=ito0, sum=summarise_C(runs, ito0))
             E.save(raw, **res); log('C')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABC']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCD']))
 
 
 if __name__ == '__main__':
