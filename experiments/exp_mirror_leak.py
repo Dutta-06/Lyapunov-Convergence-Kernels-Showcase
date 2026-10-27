@@ -11,7 +11,7 @@ A. Identities: V̇ = −k_ee² + ed − σΣ[B(w*, w) + B(w, w_p) − B(w*, w_p)
 B. The real loop under an approximation error and a disturbance (a scalar plant, six Gaussian atoms, x_m = sin t + 0.4 sin 2.7t): V, the
    largest |w| and the error over time with σ = 0, 0.01, 0.1 — against the ultimate bound (d̄²/(2k_e) + σB(w*, w_p))/min(k_e, σ).
 C. Slow adaptation: the real loop's late mean of w against the averaged loop's equilibrium w_σ (H, d̄_φ the orbit's averages), from a
-   lazy and from a rich start.
+   lazy and from an intermediate start.
 D. The regularisation paths on the orbit's Gram (twelve atoms, a 3-sparse truth): the equilibrium against the ridge (lazy start) and the
    LASSO (rich start, penalty σλ₁(β⁰)) for a range of σ, the supports, the truth's atoms kept.
 
@@ -41,7 +41,8 @@ CEN6, WID6 = np.linspace(-1.2, 1.2, 6), np.full(6, 0.4)
 SIGMAS_B, T_B = (0.0, 0.01, 0.1), 3000.0
 DIST_B = (lambda t: 0.2 * np.sin(3.1 * t) + 0.1)                             # a disturbance with a bias
 APPROX_B = 0.1                                                                  # f = Σw*φ + 0.1 sin(4x): not representable
-KE_C, G_C, GAM_C, T_C, SIGMA_C = 20.0, 0.5, 0.05, 20000.0, 0.02
+KE_C, G_C, GAM_C, T_C = 20.0, 0.5, 0.05, 40000.0
+CASES_C = (('lazy', 3.0, 5e-4), ('intermediate', 0.3, 1e-4))     # (start, β⁰, σ): equilibria 0.037 and 0.12 from w*
 D12, WID12, SIGMAS_D = 12, 0.25, (1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2)
 
 
@@ -132,17 +133,17 @@ def part_C():
     ftrue = lambda x: phi_of(x, CEN6, WID6) @ wstar
     H, ts_o, P = orbit_gram(CEN6, WID6)
     rows = []
-    for lab, b0v in (('lazy', 3.0), ('small masses', 0.01)):
+    for lab, b0v, sig in CASES_C:
         al0 = np.zeros(6); b0 = np.full(6, b0v); q = L.Q(al0, b0); eta_p = L.eta(al0, q)
-        F = L.real_rhs_leak(CEN6, WID6, ftrue, XR, XRD, KE_C, q, eta_p, SIGMA_C)
+        F = L.real_rhs_leak(CEN6, WID6, ftrue, XR, XRD, KE_C, q, eta_p, sig)
         z0 = np.r_[XR(0.0), al0, np.log(b0)]
         ts = np.linspace(0, T_C, 20001)
         sol = solve_ivp(F, (0, T_C), z0, method='LSODA', rtol=1e-9, atol=1e-12, t_eval=ts)
         W = np.exp(sol.y[7:]) * L.amp(sol.y[1:7])[0] / L.m
         late = W[:, ts > 0.75 * T_C].mean(axis=1)
         drift = float(np.abs(W[:, ts > 0.75 * T_C][:, -1] - W[:, ts > 0.75 * T_C][:, 0]).max())
-        w_eq, _ = L.leak_equilibrium(H, wstar, q, eta_p, SIGMA_C, KE_C)
-        rows.append(dict(lab=lab, b0=b0v, ok=bool(sol.success), late=late.tolist(), weq=w_eq.tolist(), wstar=wstar.tolist(),
+        w_eq, _ = L.leak_equilibrium(H, wstar, q, eta_p, sig, KE_C)
+        rows.append(dict(lab=lab, b0=b0v, sig=sig, ok=bool(sol.success), late=late.tolist(), weq=w_eq.tolist(), wstar=wstar.tolist(),
                          d=float(np.abs(late - w_eq).max()), d_star=float(np.abs(late - wstar).max()), drift=drift))
     return rows
 
@@ -203,11 +204,12 @@ def report(A=None, B=None, C=None, D=None):
                       + " | " + ', '.join(f"{x:.4f}" for x in r['erms']) + f" | {fmt(r['dQ'])} | " + (fmt(bound) if r['sig'] > 0 else "—") + " |")
         L_.append("")
     if C is not None:
-        L_ += [f"## C. Slow adaptation (k_e = {KE_C:g}, G = {G_C:g}, γ = {GAM_C:g}, σ = {SIGMA_C:g}, {T_C:g} time units): the late mean of w "
-               "(the last quarter) against the averaged loop's equilibrium w_σ", "",
-               "| start | β⁰ | max |w̄ − w_σ| | max |w̄ − w*| | the last quarter's drift |", "|---|---|---|---|---|"]
+        L_ += [f"## C. Slow adaptation (k_e = {KE_C:g}, G = {G_C:g}, γ = {GAM_C:g}, {T_C:g} time units, from α = 0 and equal masses β⁰, the leak "
+               "toward the start): the late mean of w (the last quarter) against the averaged loop's equilibrium w_σ", "",
+               "| start | β⁰ | σ | max |w̄ − w_σ| | max |w_σ − w*| | max |w̄ − w*| | the last quarter's drift |", "|---|---|---|---|---|---|---|"]
         for r in C:
-            L_.append(f"| {r['lab']} | {r['b0']:g} | {fmt(r['d'])} | {fmt(r['d_star'])} | {fmt(r['drift'])} |")
+            L_.append(f"| {r['lab']} | {r['b0']:g} | {r['sig']:g} | {fmt(r['d'])} | {fmt(float(np.abs(np.array(r['weq']) - np.array(r['wstar'])).max()))} | "
+                      f"{fmt(r['d_star'])} | {fmt(r['drift'])} |")
         L_.append("")
     if D is not None:
         L_ += [f"## D. The regularisation paths on the orbit's Gram ({D12} atoms of width {WID12:g} on [−1.4, 1.4]; its eigenvalues "

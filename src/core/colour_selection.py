@@ -114,6 +114,23 @@ def reduced_flow(Phi, w0, P0, S, h, corr, t_eval=None, rtol=1e-8, atol=1e-11, me
     return np.concatenate(ts), y[:d], np.exp(y[d:])
 
 
+def flow_to_convergence(Phi, w0, P0, S0, h, corr, S_max=1e5, tol_P=1e-8, tol_w=1e-10):
+    """The reduced flow run until it has converged: first to S0, then over doubling horizons until max P < tol_P·max|w| and w moved by
+    less than tol_w·max|w| over the last horizon, or s reaches S_max → (w, P, s reached, converged)."""
+    w, P = np.asarray(w0, float), np.asarray(P0, float)
+    s, dS = 0.0, float(S0)
+    while True:
+        _, W, Pp = reduced_flow(Phi, w, np.maximum(P, 1e-300), dS, h, corr)
+        w1, P1 = W[:, -1], Pp[:, -1]
+        s += dS
+        scale = max(np.abs(w1).max(), 1e-300)
+        done = P1.max() < tol_P * scale and np.abs(w1 - w).max() < tol_w * scale
+        w, P = w1, P1
+        if done or s >= S_max:
+            return w, P, s, bool(done)
+        dS = min(s, S_max - s)
+
+
 def uv_of(w, P):
     """(u, v) with u² − v² = w, uv = P (u, v > 0 for P > 0)."""
     u = np.sqrt((np.sqrt(w * w + 4 * P * P) + w) / 2)
@@ -208,6 +225,41 @@ def label_noise_gd(Phi, y, u0, v0, h, sigma, rho, n_steps, rng, paths, rec_every
         u, v = u - 2 * h * g * u, v + 2 * h * g * v
         xi = rho * xi + a * rng.standard_normal((paths, N))
     return u, v, np.array(rec)
+
+
+def label_noise_heun(Phi, y, u0, v0, h, sigma, rho, n_steps, rng, paths):
+    """As `label_noise_gd`, with Heun's scheme, the same draw in both stages (the ODE driven by the draws' piecewise-constant path, whose
+    selection is O((hλ)²) of the Euler scheme's, Proposition D‴.41(iv)(d)) → (u, v) at the end (paths × d)."""
+    N = Phi.shape[0]
+    u = np.tile(np.asarray(u0, float), (paths, 1)); v = np.tile(np.asarray(v0, float), (paths, 1))
+    xi = sigma * rng.standard_normal((paths, N)); a = np.sqrt(1 - rho * rho) * sigma
+    grad = lambda u, v: ((u * u - v * v) @ Phi.T - y[None, :] - xi) @ Phi / N
+    for _ in range(n_steps):
+        g1 = grad(u, v)
+        u1, v1 = u - 2 * h * g1 * u, v + 2 * h * g1 * v
+        g2 = grad(u1, v1)
+        u, v = u - h * (g1 * u + g2 * u1), v + h * (g1 * v + g2 * v1)
+        xi = rho * xi + a * rng.standard_normal((paths, N))
+    return u, v
+
+
+def sbl_em(Phi, y, lam=1e-10, iters=3000, tol=1e-12):
+    """Sparse Bayesian learning (Tipping's EM for the hyperparameters γ, noise variance λ fixed): μ = ΓΦᵀΣ_y⁻¹y, Σ_ii = γ_i − γ_i²φ_iᵀΣ_y⁻¹φ_i,
+    γ ← μ² + diag Σ, Σ_y = λI + ΦΓΦᵀ → the posterior mean μ (its log-determinant term log|Σ_y| is R's at γ ∝ |w|, λ = 1/τ_c)."""
+    N, d = Phi.shape
+    g = np.ones(d)
+    mu = np.zeros(d)
+    for _ in range(iters):
+        Sy = lam * np.eye(N) + (Phi * g[None, :]) @ Phi.T
+        A = np.linalg.solve(Sy, np.c_[y, Phi])
+        mu_new = g * (Phi.T @ A[:, 0])
+        sig = g - g * g * np.einsum('ij,ij->j', Phi, A[:, 1:])
+        g = np.maximum(mu_new ** 2 + sig, 1e-300)
+        if np.abs(mu_new - mu).max() < tol * max(np.abs(mu_new).max(), 1e-300):
+            mu = mu_new
+            break
+        mu = mu_new
+    return mu
 
 
 def rbf_dictionary(x, centres, width):

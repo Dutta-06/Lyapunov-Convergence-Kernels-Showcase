@@ -132,3 +132,64 @@ def test_the_flow_interpolant_and_one_noisy_step():
 def test_the_kernel_dictionary():
     Phi = CS.rbf_dictionary(np.linspace(0, 1, 15), np.linspace(0, 1, 40), 0.05)
     assert Phi.shape == (15, 40) and np.allclose(np.linalg.norm(Phi, axis=0), 1.0)
+
+
+def test_the_flow_is_the_gradient_flow_of_R_in_its_metric():
+    """The reduced flow's w- and P-drifts against the gradient of R in the metric diag(1/(4D), 1/D) (one common factor): a doubled or
+    halved w-drift fails."""
+    Phi, rng = _design(5, 9, 21)
+    w0 = rng.standard_normal(9); y = Phi @ w0
+    P = rng.uniform(0.05, 0.6, 9)
+    for corr in (('fresh',), ('ou', 30.0)):
+        z = np.r_[w0, np.log(P)]
+        f = CS.rhs(0.0, z, Phi, 0, corr)
+        dw, dP = f[:9], f[9:] * P                                              # rhs is in (w, log P)
+        R = lambda w, P: CS.potential(Phi, np.sqrt(w * w + 4 * P * P), 0, corr)
+        e = 1e-6
+        gw = np.array([(R(w0 + e * np.eye(9)[i], P) - R(w0 - e * np.eye(9)[i], P)) / (2 * e) for i in range(9)])
+        gP = np.array([(R(w0, P + e * np.eye(9)[i]) - R(w0, P - e * np.eye(9)[i])) / (2 * e) for i in range(9)])
+        D = np.sqrt(w0 ** 2 + 4 * P ** 2)
+        pw = -CS.project(Phi, D, 4 * D * gw)
+        pP = -D * gP
+        c = (dP @ pP) / (pP @ pP)
+        assert c > 0
+        assert np.allclose(dP, c * pP, rtol=1e-5, atol=1e-10) and np.allclose(dw, c * pw, rtol=1e-5, atol=1e-10)
+        assert np.abs(Phi @ dw).max() < 1e-10
+
+
+def test_uv_round_trip_and_the_singular_projection():
+    rng = np.random.default_rng(3)
+    w, P = rng.standard_normal(12), rng.uniform(1e-6, 2.0, 12)
+    u, v = CS.uv_of(w, P)
+    assert np.all(u > 0) and np.all(v > 0)
+    assert np.allclose(u * u - v * v, w, atol=1e-12) and np.allclose(u * v, P, rtol=1e-12)
+    Phi, rng = _design(6, 10, 4)
+    D = np.r_[rng.uniform(0.5, 1.0, 3), np.full(7, 1e-300)]                   # three atoms alive, fewer than N: ΦDΦᵀ singular
+    q = D * rng.standard_normal(10)                                             # the flow's form: D times a gradient (dead atoms fixed)
+    pq = CS.project(Phi, D, q)
+    assert np.all(np.isfinite(pq))
+    assert np.abs(Phi @ pq).max() < 1e-8 * np.abs(q).max()
+    assert np.allclose(CS.project(Phi, D, pq), pq, atol=1e-10)                 # a projection
+
+
+def test_the_experiment_helpers_and_the_new_references():
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
+    import exp_colour_selection as X
+    ws = np.array([1.0, 0.0, -0.5])
+    assert X.ok(ws + 0.9e-4, ws) and not X.ok(ws + 1.1e-4, ws)
+    Phi = np.c_[np.eye(3), np.array([1.0, 1.0, 0.0]) / np.sqrt(2)]            # three orthonormal atoms and their bisector
+    w = np.array([1.0, -1.0, 0.0, 0.0])
+    ratio, k = X.certificate(Phi, w, 0.0)
+    om = (Phi ** 2).sum(axis=0)
+    c = Phi[:, 3] @ np.linalg.pinv(Phi[:, :2]).T @ (om[:2] * np.sign(w[:2]))  # = (1 − 1)/√2 = 0
+    assert k == 2 and abs(ratio - abs(c) / om[3]) < 1e-12 and ratio < 1e-12
+    w2 = np.array([1.0, 1.0, 0.0, 0.0])                                         # same signs: c = √2 > ω = 1, not certified
+    assert abs(X.certificate(Phi, w2, 0.0)[0] - np.sqrt(2)) < 1e-12
+    Phi, rng = _design(8, 20, 9)
+    ws = np.zeros(20); ws[[3, 11]] = [1.0, -0.7]
+    assert np.abs(CS.sbl_em(Phi, Phi @ ws) - ws).max() < 1e-6
+    w, P, s, conv = CS.flow_to_convergence(Phi, *X.start(Phi, Phi @ ws, 0.5), 50.0, 0, ('fresh',), S_max=5e3)
+    assert conv and P.max() < 1e-8 * np.abs(w).max()
+    u0, v0 = CS.uv_of(*X.start(Phi, Phi @ ws, 0.5))
+    u, v = CS.label_noise_heun(Phi, Phi @ ws, u0, v0, 0.2, 0.0, 0.0, 50, np.random.default_rng(1), 2)   # noiseless: stays on M
+    assert np.abs((u * u - v * v) @ Phi.T - Phi @ ws).max() < 1e-8
