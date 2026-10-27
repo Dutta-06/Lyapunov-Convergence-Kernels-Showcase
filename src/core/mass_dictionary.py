@@ -115,36 +115,43 @@ class MassDictionary:
             th = th - PJ @ np.linalg.lstsq(J @ PJ, c, rcond=None)[0]
         return th
 
-    def ito_term(self, th, Sig_ll=None):
+    def ito_term(self, th, Sig_ll=None, filt=None):
         """The paradigm's update (Euler on log β, renormalised) against the flat one: the drift (in θ, per unit v) whose part along M it
-        adds — in ℓ = log β the fitness diag(Σ_ℓℓ)/4 (fresh draws, h → 0: Σ_ℓℓ = ⟨U_ℓU_ℓᵀ⟩_ρ, U_ℓ,i(x) = γ(a_iφ_i(x) − f̂_λ(x)),
-        f̂_λ = Σβ_ja_jφ_j/Σβ_j for the conserved mass); `Sig_ll` the filtered diagonal instead (coloured draws)."""
-        _, rho, b, a, _, _ = self.parts(th)
+        adds — in ℓ = log β the fitness diag(Σ_f,ℓℓ)/4, Σ_f the increment's filtered second moment. Label noise is ∝ the Gauss–Newton
+        matrix, diagonal in its eigenbasis, so the filter weighs each normal mode by f(κ): the noise fields in ℓ being U_ℓ,i(x) =
+        γ(a_iφ_i(x) − f̂_λ(x)) (f̂_λ = Σβ_ja_jφ_j/Σβ_j with the conserved mass, 0 without), Σ_f,ℓℓ = (γ²/N)·X Φᵀf(K)Φ Xᵀ, X = diag(a) − (1/m)
+        1(β⊙a)ᵀ (K the conserved mass's K̃); `filt` the filter (None: fresh draws as h → 0, f ≡ 1), or `Sig_ll` given directly."""
+        al, rho, b, a, da, dda = self.parts(th)
         if Sig_ll is None:
-            Ul = self.gamma * a[None, :] * self.Phi
+            f = (lambda k: np.ones_like(k)) if filt is None else filt
+            kap, Q = np.linalg.eigh(self.gram(th))
+            M = (self.Phi.T @ Q) @ np.diag(f(np.clip(kap, 0.0, None))) @ (Q.T @ self.Phi)       # Φᵀ f(K) Φ
+            X = np.diag(a)
             if self.balanced:
-                Ul = Ul - (Ul @ b / b.sum())[:, None]
-            Sig_ll = (Ul ** 2).mean(axis=0)
+                X = X - np.outer(np.ones(self.d), b * a) / b.sum()
+            Sig_ll = (self.gamma ** 2 / self.N) * np.einsum('ij,jk,ik->i', X, M, X)
         return np.r_[np.zeros(self.d), 0.5 * rho * np.asarray(Sig_ll, float) / 4.0]
 
     def drift(self, th, filt, ito=False):
         """The selection's drift along M per unit s = (m v/4)t: −P_g(P∇R) (the flat scheme), plus, with `ito`, the paradigm's update's
-        Itô term (for fresh draws; `ito_term`)."""
+        Itô term at the same filter (`ito_term`)."""
         q = -self.project(th, self.Pm * self.grad(th, filt))
         if ito:
-            q = q + self.project(th, self.ito_term(th) * (4.0 / self.m))
+            q = q + self.project(th, self.ito_term(th, filt=filt) * (4.0 / self.m))
         return q
 
     def flow(self, th, S, filt, ito=False, t_eval=None, chunks=40, rtol=1e-8, atol=1e-10, method='LSODA'):
         """The selection flow over s ∈ [0, S] from θ on M → (s, Θ (len(s), 2d)), integrated in z = (α, log β) (an atom's mass decays
         exponentially once the selection drops it: linear in log β), piecewise, retracted onto M at the pieces' ends."""
         from scipy.integrate import solve_ivp
-        d = self.d
-        to_z = lambda x: np.r_[x[:d], 2 * np.log(x[d:])]
-        to_th = lambda z: np.r_[z[:d], np.exp(0.5 * z[d:])]
+        d, lfloor = self.d, -1400.0                                              # a dead atom's mass read as ≥ e^{−1400}: its log-mass
+        to_z = lambda x: np.r_[x[:d], 2 * np.log(x[d:])]                         # keeps decaying linearly, without underflow
+        to_th = lambda z: np.r_[z[:d], np.exp(0.5 * np.maximum(z[d:], lfloor))]
 
         def rhs(s, z):
             x = to_th(z)
+            if not np.all(np.isfinite(x)):
+                return np.full_like(z, np.nan)                                  # an overshooting trial stage: rejected
             q = self.drift(x, filt, ito)
             return np.r_[q[:d], 2 * q[d:] / x[d:]]
         edges = np.linspace(0.0, S, chunks + 1)

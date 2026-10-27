@@ -60,8 +60,8 @@ def test_the_closed_forms_are_katzenbergers_drift():
         h, corr = 0.5, ('ar1', float(np.exp(-0.5 / 200.0)))
         filt = lambda k: MD.LN.lr_factor(k, h, corr)
         g, Sf = X.scheme_drift(th, B, h=h, corr=corr, coords='log')
-        q = -X.project(th, X.Pm * X.grad(th, filt)) * X.m / 4 + X.project(th, X.ito_term(th, np.diag(Sf)[X.d:]))
-        assert np.abs(g - q).max() < 1e-4 * np.abs(g).max()
+        assert np.abs(g - X.drift(th, filt, ito=True) * X.m / 4).max() < 1e-4 * np.abs(g).max()        # the filtered Itô term's
+        assert np.allclose(X.ito_term(th, filt=filt), X.ito_term(th, np.diag(Sf)[X.d:]), rtol=1e-7, atol=0)   # closed form
 
 
 def test_the_excess_mass_bound():
