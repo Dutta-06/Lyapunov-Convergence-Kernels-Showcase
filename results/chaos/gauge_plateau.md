@@ -39,7 +39,7 @@ Masses sharp, toward class 3's saturation: the largest ΔJ/τ along the path 8.2
 | 0.0002 | 19/24 | 4.06e-6 ± 9.32e-7 | 1.6e+05 | 1.90e-4 | 0.0465 |
 | 0.0003 | 24/24 | 1.09e-5 ± 2.23e-6 | 6.65e+04 | 1.42e-4 | 0.0538 |
 
-The slope of log(rate) against 1/τ: 6.31e-4 (the lowest J on the escape set's boundary, ΔJ = 7.69e-4).
+The slope of log(rate) against 1/τ: 6.31e-4 (the lowest J on the escape set's boundary, ΔJ = 7.69e-4); weighted by the escape counts (log(rate)'s variance ≈ 1/n): 6.25e-4 ± 1.09e-4, 0.81 ± 0.14 of ΔJ (referee round 31).
 
 ## D. The dead zone at fixed masses 1/3 (γ = 0, τ = 0.0002, 16 seeds, 400000 slow units)
 

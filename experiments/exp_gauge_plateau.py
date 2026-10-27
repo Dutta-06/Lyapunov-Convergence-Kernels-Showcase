@@ -256,7 +256,13 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
                "| τ | escapes | the rate (per slow unit, ± s.e.) | the median time | the rate × e^{ΔJ/τ} | the fit error at the escape |", "|---|---|---|---|---|---|"]
         for r in C['rows']:
             L_.append(f"| {r['tau']:g} | {r['n']}/{r['N']} | {fmt(r['rate'])} ± {fmt(r['rate_se'])} | {r['med']:.3g} | {fmt(r['scaled'])} | {fmt(r['fit'])} |")
-        L_ += ["", f"The slope of log(rate) against 1/τ: {fmt(-C['slope'])} (the lowest J on the escape set's boundary, ΔJ = {fmt(C['dJ'])}).", ""]
+        ok = [r for r in C['rows'] if r['n'] > 0]
+        x = np.array([1 / r['tau'] for r in ok]); yv = np.log([r['rate'] for r in ok]); w = np.array([r['n'] for r in ok], float)
+        xb, yb = w @ x / w.sum(), w @ yv / w.sum()
+        sl, se_sl = (w @ ((x - xb) * (yv - yb))) / (w @ (x - xb) ** 2), 1 / np.sqrt(w @ (x - xb) ** 2)
+        L_ += ["", f"The slope of log(rate) against 1/τ: {fmt(-C['slope'])} (the lowest J on the escape set's boundary, ΔJ = {fmt(C['dJ'])}); "
+               f"weighted by the escape counts (log(rate)'s variance ≈ 1/n): {fmt(-sl)} ± {fmt(se_sl)}, {-sl / C['dJ']:.2f} ± {se_sl / C['dJ']:.2f} of ΔJ "
+               "(referee round 31).", ""]
     if D is not None:
         L_ += [f"## D. The dead zone at fixed masses 1/3 (γ = 0, τ = {TAU_D:g}, {len(SEEDS_D)} seeds, {S_D:g} slow units)", "",
                f"A record is on the plateau when its second width exceeds {S2_PLATEAU:g} (A and B: the plateaus' configurations and the path's).", "",

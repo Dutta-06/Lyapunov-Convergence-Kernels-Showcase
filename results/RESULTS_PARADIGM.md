@@ -1002,7 +1002,8 @@ key carries the code's version).
   approximate fits with one amplitude saturated lies 7.6–7.8τ above the exact fit at W = 1/3 and at W♯ (fit error 0.035), 7.66τ at the
   box's edge: the box bounds the plateau, it does not raise it. (B) At W = 1/3 the minimum-energy path climbs to it monotonically.
 - (C) At fixed masses the escapes occur at (1.33, 4.06, 10.9)·10⁻⁶ per slow unit for τ = 1.5, 2, 3·10⁻⁴ (10, 19, 24 of 24 seeds within
-  4·10⁵), the Arrhenius slope 82% of ΔJ = 7.69·10⁻⁴ at ΔJ/τ = 2.6–5.1. (D) Without the box the plateau's occupation grows (0.18 → 0.57
+  4·10⁵), the Arrhenius slope (0.81 ± 0.14) of ΔJ = 7.69·10⁻⁴ at ΔJ/τ = 2.6–5.1 (weighted by the escape counts), within 1.3 standard errors of
+  Freidlin–Wentzell's limit. (D) Without the box the plateau's occupation grows (0.18 → 0.57
   of the records by quarters, the largest |α| to 27.6); with it it stays at 0.09–0.19 and |α| ≤ 5. (E) In the full loop with the box
   (γ = 10⁻², 12 seeds, 10⁶ slow units) each run is the unboxed one until a coordinate leaves B; at κ_F = 0 the masses' spread at 10⁶ is
   0.05–0.075 against 0.08–0.15 without the box, on their way to P_B's vertices; at κ_F = 2 within 0.41 s.e. of W♯. (F) Without a leak
