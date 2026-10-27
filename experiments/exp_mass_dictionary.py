@@ -15,12 +15,12 @@ A. Identities at random exact fits: the closed forms against Katzenberger's drif
 B. The paradigm's noisy scheme (64 paths) against the reduced flow: the paths' mean ‖w‖₁ and its largest deviation from the flow's w at
    nine times, for the conserved, free and null-kernel laws under fresh and AR(1) draws.
 C. The selection's ends on random instances (N = 5, d = 12 Gaussian designs, 2- and 3-sparse truths of ‖w*‖₁ < a_max): the conserved, free
-   and null-kernel laws under white and slow (AR(1), τ_c = 10³, 10⁴, 10⁵) noise — ‖w‖₁/a_max, the excess, the atoms used and alive, the
+   and null-kernel laws under white and slow (AR(1), τ_c = 10³, 10⁴) noise — ‖w‖₁/a_max, the excess, the atoms used and alive, the
    truth recovered, the distance to basis pursuit; for white noise also the flat update's end and the minimiser of Σ_i|φ_i|²D*(|w_i|).
 D. The same on Gaussian kernel dictionaries (16 centres, 8 samples on [0, 1]).
 E. The conserved law's white end for a_max = 0.5, 1, 2, 4: ‖w‖₁/a_max — the inflation goes to the representability boundary, whatever it is.
 
-Output: results/chaos/mass_dictionary.md and mass_dictionary_raw.npz (MD_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D`).
+Output: results/chaos/mass_dictionary.md and mass_dictionary_raw.npz (MD_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D,E`).
 """
 import os
 import sys
@@ -44,10 +44,10 @@ OUT = os.environ.get('MD_OUT', os.path.join(os.path.dirname(__file__), '..', 're
 N_WORKERS = int(os.environ.get('MD_WORKERS', 2))
 N_I, D_I, M_I, G_I, GAM_I, AMAX = 5, 12, 12.0, 1.0, 0.1, 1.0
 MODES = ('conserved', 'free', 'null kernel')
-TAUS = (0.0, 1e3, 1e4, 1e5)
-S_END = 3e8
-KS_C, N_INST_C = (2, 3), 40
-KS_D, N_INST_D, N_D, D_D, WIDTH_D = (2, 3), 20, 8, 16, 0.08
+TAUS = (0.0, 1e3, 1e4)
+S_END = 1e8
+KS_C, N_INST_C = (2, 3), 16
+KS_D, N_INST_D, N_D, D_D, WIDTH_D = (2, 3), 8, 8, 16, 0.08
 AMAXES_E, N_INST_E = (0.5, 1.0, 2.0, 4.0), 12
 H_B, SIG_B, SIG_B_SLOW, P_B, SEED_B = 1.0, 0.1, 0.03, 64, 4             # slow draws: the fit follows the noise, so a smaller σ keeps it near M
 

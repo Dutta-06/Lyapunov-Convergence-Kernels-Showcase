@@ -244,3 +244,64 @@ class FreeLaw:
         """V = ½e² + Σ_iB_{q_i}(w*_i, w_i) at the state z (α* the curves' points at w*)."""
         d = q.size
         return 0.5 * (z[0] - x_ref(t)) ** 2 + self.bregman_div(al_star, z[1:1 + d], q)
+
+    # --- the leak in the mirror coordinates (Proposition D‴.46) -----------------------------------------------------------------------
+    def real_rhs_leak(self, centres, widths, f_true, x_ref, x_ref_dot, ke, q, eta_p, sigma, dist=None, noise=None):
+        """The real loop with the leak −σ(η_i − η_p,i) added to each particle's scalar drive (Q_i = q_i kept): z = (x, α, log β),
+        ẋ = f(x) + ẋ_m − k_ee − f̂(x) + d(t); the adaptation sees e + n(t); α̇_i = Gβ_ia′_iu_i, (log β_i)˙ = γa_iu_i,
+        u_i = (e + n)φ_i(x) − σ(η_i − η_p,i), η_i = η(α_i; q_i). f_true is a function of x (realisable or not)."""
+        centres, widths, q, eta_p = (np.asarray(v, float) for v in (centres, widths, q, eta_p))
+        d = centres.size
+        G, gam, m = self.G, self.gamma, self.m
+
+        def f(t, z):
+            x, al, lb = z[0], z[1:1 + d], z[1 + d:]
+            b = np.exp(lb); a, da = self.amp(al)
+            phi = np.exp(-(x - centres) ** 2 / (2 * widths ** 2))
+            e = x - x_ref(t)
+            em = e + (0.0 if noise is None else noise(t))
+            u = em * phi - (sigma * (self.eta(al, q) - eta_p) if sigma else 0.0)
+            xdot = f_true(x) + x_ref_dot(t) - ke * e - phi @ (b * a / m) + (0.0 if dist is None else dist(t))
+            return np.r_[xdot, G * b * da * u, gam * a * u]
+        return f
+
+    def leak_equilibrium(self, H, wstar, q, eta_p, sigma, ke, dphi=None, tol=1e-13, it_max=200):
+        """The averaged loop's equilibrium with the leak: the minimiser of (1/(2k_e))(w − w*)ᵀH(w − w*) − ⟨d̄_φ, w⟩/k_e + σΣB(w_i, w_p,i),
+        i.e. H(w(η) − w*)/k_e − d̄_φ/k_e + σ(η − η_p) = 0, by damped Newton in η (Jacobian H diag(mD)/k_e + σI). Returns (w, α)."""
+        H, wstar, q, eta_p = (np.asarray(v, float) for v in (H, wstar, q, eta_p))
+        dphi = np.zeros_like(wstar) if dphi is None else np.asarray(dphi, float)
+        eta = eta_p.copy()
+
+        def resid(eta):
+            al = self.alpha_of_eta(eta, q)
+            w = self.w(al, q)
+            return H @ (w - wstar) / ke - dphi / ke + sigma * (eta - eta_p), al, w
+        R, al, w = resid(eta)
+        for _ in range(it_max):
+            if np.linalg.norm(R) < tol:
+                break
+            Jm = H * (self.m * self.relevance(al, q))[None, :] / ke + sigma * np.eye(len(eta))
+            step = np.linalg.solve(Jm, R)
+            lam = 1.0
+            while lam > 1e-10:
+                R2, al2, w2 = resid(eta - lam * step)
+                if np.linalg.norm(R2) < np.linalg.norm(R):
+                    break
+                lam /= 2
+            eta, R, al, w = eta - lam * step, R2, al2, w2
+        return w, al
+
+
+def lasso(H, wstar, mu, ke, it=20000, tol=1e-14):
+    """min (1/(2k_e))(w − w*)ᵀH(w − w*) + Σ_iμ_i|w_i| by cyclic coordinate descent (H positive definite)."""
+    H, wstar, mu = (np.asarray(v, float) for v in (H, wstar, mu))
+    w = np.zeros_like(wstar)
+    b = H @ wstar
+    for _ in range(it):
+        w_old = w.copy()
+        for i in range(len(w)):
+            r = b[i] - H[i] @ w + H[i, i] * w[i]
+            w[i] = np.sign(r) * max(abs(r) - ke * mu[i], 0.0) / H[i, i]
+        if np.abs(w - w_old).max() < tol:
+            break
+    return w

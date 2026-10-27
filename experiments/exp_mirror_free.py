@@ -260,7 +260,16 @@ def part_C4():
             proj = np.array(proj)
             out[upd] = dict(dQ_mean=float((Qp - q0).mean()), dQ_max=float(np.abs(Qp - q0).max()),
                             d_proj=float(np.abs(proj - w0).max(axis=1).mean()), d_bp=float(np.abs(proj - wbp).max(axis=1).mean()),
-                            l1=float(np.abs(proj).sum(axis=1).mean()), res=float(np.linalg.norm((b * L.amp(al)[0] / L.m) @ Phi.T - y, axis=1).mean()))
+                            l1=float(np.abs(proj).sum(axis=1).mean()), res=float(np.linalg.norm((b * L.amp(al)[0] / L.m) @ Phi.T - y, axis=1).mean()),
+                            proj_mean=proj.mean(axis=0).tolist())
+        # Proposition D‴.44's reduced flow (the step's filter) to the same s = (m v/4) t, v = hσ²/N
+        X = MD.MassDictionary(Phi, y, M_I, a_max=AMAX, G=G_I, gamma=GAM_I, balanced=False)
+        s_end = M_I * (H_C4 * SIG_C4 ** 2 / N_I) / 4 * N_C4 * H_C4
+        filt = lambda k: MD.LN.lr_factor(k, H_C4, ('fresh',))
+        th = X.flow(X.theta(al0, L.beta(al0, q0)), s_end, filt, ito=True, chunks=20)[1][-1]
+        alr, _, br, _, _, _ = X.parts(th); wr = X.w(th)
+        out['reduced'] = dict(s=float(s_end), l1=float(np.abs(wr).sum()), dQ_mean=float((L.Q(alr, br) - q0).mean()),
+                              d_euler=float(np.abs(np.array(out['Euler']['proj_mean']) - wr).max()))
         rows.append(out)
     return rows
 
@@ -448,6 +457,10 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                     x = r[upd]
                     L_.append(f"| {r['i']} | {r['l1_0']:.4f}, {fmt(r['d_bp0'])} | {upd} | {x['dQ_mean']:+.3e}, {fmt(x['dQ_max'])} | "
                               f"{fmt(x['d_proj'])} | {fmt(x['d_bp'])} | {x['l1']:.4f} | {x['res']:.3f} |")
+            L_ += ["", "Proposition D‴.44's reduced flow (the step's filter) to the same s = (m v/4)t: its ‖w‖₁ and mean change of Q, and the "
+                   "Euler paths' mean projection against its state: " + '; '.join(
+                       f"instance {r['i']} (s = {r['reduced']['s']:g}): {r['reduced']['l1']:.4f}, {r['reduced']['dQ_mean']:+.3e}, {fmt(r['reduced']['d_euler'])}"
+                       for r in C['c4'] if 'reduced' in r) + "."]
             L_.append("")
     if D is not None:
         L_ += [f"## D. The real loop (k_e = {KE_D:g}, γ = {GAM_D:g}, m = {M_D:g}, six Gaussian atoms of width 0.4 on [−1.2, 1.2] and a second "

@@ -126,3 +126,47 @@ def test_mirror_step_keeps_Q_and_moves_eta_by_hg():
     al1 = L.mirror_step(al, q, g, 0.3)
     assert np.allclose(L.eta(al1, np.broadcast_to(q, al.shape)) - L.eta(al, np.broadcast_to(q, al.shape)), 0.3 * g, atol=1e-11)
     assert np.allclose(L.Q(al1, L.beta(al1, q)), np.broadcast_to(q, al.shape), atol=1e-13)
+
+
+def test_leak_lyapunov_identity_and_equilibrium_limits():
+    """Proposition D‴.46: V̇ = −k_ee² + ed − σΣ[B(w*, w) + B(w, w_p) − B(w*, w_p)] with the leak and a disturbance; the averaged
+    equilibrium is the ridge at large starting masses and near the LASSO (same support) at small ones."""
+    L = MF.FreeLaw(m=6.0, G=1.0, gamma=0.5, a_max=1.0)
+    rng = np.random.default_rng(4)
+    d = 6
+    cen, wid = np.linspace(-1.2, 1.2, d), np.full(d, 0.4)
+    al0, b0 = 0.1 * rng.standard_normal(d), rng.uniform(0.5, 1.5, d)
+    q = L.Q(al0, b0)
+    wstar = rng.uniform(-0.15, 0.15, d)
+    al_star = L.alpha_of_w(wstar, q)
+    xr, xrd = (lambda t: np.sin(t)), (lambda t: np.cos(t))
+    dist = lambda t: 0.2 * np.sin(3.1 * t)
+    ftrue = lambda x: np.exp(-(x - cen) ** 2 / (2 * wid ** 2)) @ wstar
+    ke, sig = 5.0, 0.3
+    F = L.real_rhs_leak(cen, wid, ftrue, xr, xrd, ke, q, L.eta(al0, q), sig, dist=dist)
+    for _ in range(3):
+        al = al0 + 0.3 * rng.standard_normal(d)
+        z = np.r_[rng.uniform(-1, 1), al, np.log(L.beta(al, q))]
+        t = rng.uniform(0, 6)
+        dz = F(t, z); hh = 1e-6
+        V = lambda s: L.real_lyapunov(z + s * dz, t + s, xr, al_star, q)
+        dV = (V(hh) - V(-hh)) / (2 * hh)
+        e = z[0] - xr(t)
+        B = lambda a1, a2: L.bregman_div(a1, a2, q)
+        pred = -ke * e ** 2 + e * dist(t) - sig * (B(al_star, al) + B(al, al0) - B(al_star, al0))
+        assert abs(dV - pred) < 1e-6 * max(1.0, abs(pred))
+        assert abs(dz[1:1 + d] @ (-L.c * 2 * np.sinh(2 * al / L.A) / L.A) + dz[1 + d:] @ L.beta(al, q)) < 1e-10   # Q kept
+    Lz = MF.FreeLaw()
+    A = rng.standard_normal((30, 10)); H = A.T @ A / 30
+    ws = np.zeros(10); ws[[1, 6]] = [0.2, -0.25]
+    q = Lz.Q(np.zeros(10), np.full(10, 100.0))
+    w, _ = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 1e-2, 1.0)
+    ridge = np.linalg.solve(H + 1e-2 * Lz.m / (Lz.G * 100.0 ** 2) * np.eye(10), H @ ws)
+    assert np.abs(w - ridge).max() < 1e-6 * np.abs(ridge).max()
+    b0 = 1e-8
+    q = Lz.Q(np.zeros(10), np.full(10, b0))
+    lam1 = np.pi * Lz.A * np.sqrt((2 * Lz.c - b0) / b0) / (4 * Lz.G * Lz.c)
+    w, _ = Lz.leak_equilibrium(H, ws, q, np.zeros(10), 0.02 / lam1, 1.0)
+    ls = MF.lasso(H, ws, np.full(10, 0.02), 1.0)
+    assert np.abs(w - ls).max() < 1e-3 * np.abs(ls).max()
+    assert np.array_equal(np.abs(w) > 1e-3 * np.abs(w).max(), np.abs(ls) > 1e-12)
