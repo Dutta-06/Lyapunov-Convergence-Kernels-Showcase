@@ -104,3 +104,15 @@ def test_the_noisy_scheme_keeps_the_mass_and_fits():
     rec, al1, b1 = X.noisy(al, b, 0.5, 0.0, 0.0, 200, rng, 3, 100)
     assert np.allclose(b1.sum(axis=1), X.m)
     assert np.abs(rec[-1] - X.w(th)[None, :]).max() < 1e-10                   # without noise a point of M stays put
+
+
+def test_the_multiplicative_update_cancels_the_masses_own_selection():
+    """Free masses: the paradigm's drift (the flat one plus its Itô term) equals the flat drift without the mass term of D_i differentiated
+    in √β, for every colour — in the multiplicative law a mass is not selected by its own noise."""
+    X, th, rng = _instance(balanced=False)
+    for filt in (lambda k: np.ones_like(k), lambda k: 1.0 / (1.0 + 300.0 * k)):
+        al, rho, b, a, da, dda = X.parts(th)
+        om = (X.m / X.N) * X.weights(th, filt); m2 = X.m ** 2
+        g = np.r_[om * (b / m2) * (2 * X.G * b * da * dda + 2 * X.gamma * a * da), om * (2 * X.G * b * da ** 2 / m2) * 2 * rho]
+        full = X.drift(th, filt, ito=True)
+        assert np.abs(full + X.project(th, X.Pm * g)).max() < 1e-12 * np.abs(full).max()
