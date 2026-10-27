@@ -1330,3 +1330,219 @@ O(h2²) error. 38 of 45 mutants killed.
 continued branch, a limit's direction from three cosines, a sub-percent residual given a mechanism without varying the step. Map the whole
 zero set and its basins before naming a target, vary the noise's spectrum and not only its correlation time, and extrapolate any small
 numerical effect in the step of the computation that produced it.
+
+## Round 31 (adversarial review of Propositions D‴.39 and D‴.40, the dithered gauge's dissipativity and the gauge under general noise, and of the round-30 revisions of D‴.41 and D‴.42, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ad: Proposition D‴.39 (inserted at 1cefb5f), the draft of D‴.40 and the
+round-30 revisions of D‴.41 and D‴.42, with their code at 7adc47e, Part E of `exp_gauge_noise.py` still running
+(`review/REVIEW_round31_D3ad.md`): the generator identity term by term in the boxed stationary law (simulations at τ = 10⁻³, 10⁻² with
+every term), the leading-order claim under correlated noise, Part E's 32 finished series (the correlated noise's effective levels), Part
+G1b's zero search, the plateau's escape statistics, the box's regularity, the τ̂ estimator; 26 mutants.
+
+**Verdicts (D3ad).** D‴.40(i)'s identity right only with the box's and the cohesion's terms (without the box no stationary law exists;
+with it the box's term shifts E[u_k] by up to 5.4·10⁻² from the closed form at the fit); "only each amplitude's own intensity" exact for
+the prefactor only — the O(τ²) term depends on all of Σ; Part E ran without the box; D‴.41's Part G1b missed stable zeros at γ = 10⁻⁵.
+D‴.39's dead zone without bias only for the deterministic objects; its Arrhenius slope 0.81 ± 0.14 of the barrier, within 1.3 standard
+errors of Freidlin–Wentzell's limit (the "82%" had no error bar).
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ad-1 | major (D‴.40 (i)) | the identity omits E[g_k∂_{α_k}V]; "exactly in any stationary law" vacuous without the box | (i) with the box's and the cohesion's terms, the boxed stationary law (exact for the diffusion, the Euler chain's O(Δt) bias measured), the box-free form in the well up to exit terms; Part D every term |
+| D3ad-2 | major (D‴.40) | "only each amplitude's own intensity" only for the prefactor | (i): at leading order; the O(τ²) term E[g′_k] depends on all of Σ (Part D's amplitudes-only against isotropic) |
+| D3ad-3 | major (Part E) | run without the box; the correlated noise heats the centres 4–12× | Part E inside the box with a correlated Σ at the amplitude levels (2, 1, ½)τ, the classes' levels variant: pending (the rerun of Part E is still running) |
+| D3ad-4 | major (D‴.41 G1b) | three stable zeros missed at γ = 10⁻⁵; W₀'s flow into a corner | the zero search with reference levels and a capped step (`g_ref`, `g_zero`, `g_flow`): at γ = 10⁻⁵ the three stable zeros from τ_c = 100 on and the unstable centre from τ_c = 1000 (a8074e0); at τ_c = 10⁵ the flow from W₀ stops on its step budget short of its zero (exponents −2.2, −1.9) |
+| D3ad-5–6 | minor | D‴.40(ii)'s zero drift fails in the boxed law; τ̂ biased by the drift | (ii) qualified, "no block coupling"; (iii): the noise increments Δα − Δt·b, or the O(Δt) bias stated |
+| D3ad-7 | minor | Part D's χ² tests E[Lψ] only; the Euler bias 0.9–1.4%; the errors underestimated | Part D: the identity's residual and z, the chain-exact Euler estimator, martingale standard errors: pending (the rerun of Part D is still running) |
+| D3ad-8–9 | minor | numbers ("3·10⁻²" is 5.4·10⁻², from the box); the stationary Stein identity's precedents (configurational temperature) | numerics, docstrings; [S68] (Rugh; Jepps–Ayton–Evans; Stein's method), the novelty narrowed to the gauge identity |
+| D3ad-10–12 | minor (D‴.39) | "without bias" for the stationary averages; the slope's error bar; the C^{1,1} wall and MYULA | (iii)(b) the deterministic objects only; (0.81 ± 0.14)ΔJ; the layer flagged, [S67] |
+| D3ad-13 | minor | mutants of the correlated-noise path (`noise_L`), the levels, the per-class form, the replicator flow survive; no test of the generator identity | `tests/test_gauge_noise.py` (+3 tests) |
+| D3ad-14–16 | minor/cosmetic | D‴.41 (iv)(c)'s Ψ(∞) off by 2π; slips; typos | fixed |
+
+**Lesson.** An identity that is exact for one generator is not exact for the law one actually samples: every force the gauge does not
+cover — a box, a cohesion, a time step — enters the stationary average, and has to be measured, not assumed away. Name the stationary
+law, list its forces, and test the identity term by term where the law reaches its walls.
+
+## Round 32 (adversarial review of Proposition D‴.43, the colour of label noise selects the kernels, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ae: the draft of Proposition D‴.43 and its code at 883425a
+(`review/REVIEW_round32_D3ae.md`): the coordinate change and the reduced flow against 64-path means with the w-drift scaled; integration
+horizons; success thresholds, magnitude laws, a 40 × 160 design, a fit floor; smooth and anti-correlated noise; R(truth) against R(end);
+certificates against τ_c on kernel dictionaries and the flow's actual return; SBL, reweighted ℓ¹ (ε, start), IRLS-ℓp, OMP on the same
+instances; Euler against Heun at the same physical noise; seeds 4–7 at B's setting and 0–7 at σ = 0.3, 0.5; 23 mutants.
+
+**Verdicts (D3ae).** The reduced flow's formula right and followed by 64-path means at σ = 0.1; its recovery advantage over basis pursuit
+robust at the level of the flow (threshold, magnitude law, 40 × 160) — but SBL matches or beats it; F's "no advantage from α = 2" a
+horizon artefact; B's 4/4 seeds luck (4 more: 0, 0, 0, 2/16); the descent's agreement breaks by σ = 0.3; at h = 0.5 the white comparator
+is not basis pursuit; the effect an O(h) term of the explicit step (Heun 25× smaller); (i)'s "proved" outside its spectral-gap
+hypothesis in the pruning phase; 10 of 23 mutants surviving.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ae-1 | major | F's α = 2 claim a horizon artefact | F run to convergence (`flow_to_convergence`): from α = 2 the slow flow recovers 0.35, 0.30 (k = 3, 4), at basis pursuit's rate (0.45, 0.25) |
+| D3ae-2–3 | major | the noisy outcome depends on σ and on the seed | B over 8 seeds × 16 paths, the σ sweep per seed: the descent recovers where its reduced flow does (4 of 8 seeds, 16/16 paths), at σ = 0.3 on three of them, at σ = 0.5 on one; (i): the flow as the small-σ limit |
+| D3ae-4 | major | SBL missing; reweighted ℓ¹ unfair; Wipf–Nagarajan's theorem | G with SBL and reweighted ℓ¹ at three ε from two starts: SBL 0.88, 0.55 against the slow flow's 0.75, 0.60 (k = 3, 4), reweighted ℓ¹ 0.38–0.53, 0.17–0.25; the novelty narrowed to the mechanism; [S70] |
+| D3ae-5 | major | white = basis pursuit only as h, σ → 0 | (ii) restated; the finite-step comparator labelled; Damian–Ma–Lee's Ψ |
+| D3ae-6 | major | an O(h) effect of the explicit step | the setting states it (rate ∝ hσ², none in continuous time); Part J, Euler at two steps against Heun: Δlog P off the support −2.39 (Euler, h = 0.5), −0.278 (Euler, h = 0.125), −0.097 (Heun, h = 0.5) |
+| D3ae-7 | major | (i) proved only with a spectral gap | Status: proved where rank K = N and λ_min(K) ≫ v_h; the pruning phase and (v) the reduced flow's |
+| D3ae-8–10 | minor | the certificate's τ_c threshold; Fuchs's, not the exact recovery condition; "spark" | (v) restated; H on kernel dictionaries with the flow's return and basis pursuit's success: certified in 0.85–1.00 of the instances at τ_c = 10⁵ (white 0–0.60), the flow returning in 0.90–1.00 |
+| D3ae-11–12 | minor | concavity only in the continuum (slope ∝ 1 − 3ρ); the SBL analogy | (iv) in the continuum, the finite-step expansion; Fazel's log-det heuristic, SBL's log\|Σ_y\| term |
+| D3ae-13–14 | minor | the truth not always the global minimiser; D's instance 13 misread | C: R(end) against R(truth); D: the flow to convergence beside the noisy runs |
+| D3ae-15 | minor | mutants survive (the w-drift's factor, uv_of, the projection's truncation, the experiment's helpers) | three tests: the drifts against R's gradient in its metric (a doubled w-drift fails), `uv_of`'s round trip with the singular projection, the experiment's `ok` and `certificate` by hand with SBL, the convergence criterion and Heun's step |
+| D3ae-16–19 | minor | a fit floor; a smooth noise's slow-down; unconverged white flows; "recovers" for the interpolant | Part I; E at ten times the horizon; C's white flow to convergence; "identifies the support" |
+| D3ae-20–21 | cosmetic | slips; [S69]/[S70] attributions | fixed |
+
+**Lesson.** A striking effect has to beat the classical method that minimises the same kind of penalty on the same instances, and every
+"all" or "never" needs a convergence criterion, more seeds and a sweep of the noise's size before it is written; a selection read off a
+discrete scheme's Itô drift is a property of the scheme, and the README and the audit must say so as plainly as the statement.
+
+## Round 33 (adversarial review of Proposition D‴.45, the free mass–amplitude law as a mirror flow, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3af: the draft of Proposition D‴.45 and its code at 06247cb, with the results
+then uncommitted (committed as 23b4b80 during the review, the code unchanged) (`review/REVIEW_round33_D3af.md`): the identities by hand;
+η against quadrature and a 60-digit reference to q = 10¹⁰, both branches, the potential's shape and its rich remainder; the exact Euler
+means by Gauss–Hermite at h = 0.5, 0.05, 0.005; the seven instances with unequal-mass rich distances above 10⁻³ re-solved by an
+independent Newton method on the dual; the loop from three branch starts to t = 10⁷ and its time to the projection at s = 10⁻² … 10⁻⁴;
+D‴.44's reduced flow to s = 270, and to s = 10⁸ where basis pursuit is not the truth; C(3)'s end values of Q against (iv)(b)'s zero; 36
+mutants of `mirror_free.py` against the tests and a reduced copy of Parts A–E.
+
+**Verdicts (D3af).** The identities right: Q conserved for every drive, η's closed forms on both branches (1.5·10⁻¹⁴ against quadrature),
+dw/dη = mD and ψ*, the dual flow's convergence and the lazy limit, the Euler step's ΔQ — exactly D‴.44's drift (C(3)'s end values of Q
+to 7 digits) —, V̇ = −k_ee². Wrong or overstated: the rich remainder (−(3/2)K|w|^{2/3}, not O(|w|(1 + |log|w||))); the rich limit needing
+uniqueness, reached at scales set by the vertex gap and in a time ∝ 1/β⁰² (t ≈ 10⁶, 10⁷, 10⁹ at s = 10⁻², 10⁻³, 10⁻⁴); Part B's medians
+hiding silent solver failures (|w| ≈ 2.2·10²⁹²) and a bimodal branch median; C(3)'s "basis pursuit" only where basis pursuit is the
+truth; "never moves" true for noise with smooth paths (Stratonovich) only; C(2)'s 14–25 standard errors the O(h³) term; (ii)–(iii) an
+instance of Li–Wang–Lee–Arora's theorem; 9 of 36 mutants passing the tests.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3af-1 | major ((iv)(b), C(3)) | "reaches the rich limit (basis pursuit)" holds only because all six C(3) instances have basis pursuit = the truth; elsewhere D‴.44's reduced flow stops on other sparse fits (s to 10⁸), and nothing backs basis pursuit under the paradigm's update (D‴.44(ii)'s D* is the flat scheme's) | (iv)(b): the state first moves away from basis pursuit, then settles on a sparse exact fit — basis pursuit's where it is the truth, elsewhere its support or another sparse fit of larger ℓ¹ norm (numerical); C(3) adds instances 8, 9, 13, 17: the six end on basis pursuit (2.7–11.6·10⁻⁹ at s = 10⁸), of the four two on its support (2.6·10⁻⁵, 6.5·10⁻⁴) and two on other fits (‖w‖₁ 0.4228 against 0.4156, 0.4714 against 0.4516) |
+| D3af-2 | major (B, code) | Part B's medians include silent solver failures: `bregman_projection` returned no residual or flag, inherited `alpha_of_eta`'s clip at \|α\| = 340, and diverged to \|w\| ≈ 2.2·10²⁹² (rich, s = 10⁻⁷) and on two branch starts | the projection by Newton on the convex dual with Armijo backtracking, an adaptive radius, rejected trial points and the best iterate's true residual (`dual_newton`); `alpha_of_eta` raises instead of clipping; every aggregate counts failures and leaves them out — none in the rerun (8feae75, 7421bcf; 7421bcf adds a decimal-arithmetic Newton step where the float step stalls at extreme masses) |
+| D3af-3 | major ((iii), B) | the branches misreported: the k = 2 median 6.6·10⁻⁴ the middle of a bimodal set (ten instances ≤ 1.2·10⁻⁴, eight at 0.05–0.37), "signs kept" true by construction, "an entropy against the others' ℓ¹ weight" wrong (costs 340–480 against 420–1220, λ₁ = 702), exact fits lost as s → 0 | (iii)'s branch sentences replaced by Proposition D‴.47 (the Bregman projection onto the sign-constrained least-squares fits; an exact fit may cease to exist); B reports the distribution (k = 2: 10 of 20 within 10⁻³, the largest 0.37), the instances with a truth atom on a wrong-signed branch (13 and 18 of 20 at s = 10⁻⁶) and those whose frozen signs still fit y (18, 19); "signs kept" dropped |
+| D3af-4 | major ((iv)(a), pieces) | ROW0, BULLET and README: continuous-time noise of any colour "never moves that projection" — false for white noise read in Itô's sense (Pesme et al.'s stochastic gradient flow), whose effect is (iv)(b)'s | "noise with smooth paths (Stratonovich)" in the setting, (iv)(a), ROW0, BULLET and README; Itô's white noise adds (b)'s drift; C(1) discriminates as h → 0: Euler–Maruyama's mean change of Q over its Itô correction's integral 1.0106, 1.0037, 1.0011 at h = 0.1, 0.03, 0.01, Heun's 1.4·10⁻⁵ → 1.4·10⁻⁶ (∝ h), the mirror update's 2.2·10⁻¹⁶ (by construction) |
+| D3af-5 | major (Status, [S72]) | novelty: (ii)–(iii) Li–Wang–Lee–Arora's theorem (with Marcotte–Gribonval–Peyré, Azulay et al.), (iv)(a) stochastic mirror descent's invariance, (iv)(b) Pesme et al.'s and Even et al.'s mechanism, (v) Boffi–Slotine's, the shape the hypentropy | Status, ROW0 and the audit recast these as classical, with Gunasekar et al., Azizan–Hassibi, HaoChen et al., Ghai–Hazan–Singer, Woodworth et al. ([S72]); new narrowed to the unit's explicit potential (Q, the wall, the entropy tail, the 1/√β⁰ weights and their correction, the branches), the identification with D‴.44's selection, the mirror update |
+| D3af-6–7 | major/minor ((v), (i)) | the pair claim and Part D lie inside the cohesion's range (it acts on α_i − α_j and breaks Q); "also when centres and widths move" needs a qualifier | (v): "two particles on one atom without cohesion between them"; (i) and the setting: "as long as the cohesion's α-component vanishes on the particle" |
+| D3af-8 | minor ((iv)(b)) | the selection's early phase moves away from basis pursuit (‖w‖₁ 0.706 → 0.779 over s ≤ 270); C(3) sampled only s ≥ 10⁵ | (iv)(b): "first moves away from basis pursuit (‖w‖₁ rising)"; C(3) samples s = 10², 10³, 10⁴ (instance 0: 0.706 → 0.781 by s = 10³) |
+| D3af-9 | minor ((ii)) | the rich remainder is −(3/2)K\|w\|^{2/3}, not O(\|w\|(1 + \|log\|w\|\|)) | (ii): ψ = λ₁\|w\| − (3/2)K\|w\|^{2/3}(1 + o(1)), λ₁ exact; the proof's remainder O(\|w\|^{2/3}/λ₁) |
+| D3af-10–11 | minor ((iii)) | the rich limit needs uniqueness and is reached at scales set by the vertex gap (k = 3, instance 13 still 0.17 away at s = 10⁻⁷); the time ∝ 1/β⁰² unstated | (iii): "when it is unique"; the approach a power at an N-atom vertex — the off-support coefficients on the core's tangent profile, a small slack delaying it —, the transit's time ∝ β⁰^{−1/2} and the last digits' ∝ 1/β⁰² (fewer than N atoms); B reports medians and largest values and the loop at s = 10⁻³ (within 10⁻⁸ of its projection from t ≈ 8.5·10⁶); Part F (7421bcf): the leading order to the rounding floor, the distance falling by 1068 and 984 from ε = 10⁻⁷ to 10⁻⁹ (ε^{3/2}), instance 13 (μ_min = 2.7·10⁻⁴) 0.17 away at 10⁻⁷ and 3.2·10⁻⁸ at 10⁻¹¹ |
+| D3af-12 | minor (code) | η NaN at q = −c and not cancellation-free for \|t\| ≥ 0.9; `alpha_of_eta` clips silently and its branch bracket can fail; `mirror_step` unchecked | η without cancellation for every t and level (4·10⁻¹⁶ against a 60-digit reference to q = 10¹⁴), the critical curve, the branches from log sinh of the distance to the branch point; `alpha_of_eta` and `alpha_of_w` raise and solve on a branch in log δ; `mirror_step` checks its convergence (8feae75) |
+| D3af-13 | minor (numerics) | checks true by construction ("signs kept", Q under the mirror update, Part D's split, A's shift, C(1)) | A's shift integrated along the trajectory (1.5–4.4·10⁻⁷); C(1) Euler–Maruyama, Heun and the mirror update as h → 0; the mirror update's Q marked "by construction"; D: the pair's common mirror increments |
+| D3af-14–15 | minor ((iv)(a), Status) | the stationary mean under persistent noise displaced at O(v); the Status's "(iv) proved", "(vi) proved", (iv)(c) | (iv)(a): one clause; Status: (iv)(b) the formula proved, the selection's end numerical, (iv)(c) in expectation, (vi)'s identity proved ("not a mirror flow" dropped) |
+| D3af-16 | minor (D) | Part D's "sensor noise" reaches only the adaptation; "parameters converge slowly" not shown | D: a smooth noise in the adaptation only and a sensor noise in the feedback, the regressor and the adaptation (Q kept to 6.8·10⁻¹² and 4.9·10⁻¹³); after round 36 the noiseless parameters' distance at t = 2000 (0.048, 0.027) in place of "converge slowly" |
+| D3af-17–19 | minor | [S72] credits "isotropic noise does not" to Pesme et al. (it is HaoChen–Wei–Lee–Ma's); no link to D‴.41(ii)'s C ∝ I; the lost bound \|f̂\| ≤ a_max | [S72] fixed; (iv)(a): C ∝ I is the conserved law's centring; (v): the bound lost, D‴.46's leak the remedy |
+| D3af-20 | minor (tests) | 9 of 36 mutants survive (M04, M09–M13, M22, M24, M36); the V̇ test blind to the mass law; no rich, branch or range test | `tests/test_mirror_free.py` 8 → 15 tests: η against a 60-digit reference, round trips and range errors, rich projections at 10⁻¹⁰, `real_lyapunov` reading the state's mass, branch mirror steps (round 36: M10n, M11n, M24n killed, M12n only slower) |
+| D3af-21–22 | cosmetic | "falling 0.14, 0.16" (it rises); "as often as" (0.75 against 0.80); C(2) by Monte Carlo; the proof's dropped (c − Q) | fixed (the first two after round 36); C(2) by Gauss–Hermite (80 nodes) |
+
+**Lesson.** The exact identities were right and cheap to check; what failed passed around them unexamined — medians over a solver whose
+convergence was never recorded, a claim generalised from instances on which it holds automatically, checks true by construction, and
+shortened statements that dropped the one qualifier (Stratonovich) the theorem needs. Every aggregate carries its failure count, a
+numerical claim is tested where it can fail, and every summary keeps its hypotheses.
+
+## Round 35 (adversarial review of Proposition D‴.46, a leak in the mirror coordinates, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ah: the draft of Proposition D‴.46 and its code and results at 67c08b1
+(`review/REVIEW_round35_D3ah.md`): the three-point identity by quadrature, ψ rebuilt independently of the module; the averaged loop with
+the error filter L = 1/(s + k_e) (the periodic steady state by FFT on the 20π-periodic orbit) integrated to 2·10⁵; the real σ = 0 loop
+continued to t = 18000; Part C's equilibrium three ways (the idealised H/k_e, the filtered H_L, the exact frozen-parameter error); the
+irrepresentable condition over all 1760 three-sparse patterns of Part D's Gram; the rich start's averaged dynamics over 10⁸ time units;
+an instrumented `leak_equilibrium`; 25 mutants of the leak's code and 8 of the experiment's report code.
+
+**Verdicts (D3ah).** The algebra right: the Lyapunov identity (1.3·10⁻¹⁵ by quadrature, 1.2·10⁻¹⁰ in the module) and its ultimate bound,
+B(w, 0) = ψ(w), the ridge limit, the LASSO limit at a fixed penalty σλ₁. What the numerics were said to show did not hold: Part B's
+"drift" is slow convergence to the biased fit (τ ≈ 1.5·10⁴ against T = 3000); (ii) is the k_e → ∞ limit — the averaged loop has the
+error filter's Gram H_L and d̄_L, whose lag moves Part C's lazy equilibrium by 8.2·10⁻⁴, more than the reported gap, and the intermediate
+run lasted four time constants; "prunes to the target's kernels" one instance (the irrepresentable condition holds for 23.6% of the
+patterns); w_σ → w* + H⁺d̄, not w*; the dual-coordinate leak established in learning in games; 8 of 25 mutants and all 8 report mutants
+surviving.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ah-1 | major (B) | Part B's "drift" is slow convergence: on a persistently exciting orbit the averaged σ = 0 loop converges to the biased fit w* + H_L⁻¹d̄_L (max\|w\| 0.337, τ ≈ 1.5·10⁴, against T = 3000), and the real loop continued to t = 18000 approaches it | B(1) reworded ("creeps toward the biased fit"), the σ = 0 run to 2·10⁴ (1.3τ; the quarters' largest \|w\| 0.309, 0.330, 0.337, 0.341, the orbit's oscillation included); B(2), a drift without persistent excitation (φ = (1 + t)^{−1/2}, a bounded d built for it): w grows like (1 + t)^{1/4} (23.3 at t = 10⁶), σ = 0.01 and 0.1 hold it at 0.46 |
+| D3ah-2 | major ((ii)) | (ii) is the k_e → ∞ limit, not the slow-adaptation limit: the averaged loop has H_L = k_e⟨φL[φ]ᵀ⟩ and d̄_L (0.9% from H at k_e = 20, symmetric on a scalar periodic orbit) | (ii) restated with H_L and d̄_L: the unique, globally attracting root of a monotone equation (Lyapunov function B(w_σ, w)), the mirror flow of F_σ to O(k_e⁻²), the real loop's mean by the averaging theorem (cited); `filtered_gram` |
+| D3ah-3 | major (C) | Part C too short (T = 4/σ for the intermediate start) and its drift the lazy start's within-period oscillation | C started at w_σ^L, with period means (20π): the last within 1.6·10⁻⁴ (318 periods) and 1.7·10⁻⁴ (954) of w_σ^L, 4.4 and 2.6 times closer than to the idealised w_σ (lags 8.2·10⁻⁴, 5.1·10⁻⁴; the leak's bias 0.038, 0.12) |
+| D3ah-4 | major ((iii), D, pieces) | "the leak prunes to the target's kernels" one instance: on Part D's Gram the irrepresentable condition holds for 416 of 1760 three-sparse patterns; where it fails the equilibrium keeps spurious atoms at every μ | (iii): exact support recovery under the irrepresentable condition and no sign flips (weighted after round 36); D(2) over all 1760 patterns at μ = 10⁻³: the condition 416, the prediction 416, the equilibrium exact on 415, agreement on 1745; README, BULLET, ROW0 and the audit: "under the irrepresentable condition" |
+| D3ah-5 | major ((ii)) | w_σ → w* + H⁺d̄, not w*, under a biased disturbance; the d̄ path never exercised (its sign mutant survives) | (ii): w_σ → w* + H_L⁻¹d̄_L; D(3): the distance to w* + H⁻¹d̄ linear in σ (3.7·10⁻⁸ at σ = 10⁻⁸), 0.043 from w*; a test with k_e = 3 and a bias |
+| D3ah-6 | major (novelty) | a dual-coordinate leak, its regulariser-perturbed rest points, Bregman (Fenchel-coupling) Lyapunov functions and the vanishing-leak selection are established (Gao–Pavel; Romano–Pavel; Coucheney–Gaujal–Mertikopoulos; Pérolat et al.; Abe et al.; Azizan–Lale–Hassibi; Alvarez–Bolte–Brahic) | [S73] and the audit with these; new narrowed to the (α, β) implementation keeping Q, the bound in the adaptive loop, the weights λ₁ ∝ β⁰^{−1/2}, the filtered averaged equilibrium as a monotone equation |
+| D3ah-7–9 | minor ((iii)) | the remainder cited from D‴.45 (O(\|w\| log\|w\|)); λ₁ only to leading order (10.6% off at β⁰ = 0.4c); "soft thresholding" | (iii) with D‴.45's −(3/2)K\|w\|^{2/3}, the exact λ₁ = πa_maxκ′/(4Gc), the LASSO's KKT condition |
+| D3ah-10 | minor | the rich (LASSO) regime never run dynamically; its time ∝ k_eβ⁰^{−1/2} | D(4): the averaged loop from β⁰ = 10⁻⁶ at its equilibrium at t ≈ 3.2·10⁵ (2·10⁶ where the condition fails, five atoms kept); (iii) states the escape time |
+| D3ah-11 | minor (B) | the bound check without power: loose, not asserted, five single mutants of its formula surviving | the comparison bound asserted along B's runs (the printed largest ratio, 1.0000, still the t = 0 value); a test under a worst-case disturbance in which V comes within a factor 2 of C/λ |
+| D3ah-12–13 | minor (tests, code) | 8 of 25 mutants survive (the noise path, the k_e scalings, d̄'s sign, the tolerance, the damping); `leak_equilibrium` fails silently (it_max at β⁰ = 10⁻⁸, rejected trial points returned, clamping) | tests with a measurement noise, k_e ≠ 1, a bias and the solver's residual (round 36: R6, R7, K1, K2, P1, T1 killed; `lasso` tested at k_e = 5 after it, 2773f33; D2: fix not traced); `leak_equilibrium` returns (w, α, iterations, residual), caps its trial steps in η, rejects points beyond the curves, keeps its best iterate |
+| D3ah-14–15 | minor ((i), code) | (i)'s hypotheses incomplete (w* in each curve's range, V proper, the split of a non-representable f); η from the nominal q, not Q from the state | (i): the range, properness, the split with the bound minimised over it, "along the loop's own trajectory"; `real_rhs_leak` computes Q from the state (continuous time only; no Euler run) |
+| D3ah-16–17 | minor/cosmetic | Part A's ridge rows test only linear response (the ridge moving w by 10⁻⁹–4·10⁻⁵); the ridge "support" a threshold artefact; absolute and relative distances unlabelled; "V rising from 0.18" quotes V(0) | A: ρ = 0.5 (w moved by 31–55%), and β⁰ = 3 with the wall inside the coefficients' range (0.15 off the ridge); D's lazy rows "dense (no coefficient vanishes)", the distances labelled; B: V 0.40 → 0.45 |
+
+**Lesson.** Every agreement the proposition claimed sat at the size of an effect its own setting neglected — the error filter's lag, the
+slowest averaged time constant, the irrepresentable condition. Before calling a number confirmation, compute the neglected quantity for
+the same instance: here each took seconds, and each changed what the paragraph may claim.
+
+## Round 36 (adversarial review of Proposition D‴.47, the free law's branches, and of the round-33 and round-35 revisions of Propositions D‴.45 and D‴.46, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ai: the draft of Proposition D‴.47 with the round-33 and round-35 revisions of
+D‴.45 and D‴.46, and their code at 7421bcf (`review/REVIEW_round36_D3ai.md`): `exp_mirror_branch.py` rerun (byte-identical) and every
+number of the three numerics paragraphs checked; the identities at a_max = 0.3 and 2.5; mixed starts whose branch signs cannot fit y;
+rank-deficient and duplicated designs (`sign_ls_set` against nnls); inexact fits whose least-squares set is not a point; degenerate
+vertices; the nonnegative certificate's margin over every three-atom support, with 80-digit certificates; the loop to t = 10⁹ on typical
+targets; where the float Newton fails; 68 mutants (54 of `mirror_free.py` against the 18 tests and a reduced experiment).
+
+**Verdicts (D3ai).** D‴.47's proofs sound — (ii)'s zero-sum argument airtight (the limit confirmed on a rank-4 design, duplicated atoms
+with an inexact fit and mixed starts, to ≤ 5.4·10⁻⁹), (iii)'s rate right at N-atom vertices, (i), (iv)'s conjugate, (v)'s proof and (vi)
+correct —; every failure in what the numerics were chosen to show: every inexact instance had a single-point least-squares set (the
+Bregman selection with extinction untested, the branch speed's mutants surviving); the mixed start checked only where the branch atoms'
+signs fit y; Part E's targets from the top decile of certificate margins (over all three-atom supports the medians 4.0·10⁻⁶ and
+3.8·10⁻⁹, 25% and 45% numerically zero); `sign_ls_set` silently wrong on rank-deficient and duplicated designs; the decimal fallback
+unbudgeted. D‴.45's and D‴.46's round-33 and round-35 items fixed but for leftovers (D3ai-17, 18, 20, 21). 28 of 68 mutants surviving
+the tests.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ai-1 | major ((v), E) | "converges to w* from every positive-branch start, at every mass scale" rests on top-decile targets: over all three-atom supports median margins 4.0·10⁻⁶ and 3.8·10⁻⁹ (25%, 45% numerically zero; exact margins 10⁻³²–10⁻³⁴); typical targets 0.45–0.63 away at t = 10⁹, with 0.6–1.2 of mass off the target | (v) restated: the selection's speed is the margin (Σ_off w ≤ (\|v\|/μ)(2NB/t)^{1/2}), uniqueness alone does not make the target reachable, stability constants (Eftekhari et al.) govern it; E: the margins' quantiles on the three grids (25%, 45%, 4% at most 10⁻⁹) and the loop on supports at the quantiles — reached by t = 10⁹ above a margin of 10⁻³, still 0.37–0.83 away below 10⁻⁴ (ebfc9d9); BULLET, ROW0 |
+| D3ai-2 | major ((iii), C) | "the free particles keeping O(ε² log(1/ε))" false when the branch atoms' frozen signs cannot fit y (1.36 and 1.10 at ε = 10⁻⁴, 10⁻⁸); Part C's check true by construction | (iii) with the hypothesis, and otherwise the limit basis pursuit over the free atoms with the branch atoms sign-constrained and free of charge; C: an infeasible-sign row — the free particles carry 2.27 at ε = 10⁻⁴ and 10⁻⁸, 4.1·10⁻⁴ and 2.5·10⁻¹¹ from that limit; at 10⁻¹² the projection fails and is reported as failed |
+| D3ai-3 | major (code) | `sign_ls_set` never read lsq_linear's status: a wrong ŷ on rank-deficient (residual 0.103 for 0.520) and duplicated designs (\|Z\| 0 for 14) | Lawson–Hanson's active set (exact at any rank), its KKT conditions checked, the linear programs' status read (17d8396); D‴.45 Part B's ŷ (to 4.6·10⁻¹⁴) and Z unchanged on all 120 instances (2773f33) |
+| D3ai-4 | major (tests, B) | the Bregman selection with extinction never tested (S a point in every inexact instance); the branch-speed mutants S1, S3, S4 pass all 18 tests | a test (duplicated atoms, Z ≠ ∅, negative branches alive: the flow at the projection to 10⁻⁹, not at the equal split); B: 5 × 4 designs with every atom carried by two particles — the flow at the Bregman projection to 6.4·10⁻¹⁰ on 8 seeds, the projection 1.6·10⁻⁴–0.20 from the equal split |
+| D3ai-5, 13 | minor (C, D, code) | the experiment neither asserts nor counts projection residuals (a 40-digit mutant tabulates failures silently); the decimal fallback can run for hours (10 s per 3000-digit step) | C and D count and flag failed projections (C's one, at ε = 10⁻¹²); `dual_newton` budgets its exact steps (count and wall time) and returns the residual (2773f33) |
+| D3ai-6, 7 | minor ((iii), (ii)(c)) | degenerate vertices (\|S\| < N: ε^{0.13}, ε^{0.26} observed) silently excluded; "no other coefficient vanishes" false for free particles; the critical curve's extinction algebraic | (iii): at a vertex with fewer than N atoms the approach ε^{μ*} stated (μ* not computed); (ii)(c): "no other branch coefficient", the decay on the critical curve about t⁻³ |
+| D3ai-8, 9 | minor | (iv) drops "without cohesion between them" (a D3af-6 regression); BULLET's unconditional "exponentially"; ROW0's rate wording | restored; BULLET and ROW0: exponentially when strictly complementary; ROW0's rate ε^{μ} |
+| D3ai-10, 11 | minor (literature) | lit_S74 and lit_S72 put D‴.45's α = 0 rate under the exponential penalty at ε^{1/2} (it is the power ε^{3/2}); novelty overstated; Chou–Maly–Stöger missing | corrected (D‴.47(iii): ε^{3/2} from the core's tangent, not an entropy); Status: (ii) Alvarez–Bolte–Brahic's convergence with the range argument, (iv) the u² − v² parametrisation's, (v)'s identifiability Eftekhari et al.'s; Chou–Maly–Stöger cited |
+| D3ai-12 | minor | a free sign is not enough for D‴.45(iii): η(0) = (2/π)arcsin θ·λ₁, the weights λ₁(1 ∓ (2/π)arcsin θ) | stated in D‴.47's setting and in D‴.45(iii): the symmetric limit needs θ → 0 |
+| D3ai-14, 15 | minor/cosmetic | the rows where the leading order fails omitted (it holds only from ε ≈ 10⁻¹⁶, u ≈ 10⁻¹²⁸); E's time labels; "≈ 1/t" (t^{−0.88}) | C and D report every row; E prints the sampled times; t^{−0.9}–t^{−1} |
+| D3ai-16, 19 | minor (tests) | untested helpers and solver rules (FG1, IR1, NC1, R2, T3, T4, X4, X5, L4, E4, Z2 survive the tests; M12n only slower) | tests of the filtered Gram's causality, the weighted irrepresentable value, the nonnegative certificate's margin and the LASSO at k_e = 5 (2773f33); the solver's rules and an iteration or time bound for M12n: (open) |
+| D3ai-17, 18 | minor (D‴.45) | numerics leftovers ("falling", "as often as", the bimodal median, "converge slowly", "atoms die", Q kept by construction reported as a result); the closed form's large constants (113–138% at ε = 10⁻⁷) and the μ⁻³ hidden in O(β⁰^{3/2}); the 1/β⁰² time unqualified in ROW0 and BULLET | D‴.45's numerics edited (B's spread, "nearly as often", "no atom yet extinct", "(by construction)", F's largest values and ranges); (iii): O(β⁰^{3/2}μ_min⁻³), the relative error β⁰^{1/2}/μ with a large constant; ROW0, BULLET: "where the support has fewer than N atoms" |
+| D3ai-20, 21 | minor/cosmetic (D‴.46) | the irrepresentable condition unweighted for unequal masses, "iff < 1"; leftovers (the audit's "sparsity-selecting", the ridge "support", the σ = 0 run's 0.341 above 0.337, "V/bound 1.0000" its t = 0 value, D2 and L1 surviving) | the weighted condition, < 1 sufficient and ≤ 1 necessary (`irrepresentable` takes the weights); the audit's and D's wording, 0.341 attributed to the orbit's oscillation, `lasso` tested at k_e = 5; the printed bound ratio and D2: (open) |
+
+**Lesson.** A confirmation is only as good as the instance it was obtained on: whether the solution set is a point, how the margin is
+distributed over targets, whether the hypothesis holds by construction, whether the reference solver reported success. Ask what a wrong
+answer would look like on that very instance before calling a number a check.
+
+## Round 37 (adversarial review of Proposition D‴.48, the rich transit, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3aj: the draft of Proposition D‴.48 and its code at 5995696
+(`review/REVIEW_round37_D3aj.md`): `exp_mirror_transit.py` rerun (the md byte-identical) and every number checked against the md and the
+raw file; `iss_path`'s defining properties on three designs; the loop against the path to ε = 10⁻¹² with a Q-preserving integrator; the
+creep's instantaneous speed against both formulas; ties, near ties, close and off-grid bumps, coarse grids, edges, amplitudes; the
+Wasserstein–Fisher–Rao limit along trajectories with unequal masses and the formed-kernel count to ε = 10⁻¹⁰; one unit's transit time
+for α(0) = θε^p; `sliding_iss`'s sensitivity to its seed and fast horizon; 53 mutants.
+
+**Verdicts (D3aj).** (o)'s expansions and (i)'s soft-analysis limit (Mosco, then Brezis–Pazy) right, with slips (the energy identity's
+factor N, the composition step, the inactive margins); the ε^{1/2} rate cleaner than reported (design 5's 0.471 an artefact of the
+(α, log β) integration drifting off Q; 0.4998 on the curves); (ii) right but practically invisible (at ε = 10⁻⁴ the dual 40–80% of the
+weights away); (o)'s dichotomy a continuum (the scale set by α(0)/ε^{1/2}); (iii)(a)'s coefficient bound right, its creep speed too large
+by π³/8 and missing b^{3/2} and the sign; (iii)(b) failing at ties (a bump midway between two kernels formed by both, 0.40 each, at every
+ε); (iv)'s condensation real, but "several kernels per feature" not a limit property (15, 12, 8, 4, 3, 3, 3 kernels at ε = 10⁻⁴ … 10⁻¹⁰;
+exactly three on 16 of 16 random targets at 10⁻¹⁰), so no dichotomy of counts; `sliding_iss` neither faithful nor robust; 27 of 53
+mutants surviving (about 20 not equivalent).
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3aj-1 | major ((iv), title, New) | "several kernels share each feature" and the metric dichotomy false as ε → 0 | (iv), the title, New, ROW0, BULLET and the audit restated: the massless kernels' positions condense, the count reaches one per feature only at much smaller masses; C2 and C4 to ε = 10⁻¹⁰: 15, 12, 8, 3, 3 kernels at ε = 10⁻⁴, 10⁻⁵, 10⁻⁶, 10⁻⁸, 10⁻¹⁰, always in three clusters at the bumps; on the random targets exactly three at the bumps on 0, 10, 16 of 16 at 10⁻⁶, 10⁻⁸, 10⁻¹⁰ (c1b3334) |
+| D3aj-2 | major ((iii)(b)) | ties: a bump midway between two kernels is formed by both at every ε; near ties non-uniform; `sliding_iss`'s argmin tie-break not the limit | (iii)(b) with ties (shared, half the amplitude each) and genericity; `sliding_iss` enters ties together; C5: the tie shared (0.4, 0.4) at every ε, a near tie formed by two kernels at ε = 10⁻⁶ and by one from 10⁻⁸; bumps 0.15 and 0.25 apart off the grid resolved by two kernels, the second entering earlier than on the path (τ = 16.2, 29.6, 33.1 against 33.5; 12.1, 16.1, 17.0 against 17.1) — the creep; the near-tie law later Proposition D‴.51 |
+| D3aj-3 | major ((iii)(a), C6) | the creep speed (πa_max²/(4c))εμ^{−3}⟨r∂_cφ⟩ too large by π³/8, without b^{3/2} and the sign; C6 compared a displacement since τ = 0 with speed × window | (iii)(a): the core's profile (πa_max²/(4c))εb^{3/2}cos(πμ/2)/sin³(πμ/2)·s⟨r∂_cφ⟩; C6 the instantaneous dc/dτ — the profile's to 0.990–0.996 (ε = 10⁻⁸) and 0.9999–1.0000 (10⁻¹⁰), 0.55 at μ = 4.5·10⁻⁴ where the kernel is entering, 0.255–0.258 of the μ^{−3} form (8/π³) —; a test (to 2·10⁻³) |
+| D3aj-4 | major (code) | `sliding_iss` neither faithful nor robust: exits without an inward check, a fixed fast horizon, the path dependent on the seed (t_fast = 10⁴: 0 of 17 targets) | ties entered together, the active block relaxed until stationary (the elapsed time doubled), exits only with an inward correlation (17d8396); a test: seeds 10⁻³ and 10⁻¹¹ and t_fast = 10³ give the same path; C4: 16 of 16 random targets exact, no exits |
+| D3aj-5, 14 | major/minor (tests) | 27 of 53 mutants survive (`iss_path`'s exit rule, NNLS and hitting time; `moving_rhs`'s m and a′; the WFR limit's k, tan and 1/ρ; `sliding_iss`'s parameters; ParticleSet's free drive); the test design has no exits; the experiment untested | tests: an independent forward-stepping ISS integrator on designs with exits, a binding sign constraint, the drifts at a random state, the creep profile, the WFR limit along the trajectory with unequal masses, ties and seeds, the free particles' drive (17d8396); tests of the experiment's own code: (open) |
+| D3aj-6, 7 | minor ((o), (iii)) | (o)'s dichotomy a continuum (crossover at α(0) ~ ε^{1/2}); the creep generic on close bumps, "well-separated" unquantified | (o): the scale set by θ = \|α(0)\|/(β⁰/(2c))^{1/2}, α(0) ∝ ε^p giving ε^{−p}log(1/ε), a branch start with α(0) ≲ ε^{1/2} on the power scale; (iii)(a): frozen only while ε ≪ μ³; C5 off-grid close bumps |
+| D3aj-8 | minor (A, C) | the (α, log β) integration drifts off Q at small masses (design 5's slope 0.471) | each atom on its curve, β = εb + 2c sinh²(α/a_max) (`critical_rhs(…, b0)`, `FreeLaw.rhs_curve`); A to ε = 10⁻¹² and C rerun: slopes 0.500 on the three designs between 10⁻⁶ and 10⁻⁸, 0.503, 0.501, 0.484 between 10⁻⁸ and 10⁻¹² (c1b3334) |
+| D3aj-9, 10 | minor (C2, C4) | the path's kernels entered on 15 of 16, not 14; the WFR limit checked only at its attractor, with ρ = 1 | net entries compared (15 of 16 at 10⁻⁸); C2 and a test: the limit along the trajectory with unequal masses (1.1·10⁻⁷ with ρ_i = b_i^{−1/2}, 0.45 with the masses ignored) |
+| D3aj-11 | minor (proof of (i)) | the energy identity's factor (N∫\|ζ̇\|²), the composition's Rockafellar–Wets step, the superfluous −O(1), the inactive margins unstated | fixed |
+| D3aj-12, 13 | minor | novelty: (ii) Berthier–Pillaud-Vivien's entropic case, (i) their route, the dichotomy refuted; Kunin et al., Labarrière et al., Maennel–Bousquet–Gelly missing; (ii) practically invisible (the ± pairs' first ratio 2.65) | New and the audit narrowed, the three cited; (ii) qualified as asymptotic (at ε = 10⁻⁴ the dual 40–80% of the weights away) |
+| D3aj-15 | cosmetic | "(≈ ε)", "17–50" (18.8–40.5), the bound called a speed, c_j(0) where the code slides c, the margin's normalisation | "∝ ε", the speed, "c_j where it is" fixed; "17–50" restated as the amplitudes' range, 1/(0.1·0.6) ≈ 17 to 50 (round 41); the margin's normalisation: (open) |
+
+**Lesson.** The soft-analysis limit held; the claims resting on finite-ε pictures and on a discretisation tuned to the showcase targets did
+not. Sweep the small parameter decades past the experiment, measure instantaneous rates rather than accumulated displacements, feed
+symmetric inputs, and check that each test can tell the claimed formula from a wrong one.

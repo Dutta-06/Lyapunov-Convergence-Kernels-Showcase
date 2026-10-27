@@ -1212,7 +1212,7 @@ fits (computed independently), the vanishing coordinates' masses below 10⁻³�
   1.1·10⁻¹⁶–6.1·10⁻¹⁵ at 10⁻¹².
 - (B) On branches (amplitudes 0.2–0.6) the loop follows the one-sided path in τ = t/log(1/ε): sup|u − u_ISS| = 15.7, 8.0, 4.0, 2.0, 1.0 and
   the entry times' largest difference 55, 28, 14, 7.0, 3.5 at ε = 10⁻⁴, 10⁻⁸, 10⁻¹⁶, 10⁻³², 10⁻⁶⁴, exactly ∝ 1/log(1/ε) (the path's weights
-  1/(γ|a(0)|) ≈ 17–50), ending at the sign-constrained weighted basis pursuit (to 1.3·10⁻⁵ at ε = 10⁻⁴, below 10⁻¹⁴ from 10⁻¹⁶ on); ± pairs
+  1/(γ|a(0)|) between 17 and 50, the amplitudes' range), ending at the sign-constrained weighted basis pursuit (to 1.3·10⁻⁵ at ε = 10⁻⁴, below 10⁻¹⁴ from 10⁻¹⁶ on); ± pairs
   follow the two-sided path the same way (21, 7.9, 4.0, 2.0, 0.99 at u = 10⁻⁴ … 10⁻⁶⁴).
 - (C) Moving centres: the sliding path enters three kernels that slide onto the three bumps and fit them exactly; the loop with the
   paradigm's metric forms 8 kernels at ε = 10⁻³, 4 at 10⁻⁴ and exactly these three for ε ≤ 10⁻⁵, the others displaced ∝ ε; with the

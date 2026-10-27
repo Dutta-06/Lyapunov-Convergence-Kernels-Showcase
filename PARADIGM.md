@@ -6039,7 +6039,8 @@ design, the slopes 1.51, 1.69, 1.46 between 10⁻⁶ and 10⁻¹⁰, the inactiv
 until the width drops below the grid's step, below which the rms counts the few samples that fall within an entry; the end at 1.5τ* is
 weighted basis pursuit to 8.5·10⁻¹²–6.2·10⁻⁹ at 10⁻⁸ and 1.1·10⁻¹⁶–6.1·10⁻¹⁵ at 10⁻¹². (B) On branches (amplitudes 0.2–0.6, the first
 design) the loop follows the one-sided path in τ = t/log(1/ε) — sup|u − u_ISS| = 15.7, 8.0, 4.0, 2.0, 1.0 and the entry times' largest
-difference 55, 28, 14, 7.0, 3.5 at ε = 10⁻⁴, 10⁻⁸, 10⁻¹⁶, 10⁻³², 10⁻⁶⁴, exactly ∝ 1/log(1/ε) (the path's weights 1/(γ|a(0)|) ≈ 17–50) —,
+difference 55, 28, 14, 7.0, 3.5 at ε = 10⁻⁴, 10⁻⁸, 10⁻¹⁶, 10⁻³², 10⁻⁶⁴, exactly ∝ 1/log(1/ε) (the path's weights 1/(γ|a(0)|) between
+1/(0.1·0.6) ≈ 17 and 1/(0.1·0.2) = 50, the amplitudes' range) —,
 ending at the sign-constrained weighted basis pursuit (to 1.3·10⁻⁵ at ε = 10⁻⁴, below 10⁻¹⁴ from 10⁻¹⁶ on); ± pairs follow the two-sided
 path the same way (21, 7.9, 4.0, 2.0, 0.99 at u = 10⁻⁴ … 10⁻⁶⁴). (C) Moving centres (Gaussian kernels of width 0.12 on 61 samples of
 [−1, 1], 21 kernels started on a grid of spacing 0.1, the target three bumps of the same width at −0.52, 0.07, 0.61 with amplitudes 0.9,
