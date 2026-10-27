@@ -58,6 +58,7 @@ REF_B = (('ω = 0.05', dict(om=0.05)), ('ω = 1', dict(om=1.0)), ('a = 0.6', dic
 REF_HALF, D_C, EPS_C, TAU_C = (0.45, 0.5), (0.11, 0.19, 0.35), 1e-6, 5000.0
 EPS_D, TAU_D = (1e-6, 1e-8), 3000.0
 EPS_E, SIG_E, LEAK_E, TAU_E = 1e-4, (0.005, 0.01, 0.02), 3e-3, 600.0
+LEAKS_E2 = (3e-4, 1e-3)                                               # E2: weaker leaks, without noise and at s = 0.01
 OUTSIDE = 1.2                                                         # a kernel pushed out: |c| > OUTSIDE
 
 
@@ -244,7 +245,12 @@ def part_E():
         return pool.map(e_job, jobs)
 
 
-def report(A=None, B=None, C=None, D=None, E_=None):
+def part_E2():
+    with _pool() as pool:
+        return pool.map(e_job, [(s, lam) for lam in LEAKS_E2 for s in (0.0, 0.01)])
+
+
+def report(A=None, B=None, C=None, D=None, E_=None, E2=None):
     fmt = E.fmt
     L = law()
     ev = lambda ent: ', '.join(f"{i}: {t:.4g}" for t, i in ent)
@@ -307,9 +313,13 @@ def report(A=None, B=None, C=None, D=None, E_=None):
     if E_ is not None:
         L_ += [f"## E. Measurement noise (ε = {EPS_E:g}, τ ≤ {TAU_E:g}; 16 tones in 10–30 rad/s of rms s in the measured state)", "",
                "| s | leak λΛ | kernels | pushed out | max \\|w\\| | max \\|e\\|, last period | entries (kernel: τ) |", "|---|---|---|---|---|---|---|"]
-        for r in E_:
+        for r in list(E_) + list(E2 or []):
             L_.append(f"| {r['s']:g} | {r['lam']:g} | {r['kernels']} | {r['outside']} | {r['wmax']:.3g} | {fmt(r['e_last'])} | "
                       f"{ev(r['entries'])} |")
+        if E2:
+            L_ += ["", f"The rows with λΛ = {', '.join(f'{v:g}' for v in LEAKS_E2)} (E2): the leak's strength between none and {LEAK_E:g}, "
+                   "without noise and at s = 0.01 — the mirror leak's bias (the amplitudes shrink toward the leak's centre) against its "
+                   "hold on the kernels' positions."]
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_closed_transit.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -319,7 +329,7 @@ def main():
     raw = os.path.join(OUT, 'closed_transit_raw.npz')
     md = os.path.join(OUT, 'closed_transit.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'D', 'E')
+    keys = ('A', 'B', 'C', 'D', 'E', 'E2')
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[get(k) for k in keys]))
@@ -327,7 +337,7 @@ def main():
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = {k: v for k, v in old.items() if k in keys and k not in parts}
     t0 = time.time()
-    for k, fn in (('A', part_A), ('C', part_C), ('D', part_D), ('E', part_E), ('B', part_B)):
+    for k, fn in (('A', part_A), ('C', part_C), ('D', part_D), ('E', part_E), ('E2', part_E2), ('B', part_B)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
