@@ -108,8 +108,9 @@ def part_A():
             W = np.array([L.w(al[k], q) for k in range(len(taus))])
             ent = entries_of(W, taus, th)
             both = np.isfinite(ent) & np.isfinite(ent_ref)
+            dr = np.sqrt(np.sum((W @ Phi.T - Wref @ Phi.T) ** 2, axis=1))         # |Φ(w − w_ISS)| at each sample
             rows.append(dict(eps=eps, Lam=float(Lam), du=float(np.abs(U - Uref).max()),
-                             dres=float(np.sqrt(np.mean(np.sum((W @ Phi.T - Wref @ Phi.T) ** 2, axis=1)))),
+                             dres=float(np.sqrt(np.mean(dr ** 2))), dres_med=float(np.median(dr)), dres_n=int(np.sum(dr > 1e-3)),
                              dent=float(np.abs(ent - ent_ref)[both].max()) if both.any() else np.nan, n_only=int(np.sum(np.isfinite(ent) != np.isfinite(ent_ref))),
                              dend=float(np.abs(W[-1] - wbp).max()), secs=time.time() - t0))
         res.append(dict(seed=seed, events=[(float(t), int(i), k) for t, i, k in path['events']], tau_end=float(tau_end),
@@ -187,16 +188,17 @@ def bumps_target(K, cstar, astar):
     return K.phi(np.asarray(cstar, float)) @ np.asarray(astar, float)
 
 
-def run_moving(L, K, fstar, c0, eps, tau_end, metric, n_t=441, fixed=False, b=None, full=False):
+def run_moving(L, K, fstar, c0, eps, tau_end, metric, n_t=441, fixed=False, b=None, full=False, taus=None):
     """The free law with moving (or fixed) centres from α = 0, masses εb (b = 1 by default), to τ_end in τ = t/Λ(ε): the state (α, c), each
-    kernel kept on its curve β = εb + 2c sinh²(α/a_max) (`critical_rhs` with b0 = εb; round 37)."""
+    kernel kept on its curve β = εb + 2c sinh²(α/a_max) (`critical_rhs` with b0 = εb; round 37). The record on n_t uniform times, or on
+    the given grid `taus` (ending at τ_end)."""
     d = len(c0)
     b0 = eps * (np.ones(d) if b is None else np.asarray(b, float))
     Lam = RT.transit_scale(L, eps)
-    taus = np.linspace(0, tau_end, n_t)
+    taus = np.linspace(0, tau_end, n_t) if taus is None else np.asarray(taus, float)
     f = RT.critical_rhs(L, K, fstar, metric, b0=b0)
     rhs = (lambda t, z: np.r_[f(t, z)[:d], np.zeros(d)]) if fixed else f
-    sol = solve_ivp(rhs, (0, Lam * tau_end), np.r_[np.zeros(d), c0], method='LSODA', rtol=1e-9, atol=1e-12, t_eval=Lam * taus)
+    sol = solve_ivp(rhs, (0, Lam * taus[-1]), np.r_[np.zeros(d), c0], method='LSODA', rtol=1e-9, atol=1e-12, t_eval=Lam * taus)
     al, cc = sol.y[:d].T, sol.y[d:].T
     if full:
         return taus, RT.critical_w(L, al, b0), cc, Lam, al
@@ -262,6 +264,44 @@ def creep_case(L, K, c0, cs, As):
         creep['rows'].append(dict(eps=eps, order=order, centres=np.sort(cc[-1][np.abs(W[-1]) > TH_ACT * np.abs(As).max()]).tolist(),
                                   near=rows_near))
     return creep
+
+
+C5_CASES = (('one bump midway between two kernels (a tie)', (0.05,), (0.8,), SIG_C, EPS_C5),
+            ('one bump 0.001 off the midpoint (a near tie)', (0.051,), (0.8,), SIG_C, EPS_C5),
+            ('three bumps, one at a midpoint', (-0.52, 0.05, 0.61), ASTAR, SIG_C, EPS_C5),
+            ('two bumps 0.15 apart, off the grid', (-0.03, 0.12), (0.8, 0.6), SIG_C, EPS_C5),
+            ('two bumps 0.25 apart, off the grid', (-0.07, 0.18), (0.8, 0.6), SIG_C, EPS_C5),
+            ('three wider bumps (width 0.2)', CSTAR, ASTAR, 0.2, (EPS_RAND,)))
+
+
+def part_C5(L, K, c0):
+    """C (5): ties and near ties, close bumps off the grid, a target of bumps wider than the kernels (not representable by three of them).
+    The sliding path's kernels counted, like the loop's, by |w| > TH_ACT·max|A*| (its active set given beside them); a path that does not
+    terminate (its rms residual still above 10⁻⁹ when no kernel is left to enter) is followed on a geometric τ grid (round 38), with its
+    rms residual at each event and whether each relaxation became stationary."""
+    hard = []
+    for lab, cs, As, wid, eps_h in C5_CASES:
+        Kt = RT.Bumps(K.xs, wid)
+        f_h = bumps_target(Kt, cs, As)
+        th_h = TH_ACT * np.abs(As).max()
+        Rh = RT.sliding_iss(L, K, f_h, c0, np.ones(D_C), max_events=30)
+        done = bool(Rh['hist'][-1][3] < 1e-9)
+        te = 1.3 * Rh['events'][-1][0]
+        formed = np.abs(Rh['w']) > th_h
+        rec = dict(lab=lab, slide_n=int(formed.sum()), slide_act=int(Rh['act'].sum()), slide_c=Rh['c'][formed].tolist(),
+                   slide_w=Rh['w'][formed].tolist(), slide_rms=Rh['hist'][-1][3], slide_events=len(Rh['events']), slide_done=done,
+                   slide_entries=[(float(t), int(jj)) for t, jj, k, c in Rh['events'] if k == 'enter'],
+                   slide_hist=[(float(h[0]), float(h[3])) for h in Rh['hist']], slide_relaxed=[bool(v) for v in Rh['relaxed']],
+                   te=float(te), loops=[])
+        grid = None if done else np.r_[0.0, np.geomspace(1.0, te, 1760)]
+        for eps in eps_h:
+            taus, W, cc, Lam = run_moving(L, K, f_h, c0, eps, te, 'paradigm', n_t=1761, taus=grid)
+            sm = summarize(K, f_h, c0, taus, W, cc, th_h)
+            rec['loops'].append(dict(eps=eps, grid='uniform' if grid is None else 'geometric',
+                                     **{k: sm[k] for k in ('n_act', 'centres', 'w', 'rms', 'clusters', 'order', 'ent')}))
+        hard.append(rec)
+        print(f"  C5 {lab}: slide {rec['slide_n']} (active {rec['slide_act']}), loop {[r['n_act'] for r in rec['loops']]}", flush=True)
+    return hard
 
 
 def part_C():
@@ -350,26 +390,7 @@ def part_C():
               flush=True)
     out['c4'] = rnd
     # (5) ties and near ties (round 37), close bumps off the grid, a target wider than the kernels
-    hard = []
-    for lab, cs, As, wid, eps_h in (('one bump midway between two kernels (a tie)', (0.05,), (0.8,), SIG_C, EPS_C5),
-                                    ('one bump 0.001 off the midpoint (a near tie)', (0.051,), (0.8,), SIG_C, EPS_C5),
-                                    ('three bumps, one at a midpoint', (-0.52, 0.05, 0.61), ASTAR, SIG_C, EPS_C5),
-                                    ('two bumps 0.15 apart, off the grid', (-0.03, 0.12), (0.8, 0.6), SIG_C, EPS_C5),
-                                    ('two bumps 0.25 apart, off the grid', (-0.07, 0.18), (0.8, 0.6), SIG_C, EPS_C5),
-                                    ('three wider bumps (width 0.2)', CSTAR, ASTAR, 0.2, (EPS_RAND,))):
-        Kt = RT.Bumps(K.xs, wid)
-        f_h = bumps_target(Kt, cs, As)
-        Rh = RT.sliding_iss(L, K, f_h, c0, np.ones(D_C), max_events=30)
-        te = 1.3 * Rh['events'][-1][0]
-        rec = dict(lab=lab, slide_n=int(Rh['act'].sum()), slide_c=Rh['c'][Rh['act']].tolist(), slide_w=Rh['w'][Rh['act']].tolist(),
-                   slide_rms=Rh['hist'][-1][3], slide_events=len(Rh['events']), slide_done=bool(Rh['hist'][-1][3] < 1e-9),
-                   slide_entries=[(float(t), int(jj)) for t, jj, k, c in Rh['events'] if k == 'enter'], loops=[])
-        for eps in eps_h:
-            taus, W, cc, Lam = run_moving(L, K, f_h, c0, eps, te, 'paradigm', n_t=1761)
-            sm = summarize(K, f_h, c0, taus, W, cc, TH_ACT * np.abs(As).max())
-            rec['loops'].append(dict(eps=eps, **{k: sm[k] for k in ('n_act', 'centres', 'w', 'rms', 'clusters', 'order', 'ent')}))
-        hard.append(rec)
-        print(f"  C5 {lab}: slide {rec['slide_n']}, loop {[r['n_act'] for r in rec['loops']]}", flush=True)
+    hard = part_C5(L, K, c0)
     out['c5'] = hard
     rc = rnd[CREEP_TARGET]
     creep = creep_case(L, K, c0, np.array(rc['cs']), np.array(rc['As']))
@@ -417,20 +438,30 @@ def report(A=None, B=None, C=None, D=None):
     if A is not None:
         L_ += ["## A. From α = 0: the inverse scale space flow on the scale Λ(ε) = (πa_max/(4G))(2/(cε))^{1/2}", "",
                f"Three {NA} × {DA} Gaussian designs, 3-sparse truths, masses εb_i (b_i log-uniform in [1/4, 4]); the path of Σ|w_i|/√b_i against "
-               "the loop in τ = t/Λ, u = η/Λ, on 2001 times in [0, 1.5τ*] (τ* the last event): sup_τ|u − u_ISS|, the residual's rms difference "
-               "over τ, the largest difference of the entry times (the first sample where |w_i| > 10⁻³ max|w_bp|, on the loop and on the path; "
+               "the loop in τ = t/Λ, u = η/Λ, on 2001 times in [0, 1.5τ*] (τ* the last event): sup_τ|u − u_ISS|, the residual's difference "
+               "|Φ(w − w_ISS)| over the samples — its rms, its median and the number of samples where it exceeds 10⁻³ (at an event the "
+               "difference is O(1) over a τ-width ∝ ε^{1/2}, so its L² norm over τ is ∝ ε^{1/4}, while away from the events it is O(ε^{3/2}), the "
+               "inactive atoms' coefficients; once the width falls below the grid's step the rms counts only the samples that fall within an "
+               "entry), the largest difference of the entry times (the first sample where |w_i| > 10⁻³ max|w_bp|, on the loop and on the path; "
                "in brackets the atoms crossing on one of them only; the grid's step given), the end's distance to weighted basis pursuit.", ""]
         for a in A:
             ev = '; '.join(f"{k} {i} at {t:.4g}" for t, i, k in a['events'])
             L_ += [f"Design {a['seed']}: the path's events — {ev}; its end against weighted basis pursuit {fmt(a['end_is_bp'])}; the grid's step "
                    f"{fmt(a['dtau'])}.", "",
-                   "| ε | Λ | sup|u − u_ISS| | residual: rms difference | entry times: largest difference | |w(1.5τ*) − w_bp|∞ |", "|---|---|---|---|---|---|"]
-            L_ += [f"| {r['eps']:g} | {r['Lam']:.4g} | {fmt(r['du'])} | {fmt(r['dres'])} | {fmt(r['dent'])} ({r['n_only']}) | {fmt(r['dend'])} |"
-                   for r in a['rows']]
+                   "| ε | Λ | sup|u − u_ISS| | residual's difference: rms, median, samples > 10⁻³ | entry times: largest difference | "
+                   "|w(1.5τ*) − w_bp|∞ |", "|---|---|---|---|---|---|"]
+            L_ += [f"| {r['eps']:g} | {r['Lam']:.4g} | {fmt(r['du'])} | {fmt(r['dres'])}, {fmt(r['dres_med'])}, {r['dres_n']} | "
+                   f"{fmt(r['dent'])} ({r['n_only']}) | {fmt(r['dend'])} |" for r in a['rows']]
             du = {r['eps']: r['du'] for r in a['rows']}
             sl = f"the slope {np.log(du[1e-6] / du[1e-8]) / np.log(100):.3f} between ε = 10⁻⁶ and 10⁻⁸"
             if 1e-12 in du:
                 sl += f", {np.log(du[1e-8] / du[1e-12]) / np.log(1e4):.3f} between 10⁻⁸ and 10⁻¹²"
+            dm = {r['eps']: r['dres_med'] for r in a['rows']}
+            dr = {r['eps']: r['dres'] for r in a['rows']}
+            if 1e-12 in dm:
+                sl += (f"; the residual's difference — rms: the slope {np.log(dr[1e-6] / dr[1e-8]) / np.log(100):.3f} between 10⁻⁶ and 10⁻⁸ "
+                       f"(the L² norm's ε^{{1/4}}: 0.25); median: {np.log(dm[1e-6] / dm[1e-10]) / np.log(1e4):.3f} between 10⁻⁶ and 10⁻¹⁰ "
+                       "(ε^{3/2}: 1.5; at 10⁻¹² it nears the rounding floor)")
             L_ += ["", f"sup|u − u_ISS| in log ε: {sl} (1/Λ ∝ ε^{{1/2}}: 0.5). Each atom is integrated on its own curve (α alone, "
                    "β = εb + 2c sinh²(α/a_max)), so Q is kept exactly.", ""]
     if B is not None:
@@ -502,13 +533,38 @@ def report(A=None, B=None, C=None, D=None):
                "| target | sliding ISS: entries (τ, kernel), kernels, centres, coefficients, rms residual | ε | loop: entries (kernel: τ), formed, "
                "centres, coefficients (clusters), rms residual |", "|---|---|---|---|"]
         for r in C['c5']:
-            sl = (f"{[(round(t, 3), jj) for t, jj in r['slide_entries']][:8]}, {r['slide_n']}, {[round(v, 3) for v in r['slide_c']]}, "
-                  f"{[round(v, 3) for v in r['slide_w']]}, {fmt(r['slide_rms'])}{'' if r['slide_done'] else ' (not terminated)'}")
+            if r['slide_done']:
+                sl = (f"{[(round(t, 3), jj) for t, jj in r['slide_entries']]}, {r['slide_n']}, {[round(v, 3) for v in r['slide_c']]}, "
+                      f"{[round(v, 3) for v in r['slide_w']]}, {fmt(r['slide_rms'])}")
+            else:
+                sl = (f"{len(r['slide_entries'])} entries, at τ = {', '.join(f'{t:.3g}' for t, jj in r['slide_entries'])} (not terminated: "
+                      f"{r['slide_act']} kernels active, {r['slide_n']} with |w| above the threshold, rms residual {fmt(r['slide_rms'])})")
             for k, lp in enumerate(r['loops']):
                 ent = ', '.join(f"{i}: {t:.4g}" for i, t in zip(lp['order'], lp['ent']))
+                cw = (f"{[round(v, 3) for v in lp['centres']]}, {[round(v, 3) for v in lp['w']]} " if r['slide_done'] else "")
                 L_.append(f"| {r['lab'] if k == 0 else ''} | {sl if k == 0 else ''} | {lp['eps']:g} | {ent}; {lp['n_act']}, "
-                          f"{[round(v, 3) for v in lp['centres']]}, {[round(v, 3) for v in lp['w']]} ({lp['clusters']}), {fmt(lp['rms'])} |")
+                          f"{cw}({lp['clusters']}), {fmt(lp['rms'])} |")
         L_.append("")
+        for r in C['c5']:
+            if not r['slide_done'] and 'slide_hist' in r:
+                hh = r['slide_hist']
+                L_ += [f"The target '{r['lab']}' is not three kernels of width {SIG_C}: the sliding path enters a kernel at a time, at times "
+                       f"growing geometrically, its rms residual at the events {', '.join(fmt(v) for t, v in hh)} (at τ = "
+                       f"{', '.join(f'{t:.3g}' for t, v in hh)}); {sum(r['slide_relaxed'])} of its {len(r['slide_relaxed'])} relaxations "
+                       f"became stationary within the budget."]
+                path_order = [jj for t, jj in r['slide_entries']]
+                for lp in r['loops']:
+                    n_ = min(len(lp['order']), len(path_order))
+                    k = 0
+                    while k < n_ and lp['order'][k] == path_order[k]:
+                        k += 1
+                    ks = max([j for j in range(1, n_ + 1) if set(lp['order'][:j]) == set(path_order[:j])], default=0)
+                    L_[-1] += (f" The loop at ε = {lp['eps']:g} (on a geometric τ grid to τ = {r['te']:.3g}) enters {len(lp['order'])} kernels, "
+                               f"at τ = {lp['ent'][0]:.3g} to {lp['ent'][-1]:.3g}: the first {k} of its entrants the path's in its order, the first "
+                               f"{ks} the path's first {ks} (its entries at τ = {', '.join(f'{t:.3g}' for t in lp['ent'][:ks])}; the path's "
+                               f"{', '.join(f'{t:.3g}' for t, jj in r['slide_entries'][:ks])}); it ends with {lp['n_act']} kernels above the "
+                               f"threshold at the rms residual {fmt(lp['rms'])} (the path {fmt(r['slide_rms'])}).")
+                L_.append("")
     if C is not None and 'c6' in C:
         c6 = C['c6']
         L_ += ["", f"(6) A lost near-tie (target {CREEP_TARGET} of (4)): the sliding path enters kernels {c6['slide_order']} at τ = "
@@ -552,6 +608,10 @@ def main():
     for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
+    if 'C5' in parts and 'C' not in parts:                            # C (5) alone, into the stored C (round 38)
+        warnings.filterwarnings('ignore')
+        res['C'] = dict(res['C'], c5=part_C5(law(), RT.Bumps(np.linspace(-1, 1, NS_C), SIG_C), np.linspace(-1, 1, D_C)))
+        E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] C5", flush=True)
     open(md, 'w').write(report(*[res.get(k) for k in 'ABCD']))
 
 
