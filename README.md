@@ -82,7 +82,18 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   exact fit, the saturation repelling (Proposition D‴.38); and without the prior the dithered loop has no stationary law — the energy is bounded on the unconstrained coordinates, and the
   positions climb, at a rate e^{−ΔJ/τ}, onto a plateau of approximate fits with saturated amplitudes — which a dead zone on a box of
   the unconstrained coordinates restores — without bias for the exact fits inside it, though the stationary averages still weigh the
-  plateau where it meets the box —, the gauge's saturation becoming a wall where the drift ends (Proposition D‴.39); with free masses the mass–amplitude law is a mirror flow — a conserved quantity per kernel, an explicit potential, the implicit bias a
+  plateau where it meets the box —, the gauge's saturation becoming a wall where the drift ends (Proposition D‴.39); and measurement noise, entering along the descent's own directions, does not select among the exact fits at all in continuous time —
+  the Wong–Zakai term cancels the Itô drift exactly —, while an update that draws it afresh selects (label-noise SGD's flat-minimum bias,
+  here an interior target for the masses), and correlated draws select through the increment's second moment: a linear-response filter
+  over the normal modes, from the Hessian's trace to its log-determinant as a Markov noise slows, concave for every colour — on the masses
+  a multistable selection (Proposition D‴.41); and with several particles per class the class masses carry all of it under the isotropic dither, with m the number of particles, while
+  the split of a class's mass among its particles is frozen at Katzenberger's order — an anisotropic dither, or measurement noise away from
+  the equal split, makes the split felt (Proposition D‴.42); and under a sampled-data (explicit Euler) adaptation the colour of that noise decides which kernels survive on an over-complete
+  dictionary, at a rate ∝ hσ² (none in continuous time or for Stratonovich-consistent updates; millions of updates here): white noise
+  selects a weighted ℓ¹ norm (basis pursuit, as the step and the noise vanish), a slow one the log-determinant of Fazel's heuristic (sparse
+  Bayesian learning's log-det term), which counts the kernels — on exactly sparse targets the slow selection recovers kernel expansions
+  where basis pursuit fails (sparse Bayesian learning matches or beats it), and label-noise descent at small noise identifies their support
+  where its reduced flow does, the coefficients after a noiseless phase (Proposition D‴.43); with free masses the mass–amplitude law is a mirror flow — a conserved quantity per kernel, an explicit potential, the implicit bias a
   Bregman projection set by the starting masses (from the minimum-norm fit to weighted basis pursuit), noise with smooth paths
   (Stratonovich) unable to move it, and a Lyapunov function of the real loop's joint adaptation (Proposition D‴.45); a leak written in those mirror coordinates keeps the certificate under disturbances and makes the loop's bias an explicit
   Bregman-regularised fit — a ridge from large starting masses, a LASSO from small ones that keeps the target's kernels under the

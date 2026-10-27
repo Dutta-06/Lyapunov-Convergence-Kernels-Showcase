@@ -1014,6 +1014,99 @@ Tests (`tests/test_gauge_plateau.py`): the dead zone inactive inside the box, mi
 coordinates and J + V coercive; the box's wall and vertices; a run inside the box bit for bit the unboxed one.
 
 
+## Proposition D‴.41 — measurement noise on the gauge (`exp_gauge_label.py` → `chaos/gauge_label.md`)
+
+- Proposition D‴.36's instance without dither; the measured error r + ξ in both laws, ξ independent over the quadrature nodes, of intensity v.
+  (A) At three points of M and γ = 10⁻², 10⁻⁵, Katzenberger's Itô drift (Σ = v⟨UUᵀ⟩_ρ) and the Wong–Zakai term (v/2)∂Φ⟨(U·∇)U⟩_ρ cancel to
+  4.6·10⁻⁹–1.1·10⁻⁸ relative; the diffusion along M vanishes (≤ 2.1·10⁻²⁰); the closed form on the masses matches the Itô drift to
+  2–4·10⁻⁴ at γ = 10⁻⁵. (A2) Other node covariances (an offset, an orbit-correlated noise, a variance profile): the Stratonovich drift over
+  its Itô drift O(γ) from γ ≈ 10⁻³ on (from 10⁻⁴ for the 1 + 0.8 sin t profile) (2.4·10⁻⁵ at γ = 10⁻⁵ for an offset), 0.2–12% at γ = 10⁻¹; the coloured-noise identity to 2.5·10⁻⁸.
+- (B) The slow limit's target of the per-update selection, W_ℓ = (0.3163, 0.4115, 0.2722), interior (|a|/a_max 0.79, 0.43, 0.73), far from
+  the dither's D-optimal W♯ = (0.3765, 0.2988, 0.3247); at γ = 10⁻² the Itô drift vanishes at (0.3221, 0.3999, 0.2780); an Euler step in
+  the amplitude a gives the factor (1 − q)(1 + 3q) (Katzenberger's drift in those coordinates within 3.4·10⁻⁴ of it) and the target
+  (0.2967, 0.4513, 0.2520).
+- (C) The full loop (γ = 10⁻², 4 seeds × 2·10⁵ slow units): the gauge's slope over the linear-response prediction averaged along the path
+  0.996–1.008 for fresh draws and AR(1) draws at ρ = −1/2 … 0.6, 0.996–1.022 at ρ = 0.8, 0.9 (± up to 0.03), 1.004–1.027 at ρ = 0.95;
+  the per-step law rejected at ρ = 0.9 (0.0462 ± 0.0006 of the Itô drift against 0.0526); Heun's scheme (2 ± 7)·10⁻⁴ of the Itô drift.
+  (C2) At the step 8 (hλ_max ≈ 1.6): 0.979–1.049 of the prediction (± 0.004–0.053), where the step-free Itô drift is off by 42%.
+- (D) f = uv: E[Q]'s decay rates within 0.3% of the linear-response prediction for every scheme (ρ up to 0.999, 0.19 of the per-step law
+  there); Heun keeps Q to 1.2·10⁻⁵. (E) The diagonal network: the products' decay rates over the prediction 0.9988–0.9998 on average,
+  the prediction differing across coordinates by a factor up to 2.17 at ρ = 0.999. (F) A tanh network: the sharpness's slope over the
+  prediction 0.990–1.060 to ρ = 0.9 (slower noise below the measurement's floor).
+- (G) The per-update selection's zero set at γ = 10⁻²: one interior target for fresh draws and τ_c = 10; three stable zeros, each with one
+  class's mass large, from τ_c = 100; from τ_c = 10³ three saddles and an unstable node next to W♯ besides; W₀'s flow changing target
+  between τ_c = 100 and 10³; at γ = 10⁻⁵ the targets approach the saturation (W/W_min − 1 ≈ 10⁻⁴ at τ_c = 10⁵). The slow limit τ_cΣ_f
+  within 7·10⁻⁴ of its finite-step value; the slow noise's direction the dither's (cos 1.00000) at γ = 10⁻⁵; a smooth noise selects
+  2–5% as much as a Markov one of the same correlation time.
+
+Tests (`tests/test_gauge_label.py`): the noise along the fields; the fields orthogonal to the gauge in the flow's metric; the Wong–Zakai
+cancellation at a point; W_ℓ interior and minimising Ψ_ℓ, and the amplitude coordinates' target; the schemes' reductions; the AR(1) draws
+and Heun steps (correlated noise off M; dither) against hand-coded steps; the weighted and the covariance Wong–Zakai terms; the
+linear-response factor against the exact stationary moments and its continuum limits; the filtered covariance against the pairwise
+factors; Gaussian correlation sums; the finite-step slow limit.
+
+
+## Proposition D‴.42 — several particles per class (`exp_gauge_classes.py` → `chaos/gauge_classes.md`)
+
+- Proposition D‴.36's instance with 2 and 3 particles per class, together at the class's exact-fit position. (A) log det ∇²_ΘJ minus its
+  one-per-class value at the same class masses is −46.131219 (m = 6) and −92.262438 (m = 9) at every class mass and split (to 3·10⁻⁷,
+  4·10⁻⁷). (B) In Katzenberger's limit under the isotropic dither the class masses' drift and diffusion are 3/m times the one-per-class
+  ones at γ = 10⁻⁵ (0.5000, 0.3333, n = 3's degenerate equal split included; the diffusion at γ = 10⁻² too); the fractions' diffusion is
+  at most 10⁻¹⁶ per γ²τ, their drift 10⁻⁴ of the class drift at γ = 10⁻⁵ and at γ = 10⁻² O(γ) relative, toward the equal split.
+- (C) The correction per class at κ_F = 1 cancels the class drift as for one particle per class, the fractions' drift unchanged.
+  (D) Measurement noise at m = 6: at the equal split the Itô drift and the Wong–Zakai term cancel to 6·10⁻⁹ and the class Itô drift is m = 3's (1.0000); at unequal splits the residual is 2.2–2.6% of the Itô drift (up to 9.6% per component), at γ = 10⁻⁵ as at 10⁻²; the fractions' Itô drift is the full trace's flow less it.
+- (E) The full loop at m = 6 (8 seeds × 4·10⁵ slow units): the class masses at (0.330, 0.349, 0.321) and (0.334, 0.315, 0.351) against m = 3 at half the time (0.340, 0.346, 0.314); the fractions still from the equal split, from (0.2, 0.7, 0.5) s₁ moving by −0.035 ± 0.012 — away from the equal split — as |α| reaches 26–28. (F) Anisotropic dither (Richardson-extrapolated): the per-class law at the equal split for every mask (1.0000–1.0004 at γ ≥ 10⁻⁵, 1.0075 at 10⁻⁶), the fractions still there; at the unequal split 1.4–3.5% off it for the amplitudes-only mask, 5.9·10⁴ times it for the centres-and-widths mask (which freezes one particle per class), the fractions drifting at 1–6·10⁻⁴ per γτ.
+
+Tests (`tests/test_gauge_classes.py`): the determinant blind to the split; the class masses at the law of m and the fractions without
+diffusion; the correction per class, off M and at the floor; the degenerate equal split.
+
+
+## Proposition D‴.43 — the colour of the measurement noise selects the kernels (`exp_colour_selection.py` → `chaos/colour_selection.md`)
+
+- (A) The identities: Cauchy–Binet to 2.6·10⁻¹⁵, the gradient (4/N)ω to 4·10⁻⁹, R's second differences negative along every random segment
+  (−8·10⁻⁵ to −0.39, the continuum filters; zero for white draws), τ_cR − k log(4τ_c/N) → log(det(Φ_SᵀΦ_S)Π|w_i|) (−0.065892 against
+  −0.065900 at τ_c = 10⁶).
+- (B) Label-noise descent (10 × 40, k = 4 where basis pursuit fails, step 0.5, σ = 0.1, eight seeds × 16 paths) follows the reduced flow
+  (the paths' mean within 0.011–0.035 of it for fresh draws, 0.11–0.35 for AR(1) draws at τ_c = 100); fresh draws end on dense fits
+  (supports 10–13, errors 0.80–2.4, basis pursuit's 0.80–2.98); AR(1) draws recover the truth on all 16 paths of the four seeds whose
+  reduced flow recovers it (the end interpolants' errors 10⁻¹³–7·10⁻¹¹) and on 0–2 of 16 on the other four; at σ = 0.3 the four recover on
+  16, 0, 16 and 13 paths, at σ = 0.5 one seed still recovers — beyond the small-σ limit the descent prunes on its own.
+- (C) Recovery (10 × 40, 40 instances per row): k = 3 basis pursuit 0.38, white 0.38, slow 0.62/0.75/0.78 (τ_c = 10/100/1000); k = 4 0.17,
+  0.17, 0.42/0.60/0.62; k = 5 0, 0, 0.07/0.15/0.17; k = 6 none; at 20 × 80, k = 6 0.35 against 0.75; the white flow run to convergence ends
+  at basis pursuit's solution (336 of 340 converged, to 9.4·10⁻⁹); from the white flow's end the slow flow does no better than basis pursuit
+  at 10 × 40 (dropped atoms do not revive). Where the slow flow fails at τ_c = 100 its end has a larger R than the truth up to k = 4 (a
+  local minimum; 0.09 and 0.35 of the failures end below the truth's R at k = 5, 6); at τ_c = 10, 0.39, 0.68 and 0.85 of them (k = 4, 5, 6)
+  do — there the truth is not the finite-τ_c minimiser.
+- (D) Gaussian kernel dictionaries (coherence 0.90, 0.96): the slow flow 0.95 against 0.80 (width 0.03, k = 4), 1.00 against 0.85 (width
+  0.05, k = 4), 0.78 against 0.65 (k = 6), the white flow at basis pursuit's rate; label-noise descent with AR(1) draws recovers the truth
+  on two of three instances where basis pursuit fails (all 16 paths, errors 2·10⁻¹³–7·10⁻⁸); on the third it is still on 12–13 atoms at the
+  end, its reduced flow then at 8.8·10⁻³ and reaching the truth when run on (3·10⁻¹³ at s = 1600); fresh draws end within 0.08–0.11 of basis
+  pursuit's solution.
+- (E) At the step 0.5 a smooth noise of τ_c = 10 and a draw kept 40 steps select as well (0.70, 0.70 against fresh 0.30 and basis pursuit's
+  0.45 at k = 3: the finite-step white comparator is not basis pursuit); a smooth noise of τ_c = 100 has not begun to select at the slow
+  horizon (0.00) and recovers 0.85 and 0.65 at ten times it. (F) The flows run to convergence: from α = 0.1, 0.5 the slow flow recovers
+  0.70, 0.75 (k = 3) and 0.40, 0.50 (k = 4), from α = 2 — toward the kernel regime — 0.35 and 0.30, basis pursuit's rate (0.45, 0.25), which
+  the white flow matches from every α.
+- (G) Sparse Bayesian learning (Tipping's EM) 0.97, 0.88, 0.55, 0.12, 0.05 for k = 2–6 against the slow flow's 0.97, 0.75, 0.60, 0.15, 0.00
+  (mean supports at k = 4: 6.6, 6.4; basis pursuit 8.9); the log-det's MM 0.70, 0.45 (k = 3, 4) from the flows' start, 0.53, 0.33 from basis
+  pursuit; reweighted ℓ¹ 0.38–0.53 and 0.17–0.25 at ε = 0.01, 0.1, 1 from either start.
+- (H) The certificate (sufficient; for white draws Fuchs's, certifying 0.38 of the 2-sparse truths and 0–0.03 from k = 3 on) holds at every
+  truth for τ_c = 100 at k = 2–5 (0.93 at k = 6) and for τ_c = 1000, the median ratio ∝ 1/τ_c (k = 2: 0.439, 0.0814, 0.0087 at τ_c = 10,
+  100, 1000); on kernel dictionaries (widths 0.03–0.08, k = 4, 6) the certified fraction rises with τ_c to 0.85–1.00 at τ_c = 10⁵ (white:
+  0–0.60), and the slow flow returns to the truth from P = 10⁻³ in 0.90–1.00 (τ_c = 100) and all (τ_c = 1000) of the instances.
+- (I) Under a fit floor (y = Φw* + εe, |e| = 1, ε = 10⁻³–0.05) the slow flow's k largest atoms are the truth's support in 0.70–0.75 (k = 3)
+  and 0.50 (k = 4) of the instances, basis pursuit's in 0.40–0.45 and 0.25. (J) At the same physical noise (AR(1) of correlation time 50,
+  per-step σ = 0.1) Δlog P off the truth's support is −2.39 under Euler's step 0.5, −0.278 under Euler's step 0.125 and −0.097 under Heun's
+  step 0.5 (25 times less): the selection is the explicit scheme's.
+
+Tests (`tests/test_colour_selection.py`): the subset expansion and the gradient, also with a finite step's filter; the white and slow
+potentials (finely sampled AR(1) draws tending to the slow one), R linear (white) and concave (slow) along segments; the support count; the
+projection, singular cases included; the reduced flow on M, P's rate, finite weights at a sparse fit, an overshooting trial stage rejected,
+white → basis pursuit, slow → the sparse truth; the flow as R's gradient flow in its metric (a doubled or halved w-drift fails); the exact
+interpolant against small-step descent, the end interpolants (at infinity flagged, converging within the alive atoms' span); label-noise
+descent against hand-coded AR(1) steps; the dictionary; the (u, v) round trip; the experiment's success threshold and dual certificate
+against hand computations; sparse Bayesian learning's EM on a 2-sparse truth; the white flow run to convergence; Heun's noiseless step on M.
+
 ## Proposition D‴.45 — the free mass–amplitude law as a mirror flow (`exp_mirror_free.py` → `chaos/mirror_free.md`)
 
 - (A) Unless stated: 5 × 12 Gaussian designs with unit columns, 2- or 3-sparse truths, m = 12, G = 1, γ = 0.1, a_max = 1 (c = 0.025); no
