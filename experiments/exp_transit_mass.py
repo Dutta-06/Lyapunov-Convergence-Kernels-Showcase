@@ -9,16 +9,18 @@ near tie and the predictions made from the sliding path alone (`rich_transit`).
 A. The near-tie law: one bump between the kernels at 0.0 and 0.1, δ from the midpoint (amplitudes 0.3, 0.8, 2.0; δ = 10⁻⁴, 10⁻³, 10⁻²;
    ε = 10⁻⁵ … 10⁻¹⁰): the runner-up's share of the bump against x = μ*/ε^{1/2} (μ* its margin when the entrant enters), against the
    inner problem's share at the same x (`near_tie_inner`, at the exact tie: the limit ε → 0 at fixed x), the Gibbs split 1/(1 + e^{κx}) (κ = πρ(2c)^{1/2}/a) and the
-   frozen coefficient K'³ρ⁻³/(|A|(x − Δ)³) (Δ the inner problem's pull, B).
+   frozen coefficient K'³ρ⁻³/(|A|(x − Δ)³) (Δ the inner problem's pull, B). A2: the inner problems not stationary within 8 doublings of
+   s, two doublings later (their drift).
 B. The entrant's overshoot η_c(α_A)/(Λ₀ρ) (`overshoot`) against the pull Δ(A) the inner problem exerts on a frozen runner-up (x = 200) and
    the loop's (the runner-up's final inner coordinate read from its coefficient, δ = 10⁻³, ε = 10⁻¹⁰); I∞ = overshoot − Δ.
 C. The creep: target 10 of Proposition D‴.48's random targets (C4, C6), whose path leaves a kernel 0.0065 inside its wall beside an
    unfitted bump — its predicted creep threshold (`recovery_threshold`) bracketed by the loop.
 D. Prediction from the path, out of sample: 48 random three-bump targets (D‴.48's recipe, a fresh seed); the predicted ε_c against the loop
    at ε = 10⁻⁵, 10⁻⁶, 10⁻⁷, 10⁻⁸ (formed: |w| > 10⁻²max|A*|; recovered: exactly the path's kernels formed).
-E. The predicted ε_c over 400 random targets: the fraction predicted not to recover at ε, entry- and creep-limited, and its slope in log ε.
+E. The predicted ε_c over 400 random targets: the fraction predicted not to recover at ε, entry- and creep-limited, and their slopes in
+   log ε (local, and fitted where between 10 targets and half of them fail).
 
-Output: results/chaos/transit_mass.md and transit_mass_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D,E`).
+Output: results/chaos/transit_mass.md and transit_mass_raw.npz (`--from-raw` regenerates the md; `--only A,A2,B,C,D,E`).
 """
 import os
 import sys
@@ -90,7 +92,8 @@ def a_run(args):
     inner = RT.near_tie_inner(L, K, A, 0.5 * (c0[w_] + c0[n_]), c0[w_], c0[n_], x)     # the limit ε → 0 at fixed x: the exact tie
     wn, ww = abs(W[-1][n_]), abs(W[-1][w_])
     return dict(A=A, off=off, eps=eps, mu=float(mu), x=float(x), entrant=w_, runner=n_, share=float(wn / (ww + wn)), w_r=float(wn),
-                c_r=float(cc[-1][n_]), c_e=float(cc[-1][w_]), share_inner=float(inner['share']), secs=time.time() - t0)
+                c_r=float(cc[-1][n_]), c_e=float(cc[-1][w_]), share_inner=float(inner['share']), inner_ok=bool(inner['stationary']),
+                secs=time.time() - t0)
 
 
 def part_A():
@@ -99,6 +102,20 @@ def part_A():
     with Pool(N_WORKERS) as pool:
         rows = pool.map(a_run, jobs)
     return rows
+
+
+def part_A2(rows):
+    """The inner problems not stationary within 8 doublings of s: the share two doublings later (s four times longer) — their drift."""
+    L, K, c0 = setup()
+    out = []
+    for r in rows:
+        if r.get('inner_ok', True):
+            continue
+        w_, n_ = r['entrant'], r['runner']
+        inner = RT.near_tie_inner(L, K, r['A'], 0.5 * (c0[w_] + c0[n_]), c0[w_], c0[n_], r['x'], max_doublings=10)
+        out.append(dict(A=r['A'], off=r['off'], eps=r['eps'], x=r['x'], share8=r['share_inner'], share10=float(inner['share']),
+                        s10=float(inner['s']), ok10=bool(inner['stationary'])))
+    return out
 
 
 def b_run(A):
@@ -111,7 +128,7 @@ def b_run(A):
     xi_r = float(RT.inner_xi(L, abs(W[-1][n_])))
     fr_off = RT.near_tie_inner(L, K, A, cs, c0[w_], c0[n_], X_B, both=False)
     return dict(A=A, overshoot=ov, delta_inner=float(X_B - fr['xi_r']), xi_e=fr['xi_e'], delta_inner_off=float(X_B - fr_off['xi_r']),
-                x_loop=float(x), delta_loop=float(x - xi_r))
+                x_loop=float(x), delta_loop=float(x - xi_r), inner_ok=bool(fr['stationary'] and fr_off['stationary']))
 
 
 def part_B():
@@ -183,7 +200,7 @@ def part_E():
                        for p in preds])
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, A2=None):
     fmt = E.fmt
     L, K, c0 = setup()
     kap = np.pi * np.sqrt(2 * L.c) / L.A
@@ -208,18 +225,32 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
             fro = Kp3 / (r['A'] * (r['x'] - dd) ** 3) if dd is not None and r['x'] > dd + 1 else float('nan')
             L_.append(f"| {r['A']:g} | {r['off']:g} | {r['eps']:g} | {r['x']:.4g} | {fmt(r['share'])} | {fmt(r['share_inner'])} | "
                       f"{r['share'] / r['share_inner']:.4f} | {fmt(gib)} | {fmt(fro)} | {r['c_r']:.4f} |")
-        rat = np.array([r['share'] / r['share_inner'] for r in A])
-        L_ += ['', f"The loop's share over the inner problem's: {rat.min():.4f}–{rat.max():.4f} over all {len(A)} runs "
-               f"(x from {min(r['x'] for r in A):.3g} to {max(r['x'] for r in A):.4g}).", '']
+        by = []
+        for off in sorted({r['off'] for r in A}):
+            rat = np.array([r['share'] / r['share_inner'] for r in A if r['off'] == off])
+            by.append(f"{rat.min():.4f}–{rat.max():.4f} at δ = {off:g}")
+        nst = sum(1 for r in A if r.get('inner_ok', True))
+        dr = ''
+        if A2 is not None and len(A2):
+            ch = max(abs(q['share10'] / q['share8'] - 1) for q in A2)
+            dr = (f"; the other {len(A2)} (x ≈ {min(q['x'] for q in A2):.3g}–{max(q['x'] for q in A2):.3g}) still drifting, their share "
+                  f"changing by at most {ch:.1e} (relative) from s = {min(q['s10'] for q in A2) / 4:.3g} to {min(q['s10'] for q in A2):.3g}")
+        L_ += ['', f"The loop's share over the inner problem's: {'; '.join(by)} (x from {min(r['x'] for r in A):.3g} to "
+               f"{max(r['x'] for r in A):.4g}; the inner problem stationary — every rate below 10⁻⁹|A| — on {nst} of {len(A)}{dr}).", '']
     if B is not None:
         L_ += ["## B. The entrant's overshoot and the runner-up's pull", '',
                "The overshoot η_c(α_A)/(Λ₀ρ) (an entered kernel's dual beyond its wall, in units of ε^{1/2}ρ) against the pull Δ the inner "
                f"problem exerts on a frozen runner-up (x = {X_B:g}; at the exact tie and at δ = {OFF_B:g}) and the loop's (δ = {OFF_B:g}, "
                f"ε = {EPS_B:g}: Δ = x − ξ_r(∞), ξ_r read from the runner-up's coefficient); I∞ = overshoot − Δ:", '',
-               "| A | overshoot | Δ: inner, tie | I∞ | Δ: inner, δ | Δ: loop (x) |", "|---|---|---|---|---|---|"]
-        L_ += [f"| {r['A']:g} | {r['overshoot']:.4f} | {r['delta_inner']:.4f} | {r['overshoot'] - r['delta_inner']:.4f} | "
-               f"{r['delta_inner_off']:.4f} | {r['delta_loop']:.4f} ({r['x_loop']:.4g}) |" for r in B]
-        L_.append('')
+               "| A | overshoot | Δ: inner, tie | I∞ | Δ: inner, δ | Δ: loop (x) | tie − δ | δ − loop |", "|---|---|---|---|---|---|---|---|"]
+        L_ += [f"| {r['A']:g} | {r['overshoot']:.4f} | {r['delta_inner']:.4f}{'' if r.get('inner_ok', True) else ' (not stationary)'} | "
+               f"{r['overshoot'] - r['delta_inner']:.4f} | {r['delta_inner_off']:.4f} | {r['delta_loop']:.4f} ({r['x_loop']:.4g}) | "
+               f"{r['delta_inner'] - r['delta_inner_off']:.4f} | {r['delta_inner_off'] - r['delta_loop']:.4f} |" for r in B]
+        lam0 = RT.transit_scale(L, 1.0)
+        Bs = sorted(B, key=lambda r: r['A'])
+        inc = [(b['overshoot'] - a['overshoot']) / np.log(b['A'] / a['A']) for a, b in zip(Bs[:-1], Bs[1:])]
+        L_ += ['', "The overshoot's growth per unit log A between consecutive amplitudes: " + ', '.join(f'{v:.4f}' for v in inc) +
+               f"; the exponential branch's slope a²/(4GcΛ₀ρ) = {L.A ** 2 / (4 * L.G * L.c * lam0):.4f} (Λ₀ = {lam0:.4f}).", '']
     if C is not None:
         p = C['pred']
         L_ += ['## C. The creep', '',
@@ -257,12 +288,21 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
         L_ += ['## E. The predicted mass over many targets', '',
                f"{len(pe)} random three-bump targets (seed {SEED_E}): the fraction predicted not to recover at ε (ε ≥ ε_c), and the fractions "
                "limited by an entry's near tie (ε ≥ ε_entry) and by the creep (ε ≥ ε_creep); the local slope of each in log ε:", '',
-               "| ε | not recovered | by a near tie | by the creep | slope (all) |", "|---|---|---|---|---|"]
-        fr = [np.mean(eps_c <= e) for e in EPS_GRID_E]
-        for k, e in enumerate(EPS_GRID_E):
-            sl = (np.log(fr[k - 1] / fr[k]) / np.log(EPS_GRID_E[k - 1] / e)) if k > 0 and fr[k] > 0 and fr[k - 1] > 0 else float('nan')
-            L_.append(f"| {e:.3g} | {fr[k]:.4f} | {np.mean(ee <= e):.4f} | {np.mean(ec <= e):.4f} | {fmt(sl)} |")
-        L_.append('')
+               "| ε | not recovered | by a near tie | by the creep | slope: all | near tie | creep |", "|---|---|---|---|---|---|---|"]
+        G_ = np.array(EPS_GRID_E)
+        fr = {k: np.array([np.mean(v <= e) for e in G_]) for k, v in (('all', eps_c), ('tie', ee), ('creep', ec))}
+
+        def loc(f, k):
+            return np.log(f[k - 1] / f[k]) / np.log(G_[k - 1] / G_[k]) if k > 0 and f[k] > 0 and f[k - 1] > 0 else float('nan')
+        for k, e in enumerate(G_):
+            L_.append(f"| {e:.3g} | {fr['all'][k]:.4f} | {fr['tie'][k]:.4f} | {fr['creep'][k]:.4f} | {fmt(loc(fr['all'], k))} | "
+                      f"{fmt(loc(fr['tie'], k))} | {fmt(loc(fr['creep'], k))} |")
+        fits = []
+        for k, name in (('all', 'all'), ('tie', 'a near tie'), ('creep', 'the creep')):
+            m = (fr[k] * len(pe) >= 10) & (fr[k] <= 0.5)
+            sl = np.polyfit(np.log(G_[m]), np.log(fr[k][m]), 1)[0] if m.sum() >= 2 else float('nan')
+            fits.append(f"{name} {sl:.3f} (ε = {G_[m].max():.3g} … {G_[m].min():.3g})")
+        L_ += ['', "Least-squares slopes in log ε where between 10 targets and half of them fail: " + '; '.join(fits) + '.', '']
     L_.append('Numbers are produced by `experiments/exp_transit_mass.py`; nothing is edited by hand.')
     return '\n'.join(L_) + '\n'
 
@@ -272,16 +312,17 @@ def main():
     md = os.path.join(OUT, 'transit_mass.md')
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
+    keys = ('A', 'B', 'C', 'D', 'E', 'A2')
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[get(k) for k in keys]))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('B', part_B), ('A', part_A), ('C', part_C), ('D', part_D), ('E', part_E)):
+    for k, fn in (('B', part_B), ('A', part_A), ('A2', lambda: part_A2(res['A'])), ('C', part_C), ('D', part_D), ('E', part_E)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+            open(md, 'w').write(report(*[res.get(k) for k in keys]))
 
 
 if __name__ == '__main__':

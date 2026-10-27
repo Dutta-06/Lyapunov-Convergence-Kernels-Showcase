@@ -272,12 +272,13 @@ def overshoot(L, A, rho=1.0):
     return -inner_xi(L, A, rho)
 
 
-def near_tie_inner(L, K, A, cstar, c_e, c_r, x, rho=1.0, xi0=60.0, s_end=5000.0, both=True):
+def near_tie_inner(L, K, A, cstar, c_e, c_r, x, rho=1.0, xi0=60.0, s_end=5000.0, both=True, tol=1e-9, max_doublings=8):
     """The ε-free inner problem of a near tie (Proposition D‴.51(i)): an entrant at c_e and a runner-up at c_r, a bump A at cstar, in
     s = (τ − τ_e)/ε^{1/2} and ξ_i = (ρ − s_Au_i)/(ρε^{1/2}) (s_A the bump's sign): dξ_i/ds = −s_A⟨rφ_i⟩/ρ, dc_i/ds = Λ₀Gm w_i⟨r∂_cφ_i⟩,
     w_i = s_A𝒲(ξ_i), r = Aφ(c*) − Σ_iw_iφ(c_i); the runner-up starts x behind the entrant (ξ_r − ξ_e = x, from ξ_e = xi0). both=False
-    freezes the runner-up (its coefficient dropped): the entrant alone, the runner-up's ξ then recording the pull. Returns the end state
-    with the runner-up's share |w_r|/(|w_e| + |w_r|)."""
+    freezes the runner-up (its coefficient dropped): the entrant alone, the runner-up's ξ then recording the pull. Integrated over s_end,
+    then over the elapsed time again (doubling) until stationary — every rate below tol·|A| (a small |A| relaxes slowly) — or
+    max_doublings is reached. Returns the end state with the runner-up's share |w_r|/(|w_e| + |w_r|) and whether it became stationary."""
     lam0 = transit_scale(L, 1.0)
     sA = np.sign(A)
     f_ = A * K.phi(np.array([cstar]))[:, 0]
@@ -295,11 +296,18 @@ def near_tie_inner(L, K, A, cstar, c_e, c_r, x, rho=1.0, xi0=60.0, s_end=5000.0,
         de, dr = K.dphi(np.array([ce]))[:, 0], K.dphi(np.array([cr]))[:, 0]
         return [-sA * (pe @ r) / nx / rho, -sA * (pr @ r) / nx / rho, lam0 * L.G * L.m * we * (de @ r) / nx,
                 lam0 * L.G * L.m * wr * (dr @ r) / nx]
-    sol = solve_ivp(rhs, (0.0, s_end), [xi0, xi0 + x, c_e, c_r], method='LSODA', rtol=1e-10, atol=1e-12)
-    xe, xr, ce, cr = sol.y[:, -1]
+    z, s0, chunk, ok = np.array([xi0, xi0 + x, c_e, c_r], float), 0.0, float(s_end), False
+    for _ in range(max_doublings + 1):
+        sol = solve_ivp(rhs, (s0, s0 + chunk), z, method='LSODA', rtol=1e-10, atol=1e-12)
+        z, s0 = sol.y[:, -1], s0 + chunk
+        if np.all(np.abs(rhs(s0, z)) <= tol * abs(A)):
+            ok = True
+            break
+        chunk = s0
+    xe, xr, ce, cr = z
     we, wr = W(xe), (W(xr) if both else 0.0)
     return dict(xi_e=float(xe), xi_r=float(xr), c_e=float(ce), c_r=float(cr), w_e=we, w_r=wr, share=wr / (we + wr),
-                status=int(sol.status))
+                status=int(sol.status), stationary=ok, s=s0)
 
 
 def path_duals(K, fstar, R):
