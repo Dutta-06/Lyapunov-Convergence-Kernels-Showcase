@@ -16,7 +16,11 @@ the kernels climb the correlation's peaks before entering — condensation.
 This module: Gaussian kernels on a sample grid (`Bumps`; on a reference orbit with the closed loop's error filter, `OrbitBumps` —
 Proposition D‴.49), the free law with moving centres under either metric (`moving_rhs`) and with moving widths too
 (`moving_rhs_widths`), the active block's fast flow on the critical curve (`critical_rhs`), the sliding inverse scale space
-(`sliding_iss`) and the inactive kernels' limit under the Wasserstein–Fisher–Rao metric (`wfr_inactive_rhs`).
+(`sliding_iss`) and the inactive kernels' limit under the Wasserstein–Fisher–Rao metric (`wfr_inactive_rhs`). Proposition D‴.51 (the
+transit at a finite mass): the critical curve's inner profile near the wall (`eta_crit`, `coef_crit`, `inner_coef`, `inner_xi`), the
+entrant's overshoot (`overshoot`), the ε-free inner problem of a near tie (`near_tie_inner`), the sliding path's duals (`path_duals`), the
+creep of a kernel left near its wall along the path (`creep_reaches`) and the mass below which the loop forms exactly the path's kernels,
+predicted from the path alone (`recovery_threshold`).
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -217,3 +221,189 @@ def wfr_inactive_rhs(L, K, fstar, rho):
         h = K.dphi(c).T @ fstar / K.xs.size
         return np.r_[g, k * np.tan(np.pi * u / (2 * rho)) * h / rho]
     return f
+
+
+# ------------------------------------------------------------------------------------------------------------------------------------
+# Proposition D‴.51 (PARADIGM.md §5d): the transit at a finite mass — near ties, the entrant's overshoot, the creep, the predicted ε
+# ------------------------------------------------------------------------------------------------------------------------------------
+
+def eta_crit(L, al):
+    """The critical curve's mirror coordinate relative to the wall, η_c(α) = lim_{ε→0}(η_ε(α) − λ₁) = (a²/(2Gc))(α/a − coth(α/a)):
+    −a²/(2Gcα) near α = 0 (the core's tangent), a(α − a)/(2Gc) for α ≫ a (the exponential branch)."""
+    x = np.asarray(al, float) / L.A
+    return (L.A ** 2 / (2 * L.G * L.c)) * (x - 1 / np.tanh(x))
+
+
+def coef_crit(L, al):
+    """The coefficient w = βa/m on the critical curve β = 2c sinh²(α/a), a = a_max tanh(α/a) (|α|, overflow-safe)."""
+    x = np.minimum(np.abs(np.asarray(al, float)) / L.A, 350.0)
+    return 2 * L.c * np.sinh(x) ** 2 * L.A * np.tanh(x) / L.m
+
+
+def _alpha_of(L, target, fn, lo=1e-12, hi=1e3, it=200):
+    """α > 0 with fn(L, α) = target (fn increasing), by bisection in log α, vectorised."""
+    t = np.asarray(target, float)
+    a, b = np.full(t.shape, np.log(lo)), np.full(t.shape, np.log(hi))
+    for _ in range(it):
+        m_ = 0.5 * (a + b)
+        up = fn(L, np.exp(m_)) < t
+        a, b = np.where(up, m_, a), np.where(up, b, m_)
+    return np.exp(0.5 * (a + b))
+
+
+def inner_coef(L, xi, rho=1.0):
+    """The inner profile: a kernel whose dual coordinate is u = ρ(1 − ε^{1/2}ξ) carries, as ε → 0 at fixed ξ, the coefficient
+    𝒲(ξ) = w_c(α) with η_c(α) = −Λ₀ρξ, Λ₀ = Λ(ε)ε^{1/2} = (πa/(4G))(2/c)^{1/2}: ≈ K'³ρ⁻³ξ⁻³ for ξ ≫ 1 (the core's profile,
+    K'³ = (8/π³)a/(m(2c)^{1/2})), ∝ exp(−πρ(2c)^{1/2}ξ/a) for ξ ≪ −1 (the exponential branch)."""
+    lam0 = transit_scale(L, 1.0)
+    al = _alpha_of(L, -lam0 * rho * np.asarray(xi, float), eta_crit)
+    return coef_crit(L, al)
+
+
+def inner_xi(L, w, rho=1.0):
+    """The inverse of `inner_coef`: the inner dual coordinate ξ of a kernel carrying |w| near its wall."""
+    al = _alpha_of(L, np.abs(np.asarray(w, float)), coef_crit)
+    return -eta_crit(L, al) / (transit_scale(L, 1.0) * rho)
+
+
+def overshoot(L, A, rho=1.0):
+    """The entrant's overshoot: an entered kernel carrying the coefficient A has its dual coordinate beyond its wall by
+    η_c(α_A)/Λ = ε^{1/2}·(−inner_xi(A)) — what a runner-up's dual is pulled along by while the entrant grows (Proposition D‴.51(i))."""
+    return -inner_xi(L, A, rho)
+
+
+def near_tie_inner(L, K, A, cstar, c_e, c_r, x, rho=1.0, xi0=60.0, s_end=5000.0, both=True):
+    """The ε-free inner problem of a near tie (Proposition D‴.51(i)): an entrant at c_e and a runner-up at c_r, a bump A at cstar, in
+    s = (τ − τ_e)/ε^{1/2} and ξ_i = (ρ − s_Au_i)/(ρε^{1/2}) (s_A the bump's sign): dξ_i/ds = −s_A⟨rφ_i⟩/ρ, dc_i/ds = Λ₀Gm w_i⟨r∂_cφ_i⟩,
+    w_i = s_A𝒲(ξ_i), r = Aφ(c*) − Σ_iw_iφ(c_i); the runner-up starts x behind the entrant (ξ_r − ξ_e = x, from ξ_e = xi0). both=False
+    freezes the runner-up (its coefficient dropped): the entrant alone, the runner-up's ξ then recording the pull. Returns the end state
+    with the runner-up's share |w_r|/(|w_e| + |w_r|)."""
+    lam0 = transit_scale(L, 1.0)
+    sA = np.sign(A)
+    f_ = A * K.phi(np.array([cstar]))[:, 0]
+    nx = K.xs.size
+
+    def W(xi):
+        return float(inner_coef(L, xi, rho))
+
+    def rhs(s, z):
+        xe, xr, ce, cr = z
+        we = sA * W(xe)
+        wr = sA * W(xr) if both else 0.0
+        pe, pr = K.phi(np.array([ce]))[:, 0], K.phi(np.array([cr]))[:, 0]
+        r = f_ - we * pe - wr * pr
+        de, dr = K.dphi(np.array([ce]))[:, 0], K.dphi(np.array([cr]))[:, 0]
+        return [-sA * (pe @ r) / nx / rho, -sA * (pr @ r) / nx / rho, lam0 * L.G * L.m * we * (de @ r) / nx,
+                lam0 * L.G * L.m * wr * (dr @ r) / nx]
+    sol = solve_ivp(rhs, (0.0, s_end), [xi0, xi0 + x, c_e, c_r], method='LSODA', rtol=1e-10, atol=1e-12)
+    xe, xr, ce, cr = sol.y[:, -1]
+    we, wr = W(xe), (W(xr) if both else 0.0)
+    return dict(xi_e=float(xe), xi_r=float(xr), c_e=float(ce), c_r=float(cr), w_e=we, w_r=wr, share=wr / (we + wr),
+                status=int(sol.status))
+
+
+def path_duals(K, fstar, R):
+    """The sliding path's (`sliding_iss`) dual coordinates reconstructed at its event times: on each interval the block's residual r_k is
+    fixed, the inactive kernels' u grows at ⟨r_kφ(c_j)⟩, an entrant is pinned at its wall (±1 in units of ρ — equal masses). Returns
+    dict(taus, res (r_k after the k-th relaxation), centres, U (the duals after the events at taus[k]), ever (the kernels that enter))."""
+    hist = R['hist']
+    taus = [h[0] for h in hist]
+    res = [fstar - K.phi(h[1]) @ h[2] for h in hist]
+    cs = [h[1] for h in hist]
+    d = len(cs[0])
+    nx = K.xs.size
+    ever = sorted({j for t, j, k, c in R['events'] if k == 'enter'})
+    u = np.zeros(d); act = np.zeros(d, bool); U = [u.copy()]
+    ev = R['events']; e = 0
+    for k in range(len(taus) - 1):
+        v = K.phi(cs[k]).T @ K.filt(res[k]) / nx
+        u = u + np.where(act, 0.0, (taus[k + 1] - taus[k]) * v)
+        while e < len(ev) and ev[e][0] <= taus[k + 1] + 1e-12:
+            t, j, kind, c = ev[e]
+            if kind == 'enter':
+                act[j] = True; u[j] = np.sign(u[j])
+            else:
+                act[j] = False
+            e += 1
+        U.append(u.copy())
+    return dict(taus=taus, res=res, centres=cs, U=np.array(U), ever=ever)
+
+
+def creep_reaches(L, K, P, j, eps, c0j, b=1.0):
+    """Whether kernel j (never entering on the path), started at c0j and integrated along the path's residuals with its creep law
+    dc/dτ = ε(πa²/(4c))b^{3/2}cos(πμ/2)/sin³(πμ/2)·s⟨r∂_cφ⟩ (Proposition D‴.48(iii)(a)) and du/dτ = ⟨rφ(c)⟩, comes within the inner
+    layer 3ε^{1/2} of its wall before the path's last event (P from `path_duals`)."""
+    pref = np.pi * L.A ** 2 / (4 * L.c) * b ** 1.5
+    nx = K.xs.size
+    mu_in = 3 * np.sqrt(eps)
+    z = np.array([0.0, c0j])
+    for k in range(len(P['taus']) - 1):
+        r = K.filt(P['res'][k])
+
+        def f(t, z):
+            u, c = z
+            mu = max(1 - abs(u), mu_in)
+            ph, dph = K.phi(np.array([c]))[:, 0], K.dphi(np.array([c]))[:, 0]
+            return [ph @ r / nx, eps * pref * np.cos(np.pi * mu / 2) / np.sin(np.pi * mu / 2) ** 3 * np.sign(u) * (dph @ r) / nx]
+
+        def hit(t, z):
+            return 1 - abs(z[0]) - mu_in
+        hit.terminal = True
+        sol = solve_ivp(f, (P['taus'][k], P['taus'][k + 1]), z, method='LSODA', rtol=1e-8, atol=1e-11, events=hit)
+        if sol.status == 1:
+            return True
+        z = sol.y[:, -1]
+    return False
+
+
+def recovery_threshold(L, K, fstar, c0, R, th_abs, n_creep=4, eps_lo=1e-14, eps_hi=1e-3, n_bisect=14):
+    """The mass below which the loop forms exactly the sliding path's kernels, predicted from the path alone (Proposition D‴.51(iii)):
+    (a) at each entry i, every kernel j that never enters is pulled toward its wall by the entrant's overshoot — it is formed when its
+    margin μ_j(τ_i) < ε^{1/2}x_θ(A_i)κ_ij, x_θ(A) = ln(|A|/θ − 1)/κ (κ = πρ(2c)^{1/2}/a the inner layer's Gibbs rate, θ the formation
+    threshold th_abs), κ_ij = s_j⟨Δr_iφ_j⟩/(s_i⟨Δr_iφ_i⟩) (Δr_i the residual the entry removes, φ_i the entrant after its relaxation):
+    ε_entry = min (μ_j/(x_θκ_ij))²; (b) the n_creep never-entering kernels closest to their walls, integrated with their creep along the
+    path (`creep_reaches`): ε_creep the smallest ε (bisection in log ε) at which one reaches the inner layer. Returns dict(eps_entry,
+    entry=(i, j, μ, κ_ij, x_θ), eps_creep, creep={j: ε_j}, eps_c = min)."""
+    P = path_duals(K, fstar, R)
+    taus, res, cs, U = P['taus'], P['res'], P['centres'], P['U']
+    d = len(c0)
+    nx = K.xs.size
+    never = [j for j in range(d) if j not in P['ever']]
+    kap = np.pi * np.sqrt(2 * L.c) / L.A
+    eps_entry, arg = np.inf, None
+    for t, i, kind, c in R['events']:
+        if kind != 'enter':
+            continue
+        k = int(np.argmin(np.abs(np.array(taus) - t)))
+        dr = K.filt(res[k - 1] - res[k])
+        gi = K.phi(np.array([cs[k][i]]))[:, 0] @ dr / nx
+        Ai = abs(float(R['w'][i]))                                   # the entrant's coefficient at the path's end (0 if it left)
+        if gi == 0 or Ai <= th_abs:
+            continue
+        xth = np.log(Ai / th_abs - 1) / kap if Ai > 2 * th_abs else 0.0
+        for j in never:
+            sj = np.sign(U[k][j]) if U[k][j] != 0 else 1.0
+            kij = sj * (K.phi(np.array([c0[j]]))[:, 0] @ dr / nx) / abs(gi)
+            if kij > 0 and xth > 0:
+                e_ = ((1 - abs(U[k][j])) / (xth * kij)) ** 2
+                if e_ < eps_entry:
+                    eps_entry, arg = float(e_), (int(i), int(j), float(1 - abs(U[k][j])), float(kij), float(xth))
+    closest = sorted(never, key=lambda j: min(1 - abs(U[k][j]) for k in range(len(taus))))[:n_creep]
+    creep = {}
+    for j in closest:
+        if not creep_reaches(L, K, P, j, eps_hi, c0[j]):
+            creep[j] = np.inf
+            continue
+        lo, hi = np.log(eps_lo), np.log(eps_hi)
+        if creep_reaches(L, K, P, j, eps_lo, c0[j]):
+            creep[j] = eps_lo
+            continue
+        for _ in range(n_bisect):
+            mid = 0.5 * (lo + hi)
+            if creep_reaches(L, K, P, j, np.exp(mid), c0[j]):
+                hi = mid
+            else:
+                lo = mid
+        creep[j] = float(np.exp(hi))
+    eps_creep = min(creep.values()) if creep else np.inf
+    return dict(eps_entry=eps_entry, entry=arg, eps_creep=eps_creep, creep=creep, eps_c=min(eps_entry, eps_creep))
