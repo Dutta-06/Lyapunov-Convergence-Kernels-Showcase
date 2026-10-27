@@ -22,6 +22,13 @@ D. The example: the scalar factorisation f(u, v) = uv fitted to y = 1 with label
    Stratonovich (Heun) dynamics —; an Euler step gives exactly Q_{n+1} = Q_n(1 − (ξ_n − r_n)²h²) whatever the noise sequence, so E[Q]
    decays at the rate set by the per-step variance: σ² for noise drawn afresh (the Itô SDE's exact rate), (1 − ρ)/(1 + ρ)σ² for AR(1)
    noise at the same intensity; N_PATHS_D paths, the decay rate −log(E[Q(T)]/Q(0))/(σ²T) against the factor.
+E. A diagonal linear network, w = u⊙u − v⊙v ∈ ℝ^d fitted to n < d samples (X standard normal, w* sparse), from u = v = α to the
+   gradient flow's interpolant, then with label noise of intensity V_E (the residual r_j + ξ_j, ξ independent over the samples). Each
+   product P_i = u_iv_i — the effective initialisation scale, which sets how close the interpolant is to the ℓ¹-minimal one — is conserved
+   by the gradient flow and by every noise field, so by the Stratonovich dynamics; an Euler step multiplies it by exactly
+   1 − 4h²(g_i − ξ̃_i)² (g = ∇_wL, ξ̃ = Xᵀξ/n), so E[P_i] decays at 4V_Ec_i/n times the per-step factor (c_i = Σ_jX_ji²): label noise's
+   sparsifying selection (the Lasso of label-noise gradient descent) set by the per-step variance; the measured rates, and the interpolant
+   the noiseless gradient flow reaches from the end state (its ℓ¹ norm, its distance from w*, against the start's).
 
 Output: results/chaos/gauge_label.md and gauge_label_raw.npz (GL_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D`).
 """
@@ -56,6 +63,7 @@ SCHEMES_C = (('ito', 0.0, DT), ('ito', 0.0, DT / 2), ('ar1', -0.5, DT), ('ar1', 
              ('ar1', 0.8, DT), ('heun', 0.0, DT))
 SIG2_D, DT_D, T_D, N_PATHS_D, UV0_D, SEED_D = 0.01, 1e-3, 100.0, 400, (2.0, 0.5), 900
 SCHEMES_D = (('ito', 0.0), ('ar1', -1 / 3), ('ar1', 1 / 3), ('ar1', 0.6), ('heun', 0.0))
+D_E, N_E, ALPHA_E, V_E, DT_E, T_E, P_E, SEED_E = 40, 10, 0.5, 0.001, 1e-3, 250.0, 8, 950
 L_MAP = 5e4                                                                    # the limit map's horizon (the slowest normal rate ≈ 3·10⁻⁴: e⁻¹⁵)
 
 
@@ -163,6 +171,59 @@ def d_job(args):
     return dict(scheme=scheme, rho=rho, rec=rec, rate=-np.log(rec[-1, 1] / Q0) / (SIG2_D * T_D))
 
 
+def diag_problem():
+    rng = np.random.default_rng(SEED_E)
+    X = rng.standard_normal((N_E, D_E))
+    ws = np.zeros(D_E); ws[:3] = (1.0, -0.5, 0.8)
+    return X, X @ ws, ws
+
+
+def e_job(args):
+    """Part E, one scheme: the gradient flow to the interpolant, then label noise; the products P_i = u_iv_i's log-decay rates over [0, T_E]
+    (the paths' mean of P_i), against 4V_Ec_i/n, and ‖w‖₁, ‖w − w*‖₁, the residual at the start and the end."""
+    scheme, rho = args
+    X, y, ws = diag_problem()
+    n, h = N_E, DT_E
+    u = np.full((P_E, D_E), ALPHA_E); v = np.full((P_E, D_E), ALPHA_E)
+
+    def grad(u, v, xi):
+        g = ((u * u - v * v) @ X.T - y[None, :] - xi) @ X / n                   # ∂L/∂w, L = (1/2n)Σ_j(⟨x_j, w⟩ − y_j)² with noisy labels
+        return 2 * g * u, -2 * g * v
+
+    def flow(u, v):                                                            # the noiseless gradient flow to an interpolant
+        for k_ in range(400000):
+            gu, gv = grad(u, v, 0.0); u, v = u - h * gu, v - h * gv
+            if k_ % 1000 == 0 and np.abs((u * u - v * v) @ X.T - y).max() < 1e-9:
+                break
+        return u, v
+    u, v = flow(u, v)
+    rng = np.random.default_rng(SEED_E + 1)
+    rho_ = rho if scheme == 'ar1' else 0.0
+    sx = np.sqrt(V_E * n / h * (1 - rho_) / (1 + rho_))
+    xi = sx * rng.standard_normal((P_E, n))
+    P0 = (u * v).mean(axis=0); w0 = (u * u - v * v)
+    c = (X ** 2).sum(axis=0)
+    trH = lambda u, v: float(((4 / n) * (c[None, :] * (u * u + v * v)).sum(axis=1)).mean())     # tr ∇²L at an interpolant (Gauss–Newton)
+    st = dict(l1=float(np.abs(w0).sum(axis=1).mean()), err=float(np.abs(w0 - ws).sum(axis=1).mean()), res=float(np.abs(w0 @ X.T - y).max()),
+              tr=trH(u, v))
+    for k in range(int(round(T_E / h))):
+        if k > 0:
+            xi = rho_ * xi + np.sqrt(1 - rho_ ** 2) * sx * rng.standard_normal((P_E, n))
+        gu, gv = grad(u, v, xi)
+        if scheme == 'heun':
+            up, vp = u - h * gu, v - h * gv
+            gu2, gv2 = grad(up, vp, xi)
+            u, v = u - 0.5 * h * (gu + gu2), v - 0.5 * h * (gv + gv2)
+        else:
+            u, v = u - h * gu, v - h * gv
+    P1 = (u * v).mean(axis=0)
+    rate = -np.log(P1 / P0) / T_E
+    u, v = flow(u, v); w1 = u * u - v * v                                      # the interpolant reached from the end state
+    return dict(scheme=scheme, rho=rho, ratio=rate / (4 * V_E * c / n), start=st,
+                end=dict(l1=float(np.abs(w1).sum(axis=1).mean()), err=float(np.abs(w1 - ws).sum(axis=1).mean()), res=float(np.abs(w1 @ X.T - y).max()),
+                         tr=trH(u, v)))
+
+
 def name_C(scheme, rho, dt):
     out = {'ito': 'afresh each step', 'heun': 'Heun (Stratonovich)'}.get(scheme, f'AR(1), ρ = {rho:+.3f}')
     return out if dt == DT else f'{out}, step {dt:g}'
@@ -192,7 +253,7 @@ def summarise_C(runs, ito0):
     return out
 
 
-def report(A=None, B=None, C=None, D=None):
+def report(A=None, B=None, C=None, D=None, Ee=None):
     fmt = E.fmt
     v3 = lambda v, p=4: ', '.join(f'{x:.{p}f}' for x in v)
     L_ = ["# Proposition D‴.41: measurement noise on the gauge (`exp_gauge_label.py`)", "",
@@ -245,6 +306,20 @@ def report(A=None, B=None, C=None, D=None):
                       f"{', '.join(f'{x:.4f}' for x in rec[::2, 1])} | {r['rate']:+.4f} | {rec[-1, 3]:.2e} | {rec[-1, 4]:.4f} |")
         L_ += ["", "For noise drawn afresh at each step the Itô SDE's E[Q] decays exactly as e^{−σ²t} (dQ = −σ²Q dt + 0·dW); Heun's scheme keeps "
                "every path's Q to its discretisation error.", ""]
+    if Ee is not None:
+        L_ += [f"## E. A diagonal linear network with label noise (d = {D_E}, n = {N_E}, α = {ALPHA_E:g}, V = {V_E:g}, step {DT_E:g}, T = {T_E:g}, "
+               f"{P_E} paths)", "",
+               "| noise | (1 − ρ)/(1 + ρ) | the decay rates of P_i = u_iv_i over 4Vc_i/n: mean (range over i) | the interpolant's tr ∇²L: start → end | "
+               "its ‖w − w*‖₁: start → end | its ‖w‖₁: start → end | its residual |", "|---|---|---|---|---|---|---|"]
+        for r in Ee:
+            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.3f} | {r['ratio'].mean():+.4f} "
+                      f"({r['ratio'].min():+.4f} … {r['ratio'].max():+.4f}) | {r['start']['tr']:.4f} → {r['end']['tr']:.4f} | "
+                      f"{r['start']['err']:.4f} → {r['end']['err']:.4f} | {r['start']['l1']:.4f} → {r['end']['l1']:.4f} | {r['end']['res']:.1e} |")
+        L_ += ["", f"‖w*‖₁ = {np.abs(diag_problem()[2]).sum():g}. The interpolant: the noiseless gradient flow from the state (at the start, after the "
+               "gradient flow from u = v = α; at the end, after the noisy phase). The Euler step multiplies each P_i by exactly "
+               "1 − 4h²(g_i − ξ̃_i)²: the label noise's selection — the effective initialisation scale shrinking at the rates 4Vc_i/n, the interpolant "
+               "descending tr ∇²L = (4/n)Σ_ic_i√(w_i² + 4P_i²), a weighted ℓ¹ norm as P → 0 — is set by the per-step variance; Heun's scheme keeps "
+               "the P_i, and the interpolant does not move.", ""]
     L_.append("Numbers are produced by `experiments/exp_gauge_label.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -255,9 +330,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCD']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCD')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -269,21 +344,24 @@ def main():
                                     chunksize=1)
         if 'D' in parts:
             h['D'] = pool.map_async(d_job, list(SCHEMES_D), chunksize=1)
+        if 'E' in parts:
+            h['E'] = pool.map_async(e_job, list(SCHEMES_D), chunksize=1)
         if 'A' in parts or 'C' in parts:
             h['A'] = pool.map_async(a_job, [(g, w) for g in GAMMAS_A for w in W_A], chunksize=1)
         if 'A' in h:
             res['A'] = h['A'].get(); E.save(raw, **res); log('A')
         if 'B' in parts:
             res['B'] = part_B(); E.save(raw, **res); log('B')
-        if 'D' in h:
-            res['D'] = h['D'].get(); E.save(raw, **res); log('D')
+        for k in 'DE':
+            if k in h:
+                res[k] = h[k].get(); E.save(raw, **res); log(k)
         if 'C' in h:
             runs = h['C'].get()
             ito0 = next(r['ito'] for r in res['A'] if r['gamma'] == GAMMA_C and np.allclose(np.r_[r['w'], 1 - r['w'].sum()], W0_C))
             res['C_runs'] = runs
             res['C'] = dict(ito0=ito0, sum=summarise_C(runs, ito0))
             E.save(raw, **res); log('C')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCD']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
 
 
 if __name__ == '__main__':

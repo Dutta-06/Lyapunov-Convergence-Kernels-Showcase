@@ -109,3 +109,15 @@ def test_the_scalar_factorisation_example():
     cp = xi - (up * vp - 1)
     uh, vh = u + 0.5 * h * (c * v + cp * vp), v + 0.5 * h * (c * u + cp * up)
     assert np.abs((uh ** 2 - vh ** 2) - (u ** 2 - v ** 2)).max() < 50 * h ** 3 * np.abs(c).max() ** 3
+
+
+def test_the_diagonal_network_example():
+    # w = u⊙u − v⊙v with label noise: an Euler step multiplies each P_i = u_iv_i by exactly 1 − 4h²(g_i − ξ̃_i)², g = ∇_wL with the noisy labels
+    import exp_gauge_label as GL
+    X, y, ws = GL.diag_problem()
+    rng = np.random.default_rng(8)
+    u, v = 0.3 + rng.random(GL.D_E), 0.3 + rng.random(GL.D_E)
+    xi, h, n = rng.standard_normal(GL.N_E), 1e-2, GL.N_E
+    g = ((u * u - v * v) @ X.T - y - xi) @ X / n
+    un, vn = u - h * 2 * g * u, v + h * 2 * g * v
+    assert np.allclose(un * vn, u * v * (1 - 4 * h * h * g * g), rtol=1e-12)
