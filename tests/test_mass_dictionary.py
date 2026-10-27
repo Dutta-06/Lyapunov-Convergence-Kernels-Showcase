@@ -116,3 +116,24 @@ def test_the_multiplicative_update_cancels_the_masses_own_selection():
         g = np.r_[om * (b / m2) * (2 * X.G * b * da * dda + 2 * X.gamma * a * da), om * (2 * X.G * b * da ** 2 / m2) * 2 * rho]
         full = X.drift(th, filt, ito=True)
         assert np.abs(full + X.project(th, X.Pm * g)).max() < 1e-12 * np.abs(full).max()
+
+
+def test_projection_is_accurate_with_nearly_dead_atoms_and_the_flow_finishes():
+    # masses down to e^{−60}: the normal equations J P Jᵀ are singular to rounding there (their condition is A's squared; the old
+    # projection's idempotency error 1.8·10⁻⁷ at this point, the new one's 1.3·10⁻¹¹), and the
+    # free masses' flat flow on this instance crawled for hours; on A = P^{1/2}Jᵀ the projection is a projection and the flow finishes
+    import os, sys, time
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
+    import exp_mass_dictionary as M
+    Phi, ws, al0 = M.instance(2, 1, 'gauss')
+    X, _ = M.law(Phi, ws, 'free')
+    rng = np.random.default_rng(3)
+    th = np.r_[rng.normal(size=X.d), np.exp(-np.linspace(0.0, 30.0, X.d))]
+    q = rng.normal(size=2 * X.d)
+    p = X.project(th, q)
+    assert np.abs(X.project(th, p) - p).max() < 1e-9 * np.abs(p).max()
+    t0 = time.time()
+    th_end = X.flow(M.start(X, al0), M.S_END, M.filt_of(0.0), ito=False, chunks=60)[1][-1]
+    assert time.time() - t0 < 120
+    w = X.w(th_end)
+    assert set(np.flatnonzero(np.abs(w) > 1e-6)) == set(np.flatnonzero(ws))

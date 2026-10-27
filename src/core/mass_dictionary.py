@@ -98,21 +98,26 @@ class MassDictionary:
         J = np.c_[self.Phi * (b * da / self.m)[None, :], self.Phi * (2 * rho * a / self.m)[None, :]]
         return np.r_[J, np.r_[np.zeros(self.d), 2 * rho][None, :]] if self.balanced else J
 
+    RCOND = 1e-10                                                                 # the projection's relative cut-off (see `project`)
+
     def project(self, th, q):
-        """The flow-metric orthogonal projection of a velocity q onto the tangent space of M: q − P Jᵀ(J P Jᵀ)⁻¹ J q (P the mobility)."""
-        J = self.cjac(th)
-        PJ = self.Pm[:, None] * J.T
-        return q - PJ @ np.linalg.lstsq(J @ PJ, J @ q, rcond=None)[0]
+        """The flow-metric orthogonal projection of a velocity q onto the tangent space of M: q − P Jᵀ(J P Jᵀ)⁻¹ J q (P the mobility),
+        computed as q − P^{1/2}A·A⁺P^{−1/2}q with A = P^{1/2}Jᵀ by least squares on A itself — not on the normal equations J P Jᵀ, whose
+        condition number is A's squared: atoms with masses near e^{−30} make J P Jᵀ singular to rounding, the right-hand side noisy and the
+        integrator's step collapse. Directions with singular values below RCOND·max (atoms too light to carry a constraint) are dropped."""
+        s = np.sqrt(self.Pm)
+        A = s[:, None] * self.cjac(th).T
+        return q - s * (A @ np.linalg.lstsq(A, q / s, rcond=self.RCOND)[0])
 
     def retract(self, th, tol=1e-13, it=30):
-        """Back onto M by Gauss–Newton steps in the flow's metric (the minimal-norm correction)."""
+        """Back onto M by Gauss–Newton steps in the flow's metric (the minimal-norm correction P Jᵀ(J P Jᵀ)⁻¹c = P^{1/2}(Aᵀ)⁺c)."""
+        s = np.sqrt(self.Pm)
         for _ in range(it):
             c = self.constraints(th)
             if np.abs(c).max() < tol:
                 break
-            J = self.cjac(th)
-            PJ = self.Pm[:, None] * J.T
-            th = th - PJ @ np.linalg.lstsq(J @ PJ, c, rcond=None)[0]
+            A = s[:, None] * self.cjac(th).T
+            th = th - s * np.linalg.lstsq(A.T, c, rcond=self.RCOND)[0]
         return th
 
     def ito_term(self, th, Sig_ll=None, filt=None):
