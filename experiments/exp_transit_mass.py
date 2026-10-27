@@ -48,6 +48,7 @@ EPS_A = (1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10)
 TAU_A = 1.32                                                          # the run to 1.32 τ_entry (the relaxation after it)
 AMPS_B = (0.1, 0.2, 0.3, 0.5, 0.8, 1.2, 2.0, 4.0)
 X_B, OFF_B, EPS_B = 200.0, 1e-3, 1e-10
+EPS_BL = (1e-8, 1e-9, 1e-10)                                          # the loop's pull at x = μ*/ε^{1/2} ≈ 35, 110, 347
 XI0_B = (100.0, 200.0, 400.0, 800.0)                                  # B: the inner problem's starts behind the wall
 CREEP_TARGET, EPS_C = 10, (1e-9, 2e-9, 3.5e-9, 7e-9, 1.4e-8, 3e-8)
 N_D, SEED_D, EPS_D = 48, 51, (1e-5, 1e-6, 1e-7, 1e-8)
@@ -131,14 +132,21 @@ def b_run(A):
     ov = float(RT.overshoot(L, A))
     tie = [RT.near_tie_inner(L, K, A, 0.05, 0.1, 0.0, X_B, both=False, xi0=x0) for x0 in XI0_B]
     L, K, c0, cs, f, g, w_, n_, mu = near_tie_case(A, OFF_B)
-    taus, W, cc, Lam = X.run_moving(L, K, f, c0, EPS_B, TAU_A / abs(g[w_]), 'paradigm', n_t=331)
-    x = mu / np.sqrt(EPS_B)
-    xi_r = float(RT.inner_xi(L, abs(W[-1][n_])))
+    xs, dl = [], []
+    for eps in EPS_BL:
+        taus, W, cc, Lam = X.run_moving(L, K, f, c0, eps, TAU_A / abs(g[w_]), 'paradigm', n_t=331)
+        xs.append(float(mu / np.sqrt(eps)))
+        dl.append(float(xs[-1] - RT.inner_xi(L, abs(W[-1][n_]))))
+    # the runner-up's own creep while it waits at its margin (D‴.48(iii)(a)): ∫ of its creep times ⟨f*∂_cφ⟩ over its approach,
+    # (a²b^{3/2}/(π²c))(g′_r/g_r)²/x in units of ε^{1/2} at leading order
+    gr = float(K.phi(np.array([c0[n_]]))[:, 0] @ f) / K.xs.size
+    gp = float(K.dphi(np.array([c0[n_]]))[:, 0] @ f) / K.xs.size
+    creep = [L.A ** 2 / (np.pi ** 2 * L.c) * (gp / gr) ** 2 / x for x in xs]
     off = [RT.near_tie_inner(L, K, A, cs, c0[w_], c0[n_], X_B, both=False, xi0=x0) for x0 in XI0_B]
     ext = lambda v: 2 * v[-1] - v[-2]                                  # Richardson, the error ∝ 1/xi0
     pt, po = [r['pull'] for r in tie], [r['pull'] for r in off]
     return dict(A=A, overshoot=ov, pull_tie=pt, pull_off=po, delta_inner=float(ext(pt)), delta_inner_off=float(ext(po)),
-                xi_e=tie[-1]['xi_e'], x_loop=float(x), delta_loop=float(x - xi_r),
+                xi_e=tie[-1]['xi_e'], x_loop=xs[-1], delta_loop=dl[-1], x_loops=xs, delta_loops=dl, creep=creep,
                 inner_ok=bool(all(r['stationary'] for r in tie + off)))
 
 
@@ -277,13 +285,18 @@ def report(A=None, B=None, C=None, D=None, Ee=None, A2=None, F=None):
                f"problem exerts on a frozen runner-up (x = {X_B:g}; matched: the runner-up's outer margin at the entrant's arrival less its "
                f"final ξ) at the exact tie and at δ = {OFF_B:g}, from the starts xi0 = {', '.join(f'{v:g}' for v in XI0_B)} behind the wall "
                "(the entrant's far-field creep: the pull converges like 1/xi0; ∞ the extrapolation from the last two), and the loop's "
-               f"(δ = {OFF_B:g}, ε = {EPS_B:g}: Δ = x − ξ_r(∞), ξ_r read from the runner-up's coefficient); I∞ = overshoot − Δ (tie, ∞):", '',
+               f"(δ = {OFF_B:g}, ε = {', '.join(f'{e:g}' for e in EPS_BL)}: Δ = x − ξ_r(∞), ξ_r read from the runner-up's coefficient), whose "
+               "excess over the inner problem's at that offset is the runner-up's own creep while it waits at its margin, "
+               "(a²b^{3/2}/(π²c))(g′_r/g_r)²/x in units of ε^{1/2} at leading order (predicted in parentheses); I∞ = overshoot − Δ (tie, ∞):", '',
                "| A | overshoot | Δ: inner, tie (xi0 = " + ', '.join(f'{v:g}' for v in XI0_B) + ", ∞) | I∞ | Δ: inner, δ (∞) | Δ: loop (x) | "
-               "δ − loop |", "|---|---|---|---|---|---|---|"]
-        L_ += [f"| {r['A']:g} | {r['overshoot']:.4f} | {', '.join(f'{v:.4f}' for v in r['pull_tie'])}, {r['delta_inner']:.4f}"
-               f"{'' if r.get('inner_ok', True) else ' (not stationary)'} | {r['overshoot'] - r['delta_inner']:.4f} | "
-               f"{r['delta_inner_off']:.4f} | {r['delta_loop']:.4f} ({r['x_loop']:.4g}) | {r['delta_inner_off'] - r['delta_loop']:.4f} |"
-               for r in B]
+               "loop − inner, δ (the runner-up's creep) |", "|---|---|---|---|---|---|---|"]
+        for r in B:
+            xs_, dls_, cr_ = r.get('x_loops', [r['x_loop']]), r.get('delta_loops', [r['delta_loop']]), r.get('creep', [np.nan])
+            loops = ', '.join(f'{d:.4f} ({x:.4g})' for d, x in zip(dls_, xs_))
+            gaps = ', '.join(f"{d - r['delta_inner_off']:.4f} ({c:.4f})" for d, c in zip(dls_, cr_))
+            L_.append(f"| {r['A']:g} | {r['overshoot']:.4f} | {', '.join(f'{v:.4f}' for v in r['pull_tie'])}, {r['delta_inner']:.4f}"
+                      f"{'' if r.get('inner_ok', True) else ' (not stationary)'} | {r['overshoot'] - r['delta_inner']:.4f} | "
+                      f"{r['delta_inner_off']:.4f} | {loops} | {gaps} |")
         lam0 = RT.transit_scale(L, 1.0)
         Bs = sorted(B, key=lambda r: r['A'])
         inc = [(b['overshoot'] - a['overshoot']) / np.log(b['A'] / a['A']) for a, b in zip(Bs[:-1], Bs[1:])]
