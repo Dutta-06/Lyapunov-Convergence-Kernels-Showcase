@@ -43,12 +43,14 @@ OUT = os.environ.get('MB_OUT', os.path.join(os.path.dirname(__file__), '..', 're
 LAW_B = dict(m=12.0, G=1.0, gamma=0.1, a_max=1.0)                 # c = 0.025
 LAW_E = dict(m=12.0, G=0.25, gamma=1.0, a_max=1.0)                # c = 1
 SEEDS_B, NB, DB, T_B = range(8), 6, 12, 3e7
+ND_B, DD_B = 5, 4                                                 # B, duplicated: 5 samples, 4 atoms twice (round 36)
 NC, DC, EPS_BR, EPS_FREE = 8, 20, (1e-4, 1e-8, 1e-16, 1e-32, 1e-64, 1e-128), (1e-2, 1e-4, 1e-6, 1e-8, 1e-10)
 U_PAIR = (1e-4, 1e-8, 1e-16, 1e-32, 1e-64, 1e-128, 1e-256)
 CASES_E = ((21, 0.15, 7), (41, 0.15, 7), (41, 0.1, 11))
 STARTS_E = (('branch', 1.0, 1e-6), ('branch', 1.0, 1e-2), ('branch', 1.0, 1.0), ('branch', 2.0, 10.0), ('alpha=0', 0.0, 1e-6),
             ('alpha=0', 0.0, 1e2))
 T_E = 1e9
+Q_E, GEN_START_E = (0.25, 0.5, 0.75, 0.9), 1                         # E: margin quantiles; the start (branch, 1, 10⁻²)
 LAW_F = dict(m=12.0, G=1.0, gamma=1.0, a_max=1.0)                # c = 0.25
 KE_F, T_F = 5.0, 4000.0
 XR = (lambda t: np.sin(t) + 0.4 * np.sin(2.7 * t))
@@ -124,19 +126,29 @@ def flow_B(P, Phi, y, T, n=60):
 def b_case(seed, kind):
     L = MF.FreeLaw(**LAW_B)
     rng = np.random.default_rng(100 + seed)
-    Phi = gauss_design(seed, NB, DB)
-    ws = np.zeros(DB); ws[[0, 3, 5, 8]] = [0.9, -0.7, 0.6, -0.5]; y = Phi @ ws
-    amp = rng.uniform(0.2, 0.4, DB)
-    if kind == 'positive':
-        al_i, b_i = amp, np.full(DB, 1e-3)
-    elif kind == 'random signs':
-        al_i, b_i = amp * rng.choice([-1, 1], DB), np.full(DB, 1e-3)
-    else:                                                                    # mixed: half the particles at α = 0 (free signs)
-        al_i = amp * rng.choice([-1, 1], DB); al_i[::2] = 0.0; b_i = np.full(DB, 1e-3)
+    if kind == 'duplicated':
+        # round 36: each atom twice (the least-squares set S not a point), one atom's frozen sign against its unconstrained least-squares
+        # coefficient (Z ≠ ∅: the fit inexact), negative branches alive — the Bregman selection with extinction
+        r2 = np.random.default_rng(950 + seed)
+        Phi0 = r2.standard_normal((ND_B, DD_B)); y = r2.standard_normal(ND_B)
+        s0 = np.sign(np.linalg.lstsq(Phi0, y, rcond=None)[0]); s0[-1] = -s0[-1]
+        Phi = np.hstack([Phi0, Phi0])
+        al_i, b_i = np.r_[s0, s0] * r2.uniform(0.4, 0.8, 2 * DD_B), np.full(2 * DD_B, 1e-2)
+    else:
+        Phi = gauss_design(seed, NB, DB)
+        ws = np.zeros(DB); ws[[0, 3, 5, 8]] = [0.9, -0.7, 0.6, -0.5]; y = Phi @ ws
+        amp = rng.uniform(0.2, 0.4, DB)
+        if kind == 'positive':
+            al_i, b_i = amp, np.full(DB, 1e-3)
+        elif kind == 'random signs':
+            al_i, b_i = amp * rng.choice([-1, 1], DB), np.full(DB, 1e-3)
+        else:                                                                # mixed: half the particles at α = 0 (free signs)
+            al_i = amp * rng.choice([-1, 1], DB); al_i[::2] = 0.0; b_i = np.full(DB, 1e-3)
+    N, d = Phi.shape
     P = MF.ParticleSet(L, al_i, b_i)
     eta0 = P.eta(P.x0)
     yh, Z, _ = MF.sign_ls_set(Phi, y, P.s)
-    keep = np.setdiff1d(np.arange(DB), Z)
+    keep = np.setdiff1d(np.arange(d), Z)
     wbar, it, res = MF.projection(P, Phi, yh, eta0, keep)
     sol = flow_B(P, Phi, y, T_B)
     W = np.array([P.w(sol.y[:, k]) for k in range(sol.y.shape[1])])
@@ -145,9 +157,9 @@ def b_case(seed, kind):
     xb = P.state_of_w(wbar, keep)
     Bv = np.array([P.bdiv(wbar, xb, sol.y[:, k]) for k in range(sol.y.shape[1])])
     incr = float(max(0.0, np.max(np.diff(Bv)) / max(Bv[0], 1e-300)))
-    J = 0.5 * NB ** -1 * L.m * np.sum((W @ Phi.T - y) ** 2, axis=1)
-    Jstar = 0.5 * L.m / NB * np.sum((yh - y) ** 2)
-    g_inf = -(Phi.T @ (Phi @ wbar - y)) / NB
+    J = 0.5 * N ** -1 * L.m * np.sum((W @ Phi.T - y) ** 2, axis=1)
+    Jstar = 0.5 * L.m / N * np.sum((yh - y) ** 2)
+    g_inf = -(Phi.T @ (Phi @ wbar - y)) / N
     a0 = L.A * np.tanh(P.al0 / L.A)
     rates = []
     for i in Z:
@@ -158,11 +170,13 @@ def b_case(seed, kind):
     return dict(seed=seed, kind=kind, nbr=int(P.br.sum()), yres=float(np.linalg.norm(y - yh)), Z=[int(i) for i in Z], it=it, res=res,
                 status=int(sol.status), dist=[float(np.abs(W[k] - wbar).max()) for k in range(W.shape[0])], t=sol.t.tolist(),
                 dJ=[float(J[k] - Jstar) for k in range(W.shape[0])], bZ=[float(Bt[k, Z].max()) if len(Z) else 0.0 for k in range(W.shape[0])],
-                Bincr=incr, rates=rates)
+                Bincr=incr, rates=rates, nneg=int(np.sum(wbar[keep] < 0)),
+                split=float(np.abs(wbar - np.r_[(wbar[:d // 2] + wbar[d // 2:]) / 2, (wbar[:d // 2] + wbar[d // 2:]) / 2]).max())
+                if kind == 'duplicated' else float('nan'))
 
 
 def part_B():
-    return [b_case(s, kind) for kind in ('positive', 'random signs', 'mixed') for s in SEEDS_B]
+    return [b_case(s, kind) for kind in ('positive', 'random signs', 'mixed', 'duplicated') for s in SEEDS_B]
 
 
 def part_C():
@@ -205,8 +219,22 @@ def part_C():
         P = MF.ParticleSet(L, al_i, np.full(DC, eps))
         wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
         mx.append(dict(eps=eps, it=it, res=res, free=float(np.abs(wb[~odd]).sum()), d=float(np.abs(wb - w_scbp_odd).max())))
+    # round 36: the odd atoms' frozen signs against the truth's on its atoms — they cannot fit y; the free atoms then enter on the power
+    # scale: the limit is basis pursuit over the free atoms with the branch atoms sign-constrained and (to leading order) free of charge,
+    # their own weights 1/(γa₀) breaking ties at the next order
+    sg2 = sg.copy(); sg2[[1, 5, 9]] = -np.sign(ws[[1, 5, 9]])
+    sub2 = MF.weighted_bp(Phi[:, odd], y, 1 / a_init[odd], signs=sg2[odd])
+    w_mix2 = MF.weighted_bp(Phi, y, np.where(odd, 1e-6 / (L.gamma * a_init), 1.0), signs=np.where(odd, sg2, 0.0))
+    mx2 = []
+    for eps in (1e-4, 1e-8, 1e-12):
+        P = MF.ParticleSet(L, np.where(odd, sg2 * amp0, 0.0), np.full(DC, eps))
+        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
+        mx2.append(dict(eps=eps, it=it, res=res, free=float(np.abs(wb[~odd]).sum()), d=float(np.abs(wb - w_mix2).max())))
+    tol_r = 1e-8 * (1 + np.linalg.norm(y))
+    nfail = sum(1 for r in br + fr + mx + mx2 if not r['res'] < tol_r)
     return dict(scbp_supp=[int(i) for i in S_sc], scbp_is_truth=bool(np.abs(w_scbp - ws).max() < 1e-8),
                 bp_supp=[int(i) for i in S_bp], br=br, fr=fr, mx=mx, odd_feasible=bool(np.all(np.isfinite(sub))),
+                mx2=mx2, odd2_feasible=bool(np.all(np.isfinite(sub2))), mix2_free=float(np.abs(w_mix2[~odd]).sum()), nfail=nfail, tol_r=tol_r,
                 mu_sc=np.sort(mu_sc[off_sc]).tolist(), mu_bp=np.sort(mu_bp[off_bp]).tolist())
 
 
@@ -237,7 +265,9 @@ def part_D():
         rows.append(dict(u=u, it=it, res=res, d=float(np.abs(W - wref).max()), d1=float(np.abs(W1 - wref).max()),
                          agree=float(np.abs(W - W1).max()),
                          both=int(np.sum((np.abs(wb[:DC]) > 1e-3 * np.abs(W).max()) & (np.abs(wb[DC:]) > 1e-3 * np.abs(W).max())))))
-    return dict(rows=rows, bp_supp=[int(i) for i in S_bp], mu_bp=np.sort(mu_bp[off_bp]).tolist())
+    tol_r = 1e-8 * (1 + np.linalg.norm(y))
+    return dict(rows=rows, bp_supp=[int(i) for i in S_bp], mu_bp=np.sort(mu_bp[off_bp]).tolist(), tol_r=tol_r,
+                nfail=sum(1 for r in rows if not r['res'] < tol_r))
 
 
 def e_case(d, wid, N):
@@ -266,8 +296,31 @@ def e_case(d, wid, N):
             B0 = P.bdiv(ws, xs_, P.x0)
             row['bound'] = [float(np.linalg.norm(v) / mu * np.sqrt(2 * N * B0 / t)) if t > 0 else float('inf') for t in sol.t]
         rows.append(row)
+    # round 36: the margin over every 3-support (the target's rank among them), and the loop from one start on supports at the margins'
+    # quartiles (amplitudes 1.0, 0.7, 0.5) — the convergence's dependence on the margin
+    from itertools import combinations
+    trip = list(combinations(range(d), 3))
+    mus = np.array([MF.nonneg_certificate(Phi, list(t_))[0] for t_ in trip]) + 0.0          # + 0.0: no signed zeros
+    order = np.argsort(np.nan_to_num(mus, nan=-1.0))
+    gen = []
+    for q_ in Q_E:
+        t_ = np.array(trip[order[int(q_ * (len(trip) - 1))]])
+        wg = np.zeros(d); wg[t_] = [1.0, 0.7, 0.5]; yg = Phi @ wg
+        lab, al_v, b_v = STARTS_E[GEN_START_E]
+        P = MF.ParticleSet(L, np.full(d, al_v), np.full(d, b_v))
+        ts = np.concatenate([[0], np.geomspace(1.0, T_E, 19)])
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            sol = solve_ivp(P.rhs(Phi, yg), (0, T_E), P.x0, method='LSODA', rtol=1e-10, atol=1e-12, t_eval=ts)
+        Wt = np.array([P.w(sol.y[:, k]) for k in range(sol.y.shape[1])])
+        offg = np.setdiff1d(np.arange(d), t_)
+        gen.append(dict(q=q_, supp=t_.tolist(), mu=float(mus[order[int(q_ * (len(trip) - 1))]]), t=sol.t.tolist(),
+                        err=np.abs(Wt - wg).max(axis=1).tolist(), offmass=np.abs(Wt[:, offg]).sum(axis=1).tolist(),
+                        res=float(np.linalg.norm(Phi @ Wt[-1] - yg))))
+    fin = mus[np.isfinite(mus)]
     return dict(d=d, wid=wid, N=N, supp=supp.tolist(), mu=float(mu), bp=float(np.abs(w_bp - ws).max()), bpn=float(np.abs(w_bpn - ws).max()),
-                rows=rows)
+                rows=rows, n_supp=len(trip), mu_q=np.quantile(fin, [0.1, 0.25, 0.5, 0.75, 0.9]).tolist(), mu_zero=float(np.mean(fin <= 1e-9)),
+                mu_rank=float(np.mean(fin < mu)), gen=gen)
 
 
 def part_E():
@@ -339,9 +392,21 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
                "| start | seed | branches | |y − ŷ| | |Z| | projection (it, residual) | max |w(T) − w̄| | J − J* | max β on Z | B's increase | rates: largest relative error (n) |",
                "|---|---|---|---|---|---|---|---|---|---|---|"]
         for r in B:
+            if r['kind'] == 'duplicated':
+                continue
             rr = max((abs(x['fit'] / x['ref'] - 1) for x in r['rates']), default=float('nan'))
             L_.append(f"| {r['kind']} | {r['seed']} | {r['nbr']} | {fmt(r['yres'])} | {len(r['Z'])} | {r['it']}, {fmt(r['res'])} | {fmt(r['dist'][-1])} | "
                       f"{fmt(r['dJ'][-1])} | {fmt(r['bZ'][-1])} | {fmt(r['Bincr'])} | {fmt(rr)} ({len(r['rates'])}) |")
+        dup = [r for r in B if r['kind'] == 'duplicated']
+        if dup:
+            L_ += ["", f"Duplicated atoms (round 36; {ND_B} samples, {DD_B} Gaussian atoms each carried by two particles — the least-squares set S "
+                   "is not a point —, one atom's frozen sign against its unconstrained least-squares coefficient — the fit inexact, Z ≠ ∅ —, "
+                   "amplitudes ±U(0.4, 0.8), masses 10⁻²): the flow against the Bregman projection, and the projection's distance from the "
+                   "equal split of the duplicates (another point of S):", "",
+                   "| seed | branches | |y − ŷ| | Z | negative coefficients alive | projection vs the equal split | max |w(T) − w̄| | max β on Z |",
+                   "|---|---|---|---|---|---|---|---|"]
+            L_ += [f"| {r['seed']} | {r['nbr']} | {fmt(r['yres'])} | {r['Z']} | {r['nneg']} | {fmt(r['split'])} | {fmt(r['dist'][-1])} | "
+                   f"{fmt(r['bZ'][-1])} |" for r in dup]
         L_.append("")
     if C is not None:
         L_ += [f"## C. The rich limits on one design ({NC} × {DC}; the target on atoms [1, 5, 9])", "",
@@ -364,6 +429,15 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
                "branch atoms' own sign-constrained weighted basis pursuit:", "", "| ε | projection (it, residual) | Σ|w| on free particles | distance |",
                "|---|---|---|---|"]
         L_ += [f"| {r['eps']:g} | {r['it']}, {fmt(r['res'])} | {fmt(r['free'])} | {fmt(r['d'])} |" for r in C['mx']]
+        failed = lambda r: '' if r['res'] < C.get('tol_r', np.inf) else ' (the projection failed)'
+        if 'mx2' in C:
+            L_ += ["", f"The same with the odd atoms' frozen signs against the truth's on its atoms (round 36; their own sign-constrained fit "
+                   f"{'exists' if C['odd2_feasible'] else 'does not exist'}): the free particles enter on the power scale; the distance to basis "
+                   "pursuit over the free atoms with the branch atoms sign-constrained and free of charge (Σ|w| on the free atoms there: "
+                   f"{fmt(C['mix2_free'])}):", "", "| ε | projection (it, residual) | Σ|w| on free particles | distance |", "|---|---|---|---|"]
+            L_ += [f"| {r['eps']:g} | {r['it']}, {fmt(r['res'])}{failed(r)} | {fmt(r['free'])} | {fmt(r['d'])} |" for r in C['mx2']]
+        if 'nfail' in C:
+            L_ += ["", f"Projections whose residual |Φw − y| exceeds {fmt(C['tol_r'])}: {C['nfail']}."]
         L_.append("")
     if D is not None:
         L_ += ["## D. A pair per atom (± 0.4, equal masses; the design of C)", "",
@@ -373,6 +447,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
                "| u = w(0) | projection (it, residual) | distance | the leading order's distance | |W − W₁|∞ | atoms with both members active |",
                "|---|---|---|---|---|---|"]
         L_ += [f"| {r['u']:g} | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} | {fmt(r['d1'])} | {fmt(r['agree'])} | {r['both']} |" for r in D['rows']]
+        if 'nfail' in D:
+            L_ += ["", f"Projections whose residual exceeds {fmt(D['tol_r'])}: {D['nfail']}."]
         L_.append("")
     if Ee is not None:
         L_ += ["## E. Positive kernel dictionaries (Gaussian atoms of one width on a grid of [−1, 1], samples evenly on [−1.1, 1.1], the target "
@@ -381,14 +457,28 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
             L_ += [f"### {c['d']} atoms, width {c['wid']:g}, {c['N']} samples (the target on {c['supp']})", "",
                    f"The nonnegative certificate's margin μ = {fmt(c['mu'])}; basis pursuit's max |w − w*|: {fmt(c['bp'])} with equal weights, "
                    f"{fmt(c['bpn'])} with the columns' norms.", "",
-                   "| start | α(0) | β(0) | on branches | max |w − w*| at t = 10³, 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ (the certificate's bound) | "
-                   "|Φw − y| | support at 10⁹ |", "|---|---|---|---|---|---|---|---|"]
+                   "| start | α(0) | β(0) | on branches | max |w − w*| at the times nearest 10³, 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ (the "
+                   "certificate's bound) | |Φw − y| | support at 10⁹ |", "|---|---|---|---|---|---|---|---|"]
             for r in c['rows']:
                 ts = np.array(r['t'])
                 pick = [int(np.argmin(np.abs(np.log10(np.maximum(ts, 1e-300)) - k))) for k in (3, 5, 7, 9)]
+                if r is c['rows'][0]:
+                    L_[-2] = L_[-2].replace('the times nearest 10³, 10⁵, 10⁷, 10⁹', 't = ' + ', '.join(f'{ts[k]:.3g}' for k in pick))
                 bd = f" ({fmt(r['bound'][-1])})" if 'bound' in r else ""
                 L_.append(f"| {r['lab']} | {r['al']:g} | {r['b']:g} | {'yes' if r['branch'] else 'no'} | "
                           + ", ".join(fmt(r['err'][k]) for k in pick) + f" | {fmt(r['offmass'][-1])}{bd} | {fmt(r['res'])} | {r['supp']} |")
+            if 'gen' in c:
+                L_ += ["", f"The margin over all {c['n_supp']} supports of three atoms (round 36): the 10, 25, 50, 75, 90% quantiles "
+                       f"{', '.join(fmt(v) for v in c['mu_q'])}; {c['mu_zero']:.0%} at most 10⁻⁹ (numerically no certificate); the target above "
+                       f"{c['mu_rank']:.0%} of them. The loop from ({STARTS_E[GEN_START_E][1]:g}, {STARTS_E[GEN_START_E][2]:g}) on positive branches "
+                       "to t = 10⁹ on the supports at the margin's quantiles (amplitudes 1.0, 0.7, 0.5):", "",
+                       "| quantile | support | margin μ | max |w − w*| at t = 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ | |Φw − y| |",
+                       "|---|---|---|---|---|---|"]
+                for g_ in c['gen']:
+                    tg = np.array(g_['t'])
+                    pk = [int(np.argmin(np.abs(np.log10(np.maximum(tg, 1e-300)) - k))) for k in (5, 7, 9)]
+                    L_.append(f"| {g_['q']:g} | {g_['supp']} | {fmt(g_['mu'])} | " + ", ".join(fmt(g_['err'][k]) for k in pk)
+                              + f" | {fmt(g_['offmass'][-1])} | {fmt(g_['res'])} |")
             L_.append("")
     if F is not None:
         L_ += [f"## F. The real loop on positive branches (k_e = {KE_F:g}, G = γ = 1, twelve atoms of width 0.25, the target on atoms [2, 6, 9], "

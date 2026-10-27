@@ -460,7 +460,8 @@ def _exact_newton_step(Phi, lmD, gr, radius, cap_digits=3000):
         return np.array([float(v * fac) for v in st])
 
 
-def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-12, it_max=4000, logmD_of=None):
+def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-12, it_max=4000, logmD_of=None, exact_steps=300,
+                exact_seconds=600.0):
     """Minimise the convex dual 𝒟(z) = Σψ*_i(η0_i + (Φᵀz)_i) − yᵀz (the Bregman projection's): Newton's direction (Hessian
     Φ diag(mD)Φᵀ), Armijo backtracking on 𝒟 — with, near the solution, the residual's halving accepted instead (𝒟's rounding) —, an
     adaptive radius on the step's largest change of η (grown fourfold after a full step, shrunk to the accepted step otherwise), trial
@@ -468,7 +469,9 @@ def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-
     inv(η) → state, w_of(state), mD_of(state) = dw/dη, psistar_of(state). With logmD_of(state) = log(dw/dη) given, a float step that
     stalls (accepted without measurable progress, or none accepted) switches the remaining steps to `_exact_newton_step` — needed when
     some particles are near extinction and others not, their curvatures below the float Hessian's rounding —, and a stalled exact step
-    ends the iteration (the rounding floor); without it the iteration is the float one. Returns (w, state, iterations, |Φw − y|)."""
+    ends the iteration (the rounding floor); without it the iteration is the float one. The exact steps are budgeted (exact_steps, and
+    exact_seconds of wall time — a step at thousands of digits takes seconds; round 36): past the budget the best iterate is returned, its
+    residual telling the caller. Returns (w, state, iterations, |Φw − y|)."""
     z = np.zeros(Phi.shape[0])
     tol_abs = tol * (1 + np.linalg.norm(y))
 
@@ -480,6 +483,8 @@ def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-
     st, w, Dz = at(z)
     best = (w, st, np.linalg.norm(Phi @ w - y))
     R, it, exact = radius, 0, False
+    import time as _time
+    n_exact, t_exact = 0, None
     for it in range(it_max):
         gr = Phi @ w - y
         ng = np.linalg.norm(gr)
@@ -487,6 +492,10 @@ def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-
             break
         step = None
         if exact:
+            t_exact = _time.time() if t_exact is None else t_exact
+            n_exact += 1
+            if n_exact > exact_steps or _time.time() - t_exact > exact_seconds:
+                break
             try:
                 step = _exact_newton_step(Phi, logmD_of(st), gr, R)
             except ZeroDivisionError:
@@ -559,13 +568,17 @@ def lasso(H, wstar, mu, ke, it=20000, tol=1e-14):
     return w
 
 
-def irrepresentable(H, supp, signs):
-    """The LASSO's irrepresentable quantity ‖H_{S^cS}H_SS⁻¹sign(w*_S)‖_∞ (< 1: the support recovered for small penalties)."""
+def irrepresentable(H, supp, signs, weights=None):
+    """The LASSO's irrepresentable quantity max_{j∉S}|(H_{S^cS}H_SS⁻¹(λ_S⊙sign(w*_S)))_j|/λ_j for the penalty weights λ (default equal:
+    ‖H_{S^cS}H_SS⁻¹sign(w*_S)‖_∞): < 1 suffices for the support to be recovered at small penalties, ≤ 1 is necessary (round 36: weighted
+    when the starting masses differ)."""
     H = np.asarray(H, float); supp = np.asarray(supp, int)
+    lam = np.ones(H.shape[0]) if weights is None else np.asarray(weights, float)
     off = np.setdiff1d(np.arange(H.shape[0]), supp)
     if off.size == 0:
         return 0.0
-    return float(np.abs(H[np.ix_(off, supp)] @ np.linalg.solve(H[np.ix_(supp, supp)], np.asarray(signs, float))).max())
+    v = H[np.ix_(off, supp)] @ np.linalg.solve(H[np.ix_(supp, supp)], lam[supp] * np.asarray(signs, float))
+    return float(np.abs(v / lam[off]).max())
 
 
 def weighted_bp(Phi, y, weights, signs=None):

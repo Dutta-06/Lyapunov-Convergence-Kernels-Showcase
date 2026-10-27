@@ -527,3 +527,64 @@ def test_particle_set_free_drive():
     h = 1e-7
     deta = Pb.eta(x + h) - Pb.eta(x - h)
     assert abs(float(Pb._dstate(x, np.array([1.0]))[0]) * float(deta[0]) / (2 * h) - 1) < 1e-6
+
+
+def test_bregman_selection_with_extinction_on_a_non_singleton_set():
+    """Proposition D‴.47(ii)(b), round 36: an inexact sign-constrained fit whose least-squares set S is not a point (each atom duplicated),
+    two atoms extinct (Z ≠ ∅), negative branches alive: the flow ends at the Bregman projection onto S — not at another point of S such as
+    the equal split of the duplicates — and the extinct masses vanish."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    rng = np.random.default_rng(953)
+    N, d = 5, 4
+    Phi = rng.standard_normal((N, d)); y = rng.standard_normal(N)
+    s = np.sign(np.linalg.lstsq(Phi, y, rcond=None)[0]); s[3] = -s[3]
+    Phi2 = np.hstack([Phi, Phi])
+    P = MF.ParticleSet(L, np.r_[s, s] * rng.uniform(0.4, 0.8, 2 * d), np.full(2 * d, 1e-2))
+    assert P.br.all()
+    yh, Z, _ = MF.sign_ls_set(Phi2, y, P.s)
+    keep = np.setdiff1d(np.arange(2 * d), Z)
+    wbar, it, res = MF.projection(P, Phi2, yh, P.eta(P.x0), keep)
+    assert np.linalg.norm(y - yh) > 0.1 and Z.size >= 2 and np.any(wbar[keep] < 0)
+    W = wbar[:d] + wbar[d:]
+    assert np.abs(wbar - np.r_[W / 2, W / 2]).max() > 0.01
+    sol = solve_ivp(P.rhs(Phi2, y), (0, 1e5), P.x0, method='LSODA', rtol=1e-11, atol=1e-13)
+    wT = P.w(sol.y[:, -1])
+    assert np.abs(wT - wbar).max() < 1e-9 and np.abs(wT[Z]).max() < 1e-15
+
+
+def test_filtered_gram_is_causal():
+    """Round 36: H_L = k_e⟨φL[φ]ᵀ⟩ with L = 1/(s + k_e) the causal filter — for φ = (sin t, cos t), L[cos] = (k cos t + sin t)/(1 + k²), so
+    H_12 = k/(2(1 + k²)) = −H_21 and H_11 = k²/(2(1 + k²)) (an anti-causal filter flips the antisymmetric part)."""
+    n, k = 512, 3.0
+    t = 2 * np.pi * np.arange(n) / n
+    H = MF.filtered_gram(np.c_[np.sin(t), np.cos(t)], 2 * np.pi, k)
+    assert abs(H[0, 1] - k / (2 * (1 + k * k))) < 1e-12 and abs(H[1, 0] + k / (2 * (1 + k * k))) < 1e-12
+    assert abs(H[0, 0] - k * k / (2 * (1 + k * k))) < 1e-12
+
+
+def test_irrepresentable_and_nonneg_certificate_values():
+    """Round 36: closed forms — for the equicorrelated H (ρ off the diagonal), S = {0, 1} with equal signs, 2ρ/(1 + ρ), and with weights
+    λ = (1, 2, 4) the weighted value (ρ(1 + 2) /(1 + ρ)·…)/λ₂ computed by hand; the nonnegative certificate's margin 1 on the identity's
+    columns and 0 for a column that is the sum of two others."""
+    rho = 0.3
+    H = np.full((3, 3), rho) + (1 - rho) * np.eye(3)
+    assert abs(MF.irrepresentable(H, [0, 1], [1, 1]) - 2 * rho / (1 + rho)) < 1e-14
+    lam = np.array([1.0, 2.0, 4.0])
+    x = np.linalg.solve(H[:2, :2], lam[:2])
+    assert abs(MF.irrepresentable(H, [0, 1], [1, 1], lam) - abs(H[2, :2] @ x) / lam[2]) < 1e-14
+    mu, v = MF.nonneg_certificate(np.eye(3), [0])
+    assert abs(mu - 1) < 1e-9
+    mu2, v2 = MF.nonneg_certificate(np.array([[1.0, 0.0, 1.0], [0.0, 1.0, 1.0]]), [2])
+    assert abs(mu2) < 1e-9
+
+
+def test_lasso_kkt_at_a_gain():
+    """Round 36: the LASSO min (1/(2k_e))(w − w*)ᵀH(w − w*) + Σμ_i|w_i| at k_e = 5 satisfies its KKT conditions."""
+    rng = np.random.default_rng(8)
+    A = rng.standard_normal((12, 6)); H = A.T @ A / 12
+    ws = np.array([0.8, -0.5, 0.0, 0.3, 0.0, 0.0]); mu = np.full(6, 0.02); ke = 5.0
+    w = MF.lasso(H, ws, mu, ke)
+    g = H @ (ws - w) / ke
+    on = np.abs(w) > 1e-12
+    assert np.abs(g[on] - mu[on] * np.sign(w[on])).max() < 1e-10 and np.all(np.abs(g[~on]) <= mu[~on] + 1e-10)
+    assert on.sum() < 6 and on.sum() >= 2
