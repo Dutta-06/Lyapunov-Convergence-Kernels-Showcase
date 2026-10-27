@@ -18,6 +18,7 @@ C. The selection's ends on random instances (N = 5, d = 12 Gaussian designs, 2- 
    and null-kernel laws under white and slow (AR(1), τ_c = 10³, 10⁴, 10⁵) noise — ‖w‖₁/a_max, the excess, the atoms used and alive, the
    truth recovered, the distance to basis pursuit; for white noise also the flat update's end and the minimiser of Σ_i|φ_i|²D*(|w_i|).
 D. The same on Gaussian kernel dictionaries (16 centres, 8 samples on [0, 1]).
+E. The conserved law's white end for a_max = 0.5, 1, 2, 4: ‖w‖₁/a_max — the inflation goes to the representability boundary, whatever it is.
 
 Output: results/chaos/mass_dictionary.md and mass_dictionary_raw.npz (MD_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D`).
 """
@@ -47,6 +48,7 @@ TAUS = (0.0, 1e3, 1e4, 1e5)
 S_END = 3e8
 KS_C, N_INST_C = (2, 3), 40
 KS_D, N_INST_D, N_D, D_D, WIDTH_D = (2, 3), 20, 8, 16, 0.08
+AMAXES_E, N_INST_E = (0.5, 1.0, 2.0, 4.0), 12
 H_B, SIG_B, SIG_B_SLOW, P_B, SEED_B = 1.0, 0.1, 0.03, 64, 4             # slow draws: the fit follows the noise, so a smaller σ keeps it near M
 
 
@@ -63,10 +65,10 @@ def instance(k, i, kind='gauss'):
     return Phi, ws, 0.05 * rng.standard_normal(d + 1)
 
 
-def law(Phi, ws, mode):
+def law(Phi, ws, mode, a_max=AMAX):
     """The MassDictionary for a mode (the null kernel: a zero column appended) and its design."""
     P2 = np.c_[Phi, np.zeros(Phi.shape[0])] if mode == 'null kernel' else Phi
-    return MD.MassDictionary(P2, Phi @ ws, M_I, a_max=AMAX, G=G_I, gamma=GAM_I, balanced=(mode != 'free')), P2
+    return MD.MassDictionary(P2, Phi @ ws, M_I, a_max=a_max, G=G_I, gamma=GAM_I, balanced=(mode != 'free')), P2
 
 
 def start(X, al0):
@@ -230,7 +232,24 @@ def c_job(args):
     return out
 
 
-def report(A=None, B=None, C=None, D=None):
+@cached
+def e_job(args):
+    """Part E, one (instance, a_max): the conserved law's white end against the representability boundary, for several a_max (the
+    instance kept when its basis-pursuit solution is representable, ‖w_bp‖₁ < a_max)."""
+    warnings.filterwarnings('ignore')
+    i, am = args
+    Phi, ws, al0 = instance(2, i)
+    wbp = CS.basis_pursuit(Phi, Phi @ ws, (Phi ** 2).sum(axis=0))
+    if np.abs(wbp).sum() >= am:
+        return dict(i=i, am=am, skip=True)
+    X, _ = law(Phi, ws, 'conserved', a_max=am)
+    th0 = start(X, al0 * am)
+    th = X.flow(th0, S_END, filt_of(0.0), ito=True, chunks=60)[1][-1]
+    return dict(i=i, am=am, skip=False, l1_bp=float(np.abs(wbp).sum()), start=summary(X, th0, ws, wbp, Phi.shape[1]),
+                end=summary(X, th, ws, wbp, Phi.shape[1]))
+
+
+def report(A=None, B=None, C=None, D=None, Ee=None):
     L_ = ["# Proposition D‴.44: the replicator's own masses on a kernel dictionary under measurement noise (`exp_mass_dictionary.py`)", "",
           f"The loop at fixed positions: masses β (Σβ = m = {M_I:g}, or free), amplitudes a = a_max tanh(α/a_max) (a_max = {AMAX:g}), w = β⊙a/m, "
           f"G = {G_I:g}, γ = {GAM_I:g}; label noise on the measured error; the selection along the exact fits (`mass_dictionary`), in s = (m v/4)t. "
@@ -295,6 +314,20 @@ def report(A=None, B=None, C=None, D=None):
                       f"{np.median([r['dstar_vs_flat'] for r in rs]):.1e} | | | | | that minimiser against basis pursuit's: "
                       f"{np.median([r['dstar_vs_bp'] for r in rs]):.1e} | |")
         L_.append("")
+    if Ee is not None:
+        L_ += [f"## E. The conserved law's white end against the representability boundary ({N_I} × {D_I}, 2-sparse truths, {N_INST_E} instances; "
+               "those whose basis-pursuit solution is not representable, ‖w_bp‖₁ ≥ a_max, left out)", "",
+               "| a_max | instances | ‖w‖₁/a_max at the start | at the end | E/m at the end | the atoms used, alive | ‖w_bp‖₁/a_max |",
+               "|---|---|---|---|---|---|---|"]
+        for am in AMAXES_E:
+            rs = [r for r in Ee if r['am'] == am and not r['skip']]
+            if not rs:
+                L_.append(f"| {am:g} | 0 | | | | | |"); continue
+            L_.append(f"| {am:g} | {len(rs)} | {np.mean([r['start']['l1'] for r in rs]):.3f} | {np.mean([r['end']['l1'] for r in rs]):.3f} "
+                      f"(min {np.min([r['end']['l1'] for r in rs]):.3f}) | {np.mean([r['end']['exc'] for r in rs]):.4f} | "
+                      f"{np.mean([r['end']['used'] for r in rs]):.1f}, {np.mean([r['end']['alive'] for r in rs]):.1f} | "
+                      f"{np.mean([r['l1_bp'] / am for r in rs]):.3f} |")
+        L_.append("")
     L_.append("Numbers are produced by `experiments/exp_mass_dictionary.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -305,9 +338,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCD']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCD')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -320,12 +353,14 @@ def main():
             h['C'] = pool.map_async(c_job, [('gauss', k, i) for k in KS_C for i in range(N_INST_C)], chunksize=1)
         if 'D' in parts:
             h['D'] = pool.map_async(c_job, [('rbf', k, i) for k in KS_D for i in range(N_INST_D)], chunksize=1)
+        if 'E' in parts:
+            h['E'] = pool.map_async(e_job, [(i, am) for i in range(N_INST_E) for am in AMAXES_E], chunksize=1)
         if 'A' in parts:
             res['A'] = part_A(); E.save(raw, **res); log('A')
-        for k in 'BCD':
+        for k in 'BCDE':
             if k in h:
                 res[k] = h[k].get(); E.save(raw, **res); log(k)
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCD']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
 
 
 if __name__ == '__main__':
