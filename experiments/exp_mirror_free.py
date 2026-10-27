@@ -31,8 +31,13 @@ D. The real loop (a scalar plant, Gaussian atoms at fixed centres, two particles
    (η_i − η_i⁰ = η_j − η_j⁰) under any common drive — noiseless, with a smooth noise in the adaptation only, and with a sensor noise in
    the feedback, the regressor and the adaptation.
 E. The conserved law (Σβ = m) from the same start: Q moves, and its end differs from the free law's projection.
+F. The rich limit's leading order (unequal masses εr_i, the instances of B): where weighted basis pursuit is a vertex with N atoms, its
+   certificate's slacks μ_j, the projection against the leading order computed from the certificate (`rich_leading_order`) and against
+   the closed form a_max(εr_j)^{3/2}cos(πμ_j/2)/(m(2c)^{1/2}sin³(πμ_j/2)) off the support (`core_tail`); the distance's ratio between
+   ε = 10⁻⁷ and 10⁻⁹ (ε^{3/2}: 1000); the instances whose distance at ε = 10⁻⁷ exceeds 10⁻³ followed to 10⁻¹¹ — small slacks
+   (near-optimal vertices) delay the asymptotic regime until ε^{1/2} ≪ μ_min.
 
-Output: results/chaos/mirror_free.md and mirror_free_raw.npz (MF_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D,E`).
+Output: results/chaos/mirror_free.md and mirror_free_raw.npz (MF_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D,E,F`).
 """
 import os
 import sys
@@ -58,6 +63,7 @@ N_WORKERS = int(os.environ.get('MF_WORKERS', 2))
 N_I, D_I, M_I, G_I, GAM_I, AMAX = 5, 12, 12.0, 1.0, 0.1, 1.0
 SCALES_B, KS_B, N_INST_B, T_B = (10.0, 1.0, 0.1, 1e-2, 1e-3, 1e-4), (2, 3), 20, 1e7
 EPS_RICH, SCALES_LAZY = (1e-3, 1e-5, 1e-7), (1e2, 1e4)                     # unequal masses: ε·r and scale·r
+EPS_F, EPS_SLOW, MU_SLOW = (1e-5, 1e-7, 1e-9), (1e-11,), 0.01                # Part F: the leading order; the slow instances
 FLOW_MIN_B = 1e-2                                                           # the flow is integrated for s ≥ this (slower below)
 FLOW_S3, T_S3 = 1e-3, 3e7                                                   # one instance's flow at s = 10⁻³ (k = 2, instance 0)
 OK_TOL = 1e-9                                                               # a projection fails when |Φw − y| > OK_TOL(1 + |y|)
@@ -218,6 +224,36 @@ def b_job(args):
         wl2 = b0 ** 2 * (Phi.T @ np.linalg.solve(Phi @ ((b0 ** 2)[:, None] * Phi.T), y))
         out[('lazy', big)] = dict(d=float(np.abs(w - wl2).max() / np.abs(wl2).max()), res=res, conv=bool(res <= tol_y))
     print(f"[{time.time() - t0:.0f}s] B k {k} instance {i}", flush=True)
+    return out
+
+
+def f_job(args):
+    """Part F, one (k, instance): unequal masses εr (Part B's r), the projection from α = 0 (exact fallback) against weighted basis pursuit,
+    the leading order from its certificate and the closed form off the support, where the vertex has N atoms."""
+    warnings.filterwarnings('ignore')
+    k, i = args
+    L = law()
+    Phi, ws = instance(k, i); y = Phi @ ws
+    r = np.exp(np.random.default_rng(800 + 100 * k + i).uniform(np.log(0.25), np.log(4.0), D_I))
+    rho = 1.0 / np.sqrt(r)
+    wl1 = MF.weighted_bp(Phi, y, rho)
+    S = np.flatnonzero(np.abs(wl1) > 1e-10)
+    out = dict(k=k, i=i, nS=int(S.size), rows=[])
+    if S.size != N_I:
+        return out
+    mu, xi = MF.certificate_slacks(Phi, wl1, S, rho)
+    off = np.setdiff1d(np.arange(D_I), S)
+    out['mu_min'] = float(mu[off].min())
+    for eps in EPS_F + EPS_SLOW:
+        if eps in EPS_SLOW and out['rows'][1]['d'] <= 1e-3:
+            break
+        P = MF.ParticleSet(L, np.zeros(D_I), eps * r)
+        w, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
+        w1 = MF.rich_leading_order(P, Phi, y, wl1, S)
+        cf = np.sign(Phi.T @ xi) * L.core_tail(eps * r, mu)
+        out['rows'].append(dict(eps=eps, it=it, res=res, d=float(np.abs(w - wl1).max()), d1=float(np.abs(w1 - wl1).max()),
+                                agree=float(np.abs(w - w1).max()), cf=float(np.max(np.abs(w[off] - cf[off]) / np.abs(cf[off]))),
+                                supp=[int(j) for j in np.flatnonzero(np.abs(w) > 1e-6)]))
     return out
 
 
@@ -433,7 +469,7 @@ def part_E():
     return rows
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
     fmt = E.fmt
     L = law()
     L_ = ["# Proposition D‴.45: the free mass–amplitude law is a mirror flow (`exp_mirror_free.py`)", "",
@@ -575,6 +611,39 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
         for j, r in enumerate(Ee):
             L_.append(f"| {j} | {fmt(r['res'])} | {fmt(r['dQ'])} | {r['l1c']:.4f}, {r['l1f']:.4f} | {fmt(r['d'])} | {r['mass']:.6f} |")
         L_.append("")
+    if F is not None:
+        L_ += ["## F. The rich limit's leading order (unequal masses εr_i, the instances of B; Proposition D‴.45(iii))", "",
+               "Where weighted basis pursuit (weights r^{−1/2}) is a vertex with N atoms: its certificate's smallest relative slack μ_min off "
+               "the support; the projection from α = 0 (exact fallback) — its distance |w − w_bp|∞ — against the leading order computed from "
+               "the certificate (|w − w₁|∞, absolute: the rounding floor is ≈ 10⁻¹²) and against the closed form a_max(εr_j)^{3/2}cos(πμ_j/2)/"
+               f"(m(2c)^{{1/2}}sin³(πμ_j/2)) off the support (its largest relative error); medians and largest values over the instances with "
+               f"μ_min ≥ {MU_SLOW:g}:", ""]
+        for k in KS_B:
+            q = [f for f in F if f['k'] == k]
+            v = [f for f in q if f['nS'] == N_I]
+            g = [f for f in v if f['mu_min'] >= MU_SLOW]
+            L_ += [f"k = {k}: {len(v)} of {len(q)} instances with an N-atom vertex, {len(g)} with μ_min ≥ {MU_SLOW:g}; μ_min median "
+                   f"{fmt(np.median([f['mu_min'] for f in v]))}, smallest {fmt(min(f['mu_min'] for f in v))}.", "",
+                   "| ε | distance: median, largest | |w − w₁|∞: median, largest | the closed form: median, largest | projection: largest residual |",
+                   "|---|---|---|---|---|"]
+            for j, eps in enumerate(EPS_F):
+                rows = [f['rows'][j] for f in g]
+                L_.append(f"| {eps:g} | {fmt(np.median([rr['d'] for rr in rows]))}, {fmt(max(rr['d'] for rr in rows))} | "
+                          f"{fmt(np.median([rr['agree'] for rr in rows]))}, {fmt(max(rr['agree'] for rr in rows))} | "
+                          f"{fmt(np.median([rr['cf'] for rr in rows]))}, {fmt(max(rr['cf'] for rr in rows))} | {fmt(max(rr['res'] for rr in rows))} |")
+            ratio = [f['rows'][1]['d'] / f['rows'][2]['d'] for f in g]
+            L_ += ["", f"The distance's ratio between ε = 10⁻⁷ and 10⁻⁹ (ε^{{3/2}}: 1000): median {np.median(ratio):.0f}, range "
+                   f"{min(ratio):.0f}–{max(ratio):.0f}.", ""]
+        slow = [f for f in F if f['nS'] == N_I and f['mu_min'] < MU_SLOW]
+        if slow:
+            L_ += [f"The instances with μ_min < {MU_SLOW:g} (near-optimal second vertices; those whose distance at ε = 10⁻⁷ exceeds 10⁻³ "
+                   "followed to 10⁻¹¹):", "",
+                   "| instance | μ_min | ε | distance | the leading order's distance | |w − w₁|∞ | support |", "|---|---|---|---|---|---|---|"]
+            for f in slow:
+                for rr in f['rows']:
+                    L_.append(f"| k = {f['k']}, {f['i']} | {fmt(f['mu_min'])} | {rr['eps']:g} | {fmt(rr['d'])} | {fmt(rr['d1'])} | "
+                              f"{fmt(rr['agree'])} | {rr['supp']} |")
+            L_.append("")
     L_.append("Numbers are produced by `experiments/exp_mirror_free.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -585,9 +654,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -598,6 +667,8 @@ def main():
             h['B'] = pool.map_async(b_job, [(k, i) for k in KS_B for i in range(N_INST_B)], chunksize=1)
         if 'C' in parts:
             h['C3'] = pool.map_async(c3_job, list(I_C3), chunksize=1)
+        if 'F' in parts:
+            h['F'] = pool.map_async(f_job, [(k, i) for k in KS_B for i in range(N_INST_B)], chunksize=1)
         if 'A' in parts:
             res['A'] = part_A(); E.save(raw, **res); log('A')
         if 'D' in parts:
@@ -608,7 +679,9 @@ def main():
             C = part_C12(); C['c4'] = part_C4(); C['c3'] = h['C3'].get(); res['C'] = C; E.save(raw, **res); log('C')
         if 'B' in parts:
             res['B'] = h['B'].get(); E.save(raw, **res); log('B')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+        if 'F' in parts:
+            res['F'] = h['F'].get(); E.save(raw, **res); log('F')
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
 
 
 if __name__ == '__main__':

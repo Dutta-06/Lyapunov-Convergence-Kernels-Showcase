@@ -1,7 +1,7 @@
 """
-Propositions D‴.45–D‴.47 (PARADIGM.md §5d): the free mass–amplitude law is a mirror flow — a conservation law per particle, the implicit
+Propositions D‴.45–D‴.48 (PARADIGM.md §5d): the free mass–amplitude law is a mirror flow — a conservation law per particle, the implicit
 bias as a Bregman projection, the noise's invariance in continuous time (noise with smooth paths: Stratonovich), the sampled-data drift,
-the real loop's Lyapunov function; a leak in the mirror coordinates; the law's branches
+the real loop's Lyapunov function; a leak in the mirror coordinates; the law's branches; the rich transit
 ====================================================================================================================================
 
 The replicator–amplitude law of Proposition D‴.34 without the mass constraint (free masses: λ ≡ 0), one particle per class beyond the
@@ -28,14 +28,16 @@ D‴.46: the leak −σ(η_i − η_p,i) on each particle's drive keeps Q; with 
       error filter's Gram H_L = k_e⟨φL[φ]ᵀ⟩ and d̄_L = k_e⟨φL[d]⟩ (L = 1/(s + k_e), `filtered_gram`; `leak_equilibrium`).
 D‴.47: the branches Q_i < −c (a start with β(0) < 2c sinh²(α(0)/a_max)): the sign frozen, an entropy at the branch point with the
       temperature 1/(γa₀); the limit for every start is the Bregman projection onto the sign-constrained least-squares fits, the
-      coordinates vanishing there going extinct (`ParticleSet`, `sign_ls_set`, `projection`).
+      coordinates vanishing there going extinct (`ParticleSet`, `sign_ls_set`, `projection`); the rich limits' leading order from the
+      vertex's certificate (`certificate_slacks`, `rich_leading_order`, `FreeLaw.core_tail`).
+D‴.48: the rich transit — as the starting masses vanish the rescaled loop follows the inverse scale space flow (`iss_path`).
 
 This module: the curves, the mirror coordinates and their inverse (closed forms without cancellation: q > c, |q| ≤ c, the critical curve
 q = −c and the branches q < −c; the inverse raises instead of clipping), the potential and its conjugate, the Bregman projection on a
-dictionary (Newton on the dual with Armijo backtracking and an adaptive radius), the loop's vector fields, the Euler step's change of Q,
-the mirror update, the real loop and its Lyapunov function (from the state's own mass), the leak and its equilibrium, the error filter's
-Gram, and the branch-aware particle set with the sign-constrained projection, weighted basis pursuit, the nonnegative certificate and the
-irrepresentable condition.
+dictionary (Newton on the dual with Armijo backtracking and an adaptive radius; a decimal-arithmetic step where float curvatures
+underflow), the loop's vector fields, the Euler step's change of Q, the mirror update, the real loop and its Lyapunov function (from the
+state's own mass), the leak and its equilibrium, the error filter's Gram, and the branch-aware particle set with the sign-constrained
+projection, weighted basis pursuit, the nonnegative certificate and the irrepresentable condition.
 """
 import numpy as np
 from scipy.optimize import brentq, lsq_linear, linprog
@@ -82,6 +84,13 @@ class FreeLaw:
         b = self.beta(al, q)
         a, da = self.amp(al)
         return (b / self.m ** 2) * (self.G * b * da ** 2 + self.gamma * a ** 2)
+
+    def core_tail(self, b0, mu):
+        """From α = 0 at the mass b0, the coefficient at η = (1 − μ)λ₁ — an off-support atom of the rich limit with the certificate's slack
+        μ (Proposition D‴.45(iii)): a_max b0^{3/2}cos(πμ/2)/(m(2c)^{1/2}sin³(πμ/2)), to leading order as b0 → 0."""
+        b0, mu = np.asarray(b0, float), np.asarray(mu, float)
+        with np.errstate(divide='ignore'):                                     # μ = 0 (the wall): infinite
+            return self.A * b0 ** 1.5 * np.cos(np.pi * mu / 2) / (self.m * np.sqrt(2 * self.c) * np.sin(np.pi * mu / 2) ** 3)
 
     def branch_point(self, q):
         """α₀ ≥ 0 with β(±α₀) = 0 when q ≤ −c (the sign of w frozen beyond it; α₀ = 0 on the critical curve q = −c), else 0."""
@@ -404,12 +413,48 @@ class FreeLaw:
 
 
 # --- the shared dual solver ---------------------------------------------------------------------------------------------------------
-def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-12, it_max=4000):
+def _exact_newton_step(Phi, lmD, gr, radius, cap_digits=3000):
+    """Newton's step for the Hessian Φ diag(e^lmD)Φᵀ solved in decimal arithmetic (precision 40 digits beyond lmD's range, at most
+    cap_digits; exponents unbounded), then scaled so that its largest change of η is at most radius: the curvatures of particles near
+    extinction, far below the float Hessian's rounding, still steer the step. Raises ZeroDivisionError if the decimal system is singular."""
+    from decimal import Decimal, localcontext
+    N, d = Phi.shape
+    top = float(np.max(lmD))
+    with localcontext() as ctx:
+        ctx.prec = int(min(cap_digits, 40 + (top - float(np.min(lmD))) / np.log(10)))
+        ctx.Emin, ctx.Emax = -10 ** 9, 10 ** 9
+        wts = [(Decimal(float(v)) - Decimal(top)).exp() for v in lmD]                # e^{lmD − top}
+        Pd = [[Decimal(float(v)) for v in row] for row in Phi]
+        M = [[sum((wts[k] * Pd[i][k] * Pd[j][k] for k in range(d)), Decimal(0)) for j in range(N)] + [-Decimal(float(gr[i]))]
+             for i in range(N)]
+        for col in range(N):                                                    # Gaussian elimination, partial pivoting
+            piv = max(range(col, N), key=lambda r_: abs(M[r_][col]))
+            if M[piv][col] == 0:
+                raise ZeroDivisionError("singular Newton system")
+            M[col], M[piv] = M[piv], M[col]
+            for r_ in range(col + 1, N):
+                f = M[r_][col] / M[col][col]
+                for cc in range(col, N + 1):
+                    M[r_][cc] -= f * M[col][cc]
+        st = [Decimal(0)] * N
+        for i in range(N - 1, -1, -1):
+            st[i] = (M[i][N] - sum((M[i][j] * st[j] for j in range(i + 1, N)), Decimal(0))) / M[i][i]
+        sc = (-Decimal(top)).exp()                                              # undo the scaling e^{−top}
+        st = [v * sc for v in st]
+        de = max(abs(sum((Pd[i][k] * st[i] for i in range(N)), Decimal(0))) for k in range(d))
+        fac = min(Decimal(1), Decimal(float(radius)) / de) if de > 0 else Decimal(1)
+        return np.array([float(v * fac) for v in st])
+
+
+def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-12, it_max=4000, logmD_of=None):
     """Minimise the convex dual 𝒟(z) = Σψ*_i(η0_i + (Φᵀz)_i) − yᵀz (the Bregman projection's): Newton's direction (Hessian
     Φ diag(mD)Φᵀ), Armijo backtracking on 𝒟 — with, near the solution, the residual's halving accepted instead (𝒟's rounding) —, an
     adaptive radius on the step's largest change of η (grown fourfold after a full step, shrunk to the accepted step otherwise), trial
     points the inverse rejects (ValueError) or that are not finite skipped; the best iterate (smallest residual) is returned.
-    inv(η) → state, w_of(state), mD_of(state) = dw/dη, psistar_of(state). Returns (w, state, iterations, |Φw − y|)."""
+    inv(η) → state, w_of(state), mD_of(state) = dw/dη, psistar_of(state). With logmD_of(state) = log(dw/dη) given, a float step that
+    stalls (accepted without measurable progress, or none accepted) switches the remaining steps to `_exact_newton_step` — needed when
+    some particles are near extinction and others not, their curvatures below the float Hessian's rounding —, and a stalled exact step
+    ends the iteration (the rounding floor); without it the iteration is the float one. Returns (w, state, iterations, |Φw − y|)."""
     z = np.zeros(Phi.shape[0])
     tol_abs = tol * (1 + np.linalg.norm(y))
 
@@ -420,14 +465,21 @@ def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-
             return st, w, float(np.sum(psistar_of(st)) - y @ z)
     st, w, Dz = at(z)
     best = (w, st, np.linalg.norm(Phi @ w - y))
-    R, it = radius, 0
+    R, it, exact = radius, 0, False
     for it in range(it_max):
         gr = Phi @ w - y
         ng = np.linalg.norm(gr)
         if ng < tol_abs:
             break
-        Hs = Phi @ (mD_of(st)[:, None] * Phi.T)
-        step = -np.linalg.lstsq(Hs, gr, rcond=None)[0]
+        step = None
+        if exact:
+            try:
+                step = _exact_newton_step(Phi, logmD_of(st), gr, R)
+            except ZeroDivisionError:
+                step = None
+        if step is None:
+            Hs = Phi @ (mD_of(st)[:, None] * Phi.T)
+            step = -np.linalg.lstsq(Hs, gr, rcond=None)[0]
         de = np.abs(Phi.T @ step).max()
         lam0 = min(1.0, R / de) if de > 0 else 1.0
         lam, slope, acc = lam0, gr @ step, None
@@ -444,11 +496,19 @@ def dual_newton(inv, w_of, mD_of, psistar_of, Phi, y, eta0, radius=20.0, tol=1e-
                     break
             lam /= 2
         if acc is None:
+            if logmD_of is not None and not exact:
+                exact = True
+                continue
             break
+        stalled = logmD_of is not None and not (acc[4] < 0.99 * ng or acc[3] < Dz - 1e-13 * max(1.0, abs(Dz)))
         R = min(4 * R, 1e15) if lam == lam0 else max(lam * de, 1e-12)
         z, st, w, Dz, ng2 = acc
         if ng2 < best[2]:
             best = (w, st, ng2)
+        if stalled:
+            if exact:                                                         # the exact step stalls too: the rounding floor
+                break
+            exact = True
     return best[0], best[1], it, float(best[2])
 
 
@@ -519,6 +579,91 @@ def nonneg_certificate(Phi, supp):
 
 
 # --- the branches (Proposition D‴.47) -------------------------------------------------------------------------------------------------
+def certificate_slacks(Phi, w_lim, S, rho, frozen=None):
+    """A nondegenerate vertex w_lim of weighted basis pursuit (support S, |S| = N, Φ_S invertible): its dual certificate ξ, Φ_Sᵀξ =
+    ρ_S·sign(w_lim,S), and the relative slacks μ_j = 1 − s_j(Φᵀξ)_j/ρ_j (s_j the frozen sign where `frozen` gives one, else
+    sign((Φᵀξ)_j)) — the exponents of the rich limits' approach (Propositions D‴.45(iii), D‴.47(iii)). Returns (μ, ξ)."""
+    S = np.asarray(S, int)
+    rho = np.asarray(rho, float)
+    xi = np.linalg.solve(Phi[:, S].T, rho[S] * np.sign(w_lim[S]))
+    h = Phi.T @ xi
+    sj = np.sign(h) if frozen is None else np.where(np.asarray(frozen) != 0, frozen, np.sign(h))
+    return 1.0 - sj * h / rho, xi
+
+
+def rich_leading_order(P, Phi, y, w_lim, S):
+    """The rich limit's leading order at a nondegenerate vertex w_lim (support S, |S| = N; Propositions D‴.45(iii), D‴.47(iii)) for the
+    particles P (a ParticleSet) started at their x0: the dual z from the support's mirror coordinates at the vertex, Φ_Sᵀz = η_S(w_lim) −
+    η_S(0); the off-support coefficients through each particle's own mirror map, w_j = w(η_j(0) + (Φᵀz)_j); the support's from the fit
+    Φ_S w_S = y − Φ_{S^c}w_{S^c}. Returns w₁."""
+    S = np.asarray(S, int)
+    e0 = P.eta(P.x0)
+    z = np.linalg.solve(Phi[:, S].T, P.eta(P.state_of_w(w_lim, S))[S] - e0[S])
+    w1 = P.w(P.x_of_eta(e0 + Phi.T @ z))
+    w1[S] = 0.0
+    w1[S] = np.linalg.solve(Phi[:, S], y - Phi @ w1)
+    return w1
+
+
+def iss_path(Phi, y, rho, signs=None, tol=1e-10, max_events=1000):
+    """The inverse scale space flow of R(w) = Σ_iρ_i|w_i| (frozen signs s_i: + the indicator of s_iw_i ≥ 0) — the rich transit's limit
+    (Proposition D‴.48): du/dτ = Φᵀ(y − Φw)/N, u(0) = 0, w in the normal cone of the box |u_i| ≤ ρ_i (one-sided: s_iu_i ≤ ρ_i), the
+    least-squares element of it (the minimal-norm section of the dual's subdifferential): w piecewise constant — on the wall's atoms the
+    sign-constrained least-squares fit (NNLS after the signs) —, u piecewise linear, an atom entering when its u reaches the wall and
+    leaving when its coefficient vanishes with an inward velocity (the adaptive inverse scale space method of Burger–Möller–Benning–Osher).
+    Returns dict(taus = the event times, U = u there, W = w on each segment, events = [(τ, i, 'enter'/'exit')], w_end)."""
+    from scipy.optimize import nnls
+    N, d = Phi.shape
+    rho = np.asarray(rho, float)
+    one = signs is not None
+    s = np.asarray(signs, float) if one else None
+    u, tau = np.zeros(d), 0.0
+    on = np.zeros(d, bool)
+    taus, Us, Ws, ev = [0.0], [u.copy()], [], []
+    w = np.zeros(d)
+    for _ in range(max_events):
+        idx = np.flatnonzero(on)
+        w = np.zeros(d)
+        if idx.size:
+            sg = s[idx] if one else np.sign(u[idx])
+            w[idx] = sg * nnls(Phi[:, idx] * sg, y, maxiter=50 * d)[0]
+        r = y - Phi @ w
+        v = Phi.T @ r / N
+        Ws.append(w.copy())
+        sg_all = s if one else np.sign(u)
+        leave = on & (w == 0) & (sg_all * v < -tol * max(1.0, np.abs(v).max()))
+        ev += [(tau, int(i), 'exit') for i in np.flatnonzero(leave)]
+        on &= ~leave
+        if np.linalg.norm(r) <= tol * (1 + np.linalg.norm(y)):
+            break
+        dt = np.full(d, np.inf)
+        off = ~on
+        if one:
+            up = off & (s * v > 0)
+            dt[up] = (rho[up] - s[up] * u[up]) / (s[up] * v[up])
+        else:
+            pos, neg = off & (v > 0), off & (v < 0)
+            dt[pos] = (rho[pos] - u[pos]) / v[pos]
+            dt[neg] = (-rho[neg] - u[neg]) / v[neg]
+        j = int(np.argmin(dt))
+        if not np.isfinite(dt[j]):
+            break
+        u = u + max(dt[j], 0.0) * v
+        tau += max(dt[j], 0.0)
+        u[j] = (s[j] if one else np.sign(v[j])) * rho[j]
+        on[j] = True
+        ev.append((tau, j, 'enter'))
+        taus.append(tau); Us.append(u.copy())
+    return dict(taus=np.array(taus), U=np.array(Us), W=np.array(Ws), events=ev, w_end=w)
+
+
+def iss_eval(path, tau, Phi, y):
+    """u(τ) and w(τ) on an `iss_path` (w of the segment containing τ)."""
+    k = min(int(np.searchsorted(path['taus'], tau, side='right') - 1), len(path['W']) - 1)
+    w = path['W'][k]
+    return path['U'][k] + (tau - path['taus'][k]) * (Phi.T @ (y - Phi @ w)) / Phi.shape[0], w
+
+
 class ParticleSet:
     """Particles of one free law from starts (α(0), β(0)), each on its curve Q_i: a free sign (Q_i > −c, the state α_i) or a branch
     (β(0) < 2c sinh²(α(0)/a_max), i.e. Q_i < −c; the state u_i = log δ_i, δ_i = |α_i| − α₀,i, the sign s_i frozen). On a branch every
@@ -574,6 +719,18 @@ class ParticleSet:
         L = self.law
         b = self.beta(x); a, da = L.amp(self.alpha(x))
         return (b / L.m) * (L.G * b * da ** 2 + L.gamma * a ** 2)
+
+    def log_mD(self, x):
+        """log(dw/dη) without underflow: on a branch log β from u = log δ (β = 2c sinh((2α₀ + δ)/a_max)sinh(δ/a_max))."""
+        L = self.law
+        a, da = L.amp(self.alpha(x))
+        dl = self._dl(x)
+        xb = np.where(self.br, x, 0.0)
+        tiny = dl / L.A < 1e-8
+        lsh = np.where(tiny, xb - np.log(L.A) + dl ** 2 / (6 * L.A ** 2), logsinh(np.where(tiny, 1.0, dl) / L.A))
+        with np.errstate(divide='ignore'):
+            lb = np.where(self.br, np.log(2 * L.c) + logsinh((2 * self.al0 + dl) / L.A) + lsh, np.log(np.abs(self.beta(x))))
+        return lb - np.log(L.m) + np.log(L.G * np.exp(lb) * da ** 2 + L.gamma * a ** 2)
 
     def temperature(self, x):
         """dη/dlog|w| = a/(γa² + Gβa′²): 1/(γa₀) at a branch point, 1/(γa_max) far out."""
@@ -682,9 +839,10 @@ def sign_ls_set(Phi, y, s, tol=1e-9):
     return yh, np.array(Z, int), r.x
 
 
-def projection(P, Phi, yh, eta0, keep=None, tol=1e-12, it_max=4000):
+def projection(P, Phi, yh, eta0, keep=None, tol=1e-12, it_max=4000, exact=False):
     """The Bregman projection argmin{Σ_{i∈keep}[ψ_i(w_i) − η0_iw_i] : Φ_keep w_keep = ŷ} for a ParticleSet (the others 0, each
-    particle's range — a branch's sign — implied), by `dual_newton` on the kept coordinates. Returns (w, iterations, the residual)."""
+    particle's range — a branch's sign — implied), by `dual_newton` on the kept coordinates (exact=True: with its decimal fallback,
+    from `ParticleSet.log_mD`, for masses far below the float Hessian's range). Returns (w, iterations, the residual)."""
     keep = np.arange(P.d) if keep is None else np.asarray(keep, int)
     Pk = Phi[:, keep]
     eta0 = np.asarray(eta0, float)
@@ -694,6 +852,7 @@ def projection(P, Phi, yh, eta0, keep=None, tol=1e-12, it_max=4000):
         return P.x_of_eta(e)
     wk, st, it, res = dual_newton(inv, lambda st_: P.w(st_)[keep], lambda st_: P.mD(st_)[keep],
                                   lambda st_: P.psistar(st_)[keep], Pk, yh, eta0[keep],
-                                  radius=2.0 / (P.law.gamma * P.law.A), tol=tol, it_max=it_max)
+                                  radius=2.0 / (P.law.gamma * P.law.A), tol=tol, it_max=it_max,
+                                  logmD_of=(lambda st_: P.log_mD(st_)[keep]) if exact else None)
     out = np.zeros(P.d); out[keep] = wk
     return out, it, res

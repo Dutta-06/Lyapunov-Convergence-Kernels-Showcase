@@ -44,7 +44,7 @@ LAW_B = dict(m=12.0, G=1.0, gamma=0.1, a_max=1.0)                 # c = 0.025
 LAW_E = dict(m=12.0, G=0.25, gamma=1.0, a_max=1.0)                # c = 1
 SEEDS_B, NB, DB, T_B = range(8), 6, 12, 3e7
 NC, DC, EPS_BR, EPS_FREE = 8, 20, (1e-4, 1e-8, 1e-16, 1e-32, 1e-64, 1e-128), (1e-2, 1e-4, 1e-6, 1e-8, 1e-10)
-U_PAIR = (1e-4, 1e-8, 1e-16, 1e-32, 1e-64, 1e-128)
+U_PAIR = (1e-4, 1e-8, 1e-16, 1e-32, 1e-64, 1e-128, 1e-256)
 CASES_E = ((21, 0.15, 7), (41, 0.15, 7), (41, 0.1, 11))
 STARTS_E = (('branch', 1.0, 1e-6), ('branch', 1.0, 1e-2), ('branch', 1.0, 1.0), ('branch', 2.0, 10.0), ('alpha=0', 0.0, 1e-6),
             ('alpha=0', 0.0, 1e2))
@@ -175,16 +175,25 @@ def part_C():
     a_init = L.A * np.tanh(amp0 / L.A)
     w_scbp = MF.weighted_bp(Phi, y, 1 / a_init, signs=sg)
     w_bp = MF.weighted_bp(Phi, y, np.ones(DC))
+    S_sc = np.flatnonzero(np.abs(w_scbp) > 1e-9); S_bp = np.flatnonzero(np.abs(w_bp) > 1e-9)
+    off_sc = np.setdiff1d(np.arange(DC), S_sc); off_bp = np.setdiff1d(np.arange(DC), S_bp)
+    mu_sc = MF.certificate_slacks(Phi, w_scbp, S_sc, 1 / (L.gamma * a_init), frozen=sg)[0] if S_sc.size == NC else np.full(DC, np.nan)
+    mu_bp, xi_bp = MF.certificate_slacks(Phi, w_bp, S_bp, np.ones(DC)) if S_bp.size == NC else (np.full(DC, np.nan), None)
     br = []
     for eps in EPS_BR:
         P = MF.ParticleSet(L, sg * amp0, np.full(DC, eps))
-        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0))
-        br.append(dict(eps=eps, all_branch=bool(P.br.all()), it=it, res=res, d=float(np.abs(wb - w_scbp).max())))
+        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
+        w1 = MF.rich_leading_order(P, Phi, y, w_scbp, S_sc) if S_sc.size == NC else np.full(DC, np.nan)
+        br.append(dict(eps=eps, all_branch=bool(P.br.all()), it=it, res=res, d=float(np.abs(wb - w_scbp).max()),
+                       d1=float(np.abs(w1 - w_scbp).max()), agree=float(np.abs(wb - w1).max())))
     fr = []
     for eps in EPS_FREE:
         P = MF.ParticleSet(L, np.zeros(DC), np.full(DC, eps))
-        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0))
-        fr.append(dict(eps=eps, it=it, res=res, d=float(np.abs(wb - w_bp).max())))
+        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
+        w1 = MF.rich_leading_order(P, Phi, y, w_bp, S_bp) if S_bp.size == NC else np.full(DC, np.nan)
+        cf = np.sign(Phi.T @ xi_bp) * L.core_tail(eps, mu_bp)                  # the closed form off the support, the certificate's sign
+        fr.append(dict(eps=eps, it=it, res=res, d=float(np.abs(wb - w_bp).max()), d1=float(np.abs(w1 - w_bp).max()),
+                       agree=float(np.abs(wb - w1).max()), cf=float(np.max(np.abs(wb[off_bp] - cf[off_bp]) / np.abs(cf[off_bp])))))
     # a mixed start: the even atoms at α = 0 (free), the odd ones on branches with the truth's signs where it has them
     mx = []
     odd = np.arange(DC) % 2 == 1
@@ -194,11 +203,11 @@ def part_C():
     for eps in (1e-4, 1e-8, 1e-12):
         al_i = np.where(odd, sg * amp0, 0.0)
         P = MF.ParticleSet(L, al_i, np.full(DC, eps))
-        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0))
+        wb, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
         mx.append(dict(eps=eps, it=it, res=res, free=float(np.abs(wb[~odd]).sum()), d=float(np.abs(wb - w_scbp_odd).max())))
-    return dict(scbp_supp=[int(i) for i in np.flatnonzero(np.abs(w_scbp) > 1e-9)], scbp_is_truth=bool(np.abs(w_scbp - ws).max() < 1e-8),
-                bp_supp=[int(i) for i in np.flatnonzero(np.abs(w_bp) > 1e-9)], br=br, fr=fr, mx=mx,
-                odd_feasible=bool(np.all(np.isfinite(sub))))
+    return dict(scbp_supp=[int(i) for i in S_sc], scbp_is_truth=bool(np.abs(w_scbp - ws).max() < 1e-8),
+                bp_supp=[int(i) for i in S_bp], br=br, fr=fr, mx=mx, odd_feasible=bool(np.all(np.isfinite(sub))),
+                mu_sc=np.sort(mu_sc[off_sc]).tolist(), mu_bp=np.sort(mu_bp[off_bp]).tolist())
 
 
 def part_D():
@@ -208,18 +217,27 @@ def part_D():
     ws = np.zeros(DC); ws[[1, 5, 9]] = [0.8, -0.6, 0.5]; y = Phi @ ws
     al = 0.4
     Phi2 = np.hstack([Phi, Phi])
+    w_bp = MF.weighted_bp(Phi, y, np.ones(DC))                                 # equal amplitudes: the weights 1/a₀ are equal
+    S_bp = np.flatnonzero(np.abs(w_bp) > 1e-9)
+    off_bp = np.setdiff1d(np.arange(DC), S_bp)
+    mu_bp = MF.certificate_slacks(Phi, w_bp, S_bp, np.ones(DC))[0] if S_bp.size == NC else np.full(DC, np.nan)
+    S2 = np.where(w_bp[S_bp] > 0, S_bp, DC + S_bp)                              # the member of each support atom with its sign
     rows = []
     for u in U_PAIR:
         b = u * L.m / (L.A * np.tanh(al / L.A))                               # w(0) = u for each member
         P = MF.ParticleSet(L, np.r_[np.full(DC, al), np.full(DC, -al)], np.full(2 * DC, b))
         assert P.br.all(), u
-        wb, it, res = MF.projection(P, Phi2, y, P.eta(P.x0))
+        wb, it, res = MF.projection(P, Phi2, y, P.eta(P.x0), exact=True)
         W = wb[:DC] + wb[DC:]
         a0 = L.A * np.tanh(P.al0[0] / L.A)
         wref = MF.weighted_bp(Phi, y, np.full(DC, 1 / a0))
-        rows.append(dict(u=u, it=it, res=res, d=float(np.abs(W - wref).max()), both=int(np.sum((np.abs(wb[:DC]) > 1e-3 * np.abs(W).max())
-                                                                                             & (np.abs(wb[DC:]) > 1e-3 * np.abs(W).max())))))
-    return dict(rows=rows, bp_supp=[int(i) for i in np.flatnonzero(np.abs(MF.weighted_bp(Phi, y, np.ones(DC))) > 1e-9)])
+        w2 = np.zeros(2 * DC); w2[S2] = wref[S_bp]
+        w1 = MF.rich_leading_order(P, Phi2, y, w2, S2) if S_bp.size == NC else np.full(2 * DC, np.nan)
+        W1 = w1[:DC] + w1[DC:]
+        rows.append(dict(u=u, it=it, res=res, d=float(np.abs(W - wref).max()), d1=float(np.abs(W1 - wref).max()),
+                         agree=float(np.abs(W - W1).max()),
+                         both=int(np.sum((np.abs(wb[:DC]) > 1e-3 * np.abs(W).max()) & (np.abs(wb[DC:]) > 1e-3 * np.abs(W).max())))))
+    return dict(rows=rows, bp_supp=[int(i) for i in S_bp], mu_bp=np.sort(mu_bp[off_bp]).tolist())
 
 
 def e_case(d, wid, N):
@@ -329,9 +347,19 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
         L_ += [f"## C. The rich limits on one design ({NC} × {DC}; the target on atoms [1, 5, 9])", "",
                f"Sign-constrained basis pursuit weighted by 1/|a(0)| (the frozen signs: the target's on its atoms, random elsewhere): support "
                f"{C['scbp_supp']} (the target: {'yes' if C['scbp_is_truth'] else 'no'}); basis pursuit: support {C['bp_supp']}.", "",
-               "| start | ε | all on branches | projection (it, residual) | distance to its limit |", "|---|---|---|---|---|"]
-        L_ += [f"| branches (amplitudes 0.2–0.6) | {r['eps']:g} | {'yes' if r['all_branch'] else 'no'} | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} |" for r in C['br']]
-        L_ += [f"| α(0) = 0 | {r['eps']:g} | no | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} |" for r in C['fr']]
+               "The vertices' certificates (|S| = N, ξ from Φ_Sᵀξ = ρ_S·sign): the smallest relative slacks off the support μ_j = 1 − s_j(Φᵀξ)_j/ρ_j — "
+               f"sign-constrained, weights 1/(γ|a(0)|): {', '.join(f'{v:.4f}' for v in C['mu_sc'][:3])}; basis pursuit (equal weights): "
+               f"{', '.join(f'{v:.4f}' for v in C['mu_bp'][:3])}.", "",
+               "The projection's distance to its limit against the leading order computed from the certificate (the support's mirror coordinates "
+               "at the vertex, the off-support coefficients through each particle's mirror map: ≈ e^{O(1)}ε^{μ_j} on branches, "
+               "a_maxε^{3/2}cos(πμ_j/2)/(m(2c)^{1/2}sin³(πμ_j/2)) from α(0) = 0 — the closed form's largest relative error off the support in the "
+               "last column):", "",
+               "| start | ε | all on branches | projection (it, residual) | distance to its limit | the leading order's distance | "
+               "|w − w₁|∞ | the closed form |", "|---|---|---|---|---|---|---|---|"]
+        L_ += [f"| branches (amplitudes 0.2–0.6) | {r['eps']:g} | {'yes' if r['all_branch'] else 'no'} | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} | "
+               f"{fmt(r['d1'])} | {fmt(r['agree'])} | — |" for r in C['br']]
+        L_ += [f"| α(0) = 0 | {r['eps']:g} | no | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} | {fmt(r['d1'])} | {fmt(r['agree'])} | {fmt(r['cf'])} |"
+               for r in C['fr']]
         L_ += ["", "A mixed start (the even atoms at α = 0, the odd ones on branches): the free particles' total |w| and the distance to the "
                "branch atoms' own sign-constrained weighted basis pursuit:", "", "| ε | projection (it, residual) | Σ|w| on free particles | distance |",
                "|---|---|---|---|"]
@@ -340,9 +368,11 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
     if D is not None:
         L_ += ["## D. A pair per atom (± 0.4, equal masses; the design of C)", "",
                "The atom's coefficient W = w₊ + w₋ of the projection against basis pursuit weighted by 1/a₀; the atoms where both members "
-               f"carry more than 10⁻³ of the largest |W| (basis pursuit's support {D['bp_supp']}):", "",
-               "| u = w(0) | projection (it, residual) | distance | atoms with both members active |", "|---|---|---|---|"]
-        L_ += [f"| {r['u']:g} | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} | {r['both']} |" for r in D['rows']]
+               f"carry more than 10⁻³ of the largest |W| (basis pursuit's support {D['bp_supp']}; its certificate's smallest relative slacks "
+               f"{', '.join(f'{v:.4f}' for v in D['mu_bp'][:3])}); the leading order from the certificate as in C:", "",
+               "| u = w(0) | projection (it, residual) | distance | the leading order's distance | |W − W₁|∞ | atoms with both members active |",
+               "|---|---|---|---|---|---|"]
+        L_ += [f"| {r['u']:g} | {r['it']}, {fmt(r['res'])} | {fmt(r['d'])} | {fmt(r['d1'])} | {fmt(r['agree'])} | {r['both']} |" for r in D['rows']]
         L_.append("")
     if Ee is not None:
         L_ += ["## E. Positive kernel dictionaries (Gaussian atoms of one width on a grid of [−1, 1], samples evenly on [−1.1, 1.1], the target "

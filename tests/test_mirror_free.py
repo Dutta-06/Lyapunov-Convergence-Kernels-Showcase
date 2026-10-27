@@ -352,3 +352,81 @@ def test_branch_limit_is_the_projection_onto_the_sign_constrained_fits():
     sol = solve_ivp(P.rhs(Phi, y), (0, 3e7), P.x0, method='LSODA', rtol=1e-10, atol=1e-12)
     assert np.abs(P.w(sol.y[:, -1]) - wbar).max() < 1e-9
     assert P.beta(sol.y[:, -1])[Z].max() < 1e-30
+
+
+def test_exact_newton_fallback_at_extreme_masses():
+    """Proposition D‴.47(iii) at ε = 10⁻³²: with particles near and far from extinction the float Hessian loses the small curvatures and
+    the float Newton stalls; the decimal fallback converges and agrees with the leading order from the vertex's certificate, and leaves a
+    converged float iteration unchanged."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    rng = np.random.default_rng(7)
+    Phi = rng.standard_normal((8, 20))
+    ws = np.zeros(20); ws[[1, 5, 9]] = [0.8, -0.6, 0.5]; y = Phi @ ws
+    sg = rng.choice([-1.0, 1.0], 20); sg[[1, 5, 9]] = np.sign(ws[[1, 5, 9]])
+    amp0 = rng.uniform(0.2, 0.6, 20)
+    a0 = L.A * np.tanh(amp0 / L.A)
+    wl = MF.weighted_bp(Phi, y, 1 / a0, signs=sg)
+    S = np.flatnonzero(np.abs(wl) > 1e-9)
+    assert S.size == 8
+    mu, _ = MF.certificate_slacks(Phi, wl, S, 1 / (L.gamma * a0), frozen=sg)
+    off = np.setdiff1d(np.arange(20), S)
+    assert np.abs(mu[S]).max() < 1e-12 and mu[off].min() > 0.05
+    P = MF.ParticleSet(L, sg * amp0, np.full(20, 1e-4))
+    w_f = MF.projection(P, Phi, y, P.eta(P.x0))[0]
+    assert np.array_equal(w_f, MF.projection(P, Phi, y, P.eta(P.x0), exact=True)[0])
+    P = MF.ParticleSet(L, sg * amp0, np.full(20, 1e-32))
+    w, it, res = MF.projection(P, Phi, y, P.eta(P.x0), exact=True)
+    assert res < 1e-11 and it < 200
+    w1 = MF.rich_leading_order(P, Phi, y, wl, S)
+    assert np.abs(w - w1).max() < 1e-2 * np.abs(w - wl).max()
+
+
+def test_rich_limit_leading_order_from_alpha_zero():
+    """Proposition D‴.45(iii): from α = 0 at the masses εr_i the off-support coefficients are a_max(εr_j)^{3/2}cos(πμ_j/2)/(m(2c)^{1/2}
+    sin³(πμ_j/2)) to leading order (μ_j the weighted basis pursuit certificate's slacks): the approach is O(ε^{3/2}), the leading order
+    from the certificate exact to higher order."""
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    rng = np.random.default_rng(0)
+    N, d = 5, 12
+    Phi = rng.standard_normal((N, d))
+    ws = np.zeros(d); ws[rng.choice(d, 3, replace=False)] = rng.choice([-1, 1], 3) * rng.uniform(0.15, 0.3, 3); y = Phi @ ws
+    r = np.exp(rng.uniform(np.log(0.25), np.log(4.0), d))
+    wl = MF.weighted_bp(Phi, y, r ** -0.5)
+    S = np.flatnonzero(np.abs(wl) > 1e-10)
+    assert S.size == N
+    mu, xi = MF.certificate_slacks(Phi, wl, S, r ** -0.5)
+    off = np.setdiff1d(np.arange(d), S)
+    dist = {}
+    for eps, tol_cf in ((1e-5, 0.15), (1e-7, 0.015)):
+        P = MF.ParticleSet(L, np.zeros(d), eps * r)
+        w, it, res = MF.projection(P, Phi, y, P.eta(P.x0))
+        assert res < 1e-12
+        dist[eps] = np.abs(w - wl).max()
+        assert np.abs(w - MF.rich_leading_order(P, Phi, y, wl, S)).max() < 1e-4 * dist[eps] + 1e-13          # + rounding
+        cf = np.sign(Phi.T @ xi) * L.core_tail(eps * r, mu)
+        assert np.max(np.abs(w[off] - cf[off]) / np.abs(cf[off])) < tol_cf
+    assert 800 < dist[1e-5] / dist[1e-7] < 1300                                  # ε^{3/2}: 1000
+
+
+def test_iss_path_and_the_rich_transit():
+    """Proposition D‴.48(i): the inverse scale space path ends at weighted basis pursuit (one-sided: the sign-constrained one), and the
+    loop from α = 0 at the masses εr_i, in the time t/Λ(ε), follows it: u = η/Λ within 0.02 of the path at ε = 10⁻⁶."""
+    rng = np.random.default_rng(3)
+    N, d = 6, 14
+    Phi = rng.standard_normal((N, d))
+    ws = np.zeros(d); ws[[1, 4, 9]] = [0.8, -0.5, 0.4]; y = Phi @ ws
+    r = np.exp(rng.uniform(np.log(0.25), np.log(4.0), d))
+    rho = r ** -0.5
+    path = MF.iss_path(Phi, y, rho)
+    assert np.abs(path['w_end'] - MF.weighted_bp(Phi, y, rho)).max() < 1e-12
+    s = rng.choice([-1.0, 1.0], d); s[[1, 4, 9]] = np.sign(ws[[1, 4, 9]])
+    assert np.abs(MF.iss_path(Phi, y, rho, signs=s)['w_end'] - MF.weighted_bp(Phi, y, rho, signs=s)).max() < 1e-12
+    L = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
+    eps = 1e-6
+    Lam = (np.pi * L.A / (4 * L.G)) * np.sqrt(2 / (L.c * eps))
+    taus = np.linspace(0, 1.5 * path['taus'][-1], 301)
+    b0 = eps * r; q = L.Q(np.zeros(d), b0)
+    sol = solve_ivp(L.rhs(Phi, y), (0, Lam * taus[-1]), np.r_[np.zeros(d), np.log(b0)], method='LSODA', rtol=1e-10, atol=1e-13,
+                    t_eval=Lam * taus)
+    err = max(np.abs(L.eta(sol.y[:d, k], q) / Lam - MF.iss_eval(path, t, Phi, y)[0]).max() for k, t in enumerate(taus))
+    assert err < 0.02
