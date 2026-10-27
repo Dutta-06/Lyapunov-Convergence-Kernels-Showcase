@@ -234,9 +234,152 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   conic particle gradient descent, neuron birth–death and exponentiated-gradient laws ([S62]); new is their combination as a leak in
   mean-field adaptive control: the exact blocks at clustered configurations with the mass factor, the gauge-scaled splitting margin, the
   twins' rate, the real loop's exponents, and the replicator's removal of the saturation trap with the representability criterion (for bounded trajectories).
-- **Missing.** The transit from a spread cloud (which classes form, with which masses) and any selection of the number of kernels; the
+- **Missing.** The transit from a spread cloud (which classes form, with which masses; from small masses Proposition D‴.48's transit forms
+  one kernel per feature) and any selection of the number of kernels by the leak itself; the
   shedding of single particles below the resolution's threshold (the replicator does not remove it); a scale R chosen from the data (at a
   fixed scale the broad starts do not end at the target's count, Part J); the basin uniform in m; the a-priori bound under the transport
-  (the leak is internal — a projection, Proposition D‴.27, is the remedy); the replicator's neutral directions under noise (the gauge and the redistributions), boundedness at fixed positions, and the real loop with transport and replicator together.
+  (the leak is internal — a projection, Proposition D‴.27, is the remedy); the replicator's neutral directions under noise beyond papers 14–15 (the redistributions within a class), boundedness at fixed positions, and the real loop with transport and replicator together.
 - **Venue.** SIAM J. Control Optim. or IEEE TAC (theory); NeurIPS/ICML-style venues for the mean-field network regulariser and the mass
   transfer.
+
+### 14. Noise-induced selection on the gauge of a kernel network: Katzenberger's drift, its Fixman correction, general noise and the dither's confinement
+
+- **Claim.** With a replicator (Fisher–Rao) law on the kernels' weights and dither on their positions, the weights are a gauge of the
+  exact fit: the fits through a configuration form a manifold parametrised by the masses, on which the function does not move. Dither
+  makes the masses diffuse along it — Katzenberger's limit, the noise projected in the flow's own metric, at the predicted rate
+  (Proposition D‴.36) — and drift at the same order: in the slow-replicator limit they follow the replicator flow of the entropic free
+  energy (τ/2) log det of the positions' Hessian, which with one particle per class has the closed form 2Σ log(W_k a′_k) and diverges at
+  every saturation, so the noise drives the masses into the saturated, flattest fits; a boundary layer of width O(√γ), where the
+  replicator outruns the saturating amplitude, slows but does not stop them (Proposition D‴.37). A Fixman correction — the free energy's
+  derivative added to the replicator's fitness with a gain κ_F, in closed form on the masses — makes the corrected loop a gradient flow
+  with a log-barrier on the representable masses: it cancels the drift to leading order (κ_F = 1), or reverses it toward the barrier's
+  maximiser, the unique D-optimal exact fit (κ_F > 1, robust to an underestimated dither level; in the full loop within 1.1 standard
+  errors of it), and, unfloored, makes the saturation non-attracting, the density there δ^{κ_F − 1} (a floor that keeps the simulation
+  finite restores δ⁻¹ within its cap); with a leak the pinned state is predicted to second order, the fluctuations acting through the
+  leak's curvature; evaluated at the current amplitudes instead the correction turns the positions' excursions into a mass runaway
+  (Proposition D‴.38). Under the cohesion leak, which has no prior, the energy is bounded on the unconstrained coordinates, so the
+  dithered loop has no stationary law: the positions leave the exact fit's well, after a time of order e^{ΔJ/τ}, for a plateau of
+  approximate fits with saturated amplitudes; a dead zone on the unconstrained coordinates (the Moreau–Yosida envelope of a box's
+  indicator) restores the stationary law — without bias for the exact fits inside its box, though the law still weighs the plateau where
+  it meets the box —, turns the gauge's saturation into a non-degenerate wall at which the entropic drift ends, and keeps the Fixman
+  correction's selection (Proposition D‴.39; the escapes at fixed masses with an Arrhenius slope of (0.81 ± 0.14) of the barrier at the
+  instance's moderate barriers, the dead zone holding the plateau's occupation at 0.09–0.19). With several particles per class, together
+  at the class's exact-fit position, the positions' Hessian factors into the class masses' and the cohesion's within-class block: under
+  the isotropic dither the selection, its correction and a frozen split act on the class masses as with one particle per class, slowed
+  by the number of particles, while an anisotropic dither makes the split felt and moves the class masses at unequal splits
+  (Proposition D‴.42). In preparation (Proposition D‴.40, in review): for any noise covariance on the positions the gauge identity makes
+  the masses' fitness the generator's image of a function of one amplitude, so that at leading order only each amplitude's own noise
+  intensity selects — the replicator flow of a weighted log-determinant Σ_kτ_k log(W_k a′_k) whatever the noise —, dithering only the
+  centres and widths freezes the masses, and the correction at the classes' levels, read from the amplitudes' quadratic variation,
+  cancels the selection.
+- **Rests on.** Propositions D‴.36 ((i) proved for one particle per class, (ii) by Katzenberger's theorem on compact parts of M, (iii)
+  proved with the O(τ/ε) shift sketched), D‴.37 ((i) proved given Katzenberger, (ii) the averaging and Laplace steps sketched and checked
+  to 0.3%, (iii) the divergence and the layer's scale, the non-normalisability; (iv) first order), D‴.38 ((i) the slow-limit cancellation
+  proved, the remainder numerical; (ii) proved; (iii) the projected drift proved on M, the exponents checked in Katzenberger's limit;
+  (iv) checked on paired seeds; (v) numerical), D‴.39 ((i) proved; (ii) the plateau numerical, the exit time's order Freidlin–Wentzell's;
+  (iii) (a), (b) proved ((b) for the deterministic objects), (c) sketched at leading order), D‴.42 ((i), (iii) proved, (ii) proved for the
+  isotropic dither, its anisotropic failure's mechanism proved and its size numerical); `src/core/gauge_drift.py`,
+  `exp_gauge_dither.py`, `exp_gauge_drift.py`, `exp_gauge_fixman.py`, `exp_gauge_plateau.py`, `exp_gauge_classes.py`; Proposition
+  D‴.40 and `exp_gauge_noise.py` once their review and runs are complete.
+- **Novelty (audit).** Diffusions forced onto a manifold of equilibria (Katzenberger), the noise-driven drift along manifolds of minima
+  and its log-pseudo-determinant form for isotropic noise (Blanc et al., Li–Wang–Arora), averaging and the potential of mean force
+  (Khasminskii, Kirkwood), flat minima (Hochreiter–Schmidhuber, Entropy-SGD), the Fixman correction of stiff constraints (Fixman, Hinch,
+  Ciccotti–Lelièvre–Vanden-Eijnden), the adaptive biasing force and well-tempered metadynamics, the max-det selection of a log-barrier,
+  dissipativity, metastable exit times and parameter projection (Mattingly–Stuart–Higham, Raginsky–Rakhlin–Telgarsky, Freidlin–Wentzell,
+  Bovier et al., Pomet–Praly), Langevin sampling with a Moreau–Yosida envelope (MYULA), Jacobi coordinates are classical ([S64]–[S67]).
+  New: the amplitude–mass gauge of a replicator-weighted kernel network as the slow manifold, with noise on the positions only and a slow
+  mass channel; the log-determinant's closed form; the consequence that the noise brings back the saturation trap the replicator had
+  removed, and the √γ layer that does not stop it; the online Fixman correction on the masses, its gain selecting the D-optimal fit; the
+  loss of the dithered loop's stationary law with the prior, and the dead zone that restores it without touching the selection; the class
+  masses' laws with several particles per class exactly when the dither is isotropic.
+- **Missing.** Proposition D‴.40's review and runs (the general noise); separated particles of one class (the split's onset under
+  dither); the fractions' order-γ²τ drift; the real closed loop (the masses' time scale 1/(γτ) is out of direct simulation's reach on the
+  instance); an estimate of τ when the noise is measurement noise (Proposition D‴.41 for the error's noise); the averaging step of
+  D‴.37(ii) with constants; the plateau's occupation in the box's stationary law and the box's term at small τ.
+- **Venue.** SIAM J. Applied Dynamical Systems or Multiscale Model. Simul. (the limit, its correction and the confinement); a
+  learning-theory venue (COLT/ALT) for the implicit bias of noisy replicator dynamics.
+
+### 15. The colour of label noise is a sparsity prior: no selection in continuous time, the trace for white noise, the log-determinant for a slow Markov one
+
+- **Claim.** For a gradient flow driven by an error signal — supervised learning on the square loss, an adaptive control law, the
+  replicator–transport loop of an adaptive approximator — noise in the error enters along the descent's own vector fields, which are
+  orthogonal to the manifold of exact fits in the flow's metric. The limit map's invariance then makes the bilinear form
+  ⟨∇r ⊗ ∇(∂Φ·U)⟩ antisymmetric, and the Wong–Zakai term cancels Katzenberger's Itô drift exactly: in continuous time, for a noise white on
+  the data's resolution and of any temporal spectrum, the parameters neither drift nor diffuse along the manifold at leading order — a
+  loop adapting in continuous time does not select through its measurement noise. Only a discrete update selects, through the second
+  moment of the whole increment: at linear response each pair of normal modes is weighted by a filter f_il of the step and the noise's
+  correlation (the cross term the correlation adds cancelling by the same antisymmetry). On a flat-metric network the selection descends
+  tr Ψ(∇²L), Ψ′ = f: for fresh draws Ψ = −(2/h)log(1 − hλ/2), Damian–Ma–Lee's finite-step regulariser; for a finely sampled Markov noise
+  of correlation time τ_c Ψ = log(1 + λτ_c)/τ_c — (1/τ_c)log det(I + τ_c∇²L) —; for every coloured noise in the continuum Ψ is concave.
+  On factorised coefficients — w = u⊙u − v⊙v, the quadratic parametrisation of a diagonal network or of a kernel expansion's two adaptive
+  masses per atom — white label noise selects, as the step and the noise vanish, the weighted ℓ¹ norm (basis pursuit), a slow Markov noise
+  the log-determinant of Fazel's heuristic (sparse Bayesian learning's log-det term, not its penalty), which by Cauchy–Binet counts the
+  support: a k-sparse exact fit is held once τ_c passes a coherence-dependent threshold (a weighted dual certificate), and the slow
+  selection recovers sparse expansions where weighted basis pursuit fails (on 10 × 40 Gaussian designs 0.75 and 0.60 of the 3- and
+  4-sparse truths against basis pursuit's 0.38 and 0.17; label-noise descent with correlated draws at small σ where its reduced flow
+  does) — the mechanism, not a better sparse solver (sparse Bayesian learning's EM recovers 0.88 and 0.55) —; the coloured selection is
+  multistable, the concave penalty's local minima — on a replicator's masses, three stable targets where white noise has one.
+- **Rests on.** Propositions D‴.41 ((i) proved; (ii) proved at order v given Katzenberger's and the Wong–Zakai theorems; (iii) proved at
+  leading order; (iv) proved at order v and linear response for any step h < 2/λ_max and correlation, (c)'s concavity in the continuum
+  limit, (e)'s finite-step slow limit; the examples exact per step) and D‴.43 ((i) proved at order v given D‴.41(iv) where rank K = N,
+  the pruning phase numerical; (ii) the potential proved, the end at basis pursuit's solution sketched; (iii), (iv) proved; (v) proved for
+  the reduced flow, the certificate sufficient; the recovery rates numerical); `src/core/label_noise.py`, `src/core/colour_selection.py`,
+  `exp_gauge_label.py`, `exp_colour_selection.py`.
+- **Novelty (audit).** Katzenberger's limit along manifolds of minimisers (Li–Wang–Arora), label-noise SGD's flat-minimum and sparsity
+  selections and the finite-step regulariser (Blanc et al., Damian–Ma–Lee, HaoChen et al., Pillaud-Vivien–Reygner–Flammarion,
+  Shalova–Schlichting–Peletier), the Itô–Stratonovich distinction and the coloured-noise crossover (Wong–Zakai, van Kampen,
+  Kupferman–Pavliotis–Stuart), the active Ornstein–Uhlenbeck filter and the coloured-noise approximation's determinant (Jung–Hänggi,
+  Maggi et al.), correlated and anti-correlated noise (Orvieto et al., Lucchi et al., Kühn–Rosenow, Beneventano), the noise equilibria of
+  parameter symmetries (Ziyin et al.), sparse Bayesian learning, its non-separable reweighting and the log-det heuristic (Tipping,
+  Wipf–Rao, Wipf–Nagarajan, Fazel–Hindi–Boyd), reweighted ℓ¹ (Candès–Wakin–Boyd), stochastic collapse (Chen et al.) and the dual
+  certificate (Fuchs, Tropp) are classical ([S69], [S70], [S72]). New (not found stated): the exact continuous-time cancellation for noise
+  entering through the error; the coloured filter of label noise's drift along the exact fits; that the noise's temporal correlation sets
+  the sparsity prior of the explicit update's selection — the trace for white noise, a support-counting log-determinant for a slow Markov
+  one, a concave penalty for every colour —, its stability law and its recovery beyond basis pursuit; the closed forms and the
+  multistability on the replicator's masses.
+- **Missing.** The order-v² motion along the manifold; the singular limit near sparse exact fits (the normal space degenerating, the
+  pruning phase); minibatch noise; trained networks with temporally correlated label noise (augmentation repeated over epochs, sensor noise
+  in online learning) at scale; the paradigm's own replicator mass law on a dictionary (Proposition D‴.44, in preparation); a real closed
+  loop with sampled-data adaptation.
+- **Venue.** A learning-theory venue (COLT, NeurIPS) or SIAM J. Math. Data Sci. for the filter and the sparsity prior; IEEE TAC or
+  Automatica for the adaptive-control reading (continuous-time adaptation does not select through its measurement noise; a sampled one
+  selects by its noise's spectrum, and a slow sensor noise prunes the kernels).
+
+### 16. The free mass–amplitude law of self-adaptive kernels: a mirror flow, its implicit bias for every start, a leak in its mirror coordinates
+
+- **Claim.** Free the kernels' masses from their constraint and each kernel's mass and saturating amplitude are driven by one scalar
+  signal: Q = β − (γa_max²/4G)cosh(2α/a_max) is conserved for every drive, so the law only reparametrises the amplitude and its coefficient
+  w = βa/m follows the mirror flow of an explicit separable potential — a mass-weighted ℓ² core, a soft wall at the saturation, an entropy
+  tail; for small starting masses an ℓ¹ norm of weight ∝ β⁰^{−1/2} (Proposition D‴.45). On a dictionary the loop converges from every
+  start to the Bregman projection of the start onto the sign-constrained least-squares fits — the exact fits when the frozen signs allow
+  it —, the kernels whose sign cannot help dying out; starts at nonzero amplitude and small mass put the kernels on branches of their
+  curves, where the signs freeze and the law is an exponentiated gradient with the temperature 1/(γa₀) (Proposition D‴.47): the starting
+  masses and amplitudes select between the minimum-norm fit, weighted basis pursuit and sign-constrained basis pursuit, and on positive
+  kernel dictionaries the frozen signs make the target's kernels the limit at every scale. Noise with smooth paths (Stratonovich) never
+  moves the selected fit; a sampled-data update does, through a closed-form change of Q per step, which a mirror update on the curves
+  removes. In the real loop ½e² plus the Bregman divergences is a Lyapunov function of the joint mass–amplitude adaptation; a leak written
+  in the mirror coordinates keeps it under disturbances (an ultimate bound the free masses alone lack) and makes the loop's bias an
+  explicit Bregman-regularised fit — a ridge from large starting masses, a LASSO from small ones that keeps exactly the target's kernels
+  under the irrepresentable condition, the averaged loop's equilibrium written with the error filter's Gram (Proposition D‴.46).
+- **Rests on.** Propositions D‴.45 ((i), (ii), (iv)(a), (v) exact; (iii) proved for Q > −c, the rich limit when weighted basis pursuit is
+  unique; (iv)(b) the formula proved, the selection's end numerical), D‴.46 ((i) proved; (ii) for the averaged loop, the real loop's mean
+  by classical averaging; (iii) the limits proved, the support recovery by the LASSO's theory), D‴.47 ((ii) for every start; (iii) the
+  limit and the off-support rate; (v) with a certified uniqueness); `src/core/mirror_free.py`, `exp_mirror_free.py`, `exp_mirror_leak.py`,
+  `exp_mirror_branch.py`; the sampled-data selection's ends under the paradigm's update (Proposition D‴.44, `exp_mass_dictionary.py`) once
+  its runs are complete.
+- **Novelty (audit).** Mirror flows of commuting reparametrisations and their conservation laws (Li–Wang–Lee–Arora; Marcotte–Gribonval–
+  Peyré; Azulay et al.), the kernel and rich regimes and the hyperbolic entropy (Woodworth et al.; Ghai–Hazan–Singer), exponentiated
+  gradient and Hessian–Riemannian flows on constrained domains (Kivinen–Warmuth; Alvarez–Bolte–Brahic), nonnegative least squares by
+  overparametrisation (Chou–Maly–Verdun et al.), SGD's Itô noise and the effective initialisation (Pesme et al.; Even et al.; HaoChen et
+  al.), mirror-descent adaptation laws (Boffi–Slotine), discounted mirror descent and penalty-regulated dynamics (Gao–Pavel; Romano–Pavel;
+  Coucheney–Gaujal–Mertikopoulos), the σ-modification and averaging of adaptive systems (Ioannou–Kokotović; Anderson et al.; Sastry–
+  Bodson) and the LASSO's irrepresentable condition (Zhao–Yu; Wainwright) are classical ([S71]–[S74]); new is the paradigm's saturating
+  unit made explicit — the conserved Q, the mirror coordinate and potential in every regime, the weights 1/√β⁰, the branches with their
+  temperature —, the implicit bias for every start with the extinction of wrong-signed kernels, the sampled-data change of Q and the
+  mirror update that removes it, and the dual-coordinate leak realised on (α, β) with its bound and its starting-mass-dependent LASSO.
+- **Missing.** Moving centres and widths (Q stays conserved while the cohesion's α-component vanishes; the mirror structure does not
+  extend; the small-mass transit with moving centres is Proposition D‴.48's); the rich equilibria's slow approach (times ∝ 1/β⁰² without, ∝
+  β⁰^{−1/2} with the leak) and the extinction's rate without strict complementarity; the real loop's bias beyond averaging; the
+  sampled-data drift of the projection in closed form.
+- **Venue.** IEEE TAC or SIAM J. Control Optim. (the adaptive law, its Lyapunov function and the leak); COLT/NeurIPS-style venues for
+  the implicit bias of the saturating unit and its branches.
