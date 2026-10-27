@@ -45,30 +45,43 @@ The flow (LSODA) to t = 3·10⁷ against the Bregman projection of its start ont
 
 | start | seed | branches | |y − ŷ| | |Z| | projection (it, residual) | max |w(T) − w̄| | J − J* | max β on Z | B's increase | rates: largest relative error (n) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| positive | 0 | 12 | 0.703 | 8 | 9, 3.46e-14 | 1.18e-14 | 5.00e-16 | 0 | 5.78e-17 | 0.0112 (8) |
-| positive | 1 | 12 | 0.0443 | 7 | 11, 6.01e-14 | 5.17e-14 | 6.07e-18 | 7.22e-104 | 2.07e-17 | 0.101 (7) |
-| positive | 2 | 12 | 4.58e-16 | 0 | 12, 5.30e-14 | 1.00e-13 | 1.55e-29 | 0 | 7.71e-17 | — (0) |
-| positive | 3 | 12 | 0.304 | 7 | 11, 3.95e-14 | 2.11e-14 | -9.71e-17 | 0 | 3.61e-17 | 0.0111 (7) |
-| positive | 4 | 12 | 3.72e-16 | 0 | 12, 9.88e-15 | 8.44e-15 | 1.86e-29 | 0 | 4.23e-17 | — (0) |
-| positive | 5 | 12 | 0.806 | 8 | 11, 3.41e-15 | 4.81e-15 | -2.22e-16 | 0 | 6.81e-17 | 0.00952 (8) |
-| positive | 6 | 12 | 4.08e-16 | 0 | 12, 5.18e-15 | 1.22e-10 | 3.91e-30 | 0 | 7.19e-17 | — (0) |
-| positive | 7 | 12 | 1.7 | 8 | 11, 8.78e-13 | 4.11e-13 | 0 | 0 | 5.13e-17 | 0.00453 (8) |
-| random signs | 0 | 12 | 2.25 | 8 | 12, 1.57e-14 | 8.88e-15 | 1.78e-15 | 0 | 7.30e-17 | 0.0834 (8) |
-| random signs | 1 | 12 | 7.13e-16 | 0 | 13, 4.98e-15 | 4.73e-14 | 3.08e-31 | 0 | 3.99e-17 | — (0) |
-| random signs | 2 | 12 | 1.12e-15 | 0 | 15, 1.04e-12 | 3.30e-13 | 4.28e-29 | 0 | 2.08e-17 | — (0) |
-| random signs | 3 | 12 | 0.556 | 7 | 11, 2.53e-14 | 5.22e-15 | -1.67e-16 | 0 | 1.29e-16 | 0.0311 (7) |
-| random signs | 4 | 12 | 2.99e-16 | 0 | 11, 1.07e-14 | 1.11e-10 | 8.11e-30 | 0 | 6.50e-17 | — (0) |
-| random signs | 5 | 12 | 4.78e-16 | 0 | 10, 3.14e-15 | 3.55e-12 | 1.85e-30 | 0 | 1.03e-16 | — (0) |
-| random signs | 6 | 12 | 3.47e-16 | 0 | 13, 1.10e-14 | 1.73e-13 | 1.76e-30 | 0 | 4.74e-17 | — (0) |
-| random signs | 7 | 12 | 3.51e-16 | 0 | 12, 6.49e-15 | 3.28e-12 | 2.62e-30 | 0 | 5.43e-17 | — (0) |
-| mixed | 0 | 6 | 9.61e-16 | 0 | 14, 1.29e-13 | 3.11e-14 | 4.91e-30 | 0 | 1.09e-16 | — (0) |
-| mixed | 1 | 6 | 1.57e-16 | 0 | 13, 8.55e-14 | 1.48e-10 | 3.93e-30 | 0 | 1.53e-16 | — (0) |
-| mixed | 2 | 6 | 1.02e-15 | 0 | 16, 4.96e-14 | 3.49e-11 | 4.49e-30 | 0 | 6.35e-17 | — (0) |
-| mixed | 3 | 6 | 3.25e-16 | 0 | 12, 1.22e-14 | 1.08e-11 | 2.78e-30 | 0 | 1.00e-16 | — (0) |
-| mixed | 4 | 6 | 3.51e-16 | 0 | 13, 1.07e-14 | 5.00e-10 | 1.33e-30 | 0 | 3.76e-17 | — (0) |
-| mixed | 5 | 6 | 2.24e-16 | 0 | 11, 4.84e-15 | 1.82e-11 | 1.06e-31 | 0 | 2.07e-17 | — (0) |
-| mixed | 6 | 6 | 7.63e-16 | 0 | 14, 2.61e-14 | 7.56e-14 | 2.00e-30 | 0 | 4.79e-17 | — (0) |
-| mixed | 7 | 6 | 4.61e-16 | 0 | 14, 6.00e-15 | 2.06e-12 | 1.23e-32 | 0 | 2.19e-16 | — (0) |
+| positive | 0 | 12 | 0.703 | 8 | 9, 1.35e-14 | 4.66e-15 | 3.89e-16 | 0 | 5.78e-17 | 0.0112 (8) |
+| positive | 1 | 12 | 0.0443 | 7 | 11, 5.82e-14 | 5.18e-14 | 4.77e-18 | 7.22e-104 | 2.07e-17 | 0.101 (7) |
+| positive | 2 | 12 | 2.10e-15 | 0 | 12, 6.62e-14 | 1.00e-13 | 1.13e-29 | 0 | 7.71e-17 | — (0) |
+| positive | 3 | 12 | 0.304 | 7 | 11, 4.69e-14 | 1.02e-14 | -6.94e-17 | 0 | 3.61e-17 | 0.0111 (7) |
+| positive | 4 | 12 | 8.83e-16 | 0 | 12, 1.53e-14 | 6.66e-15 | 1.79e-29 | 0 | 4.23e-17 | — (0) |
+| positive | 5 | 12 | 0.806 | 8 | 11, 7.67e-16 | 2.44e-15 | -1.11e-16 | 0 | 6.81e-17 | 0.00952 (8) |
+| positive | 6 | 12 | 4.48e-16 | 0 | 12, 5.86e-15 | 1.22e-10 | 3.88e-30 | 0 | 7.19e-17 | — (0) |
+| positive | 7 | 12 | 1.7 | 8 | 11, 8.75e-13 | 4.08e-13 | 4.44e-16 | 0 | 5.13e-17 | 0.00453 (8) |
+| random signs | 0 | 12 | 2.25 | 8 | 12, 1.62e-14 | 6.66e-15 | 0 | 0 | 7.30e-17 | 0.0834 (8) |
+| random signs | 1 | 12 | 1.18e-15 | 0 | 13, 8.32e-15 | 4.73e-14 | -5.76e-31 | 0 | 3.99e-17 | — (0) |
+| random signs | 2 | 12 | 5.66e-15 | 0 | 15, 9.85e-13 | 2.54e-13 | 1.21e-29 | 0 | 2.08e-17 | — (0) |
+| random signs | 3 | 12 | 0.556 | 7 | 11, 3.77e-14 | 7.55e-15 | 2.78e-16 | 0 | 1.29e-16 | 0.0311 (7) |
+| random signs | 4 | 12 | 1.89e-15 | 0 | 11, 5.97e-15 | 1.11e-10 | 4.64e-30 | 0 | 6.50e-17 | — (0) |
+| random signs | 5 | 12 | 5.39e-16 | 0 | 10, 1.10e-14 | 3.55e-12 | 1.79e-30 | 0 | 1.03e-16 | — (0) |
+| random signs | 6 | 12 | 5.15e-16 | 0 | 13, 2.06e-14 | 1.73e-13 | 1.61e-30 | 0 | 4.74e-17 | — (0) |
+| random signs | 7 | 12 | 6.61e-16 | 0 | 12, 1.03e-14 | 3.28e-12 | 2.30e-30 | 0 | 5.43e-17 | — (0) |
+| mixed | 0 | 6 | 1.67e-15 | 0 | 14, 1.25e-13 | 3.11e-14 | 3.03e-30 | 0 | 1.09e-16 | — (0) |
+| mixed | 1 | 6 | 7.36e-16 | 0 | 13, 9.61e-14 | 1.48e-10 | 3.41e-30 | 0 | 1.53e-16 | — (0) |
+| mixed | 2 | 6 | 2.16e-15 | 0 | 16, 8.53e-14 | 3.49e-11 | 8.87e-31 | 0 | 6.35e-17 | — (0) |
+| mixed | 3 | 6 | 8.07e-16 | 0 | 12, 4.45e-14 | 1.08e-11 | 2.24e-30 | 0 | 1.00e-16 | — (0) |
+| mixed | 4 | 6 | 1.89e-15 | 0 | 13, 4.96e-14 | 5.00e-10 | -2.11e-30 | 0 | 3.76e-17 | — (0) |
+| mixed | 5 | 6 | 5.15e-16 | 0 | 11, 8.33e-15 | 1.82e-11 | -1.09e-31 | 0 | 2.07e-17 | — (0) |
+| mixed | 6 | 6 | 1.00e-15 | 0 | 14, 2.79e-14 | 7.56e-14 | 1.58e-30 | 0 | 4.79e-17 | — (0) |
+| mixed | 7 | 6 | 5.66e-16 | 0 | 14, 5.76e-15 | 2.06e-12 | -9.55e-32 | 0 | 2.19e-16 | — (0) |
+
+Duplicated atoms (round 36; 5 samples, 4 Gaussian atoms each carried by two particles — the least-squares set S is not a point —, y random (the fit inexact) and one atom's frozen sign against its unconstrained least-squares coefficient (Z ≠ ∅ where it binds), amplitudes ±U(0.4, 0.8), masses 10⁻²): the flow against the Bregman projection, and the projection's distance from the equal split of the duplicates (another point of S):
+
+| seed | branches | |y − ŷ| | Z | negative coefficients alive | projection vs the equal split | max |w(T) − w̄| | max β on Z |
+|---|---|---|---|---|---|---|---|
+| 0 | 7 | 0.769 | [0, 3, 4, 7] | 1 | 0.00897 | 5.20e-12 | 0 |
+| 1 | 6 | 0.799 | [] | 5 | 0.197 | 6.37e-10 | 0 |
+| 2 | 7 | 0.659 | [2, 3, 6, 7] | 4 | 0.0141 | 2.12e-11 | 0 |
+| 3 | 8 | 0.71 | [0, 3, 4, 7] | 2 | 0.017 | 1.47e-11 | 0 |
+| 4 | 8 | 1.56 | [0, 2, 3, 4, 6, 7] | 0 | 0.0663 | 3.91e-11 | 0 |
+| 5 | 8 | 1.17 | [0, 1, 3, 4, 5, 7] | 2 | 1.63e-4 | 1.61e-14 | 0 |
+| 6 | 8 | 1.77 | [3, 7] | 4 | 0.136 | 9.54e-11 | 0 |
+| 7 | 7 | 1.35 | [3, 7] | 0 | 0.0421 | 4.21e-11 | 0 |
 
 ## C. The rich limits on one design (8 × 20; the target on atoms [1, 5, 9])
 
@@ -100,6 +113,16 @@ A mixed start (the even atoms at α = 0, the odd ones on branches): the free par
 | 1e-08 | 15, 1.81e-12 | 7.84e-14 | 9.71e-13 |
 | 1e-12 | 12, 3.43e-14 | 7.82e-22 | 2.23e-14 |
 
+The same with the odd atoms' frozen signs against the truth's on its atoms (round 36; their own sign-constrained fit does not exist): the free particles enter on the power scale; the distance to basis pursuit over the free atoms with the branch atoms sign-constrained and free of charge (Σ|w| on the free atoms there: 2.27):
+
+| ε | projection (it, residual) | Σ|w| on free particles | distance |
+|---|---|---|---|
+| 0.0001 | 18, 5.16e-14 | 2.27 | 4.10e-4 |
+| 1e-08 | 88, 2.08e-12 | 2.27 | 2.50e-11 |
+| 1e-12 | 84, 1.95 (the projection failed) | 0.578 | 0.922 |
+
+Projections whose residual |Φw − y| exceeds 3.37e-8: 1.
+
 ## D. A pair per atom (± 0.4, equal masses; the design of C)
 
 The atom's coefficient W = w₊ + w₋ of the projection against basis pursuit weighted by 1/a₀; the atoms where both members carry more than 10⁻³ of the largest |W| (basis pursuit's support [2, 4, 5, 7, 9, 12, 14, 19]; its certificate's smallest relative slacks 0.0157, 0.0197, 0.0465); the leading order from the certificate as in C:
@@ -114,13 +137,15 @@ The atom's coefficient W = w₊ + w₋ of the projection against basis pursuit w
 | 1e-128 | 68, 1.74e-13 | 2.59e-4 | 2.60e-4 | 1.41e-6 | 0 |
 | 1e-256 | 62, 7.47e-13 | 1.87e-6 | 1.87e-6 | 5.69e-11 | 0 |
 
+Projections whose residual exceeds 3.37e-8: 0.
+
 ## E. Positive kernel dictionaries (Gaussian atoms of one width on a grid of [−1, 1], samples evenly on [−1.1, 1.1], the target 1.0, 0.7, 0.5 on two adjacent atoms and one more)
 
 ### 21 atoms, width 0.15, 7 samples (the target on [5, 6, 15])
 
 The nonnegative certificate's margin μ = 0.0146; basis pursuit's max |w − w*|: 1 with equal weights, 1.18e-12 with the columns' norms.
 
-| start | α(0) | β(0) | on branches | max |w − w*| at t = 10³, 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ (the certificate's bound) | |Φw − y| | support at 10⁹ |
+| start | α(0) | β(0) | on branches | max |w − w*| at t = 1.22e+03, 7.69e+04, 8.77e+06, 1e+09 | the other atoms' mass at 10⁹ (the certificate's bound) | |Φw − y| | support at 10⁹ |
 |---|---|---|---|---|---|---|---|
 | branch | 1 | 1e-06 | yes | 0.854, 0.285, 0.00579, 5.35e-5 | 5.07e-5 (0.0922) | 6.82e-7 | [5, 6, 15] |
 | branch | 1 | 0.01 | yes | 0.703, 0.222, 0.00584, 5.35e-5 | 5.07e-5 (0.0571) | 6.83e-7 | [5, 6, 15] |
@@ -129,11 +154,20 @@ The nonnegative certificate's margin μ = 0.0146; basis pursuit's max |w − w*|
 | alpha=0 | 0 | 1e-06 | no | 1, 1, 1, 1 | 0.745 | 4.71e-16 | [0, 3, 6, 10, 14, 17, 20] |
 | alpha=0 | 0 | 100 | no | 0.632, 0.632, 0.632, 0.632 | 1.59 | 6.29e-17 | [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] |
 
+The margin over all 1330 supports of three atoms (round 36): the 10, 25, 50, 75, 90% quantiles 0, 8.36e-10, 4.02e-6, 0.00199, 0.0146; 25% at most 10⁻⁹ (numerically no certificate); the target above 89% of them. The loop from (1, 0.01) on positive branches to t = 10⁹ on the supports at the margin's quantiles (amplitudes 1.0, 0.7, 0.5):
+
+| quantile | support | margin μ | max |w − w*| at t = 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ | |Φw − y| |
+|---|---|---|---|---|---|
+| 0.25 | [2, 16, 18] | 8.36e-10 | 0.528, 0.464, 0.374 | 0.449 | 1.96e-7 |
+| 0.5 | [14, 16, 17] | 4.02e-6 | 0.49, 0.491, 0.49 | 0.553 | 2.42e-6 |
+| 0.75 | [6, 12, 13] | 0.0019 | 0.497, 0.156, 0.00234 | 0.00266 | 4.92e-6 |
+| 0.9 | [3, 4, 16] | 0.0146 | 0.278, 0.00531, 5.31e-5 | 5.79e-5 | 7.30e-7 |
+
 ### 41 atoms, width 0.15, 7 samples (the target on [10, 11, 30])
 
 The nonnegative certificate's margin μ = 0.003; basis pursuit's max |w − w*|: 1.28 with equal weights, 1.41e-13 with the columns' norms.
 
-| start | α(0) | β(0) | on branches | max |w − w*| at t = 10³, 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ (the certificate's bound) | |Φw − y| | support at 10⁹ |
+| start | α(0) | β(0) | on branches | max |w − w*| at t = 1.22e+03, 7.69e+04, 8.77e+06, 1e+09 | the other atoms' mass at 10⁹ (the certificate's bound) | |Φw − y| | support at 10⁹ |
 |---|---|---|---|---|---|---|---|
 | branch | 1 | 1e-06 | yes | 0.911, 0.647, 0.078, 0.0012 | 0.00118 (0.448) | 3.28e-6 | [10, 11, 29, 30, 31] |
 | branch | 1 | 0.01 | yes | 0.834, 0.539, 0.0779, 0.0012 | 0.00118 (0.278) | 3.28e-6 | [10, 11, 29, 30, 31] |
@@ -142,11 +176,20 @@ The nonnegative certificate's margin μ = 0.003; basis pursuit's max |w − w*|:
 | alpha=0 | 0 | 1e-06 | no | 1, 1.33, 1.28, 1.28 | 2.11 | 6.24e-17 | [0, 6, 12, 20, 28, 34, 40] |
 | alpha=0 | 0 | 100 | no | 0.824, 0.824, 0.824, 0.824 | 2.14 | 2.22e-16 | [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] |
 
+The margin over all 10660 supports of three atoms (round 36): the 10, 25, 50, 75, 90% quantiles 0, 0, 3.81e-9, 7.02e-6, 8.06e-4; 45% at most 10⁻⁹ (numerically no certificate); the target above 94% of them. The loop from (1, 0.01) on positive branches to t = 10⁹ on the supports at the margin's quantiles (amplitudes 1.0, 0.7, 0.5):
+
+| quantile | support | margin μ | max |w − w*| at t = 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ | |Φw − y| |
+|---|---|---|---|---|---|
+| 0.25 | [1, 12, 23] | 0 | 0.825, 0.826, 0.833 | 1.33 | 2.97e-5 |
+| 0.5 | [28, 29, 37] | 3.81e-9 | 0.469, 0.469, 0.469 | 0.931 | 1.07e-6 |
+| 0.75 | [13, 34, 40] | 7.02e-6 | 0.573, 0.571, 0.555 | 0.816 | 2.13e-5 |
+| 0.9 | [13, 39, 40] | 8.06e-4 | 0.472, 0.38, 0.0364 | 0.0165 | 1.33e-5 |
+
 ### 41 atoms, width 0.1, 11 samples (the target on [10, 11, 30])
 
 The nonnegative certificate's margin μ = 0.0272; basis pursuit's max |w − w*|: 2.22e-16 with equal weights, 2.22e-16 with the columns' norms.
 
-| start | α(0) | β(0) | on branches | max |w − w*| at t = 10³, 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ (the certificate's bound) | |Φw − y| | support at 10⁹ |
+| start | α(0) | β(0) | on branches | max |w − w*| at t = 1.22e+03, 7.69e+04, 8.77e+06, 1e+09 | the other atoms' mass at 10⁹ (the certificate's bound) | |Φw − y| | support at 10⁹ |
 |---|---|---|---|---|---|---|---|
 | branch | 1 | 1e-06 | yes | 0.482, 0.163, 0.00238, 2.10e-5 | 2.44e-5 (0.0952) | 5.94e-7 | [10, 11, 30] |
 | branch | 1 | 0.01 | yes | 0.496, 0.162, 0.00238, 2.10e-5 | 2.44e-5 (0.0591) | 5.94e-7 | [10, 11, 30] |
@@ -154,6 +197,15 @@ The nonnegative certificate's margin μ = 0.0272; basis pursuit's max |w − w*|
 | branch | 2 | 10 | yes | 0.448, 0.155, 0.00195, 1.69e-5 | 1.97e-5 (0.0817) | 4.79e-7 | [10, 11, 30] |
 | alpha=0 | 0 | 1e-06 | no | 1, 1, 1.69e-4, 3.04e-5 | 3.13e-5 | 1.08e-6 | [10, 11, 30] |
 | alpha=0 | 0 | 100 | no | 0.609, 0.609, 0.609, 0.609 | 2.09 | 5.66e-18 | [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] |
+
+The margin over all 10660 supports of three atoms (round 36): the 10, 25, 50, 75, 90% quantiles 1.85e-7, 2.83e-5, 0.00118, 0.0141, 0.0264; 4% at most 10⁻⁹ (numerically no certificate); the target above 92% of them. The loop from (1, 0.01) on positive branches to t = 10⁹ on the supports at the margin's quantiles (amplitudes 1.0, 0.7, 0.5):
+
+| quantile | support | margin μ | max |w − w*| at t = 10⁵, 10⁷, 10⁹ | the other atoms' mass at 10⁹ | |Φw − y| |
+|---|---|---|---|---|---|
+| 0.25 | [6, 29, 32] | 2.83e-5 | 0.416, 0.422, 0.407 | 0.704 | 2.47e-5 |
+| 0.5 | [10, 21, 26] | 0.00118 | 0.443, 0.255, 0.00595 | 0.0108 | 1.23e-5 |
+| 0.75 | [13, 24, 39] | 0.0141 | 0.48, 0.0113, 1.16e-4 | 1.53e-4 | 1.49e-6 |
+| 0.9 | [0, 21, 32] | 0.0264 | 0.138, 0.00208, 2.09e-5 | 3.39e-5 | 7.00e-7 |
 
 ## F. The real loop on positive branches (k_e = 5, G = γ = 1, twelve atoms of width 0.25, the target on atoms [2, 6, 9], α(0) = 0.5, β(0) = 10⁻³, 4000 time units)
 

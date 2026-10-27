@@ -400,7 +400,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None):
         dup = [r for r in B if r['kind'] == 'duplicated']
         if dup:
             L_ += ["", f"Duplicated atoms (round 36; {ND_B} samples, {DD_B} Gaussian atoms each carried by two particles — the least-squares set S "
-                   "is not a point —, one atom's frozen sign against its unconstrained least-squares coefficient — the fit inexact, Z ≠ ∅ —, "
+                   "is not a point —, y random (the fit inexact) and one atom's frozen sign against its unconstrained least-squares coefficient (Z ≠ ∅ where it "
+                   "binds), "
                    "amplitudes ±U(0.4, 0.8), masses 10⁻²): the flow against the Bregman projection, and the projection's distance from the "
                    "equal split of the duplicates (another point of S):", "",
                    "| seed | branches | |y − ŷ| | Z | negative coefficients alive | projection vs the equal split | max |w(T) − w̄| | max β on Z |",
