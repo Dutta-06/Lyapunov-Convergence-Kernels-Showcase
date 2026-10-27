@@ -84,3 +84,14 @@ def test_wfr_metric_condenses_onto_the_limit():
     taus, W, cc, al, Lam = flow(1e-6, tau, 'wfr', n_t=11)
     assert np.abs(np.sort(cc[-1]) - c_lim).max() < 1e-5
     assert np.abs(W[-1]).max() < 1e-3
+
+
+def test_orbit_filter_is_the_periodic_error():
+    """Proposition D‴.49: OrbitBumps.filt is the periodic steady state of ė = −k_ee + r on the reference's orbit — for
+    r = sin(ωt), e = (k_e sin ωt − ω cos ωt)/(k_e² + ω²)."""
+    ke, om = 10.0, 0.2
+    K = RT.OrbitBumps(lambda t: np.sin(om * t), 2 * np.pi / om, 256, 0.12, ke)
+    ts = (2 * np.pi / om) * np.arange(256) / 256
+    e = K.filt(np.sin(om * ts))
+    assert np.abs(e - (ke * np.sin(om * ts) - om * np.cos(om * ts)) / (ke ** 2 + om ** 2)).max() < 1e-12
+    assert np.allclose(K.xs, np.sin(om * ts))

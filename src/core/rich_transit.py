@@ -13,9 +13,10 @@ Wasserstein–Fisher–Rao metric on the positions instead (the mass dropped fro
 amplitude is O(ε^{1/2}) and its centre moves at O(1) in τ — dc/dτ = (πa_max²/(4cρ))tan(πu/(2ρ))⟨r∂_cφ⟩, du/dτ = ⟨rφ⟩ (`wfr_inactive_rhs`):
 the kernels climb the correlation's peaks before entering — condensation.
 
-This module: Gaussian kernels on a sample grid (`Bumps`), the free law with moving centres under either metric (`moving_rhs`), the active
-block's fast flow on the critical curve (`critical_rhs`), the sliding inverse scale space (`sliding_iss`) and the inactive kernels' limit
-under the Wasserstein–Fisher–Rao metric (`wfr_inactive_rhs`).
+This module: Gaussian kernels on a sample grid (`Bumps`; on a reference orbit with the closed loop's error filter, `OrbitBumps` —
+Proposition D‴.49), the free law with moving centres under either metric (`moving_rhs`), the active block's fast flow on the critical
+curve (`critical_rhs`), the sliding inverse scale space (`sliding_iss`) and the inactive kernels' limit under the Wasserstein–Fisher–Rao
+metric (`wfr_inactive_rhs`).
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -38,6 +39,25 @@ class Bumps:
     def mean(self, v):
         return np.asarray(v).sum(axis=0) / self.xs.size
 
+    def filt(self, r):
+        """The residual as the drive sees it: itself on a dictionary (`OrbitBumps`: the closed loop's error filter)."""
+        return r
+
+
+class OrbitBumps(Bumps):
+    """The closed loop's averaged drive (Proposition D‴.49): the samples x_m(t_s) of a T-periodic reference over one period (M points) and
+    the error filter L = 1/(s + k_e) — the periodic steady state of ė = −k_ee + r, by FFT —, so that ⟨φ_i filt(r)⟩ = T⁻¹∮φ_i(x_m)L[r(x_m)]dt
+    is the averaged drive ⟨eφ_i(x)⟩ of the slow adaptation."""
+
+    def __init__(self, xm, T, M, sig, ke):
+        ts = T * np.arange(M) / M
+        super().__init__(xm(ts), sig)
+        om = 2 * np.pi * np.fft.fftfreq(M, d=T / M)
+        self.H, self.ke, self.T = 1.0 / (1j * om + ke), float(ke), float(T)
+
+    def filt(self, r):
+        return np.real(np.fft.ifft(np.fft.fft(r) * self.H))
+
 
 def transit_scale(L, eps):
     """Λ(ε) = (πa_max/(4G))(2/(cε))^{1/2}: λ₁ = Λ·b^{−1/2}(1 + O(ε)) for the mass εb (Proposition D‴.45(ii))."""
@@ -55,7 +75,7 @@ def moving_rhs(L, K, fstar, metric='paradigm'):
         al, lb, c = z[:d], z[d:2 * d], z[2 * d:]
         b = np.exp(lb); a, da = L.amp(al)
         Ph = K.phi(c)
-        r = fstar - Ph @ (b * a / L.m)
+        r = K.filt(fstar - Ph @ (b * a / L.m))
         g = Ph.T @ r / K.xs.size
         h = K.dphi(c).T @ r / K.xs.size
         speed = L.G * b * a if metric == 'paradigm' else L.G * a
@@ -76,7 +96,7 @@ def critical_rhs(L, K, fstar, metric='paradigm'):
         b = 2 * L.c * np.sinh(al / L.A) ** 2
         a, da = L.amp(al)
         Ph = K.phi(c)
-        r = fstar - Ph @ (b * a / L.m)
+        r = K.filt(fstar - Ph @ (b * a / L.m))
         g = Ph.T @ r / K.xs.size
         h = K.dphi(c).T @ r / K.xs.size
         speed = L.G * b * a if metric == 'paradigm' else L.G * a
@@ -102,7 +122,7 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         hist.append((tau, c.copy(), w.copy(), rms))
         if rms < tol:
             break
-        v = K.phi(c).T @ r / K.xs.size
+        v = K.phi(c).T @ K.filt(r) / K.xs.size
         dt = np.full(d, np.inf)
         ina = ~act & (v != 0)
         dt[ina] = (rho[ina] - np.sign(v[ina]) * u[ina]) / np.abs(v[ina])
