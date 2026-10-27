@@ -99,10 +99,24 @@ In Part~I, every step of the stability argument is either proved or verified num
     leak on the masses pins (Proposition D$'''$.36), the dither's drift along it, the replicator flow of a
     log-determinant free energy that drives the masses into the saturation (Proposition D$'''$.37), a Fixman correction
     on the masses, which cancels that drift to leading order or, with a gain above one, reverses it toward the
-    D-optimal exact fit (Proposition D$'''$.38), and the dissipativity of the dithered gauge, lost with the prior and
+    D-optimal exact fit (Proposition D$'''$.38), the dissipativity of the dithered gauge, lost with the prior and
     restored by a dead zone on a box of the unconstrained coordinates, without bias for the exact fits inside the box
-    (Proposition D$'''$.39) --- through a seventeenth to a thirty-first. Every confirmed issue and its fix is logged in
-    \code{review/REVIEW_LOG.md}, and the raw reports of rounds 1--3 and 5--31 are kept beside it.
+    (Proposition D$'''$.39), measurement noise on the gauge, which selects nothing among the exact fits in continuous
+    time and, under an update that draws it afresh, selects through the increment's second moment, from the Hessian's
+    trace to its log-determinant as a Markov noise slows (Proposition D$'''$.41), several particles per class, whose
+    class masses carry the gauge's laws under an isotropic dither while the split within a class is frozen
+    (Proposition D$'''$.42), the colour of the measurement noise as the sparsity prior of a sampled-data adaptation on
+    a kernel dictionary, from a weighted $\ell^1$ norm for white noise to a log-determinant that counts the kernels for
+    a slow one (Proposition D$'''$.43), the free mass--amplitude law as a mirror flow, with a conserved quantity per
+    kernel and an implicit bias, a Bregman projection set by the starting masses, from the minimum-norm fit to weighted
+    basis pursuit (Proposition D$'''$.45), a leak in the mirror coordinates, whose bias is a Bregman-regularised fit, a
+    ridge from large starting masses and a LASSO from small ones (Proposition D$'''$.46), the free law's branches, on
+    which small starts freeze the signs and the law is an exponentiated gradient whose limit is the Bregman projection
+    onto the sign-constrained least-squares fits (Proposition D$'''$.47), and the rich transit, in which from small
+    masses the kernels enter one at a time along an inverse scale space flow and, with the paradigm's moving centres,
+    slide onto the target's features, one kernel per feature (Proposition D$'''$.48) --- through a seventeenth to a
+    thirty-seventh. Every confirmed issue and its fix is logged in \code{review/REVIEW_LOG.md}, and the raw reports of
+    rounds 1--3, 5--33 and 35--37 are kept beside it.
   \item The claim-by-claim novelty audit is in \code{LITERATURE_TRANSPORT.md}.
 \end{itemize}
 Appendix~\ref{sec:verification} maps each checked statement to the test or experiment that checks it.
@@ -838,6 +852,282 @@ Lipschitz boundary layer (Ioannou--Sun; Pomet--Praly), Langevin sampling through
 set's indicator (MYULA) are classical (\cite{S67}); new: the loss of the dithered loop's stationary law with the prior,
 the plateau of saturated approximate fits and the monotone climb to it on the instance, the dead zone's wall on the
 gauge and its compatibility with the Fixman correction\\
+\addlinespace[0.5pt]
+% The rows D'''.41 to D'''.48 are PARADIGM.md's summary-table rows as committed at da1a80e (D'''.41--D'''.43) and
+% 1269272 (D'''.45--D'''.48) (manuscript part 4k). In the D'''.41 row the flow's mobility, PARADIGM's M, is written
+% \mathsf M, as in the proposition. The D'''.43 row has the comma after "Psi' = f" of PARADIGM's working-tree revision
+% (not yet committed when typeset).
+D$'''$.41 & Measurement noise on the gauge: with the measured error $r + \xi$ driving both laws (the noise entering
+along the descent's own vector fields $U_x = m\mathsf M\nabla\fhat(x)$), the fields are orthogonal to the manifold of
+exact fits in the flow's metric --- no diffusion of the masses along it ---, and the limit map's invariance makes the
+bilinear form $\langle\nabla r\otimes\nabla(\partial\Phi\cdot U)\rangle$ antisymmetric, so for a noise white on the
+orbit's resolution (homoscedastic, independent over the nodes) the drift along $M$ vanishes at order $v$ in continuous
+time, in Stratonovich's sense and for smooth noise of any temporal spectrum: Katzenberger's It\^o drift and the
+Wong--Zakai term cancel; with noise drawn afresh at each update of an Euler step (sampled-data adaptation, label-noise
+SGD) the drift is $-(v/2)\partial\Phi\langle(U\cdot\nabla)U\rangle_\rho$ --- label-noise SGD's flat-minimum selection,
+its form depending on the update's coordinates ---, on the replicator's masses the replicator flow of a strictly convex
+potential with an interior minimiser; for correlated draws the selection is Katzenberger's drift of the increment's
+second moment, each pair of normal modes weighted by a linear-response factor (for any step $h < 2/\lambda_{\max}$):
+$(1 - \rho)/(1 + \rho)$ of the fresh noise's only when $\lambda_{\max}\tau_c\ll1$, on a flat-metric gradient flow the
+descent of $\tr\Psi(\nabla^2J)$ with $\Psi = -(2/h)\log(1 - h\lambda/2)$ for fresh draws (Damian--Ma--Lee's finite-step
+regulariser) and $\log(1 + \lambda\tau_c)/\tau_c$ for a finely sampled slow Markov noise --- from the trace to the
+log-determinant ---, $\Psi$ concave for every colour (a smooth noise's bounded); in the slow limit a Markov measurement
+noise selects as a dither of the flow's own mobility ($\tau_c\Sigma_f\to m\cdot Q\mathsf MQ^\T$, a
+fluctuation--dissipation identity), toward the saturation in the slow-replicator limit; at a finite replicator rate the
+coloured selection is multistable (three stable targets, $W^\sharp$ unstable)
+& (i) proved; (ii) proved at order $v$ (given Katzenberger's and the Wong--Zakai theorems), the $O(\gamma)$ of the
+residual for other node covariances proved at leading order in $\gamma$, its size numerical; (iii) proved at leading
+order (the closed forms in the slow-replicator limit); (iv) proved at order $v$ and linear response for any step
+$h < 2/\lambda_{\max}$ and correlation, (c)'s concavity in the continuum limit, (e)'s finite-step limit, its identity
+with the dither's direction in the slow-replicator limit away from the saturations; the zero set at finite $\gamma$
+numerical; (v) a corollary; numerics: It\^o + Wong--Zakai = 0 to $10^{-8}$; the full loop against the linear-response
+prediction within 0.8\% (fresh, $\rho = \pm1/3$, $-1/2$, 0.6) and 1--2\% at $h = 8$ ($h\lambda_{\max}\approx1.6$), the
+per-step law rejected at $\rho\ge0.9$; $f = uv$'s rates within 0.3\% to $\rho = 0.999$; the selection multistable from
+$\tau_c\approx100$
+& Katzenberger's limit for noise along a manifold of minimisers (Li--Wang--Arora), label-noise SGD's selection of flat
+minima and its finite-step regulariser (Blanc--Gupta--Valiant--Valiant, Damian--Ma--Lee, HaoChen--Wei--Lee--Ma,
+Shalova--Schlichting--Peletier), the It\^o--Stratonovich distinction, the Wong--Zakai theorem and the coloured-noise
+crossover (Wong--Zakai, van Kampen, Kupferman--Pavliotis--Stuart), the active Ornstein--Uhlenbeck particle's filter
+$1/(1 + k\tau)$ and the coloured-noise approximation's $\det(I + \tau\nabla^2U)$ (Jung--H\"anggi, Maggi et al.), SGD's
+It\^o SDE models (Li--Tai--E, Li--Malladi--Arora), correlated and anti-correlated noise (Orvieto et al., Lucchi et al.,
+K\"uhn--Rosenow, Beneventano), the law of balance (Ziyin et al.), the diagonal network's label-noise Lasso
+(Pillaud-Vivien--Reygner--Flammarion) are classical (\cite{S69}, \cite{S64}); new: the cancellation for noise entering
+through the error, for any temporal spectrum, by the antisymmetry the limit map's invariance imposes; the coloured
+filter of label noise's drift along $M$, its cross term cancelling by the same antisymmetry, from the trace to the
+log-determinant, concave for every colour, a slow Markov noise acting as a dither; the closed forms on the replicator's
+masses and the coloured selection's multistability there\\
+\addlinespace[0.5pt]
+D$'''$.42 & Several particles per class: with each class's particles together at its exact-fit position,
+$\log\det\nabla^2_\Theta J$ on the manifold of exact fits is the one-particle-per-class $\ell_1$ at the class masses
+plus a constant (a unit-Jacobian change to the class's barycentre and internal differences makes the Hessian
+block-diagonal: the fit sees the barycentres, the cohesion the differences, the masses' split neither), so under the
+isotropic dither the class masses follow Proposition D$'''$.37's law with $m$ the number of particles (the
+one-per-class dynamics slowed by $K/m$), the fractions within a class neither drift at $O(\gamma\tau)$ nor diffuse (the
+diffusion vanishing at any $\gamma$ for any position noise), and Proposition D$'''$.38's correction at the class masses
+acts as with one particle per class; an anisotropic dither (Proposition D$'''$.40's masks) breaks this at unequal splits
+--- the barycentre and the differences coupled, the positions' law no longer Gibbs ---: the fractions drift at
+$O(\gamma\tau)$ and the class masses depart from the per-class law; with measurement noise the equal split is an
+invariant subspace on which the loop is the one-per-class loop (the laws $m$-independent, the cancellation exact), at
+unequal splits the cohesion breaks Proposition D$'''$.41's cancellation (up to 10\% of the It\^o drift) on the class
+masses and the fractions, and noise drawn afresh equalises the fractions through the full trace
+& (i) proved; (ii) proved for the isotropic dither in the slow limit, the diffusion's vanishing at every $\gamma$ for any
+position noise, the anisotropic mechanism proved and its size numerical; (iii) proved under the isotropic dither; (iv)
+the invariant subspace and the residual's mechanism proved, its size numerical; numerics: the determinant blind to the
+split to $4\cdot10^{-7}$; the ratios 0.5000 and 0.3333 at $\gamma = 10^{-5}$; the per-class law at the equal split
+under every mask to $4\cdot10^{-4}$ (extrapolated in the finite differences' step); at unequal splits an anisotropic
+dither moving the class masses ($5.9\cdot10^4$ times the per-class law for the centres-and-widths mask) and the
+fractions at $O(\gamma\tau)$; measurement noise's residual up to 9.6\% per component there
+& Jacobi coordinates, the block structure of a translation-invariant interaction, and the non-Gibbs stationary law of a
+non-isotropically driven linear system are classical; new: the gauge's laws (the dither's selection, its correction)
+acting on the class masses with $m$ the number of particles exactly when the dither is isotropic, the split felt at
+Katzenberger's order otherwise; the equal split's invariant subspace under measurement noise --- the open item of
+Propositions D$'''$.36--D$'''$.41\\
+\addlinespace[0.5pt]
+D$'''$.43 & The colour of the measurement noise selects the kernels: on a kernel dictionary whose coefficients are the
+difference of two adaptive masses per atom ($w = u\odot u - v\odot v$, the unbalanced Fisher--Rao law of a signed
+kernel measure's two parts), label noise under an explicit (Euler) update moves the parameters along the exact fits by
+the gradient flow of $R = \tr\Psi(K)$, $K = (4/N)\Phi\operatorname{diag}(u^2 + v^2)\Phi^\T$, $\Psi' = f$, Proposition
+D$'''$.41's filter --- the products $u_iv_i$ decaying at the rates $\omega_i = \varphi_i^\T f(K)\varphi_i$ ---, the
+step's It\^o drift at a rate $\propto h\sigma^2$ (absent in continuous time and for Stratonovich-consistent updates;
+Heun's scheme selects $O((h\lambda)^2)$ of it) and the descent's small-noise limit ($\sigma$ small against the truth's
+least coefficient times $\sigma_{\min}(\Phi_S)$; beyond it the descent prunes on its own, Lasso-like): as
+$h\lambda_{\max},\sigma\to0$ white noise selects the weighted $\ell^1$ norm (basis pursuit; at a finite step
+Damian--Ma--Lee's strictly convex potential, whose minimiser on $M$ is not basis pursuit's solution), a slow Markov noise
+$(1/\tau_c)\log\det(I + \tau_cK)$ --- Fazel's log-det heuristic, sparse Bayesian learning's log-det term but not its
+penalty ---, which by Cauchy--Binet counts the support ($k\log(\tau_c)/\tau_c$: the sparsest exact fits its global
+minimisers as $\tau_c\to\infty$, not at every finite $\tau_c$), every colour in the continuum a concave penalty with
+many local minima (at a finite step the concavity fails, for weakly or anti-correlated draws already at small $K$; a
+smooth noise selects slowly, $f\approx(\lambda\tau_c)^{-2}$); a $k$-sparse exact fit on fewer than $N$ atoms is held by
+the slow selection once $\tau_c$ passes a threshold that grows without bound with the dictionary's coherence (a weighted
+dual certificate, sufficient, its ratio $O(1/\tau_c)$ beyond it; for white noise Fuchs's, conservative), by the white
+one only where weighted basis pursuit recovers it; the slow selection recovers sparse kernel expansions where basis
+pursuit fails, and label-noise descent at small $\sigma$ identifies their support where its reduced flow does (the
+coefficients after a noiseless phase)
+& (i) proved at order $v$ (given D$'''$.41(iv)) where $\operatorname{rank}K = N$ and $\lambda_{\min}(K)\gg v_h$; the
+pruning phase ($\lambda_{\min}(K)\to0$, the sparse fits singular points of $M$) and (v)'s stability statements about the
+reduced flow, numerical for the descent; (ii) the potential proved, the end at basis pursuit's solution sketched, in the
+limits $h\lambda_{\max},\sigma\to0$; (iii), (iv) proved ((iv) in the continuum, its failure at a finite step from the
+filter's expansion); (v) proved for the reduced flow (the certificate sufficient); the basins numerical; numerics: the
+identities to $2.6\cdot10^{-15}$ (Cauchy--Binet) and $4\cdot10^{-9}$ (the gradient), $R$ concave along every random
+segment (the continuum filters); on $10\times40$ Gaussian designs the slow flow ($\tau_c = 100$) recovers 0.75 and 0.60
+of the 3- and 4-sparse truths against basis pursuit's 0.38 and 0.17 (the white flow, run to convergence, ends at basis
+pursuit's solution), at $20\times80$ 0.75 against 0.35 ($k = 6$), sparse Bayesian learning's EM 0.88 and 0.55 ($k = 3$,
+4); at $\tau_c = 10$, 0.39, 0.68 and 0.85 of the slow flow's failures ($k = 4$, 5, 6) end below the truth's $R$;
+label-noise descent with AR(1) draws ($\sigma = 0.1$, eight instances where basis pursuit fails) recovers the truth on
+all 16 paths of the four whose reduced flow recovers it, on 0--2 of 16 on the other four, at $\sigma = 0.5$ on one; on
+Gaussian kernel dictionaries (coherence 0.96) 1.00 against 0.85 at $k = 4$; the certificate's median ratio
+$\propto1/\tau_c$ (0.439, 0.0814, 0.0087 at $\tau_c = 10$, 100, 1000), on kernel dictionaries the certified fraction
+rising with $\tau_c$ to 0.85--1.00 at $\tau_c = 10^5$ (white: 0--0.60); from a large start ($\alpha = 2$, run to
+convergence) basis pursuit's rate, and atoms the white flow has dropped do not revive; at the same physical noise
+$\Delta\log P$ off the truth's support $-2.39$ under Euler's step 0.5, $-0.097$ under Heun's (25 times less)
+& the label-noise $\ell^1$/Lasso selection on quadratic parametrisations (HaoChen--Wei--Lee--Ma,
+Pillaud-Vivien--Reygner--Flammarion), the finite-step regulariser (Damian--Ma--Lee), the kernel and rich regimes
+(Woodworth et al.), sparse Bayesian learning and its log-determinant (Tipping; Wipf--Rao) and its non-separable
+reweighting succeeding where $\ell^1$ fails (Wipf--Nagarajan), the log-det heuristic (Fazel--Hindi--Boyd), reweighted
+$\ell^1$ (Cand\`es--Wakin--Boyd), stochastic collapse (Chen et al.), sparse optimisation on measures by Fisher--Rao flows
+(Chizat), the dual certificate (Fuchs, Tropp) are classical (\cite{S69}, \cite{S70}, \cite{S72}); new: the noise's
+temporal correlation as the sparsity prior of the explicit update's selection along the exact fits --- the trace for
+white noise, a support-counting log-determinant for a slow Markov one, concave for every colour in the continuum ---,
+its stability law (every sparse fit on fewer than $N$ atoms held beyond a coherence-dependent $\tau_c$), and recovery
+beyond basis pursuit by the reduced flow and by label-noise descent at small $\sigma$ --- the mechanism, not a better
+sparse solver\\
+\addlinespace[0.5pt]
+D$'''$.45 & The free mass--amplitude law is a mirror flow: without the masses' constraint each particle's mass and
+amplitude are driven by one scalar signal, so $Q = \beta - (\gamma a_{\max}^2/4G)\cosh(2\alpha/a_{\max})$ is conserved
+for every drive (beyond the cohesion's range) --- the particle moves on a fixed curve, the free replicator
+reparametrises the amplitude and lifts its saturation ---, and on a dictionary $w = \beta\odot a/m$ follows the mirror
+flow $\dd\eta = \Phi^\T(r + \xi)\dd t/N$ of an explicit separable potential ($\eta = \int\dd\alpha/(G\beta a')$ in
+closed form, its conjugate the mass gained): the noiseless loop converges from every start with $Q > -c$, without
+persistent excitation, to the start's Bregman projection on the exact fits --- the mass-weighted minimum norm for large
+starting masses, weighted basis pursuit with weights $1/\sqrt{\beta^0}$ for small ones at zero amplitudes (when unique;
+approached like $(\beta^0)^{3/2}$, the off-support coefficients on the core's tangent profile with the certificate's
+slacks; the transit in a time $\propto(\beta^0)^{-1/2}$, D$'''$.48, the last digits $\propto1/(\beta^0)^2$ where the
+support has fewer than $N$ atoms) ---; noise with smooth paths (Stratonovich), of any colour and covariance over the
+nodes, never moves that projection, It\^o's white noise adds the Euler step's drift; an Euler (sampled-data) update
+changes $Q$ by a closed-form amount per step --- the conserved share of D$'''$.44's selection ---, a mirror update on
+the curves keeps it; in the real loop $\tfrac12e^2 + \sum$ Bregman divergences is a Lyapunov function of the joint
+mass--amplitude adaptation; the conserved law shifts every level by $-\gamma\beta\lambda\dd t$
+& (i), (ii), (iv)(a), (v) and (vi)'s identity proved; (iii) the convergence and the projection proved for $Q > -c$, the
+lazy limit proved, the rich limit proved when weighted basis pursuit is unique, its leading order at an $N$-atom vertex
+derived and checked (Part F); (iv)(b) the formula proved, the selection's end numerical; (iv)(c) in expectation; the
+branches: D$'''$.47; numerics: $\eta$'s closed form to $1.5\cdot10^{-14}$, $Q$ kept to $1.4\cdot10^{-11}$ noiseless and
+$3.6\cdot10^{-10}$ under a smooth noise mixed over the nodes, the conserved law's shift to $1.5$--$4.4\cdot10^{-7}$; on
+$5\times12$ Gaussian designs from masses $s\cdot m/d$ the loop's end the projection to $4.7\cdot10^{-11}$ (no
+projection failed), for 2-sparse truths 0.5\% from the minimum-norm fit at $s = 10$ and with $\norm w_1$ 1.0004 times
+basis pursuit's at $s = 10^{-4}$, within $10^{-8}$ at $s = 10^{-3}$ only from $t\approx8.5\cdot10^6$; with unequal
+masses weighted basis pursuit to $1.7\cdot10^{-9}$ ($s = 10^{-7}$); at $N$-atom vertices the leading order to the
+rounding floor, the distance falling by 1068 and 984 from $\varepsilon = 10^{-7}$ to $10^{-9}$ ($\varepsilon^{3/2}$:
+1000), a small slack ($\mu_{\min} = 2.7\cdot10^{-4}$) still 0.17 away at $10^{-7}$; Euler--Maruyama's mean change of $Q$
+its It\^o correction's integral (ratio 1.0011 at $h = 0.01$), Heun's $1.4\cdot10^{-6}$, the mirror update's
+$2.2\cdot10^{-16}$; D$'''$.44's reduced flow ending on basis pursuit where it is the truth (6 instances), elsewhere on its
+support or on another sparse fit of larger $\ell^1$ norm; at $h = 0.5$ the Euler update moving the projection by
+0.030--0.043, the mirror update keeping it to $9.0\cdot10^{-12}$; in the real loop $\dot V = -k_ee^2$ to
+$3.0\cdot10^{-9}$; the conserved law's limits $1.6$--$4.1\cdot10^{-3}$ from the free law's projections
+& Classical (\cite{S72}): a gradient flow under a commuting reparametrisation is a mirror flow (Li--Wang--Lee--Arora),
+with one conserved function per unit (Marcotte--Gribonval--Peyr\'e; Azulay et al.), the kernel and rich regimes and the
+hyperbolic entropy's shape (Woodworth et al.; Ghai--Hazan--Singer), exponentiated gradient as mirror descent and as
+reparametrised gradient descent (Kivinen--Warmuth; Amid--Warmuth), stochastic mirror descent's invariance in the dual
+span (Gunasekar et al.; Azizan--Hassibi), SGD's It\^o noise shrinking the effective initialisation and isotropic noise
+not selecting (Pesme--Pillaud-Vivien--Flammarion; Even et al.; HaoChen--Wei--Lee--Ma), Bregman Lyapunov functions of
+mirror-descent adaptation laws (Boffi--Slotine); new: this saturating unit's potential in closed form (the conserved
+$Q$, the wall, the entropy tail, the $\ell^1$ weights $1/\sqrt{\beta^0}$ with their $-(3/2)K\abs w^{2/3}$ correction,
+the branches), the Euler update's change of $Q$ as the conserved share of D$'''$.44's selection, the mirror update as a
+sampled-data law whose noise never selects\\
+\addlinespace[0.5pt]
+D$'''$.46 & A leak in the mirror coordinates: adding $-\sigma(\eta_i - \eta_{p,i})$ to each particle's scalar drive in
+the free mass--amplitude law ($Q$ kept, $\eta$ explicit) keeps Proposition D$'''$.45's Lyapunov function with
+$\dot V = -k_ee^2 + ed - \sigma\sum[B(w^*,w) + B(w,w_p) - B(w^*,w_p)]$ (the three-point identity), so
+$V(t)\le V(0)e^{-\lambda t} + (C/\lambda)(1 - e^{-\lambda t})$ and the parameters are ultimately bounded under bounded
+disturbances and approximation errors, which the free masses alone are not (a decaying excitation can drive them to
+infinity); the averaged loop, with the error filter's Gram $H_L$, has a unique, globally attracting equilibrium --- a
+Bregman-regularised fit, the mirror flow's minimiser to second order in $1/k_e$ ---, so the leak's bias is explicit: a
+generalised ridge from large starting masses, the LASSO of penalty $\sigma\lambda_1(\beta^0)\propto\sigma/\sqrt{\beta^0}$
+from small ones at zero amplitudes, which keeps exactly the target's kernels under the irrepresentable condition
+& (i) proved; (ii) proved for the averaged loop, the real loop's mean by the classical averaging theorem; (iii) the two
+limits proved, the support recovery by the LASSO's theory; numerics: the identity to $9.5\cdot10^{-11}$; on random $H$
+the averaged equilibrium the ridge to $1.3\cdot10^{-8}$ ($\beta^0 = 10^4$), 0.15 off it at $\beta^0 = 3$ where the
+saturation's wall lies inside the coefficients' range, and the LASSO to $1.5\cdot10^{-4}$ ($\beta^0 = 10^{-8}$) with its
+support in every draw; on a persistently exciting orbit under an approximation error and a biased disturbance the free
+law creeping toward the biased fit (its largest coefficient 0.309, 0.330, 0.337, 0.341 by quarters), $\sigma = 0.01$
+and 0.1 holding the coefficients at 0.081 and 0.040, $V$ below the comparison bound at every sample, the rms error
+rising from 0.024 to 0.031 and 0.037; without excitation the free law's coefficient 23.3 at $t = 10^6$, the leak's
+0.46; the real loop's period means within $1.6\cdot10^{-4}$ and $1.7\cdot10^{-4}$ of the filtered equilibrium, 4.4 and
+2.6 times closer than to the idealised one; on an orbit's Gram the equilibrium's support exactly the truth's for 415 of
+the 1760 3-sparse patterns, the LASSO's prediction holding for 416 (agreement on 1745), the rich start's equilibrium
+reached at $t\approx3.2\cdot10^5$, at $2\cdot10^6$ where the irrepresentable condition fails
+& Classical (\cite{S73}): the $\sigma$-modification and its ultimate bound (Ioannou--Kokotovi\'c; Ioannou--Sun),
+averaging of adaptive systems with the filtered regressor (Anderson et al.; Bodson et al.; Sastry--Bodson),
+continuous-time discounted mirror descent --- a dual-coordinate leak --- with its regulariser-perturbed rest points and
+Lyapunov functions (Gao--Pavel; Romano--Pavel), its entropic case for the replicator
+(Coucheney--Gaujal--Mertikopoulos), regularisation toward a reference (P\'erolat et al.; Abe et al.), the vanishing-leak
+selection (Alvarez--Bolte--Brahic; Attouch), the LASSO and its irrepresentable condition (Tibshirani; Zhao--Yu;
+Wainwright), mirror-descent adaptation laws (Boffi--Slotine); new: the dual-coordinate leak on the paradigm's
+$(\alpha,\beta)$ law with $Q$ kept, its bound in the adaptive loop, the starting masses' LASSO weights
+$\lambda_1\propto(\beta^0)^{-1/2}$\\
+\addlinespace[0.5pt]
+D$'''$.47 & The free law's branches: a start with $\beta(0) < 2c\sinh^2(\alpha(0)/a_{\max})$ --- every small start at
+nonzero amplitude --- puts the particle on a branch of its curve, where the sign of $w$ is frozen and the potential is an
+entropy at the branch point with the temperature $1/(\gamma a_0)$
+($\dd\eta/\dd\log\abs w = a/(\gamma a^2 + G\beta a'^2)$), finite there, $B(0,w) = \beta/(\gamma m)$: the law is an
+exponentiated gradient. From every start the dictionary loop converges to the Bregman projection of its start onto the
+sign-constrained least-squares fits, the coordinates vanishing on them going extinct (exponentially when strictly
+complementary); the rich limit on branches is the sign-constrained basis pursuit weighted by $1/\abs{a(0)}$, at a
+logarithmic temperature --- approached like $\varepsilon^\mu$, $\mu$ the certificate's slack, against
+$\varepsilon^{3/2}$ from zero amplitudes ---; a $\pm$ pair per atom is the hyperbolic entropy; on positive kernel
+dictionaries with a unique nonnegative fit the loop selects the target's kernels at every mass scale, algebraically
+fast as the certificate's margin allows
+& (i), (iv)'s conjugate and (vi) exact; (ii) proved for every start; (iii) the limit and the off-support rate
+$\varepsilon^{\mu_j}$ at an $N$-atom vertex proved, the leading order computed and checked; (iv)'s hyperbolic entropy at
+leading order; (v) proved, the uniqueness certified by linear programming; numerics: (i)'s slope to $2.3\cdot10^{-9}$,
+the temperature $1/(\gamma a_0)$ to ten digits, $B(\bar w,w)\to\beta/(\gamma m)$ ($5\cdot10^{-10}$ at
+$\bar\delta = 10^{-12}$); on random $6\times12$ designs the flow at $t = 3\cdot10^7$ the Bregman projection onto the
+sign-constrained least-squares fits to $5.0\cdot10^{-10}$, where the frozen signs cannot fit $y$ the wrong-signed
+particles extinct (masses below $10^{-103}$) at the predicted rates to 0.5--10\%, with duplicated atoms
+$1.6\cdot10^{-4}$--0.20 from the equal split; the rich limit from branches $1.1\cdot10^{-9}$ from the sign-constrained
+weighted basis pursuit at $\varepsilon = 10^{-64}$ ($\varepsilon^{\mu_j}$, the leading order to $3.4\cdot10^{-14}$),
+from $\alpha(0) = 0$ $4.3\cdot10^{-11}$ from basis pursuit at $\varepsilon = 10^{-10}$ ($\varepsilon^{3/2}$); one
+projection failed (a mixed start at $\varepsilon = 10^{-12}$, residual 1.95); on positive Gaussian dictionaries the
+target from every start scale $\beta(0) = 10^{-6}$ to 10 at the margin 0.015 (within $6.0\cdot10^{-5}$ at
+$t = 10^9$), still $1.0$--$1.3\cdot10^{-3}$ away at the margin 0.003; over all three-atom supports of three grids the
+median margins $4.0\cdot10^{-6}$, $3.8\cdot10^{-9}$, $1.2\cdot10^{-3}$, the loop still 0.37--0.83 away at $t = 10^9$
+where the margin is below $10^{-4}$; the real loop's $V$ monotone, the coefficients still 0.080 from $w^*$ after 4000
+time units
+& Classical (\cite{S74}): exponentiated gradient and mirror descent's Bregman-projection bias (Kivinen--Warmuth;
+Gunasekar et al.), Hessian--Riemannian gradient flows on constrained domains (Alvarez--Bolte--Brahic), nonnegative least
+squares by overparametrised gradient flow (Chou--Maly--Verdun et al.), the $u^2 - v^2$ parametrisation and the
+hyperbolic entropy (Woodworth et al.; Ghai--Hazan--Singer; Va\v{s}kevi\v{c}ius et al.), nonnegative sparse uniqueness
+and super-resolution without separation (Donoho--Tanner; Bruckstein--Elad--Zibulevsky; Schiebinger--Robeva--Recht;
+Eftekhari et al.), the exponential penalty in linear programming (Cominetti--San Mart\'in; Weed); new: the paradigm's
+law as an exponentiated gradient on its branches with the temperature read off the conservation law, the limit for
+every start (inexact fits, extinction) completing D$'''$.45(iii), $B(0,w) = \beta/(\gamma m)$, the two rich limits'
+temperatures, an atom's particles as an infimal convolution, the scale-independent selection on positive kernel
+dictionaries\\
+\addlinespace[0.5pt]
+D$'''$.48 & The rich transit: from small masses the free law's kernels enter one at a time. At $\alpha = 0$ the unit near
+its critical curve is an effective depth-3 unit ($w\approx2c\alpha^3/(ma_{\max}^2)$), and as the masses
+$\varepsilon b_i\to0$ the loop in the time $t/\Lambda$, $\Lambda\propto\varepsilon^{-1/2}$, converges to the inverse
+scale space flow of $\sum\abs{w_i}/\sqrt{b_i}$ --- the adaptive inverse scale space path: piecewise-linear dual
+coordinates, kernels entering when their integrated correlation reaches its weight, ending at weighted basis pursuit; on
+branches (nonzero starting amplitudes) the same on the logarithmic scale $\log(1/\varepsilon)$, sign-constrained (a
+$\pm$ pair: Pesme--Flammarion's depth-2 limit). With the paradigm's moving centres (the mass in the position law's drift)
+the kernels that have not entered stay where they started and the entered ones slide --- a sliding inverse scale space
+that forms one kernel per well-separated feature at its centre (a tie --- a feature midway between two kernels ---
+shared by both; near ties and lingering kernels creep at the core's profile
+$(\pi a_{\max}^2/(4c))\varepsilon b^{3/2}\allowbreak\cos(\pi\mu/2)/\sin^3(\pi\mu/2)\cdot s\langle r\partial_c\varphi\rangle$,
+frozen only while $\varepsilon\ll\mu^3$); with a Wasserstein--Fisher--Rao metric the massless kernels instead climb the
+correlation's peaks before entering and condense there --- in the limit still one kernel per feature, but several at a
+finite $\varepsilon$, down to much smaller masses
+& (o) exact expansions; (i), (ii) proved (Mosco convergence of the explicit dual potentials, the semigroups'
+convergence), $u$'s rates numerical; (iii)(a) proved (the creep's profile to leading order), (iii)(b) formal (two time
+scales; ties, near ties), the sliding path numerical; (iv) the inactive kernels' limit derived to leading order and
+checked along the trajectory with unequal masses, the count as $\varepsilon\to0$ numerical; (v) numerical; numerics:
+$u$'s distance to the path $\propto\varepsilon^{1/2}$ on three designs (log-log slopes 0.500 between
+$\varepsilon = 10^{-6}$ and $10^{-8}$; $6.7\cdot10^{-6}$, $8.8\cdot10^{-6}$, $2.0\cdot10^{-5}$ at $10^{-12}$), the end
+weighted basis pursuit to $1.1\cdot10^{-16}$--$6.1\cdot10^{-15}$ at $10^{-12}$; on branches
+$\propto1/\log(1/\varepsilon)$ exactly (15.7, 8.0, 4.0, 2.0, 1.0 at $\varepsilon = 10^{-4}$ \dots\ $10^{-64}$); with
+moving centres the sliding path fitting three bumps exactly with three kernels and the loop forming exactly these three
+for $\varepsilon\le10^{-5}$ (8 at $10^{-3}$, 4 at $10^{-4}$), the others displaced $\propto\varepsilon$, on sixteen
+random targets 11, 13 and 16 at $\varepsilon = 10^{-5}$, $10^{-6}$, $10^{-8}$; under the Wasserstein--Fisher--Rao metric
+the centres on (iv)'s limit to $1.7\cdot10^{-5}$ at $\varepsilon = 10^{-4}$ and $2\cdot10^{-7}$ below $10^{-5}$, 15,
+12, 8, 3, 3 kernels at $\varepsilon = 10^{-4}$, $10^{-5}$, $10^{-6}$, $10^{-8}$, $10^{-10}$, on the random targets
+exactly three on none at $10^{-6}$ and on all sixteen at $10^{-10}$; centres held on the grid 5 kernels, 0.019 from the
+target; a tie shared (0.4, 0.4), a near tie formed by two kernels at $\varepsilon = 10^{-6}$; the creep at the profile's
+speed to 0.990--0.996 ($\varepsilon = 10^{-8}$) and 0.9999--1.0000 ($10^{-10}$), a lingering kernel entering in place of
+the path's at $10^{-8}$; wider bumps along a staircase (21 entries on the path); with moving widths bumps of widths 0.2
+and 0.08 formed by exactly three kernels at $\varepsilon = 10^{-6}$
+& Classical (\cite{S75}): the inverse scale space flow and its adaptive algorithm (Burger et al.), linearised Bregman and
+differential inclusions (Yin--Osher et al.; Osher--Ruan--Xiong--Yao--Yin), saddle-to-saddle dynamics and incremental
+learning of diagonal networks identified with the adaptive inverse scale space method (Pesme--Flammarion; Berthier;
+Gissin et al.), inverse scale space limits of mirror flows by Mosco convergence (Berthier--Pillaud-Vivien), depth-$D$
+potentials and polynomial scales (Woodworth et al.; Jacot et al.; Chou--Maly--Rauhut), sliding Frank--Wolfe and ADCG,
+conic particle descent (Chizat), condensation and early alignment at small initialisation (Luo et al.; Zhou et al.;
+Boursier et al.; Min--Mallada--Vidal; Kumar--Haupt), alternating gradient flows and unbalanced initialisations (Kunin et
+al.), deep diagonal networks as mirror flows (Labarri\`ere et al.), feature quantisation at small initialisation
+(Maennel--Bousquet--Gelly); (i) follows Berthier--Pillaud-Vivien's route and (ii) is their entropic case; new: the unit
+as an effective depth-3 unit with an explicit potential and its transit scale $\Lambda\propto\varepsilon^{-1/2}$ --- the
+scale set continuously by $\alpha(0)/\varepsilon^{1/2}$ ---, the sliding transit under the paradigm's position law (the
+creep's profile, ties), and what the positions' metric decides: where the massless kernels go and how small the masses
+must be, not the limit's count\\
 \addlinespace[0.5pt]
 J & At finite $m$, without dither, in the scaling $\sigma = \sigma_0/k_e$: every hyperbolic critical point of the
 $m$-particle regularised loss $J_m$ has a unique nearby $T_0$-periodic orbit of the real closed loop, at distance

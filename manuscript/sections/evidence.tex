@@ -594,7 +594,8 @@ Script: \code{exp_ot_basin.py} $\to$ \code{chaos/ot_basin.md}.
 % at 1ddff8c (manuscript part 4f), that on Proposition D'''.34 as committed at 9d122dd (manuscript part 4g), that on
 % Proposition D'''.35 as committed at 2e5eb10 (manuscript part 4h), those on Propositions D'''.36 and D'''.37 as
 % committed at c054367 and 5952611 (manuscript part 4i), those on Propositions D'''.38 and D'''.39 as committed at
-% 5d14f92 and 5b747b9 (manuscript part 4j).
+% 5d14f92 and 5b747b9 (manuscript part 4j), those on Propositions D'''.41 to D'''.43 and D'''.45 to D'''.48 as
+% committed at da1a80e and 1269272 (manuscript part 4k).
 \subsection{Theorem D\texorpdfstring{$'''$}{'''}.23: adaptive priors}
 
 Script: \code{exp_adaptive_prior.py} $\to$ \code{chaos/adaptive_prior.md}.
@@ -1305,6 +1306,310 @@ Script: \code{exp_gauge_plateau.py} $\to$ \code{chaos/gauge_plateau.md}.
   \item Tests (\code{tests/test_gauge_plateau.py}): the dead zone inactive inside the box, minus its $G$-gradient
     outside; $J$ bounded on the unconstrained coordinates and $J + V$ coercive; the box's wall and vertices; a run
     inside the box bit for bit the unboxed one.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.41: measurement noise on the gauge}
+
+Script: \code{exp_gauge_label.py} $\to$ \code{chaos/gauge_label.md}.
+\begin{itemize}
+  \item Proposition D$'''$.36's instance without dither; the measured error $r + \xi$ in both laws, $\xi$ independent
+    over the quadrature nodes, of intensity $v$. (A) At three points of $M$ and $\gamma = 10^{-2}$, $10^{-5}$,
+    Katzenberger's It\^o drift ($\Sigma = v\langle UU^\T\rangle_\rho$) and the Wong--Zakai term
+    $(v/2)\partial\Phi\langle(U\cdot\nabla)U\rangle_\rho$ cancel to $4.6\cdot10^{-9}$--$1.1\cdot10^{-8}$ relative; the
+    diffusion along $M$ vanishes ($\le2.1\cdot10^{-20}$); the closed form on the masses matches the It\^o drift to
+    $2$--$4\cdot10^{-4}$ at $\gamma = 10^{-5}$. (A2) Other node covariances (an offset, an orbit-correlated noise, a
+    variance profile): the Stratonovich drift over its It\^o drift $O(\gamma)$ from $\gamma\approx10^{-3}$ on (from
+    $10^{-4}$ for the $1 + 0.8\sin t$ profile) ($2.4\cdot10^{-5}$ at $\gamma = 10^{-5}$ for an offset), 0.2--12\% at
+    $\gamma = 10^{-1}$; the coloured-noise identity to $2.5\cdot10^{-8}$.
+  \item (B) The slow limit's target of the per-update selection, $W_\ell = (0.3163, 0.4115, 0.2722)$, interior
+    ($\abs a/a_{\max}$ 0.79, 0.43, 0.73), far from the dither's D-optimal $W^\sharp = (0.3765, 0.2988, 0.3247)$; at
+    $\gamma = 10^{-2}$ the It\^o drift vanishes at $(0.3221, 0.3999, 0.2780)$; an Euler step in the amplitude $a$ gives
+    the factor $(1 - q)(1 + 3q)$ (Katzenberger's drift in those coordinates within $3.4\cdot10^{-4}$ of it) and the
+    target $(0.2967, 0.4513, 0.2520)$.
+  \item (C) The full loop ($\gamma = 10^{-2}$, 4 seeds $\times$ $2\cdot10^5$ slow units): the gauge's slope over the
+    linear-response prediction averaged along the path 0.996--1.008 for fresh draws and AR(1) draws at
+    $\rho = -1/2$ \dots\ 0.6, 0.996--1.022 at $\rho = 0.8$, 0.9 ($\pm$ up to 0.03), 1.004--1.027 at $\rho = 0.95$; the
+    per-step law rejected at $\rho = 0.9$ ($0.0462\pm0.0006$ of the It\^o drift against 0.0526); Heun's scheme
+    $(2\pm7)\cdot10^{-4}$ of the It\^o drift. (C2) At the step 8 ($h\lambda_{\max}\approx1.6$): 0.979--1.049 of the
+    prediction ($\pm$ 0.004--0.053), where the step-free It\^o drift is off by 42\%.
+  \item (D) $f = uv$: $\E[Q]$'s decay rates within 0.3\% of the linear-response prediction for every scheme ($\rho$ up
+    to 0.999, 0.19 of the per-step law there); Heun keeps $Q$ to $1.2\cdot10^{-5}$. (E) The diagonal network: the
+    products' decay rates over the prediction 0.9988--0.9998 on average, the prediction differing across coordinates by a
+    factor up to 2.17 at $\rho = 0.999$. (F) A tanh network: the sharpness's slope over the prediction 0.990--1.060 to
+    $\rho = 0.9$ (slower noise below the measurement's floor).
+  \item (G) The per-update selection's zero set at $\gamma = 10^{-2}$: one interior target for fresh draws and
+    $\tau_c = 10$; three stable zeros, each with one class's mass large, from $\tau_c = 100$; from $\tau_c = 10^3$ three
+    saddles and an unstable node next to $W^\sharp$ besides; $W_0$'s flow changing target between $\tau_c = 100$ and
+    $10^3$; at $\gamma = 10^{-5}$ the targets approach the saturation ($W/W_{\min} - 1\approx10^{-4}$ at
+    $\tau_c = 10^5$). The slow limit $\tau_c\Sigma_f$ within $7\cdot10^{-4}$ of its finite-step value; the slow noise's
+    direction the dither's (cos 1.00000) at $\gamma = 10^{-5}$; a smooth noise selects 2--5\% as much as a Markov one of
+    the same correlation time.
+  \item Tests (\code{tests/test_gauge_label.py}): the noise along the fields; the fields orthogonal to the gauge in the
+    flow's metric; the Wong--Zakai cancellation at a point; $W_\ell$ interior and minimising $\Psi_\ell$, and the
+    amplitude coordinates' target; the schemes' reductions; the AR(1) draws and Heun steps (correlated noise off $M$;
+    dither) against hand-coded steps; the weighted and the covariance Wong--Zakai terms; the linear-response factor
+    against the exact stationary moments and its continuum limits; the filtered covariance against the pairwise factors;
+    Gaussian correlation sums; the finite-step slow limit.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.42: several particles per class}
+
+Script: \code{exp_gauge_classes.py} $\to$ \code{chaos/gauge_classes.md}.
+\begin{itemize}
+  \item Proposition D$'''$.36's instance with 2 and 3 particles per class, together at the class's exact-fit position.
+    (A) $\log\det\nabla^2_\Theta J$ minus its one-per-class value at the same class masses is $-46.131219$ ($m = 6$) and
+    $-92.262438$ ($m = 9$) at every class mass and split (to $3\cdot10^{-7}$, $4\cdot10^{-7}$). (B) In Katzenberger's
+    limit under the isotropic dither the class masses' drift and diffusion are $3/m$ times the one-per-class ones at
+    $\gamma = 10^{-5}$ (0.5000, 0.3333, $n = 3$'s degenerate equal split included; the diffusion at $\gamma = 10^{-2}$
+    too); the fractions' diffusion is at most $10^{-16}$ per $\gamma^2\tau$, their drift $10^{-4}$ of the class drift at
+    $\gamma = 10^{-5}$ and at $\gamma = 10^{-2}$ $O(\gamma)$ relative, toward the equal split.
+  \item (C) The correction per class at $\kappa_F = 1$ cancels the class drift as for one particle per class, the
+    fractions' drift unchanged. (D) Measurement noise at $m = 6$: at the equal split the It\^o drift and the Wong--Zakai
+    term cancel to $6\cdot10^{-9}$ and the class It\^o drift is $m = 3$'s (1.0000); at unequal splits the residual is
+    2.2--2.6\% of the It\^o drift (up to 9.6\% per component), at $\gamma = 10^{-5}$ as at $10^{-2}$; the fractions' It\^o
+    drift is the full trace's flow less it.
+  \item (E) The full loop at $m = 6$ (8 seeds $\times$ $4\cdot10^5$ slow units): the class masses at
+    (0.330, 0.349, 0.321) and (0.334, 0.315, 0.351) against $m = 3$ at half the time (0.340, 0.346, 0.314); the
+    fractions still from the equal split, from (0.2, 0.7, 0.5) $s_1$ moving by $-0.035\pm0.012$ --- away from the
+    equal split --- as $\abs\alpha$ reaches 26--28. (F) Anisotropic dither (Richardson-extrapolated): the per-class law
+    at the equal split for every mask (1.0000--1.0004 at $\gamma\ge10^{-5}$, 1.0075 at $10^{-6}$), the fractions still
+    there; at the unequal split 1.4--3.5\% off it for the amplitudes-only mask, $5.9\cdot10^4$ times it for the
+    centres-and-widths mask (which freezes one particle per class), the fractions drifting at $1$--$6\cdot10^{-4}$ per
+    $\gamma\tau$.
+  \item Tests (\code{tests/test_gauge_classes.py}): the determinant blind to the split; the class masses at the law of
+    $m$ and the fractions without diffusion; the correction per class, off $M$ and at the floor; the degenerate equal
+    split.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.43: the colour of the measurement noise selects the kernels}
+
+Script: \code{exp_colour_selection.py} $\to$ \code{chaos/colour_selection.md}.
+\begin{itemize}
+  \item (A) The identities: Cauchy--Binet to $2.6\cdot10^{-15}$, the gradient $(4/N)\omega$ to $4\cdot10^{-9}$, $R$'s
+    second differences negative along every random segment ($-8\cdot10^{-5}$ to $-0.39$, the continuum filters; zero for
+    white draws), $\tau_cR - k\log(4\tau_c/N)\to\log(\det(\Phi_S^\T\Phi_S)\prod\abs{w_i})$ ($-0.065892$ against
+    $-0.065900$ at $\tau_c = 10^6$).
+  \item (B) Label-noise descent ($10\times40$, $k = 4$ where basis pursuit fails, step 0.5, $\sigma = 0.1$, eight seeds
+    $\times$ 16 paths) follows the reduced flow (the paths' mean within 0.011--0.035 of it for fresh draws, 0.11--0.35
+    for AR(1) draws at $\tau_c = 100$); fresh draws end on dense fits (supports 10--13, errors 0.80--2.4, basis pursuit's
+    0.80--2.98); AR(1) draws recover the truth on all 16 paths of the four seeds whose reduced flow recovers it (the end
+    interpolants' errors $10^{-13}$--$7\cdot10^{-11}$) and on 0--2 of 16 on the other four; at $\sigma = 0.3$ the four
+    recover on 16, 0, 16 and 13 paths, at $\sigma = 0.5$ one seed still recovers --- beyond the small-$\sigma$ limit the
+    descent prunes on its own.
+  \item (C) Recovery ($10\times40$, 40 instances per row): $k = 3$ basis pursuit 0.38, white 0.38, slow 0.62/0.75/0.78
+    ($\tau_c = 10/100/1000$); $k = 4$ 0.17, 0.17, 0.42/0.60/0.62; $k = 5$ 0, 0, 0.07/0.15/0.17; $k = 6$ none; at
+    $20\times80$, $k = 6$ 0.35 against 0.75; the white flow run to convergence ends at basis pursuit's solution (336 of
+    340 converged, to $9.4\cdot10^{-9}$); from the white flow's end the slow flow does no better than basis pursuit at
+    $10\times40$ (dropped atoms do not revive). Where the slow flow fails at $\tau_c = 100$ its end has a larger $R$ than
+    the truth up to $k = 4$ (a local minimum; 0.09 and 0.35 of the failures end below the truth's $R$ at $k = 5$, 6); at
+    $\tau_c = 10$, 0.39, 0.68 and 0.85 of them ($k = 4$, 5, 6) do --- there the truth is not the finite-$\tau_c$
+    minimiser.
+  \item (D) Gaussian kernel dictionaries (coherence 0.90, 0.96): the slow flow 0.95 against 0.80 (width 0.03, $k = 4$),
+    1.00 against 0.85 (width 0.05, $k = 4$), 0.78 against 0.65 ($k = 6$), the white flow at basis pursuit's rate;
+    label-noise descent with AR(1) draws recovers the truth on two of three instances where basis pursuit fails (all 16
+    paths, errors $2\cdot10^{-13}$--$7\cdot10^{-8}$); on the third it is still on 12--13 atoms at the end, its reduced
+    flow then at $8.8\cdot10^{-3}$ and reaching the truth when run on ($3\cdot10^{-13}$ at $s = 1600$); fresh draws end
+    within 0.08--0.11 of basis pursuit's solution.
+  \item (E) At the step 0.5 a smooth noise of $\tau_c = 10$ and a draw kept 40 steps select as well (0.70, 0.70 against
+    fresh 0.30 and basis pursuit's 0.45 at $k = 3$: the finite-step white comparator is not basis pursuit); a smooth noise
+    of $\tau_c = 100$ has not begun to select at the slow horizon (0.00) and recovers 0.85 and 0.65 at ten times it. (F)
+    The flows run to convergence: from $\alpha = 0.1$, 0.5 the slow flow recovers 0.70, 0.75 ($k = 3$) and 0.40, 0.50
+    ($k = 4$), from $\alpha = 2$ --- toward the kernel regime --- 0.35 and 0.30, basis pursuit's rate (0.45, 0.25), which
+    the white flow matches from every $\alpha$.
+  \item (G) Sparse Bayesian learning (Tipping's EM) 0.97, 0.88, 0.55, 0.12, 0.05 for $k = 2$--6 against the slow flow's
+    0.97, 0.75, 0.60, 0.15, 0.00 (mean supports at $k = 4$: 6.6, 6.4; basis pursuit 8.9); the log-det's MM 0.70, 0.45
+    ($k = 3$, 4) from the flows' start, 0.53, 0.33 from basis pursuit; reweighted $\ell^1$ 0.38--0.53 and 0.17--0.25 at
+    $\varepsilon = 0.01$, 0.1, 1 from either start.
+  \item (H) The certificate (sufficient; for white draws Fuchs's, certifying 0.38 of the 2-sparse truths and 0--0.03
+    from $k = 3$ on) holds at every truth for $\tau_c = 100$ at $k = 2$--5 (0.93 at $k = 6$) and for $\tau_c = 1000$,
+    the median ratio $\propto1/\tau_c$ ($k = 2$: 0.439, 0.0814, 0.0087 at $\tau_c = 10$, 100, 1000); on kernel
+    dictionaries (widths 0.03--0.08, $k = 4$, 6) the certified fraction rises with $\tau_c$ to 0.85--1.00 at
+    $\tau_c = 10^5$ (white: 0--0.60), and the slow flow returns to the truth from $P = 10^{-3}$ in 0.90--1.00
+    ($\tau_c = 100$) and all ($\tau_c = 1000$) of the instances.
+  \item (I) Under a fit floor ($y = \Phi w^* + \varepsilon e$, $\abs e = 1$, $\varepsilon = 10^{-3}$--0.05) the slow
+    flow's $k$ largest atoms are the truth's support in 0.70--0.75 ($k = 3$) and 0.50 ($k = 4$) of the instances, basis
+    pursuit's in 0.40--0.45 and 0.25. (J) At the same physical noise (AR(1) of correlation time 50, per-step
+    $\sigma = 0.1$) $\Delta\log P$ off the truth's support is $-2.39$ under Euler's step 0.5, $-0.278$ under Euler's step
+    0.125 and $-0.097$ under Heun's step 0.5 (25 times less): the selection is the explicit scheme's.
+  \item Tests (\code{tests/test_colour_selection.py}): the subset expansion and the gradient, also with a finite step's
+    filter; the white and slow potentials (finely sampled AR(1) draws tending to the slow one), $R$ linear (white) and
+    concave (slow) along segments; the support count; the projection, singular cases included; the reduced flow on
+    $M$, $P$'s rate, finite weights at a sparse fit, an overshooting trial stage rejected, white $\to$ basis pursuit,
+    slow $\to$ the sparse truth; the flow as $R$'s gradient flow in its metric (a doubled or halved $w$-drift fails); the
+    exact interpolant against small-step descent, the end interpolants (at infinity flagged, converging within the alive
+    atoms' span); label-noise descent against hand-coded AR(1) steps; the dictionary; the $(u,v)$ round trip; the
+    experiment's success threshold and dual certificate against hand computations; sparse Bayesian learning's EM on a
+    2-sparse truth; the white flow run to convergence; Heun's noiseless step on $M$.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.45: the free mass--amplitude law as a mirror flow}
+
+Script: \code{exp_mirror_free.py} $\to$ \code{chaos/mirror_free.md}.
+\begin{itemize}
+  \item (A) Unless stated: $5\times12$ Gaussian designs with unit columns, 2- or 3-sparse truths, $m = 12$, $G = 1$,
+    $\gamma = 0.1$, $a_{\max} = 1$ ($c = 0.025$); no projection failed. $\eta$'s closed form agrees with the quadrature of
+    $\dd\alpha/(G\beta a')$ to $1.5\cdot10^{-14}$ (relative, free curves and a branch), $(\psi^*)' = w$ and
+    $\dd w/\dd\eta = mD$ to $7.2\cdot10^{-11}$ and $4.3\cdot10^{-10}$. Along the loop $Q$ moves by at most
+    $1.4\cdot10^{-11}$ noiseless and $3.6\cdot10^{-10}$ under a smooth noise of 30 sinusoids mixed over the nodes (the
+    integrator's tolerance); the conserved law's shift equals the quadrature of $-\gamma\beta_i\lambda$ to
+    $1.5$--$4.4\cdot10^{-7}$; along D$'''$.44's reduced flow $\dd Q/\dd s$ is (iv)(b)'s closed form to
+    $9.1\cdot10^{-16}$.
+  \item (B) From $\alpha = 0$ and equal masses $s\cdot m/d$ the noiseless loop's end at $t = 10^7$ is the Bregman
+    projection to $4.7\cdot10^{-11}$ (20 instances per $k$). For $k = 2$ the projection is 0.5\% from the minimum-norm fit
+    at $s = 10$ and its $\norm w_1$ 1.0004 times basis pursuit's at $s = 10^{-4}$, the truth recovered nearly as often as
+    by basis pursuit (0.75 against 0.80); at $s = 10^{-3}$ the loop is within $10^{-8}$ of its projection only from
+    $t\approx8.5\cdot10^6$. Unequal masses $s\cdot r_i$: weighted basis pursuit to $1.7\cdot10^{-9}$ and
+    $2.1\cdot10^{-8}$ ($k = 2$, 3) at $s = 10^{-7}$, the weighted minimum norm to $2.4$--$2.5\cdot10^{-9}$ at $s = 10^4$;
+    from small random amplitudes at $s = 10^{-6}$ the particles sit on branches, the bias the sign-constrained one
+    (D$'''$.47). (F) At $N$-atom vertices the leading order from the certificate agrees with the projection to the
+    rounding floor ($1.8\cdot10^{-13}$, $2.6\cdot10^{-11}$ at $\varepsilon = 10^{-7}$) and the distance falls by 1068 and
+    984 from $10^{-7}$ to $10^{-9}$ ($\varepsilon^{3/2}$: 1000); a small slack ($\mu_{\min} = 2.7\cdot10^{-4}$) keeps a
+    sixth atom, 0.17 away at $10^{-7}$.
+  \item (C) White label noise ($\sigma = 0.3$, 64 paths): Euler--Maruyama changes $Q$ on average by its It\^o
+    correction's integral (ratios 1.0106, 1.0037, 1.0011 at $h = 0.1$, 0.03, 0.01), Heun's (Stratonovich) mean change is
+    $1.4\cdot10^{-5}$, $4.1\cdot10^{-6}$, $1.4\cdot10^{-6}$, the mirror update keeps $Q$ to $2.2\cdot10^{-16}$; the Euler
+    step's exact mean change is the closed form's to 0.029--0.036\% at $h = 0.005$. Along D$'''$.44's reduced flow from
+    the lazy projection $\norm w_1$ first rises, then $Q$'s mean falls to $-0.021$ by its time $s = 10^8$ (no atom yet
+    extinct): the state ends on basis pursuit where it is the truth (6 instances), elsewhere on its support (two) or on
+    another sparse fit of larger $\ell^1$ norm (two). At $h = 0.5$ the paradigm's Euler update lowers $Q$ by 0.34--0.36
+    and moves the projection by 0.030--0.043, as the reduced flow does; the mirror update keeps it to $9.0\cdot10^{-12}$.
+  \item (D) The real loop ($k_e = 5$, $m = 6$, six Gaussian atoms, a second particle on the third, 2000 time units):
+    noiseless, $V$ falls monotonically from 0.175 to 0.022 with $\dot V = -k_ee^2$ to $3.0\cdot10^{-9}$, $Q$ kept to
+    $7.6\cdot10^{-15}$ and the pair's mirror coordinates moving together to $2.4\cdot10^{-15}$; under a smooth noise in
+    the adaptation, or a sensor noise, $V$ is no longer monotone ($0.175\to0.136$, 0.377) while $Q$ is kept to
+    $6.8\cdot10^{-12}$ and $4.9\cdot10^{-13}$; at $t = 2000$ the noiseless coefficients are still 0.048 (the distinct
+    atoms) and 0.027 (the pair's sum) from $w^*$. (E) The conserved law ($\sum\beta = m$) from the same starts reaches
+    exact fits $1.6$--$4.1\cdot10^{-3}$ from the free law's projections, its $Q$ moving by 0.058--0.22.
+  \item Tests (\code{tests/test_mirror_free.py}): $\eta$ against quadrature in the three cases, on both sides of a branch
+    and on the critical curve, and against a 60-digit reference near $\kappa = 1$ and $\abs t = 1$; the inverse's round
+    trips and its range errors; the conjugate $(\psi^*)' = w$ and the metric $\dd w/\dd\eta = mD$; $Q$ under a smooth
+    node-correlated noise and the conserved law's shift $\dd Q = -\gamma\beta\lambda\dd t$; the noiseless limit equal to
+    the Bregman projection; the rich projection converging to weighted basis pursuit; the Euler step's second-order change
+    of $Q$; $\dot V = -k_ee^2$ in the real loop (and a wrong mass law seen by $V$); the mirror update keeping $Q$ and
+    moving $\eta$ by $hg$, on branches too.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.46: a leak in the mirror coordinates}
+
+Script: \code{exp_mirror_leak.py} $\to$ \code{chaos/mirror_leak.md}.
+\begin{itemize}
+  \item (A) The identity of (i) --- the leak with a disturbance and a measurement noise --- holds to $9.5\cdot10^{-11}$
+    (relative) at twelve random states of the real loop ($\sigma = 0$ and 0.3). On random positive definite $H$
+    ($10\times10$, $k_e = 2$, four draws) the averaged equilibrium is the ridge with
+    $\rho = k_e\sigma m/(G(\beta^0)^2) = 0.5$, which moves $w$ by 31--55\%, to $1.3\cdot10^{-8}$ ($\beta^0 = 10^4$) and
+    $1.3\cdot10^{-4}$ ($10^2$), but departs from it by 0.15 at $\beta^0 = 3$, where the saturation's wall
+    $w_\sqcap = 0.25$ lies inside the coefficients' range: a ridge only below the wall; at small masses it is the LASSO of
+    penalty $\sigma\lambda_1 = 0.02$ to 0.015, $1.5\cdot10^{-3}$, $1.5\cdot10^{-4}$ ($\beta^0 = 10^{-4}$, $10^{-6}$,
+    $10^{-8}$; the remainder $\propto(\beta^0)^{1/2}$), with the LASSO's support in every draw.
+  \item (B) On a persistently exciting orbit (the filtered Gram's eigenvalues $2.7\cdot10^{-3}$ to 0.68) under an
+    approximation error and a biased disturbance the free law without the leak creeps toward the biased fit
+    $w^* + H_L^{-1}\bar d_L$ (its largest coefficient 0.309, 0.330, 0.337, 0.341 by quarters, $V$ rising from 0.40 to
+    0.45); $\sigma = 0.01$ and 0.1 hold the coefficients at 0.081 and 0.040 and $V$ at 0.085 and 0.13, below
+    $C/\lambda = 1.74$ and 0.30 and the comparison bound at every sample, the late means within $2.5\cdot10^{-3}$ and
+    $6.5\cdot10^{-4}$ of $w_\sigma^L$, the rms error rising from 0.024 to 0.031 and 0.037. Without persistent
+    excitation the free law's coefficient grows as constructed, 0.70, 2.31, 7.37, 23.3 at $t = 1$, $10^2$, $10^4$,
+    $10^6$, while $\sigma = 0.01$ and 0.1 bound it (0.46 at $t = 10^6$).
+  \item (C) Slow adaptation ($k_e = 20$): the error filter's Gram is 0.89\% from the idealised
+    $\langle\varphi\varphi^\T\rangle$, symmetric to $3\cdot10^{-14}$; started at the averaged equilibrium $w_\sigma^L$,
+    the real loop's last period means lie within $1.6\cdot10^{-4}$ (lazy start) and $1.7\cdot10^{-4}$ (intermediate) of
+    it, 4.4 and 2.6 times closer than to the idealised equilibrium (the leak's bias 0.038 and 0.12). (D) On an orbit's
+    Gram the rich start's equilibrium is the LASSO to $3.7\cdot10^{-6}$--$6.5\cdot10^{-4}$, keeping exactly the truth's
+    three atoms for $\mu\le10^{-2}$ (one dropped at $3\cdot10^{-2}$), the lazy start's the ridge to
+    $3.9\cdot10^{-6}$--$2.5\cdot10^{-4}$, dense; over all 1760 3-sparse patterns the support is exactly the truth's for
+    415, the LASSO's prediction holds for 416, the two agree on 1745; with a correlated disturbance bias the equilibrium
+    tends to $w^* + H^{-1}\bar d$ as $\sigma\to0$, linearly; from the rich start it is reached at
+    $t\approx3.2\cdot10^5$, at $2\cdot10^6$ where the irrepresentable condition fails (five atoms kept).
+  \item Tests (\code{tests/test_mirror_free.py}): the Lyapunov identity with the leak, a disturbance and a measurement
+    noise; $Q$ kept by the leak; the equilibrium's ridge limit, its biased limit $w^* + H^{-1}\bar d$ and its LASSO limit
+    (same support) at $k_e\ne1$, the solver's residual asserted; the comparison bound under a worst-case disturbance,
+    coming within a factor 2 of its ultimate value; the filtered Gram's expansion
+    $H - \langle\dot\varphi\dot\varphi^\T\rangle/k_e^2 + O(k_e^{-3})$ and its $O(k_e^{-3})$ asymmetry.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.47: the free law's branches}
+
+Script: \code{exp_mirror_branch.py} $\to$ \code{chaos/mirror_branch.md}.
+\begin{itemize}
+  \item (A) The slope $\dd\eta/\dd\log\abs w = a/(\gamma a^2 + G\beta a'^2)$ holds to $2.3\cdot10^{-9}$ (40 random
+    states, free and on branches); at the branch point the temperature is $1/(\gamma a_0)$ to ten digits
+    ($\alpha_0 = 0.05$, 0.3, 1, 2); $B(\bar w,w)\to\beta/(\gamma m)$ as $\bar w\to0$ ($2\cdot10^{-4}$ relative at
+    $\bar\delta = 10^{-6}$, $5\cdot10^{-10}$ at $10^{-12}$); with $\alpha(0)$ uniform on $[-0.3,0.3]$ the fraction of
+    starts on branches is 0.52, 0.95, 0.995, 0.9996 at $\beta(0) = 10^{-3}$, $10^{-5}$, $10^{-7}$, $10^{-9}$; a $\pm$
+    pair's coefficient follows $2u\sinh(\gamma a_0\Delta)$ to $2\cdot10^{-5}$ for $\Delta\le10$ ($6\cdot10^{-4}$ at
+    $\Delta = 120$, where the members leave their branch points); on the critical curve $\eta\cdot w^{1/3}\to-K = -3.218$
+    ($-3.2182$ at $\alpha = 10^{-4}$).
+  \item (B) Random $6\times12$ Gaussian designs (the target on four atoms, masses $10^{-3}$, amplitudes 0.2--0.4, 8 seeds
+    for each of three sign patterns): the flow at $t = 3\cdot10^7$ is the Bregman projection onto $S$, computed
+    independently, to $5.0\cdot10^{-10}$; where the frozen signs cannot fit $y$ (5 of 8 positive starts, 2 of 8 random
+    ones) $J$ reaches its sign-constrained minimum and the wrong-signed particles go extinct (masses below $10^{-103}$)
+    at the rates $\gamma a_0\abs{g(\infty)}$ to 0.5--10\%, $B(\bar w,w(t))$ never increasing by more than
+    $2.2\cdot10^{-16}$; the mixed starts fit exactly. With duplicated atoms ($S$ not a point; 8 seeds) the flow is the
+    Bregman projection to $6.4\cdot10^{-10}$, $1.6\cdot10^{-4}$--0.20 from the equal split of the duplicates: the
+    selection with extinction is the Bregman one, not the symmetric one.
+  \item (C) On one $8\times20$ design: from branches (amplitudes 0.2--0.6, masses $\varepsilon$) the projection's
+    distance to the sign-constrained basis pursuit weighted by $1/\abs{a(0)}$ is 0.23, 0.030, $1.3\cdot10^{-3}$,
+    $5.1\cdot10^{-6}$, $1.1\cdot10^{-9}$ at $\varepsilon = 10^{-4}$, $10^{-8}$, $10^{-16}$, $10^{-32}$, $10^{-64}$, the
+    leading order agreeing to $4.1\cdot10^{-4}$, $2.4\cdot10^{-9}$, $3.4\cdot10^{-14}$ from $10^{-16}$ on
+    ($\mu_{\min} = 0.104$): the approach $\varepsilon^{\mu_j}$; from $\alpha(0) = 0$ the distance to basis pursuit is
+    0.29, 0.14, $4.0\cdot10^{-4}$, $5.2\cdot10^{-8}$, $4.3\cdot10^{-11}$ at $\varepsilon = 10^{-2}$, \dots, $10^{-10}$:
+    $\varepsilon^{3/2}$. In a mixed start the free particles carry $\approx\varepsilon^2$ --- or, where the branch atoms'
+    frozen signs cannot fit, 2.27 on the power scale, the projection failing at $\varepsilon = 10^{-12}$ (residual 1.95).
+    (D) A $\pm$ pair per atom tends to basis pursuit weighted by $1/a_0$, slowly (slacks 0.016, 0.020): 0.29 at
+    $u = 10^{-4}$, $2.6\cdot10^{-4}$ at $10^{-128}$, $1.9\cdot10^{-6}$ at $10^{-256}$; never are both members of an atom
+    active.
+  \item (E) Positive Gaussian dictionaries, positive branches: with 21 atoms of width 0.15 and 7 samples (margin
+    $\mu = 0.015$) the loop reaches the target from every start scale, $\beta(0) = 10^{-6}$ to 10, within
+    $6.0\cdot10^{-5}$ at $t = 10^9$, where from $\alpha(0) = 0$ the rich start ends on a seven-atom fit 1 away and the
+    lazy one spreads over all 21 atoms; at $\mu = 0.003$ it is still $1.0$--$1.3\cdot10^{-3}$ away at $10^9$, at
+    $\mu = 0.027$ on the target's atoms; the decay is algebraic ($t^{-0.9}$--$t^{-1}$). Over all three-atom supports the
+    median margins are $4.0\cdot10^{-6}$, $3.8\cdot10^{-9}$, $1.2\cdot10^{-3}$ (25\%, 45\%, 4\% at most $10^{-9}$); the
+    loop reaches the supports at the quantiles whose margins exceed $10^{-3}$ by $t = 10^9$, and on those below $10^{-4}$
+    is still 0.37--0.83 away: the selection's speed is the margin. (F) The real loop on positive branches:
+    $\dot V = -k_ee^2$ to $1.7\cdot10^{-8}$, $V$ falls monotonically from 3.64 while the unused atoms' masses rise to
+    0.78; after 4000 time units the coefficients are still 0.080 from $w^*$.
+  \item Tests (\code{tests/test_mirror_free.py}): the branch criterion and $\delta(0)$ solved from $\beta(0)$ (masses far
+    below $c$'s precision kept), $\eta$'s inverse to any depth, the temperature $1/(\gamma a_0)$ at a branch point,
+    $B(\bar w,w)\to\beta/(\gamma m)$ as $\bar w\to0$, a $\pm$ pair's $W(\Delta) = 2u\sinh(\gamma a_0\Delta)$ at leading
+    order; the limit theorem: from positive branches that cannot fit the labels the loop converges to the projection onto
+    the sign-constrained fits (computed independently), the vanishing coordinates' masses below $10^{-30}$.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.48: the rich transit}
+
+Script: \code{exp_mirror_transit.py} $\to$ \code{chaos/mirror_transit.md}.
+\begin{itemize}
+  \item (A) From $\alpha = 0$ on three $6\times14$ Gaussian designs (3-sparse truths, masses $\varepsilon b_i$, $b_i$
+    log-uniform in $[1/4,4]$) the adaptive inverse scale space path of $\sum\abs{w_i}/\sqrt{b_i}$ ends at weighted basis
+    pursuit after 3, 8 and 10 events, and the loop in $\tau = t/\Lambda(\varepsilon)$ follows it:
+    $\sup_\tau\abs{u - u_{\mathrm{ISS}}}$ falls from 0.54, 0.61, 1.15 at $\varepsilon = 10^{-2}$ to $6.7\cdot10^{-6}$,
+    $8.8\cdot10^{-6}$, $2.0\cdot10^{-5}$ at $10^{-12}$ (log-log slopes 0.500 between $10^{-6}$ and $10^{-8}$:
+    $1/\Lambda\propto\varepsilon^{1/2}$); the entry times converge at that rate down to the grid's step; the residual's
+    difference is $O(1)$ at an event over a $\tau$-width $\propto\varepsilon^{1/2}$ and $O(\varepsilon^{3/2})$ away from
+    the events (median slopes 1.51, 1.69, 1.46); the end at $1.5\tau^*$ is weighted basis pursuit to
+    $1.1\cdot10^{-16}$--$6.1\cdot10^{-15}$ at $10^{-12}$.
+  \item (B) On branches (amplitudes 0.2--0.6) the loop follows the one-sided path in $\tau = t/\log(1/\varepsilon)$:
+    $\sup\abs{u - u_{\mathrm{ISS}}} = 15.7$, 8.0, 4.0, 2.0, 1.0 and the entry times' largest difference 55, 28, 14, 7.0,
+    3.5 at $\varepsilon = 10^{-4}$, $10^{-8}$, $10^{-16}$, $10^{-32}$, $10^{-64}$, exactly
+    $\propto1/\log(1/\varepsilon)$ (the path's weights $1/(\gamma\abs{a(0)})\approx17$--50), ending at the
+    sign-constrained weighted basis pursuit (to $1.3\cdot10^{-5}$ at $\varepsilon = 10^{-4}$, below $10^{-14}$ from
+    $10^{-16}$ on); $\pm$ pairs follow the two-sided path the same way (21, 7.9, 4.0, 2.0, 0.99 at $u = 10^{-4}$ \dots\
+    $10^{-64}$).
+  \item (C) Moving centres: the sliding path enters three kernels that slide onto the three bumps and fit them exactly;
+    the loop with the paradigm's metric forms 8 kernels at $\varepsilon = 10^{-3}$, 4 at $10^{-4}$ and exactly these
+    three for $\varepsilon\le10^{-5}$, the others displaced $\propto\varepsilon$; with the Wasserstein--Fisher--Rao metric
+    the centres follow (iv)'s limit and the loop forms 15, 12, 8, 3, 3 kernels at $\varepsilon = 10^{-4}$, $10^{-5}$,
+    $10^{-6}$, $10^{-8}$, $10^{-10}$; with the centres held on the grid it forms 5 kernels, 0.019 from the target. On
+    sixteen random targets the loop forms exactly three kernels at the bumps on 11, 13, 16 at $\varepsilon = 10^{-5}$,
+    $10^{-6}$, $10^{-8}$ (Wasserstein--Fisher--Rao: none at $10^{-6}$, all at $10^{-10}$); a tie is shared (0.4, 0.4), a
+    near tie takes two kernels at $\varepsilon = 10^{-6}$; the creep's speed is the profile's to 0.990--0.996
+    ($\varepsilon = 10^{-8}$) and 0.9999--1.0000 ($10^{-10}$); wider bumps are fitted along a staircase. (D) Moving
+    widths fit bumps of widths 0.2 and 0.08 with exactly three kernels at $\varepsilon = 10^{-6}$, where fixed widths need
+    six kernels or miss the amplitudes (0.71, $-0.48$, 0.59).
+  \item Tests (\code{tests/test_rich_transit.py}, \code{tests/test_mirror_free.py}): the critical curve's coefficient and
+    its depth-3 form; the sliding path recovers three bumps exactly; the loop at $\varepsilon = 10^{-5}$ forms the same
+    three kernels at the path's entry times; the inactive kernels' coefficients below the core's bound before the first
+    entry; the Wasserstein--Fisher--Rao metric's centres on their limit; the inverse scale space path ends at weighted
+    basis pursuit (one-sided: the sign-constrained one) and the loop at $\varepsilon = 10^{-6}$ follows it.
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E

@@ -225,7 +225,8 @@ Each branch states what is proved, what is open, and the first concrete step.
     % D'''.35's bullet, before D'''.34's, as committed at 2e5eb10 (part 4h); Propositions D'''.37's and D'''.36's
     % bullets, before D'''.35's and in that order, as committed at 5952611 and c054367 (part 4i); Propositions
     % D'''.39's and D'''.38's bullets, before D'''.37's and in that order, as committed at 1cefb5f and 5d14f92
-    % (part 4j).
+    % (part 4j); Propositions D'''.48's, D'''.47's, D'''.46's, D'''.45's, D'''.43's, D'''.42's and D'''.41's bullets,
+    % before D'''.39's and in that order, as committed at 1269272 and da1a80e (part 4k).
     \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
       fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
       Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
@@ -281,6 +282,104 @@ Each branch states what is proved, what is open, and the first concrete step.
       infinity (the best approximant on the saturation boundary, as for a sharp friction step, a cogging function that
       two kernels fit as a dipole, or Proposition D$'''$.29's servo globally), where only the projected prior keeps the
       parameters bounded; vector amplitudes, where the margins have no closed form.
+    \item \emph{Done (Proposition D$'''$.48):} the rich transit. From small masses the kernels enter one at a time: from
+      zero amplitudes the loop, in the time $t/\Lambda$ with $\Lambda\propto(\text{starting mass})^{-1/2}$, follows the
+      inverse scale space path of the weighted $\ell^1$ norm --- the unit near its critical curve is an effective
+      depth-3 unit ---, and on branches the same on the logarithmic scale, sign-constrained. With the paradigm's moving
+      centres the kernels that have not entered stay where they started and the entered ones slide onto the target's
+      features: one kernel per well-separated feature at its centre (a tie shared by both kernels); a
+      Wasserstein--Fisher--Rao metric on the positions condenses the massless kernels at the correlation's peaks
+      instead, reaching one kernel per feature only at much smaller masses (on three bumps the paradigm's metric forms
+      exactly three kernels for $\varepsilon\le10^{-5}$, the Wasserstein--Fisher--Rao metric 15, 12 and 8 kernels at
+      $\varepsilon = 10^{-4}$, $10^{-5}$, $10^{-6}$ and three from $\varepsilon\approx10^{-8}$; on sixteen random
+      targets exactly three kernels at the bumps on all sixteen at $\varepsilon = 10^{-8}$ under the paradigm's metric,
+      on 10 of 16 under the Wasserstein--Fisher--Rao one). \emph{Open:} the sliding limit proved (the fast block's
+      relaxation to a stationary point); at a finite mass the near ties and the creep are Proposition D$'''$.51's.
+    \item \emph{Done (Proposition D$'''$.47):} the free law's branches. A small start at nonzero amplitude puts a
+      particle on a branch of its curve, where its sign is frozen and the law is an exponentiated gradient --- an
+      entropy at the branch point with the temperature $1/(\gamma a_0)$, read off the conservation law. For every start
+      the loop converges to the Bregman projection of its start onto the sign-constrained least-squares fits; particles
+      whose sign cannot help die out (exponentially under strict complementarity off the critical curve); the rich limit
+      is a sign-constrained basis pursuit, and a pair of opposite particles per atom restores the free sign as a
+      hyperbolic entropy. On positive kernel dictionaries the frozen signs make the selection of the target's kernels
+      independent of the starting scale, at a speed set by the certificate's margin --- typically tiny on Gaussian grids
+      sampled at few points, where the selection is not reached (with 21 atoms, 7 samples and the margin 0.015 the loop
+      reaches the target from every start scale, $\beta(0) = 10^{-6}$ to 10, within $6.0\cdot10^{-5}$ at $t = 10^9$;
+      over all three-atom supports of three Gaussian grids the median margins are $4.0\cdot10^{-6}$, $3.8\cdot10^{-9}$
+      and $1.2\cdot10^{-3}$, and below $10^{-4}$ the loop is still 0.37--0.83 away at $t = 10^9$). \emph{Open:} the
+      extinction's rate without strict complementarity; branches in the real loop's slow modes; moving centres on
+      branches.
+    \item \emph{Done (Proposition D$'''$.46):} a leak for the free mass--amplitude law. Written in the mirror
+      coordinates --- each particle's drive minus $\sigma$ times its mirror coordinate's distance to a prior point of
+      its own curve ---, the leak keeps the conservation law and the Lyapunov function, now with the three-point
+      identity's $-\sigma B$ terms, so the parameters stay ultimately bounded under bounded disturbances and
+      approximation errors, which the free masses alone are not (a decaying excitation can drive them to infinity). Its
+      bias is explicit: the averaged loop --- with the error filter's Gram --- settles on the fit plus $\sigma$ times the
+      Bregman divergence to the prior, a ridge from large starting masses, a LASSO from small ones, which keeps exactly
+      the target's kernels under the irrepresentable condition (on random $H$ the equilibrium matches the ridge at
+      $\beta^0 = 10^4$ and the LASSO at $\beta^0 = 10^{-8}$ to the relative distances $1.3\cdot10^{-8}$ and
+      $1.5\cdot10^{-4}$; over all 1760 3-sparse patterns of an orbit's Gram its support is exactly the truth's on 415,
+      the LASSO's prediction holds on 416, and the two agree on 1745). \emph{Open:} the real loop's bias beyond
+      averaging; a leak rate adapted to the excitation; the rich equilibria's slow approach; moving centres and widths.
+    \item \emph{Done (Proposition D$'''$.45):} the free mass--amplitude law is a mirror flow. Without the masses'
+      constraint each particle's mass and amplitude are driven by one scalar signal, so a closed-form quantity
+      $Q = \beta - (\gamma a_{\max}^2/4G)\cosh(2\alpha/a_{\max})$ is conserved whatever the drive: the free replicator
+      only reparametrises the amplitude, and lifts its saturation. On a dictionary the coefficients follow the mirror
+      flow of an explicit potential --- a mass-weighted $\ell^2$ core, a soft wall at the saturation, an entropy tail
+      ---, so the noiseless loop converges from every start, without persistent excitation, to the start's Bregman
+      projection on the exact fits: the minimum-norm fit for large starting masses, weighted basis pursuit with weights
+      $1/\sqrt{\beta^0}$ for small ones, paid for in time ($\propto(\beta^0)^{-1/2}$ for the transit,
+      $\propto1/(\beta^0)^2$ for the last digits where the support has fewer than $N$ atoms) (from masses $s\cdot m/d$
+      on $5\times12$ Gaussian designs with 2-sparse truths the projection lies within 0.5\% of the minimum-norm fit at
+      $s = 10$ and has 1.0004 times basis pursuit's $\ell^1$ norm at $s = 10^{-4}$; at $s = 10^{-3}$ the loop is within
+      $10^{-8}$ of it only from $t\approx8.5\cdot10^6$). Noise with smooth paths (Stratonovich) never moves that
+      projection; a sampled-data update --- like It\^o's white noise --- does, through a closed-form change of $Q$ per
+      step, the conserved share of D$'''$.44's selection, which a mirror update on the curves removes; in the real loop
+      $\frac12e^2$ plus the Bregman divergences is a Lyapunov function of the joint adaptation. \emph{Open:} the
+      conserved law's implicit bias (its level shift couples the particles); moving centres and widths ($Q$ stays
+      conserved while the cohesion's $\alpha$-component vanishes, the mirror structure does not); the sampled-data
+      drift of the projection in closed form.
+    \item \emph{Done (Proposition D$'''$.43):} which kernels the colour of the measurement noise keeps. On a kernel
+      dictionary with coefficients that are differences of adaptive masses, label noise under an explicit (Euler)
+      update moves the fit along the exact fits by the gradient flow of $\tr\Psi(K)$ --- the step's It\^o drift, at a
+      rate $\propto h\sigma^2$, absent in continuous time and 25 times less under Heun's scheme at the step 0.5 ---: the
+      trace --- a weighted $\ell^1$ norm, basis pursuit as the step and the noise vanish --- for white noise, the
+      log-determinant of Fazel's heuristic (sparse Bayesian learning's log-det term) --- a support count --- for a slow
+      Markov noise, a concave penalty for every colour in the continuum. A sparse exact fit on fewer than $N$ atoms is
+      held by the slow selection once the correlation time passes a threshold that grows with the dictionary's
+      coherence, by the white one only where weighted basis pursuit recovers it. The slow selection recovered the sparse
+      truth where basis pursuit fails (its reduced flow on $10\times40$ Gaussian designs 0.75 and 0.60 of the 3- and
+      4-sparse truths against basis pursuit's 0.38 and 0.17, on Gaussian kernel dictionaries 1.00 against 0.85), and
+      label-noise descent at small $\sigma$ identified the support where its reduced flow does (four of eight
+      instances; the coefficients after a noiseless phase); sparse Bayesian learning matches or beats it (0.88 and
+      0.55): the contribution is the mechanism. The replicator's own masses: Proposition D$'''$.44. \emph{Open:} the
+      descent's pruning phase (fewer than $N$ atoms alive, $\lambda_{\min}(K)\to0$); the basins; noise that reaches the
+      adaptation through a closed loop.
+    \item \emph{Done (Proposition D$'''$.42):} several particles per class. With a class's particles together, the
+      positions' Hessian on the manifold of exact fits factors into the one-particle-per-class Hessian at the class
+      masses and the cohesion's within-class block, whatever the split of the class's mass: under the isotropic dither
+      the selection and its correction act on the class masses as with one particle per class (with $m$ the number of
+      particles) and the fractions within a class are frozen at Katzenberger's order --- but an anisotropic dither makes
+      the split felt at unequal splits, and measurement noise's cancellation holds on the equal split's invariant
+      subspace only, the cohesion breaking it by up to 10\% elsewhere. In the full loop the class masses follow the
+      per-class law at half the speed; from an unequal split the fractions moved away from the equal split while the
+      amplitudes visited the saturation, where the local laws do not hold. \emph{Open:} separated particles of one
+      class (the split's onset, Proposition D$'''$.35, under dither); the order-$\gamma^2\tau$ drift of the fractions;
+      the real loop.
+    \item \emph{Done (Proposition D$'''$.41):} what measurement noise does to the gauge. Noise in the error enters along
+      the descent's own vector fields, which are orthogonal to the manifold of exact fits in the flow's metric; the
+      limit map's invariance then makes the Wong--Zakai term cancel Katzenberger's It\^o drift exactly: in continuous
+      time, for a noise white on the orbit's resolution and of any temporal spectrum, the masses neither diffuse nor
+      drift along the manifold at leading order (other noise structures over the nodes leave an $O(\gamma)$ residual).
+      Only an update that draws the noise afresh selects --- label-noise SGD's flat-minimum bias, on the replicator's
+      masses a strictly convex potential whose minimiser is interior, its form depending on the coordinates of the
+      update ---, and for correlated draws the increment's second moment selects, not the noise's variance: each pair of
+      normal modes is weighted by a linear-response factor, the potential passing from the trace (Damian--Ma--Lee's
+      finite-step form for fresh draws) to $(1/\tau_c)\log\det(I + \tau_c\nabla^2J)$ as a Markov noise slows ---
+      concave for every colour ---; a slow Markov measurement noise selects as a dither of the flow's own mobility does,
+      and at a finite replicator rate the coloured selection is multistable: three stable targets, each with one class's
+      mass large. \emph{Open:} the order-$v^2$ motion; the real loop's sampled-data implementation; which target a given
+      start reaches, beyond the instance.
     \item \emph{Done (Proposition D$'''$.39):} the dithered loop's stationary law. Without a prior the energy is
       bounded on the unconstrained coordinates, so the dithered positions have no stationary law at all: the prior
       leak's confinement went with its bias. The way out of the exact fit's well is a climb, without a saddle on the
