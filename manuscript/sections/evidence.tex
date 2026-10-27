@@ -593,7 +593,8 @@ Script: \code{exp_ot_basin.py} $\to$ \code{chaos/ot_basin.md}.
 % results/RESULTS_PARADIGM.md as committed at 29f9394, those on Proposition D'''.32 and Corollary D'''.33 as committed
 % at 1ddff8c (manuscript part 4f), that on Proposition D'''.34 as committed at 9d122dd (manuscript part 4g), that on
 % Proposition D'''.35 as committed at 2e5eb10 (manuscript part 4h), those on Propositions D'''.36 and D'''.37 as
-% committed at c054367 and 5952611 (manuscript part 4i).
+% committed at c054367 and 5952611 (manuscript part 4i), those on Propositions D'''.38 and D'''.39 as committed at
+% 5d14f92 and 5b747b9 (manuscript part 4j).
 \subsection{Theorem D\texorpdfstring{$'''$}{'''}.23: adaptive priors}
 
 Script: \code{exp_adaptive_prior.py} $\to$ \code{chaos/adaptive_prior.md}.
@@ -1230,6 +1231,80 @@ Script: \code{exp_gauge_drift.py} $\to$ \code{chaos/gauge_drift.md}.
   \item Tests (\code{tests/test_gauge_drift.py}): the identities on flows with known limit maps and on an integrated
     one; the diffusion against D$'''$.36's projection; the slow limit against the log-determinant law; the
     split-invariance of the log-determinant within a class.
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.38: a Fixman correction for the replicator under dither}
+
+Script: \code{exp_gauge_fixman.py} $\to$ \code{chaos/gauge_fixman.md}.
+\begin{itemize}
+  \item Proposition D$'''$.36's instance at $\tau = 10^{-4}$; the correction
+    $\kappa_F(\tau/m)(1 + \hat W_k^2/W_k^2)/(W_k - \hat W_k^2/W_k)$ on the replicator's fitness, $\hat W_k$ from the
+    classes' contributions (the masses form) or from the current amplitudes (the plug-in form), equal on $M$. (A) At
+    $\kappa_F = 1$ the corrected drift is 0.31, 0.07, $2\cdot10^{-3}$ and $7\cdot10^{-4}$ of the uncorrected at
+    $W = 1/3$ for $\gamma = 10^{-2}$, $5\cdot10^{-3}$, $10^{-3}$, $10^{-4}$ ($O(\gamma^2\tau)$ against
+    $O(\gamma\tau)$); from $\gamma = 2\cdot10^{-3}$ on it is reversed (the finite-$\gamma$ projection weighs the
+    correction's drift more than the dither's: 74\% and 57\% of their slow limits at $\gamma = 10^{-2}$), at
+    $\gamma = 2\cdot10^{-2}$ by the factor 1.6.
+  \item (B) At $\kappa_F = 2$ the corrected field's zero is the D-optimal fit $W^\sharp = (0.3765, 0.2988, 0.3247)$
+    (the largest $\det\nabla^2_\Theta J$; not the best-conditioned --- the condition number is nearly flat along $M$)
+    to $2\cdot10^{-4}$ or better, attracting, the linearised spread there 0.040, 0.014, 0.0046 at $\gamma = 10^{-2}$,
+    $10^{-3}$, $10^{-4}$ ($\propto\sqrt\gamma$); at $\kappa_F = 1$ the remainder's zero is attracting at
+    $\gamma = 10^{-2}$ but repelling at $10^{-3}$ and $10^{-4}$. (C) In Katzenberger's limit near the saturation the
+    density's exponent is $-0.99$, $-0.00$, $+0.98$ for $\kappa_F = 0$, 1, 2 (predicted $\kappa_F - 1$); (H) across
+    the implemented floor's cap ($\delta_{\mathrm{cap}} = 0.00126$) it falls back toward $-1$, as predicted to
+    $10^{-3}$.
+  \item (D, E) In the full loop ($\gamma = 10^{-2}$, 12 seeds, $10^6$ slow units; the plug-in form re-run with the
+    implemented floor, the masses form with $\hat A$ fixed) the correction keeps the amplitudes out of the saturation
+    (the seeds' mean of the largest $\abs{\alpha_1}$ 4--6 against $6.6\to11.3$ without, no record beyond a saturation;
+    at $\kappa_F = 1$ excursions along $M$ into a layer, 1\% of the third class's last-quarter records with
+    $\abs{\alpha_3} > 10$); at $\kappa_F = 2$ the second half's mean is within 1.07 s.e.\ of $W^\sharp$ and of the mean
+    path (plug-in) and within 1.0 (masses form); at $\kappa_F = 1$ within 1.5 s.e.\ of both $W^\sharp$ and the mean
+    path, which the run cannot tell apart; equipartition with the rms fit error: $p_{\mathrm{eff}} = 8.96$--$9.04$
+    with the correction, 8.06 without (a saturated amplitude holds no fit energy), the dither's level read back to
+    0.4\%.
+  \item (F) With the leak ($\gamma = 3\cdot10^{-3}$, $\varepsilon = 10^{-4}$, 16 seeds): two seeds' positions escape
+    the exact fit's well in every form; the masses form keeps the masses where the leak holds them (0.31--0.35), the
+    plug-in form moves them over 0.21--0.46, a running average of $\hat A$ drifts with the escape; on the other 14
+    seeds the bias reverses as predicted (within 1.1 s.e.\ of the first order, 1.3 of the second).
+  \item (G) Inside the leak's window ($\gamma = 10^{-2}$, $\varepsilon = 3\cdot10^{-4}$, 16 seeds): the shifts
+    ($-0.0013$, $+0.0011$, $+0.0002$), ($+0.0000$, $+0.0003$, $-0.0003$), ($+0.0012$, $-0.0005$, $-0.0007$) at
+    $\kappa_F = 0$, 1, 2 are within 1.03 s.e.\ of the second order --- the drift balance plus the fluctuations' term
+    through the leak's curvature, ($-0.0004$, $+0.0002$, $+0.0002$) at $\kappa_F = 0$ ---, the paired differences
+    within 0.93 s.e.\ of it
+    (the first order 1.2--4.8 s.e.\ off): ``the bias gone at $\kappa_F = 1$'' is the finite-$\gamma$
+    over-compensation cancelled by the fluctuation term. The same term accounts for Proposition D$'''$.37's Part G at
+    $\varepsilon = 10^{-4}$ and $10^{-3}$ (within 1.7 s.e.).
+  \item Tests (\code{tests/test_gauge_fixman.py}): the correction as $(\tau/2)\partial_\beta\ell$ along $M$; no
+    correction without dither; the slow-limit cancellation; the gain's zero at $W^\sharp$; the density exponents and
+    the floor's cap; the general form reducing to the closed form; the masses form equal to the plug-in form on $M$
+    and blind to an amplitude's excursion at fixed masses; the tracked contributions fixed on $M$ and relaxing at
+    their time constant; \code{kappa()} as the leak's projected stiffness; the analysis' statistics on synthetic
+    records (\code{tests/test_runcache.py}: the cache key carries the code's version).
+\end{itemize}
+
+\subsection{Proposition D\texorpdfstring{$'''$}{'''}.39: dissipativity of the dithered gauge}
+
+Script: \code{exp_gauge_plateau.py} $\to$ \code{chaos/gauge_plateau.md}.
+\begin{itemize}
+  \item Proposition D$'''$.36's instance at $\tau = 10^{-4}$; the box $L = (5, 3, 4)$ in the unconstrained
+    coordinates $(\alpha,\gamma,\kappa)$, $\sigma_B = 1$. (A) The plateau of approximate fits with one amplitude
+    saturated lies $7.6$--$7.8\tau$ above the exact fit at $W = 1/3$ and at $W^\sharp$ (fit error 0.035), $7.66\tau$
+    at the box's edge: the box bounds the plateau, it does not raise it. (B) At $W = 1/3$ the minimum-energy path
+    climbs to it monotonically.
+  \item (C) At fixed masses the escapes occur at $(1.33, 4.06, 10.9)\cdot10^{-6}$ per slow unit for $\tau = 1.5$, 2,
+    $3\cdot10^{-4}$ (10, 19, 24 of 24 seeds within $4\cdot10^5$), the Arrhenius slope $(0.81\pm0.14)$ of
+    $\Delta J = 7.69\cdot10^{-4}$ at $\Delta J/\tau = 2.6$--$5.1$ (weighted by the escape counts), within 1.3 standard
+    errors of Freidlin--Wentzell's limit. (D) Without the box the plateau's occupation grows ($0.18\to0.57$ of the
+    records by quarters, the largest $\abs{\alpha}$ to 27.6); with it it stays at 0.09--0.19 and
+    $\abs{\alpha}\le5$. (E) In the full loop with the box ($\gamma = 10^{-2}$, 12 seeds, $10^6$ slow units) each run
+    is the unboxed one until a coordinate leaves $B$; at $\kappa_F = 0$ the masses' spread at $10^6$ is 0.05--0.075
+    against 0.08--0.15 without the box, on their way to $P_B$'s vertices; at $\kappa_F = 2$ within 0.41 s.e.\ of
+    $W^\sharp$. (F) Without a leak all but one of the records with $\abs{\alpha_k} > 10$ have their mass within 0.01
+    of the saturation and the exact fit's error; with the leak every such record is off $M$ ($W_k$ more than 0.05
+    above the saturation, the fit error 0.041--0.043).
+  \item Tests (\code{tests/test_gauge_plateau.py}): the dead zone inactive inside the box, minus its $G$-gradient
+    outside; $J$ bounded on the unconstrained coordinates and $J + V$ coercive; the box's wall and vertices; a run
+    inside the box bit for bit the unboxed one.
 \end{itemize}
 
 % ------------------------------------------------------------------------------------------------ E

@@ -223,7 +223,9 @@ Each branch states what is proved, what is open, and the first concrete step.
     % manuscript part 4e; the Corollary D'''.33 and Proposition D'''.32 bullets as committed at 1ddff8c (part 4f);
     % Proposition D'''.34's bullet, before them in PARADIGM.md, as committed at 9d122dd (part 4g); Proposition
     % D'''.35's bullet, before D'''.34's, as committed at 2e5eb10 (part 4h); Propositions D'''.37's and D'''.36's
-    % bullets, before D'''.35's and in that order, as committed at 5952611 and c054367 (part 4i).
+    % bullets, before D'''.35's and in that order, as committed at 5952611 and c054367 (part 4i); Propositions
+    % D'''.39's and D'''.38's bullets, before D'''.37's and in that order, as committed at 1cefb5f and 5d14f92
+    % (part 4j).
     \item \emph{Done (Proposition D$'''$.12):} the barycentric OT leak's mass constraint against the weight
       fluctuation. The nearest-atom leak conserves the cluster masses, and the finite-$m$ floor of
       Proposition D$'''$.5 is the memory of the initial cloud that this conservation carries; the OT leak constrains
@@ -279,6 +281,31 @@ Each branch states what is proved, what is open, and the first concrete step.
       infinity (the best approximant on the saturation boundary, as for a sharp friction step, a cogging function that
       two kernels fit as a dipole, or Proposition D$'''$.29's servo globally), where only the projected prior keeps the
       parameters bounded; vector amplitudes, where the margins have no closed form.
+    \item \emph{Done (Proposition D$'''$.39):} the dithered loop's stationary law. Without a prior the energy is
+      bounded on the unconstrained coordinates, so the dithered positions have no stationary law at all: the prior
+      leak's confinement went with its bias. The way out of the exact fit's well is a climb, without a saddle on the
+      instance, to a plateau of approximate fits with saturated amplitudes about $7.7\tau$ higher, on which those
+      amplitudes diffuse freely. The escape runs at a rate close to Arrhenius's at the instance's moderate barriers
+      (the weighted slope $0.81\pm0.14$ of the barrier), and in the stored runs the two channels to the saturation
+      separate cleanly: along the manifold without a leak, off it with the masses held by the leak. A dead zone on a
+      box of the unconstrained coordinates restores a unique stationary law and leaves the deterministic objects inside
+      the box --- the exact fits, the noiseless flow --- unchanged (not the stationary law's occupation, which the box
+      sets); the gauge's saturation becomes a non-degenerate wall at which the entropic drift ends, and the Fixman correction still selects the D-optimal fit. \emph{Open:} the plateau's occupation in
+      the box's stationary law as a function of the box; a box chosen from data; several particles per class (the
+      within-class masses are neutral at leading order and have their own unbounded direction, the log-ratios).
+    \item \emph{Done (Proposition D$'''$.38):} a remedy for the dither's drive into the saturation. Adding to the
+      replicator's fitness the derivative of the log-determinant free energy with a gain $\kappa_F$ --- a Fixman
+      correction, in closed form on the masses, which makes the corrected loop a gradient flow with a log-barrier on
+      the representable masses --- cancels the entropic drift to leading order at $\kappa_F = 1$ and, for
+      $\kappa_F > 1$, reverses it: the masses climb the strictly concave log-determinant to its unique maximiser, the
+      D-optimal exact fit (in the full loop within 1.1 standard errors, with the spread of the linearised limit). Near
+      the saturation the density goes like $\delta^{\kappa_F - 1}$ instead of $\delta^{-1}$ for the unfloored
+      correction (the implemented floor restores $\delta^{-1}$ within 0.00126 of it); with a leak the pinned state is
+      predicted to second order --- the fluctuations acting through the leak's curvature, which also explains
+      D$'''$.37's excess. Evaluated at the current amplitudes (the plug-in form) the correction reads the positions'
+      escapes off the manifold as masses at their saturation and moves them; on the masses alone it does not.
+      \emph{Open:} several particles per class; the real loop; $\hat A$ from data on a changing target; a floor that
+      shrinks with $\tau$.
     \item \emph{Done (Proposition D$'''$.37):} where dither drives the replicator's masses. The drift of the masses
       along the manifold of exact fits is of the order of their diffusion; in the slow-replicator limit it is the
       replicator flow of the entropic free energy $(\tau/2)\log\det$ of the positions' Hessian (checked to 0.3\%),

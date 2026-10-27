@@ -242,7 +242,8 @@ is a delta-method statement, new in its object.}
   % The items Theorem D'''.23 to Corollary D'''.33 are LITERATURE_TRANSPORT.md's audit bullets as committed at 1ddff8c
   % (D'''.25 has none), the item Proposition D'''.34 as committed at 9d122dd (manuscript part 4g; the D'''.32 item is
   % unchanged there), the item Proposition D'''.35 as committed at 2e5eb10 (manuscript part 4h), the items
-  % Propositions D'''.36 and D'''.37 as committed at c054367 and 5952611 (manuscript part 4i). Its references
+  % Propositions D'''.36 and D'''.37 as committed at c054367 and 5952611 (manuscript part 4i), the items
+  % Propositions D'''.38 and D'''.39 as committed at 5d14f92 and 5b747b9 (manuscript part 4j). Its references
   % [S..] are the bibitems S.. of refs.tex; [1], [3], [4], [6]--[8], [30], [49]
   % and [55] (review/LITERATURE_refs.md) are sanner1992, x-ioannou1983 (Ioannou--Kokotovic's sigma-modification),
   % ioannou1996, R6--R8, R30, R49 and R55; [S9] (the standard references) is sb1989 where it is cited for
@@ -522,6 +523,39 @@ is a delta-method statement, new in its object.}
     saturating amplitude, which slows but does not stop it; and the entropic leak's bias $\kappa^{-1}b(w)$. Numerics:
     \code{exp_gauge_drift.py}. Verdict: classical limits (Katzenberger, Li--Wang--Arora, averaging) applied; a new
     mechanism for the replicator's gauge under dither.
+  \item \emph{Proposition D$'''$.38 (a Fixman correction for the replicator under dither).} That a stiff system's free
+    energy along its soft directions carries a log-determinant, and that adding the opposite term makes the
+    constrained dynamics sample as intended, is Fixman's (the log-det term the stiff limit's zero-point term, Helfand;
+    disputed in the overdamped setting by Waszkiewicz--Lisicki); the drift corrections between stiff bonds and rigid
+    constraints are Hinch's, and the projected diffusions and the mean force on submanifolds are
+    Ciccotti--Leli\`evre--Vanden-Eijnden's (\cite{S66}); removing a free-energy drift online is the adaptive biasing
+    force method, a gain on it well-tempered metadynamics' bias factor, and the max-det maximiser of a log-barrier is
+    classical in convex optimisation (\cite{S66}); the log-determinant drift itself is Li--Wang--Arora's for isotropic
+    noise (\cite{S64}) and \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s for the replicator. What is specific
+    here: the correction for the replicator's gauge, applied online to the masses only, in closed form on the masses
+    --- a log-barrier on the representable masses, the corrected loop a gradient flow --- and the distinction between
+    that masses form and the form at the current amplitudes, which reads the positions' escapes off the manifold as
+    masses at their saturation; the selection of the D-optimal exact fit $W^\sharp$ with the gain and the confinement
+    exponent $\delta^{\kappa_F - 1}$ are applications; the leak's pinned state predicted to second order (the
+    fluctuations through the leak's curvature, which the paired seeds resolve). Numerics: \code{exp_gauge_fixman.py}.
+    Verdict: a classical correction carried to a new setting, with a new design knob.
+  \item \emph{Proposition D$'''$.39 (dissipativity of the dithered gauge).} That a Langevin dynamics needs a confining
+    potential to have an invariant probability law is classical (Mattingly--Stuart--Higham; in learning,
+    Raginsky--Rakhlin--Telgarsky's dissipativity), as are the exit times' exponential order (Freidlin--Wentzell;
+    sharp, Bovier--Eckhoff--Gayrard--Klein) and parameter projection with its Lipschitz boundary layer (Ioannou--Sun,
+    Pomet--Praly), and the dead zone itself is the Moreau--Yosida envelope of the box's indicator, with which MYULA
+    samples on a convex set (Durmus--Moulines--Pereyra; Brosse et al.) --- a switching $\sigma$-modification in
+    adaptive control (\cite{S67}). What is specific here: the cohesion leak's removal of the prior
+    (\hyperref[res:thmDppp:32]{Proposition D$'''$.32}) removes with it the dissipativity the prior leak gave the
+    dithered loop; on the instance the dither's way out of the exact fit's well is a monotone climb, without a saddle,
+    to a plateau of approximate fits with saturated amplitudes; the dead zone on the unconstrained coordinates
+    replaces the gauge's saturation by a non-degenerate wall, so the entropic drift of
+    \hyperref[res:thmDppp:37]{Proposition D$'''$.37} ends at the vertices of the representable polytope (at leading
+    order: the envelope is $C^{1,1}$, so the drift's description has a boundary layer at the faces), and keeps
+    \hyperref[res:thmDppp:38]{Proposition D$'''$.38}'s selection of $W^\sharp$; it leaves the deterministic objects
+    inside the box unchanged, not the stationary averages, which weigh the plateau where it meets the box. Numerics:
+    \code{exp_gauge_plateau.py}. Verdict: classical ingredients; the loss of dissipativity under the cohesion leak and
+    its consequences for the gauge are new.
 \end{itemize}
 
 \begin{proof}
@@ -5463,11 +5497,15 @@ gradient flow the $g$-orthogonal projection of \hyperref[res:thmDppp:36]{Proposi
     about $0.1\delta^*$ of a saturation the transverse mass fluctuations are as large as the distance itself, and the
     description in the coordinates $W$ breaks down.
   \item \emph{(the leak's bias)} With the entropic leak of \hyperref[res:thmDppp:36]{Proposition D$'''$.36}(iii) the
-    pinned state is shifted by $\kappa^{-1}b(w) + O(\tau^2/\varepsilon^2)$: the bias is $O(\tau/\varepsilon)$ and its
-    direction is the dither's drift at the target's fractions; the first-order statement needs the spread
-    $O(\sqrt{\tau/\varepsilon})$ small against the scale on which $b$ and $D$ vary, and the leak's stiffness below the
-    slowest normal rate ($3.06\cdot10^{-4}$ on the instance): $\tau\ll\varepsilon\ll3\cdot10^{-4}$, which the instance
-    barely meets. In the amplitude coordinate the leak's force on a saturating class grows as
+    limit SDE on $M$, $\dd W = f(W)\,\dd s + D^{1/2}\dd B$ ($f = b$ + the leak's projected force), has the stationary
+    mean $E[W] = W_0 - J^{-1}\cdot\tfrac12\partial^2f[C] + \dots$, $W_0$ the zero of $f$ ($= w + \kappa^{-1}b(w)$ to
+    first order), $J = \partial f(W_0)\approx-\kappa$, $JC + CJ^\T + D = 0$: the bias is $O(\tau/\varepsilon)$ --- the
+    drift balance $\kappa^{-1}b(w)$, whose direction is the dither's drift at the target's fractions, and the
+    fluctuations acting through the curvature of $f$, almost all of it the leak's projected force, whose stiffness
+    varies on the scale of the distance to the saturation (of the same order on the instance,
+    \hyperref[res:thmDppp:38]{Proposition D$'''$.38}(iv)). The expansion needs the spread $O(\sqrt{\tau/\varepsilon})$
+    small against the scale on which $b$ and $D$ vary, and the leak's stiffness below the slowest normal rate
+    ($3.06\cdot10^{-4}$ on the instance): $\tau\ll\varepsilon\ll3\cdot10^{-4}$, which the instance barely meets. In the amplitude coordinate the leak's force on a saturating class grows as
     $\dd W_k/\dd\alpha_k\to0$, so the leak does restore what the layer does not.
 \end{enumerate}
 \end{thm}
@@ -5491,13 +5529,16 @@ $\beta_\perp\beta_\perp^\T\otimes Q$ + cohesion on the separations, whose Schur 
 $a'_k\approx2(W_k - \abs{A_k}/a_{\max})/W_k$; the rates: $\partial^2J/\partial\alpha_k^2 = m\Gamma_{kk}W_k^2a_k'^2$
 and, through the masses, $\dd e_k/\dd s = -\gamma W_ka_k^2\Gamma_{kk}e_k$ for the residual's coefficient
 $e_k = W_ka_k - A_k$; inside the layer the limit map moves along $\alpha_k$, and $W = A/a(\alpha)$ is convex in
-$\alpha$ ($a = a_{\max}\tanh(\alpha/a_{\max})$), so its It\^o term is positive. (iv) The fixed point of
-$b(W) - \kappa(W)(W - w) = 0$ expanded in $b = O(\tau)$.
+$\alpha$ ($a = a_{\max}\tanh(\alpha/a_{\max})$), so its It\^o term is positive. (iv) The zero $W_0$ of
+$f = b(W) - \kappa(W)(W - w)$ expanded in $b = O(\tau)$ is the drift balance; stationarity, $E[f(W)] = 0$, expanded at
+$W_0$ to second order in the spread gives $J(E[W] - W_0) + \tfrac12\partial^2f[C] = O(\abs{C}^{3/2})$, $C$ the
+linearisation's stationary covariance ($JC + CJ^\T + D = 0$) --- the small-noise expansion of a stationary mean.
 \end{proof}
 \status{(i) proved (given Katzenberger's theorem; checked against the integrated limit map); (ii) the averaging and
 Laplace steps sketched, the law checked to three digits at $\gamma = 10^{-5}$; (iii) the divergence proved, the layer's
 scale by the crossing of the rates, the inside law sketched (checked to 0.6\%), the non-normalisability inside the
-layer from the driftless $\alpha$-diffusion (the full loop's excursions growing, (H)); (iv) a first-order statement.
+layer from the driftless $\alpha$-diffusion (the full loop's excursions growing, (H)); (iv) the drift balance and the second-order
+stationary mean sketched (the small-noise expansion; its window $\tau\ll\varepsilon\ll3\cdot10^{-4}$ not quantified).
 Classical: the second derivative of the limit map and its use for the noise-driven drift along a manifold of minima
 (Katzenberger; Li--Wang--Arora, \cite{S64}), averaging and the free energy of fast variables (the potential of mean
 force), Laplace's method, the preference of noisy gradient dynamics for flat minima (\cite{S65}); the
@@ -5542,10 +5583,11 @@ $(-0.0013\pm0.0004, +0.0011\pm0.0002, +0.0002\pm0.0003)$ and $(-0.0003, +0.0003,
 $\kappa^{-1}b(w) = (-0.0009, +0.0007, +0.0003)$ and $(-0.0003, +0.0002, +0.0001)$, within 1--2 standard errors, the
 spreads within 5\% of \hyperref[res:thmDppp:36]{Proposition D$'''$.36}(iii)'s; at $\varepsilon = \tau = 10^{-4}$ the
 shift $(-0.0051\pm0.0014, +0.0040\pm0.0007, +0.0011\pm0.0011)$ is about 1.8 times $\kappa^{-1}b$ and the spreads
-(0.0165, 0.0112, 0.0114) 9--19\% above the linear prediction --- the first-order statement (iv) is approximate for
+(0.0165, 0.0112, 0.0114) 9--19\% above the linear prediction --- (iv)'s drift balance alone is approximate for
 $\varepsilon\gtrsim3\tau$ and fails at $\varepsilon = \tau$, where the masses' excursions reach where $b$ and $D$ vary;
 the second component is above $\kappa^{-1}b$ at every $\varepsilon$ (by 2.8, 2.1 and 1.7 standard errors, the same
-seeds for the three $\varepsilon$, so not independent checks), and at $\varepsilon = 10^{-3}$ the leak's stiffness
+seeds for the three $\varepsilon$, so not independent checks) --- (iv)'s fluctuation term: with it 1.7, within 1.03
+in every component (\hyperref[res:thmDppp:38]{Proposition D$'''$.38}'s Part G at $\kappa_F = 0$) and 0.8 ---, and at $\varepsilon = 10^{-3}$ the leak's stiffness
 exceeds the slowest normal rate: the window $\tau\ll\varepsilon\ll3\cdot10^{-4}$ of (iv) is barely met. (H) Without a
 leak over $10^6$ slow units (12 seeds) the masses leave 1/3 and spread toward the saturations: the fraction of seeds
 within 0.02 of a class's saturation grows to 0.50, 0.25, 0.33 at $10^6$ (0.17, 0, 0 at $10^5$), the amplitudes reaching
@@ -5556,6 +5598,396 @@ beyond their saturation --- off the manifold of exact fits --- in 11\% and 12\% 
 them. The limit SDE on $M$ (4000 paths on E's field) gives means within 1.6 standard errors of the 12 seeds' except the
 third at $10^6$ (2.2), and its near-saturation fractions 0.30, 0.18, 0.26 and spreads 0.10--0.13 against 0.08--0.15;
 confined to the grid ($W_k\ge\abs{A_k}/a_{\max} + 0.004$), it cannot test the saturation itself.
+\end{sloppypar}
+
+% Proposition D'''.38 with its proof sketch, Status and numerics (PARADIGM.md section 5d, round-28 version, as committed
+% at 5d14f92; the numbers are PARADIGM's copies of results/chaos/gauge_fixman.md). The anchor res:thmDppp:38 is a
+% \hyperref target, as res:thmDppp:21 is. The references [S64], [S66] (LITERATURE_TRANSPORT.md) are the bibitems S64 and
+% S66 of refs.tex. PARADIGM's potential Phi := kappa_F(tau/2)ell is written \Phi_c here, to keep it apart from the limit
+% map Phi of Propositions D'''.36 and D'''.37 (PARADIGM's proof writes the limit map's derivative as dPhi in the same
+% sentence); the Jacobian J = df(W_0) of (iv) is written J_f, to keep it apart from the energy J. Proposition D'''.40,
+% which the text cites, is not stated in PARADIGM.md (in progress), so the citation is plain text.
+\begin{thm}{Proposition}{D$'''$.38}[a Fixman correction for the replicator under dither: the entropic drift cancelled,
+or reversed toward the D-optimal exact fit]\phantomsection\label{res:thmDppp:38}%
+In the setting of \hyperref[res:thmDppp:37]{Proposition D$'''$.37} (one particle per class, the replicator at rate
+$\gamma$, the positions dithered at the level $\tau$, the manifold $M$ of exact fits with
+$\ell = \log\det\nabla^2_\Theta J$ along it), add to the replicator's fitness the correction
+\[
+  c_k := \kappa_F\frac\tau2\,\partial_{\beta_k}\ell(\beta/m)
+  = \kappa_F\frac\tau m\,\frac{1 + \hat W_k^2/W_k^2}{W_k - \hat W_k^2/W_k},\qquad
+  W_k = \beta_k/m,\quad \hat W_k = \abs{\hat A_k}/a_{\max},
+\]
+with a gain $\kappa_F\ge0$ and $\hat A_k$ the classes' contributions to the fit (on $M$, $\hat A_k = W_ka_k = A_k$ and
+$\hat W_k = W_{\min,k}$): \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s closed form
+$\ell(W) = 2\sum_k\log(W_k - W_{\min,k}^2/W_k) + \text{const}$ differentiated in the masses --- the masses form. It
+needs the dither's level, the saturation bound and the classes' contributions, vanishes without dither, acts on the
+masses only ($\sum\beta = m$ is kept), and with $\hat A$ fixed is the replicator's fitness of the potential
+$\kappa_F(\tau/2)\ell$, a function of the masses alone, as in Fixman's correction of stiff constraints (a potential on
+the soft coordinates computed on the constraint manifold). The corrected loop's deterministic part is then the gradient
+flow of $J - \kappa_F(\tau/2)\ell(W)$ in \hyperref[res:thmDppp:34]{Proposition D$'''$.34}'s metric: $\ell$, which tends
+to $-\infty$ at every saturation, enters as a log-barrier on the representable masses (the implementation floors the
+denominator at $0.01W_k$, see (iii)). The plug-in form, $\hat W_k = W_k\abs{a_k}/a_{\max}$ at the current amplitudes,
+i.e.\ $\kappa_F(\tau/m)(1 + (a_k/a_{\max})^2)/(W_ka'_k)$, $a'_k = 1 - (a_k/a_{\max})^2$, equals it on $M$ and depends on
+the amplitudes; it is $\kappa_F\tau g'_k(\alpha_k)$ with $g_k = a_k/(\beta_ka'_k)$. Since
+$\partial_{\alpha_k}J = -u_k/g_k$ (the gauge), one integration by parts gives
+$\langle u_k\rangle = -\tau\langle g'_k\rangle$ in the positions' quasi-stationary law in the exact fit's well at fixed
+masses (Proposition D$'''$.40(i); the global Gibbs law has no such identity, $\langle g'_k\rangle$ diverging on the
+plateau of saturated fits): under that law the plug-in form cancels the slow-limit fitness to every order in $\tau$,
+the masses form to Laplace's order.
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(the cancellation)} On the slow time scale the correction --- an $O(\tau)$ perturbation $F_c$ of the
+    flow --- adds $\partial W\cdot P\cdot F_c$ to the drift of \hyperref[res:thmDppp:37]{Proposition D$'''$.37}(i),
+    $P$ the projection onto the tangent of $M$ along the range of the linearisation, $F_c$ evaluated on $M$ (so
+    (i)--(iv) hold for both forms). $F_c$ is the flow's gradient of $\Phi_c := \kappa_F(\tau/2)\ell$, a function of the
+    masses, so exactly $P\cdot F_c = (T^\T gT)^{-1}\nabla_W\Phi_c$, $T$ the tangent of $M$ in the masses' chart and $g$
+    the flow's metric. In the slow-replicator limit the masses' own coordinates dominate $T^\T gT$ and $P\cdot F_c$ is
+    the replicator flow ascending $\Phi_c$, so the masses' drift is the replicator flow of the potential
+    $(1 - \kappa_F)(\tau/2)\ell$ plus $O(\gamma^2\tau)$, on compact sets of the representable masses outside the layers
+    of \hyperref[res:thmDppp:37]{Proposition D$'''$.37}(iii): at $\kappa_F = 1$ the entropic drift is cancelled to
+    leading order, and what remains, $O(\gamma^2\tau)$, is of the order of the diffusion $D = O(\gamma^2\tau)$, its
+    direction not controlled by the correction. At finite $\gamma$ the amplitudes' share of $T^\T gT$ grows, and the
+    dither's drift falls below its slow limit faster than the correction's (to 57\% and 74\% of them at
+    $\gamma = 10^{-2}$, $W = 1/3$): at $\kappa_F = 1$ the correction over-compensates once $\gamma$ is a few
+    $10^{-3}$ --- the net drift reversed from $\gamma\approx2\cdot10^{-3}$ on, at 31\% of the uncorrected drift's size
+    at $\gamma = 10^{-2}$.
+  \item \emph{(the gain: the D-optimal fit)} For $\kappa_F > 1$ the masses ascend $\ell$. Each term of $\ell$ is
+    strictly concave in $W_k$ on the representable masses and tends to $-\infty$ at the saturation, so $\ell$ has a
+    unique maximiser $W^\sharp$ on the simplex, interior --- the exact fit whose positions' Hessian has the largest
+    determinant (D-optimal; the condition number along $M$ is nearly flat and minimised elsewhere), the repelling node
+    of \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s drift ---, and in the slow-replicator limit the masses
+    converge to it, deterministically on the time scale $1/((\kappa_F - 1)\gamma\tau)$, their spread there
+    $O(\sqrt{\gamma/(\kappa_F - 1)})$. With an estimate $\hat\tau$ of the dither's level in the correction the net
+    potential is $(\kappa_F\hat\tau/\tau - 1)(\tau/2)\ell$: the selection needs only $\kappa_F\hat\tau > \tau$ --- and
+    $\hat\tau$ can be read from the rms fit error by equipartition, $\hat\tau = m\langle F^2\rangle\langle e^2\rangle/p$
+    with $p$ the position coordinates holding fit energy (each stores $\tau/2$ of $J = (m/2)\langle r^2\rangle$; the
+    mean of $e$ is biased low by Jensen's inequality).
+  \item \emph{(the saturation)} For the correction as stated (unfloored): inside the layer of
+    \hyperref[res:thmDppp:37]{Proposition D$'''$.37}(iii), where the amplitude dominates the tangent of $M$ in the
+    flow's metric, the projected correction moves the saturating amplitude at
+    $\dd\alpha_k/\dd s = G_\alpha\partial_{\alpha_k}\Phi_c = -\kappa_FG_\alpha\tau(1 + (a_k/a_{\max})^2)/a_k
+    \to-2\kappa_FG_\alpha\tau/a_{\max}$. With the amplitude's noise $2\tau G_\alpha$ the zero-flux density of
+    Katzenberger's limit near the saturation behaves like $e^{-2\kappa_F\alpha_k/a_{\max}}$ in the amplitude coordinate
+    and like $\delta^{\kappa_F - 1}$ in $\delta := W_k - W_{\min,k}$: normalisable for every $\kappa_F > 0$, flat at
+    $\kappa_F = 1$ (excursions along $M$ into the layer are then unopposed),
+    \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s $\delta^{-1}$ at $\kappa_F = 0$; the mean drift descends
+    $(1 - \kappa_F)\ell$, so only for $\kappa_F > 1$ is the saturation repelling. The implementation floors the
+    denominator at $0.01W_k$: within $\delta_{\mathrm{cap}} = W_{\min,k}(1/\sqrt{0.99} - 1)$ (0.00126 for the first
+    class) of the saturation the correction stops growing, its contribution to the exponent falls from $\kappa_F$ to
+    $\kappa_F(1 - W_{\min,k}^2/W_k^2)/0.01\approx200\kappa_F\delta/W_{\min,k}$, and the density goes back to
+    $\delta^{-1}$ --- the mass near the saturation log-divergent in the $\tau\to0$ limit, as without the correction.
+    Normalisability needs the unfloored correction, or a floor that shrinks with $\tau$ (at the finite-$\tau$
+    threshold below, where the description in $W$ ends anyway). At finite $\tau$ the law needs
+    $\delta\gg(\kappa_F\tau/(ma_{\max}^2\Gamma_{kk}))^{1/2}$ ($\Gamma_{kk} = \langle\varphi_k^2\rangle_\rho$;
+    $0.003\sqrt{\kappa_F}$ for the first class on the instance): there the fit's overshoot, through which the masses
+    relax, leaves $a'_k$ at its value on $M$ and the two forms agree.
+  \item \emph{(with the leak)} With the entropic leak of \hyperref[res:thmDppp:36]{Proposition D$'''$.36}(iii) the
+    limit SDE on $M$, $\dd W = f(W)\dd s + D^{1/2}\dd B$ with $f = b_c + P\cdot F_{\mathrm{leak}}$, has the stationary
+    mean
+    \[
+      \E[W] = W_0 - J_f^{-1}\cdot\tfrac12\partial^2f[C] + \dots,\qquad J_fC + CJ_f^\T + D = 0,
+    \]
+    $W_0$ the zero of $f$ ($= w + \kappa^{-1}b_c(w)$ to first order, $b_c$ the corrected drift, $\kappa$ the leak's
+    stiffness along $M$), $J_f = \partial f(W_0)\approx-\kappa$, $C$ the masses' stationary covariance: the drift
+    balance --- $O(\gamma\tau/\varepsilon)$ without the correction, $O(\gamma^2\tau/\varepsilon)$ at $\kappa_F = 1$,
+    toward $W^\sharp$ at $\kappa_F > 1$ --- and the fluctuations acting through the curvature of $f$, almost all of it
+    the leak's projected force, whose stiffness varies on the scale $\delta$ of the distance to the saturation through
+    the finite-$\gamma$ weights of (i): $O(C/\delta) = O(\gamma^2\tau/(\varepsilon\delta))$, of the order of the drift
+    balance at the instance (30--70\% of it without the correction, larger than it at $\kappa_F = 1$). The window of
+    \hyperref[res:thmDppp:37]{Proposition D$'''$.37}(iv), $\tau\ll\varepsilon\ll{}$ the slowest normal rate, keeps the
+    expansion valid.
+  \item \emph{(off $M$: the forms differ)} Off $M$ the plug-in form reads the current amplitudes: an amplitude's
+    excursion at fixed masses --- the positions' own escape from the exact fit's well toward approximate fits with
+    saturated amplitudes, which the dither reaches at finite $\tau$ (Part F's two escaping seeds) --- is read as a mass
+    at its saturation, and the class is fed mass up to the correction's cap: the masses leave the state the leak or the
+    correction holds them in. The masses form does not see the excursion: the masses stay, and the escape remains the
+    positions' own. A running average of the classes' contributions in place of $\hat A$ inherits the plug-in form's
+    fault on the time scale of the average.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}[Proof sketch]
+The gradient structure: $c_k = \partial_{\beta_k}\Phi_c$ with $\Phi_c = \kappa_F(\tau/2)\ell(\beta/m)$, independent of
+$\Theta$, so the masses' fitness is $-\partial_\beta(J - \Phi_c)$ and the positions' drift
+$-G\nabla_\Theta(J - \Phi_c)$ (\hyperref[res:thmDppp:34]{Proposition D$'''$.34}). (i) Katzenberger's limit with an
+$O(\tau)$ perturbation of the drift adds $\partial\Phi\cdot F_c = P\cdot F_c$
+(\hyperref[res:thmDppp:36]{Proposition D$'''$.36}(ii)); the linearisation of a gradient flow is self-adjoint in its
+metric $g$, so $P$ is the $g$-orthogonal projection onto $T$, and with $gF_c = \nabla\Phi_c$,
+$P\cdot F_c = T(T^\T gT)^{-1}T^\T\nabla\Phi_c = T(T^\T gT)^{-1}\nabla_W\Phi_c$; in the slow-replicator limit $g$'s
+masses' block, of order $1/\gamma$, dominates $T^\T gT$, and
+$(T^\T gT)^{-1}\nabla_W\Phi_c\to\gamma W_k(c_k - \sum_lW_lc_l)$, the replicator flow ascending $\Phi_c$, which adds to
+\hyperref[res:thmDppp:37]{Proposition D$'''$.37}(ii)'s descent of $(\tau/2)\ell$. The closed form:
+$W_ka'_k = W_k - W_{\min,k}^2/W_k$ on $M$, and $\partial_{\beta_k} = m^{-1}\partial_{W_k}$. (ii) With
+$f(W) = \log(W - c/W)$, $c = W_{\min}^2$, $f'' = -2(W^2 + c)/(W^2 - c)^2 + 1/W^2 < 0$ for $W^2 > c$ (equivalent to
+$W^4 + 4cW^2 - c^2 > 0$); $f\to-\infty$ as $W\downarrow\sqrt c$; so $\ell$ restricted to the simplex is strictly
+concave with an interior maximiser, characterised by equal partial derivatives; the replicator flow ascending a
+strictly concave function converges to its maximiser (the Shahshahani gradient flow, with $\ell$ as its Lyapunov
+function). (iii) Inside the layer $\abs{\partial\alpha_k/\partial W_k} = a_k/(W_ka'_k)\to\infty$, so the amplitude's
+part of $T$ dominates $T^\T gT$ and $P\cdot F_c$ moves the configuration along $M$ at
+$\dd\alpha_k/\dd s = G_\alpha\partial_{\alpha_k}\Phi_c$, $\Phi_c$ read as a function of $\alpha_k$ on $M$
+($W_k = A_k/a_k$); there $\partial_{\alpha_k}\log(W_ka'_k) = a''_k/a'_k - a'_k/a_k = -(1 + (a_k/a_{\max})^2)/a_k$ for
+$a = a_{\max}\tanh(\alpha/a_{\max})$, which gives the stated drift; a one-dimensional diffusion with constant drift
+$-v$ and diffusion $2\tau G_\alpha$ has the density $e^{-v\alpha/(\tau G_\alpha)}$, and
+$\delta\propto e^{-2\alpha_k/a_{\max}}$ near the saturation; with the floor, $c_k$ is capped at
+$\kappa_F(\tau/m)(1 + W_{\min,k}^2/W_k^2)/(0.01W_k)$, the fraction $(1 - W_{\min,k}^2/W_k^2)/0.01$ of the unfloored
+value; the finite-$\tau$ condition compares $a'_k(M)\approx2\delta/W_{\min,k}$ with the overshoot's change of $a'_k$,
+$\approx2c_k/(W_ka_{\max}^2\Gamma_{kk})$, $c_k\approx\kappa_F\tau/(m\delta)$. (iv) Stationarity of $\E[W]$:
+$\E[f(W)] = 0$, expanded at $W_0$ to second order in $W - W_0$. (v) The plug-in form's denominator $W_ka'_k$ vanishes
+with $a'_k$ at fixed $W_k$; the masses form depends on the masses alone; a running average of $W_ka_k$ over an
+excursion with $a_k$ near $\pm a_{\max}$ tends to $W_k(\pm a_{\max})$, so its $\hat W_k$ tends to $W_k$.
+\end{proof}
+\status{(i) the slow-limit cancellation proved (given \hyperref[res:thmDppp:37]{Proposition D$'''$.37}(ii) and
+Katzenberger's theorem), the finite-$\gamma$ formula exact, the $O(\gamma^2\tau)$ remainder numerical; (ii) the
+concavity, the uniqueness and the slow-limit convergence proved; (iii) the projected drift proved on $M$ (given
+Katzenberger's theorem), the exponents checked in Katzenberger's limit ($\tau\to0$) --- the finite-$\tau$ statement is
+untested at the instance's $\tau$ --- and the floor's cap checked; (iv) the second-order expansion of the stationary
+mean (standard), checked on paired seeds to within one standard error; (v) a mechanism, numerical. The correction is
+the instance's: for one particle per class, through \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s closed form of
+$\ell$; for other architectures its general form, $\kappa_F(\tau/2)$ times the derivative of
+$\log\det\nabla^2_\Theta J$ along $M$ (through the implicit function $\Theta^*(\beta)$ of the exact fit), is the
+statement and the closed form its evaluation. Classical (\cite{S66}): the Fixman correction --- the log-determinant of
+the constraint metric added to the energy of a system with stiff constraints so that the flexible and the rigid
+ensembles agree (Fixman), the Brownian dynamics of stiff bonds against rigid constraints (Hinch), the projection of
+diffusions on submanifolds and the mean force (Ciccotti--Leli\`evre--Vanden-Eijnden); the log-determinant of the
+confining Hessian as the stiff limit's zero-point term (Helfand; in the overdamped setting Waszkiewicz--Lisicki, the
+``trimer paradox''); cancelling a free-energy drift along a slow coordinate online --- the adaptive biasing force
+method (Darve--Pohorille; Leli\`evre--Rousset--Stoltz) --- and a gain on such a bias, well-tempered metadynamics' bias
+factor (Barducci--Bussi--Parrinello); the log-barrier, its maximiser and the max-det (D-optimal) selection
+(Sonnevend; Nesterov--Nemirovski; Vandenberghe--Boyd--Wu); noise-induced drifts of the replicator dynamics
+(Fudenberg--Harris; Mertikopoulos--Viossat). New: the correction for the replicator's gauge --- online, in closed form
+on the masses ---, the distinction between its masses form and its plug-in form and the plug-in form's failure off
+$M$; the selection of the D-optimal fit and the confinement exponent $\delta^{\kappa_F - 1}$ are their applications.}
+
+% Numerics of Proposition D'''.38 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/gauge_fixman.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_gauge_fixman.py} $\to$ \code{results/chaos/gauge_fixman.md};
+\hyperref[res:thmDppp:36]{Proposition D$'''$.36}'s instance: three bumps, one particle per class at an exact
+representation, $m = 3$, $\tau = 10^{-4}$; the drifts from \code{gauge_drift.limit_drift} with the correction as the
+perturbation $F_1$, evaluated on $M$, where the two forms agree). (A) At $\kappa_F = 1$ the corrected drift over
+$\gamma\tau$ at $W = 1/3$ is $(+0.063, -0.034, -0.029)$, $(+0.020, -0.010, -0.010)$, $(-0.0007, +0.0006, +0.0001)$ and
+$(-0.0002, +0.0002, +0.0001)$ at $\gamma = 10^{-2}$, $5\cdot10^{-3}$, $10^{-3}$ and $10^{-4}$, against the uncorrected
+$(-0.206, +0.158, +0.048)$, $(-0.288, +0.203, +0.085)$, $(-0.350, +0.236, +0.115)$ and $(-0.361, +0.241, +0.120)$: the
+ratio of the largest components 0.31, 0.07, $2.1\cdot10^{-3}$ and $6.8\cdot10^{-4}$, the remainder $O(\gamma^2\tau)$ at
+small $\gamma$ (over $\gamma\tau$, $2.4\cdot10^{-4}$, $4.5\cdot10^{-4}$, $6.1\cdot10^{-4}$ at $\gamma = 1$, 2,
+$3\cdot10^{-4}$), reversed from $\gamma = 2\cdot10^{-3}$ on ($+0.0017$ in the first component, against $-0.337$) --- the
+correction's projected drift at $\gamma = 10^{-2}$ is 74\% of its slow limit, the uncorrected one 57\% of its own (from
+the table) ---; at $\gamma = 2\cdot10^{-2}$ the ratio is 1.6, and at $(0.40, 0.25, 0.35)$ and $(0.36, 0.30, 0.34)$ 1.3
+and 0.78, reversed as well. (B) $W^\sharp = (0.37652, 0.29876, 0.32472)$, $\abs{a}/a_{\max} = 0.66$, 0.59, 0.62 there,
+the D-optimal exact fit --- not the best-conditioned: the condition number of $\nabla^2_\Theta J$ is 649.9 at
+$W^\sharp$ and 648.6 at its minimiser along $M$ $(0.3546, 0.3277, 0.3177)$, nearly flat; at $\kappa_F = 2$ the
+corrected field's zero lies within $1.8\cdot10^{-4}$, $4.4\cdot10^{-5}$ and $5.4\cdot10^{-6}$ of $W^\sharp$ at
+$\gamma = 10^{-2}$, $10^{-3}$, $10^{-4}$, attracting, its eigenvalues $-(5.7$--$6.8)\gamma\tau$, the stationary spread
+of the limit SDE linearised there 0.040, 0.037, 0.038 at $\gamma = 10^{-2}$, $\propto\sqrt\gamma$ (0.014 at $10^{-3}$,
+0.0046 at $10^{-4}$); at $\kappa_F = 1$ the remainder's zero is attracting at $\gamma = 10^{-2}$
+($(0.379, 0.297, 0.324)$, the eigenvalues $-4.5\cdot10^{-7}$, $-5.5\cdot10^{-7}$) but repelling at $10^{-3}$ and
+$10^{-4}$ (near $(0.39, 0.29, 0.32)$, the eigenvalues $+16$--$19\gamma^2\tau$ and $+29$--$30\gamma^2\tau$): the neutral
+gain leaves the remainder's direction to the higher orders. (C) In Katzenberger's limit ($\tau\to0$), along
+$W_2 = W_3$, 0.002--0.004 from the first class's saturation (inside its layer at $\gamma = 10^{-2}$; at the instance's
+$\tau$ these $\delta$ are below the finite-$\tau$ threshold of (iii)), the exponent $\dd\log p/\dd\log\delta$ of the
+one-dimensional zero-flux density is $-0.99$, $-0.00$ and $+0.98$ for $\kappa_F = 0$, 1, 2, against $\kappa_F - 1$.
+(H) Across the floor's cap ($\delta = 0.0015$--$0.0004$; $\delta_{\mathrm{cap}} = 0.00126$) the exponent at
+$\kappa_F = 2$ falls from $+0.99$ to $-0.22$ ($+0.99$ to $+1.15$ without the floor), at $\kappa_F = 1$ from $+0.00$ to
+$-0.53$: the unfloored exponent minus $\kappa_F(1 - (1 - W_{\min}^2/W^2)/0.01)$ to $10^{-3}$. (D) The full loop with
+the plug-in form over $10^6$ slow units at $\gamma = 10^{-2}$, 12 seeds each, with the implemented floor, on the seeds
+of \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s Part H ($\kappa_F = 0$): the seeds' mean of the largest
+$\abs{\alpha_1}$ by quarters is 6.6, 10.1, 10.9, 11.3 without the correction, 5.0, 5.7, 5.1, 4.5 at $\kappa_F = 1$ and
+4.5, 4.7, 4.4, 4.1 at $\kappa_F = 2$ (the third class's $4.6\to11.5$, $3.7\to5.5$ and $3.5\to4.3$); the records beyond
+a saturation in the last quarter 11\% and 12\% of the first and third classes' without it, none with it, though at
+$\kappa_F = 1$ 1\% of the third class's last-quarter records have $\abs{\alpha_3} > 10$ (the largest over all the
+records 12.5, against 26.9 without the correction and 7.9 at $\kappa_F = 2$) --- excursions along $M$ into its layer,
+as (iii)'s flat law at $\kappa_F = 1$ allows ---; the masses' spread at $10^6$ 0.08--0.15 without, 0.05 at
+$\kappa_F = 1$, 0.03--0.04 at $\kappa_F = 2$; the second half's mean ($0.3728\pm0.0110$, $0.3139\pm0.0122$,
+$0.3133\pm0.0112$) at $\kappa_F = 1$, within 1.5 standard errors both of $W^\sharp$ and of the deterministic mean path
+from 1/3 $(0.3563, 0.3196, 0.3241)$ --- the run is shorter than that zero's relaxation, so it does not tell them apart
+---, and ($0.3777\pm0.0056$, $0.3041\pm0.0053$, $0.3182\pm0.0061$) at $\kappa_F = 2$, within 1.07 standard errors of
+$W^\sharp$ and of the mean path, which has reached it. The rms fit error over the second half is 0.0267 and 0.0268 with
+the correction and 0.0253 without, against equipartition's $\sqrt{p\tau/(m\langle F^2\rangle)} = 0.0267$, 0.0252,
+0.0236 for $p = 9$, 8, 7 position coordinates holding fit energy:
+$p_{\mathrm{eff}} = m\langle F^2\rangle\langle e^2\rangle/\tau = 8.96$ and 9.04 with the correction, 8.06 without --- a
+saturated amplitude holds none ---, the dither's level read back as $\hat\tau = 0.996\cdot10^{-4}$ and
+$1.00\cdot10^{-4}$ against $\tau = 10^{-4}$. (E) The masses form ($\hat A$ fixed at the initial exact fit, the seeds of
+D): the seeds' mean of the largest $\abs{\alpha_1}$ by quarters 5.0, 5.7, 5.1, 4.5 at $\kappa_F = 1$ and 4.5, 4.7, 4.3,
+4.1 at $\kappa_F = 2$, no record beyond a saturation; at $\kappa_F = 2$ the largest $\abs{\alpha}$ over all the records
+is 8.1 and the second half's mean ($0.3784\pm0.0057$, $0.3030\pm0.0056$, $0.3186\pm0.0063$) is within 1.0 standard
+error of $W^\sharp$ (and of the deterministic mean path from 1/3, which has reached $W^\sharp$), the spread at $10^6$
+(0.032, 0.042, 0.037) against (B)'s 0.040, 0.037, 0.038; at $\kappa_F = 1$, where (iii)'s law is flat, the third
+class's amplitude makes excursions along $M$ into its layer ($\abs{\alpha_3}$ up to 13.5, $\abs{a_3}/a_{\max} = 0.998$),
+and the second half's mean ($0.3746\pm0.0115$, $0.3136\pm0.0127$, $0.3118\pm0.0116$) is within 1.6 standard errors
+both of $W^\sharp$ and of the mean path $(0.3563, 0.3196, 0.3241)$ --- the run is shorter than the $\kappa_F = 1$
+zero's relaxation time ($2\cdot10^6$ slow units), so it does not tell the two apart: the drift toward $W^\sharp$ there
+is (i)'s finite-$\gamma$ over-compensation, not the cancellation. Equipartition with the rms fit error:
+$p_{\mathrm{eff}} = m\langle F^2\rangle\langle e^2\rangle/\tau = 8.92$ and 9.03 with the correction, 8.06 without it
+(one saturated amplitude holds no fit energy) --- the dither's level read back as $\hat\tau = 0.99\cdot10^{-4}$ and
+$1.00\cdot10^{-4}$ against $\tau = 10^{-4}$; the correction pays the fit energy of the amplitude it keeps coupled.
+(F) With the entropic leak ($\gamma = 3\cdot10^{-3}$, $\varepsilon = 10^{-4}$, 16 seeds, $4\cdot10^5$ slow units): the
+same two seeds leave the exact fit's well --- some $\abs{\alpha_k} > 10$ from $1.13\cdot10^5$ and $1.27\cdot10^5$ slow
+units on --- without the correction and in every form, the fit error there 0.043 against 0.027. The masses stay where
+the leak holds them without the correction (0.314--0.348 over all the records) and with the masses form at
+$\kappa_F = 2$ (0.313--0.349); the plug-in form reads the escaped amplitudes as masses at their saturation and moves
+the masses over 0.21--0.46; the masses form with $\hat A$ tracked ($T_A = 10^5$) absorbs the escaped classes'
+contributions ($\hat A = 1.38$, $-0.99$, 1.10 and 1.39, $-1.10$, 1.16 at $4\cdot10^5$ against 1, $-0.7$, 0.8) and
+starts to move them ($W_1$ up to 0.366): $\hat A$ is to be taken from a fit, not from a running average. On the 14
+seeds without an escape the leak's pinned state is shifted by ($-0.00072\pm0.00035$, $+0.00062\pm0.00024$,
+$+0.00010\pm0.00034$) without the correction and by ($+0.00145\pm0.00032$, $-0.00083\pm0.00023$, $-0.00061\pm0.00033$)
+with the masses form at $\kappa_F = 2$ (the plug-in form's alike), against the first order
+$(-0.00106, +0.00072, +0.00035)$ and $(+0.00111, -0.00073, -0.00037)$ and the second order
+$(-0.00116, +0.00077, +0.00039)$ and $(+0.00103, -0.00069, -0.00034)$: the reversal (iv) predicts, within 1.1 (first
+order) and 1.3 (second order) standard errors, the fluctuation term inside the errors at this $\varepsilon$. (G) With
+the leak inside (iv)'s window ($\gamma = 10^{-2}$, $\varepsilon = 3\cdot10^{-4}$; the 16 seeds of
+\hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s Part G, whose uncorrected runs this repeats bit for bit): the
+pinned state's shift from 1/3 is ($-0.00129\pm0.00039$, $+0.00112\pm0.00023$, $+0.00017\pm0.00035$) without the
+correction, ($+0.00001\pm0.00037$, $+0.00026\pm0.00022$, $-0.00027\pm0.00034$) at $\kappa_F = 1$ and
+($+0.00120\pm0.00035$, $-0.00054\pm0.00021$, $-0.00066\pm0.00033$) at $\kappa_F = 2$, against the second order
+$(-0.00134, +0.00089, +0.00045)$, $(-0.00006, +0.00004, +0.00001)$ and $(+0.00112, -0.00075, -0.00038)$, within 1.03
+standard errors in every component (the first order $\kappa^{-1}b_c$, $(-0.00092, +0.00066, +0.00027)$,
+$(+0.00028, -0.00015, -0.00014)$ and $(+0.00149, -0.00095, -0.00054)$, is 1.9--2.1 standard errors off in $W_2$ ---
+\hyperref[res:thmDppp:37]{D$'''$.37}'s excess); the fluctuation term, $(-0.00042, +0.00023, +0.00019)$ without the
+correction and $(-0.00036, +0.00020, +0.00016)$ at $\kappa_F = 1$, comes from the leak's projected force ($b$'s part
+$2\cdot10^{-5}$, the correction's below $10^{-5}$). So ``the bias gone at $\kappa_F = 1$'' is a cancellation between the
+finite-$\gamma$ over-compensation, $\kappa^{-1}b_c = (+0.00028, -0.00015, -0.00014)$, and the fluctuation term, not
+(i)'s cancellation. On the same seeds the correction's own shift, the difference from $\kappa_F = 0$, is measured to
+$1$--$4\cdot10^{-5}$: $(+0.00129, -0.00086, -0.00044)$ and $(+0.00249, -0.00166, -0.00083)$, against the second
+order's $(+0.00128, -0.00085, -0.00043)$ and $(+0.00246, -0.00164, -0.00082)$ --- within 0.93 standard errors ---
+where the first order $(+0.00121, -0.00081, -0.00040)$ and $(+0.00241, -0.00161, -0.00080)$ is 1.2--4.8 standard
+errors off and the nonlinear fixed point 2.4--3.8: the paired design resolves the fluctuation term. The second order
+also accounts for \hyperref[res:thmDppp:37]{D$'''$.37}'s Part G at its other leaks: at $\varepsilon = 10^{-4}$ and
+$10^{-3}$ the second component's excess over $\kappa^{-1}b$ falls from 2.8 and 1.7 to 1.7 and 0.8 standard errors.
+\end{sloppypar}
+
+% Proposition D'''.39 with its proof sketch, Status and numerics (PARADIGM.md section 5d, round-31 version, as committed
+% at 5b747b9; the numbers are PARADIGM's copies of results/chaos/gauge_plateau.md). The anchor res:thmDppp:39 is a
+% \hyperref target, as res:thmDppp:21 is. The reference [S67] (LITERATURE_TRANSPORT.md) is the bibitem S67 of refs.tex.
+% The unconstrained coordinates (alpha, gamma, kappa) are Theorem H's; gamma is also the replicator's rate in the
+% numerics, as in PARADIGM. The Brownian motions, PARADIGM's B_i, are written \mathcal W_i here, as in Proposition
+% D'''.36's proof, to keep them apart from the box B. Proposition D'''.40, which the text cites, is not stated in
+% PARADIGM.md (in progress), so the citation is plain text.
+\begin{thm}{Proposition}{D$'''$.39}[dissipativity of the dithered gauge: without a prior the dithered loop has no
+stationary law; the dither reaches saturated approximate fits; a dead zone restores the law, without bias for the exact
+fits inside it]\phantomsection\label{res:thmDppp:39}%
+In the setting of \hyperref[res:thmDppp:36]{Proposition D$'''$.36} --- the positions in the unconstrained coordinates
+$\vartheta = (\alpha,\gamma,\kappa)$ of the saturating maps $a = a_{\max}\tanh(\alpha/a_{\max})$,
+$c = c_{\max}\tanh(\gamma/c_{\max})$, $s = s_{\min} + (s_{\max} - s_{\min})\operatorname{sig}(\kappa)$, dithered at the
+level $\tau$ ($\dd\vartheta_i = -G\partial_{\vartheta_i}J\dd s + \sqrt{2\tau G}\dd\mathcal W_i$), the cohesion leak, the
+masses fixed or following the replicator ---:
+\begin{enumerate}[label=\textup{(\roman*)}]
+  \item \emph{(no stationary law)} $J$ is bounded on the unconstrained coordinates --- the physical coordinates are
+    bounded and the cohesion energy $W\le R^2/8$ ---, so at fixed masses the Gibbs measure $e^{-J/\tau}\dd\Theta$,
+    invariant for the positions' diffusion, has infinite mass for every $\tau > 0$: the positions have no invariant
+    probability law, and the fraction of time they spend in any bounded set of the unconstrained coordinates tends to
+    zero. With the prior leak of Theorems D$'$--J$'$, $(\sigma_0/2)\sum_i\norm{\vartheta_i - \vartheta^0}^2_{\Ginv}$,
+    $J$ is coercive and the Gibbs law has Gaussian tails (Theorem J$'$); the cohesion leak, a function of the
+    differences $\vartheta_i - \vartheta_j$, removed the prior's bias (\hyperref[res:thmDppp:32]{Proposition
+    D$'''$.32}) and with it this confinement.
+  \item \emph{(the plateau and the escape)} Where a coordinate saturates, $J$ tends to its value at the bound and that
+    coordinate's force vanishes ($\partial J/\partial\alpha_k = a'_k\partial J/\partial a_k$, $a'_k\to0$): approximate
+    fits with saturated coordinates form plateaus on which the saturated coordinates diffuse without drift. The exact
+    fit's well holds the positions for a time $e^{\Delta J_D/\tau + o(1/\tau)}$ (Freidlin--Wentzell), $\Delta J_D$ the
+    lowest energy above the exact fit on the boundary of a part $D$ of its basin that excludes the plateaus; after that
+    the positions spend a growing fraction of the time on the plateaus, their fit error at the plateau's level and the
+    saturated amplitudes' gain $a'_k\to0$. On the instance the way out is a monotone climb, without a saddle, of the
+    widths and amplitudes to a plateau $\Delta J\approx7.7\tau$ ($\tau = 10^{-4}$) above the exact fit.
+  \item \emph{(the dead zone)} Add to $J$ the dead zone
+    $V(\Theta) = (\sigma_B/2)\sum_i\norm{\vartheta_i - \Pi_B(\vartheta_i)}^2_{\Ginv}$, $B = \prod_j[-L_j,L_j]$ a box in
+    the unconstrained coordinates, $\sigma_B > 0$ (the Moreau--Yosida envelope of the box's indicator; in adaptive
+    control a switching $\sigma$-modification) --- on the drift $-\sigma_B(\vartheta_i - \Pi_B(\vartheta_i))$, zero
+    inside $B$. Then (a) $e^{-(J+V)/\tau}$ is integrable: at fixed masses the positions have a unique stationary law,
+    and the excursions onto a plateau, still reached at the rate of (ii) where the plateau meets $B$, end; (b) inside
+    $B$ the deterministic objects do not change --- the exact fits with their positions in $B$ are stationary without
+    bias, and the manifold $M$, Katzenberger's limit on it and Propositions
+    \hyperref[res:thmDppp:36]{D$'''$.36}--\hyperref[res:thmDppp:38]{D$'''$.38} are unchanged there (a dithered
+    trajectory is the unboxed one until a coordinate leaves $B$) ---, but the stationary law is not the well's: it gives
+    the plateau, where it meets $B$, the weight of its Laplace order (on the instance 9--19\% of the records at
+    $\tau = 2\cdot10^{-4}$, Numerics (D)), and there the box's force enters the masses' averaged fitness at the size of
+    the noise's own selection (Proposition D$'''$.40(i)); (c) the representable masses become
+    $W_k > W_{B,k} := \abs{A_k}/(a_{\max}\tanh(L_\alpha/a_{\max})) > W_{\min,k}$: the gauge's saturation is replaced by
+    the box's wall, where $a'_k = \operatorname{sech}^2(L_\alpha/a_{\max}) > 0$, so $\ell$ stays finite on the
+    representable masses, and the entropic drift of \hyperref[res:thmDppp:37]{Proposition D$'''$.37} ends at vertices
+    of the polytope $P_B = \{W_k\ge W_{B,k},\ \sum W_k = 1\}$ --- the local minima of the strictly concave $\ell$ on it
+    --- instead of running into the saturation; $V$ is $C^{1,1}$ only (its Hessian jumps by $\sigma_B$ on $B$'s faces),
+    so Katzenberger's limit and the entropic drift, which use third derivatives, hold away from a boundary layer at
+    $P_B$'s faces, and the vertex statement is at leading order (a $C^3$ penalty removes the layer); (d) with
+    \hyperref[res:thmDppp:38]{Proposition D$'''$.38}'s correction at $\kappa_F > 1$ the masses go to $W^\sharp$,
+    provided $W^\sharp\in P_B$, i.e.\ $L_\alpha > a_{\max}\operatorname{artanh}(W_{\min,k}/W^\sharp_k)$ for every $k$.
+\end{enumerate}
+\end{thm}
+
+\begin{proof}[Proof sketch]
+(i) The image of the saturating maps is bounded and $\fhat$ is continuous in the physical coordinates, so the
+residual's mean square is bounded, and $\omega\le1/8$ (compact kernel) or $\le1$ (Gaussian): $J$ is bounded,
+$e^{-J/\tau}\ge e^{-\sup J/\tau} > 0$ and $\int e^{-J/\tau}\dd\Theta = \infty$. The generator
+$\tau\nabla\cdot(G\nabla) - G\nabla J\cdot\nabla$ is symmetric in $L^2(e^{-J/\tau}\dd\Theta)$; the drift is bounded (the
+saturating maps have bounded derivatives, $s\ge s_{\min}$, the cohesion force $\le\sigma_0R$), so the diffusion does
+not explode, and it is elliptic. A positive-recurrent elliptic diffusion has a unique invariant measure up to a factor,
+finite --- but $e^{-J/\tau}\dd\Theta$ is invariant and infinite; so the diffusion is null recurrent or transient, and
+the occupation fraction of a bounded set tends to zero (the ratio limit theorem against ever larger sets, or a finite
+occupation time). (ii) On a plateau the saturated coordinate's drift is $O(a'_k) = O(e^{-2\abs{\alpha_k}/a_{\max}})$.
+For the gradient diffusion the quasi-potential is $J - J(\text{exact})$, and Freidlin--Wentzell's exit theorem gives
+$\tau\log\E[\text{exit time from }D]\to\Delta J_D$ for a domain $D$ in the basin whose closure flows to the exact fit;
+the path's monotone climb (B) makes the plateau's entrance the boundary's lowest part. (iii) (a)
+$J + V\ge(\sigma_B/2)\operatorname{dist}_{\Ginv}(\Theta,B^m)^2 - \sup\abs{J}$, integrable against $e^{-\cdot/\tau}$;
+$J + V$ is a Lyapunov function (its generator $\to-\infty$ outside a compact); uniqueness by ellipticity. (b) $V$ and
+$\nabla V$ vanish on $B$. (c) An exact fit needs $\abs{a_k} = \abs{A_k}/W_k\le a_{\max}\tanh(L_\alpha/a_{\max})$; below
+$W_{B,k}$ the fit in $B$ undershoots and the class's fitness $u_k > 0$ feeds it, so $P_B$ is invariant to leading
+order; $\ell = 2\sum\log(W_k - W_{\min,k}^2/W_k)$ is finite and strictly concave on $P_B$, and a local minimum of a
+strictly concave function on a polytope is a vertex. (d) \hyperref[res:thmDppp:38]{Proposition D$'''$.38}(ii) on
+$P_B$.
+\end{proof}
+\status{(i) proved; (ii) the plateau, its level and the monotone path numerical, the exit time's exponential order
+Freidlin--Wentzell's (classical), its slope measured at $(0.81\pm0.14)\Delta J$ at the instance's
+$\Delta J/\tau = 2.6$--$5.1$, within 1.3 standard errors of Freidlin--Wentzell's limit; (iii)(a), (b) proved ((b) for
+the deterministic objects and the dynamics before the first exit from $B$, not for the stationary averages), (c) the
+polytope's invariance at leading order and the vertices away from the faces' boundary layer (sketched), (d) given
+\hyperref[res:thmDppp:38]{Proposition D$'''$.38}(ii). Classical: dissipativity and the existence of invariant laws for
+Langevin dynamics (Mattingly--Stuart--Higham; Raginsky--Rakhlin--Telgarsky for learning), the exit problem and
+metastability (Freidlin--Wentzell; Bovier--Eckhoff--Gayrard--Klein), parameter projection and its Lipschitz boundary
+layer in adaptive control (Ioannou--Sun; Pomet--Praly), Langevin sampling on a convex set through the Moreau--Yosida
+envelope of its indicator (MYULA: Durmus--Moulines--Pereyra; Brosse--Durmus--Moulines--Pereyra) (\cite{S67}). New:
+that the cohesion leak's removal of the prior's bias also removed the dithered loop's stationary law; the plateau of
+saturated approximate fits on the instance and the monotone climb to it; the dead zone's effect on the gauge --- the
+saturation replaced by a non-degenerate wall at which the entropic drift ends --- and its compatibility with the Fixman
+correction.}
+
+% Numerics of Proposition D'''.39 (PARADIGM.md section 5d; the numbers are PARADIGM's copies of
+% results/chaos/gauge_plateau.md).
+\begin{sloppypar}
+\paragraph{Numerics} (\code{exp_gauge_plateau.py} $\to$ \code{results/chaos/gauge_plateau.md};
+\hyperref[res:thmDppp:36]{Proposition D$'''$.36}'s instance, energies over $\tau = 10^{-4}$; the box $L = (5, 3, 4)$ in
+$(\alpha,\gamma,\kappa)$, $\sigma_B = 1$, so $\abs{a}\le3.39$ and the representable masses
+$W_k\ge(0.2947, 0.2063, 0.2358)$ against the saturation's $(0.25, 0.175, 0.2)$). (A) The lowest configurations with one
+amplitude fixed at $\pm20$ (200 starts each) lie $7.72\tau$ (the first or third class) and $7.76\tau$ (the second) above
+the exact fit at $W = 1/3$, their fit error 0.035 --- approximate fits with the widths broadened (0.58--0.75 against
+0.4--0.5) and two amplitudes up, or the same with the first and third particles exchanged --- and $7.64\tau$,
+$7.71\tau$ at $W^\sharp$; on the escape set's boundary $\max\abs{\alpha_k} = 6$, $7.69\tau$ ($W = 1/3$) and $7.67\tau$
+($W^\sharp$); at the box's edge $7.66\tau$ and $7.63\tau$: the box does not raise the plateau, it bounds it. (B) At
+$W = 1/3$ the minimum-energy path to the plateau (40 images) climbs monotonically --- 0, 1.86, 5.33, 7.17, 7.57, 7.66,
+$7.70\tau$ at every fourth image ---, the second width $0.40\to0.75$ and the fit error $0\to0.035$ along it, without a
+saddle; at $W^\sharp$ the path to the lowest plateau (the outer amplitudes saturated, the middle width 1.17) crosses a
+saddle at $8.21\tau$, the escape boundary's lowest point ($7.67\tau$) lying on the other family. (C) The escapes at
+fixed masses $W = 1/3$ ($\gamma = 0$, 24 seeds each, up to $4\cdot10^5$ slow units; an escape when
+$\max\abs{\alpha_k} > 6$): 10, 19 and 24 of the 24 at $\tau = 1.5$, 2 and $3\cdot10^{-4}$, the rates
+$(1.33\pm0.42)\cdot10^{-6}$, $(4.06\pm0.93)\cdot10^{-6}$ and $(1.09\pm0.22)\cdot10^{-5}$ per slow unit, the fit error
+at the escape 0.046--0.054; $\log(\text{rate})$ against $1/\tau$ has the slope $6.31\cdot10^{-4}$ (weighted by the
+escape counts $(6.25\pm1.09)\cdot10^{-4}$) against the escape boundary's lowest $\Delta J = 7.69\cdot10^{-4}$ ---
+$(0.81\pm0.14)\Delta J$, within 1.3 standard errors of Freidlin--Wentzell's limit at these barriers
+($\Delta J/\tau = 2.6$--$5.1$; the rate times $e^{\Delta J/\tau}$ is 2.25, 1.90 and $1.42\cdot10^{-4}$). (D) The dead
+zone at fixed masses ($\tau = 2\cdot10^{-4}$, 16 seeds, $4\cdot10^5$ slow units; a record on the plateau when the second
+width exceeds 0.6): without the box every seed reaches the plateau and the occupation grows --- 0.18, 0.40, 0.54, 0.57
+of the records by quarters, $\max\abs{\alpha} > 6$ in $0.09\to0.56$ of them, the largest $\abs{\alpha}$
+$15.0\to27.6$, the fit error $0.040\to0.045$ ---; with the box every seed still reaches it, but the occupation stays
+at 0.09--0.19, no record has $\max\abs{\alpha} > 6$ ($\abs{\alpha}\le5.0$, the box's edge), and the fit error stays at
+0.039--0.040: the excursions onto the plateau end. (E) The full loop with the box ($\gamma = 10^{-2}$,
+$\tau = 10^{-4}$, 12 seeds, $10^6$ slow units; $P_B$'s vertices $(0.558, 0.206, 0.236)$, $(0.295, 0.470, 0.236)$,
+$(0.295, 0.206, 0.499)$): each run is the unboxed one record for record until a coordinate first leaves $B$ (without
+the correction from $1.7\cdot10^4$ to $4.1\cdot10^5$ slow units; at $\kappa_F = 2$ from $2.4\cdot10^4$ on, one seed
+never); without the correction the masses' spread at $10^6$ is 0.049, 0.075, 0.057 against 0.145, 0.154, 0.081
+without the box, each seed's masses still 0.10--0.18 from the nearest vertex --- on their way, at the entropic drift's
+slow rate; at $\kappa_F = 2$ the masses' mean at $10^6$ ($0.3803\pm0.0093$, $0.2961\pm0.0122$, $0.3236\pm0.0102$) is
+within 0.41 standard errors of $W^\sharp$, every seed within 0.010--0.080 of it; $\abs{\alpha}\le5.03$, the fit error
+0.026. (F) In \hyperref[res:thmDppp:37]{Proposition D$'''$.37}'s runs without a leak (H) every record with
+$\abs{\alpha_k} > 10$ but one (3860 of 3861, on 8, 3 and 7 of the 12 seeds) has $W_k$ within 0.01 of the saturation,
+and the exact fit's error (0.024): the gauge's channel; with the masses held near 1/3 by the leak and no correction
+(\hyperref[res:thmDppp:38]{Proposition D$'''$.38} (F)) every such record has $W_k$ more than 0.05 above it and the fit
+error 0.041--0.043 (516 and 13 records, on 2 and 1 of the 16 seeds): the positions' own channel, the escape of (ii).
 \end{sloppypar}
 
 % Numerics (PARADIGM.md section 5d, third pass; the numbers are PARADIGM's copies of results/chaos/learning_table.md).
