@@ -16,14 +16,17 @@ B. Katzenberger's limit drift at γ = 10⁻⁵ (`gauge_drift.limit_drift` with t
 C. Noise on the centres and widths only at γ = 10⁻², 10⁻³, 10⁻⁴, 10⁻⁵: the masses' diffusion (zero: the gauge's tangent lies in the
    amplitude–mass coordinates and the metric is diagonal) and drift (O(γ)), against the isotropic noise's.
 D. The identity in simulation at fixed masses 1/3 (γ = 0), inside the box of Proposition D‴.39 (so the stationary law exists): the time
-   averages of u_k and of −τ_k g′_k(α_k) + g_k∂_{α_k}(J_coh + V) (the cohesion's and the dead zone's parts of the amplitude's force,
-   which the gauge identity does not cover) over S_D slow units, for isotropic and correlated noise at
-   τ = 10⁻³ and 10⁻², where the small-noise expansion is poor; their difference against its batch-means error; the amplitudes' noise
-   intensity read from their quadratic variation, τ̂_k = Σ(Δα_k)²/(2G_αS).
-E. The full loop at γ = 10⁻², τ = 10⁻⁴ (the 12 seeds of exp_gauge_drift.py's Part H, 10⁶ slow units): the centres and widths dithered only
-   (the masses frozen); the same with the barrier of Proposition D‴.38's masses form at κ_F = 1 (no amplitude noise to cancel: the masses
-   ascend ℓ to W♯); correlated noise on all coordinates ('correlated 1'), uncorrected, and with the masses form at the classes' levels τ_k
-   and κ_F = 2 (the masses ascend Σ_kτ_k log(W_k a′_k) to its maximiser W♯_τ).
+   averages of u_k and of each term of the generator identity E[u_k] = −τ_kE[g′_k] + E[g_k∂_{α_k}J_coh] + E[g_k∂_{α_k}V] + E[Lψ_k] (ψ_k =
+   ∫g_k dα_k/G_α; the last term the Euler chain's bias, measured exactly from the Gaussian increment's closed-form expectation), with
+   (i)'s box-free residual E[u_k + τ_kg′_k] and its z, the share of steps outside the box, and the whole identity's residual against its
+   martingale error; isotropic noise, the amplitudes only (the same τ_k, no centre or width noise), 'correlated 1' at τ = 10⁻³ and 10⁻²,
+   and the centres and widths only at 10⁻²; the amplitudes' noise intensity from their quadratic variation, with and without the drift's
+   part (referee round 31).
+E. The full loop inside the box at γ = 10⁻², τ = 10⁻⁴ (the 12 seeds of exp_gauge_drift.py's Part H, 10⁶ slow units): the centres and
+   widths dithered only (the masses frozen); the same with the barrier of Proposition D‴.38's masses form at κ_F = 1 (no amplitude noise
+   to cancel: the masses ascend ℓ to W♯); a correlated noise on all coordinates whose amplitudes have the levels (2, 1, 0.5)τ and whose
+   centres and widths stay at the dither's level ('correlated E'), uncorrected, and with the masses form at the classes' levels τ_k and
+   κ_F = 2 (the masses ascend Σ_kτ_k log(W_k a′_k) to its maximiser W♯_τ, 0.084 from W♯).
 
 Output: results/chaos/gauge_noise.md and gauge_noise_raw.npz (GN_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
 """
@@ -55,7 +58,8 @@ G9 = np.tile(E.G, 3)
 W_A = ((1 / 3, 1 / 3), (0.30, 0.35), (0.40, 0.25))
 W_B = ((1 / 3, 1 / 3), (0.30, 0.35))
 GAMMAS_C = (1e-2, 1e-3, 1e-4, 1e-5)
-TAUS_D, S_D, SEED_D, N_BATCH = (1e-3, 1e-2), 2e5, 700, 20
+TAUS_D, S_D, SEED_D, N_BATCH, N_BATCH_LONG = (1e-3, 1e-2), 2e5, 700, 40, 10
+RUNS_D = tuple((n, t) for n in ('isotropic', 'amplitudes only', 'correlated 1') for t in TAUS_D) + (('centres and widths only', 1e-2),)
 GAMMA_E, SEEDS_E, S_E, T_E = 1e-2, X.SEEDS_H, 1e6, X.T_H
 NOISE_SEEDS = (11, 12, 13)
 
@@ -69,7 +73,22 @@ def noises(tau=TAU):
     for i, sd in enumerate(NOISE_SEEDS):
         Lr = np.random.default_rng(sd).standard_normal((9, 9))
         out[f'correlated {i + 1}'] = 2 * tau * 0.3 * (Lr @ Lr.T)
+    out['correlated E'] = 2 * tau * corr_E()
     return out
+
+
+LEVELS_E = (2.0, 1.0, 0.5)
+
+
+def corr_E():
+    """Part E's correlated noise over 2τ: the amplitudes at the levels LEVELS_E·G_α, the centres and widths at the dither's level G_γ, G_κ,
+    correlated through the mixture ½I + ½R of a random correlation matrix R (seed 21) — so the amplitudes' levels differ and every
+    coordinate's noise is correlated, while the centres and widths are not heated beyond the dither (referee round 31)."""
+    Lr = np.random.default_rng(21).standard_normal((9, 9))
+    C = Lr @ Lr.T; d = np.sqrt(np.diag(C))
+    R = 0.5 * np.eye(9) + 0.5 * C / np.outer(d, d)
+    sd = np.sqrt(np.tile(E.G, 3) * np.ravel([[lv, 1.0, 1.0] for lv in LEVELS_E]))
+    return R * np.outer(sd, sd)
 
 
 def levels(Sig):
@@ -137,8 +156,11 @@ def c_job(args):
 
 @cached
 def d_job(args):
-    """Fixed masses 1/3, the box, the noise Σ(τ): the time averages (by batches) of u_k and of −τ_k g′_k(α_k) + g_k ∂_{α_k}V, and the
-    quadratic variation of the amplitudes."""
+    """Fixed masses 1/3, the box, the noise Σ(τ): per batch the time averages of u_k and of the identity's terms −τ_kg′_k(α_k),
+    g_k∂_{α_k}J_coh, g_k∂_{α_k}V (the box), Lψ_k (ψ_k = ∫g_k dα_k/G_α = (a_max²/4β_kG_α)cosh(2α_k/a_max), the generator applied to it: its
+    stationary mean is the Euler chain's bias) and the chain's exact per-step bias E_n[ψ_k(α_{n+1}) − ψ_k(α_n)]/Δt − Lψ_k (the Gaussian
+    increment's expectation in closed form); the martingale increments' sum of squares (the exact error of E[Lψ_k]); the share of steps with
+    α_k outside the box; the amplitudes' quadratic variation with and without the drift's part."""
     name, tau = args
     t0 = time.time()
     net, base = E.setup()
@@ -147,9 +169,13 @@ def d_job(args):
     Sig = noises(tau)[name]; tk = levels(Sig)
     lam, V = np.linalg.eigh(Sig); Lc = V * np.sqrt(np.clip(lam, 0, None))            # Lc Lcᵀ = Σ
     n = int(round(S_D / DT)); nb = n // N_BATCH
-    U = np.zeros((N_BATCH, 3)); Rhs = np.zeros((N_BATCH, 3)); qv = np.zeros(3)
+    keys = ('u', 'gp', 'coh', 'box', 'lpsi', 'bias')
+    acc = {k: np.zeros((N_BATCH, 3)) for k in keys}
+    m2, out_box, qv, qv_noise = np.zeros(3), np.zeros(3), np.zeros(3), np.zeros(3)
     Th = E.exact_rep(net, W).copy(); rng = np.random.default_rng(SEED_D)
     sq = np.sqrt(DT) * Lc
+    kk, cpsi, s2 = 2.0 / A_MAX, A_MAX ** 2 / (4 * beta * E.G[0]), np.diag(Sig)[0::3] * DT
+    psi0 = cpsi * np.cosh(kk * Th[:, 0])
     for k in range(nb * N_BATCH):
         a = base.features(Th)[0]
         ap = 1 - (a / A_MAX) ** 2
@@ -157,45 +183,49 @@ def d_job(args):
         r = loop.residual(Th, beta)
         u = loop.fitness(r, Th)
         dT = loop.drift(Th, beta)[0]
-        nonfit = -(dT[:, 0] - beta * E.G[0] * base.grad_weighted(r, Th)[:, 0]) / E.G[0]   # ∂_{α_k}(J_coh + V): the cohesion and the dead zone
+        nonfit = -(dT[:, 0] - beta * E.G[0] * base.grad_weighted(r, Th)[:, 0]) / E.G[0]   # ∂_{α_k}(J_coh + V)
+        boxt = P.SIGMA_B * loop.box_excess(Th)[:, 0] / E.G[0]                            # ∂_{α_k}V
+        lpsi = u - g * nonfit + tk * gp                                                   # Lψ_k = (g_k/G_α)b_k + τ_kg′_k
+        Epsi = cpsi * np.cosh(kk * (Th[:, 0] + DT * dT[:, 0])) * np.exp(0.5 * kk * kk * s2)
         i = k // nb
-        U[i] += u; Rhs[i] += -tk * gp + g * nonfit
+        acc['u'][i] += u; acc['gp'][i] += -tk * gp; acc['coh'][i] += g * (nonfit - boxt); acc['box'][i] += g * boxt
+        acc['lpsi'][i] += lpsi; acc['bias'][i] += (Epsi - psi0) / DT - lpsi
+        out_box += np.abs(Th[:, 0]) > P.BOX[0]
         dW = (sq @ rng.standard_normal(9)).reshape(3, 3)
+        qv += (DT * dT[:, 0] + dW[:, 0]) ** 2; qv_noise += dW[:, 0] ** 2
         Th = Th + DT * dT + dW
-        qv += (DT * dT[:, 0] + dW[:, 0]) ** 2
-    U /= nb; Rhs /= nb
+        psi1 = cpsi * np.cosh(kk * Th[:, 0])
+        m2 += (psi1 - Epsi) ** 2
+        psi0 = psi1
+    for k_ in keys:
+        acc[k_] /= nb
+    T = nb * N_BATCH * DT
     print(f"[{time.time() - t0:.0f}s] D {name} tau {tau:g}", flush=True)
-    return dict(name=name, tau=tau, tk=tk, U=U, Rhs=Rhs, tk_hat=qv / (2 * E.G[0] * nb * N_BATCH * DT), closed=closed(W, tk))
-
-
-def d_rates():
-    """Part D's Euler-bias scale: G_α∂²_{α_kα_k}J at the fit (masses 1/3, the box), from the positions' drift's Jacobian."""
-    net, base = E.setup()
-    W = np.ones(3) / 3; beta = 3 * W
-    loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=0.0, box=P.BOX, box_sigma=P.SIGMA_B)
-    x0 = E.exact_rep(net, W).ravel().copy(); h = 1e-6
-    f = lambda x: loop.drift(x.reshape(3, 3), beta)[0].ravel()
-    return np.array([-(f(x0 + h * np.eye(9)[3 * k]) - f(x0 - h * np.eye(9)[3 * k]))[3 * k] / (2 * h) for k in range(3)])
+    return dict(name=name, tau=tau, tk=tk, **acc, se_mart=np.sqrt(m2) / T, out_box=out_box / (nb * N_BATCH),
+                tk_hat=qv / (2 * E.G[0] * T), tk_hat_noise=qv_noise / (2 * E.G[0] * T), closed=closed(W, tk))
 
 
 @cached
 def e_series(args):
-    """The full loop: (variant, seed) → records (s, α_1..3, W_1..3, the fit error)."""
+    """The full loop inside the box of Proposition D‴.39 (so that a stationary law exists): (variant, seed) → records (s, α_1..3, W_1..3,
+    the fit error)."""
     variant, seed = args
     t0 = time.time()
     net, base = E.setup()
     Th = E.exact_rep(net, np.ones(3) / 3).copy()
     A0 = base.features(Th)[0] / 3
-    Sig = noises()['correlated 1']
+    Sig = noises()['correlated E']
     kw = dict(mask=None, noise_L=None)
+    bx = dict(box=P.BOX, box_sigma=P.SIGMA_B)
     if variant == 'nonlinear only':
-        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E); kw['mask'] = (0.0, 1.0, 1.0)
+        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E, **bx); kw['mask'] = (0.0, 1.0, 1.0)
     elif variant == 'nonlinear only + barrier':
-        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E, fixman=1.0, fixman_tau=TAU, fixman_A=A0); kw['mask'] = (0.0, 1.0, 1.0)
-    elif variant == 'correlated':
-        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E); kw['noise_L'] = np.linalg.cholesky(Sig)
-    elif variant == 'correlated + class levels':
-        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E, fixman=2.0, fixman_tau=levels(Sig), fixman_A=A0)
+        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E, fixman=1.0, fixman_tau=TAU, fixman_A=A0, **bx)
+        kw['mask'] = (0.0, 1.0, 1.0)
+    elif variant == 'correlated E':
+        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E, **bx); kw['noise_L'] = np.linalg.cholesky(Sig)
+    elif variant == 'correlated E + class levels':
+        loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_E, fixman=2.0, fixman_tau=levels(Sig), fixman_A=A0, **bx)
         kw['noise_L'] = np.linalg.cholesky(Sig)
     else:
         raise ValueError(variant)
@@ -206,7 +236,7 @@ def e_series(args):
     return dict(variant=variant, seed=seed, rec=np.array(rec))
 
 
-VARIANTS_E = ('nonlinear only', 'nonlinear only + barrier', 'correlated', 'correlated + class levels')
+VARIANTS_E = ('nonlinear only', 'nonlinear only + barrier', 'correlated E', 'correlated E + class levels')
 
 
 def summarise_E(R):
@@ -254,39 +284,57 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                       f"{', '.join(f'{v:.4f}' for v in np.diag(iso['D']))} | {np.abs(cs['D']).max():.1e} |")
         L_.append("")
     if D is not None:
-        L_ += [f"## D. The identity in simulation (fixed masses 1/3, the box, {S_D:g} slow units, {N_BATCH} batches)", "",
-               "| noise | τ | E[u_k] (± s.e.) | E[−τ_kg′_k(α_k) + g_k∂_{α_k}(J_coh + V)] (± s.e.) | the difference (± s.e.) | the closed form at the fit | τ_k / τ̂_k (quadratic variation) |",
-               "|---|---|---|---|---|---|---|"]
-        z = []
+        se = lambda M: M.std(axis=0, ddof=1) / np.sqrt(len(M))
+        lng = lambda M: M.reshape(N_BATCH_LONG, -1, 3).mean(axis=1)
+        pm = lambda M: ', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(lng(M).mean(axis=0), se(lng(M))))
+        L_ += [f"## D. The identity in simulation (fixed masses 1/3, the box of Proposition D‴.39, {S_D:g} slow units)", "",
+               "The generator applied to ψ_k = ∫g_k dα_k/G_α = (a_max²/4β_kG_α)cosh(2α_k/a_max) gives, in the stationary law, "
+               "E[u_k] = −τ_kE[g′_k] + E[g_k∂_{α_k}J_coh] + E[g_k∂_{α_k}V] + E[Lψ_k], the last the Euler chain's bias (zero for the diffusion); "
+               "(i)'s box-free form leaves out the cohesion's and the box's terms. Errors: batch means over "
+               f"{N_BATCH_LONG} batches of {S_D / N_BATCH_LONG:g} slow units (the plateau gives a slow tail: referee round 31).", "",
+               "| noise | τ | τ_k/τ | E[u_k] | E[−τ_kg′_k] | E[g_k∂_{α_k}J_coh] | E[g_k∂_{α_k}V] (the box) | (i)'s residual E[u_k + τ_kg′_k] (z) | "
+               "α_k outside the box (share of steps) |", "|---|---|---|---|---|---|---|---|---|"]
+        zi = []
         for r in D:
-            se = lambda M: M.std(axis=0, ddof=1) / np.sqrt(len(M))
-            U, Rh = r['U'], r['Rhs']
-            z += list((U - Rh).mean(axis=0) / se(U - Rh))
-            L_.append(f"| {r['name']} | {r['tau']:g} | {', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(U.mean(axis=0), se(U)))} | "
-                      f"{', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(Rh.mean(axis=0), se(Rh)))} | "
-                      f"{', '.join(f'{a:+.1e} ± {b:.1e}' for a, b in zip((U - Rh).mean(axis=0), se(U - Rh)))} | {', '.join(f'{v:+.3e}' for v in r['closed'])} | "
-                      f"{', '.join(f'{a:.4g} / {b:.4g}' for a, b in zip(r['tk'], r['tk_hat']))} |")
-        z = np.array(z); lam = d_rates()
-        L_ += ["", f"The differences over their batch-means errors: χ² = {float(z @ z):.1f} for {len(z)} values, the largest |z| {np.abs(z).max():.2f}. "
-               f"The Euler step's own bias of the identity, ½Δt·G_α∂²_{{α_kα_k}}J relative to τ_kg′_k (the stationary chain's E[Ψ(α_(n+1)) − Ψ(α_n)] = 0 "
-               f"expanded in Δt), is at most {0.5 * DT * lam.max():.1e} here (G_α∂²_{{α_kα_k}}J = {', '.join(f'{v:.4f}' for v in lam)} at the fit, Δt = {DT:g}).", ""]
+            res = lng(r['u'] - r['gp']); z = res.mean(axis=0) / se(res); zi += list(z)
+            L_.append(f"| {r['name']} | {r['tau']:g} | {', '.join(f'{v:.3f}' for v in r['tk'] / r['tau'])} | {pm(r['u'])} | {pm(r['gp'])} | "
+                      f"{pm(r['coh'])} | {pm(r['box'])} | {', '.join(f'{a:+.2e} ({b:+.1f})' for a, b in zip(res.mean(axis=0), z))} | "
+                      f"{', '.join(f'{v:.3f}' for v in r['out_box'])} |")
+        L_ += ["", "The whole identity and the Euler chain's bias (the chain's exact per-step bias b_k = E_n[ψ_k(α_(n+1)) − ψ_k(α_n)]/Δt − Lψ_k, "
+               "the Gaussian increment's expectation in closed form, so that E[Lψ_k] = −E[b_k] exactly; the error of E[Lψ_k] from the "
+               "martingale increments ψ_k(α_(n+1)) − E_n[ψ_k(α_(n+1))]):", "",
+               "| noise | τ | E[Lψ_k] (± its martingale error) | −E[b_k] | E[Lψ_k] + E[b_k] over that error | the bias E[b_k] over τ_kE[g′_k] | "
+               "τ_k/τ̂_k: the amplitudes' quadratic variation, with the drift's part, without |", "|---|---|---|---|---|---|---|"]
+        zf = []
+        for r in D:
+            lp, bi = r['lpsi'].mean(axis=0), r['bias'].mean(axis=0)
+            z = (lp + bi) / r['se_mart']; zf += list(z)
+            L_.append(f"| {r['name']} | {r['tau']:g} | {', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(lp, r['se_mart']))} | "
+                      f"{', '.join(f'{-v:+.2e}' for v in bi)} | {', '.join(f'{v:+.2f}' for v in z)} | "
+                      f"{', '.join(f'{v:+.4f}' for v in bi / -r['gp'].mean(axis=0))} | "
+                      f"{', '.join(f'{a / b:.4f}, {a / c:.4f}' for a, b, c in zip(r['tk'], r['tk_hat'], r['tk_hat_noise']))} |")
+        zi, zf = np.array(zi), np.array(zf)
+        L_ += ["", f"The whole identity: χ² = {float(zf @ zf):.1f} for {len(zf)} values (largest |z| {np.abs(zf).max():.2f}). (i)'s box-free form: "
+               f"the largest |z| {np.abs(zi).max():.1f}, its residual the box's term.", ""]
     if Ee is not None:
-        ws = Q.w_sharp(); wt = w_sharp_weighted(levels(noises()['correlated 1']))
-        target = {'nonlinear only': np.ones(3) / 3, 'nonlinear only + barrier': ws, 'correlated': None, 'correlated + class levels': wt}
-        L_ += [f"## E. The full loop (γ = {GAMMA_E:g}, τ = {TAU:g}, {len(SEEDS_E)} seeds, {S_E:g} slow units)", "",
+        ws = Q.w_sharp(); wt = w_sharp_weighted(levels(noises()['correlated E']))
+        target = {'nonlinear only': np.ones(3) / 3, 'nonlinear only + barrier': ws, 'correlated E': None, 'correlated E + class levels': wt}
+        L_ += [f"## E. The full loop inside the box (γ = {GAMMA_E:g}, τ = {TAU:g}, {len(SEEDS_E)} seeds, {S_E:g} slow units)", "",
                f"Targets: the initial masses 1/3 (frozen), W♯ = {v3(ws)}, W♯_τ = {v3(wt)} (the maximiser of Σ_kτ_k log(W_k a′_k) for "
-               f"'correlated 1', τ_k/τ = {', '.join(f'{v:.3f}' for v in levels(noises()['correlated 1']) / TAU)}).", "",
+               f"'correlated E', τ_k/τ = {', '.join(f'{v:.3f}' for v in levels(noises()['correlated E']) / TAU)}, its centres and widths at the "
+               f"dither's level); the box's representable masses W_B = {v3(P.W_BOX)}.", "",
                "| variant | s | mean of W_1, W_2, W_3 (± s.e.) | std |", "|---|---|---|---|"]
         for r in Ee:
             for t in r['sum']['times']:
                 L_.append(f"| {r['variant']} | {t['s']:g} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(t['mean'], t['se']))} | {v3(t['std'])} |")
-        L_ += ["", "| variant | the second half's mean (± s.e.) | its target | the distance from it (largest component) | the largest |α| | "
-               "the fit error (second half) |", "|---|---|---|---|---|---|"]
+        L_ += ["", "| variant | the second half's mean (± s.e.) | its target | the distance from it (largest component) | the distance from W♯ | "
+               "the largest |α| | the fit error (second half) |", "|---|---|---|---|---|---|---|"]
         for r in Ee:
             hm = r['sum']['half']; se = hm.std(axis=0, ddof=1) / np.sqrt(len(hm)); tg = target[r['variant']]
             dist = '—' if tg is None else f"{np.abs(hm.mean(axis=0) - tg).max():.4f}"
             L_.append(f"| {r['variant']} | {', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(hm.mean(axis=0), se))} | "
-                      f"{'none' if tg is None else v3(tg)} | {dist} | {r['sum']['almax']:.2f} | {fmt(r['sum']['fit'])} |")
+                      f"{'none' if tg is None else v3(tg)} | {dist} | {np.abs(hm.mean(axis=0) - ws).max():.4f} | {r['sum']['almax']:.2f} | "
+                      f"{fmt(r['sum']['fit'])} |")
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_noise.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -315,7 +363,7 @@ def main():
         if 'C' in parts:
             h['C'] = pool.map_async(c_job, [(g, w) for g in GAMMAS_C for w in W_B], chunksize=1)
         if 'D' in parts:
-            h['D'] = pool.map_async(d_job, [(n, t) for n in ('isotropic', 'correlated 1') for t in TAUS_D], chunksize=1)
+            h['D'] = pool.map_async(d_job, list(RUNS_D), chunksize=1)
         if 'E' in parts:
             h['E'] = pool.map_async(e_series, [(v, s) for v in VARIANTS_E for s in SEEDS_E], chunksize=1)
         for k in 'ABCD':

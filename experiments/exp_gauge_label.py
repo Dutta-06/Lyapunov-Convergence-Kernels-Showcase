@@ -257,42 +257,47 @@ def g_dr(gamma, w, corr, Wm):
 
 
 def g_ref(gamma, corr, Wm):
-    """The drift's scale at W₀ (Part C's start): the unit of the stability exponents at (γ, τ_c)."""
-    return float(np.abs(g_dr(gamma, np.asarray(W0_C[:2], float), corr, Wm)).max())
+    """The drift's scale at (γ, τ_c): the largest |drift| over the grid of starts (`g_starts`) — the unit of the stability exponents and of
+    the zeros' acceptance (W₀'s own drift can nearly vanish where a zero passes near it: referee round 31)."""
+    v = [np.abs(g_dr(gamma, st, corr, Wm)).max() for st in g_starts(Wm)]
+    v = [x for x in v if np.isfinite(x)]
+    return float(max(v)) if v else float('nan')
 
 
 def g_zero(gamma, start, corr, Wm, ref=None):
     """A zero of the drift from `start` (fsolve on the drift over its scale there) and its two stability exponents (the eigenvalues of the
-    drift's Jacobian over `ref`, by default the drift's scale at W₀), or None."""
+    drift's Jacobian over `ref`, by default `g_ref`), or None; accepted when |drift| ≤ 10⁻⁸·ref there."""
     from scipy.optimize import fsolve
+    ref = g_ref(gamma, corr, Wm) if ref is None else ref
     sc = np.abs(g_dr(gamma, start, corr, Wm)).max()
     if not np.isfinite(sc) or sc == 0:
         return None
     w = fsolve(lambda w_: np.nan_to_num(g_dr(gamma, w_, corr, Wm) / sc, nan=1e3), np.asarray(start, float), xtol=1e-12)
     d = g_dr(gamma, w, corr, Wm)
-    if not np.all(np.isfinite(d)) or np.abs(d).max() > 1e-6 * sc:
+    if not np.all(np.isfinite(d)) or np.abs(d).max() > 1e-8 * ref:
         return None
-    ref = g_ref(gamma, corr, Wm) if ref is None else ref
     J = np.array([(g_dr(gamma, w + 1e-6 * e, corr, Wm) - g_dr(gamma, w - 1e-6 * e, corr, Wm)) / 2e-6 for e in np.eye(2)]).T / ref
     if not np.all(np.isfinite(J)):
         return None
     return w, np.sort(np.linalg.eigvals(J).real)
 
 
-def g_flow(gamma, start, corr, Wm, n=400, step=2e-3, ref=None):
-    """The drift field's flow from `start` (steps of length ≤ `step` in W along the drift) until it nears a zero; the end polished to the
-    zero by `g_zero` → (the zero or the last point, 'zero' / 'boundary' / 'steps', the stable zero's exponents or None)."""
+def g_flow(gamma, start, corr, Wm, n=4000, step=2e-3, ref=None):
+    """The drift field's flow from `start` (steps along the drift of length ≤ `step` in W and ≤ half the distance to the guard
+    GUARD_G·W_min — a coarser step overshoots the zeros near a saturation: referee round 31) until it nears a zero; the end polished to
+    the zero by `g_zero` → (the zero or the last point, 'zero' / 'boundary' / 'steps', the stable zero's exponents or None)."""
     w = np.asarray(start, float).copy()
+    ref = g_ref(gamma, corr, Wm) if ref is None else ref
     for k in range(n):
         d = g_dr(gamma, w, corr, Wm)
         if not np.all(np.isfinite(d)):
             return w, 'boundary', None
-        nd = np.abs(np.r_[d, -d.sum()]).max()
-        if k == 0:
-            sc = nd
-        if nd < 3e-3 * sc:
+        dd = np.r_[d, -d.sum()]
+        nd = np.abs(dd).max()
+        if nd < 3e-3 * ref:
             break
-        w = w + step * d / nd
+        gap = float(np.min(np.r_[w, 1 - w.sum()] - GUARD_G * Wm))
+        w = w + min(step, 0.5 * gap) * d / nd
     z = g_zero(gamma, w, corr, Wm, ref)
     return (z[0], 'zero', z[1]) if z is not None and z[1].max() < 0 else (w, 'steps', None)
 
@@ -319,7 +324,7 @@ def g1_job(gamma):
     start = ito_zero(gamma, LN.w_label(P, Wm))[0][:2]
     rows, last = [], None
     for tc in TAUC_G:
-        z = g_zero(gamma, start, g_corr(tc), Wm)
+        z = g_zero(gamma, start, g_corr(tc), Wm, g_ref(gamma, g_corr(tc), Wm))
         if z is None:
             d = g_dr(gamma, start, g_corr(tc), Wm)
             last = dict(tc=tc, drift=np.r_[d, -d.sum()] / np.abs(np.r_[d, -d.sum()]).max())
@@ -877,7 +882,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None, C2
     if G is not None:
         L_ += [f"## G. The noise's colour on the gauge: one target for fresh draws, several for slow ones (AR(1) draws of correlation time τ_c, step {DT:g})", "",
                f"G1a. The zero of the per-update selection on the simplex continued in τ_c from τ_c = 0 (fresh draws), with its two stability exponents "
-               f"(the eigenvalues of the drift's Jacobian over the drift's scale at W₀) and the softest normal relaxation rate λ_soft there "
+               f"(the eigenvalues of the drift's Jacobian over the drift's largest size on the grid of 21 starts) and the softest normal relaxation rate λ_soft there "
                f"(zeros only with every W_k above (1 + {GUARD_G - 1:.0e})W_min,k):", "",
                "| γ | τ_c | the zero W | W/W_min − 1 | the stability exponents | λ_soft·τ_c |", "|---|---|---|---|---|---|"]
         for g in G['G1']:
@@ -890,7 +895,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None, C2
         if 'G1m' in G:
             L_ += ["", "G1b. The whole zero set at fixed τ_c (fsolve and the drift field's flow from 21 starts on the representable simplex, distinct "
                    "to 10⁻⁵; stable: both exponents negative; a saddle: one positive; unstable: both; zeros within 10⁻⁴ of a saturation, W_k/W_min,k − 1 "
-                   f"< 10⁻⁴, apart), and where the flow ends from W₀ = {v3(W0_C)} (Part C's start) and from its neighbour "
+                   f"< 10⁻⁴, apart; the flow's steps at most half the distance to the guard), and where the flow ends from W₀ = {v3(W0_C)} (Part C's start) and from its neighbour "
                    f"{v3(np.r_[W0_NB, 1 - sum(W0_NB)])}:", "",
                    "| γ | τ_c | stable zeros (exponents) | saddles | unstable zeros | zeros at a saturation | the flow from W₀ ends at | from its neighbour |",
                    "|---|---|---|---|---|---|---|---|"]

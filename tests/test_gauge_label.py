@@ -312,3 +312,22 @@ def test_heun_with_dither_and_label_noise():
     Th, lb = T0 + 0.5 * dt * (d1 + d2) + dW, np.log(b0) + 0.5 * dt * (g1 / b0 + g2 / np.exp(lp))
     lb = lb - np.log(np.exp(lb).sum() / 3)
     assert np.allclose(T1, Th, rtol=0, atol=1e-13) and np.allclose(b1, np.exp(lb), rtol=0, atol=1e-13)
+
+
+def test_the_zero_search_resolves_zeros_near_a_saturation():
+    """Part G's flow and zero search on a field with a stable zero 6·10⁻⁵ above a saturation (W₃ = 0.20006, W_min,3 = 0.2): the flow's
+    steps are capped by the distance to the guard, the zero accepted relative to the field's scale (referee round 31)."""
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'experiments'))
+    import exp_gauge_label as GL
+    Wm = np.array([0.25, 0.175, 0.2])
+    target = np.array([0.6249, 0.17504])
+    orig = GL.g_dr
+    GL.g_dr = lambda gamma, w, corr, Wm_: (np.full(2, np.nan) if np.any(np.r_[w, 1 - np.sum(w)] <= GL.GUARD_G * Wm_)
+                                         else -(np.asarray(w, float) - target))
+    try:
+        w, why, lam = GL.g_flow(0.0, np.array([0.40, 0.25]), None, Wm, ref=1.0)
+        assert why == 'zero' and np.abs(w - target).max() < 1e-9 and lam.max() < 0
+        z = GL.g_zero(0.0, target + 1e-7, None, Wm, ref=1.0)
+        assert z is not None and np.abs(z[0] - target).max() < 1e-10 and np.allclose(z[1], -1.0)
+    finally:
+        GL.g_dr = orig

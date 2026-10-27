@@ -106,6 +106,12 @@ def test_the_flow_interpolant_and_one_noisy_step():
     wf, Pf = CS.flow_interpolant(Phi, y, u, v)
     wg, _ = CS.gd_interpolant(Phi, y, u=u, v=v, h=0.002)
     assert np.abs(Phi @ wf - y).max() < 1e-12 and np.allclose(Pf, u * v) and np.abs(wf - wg).max() < 2e-4
+    us, vs = np.full(20, 1e-150), np.full(20, 1e-150); us[:3], vs[:3] = u[:3], v[:3]   # three atoms alive, y outside their span:
+    W, ok = CS.end_interpolants(Phi, y, np.array([u, us]), np.array([v, vs]))           # the interpolant is at infinity, flagged
+    assert ok.tolist() == [True, False] and np.allclose(W[0], wf) and np.all(np.isnan(W[1]))
+    ys = Phi[:, :3] @ np.array([0.3, -0.2, 0.1])                                         # within their span it converges, singular Hm
+    W, ok = CS.end_interpolants(Phi, ys, us[None, :], vs[None, :])
+    assert ok[0] and np.abs(Phi @ W[0] - ys).max() < 1e-9 and np.abs(W[0][3:]).max() < 1e-100
 
     class Rec:
         def __init__(self):

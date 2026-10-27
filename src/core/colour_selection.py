@@ -144,25 +144,43 @@ def flow_interpolant(Phi, y, u, v, tol=1e-13, max_iter=200):
     """The noiseless gradient flow's interpolant from (u, v), exactly: along the flow u_i = u_i(0)e^{−s_i/2}, v_i = v_i(0)e^{s_i/2} with
     s = Φᵀμ (μ = 4∫r dt/N), so w_i(μ) = u_i²e^{−s_i} − v_i²e^{s_i}, P_i = u_iv_i conserved, and μ solves Φw(μ) = y — the maximiser of
     the strictly concave −Σ_i(u_i²e^{−s_i} + v_i²e^{s_i}) − yᵀμ (Newton with backtracking) → (w, P). From u = v = α: w = −2α²sinh(s), the
-    minimiser of the hyperbolic entropy on {Φw = y} (Woodworth et al.)."""
+    minimiser of the hyperbolic entropy on {Φw = y} (Woodworth et al.). When y needs atoms whose masses have underflowed (a noisy end
+    with fewer than N atoms alive and a residual outside their span) the maximiser is at infinity: the iteration stops at max_iter and
+    the caller checks the residual (`end_interpolants`)."""
     u2, v2 = np.asarray(u, float) ** 2, np.asarray(v, float) ** 2
     N = Phi.shape[0]
     mu = np.zeros(N)
-    obj = lambda m_: -float(np.sum(u2 * np.exp(-(Phi.T @ m_)) + v2 * np.exp(Phi.T @ m_))) - float(y @ m_)
+
+    def obj(m_):
+        with np.errstate(over='ignore', invalid='ignore'):
+            f = -float(np.sum(u2 * np.exp(-(Phi.T @ m_)) + v2 * np.exp(Phi.T @ m_))) - float(y @ m_)
+        return f if np.isfinite(f) else -np.inf
     for it in range(max_iter):
         sv = Phi.T @ mu
         w = u2 * np.exp(-sv) - v2 * np.exp(sv)
         F = Phi @ w - y
         if np.abs(F).max() < tol * max(1.0, np.abs(y).max()):
             break
-        Hm = (Phi * (u2 * np.exp(-sv) + v2 * np.exp(sv))[None, :]) @ Phi.T       # −∇²(objective), positive definite
-        step = np.linalg.solve(Hm, F)                                              # ascent: μ ← μ + step
-        f0, t = obj(mu), 1.0
+        Hm = (Phi * (u2 * np.exp(-sv) + v2 * np.exp(sv))[None, :]) @ Phi.T       # −∇²(objective), positive semi-definite
+        step = np.linalg.lstsq(Hm, F, rcond=None)[0]                               # ascent μ ← μ + step (minimal norm: with fewer
+        f0, t = obj(mu), 1.0                                                       # than N atoms alive Hm is singular)
         while obj(mu + t * step) < f0 + 0.25 * t * float(F @ step) and t > 1e-12:
             t *= 0.5
         mu = mu + t * step
     sv = Phi.T @ mu
-    return u2 * np.exp(-sv) - v2 * np.exp(sv), np.asarray(u, float) * np.asarray(v, float)
+    with np.errstate(over='ignore', invalid='ignore'):
+        return u2 * np.exp(-sv) - v2 * np.exp(sv), np.asarray(u, float) * np.asarray(v, float)
+
+
+def end_interpolants(Phi, y, U, V, tol=1e-9):
+    """The flow interpolants of the rows of (U, V) (paths' ends) → (W (paths × d), converged (paths,)): a row whose interpolant does not
+    reach |Φw − y| ≤ tol·max(1, |y|) (it would revive underflowed atoms) is NaN."""
+    W, ok = [], []
+    for u, v in zip(U, V):
+        w = flow_interpolant(Phi, y, u, v)[0]
+        c = bool(np.all(np.isfinite(w)) and np.abs(Phi @ w - y).max() <= tol * max(1.0, np.abs(y).max()))
+        W.append(w if c else np.full(len(w), np.nan)); ok.append(c)
+    return np.array(W), np.array(ok)
 
 
 def basis_pursuit(Phi, y, c):

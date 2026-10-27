@@ -141,12 +141,13 @@ def b_job(args):
     s_rec = np.arange(9) * every * H_B * 4 * vh / N_B
     _, Wf, _ = CS.reduced_flow(Phi, w0, P0, s_rec[-1], H_B, corr, t_eval=s_rec)
     u, v, rec = CS.label_noise_gd(Phi, y, u0, v0, H_B, SIG_B, rho, n, np.random.default_rng(seed + 77), P_B, rec_every=every)
-    ends = np.array([CS.flow_interpolant(Phi, y, u[p], v[p])[0] for p in range(P_B)])
+    ends, conv = CS.end_interpolants(Phi, y, u, v)
     wbp = CS.basis_pursuit(Phi, y, (Phi ** 2).sum(axis=0))
     print(f"[{time.time() - t0:.0f}s] B seed {seed} tau_c {tc:g}", flush=True)
     return dict(seed=seed, tc=tc, s=s_rec, dev=np.abs(rec - Wf.T).max(axis=1), flow_err=np.abs(Wf.T - ws[None, :]).max(axis=1),
                 path_err=np.abs(rec - ws[None, :]).max(axis=1), end_err=np.abs(ends - ws[None, :]).max(axis=1),
-                end_nnz=(np.abs(ends) > 1e-3).sum(axis=1), bp_err=float(np.abs(wbp - ws).max()), n=n, vh=vh, wmax=float(np.abs(ws).max()))
+                end_nnz=np.where(conv, (np.abs(ends) > 1e-3).sum(axis=1), -1), bp_err=float(np.abs(wbp - ws).max()), n=n, vh=vh,
+                wmax=float(np.abs(ws).max()))
 
 
 @cached
@@ -204,16 +205,22 @@ def d_noisy_job(args):
     lam = np.linalg.eigvalsh(CS.gram(Phi, np.sqrt(w0 ** 2 + 4 * P0 ** 2))).max()
     h = min(H_B, 0.5 / lam)                                                   # hλ_max ≤ 1/2 at the start
     vh = h * SIG_B ** 2 / N_D
+    wbp = CS.basis_pursuit(Phi, y, (Phi ** 2).sum(axis=0))
     out = dict(width=width, k=k, i=i, h=h)
     for tc in (0.0, 100.0):
         rho = 0.0 if tc == 0 else float(np.exp(-h / tc))
         S = S_B[tc]
         n = int(round(S * N_D / (4 * vh) / h))
         u, v, _ = CS.label_noise_gd(Phi, y, u0, v0, h, SIG_B, rho, n, np.random.default_rng(1000 * k + i), P_B)
-        ends = np.array([CS.flow_interpolant(Phi, y, u[p], v[p])[0] for p in range(P_B)])
+        ends, conv = CS.end_interpolants(Phi, y, u, v)
+        raw = u * u - v * v
         flow = CS.reduced_flow(Phi, w0, P0, S, h, ('fresh',) if tc == 0 else ('ar1', rho))[1][:, -1]
-        out[tc] = dict(n=n, err=np.abs(ends - ws[None, :]).max(axis=1), nnz=(np.abs(ends) > 1e-3 * np.abs(ws).max()).sum(axis=1),
-                       flow_err=float(np.abs(flow - ws).max()), flow_nnz=int((np.abs(flow) > 1e-3 * np.abs(ws).max()).sum()))
+        out[tc] = dict(n=n, err=np.abs(ends - ws[None, :]).max(axis=1),
+                       nnz=np.where(conv, (np.abs(ends) > 1e-3 * np.abs(ws).max()).sum(axis=1), -1),
+                       raw_err=np.abs(raw - ws[None, :]).max(axis=1), raw_bp=np.abs(raw - wbp[None, :]).max(axis=1),
+                       alive=((u * u + v * v) > 1e-8 * (u * u + v * v).max(axis=1, keepdims=True)).sum(axis=1),
+                       flow_err=float(np.abs(flow - ws).max()), flow_nnz=int((np.abs(flow) > 1e-3 * np.abs(ws).max()).sum()),
+                       flow_bp=float(np.abs(flow - wbp).max()))
     print(f"[{time.time() - t0:.0f}s] D noisy width {width:g} k {k} instance {i}", flush=True)
     return out
 
@@ -316,6 +323,10 @@ def h_job(args):
                 at_bp={tc: certificate(Phi, wbp, tc)[0] for tc in TAUS_H}, bp_nnz=certificate(Phi, wbp, 0.0)[1])
 
 
+def fmt_end(x):
+    return 'n.c.' if not np.isfinite(x) else f'{x:.0e}'
+
+
 def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, G=None, H=None):
     L_ = ["# Proposition D‴.43: the colour of the measurement noise selects the kernels (`exp_colour_selection.py`)", "",
           "w = u⊙u − v⊙v on a fixed dictionary Φ (N × d), fitted by gradient descent with label noise; along the exact fits the reduced flow "
@@ -343,7 +354,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, G=None, H=None):
             noise = 'fresh' if r['tc'] == 0 else f"AR(1), τ_c = {r['tc']:g}"
             L_.append(f"| {r['seed']} | {noise} | {r['n']} | {r['s'][-1]:.0f} | "
                       f"{', '.join(f'{x:.3f}' for x in r['dev'])} | {r['flow_err'][-1]:.1e} | {r['path_err'][-1]:.1e} | "
-                      f"{', '.join(f'{x:.0e}' for x in r['end_err'])} | {', '.join(str(int(x)) for x in r['end_nnz'])} | {r['bp_err']:.2f} |")
+                      f"{', '.join(fmt_end(x) for x in r['end_err'])} | {', '.join(str(int(x)) if x >= 0 else 'n.c.' for x in r['end_nnz'])} | "
+                      f"{r['bp_err']:.2f} |")
         L_.append("")
     if C is not None:
         meth = list(C[0]['out'])
@@ -371,14 +383,17 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, G=None, H=None):
                           f" | {np.mean([r['out']['bp'][1] for r in rs]):.1f}, {np.mean([r['out']['slow 100'][1] for r in rs]):.1f} |")
         L_ += ["", f"Label-noise descent on the first instances where basis pursuit fails (width {WIDTHS_D[1]:g}, k = 4; {P_B} paths, σ = {SIG_B:g}, "
                "the step min(0.5, 1/(2λ_max)) at the start):", "",
-               "| instance | step | the noise | steps | the end interpolants' errors (per path) | their supports' sizes | the reduced flow's error, support |",
-               "|---|---|---|---|---|---|---|"]
+               "| instance | step | the noise | steps | the end interpolants' errors (per path) | their supports' sizes | the ends' atoms "
+               "alive (D > 10⁻⁸ max D) | the raw ends' distance to the truth, to basis pursuit's solution (max over paths) | the reduced "
+               "flow's error, support, distance to basis pursuit's solution |", "|---|---|---|---|---|---|---|---|---|"]
         for r in Dn:
             for tc in (0.0, 100.0):
                 q = r[tc]
-                L_.append(f"| {r['i']} | {r['h']:.3g} | {'fresh' if tc == 0 else 'AR(1), τ_c = 100'} | {q['n']} | {', '.join(f'{x:.0e}' for x in q['err'])} | "
-                          f"{', '.join(str(int(x)) for x in q['nnz'])} | {q['flow_err']:.1e}, {q['flow_nnz']} |")
-        L_.append("")
+                L_.append(f"| {r['i']} | {r['h']:.3g} | {'fresh' if tc == 0 else 'AR(1), τ_c = 100'} | {q['n']} | {', '.join(fmt_end(x) for x in q['err'])} | "
+                          f"{', '.join(str(int(x)) if x >= 0 else 'n.c.' for x in q['nnz'])} | {', '.join(str(int(x)) for x in q['alive'])} | "
+                          f"{q['raw_err'].max():.2f}, {q['raw_bp'].max():.2f} | {q['flow_err']:.1e}, {q['flow_nnz']}, {q['flow_bp']:.1e} |")
+        L_ += ["", "n.c.: the end's flow interpolant does not converge — the exact fit needs atoms whose masses have underflowed (fewer than N "
+               "alive, a residual outside their span), its maximiser is at infinity; the raw end (residual O(σ)) is reported instead.", ""]
     if Ee is not None:
         names = list(Ee[0]['out'])
         L_ += [f"## E. Other colours at the step {H_B:g} (the reduced flow with each scheme's filter; 10 × 40, {N_INST_E} instances)", "",
