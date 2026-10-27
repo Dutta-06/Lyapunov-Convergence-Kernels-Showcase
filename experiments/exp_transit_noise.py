@@ -16,8 +16,9 @@ B. The fluctuation–dissipation relation on the support (ε = 10⁻⁶, three d
    the coefficients' covariance over a window against T·dw/dη (T = σ²/(2N)), their correlations against the design's, their mean against
    weighted basis pursuit, the inactive coefficients.
 C. The noisy transit (the first design, ε = 10⁻⁴, 10⁻⁶, 10⁻⁸, σ = 0.1, 0.3, 1, four noise paths): the noise's share sup_τ|u − u_det|
-   (u_det the noiseless run on the same grid) against κ = σ/(NΛ^{1/2}) and against its first-order response κΦᵀ∫P_T dW along the inverse
-   scale space path (the same noise path); the entries' order and times.
+   (u_det the noiseless run on the same grid) against κ = σ/(NΛ^{1/2}) and against its first-order response along the inverse scale space
+   path (δν ← P_T(δν + κdW), the same noise path: for entries only κP_{T(τ)}W(τ)) — its error over all τ, outside windows of ±0.05 and
+   ±0.1 around the path's events (where an entry's O(κ) shift makes the response O(1)-nonlinear), and in L²; the entries' order and times.
 D. The stationary mean in the rich limit at larger noise (the first design, ε = 10⁻⁴, 10⁻⁶, 10⁻⁸, σ = 0.3, 1): the support's mean against
    weighted basis pursuit with its standard error, the inactive coefficients.
 
@@ -50,6 +51,7 @@ H_PATH_A, T_PATH_A, T_DRIFT_A = (0.01, 0.0025), 50.0, 2000.0                  # 
 SEEDS_B, EPS_B, SIGS_B, H_B, TW_B = (3, 4, 5), 1e-6, (0.03, 0.1, 0.3), 0.1, 4.0e4
 SEED_CD = 3                                                              # C, D: the first design of exp_mirror_transit
 EPS_C, SIGS_C, PATHS_C, H_C, REC_C = (1e-4, 1e-6, 1e-8), (0.1, 0.3, 1.0), 4, 0.25, 20
+WIN_C = (0.05, 0.1)                                                       # C: windows around the path's events (in τ)
 EPS_D, SIGS_D, H_D, TW_D = (1e-4, 1e-6, 1e-8), (0.3, 1.0), 0.1, 4.0e4
 NB = 20                                                                  # batch means
 
@@ -216,9 +218,16 @@ def part_C(pool):
             continue
         dd = det[r['eps']]
         dU = r['U'] - dd['U']
+        err = np.abs(dU - r['U_lin'])
+        ev = [t for t, i, kind in setup(SEED_CD, r['eps'])[5]['events']]
+        out = {}
+        for w in WIN_C:
+            keep = np.all(np.abs(r['taus'][:, None] - np.array(ev)[None, :]) >= w, axis=1)
+            out[w] = float(err[keep].max() / np.abs(dU).max())
         kap = r['sig'] / (X.NA * np.sqrt(r['Lam']))
         row = dict(eps=r['eps'], sig=r['sig'], k=r['k'], share=float(np.abs(dU).max()), kappa=float(kap),
-                   lin_err=float(np.abs(dU - r['U_lin']).max() / np.abs(dU).max()), iss=r['iss'], iss_det=dd['iss'],
+                   lin_err=float(err.max() / np.abs(dU).max()), lin_out=out, lin_l2=float(np.sqrt(np.mean(err ** 2) / np.mean(dU ** 2))),
+                   iss=r['iss'], iss_det=dd['iss'],
                    order=[i for i in np.argsort(r['entries']) if np.isfinite(r['entries'][i])] ==
                          [i for i in np.argsort(dd['entries']) if np.isfinite(dd['entries'][i])],
                    dt_entry=float(np.nanmax(np.abs(np.where(np.isfinite(r['entries']), r['entries'], np.nan) -
@@ -226,7 +235,8 @@ def part_C(pool):
                    end=float(np.abs(r['w_end'] - dd['w_end']).max()))
         rows.append(row)
         print(f"  C ε {r['eps']:g} σ {r['sig']} path {r['k']}: share {row['share']:.2e} = {row['share'] / kap:.2f}κ, linear response "
-              f"error {row['lin_err']:.3f}, order kept {row['order']} ({r['secs']:.0f}s)", flush=True)
+              f"error {row['lin_err']:.3f} (outside the windows {', '.join(f'{v:.3f}' for v in out.values())}; L² {row['lin_l2']:.3f}), "
+              f"order kept {row['order']} ({r['secs']:.0f}s)", flush=True)
     return dict(rows=rows, det={e: dict(iss=det[e]['iss'], entries=det[e]['entries']) for e in det})
 
 
@@ -309,17 +319,20 @@ def report(A=None, B=None, C=None, D=None):
         rows = C['rows']
         s += ['## C. The noisy transit (the first design)', '',
               'Per ε and σ over four noise paths: the noise\'s share sup_τ|u − u_det| (mean, and divided by κ = σ/(NΛ^{1/2})), the '
-              'first-order response\'s relative error sup|δu − κΦᵀ∫P_T dW|/sup|δu|, the entries\' order kept, the largest entry-time '
-              'shift; the noiseless run\'s sup|u_det − u_ISS| for comparison.', '',
-              '| ε | σ | κ | share (mean) | share/κ | linear-response error (max) | order kept | max entry shift | sup|u_det − u_ISS| |',
-              '|---|---|---|---|---|---|---|---|---|']
+              'first-order response\'s (δν ← P_T(δν + κdW) along the path) relative error |δu − δu_lin|/sup|δu| — its sup over all τ, '
+              f'its sup outside ±{WIN_C[0]:g} and ±{WIN_C[1]:g} of the path\'s events, its L² over τ (the largest over the paths) —, the '
+              'entries\' order kept, the largest entry-time shift; the noiseless run\'s sup|u_det − u_ISS| for comparison.', '',
+              f'| ε | σ | κ | share (mean) | share/κ | linear response: sup | outside ±{WIN_C[0]:g} | outside ±{WIN_C[1]:g} | L² | order kept | '
+              'max entry shift | sup|u_det − u_ISS| |',
+              '|---|---|---|---|---|---|---|---|---|---|---|---|']
         for e in EPS_C:
             for g in SIGS_C:
                 rr = [r for r in rows if r['eps'] == e and r['sig'] == g]
                 sh = np.array([r['share'] for r in rr])
                 s.append(f"| {e:g} | {g} | {rr[0]['kappa']:.2e} | {sh.mean():.2e} | {np.mean(sh / rr[0]['kappa']):.2f} | "
-                         f"{max(r['lin_err'] for r in rr):.3f} | {sum(r['order'] for r in rr)}/{len(rr)} | "
-                         f"{max(r['dt_entry'] for r in rr):.2e} | {rr[0]['iss_det']:.2e} |")
+                         f"{max(r['lin_err'] for r in rr):.3f} | {max(r['lin_out'][WIN_C[0]] for r in rr):.3f} | "
+                         f"{max(r['lin_out'][WIN_C[1]] for r in rr):.3f} | {max(r['lin_l2'] for r in rr):.3f} | "
+                         f"{sum(r['order'] for r in rr)}/{len(rr)} | {max(r['dt_entry'] for r in rr):.2e} | {rr[0]['iss_det']:.2e} |")
         sh = {g: np.array([np.mean([r['share'] for r in rows if r['eps'] == e and r['sig'] == g]) for e in EPS_C]) for g in SIGS_C}
         sl = {g: np.polyfit(np.log(EPS_C), np.log(sh[g]), 1)[0] for g in SIGS_C}
         s += ['', 'Log-log slope of the share in ε: ' + ', '.join(f'σ = {g}: {sl[g]:.3f}' for g in SIGS_C) + ' (κ ∝ ε^{1/4}).', '']
