@@ -456,7 +456,7 @@ def creep_reaches(L, K, P, j, eps, c0j, b=1.0):
     return False
 
 
-def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0, tol=1e-10, max_doublings=12):
+def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0, tol=1e-10, max_doublings=12, cross=None):
     """The pull an entry exerts on kernels that do not enter, measured on the entry's ε-free inner problem (Proposition D‴.51(iv)): in
     s = (τ − τ_e)/ε^{1/2} the active block of the path before the event k (index into P's times) and the entrant i follow the loop on the
     critical curve — dα/ds = Λ₀·2Gc tanh²(α/a)⟨rφ⟩, dc/ds = Λ₀Gm w⟨r∂_cφ⟩, w = 2c sinh²(α/a)·a tanh(α/a)/m —, the block from its
@@ -465,7 +465,8 @@ def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0
     the outer solution — the drift of the residual before the entry until the entrant's outer arrival at its wall, s₀ = xi0ρ/(s_i⟨r⁻φ_i⟩),
     the inner problem's final residual's after: kernel j forms at the mass ε iff μ_j/ε^{1/2} − Δ_j < ξ_θ (𝒲(ξ_θ) = θ). Integrated over
     s₀ + s_end, then doubling until the block's rates fall below tol (or max_doublings). Returns dict(pull = {j: Δ_j}, stationary, s,
-    w_end (the block's and the entrant's coefficients at the end))."""
+    w_end (the block's and the entrant's coefficients at the end)); with cross = θ also s_cross, the time at which the entrant's |w| first
+    reaches θ, measured from its outer arrival s₀ (Theorem D‴.53(c): the loop's crossing at τ_e + ε^{1/2}s_cross)."""
     lam0 = transit_scale(L, 1.0)
     nx = K.xs.size
     hist = R['hist']
@@ -496,9 +497,14 @@ def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0
         h = K.dphi(c).T @ r / nx
         x = np.minimum(np.abs(al) / L.A, 350.0)
         return np.r_[lam0 * 2 * L.G * L.c * np.tanh(x) ** 2 * g, lam0 * L.G * L.m * w * h, -st * (Ptr.T @ r) / nx / rho]
-    z, s_, chunk, ok = z0, 0.0, s0 + float(s_end), False
+    def hit(s, z):
+        return coef_crit(L, z[n - 1]) - cross
+    hit.direction = 1
+    z, s_, chunk, ok, s_cross = z0, 0.0, s0 + float(s_end), False, None
     for _ in range(max_doublings + 1):
-        sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', rtol=1e-9, atol=1e-12)
+        sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', rtol=1e-9, atol=1e-12, events=hit if cross is not None else None)
+        if cross is not None and s_cross is None and sol.t_events[0].size:
+            s_cross = float(sol.t_events[0][0]) - s0
         z, s_ = sol.y[:, -1], s_ + chunk
         if np.all(np.abs(rhs(s_, z)[:2 * n]) <= tol):
             ok = True
@@ -508,7 +514,7 @@ def entry_pull(L, K, fstar, R, P, k, i, tracers, rho=1.0, xi0=400.0, s_end=200.0
     d_post = st * (Ptr.T @ r_end) / nx / rho
     xi_out = -(d_pre * min(s_, s0) + d_post * max(s_ - s0, 0.0))
     pull = {j: float(xi_out[q] - z[2 * n + q]) for q, j in enumerate(tr)}
-    return dict(pull=pull, stationary=ok, s=s_, w_end=dict(zip(idx, w.tolist())))
+    return dict(pull=pull, stationary=ok, s=s_, w_end=dict(zip(idx, w.tolist())), s_cross=s_cross)
 
 
 def recovery_threshold(L, K, fstar, c0, R, th_abs, n_creep=4, eps_lo=1e-14, eps_hi=1e-3, n_bisect=14, measured_pull=True):
@@ -576,3 +582,106 @@ def recovery_threshold(L, K, fstar, c0, R, th_abs, n_creep=4, eps_lo=1e-14, eps_
         creep[j] = float(np.exp(hi))
     eps_creep = min(creep.values()) if creep else np.inf
     return dict(eps_entry=eps_entry, entry=arg, eps_creep=eps_creep, creep=creep, eps_c=min(eps_entry, eps_creep))
+
+
+def loop_with_duals(L, K, fstar, c0, eps, taus, b=None, levels=None, P=None, rtol=1e-11, atol=1e-12):
+    """The free law with moving centres from α = 0 with the masses εb (Theorem D‴.53's loop), the dual coordinates integrated alongside:
+    the state (α, c, δη), each kernel on its curve β = εb_i + 2c sinh²(α_i/a_max). Without P, δη = η (η̇_i = ⟨rφ(c_i)⟩ exactly); with the
+    sliding path's duals P (`path_duals`), δη_i = η_i − Λu_i^path(t/Λ), integrated at ⟨rφ(c_i)⟩ minus the path's rate on each of its
+    intervals (⟨r_kφ(c_i^k)⟩ for its inactive kernels, 0 on its walls) — a well-scaled deviation (O(1) where η is O(Λ)), split at the path's
+    events. The tolerances are per component: α's absolute tolerance atol times the core's scale a_max(εb/(2c))^{1/2}, the centres' atol·10⁻²,
+    δη's atol. Records on the grid `taus` (in τ = t/Λ(ε)) the coefficients, centres, u = u^path + δη/Λ and du = δη/Λ; with
+    levels = {i: θ_i} the first time each |w_i| reaches θ_i. Returns dict(taus, w, c, u, du, cross = {i: τ or None}, Lam)."""
+    d = len(c0)
+    bb = np.ones(d) if b is None else np.asarray(b, float)
+    b0 = eps * bb
+    Lam = transit_scale(L, eps)
+    taus = np.asarray(taus, float)
+    base = critical_rhs(L, K, fstar, 'paradigm', b0=b0)
+    nx = K.xs.size
+    al_core = L.A * np.sqrt(b0 / (2 * L.c))
+    tol = np.r_[atol * al_core, np.full(d, 1e-2 * atol), np.full(d, atol)]
+    if P is not None:
+        T = np.asarray(P['taus'], float)
+        rates = []
+        for k in range(len(T)):
+            act = np.abs(np.abs(P['U'][k]) - 1) < 1e-12
+            v = K.phi(np.asarray(P['centres'][k], float)).T @ K.filt(P['res'][k]) / nx
+            rates.append(np.where(act, 0.0, v))
+        cuts = [t for t in T[1:] if t < taus[-1]]
+    else:
+        T, rates, cuts = np.array([0.0]), [np.zeros(d)], []
+
+    def make(rate):
+        def rhs(t, z):
+            al, c = z[:d], z[d:2 * d]
+            r = K.filt(fstar - K.phi(c) @ critical_w(L, al, b0))
+            return np.r_[base(t, z[:2 * d]), K.phi(c).T @ r / nx - rate]
+        return rhs
+    lev = dict(levels or {})
+    evs = []
+    for i, th in lev.items():
+        def ev(t, z, i=i, th=th):
+            return abs(float(critical_w(L, z[i], b0[i]))) - th
+        ev.direction = 1
+        evs.append(ev)
+    bounds = [0.0] + [Lam * t for t in cuts] + [Lam * taus[-1]]
+    z = np.r_[np.zeros(d), np.asarray(c0, float), np.zeros(d)]
+    Y = np.full((taus.size, 3 * d), np.nan)
+    cross = {i: None for i in lev}
+    for q in range(len(bounds) - 1):
+        t0, t1 = bounds[q], bounds[q + 1]
+        k = int(np.searchsorted(T, t0 / Lam + 1e-12, side='right') - 1) if P is not None else 0
+        sel = (Lam * taus >= t0) & (Lam * taus < t1)
+        if q == len(bounds) - 2:
+            sel = (Lam * taus >= t0)
+        te = np.unique(np.r_[Lam * taus[sel], t1])                       # the segment's end always evaluated: the next one starts there
+        sol = solve_ivp(make(rates[k]), (t0, t1), z, method='LSODA', rtol=rtol, atol=tol, t_eval=te, events=evs or None)
+        if sel.any():
+            Y[sel] = sol.y.T[np.searchsorted(te, Lam * taus[sel])]
+        for qq, i in enumerate(lev):
+            if cross[i] is None and sol.t_events[qq].size:
+                cross[i] = float(sol.t_events[qq][0]) / Lam
+        z = sol.y[:, -1]
+    al, c, deta = Y[:, :d], Y[:, d:2 * d], Y[:, 2 * d:]
+    if P is not None:
+        up = np.array([np.asarray(P['U'][int(np.searchsorted(T, t + 1e-12, side='right') - 1)])
+                       + (t - T[int(np.searchsorted(T, t + 1e-12, side='right') - 1)])
+                       * rates[int(np.searchsorted(T, t + 1e-12, side='right') - 1)] for t in taus])
+    else:
+        up = np.zeros_like(deta)
+    return dict(taus=taus, w=critical_w(L, al, b0), c=c, u=up + deta / Lam, du=deta / Lam, cross=cross, Lam=Lam)
+
+
+def creep_constants(L, K, P, j, c0j, taus, b=1.0):
+    """The leading-order displacement of a kernel that does not enter, and its dual's, along the sliding path (Theorem D‴.53(a), (d)):
+    c_j = c0j + εC_j(τ), u_j = u_j^path(τ) + (pulls) + εD_j(τ), with dC_j/dτ = κ(μ_j)s_j⟨r_k∂_cφ(c0j)⟩ (the creep law of D‴.48(iii)(a),
+    κ(μ) = (πa_max²/(4c))b^{3/2}cos(πμ/2)/sin³(πμ/2), μ_j = 1 − |u_j| the path's margin, ρ = 1) and dD_j/dτ = C_j⟨r_k∂_cφ(c0j)⟩ on each of
+    the path's intervals (P from `path_duals`). Returns (C, D) at `taus` (which must precede j's entry, if it enters)."""
+    pref = np.pi * L.A ** 2 / (4 * L.c) * b ** 1.5
+    nx = K.xs.size
+    ph, dph = K.phi(np.array([c0j]))[:, 0], K.dphi(np.array([c0j]))[:, 0]
+    T = list(P['taus'])
+    taus = np.asarray(taus, float)
+    out = np.full((taus.size, 2), np.nan)
+    z = np.zeros(2)
+    for k in range(len(T)):
+        t0 = T[k]
+        t1 = T[k + 1] if k + 1 < len(T) else max(taus.max(), t0) + 1e-12
+        r = K.filt(P['res'][k])
+        v, gp = ph @ r / nx, dph @ r / nx
+        u0 = P['U'][k][j]
+
+        def f(t, z, u0=u0, v=v, gp=gp, t0=t0):
+            u = u0 + (t - t0) * v
+            mu = 1 - abs(u)
+            return [pref * np.cos(np.pi * mu / 2) / np.sin(np.pi * mu / 2) ** 3 * np.sign(u) * gp, z[0] * gp]
+        sel = (taus >= t0) & (taus <= t1)
+        if t1 > t0:
+            sol = solve_ivp(f, (t0, t1), z, method='LSODA', rtol=1e-10, atol=1e-14, dense_output=True)
+            if sel.any():
+                out[sel] = sol.sol(taus[sel]).T
+            z = sol.y[:, -1]
+        if t1 >= taus.max():
+            break
+    return out[:, 0], out[:, 1]
