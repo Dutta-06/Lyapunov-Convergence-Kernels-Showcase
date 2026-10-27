@@ -1233,3 +1233,36 @@ generous; Part E's seven zeros confirmed; the md regenerates byte-identically.
 
 **Lesson.** A zero of the drift is not a resting place when the diffusion vanishes there too: in the coordinate where the noise is
 regular the "restoring" drift was only an Itô term, and the masses kept going. The drift field alone does not decide recurrence.
+
+## Round 28 (adversarial review of Proposition D‴.38, the Fixman correction, 2026-10-26)
+
+**Design.** One referee, not modifying the repository. D3aa: Proposition D‴.38 at 2b56ae1 (`review/REVIEW_round28_D3aa.md`): the closed
+form ℓ against an independent Gauss–Newton Hessian at six points; the conditioning along M; the second-order stationary mean of the pinned
+state (the linearised limit SDE with the leak's projected force); the floor's cap and the zero-flux density across it; the finite-γ
+correction drift; equipartition with ⟨e²⟩; the reproducibility of every part by the current code; 25 mutants.
+
+**Verdicts (D3aa).** (i)'s cancellation in the slow limit and the closed form right (log det − ℓ constant to 10⁻⁸); (ii) right, with
+"best-conditioned" wrong (W♯ is D-optimal); (iii) the exponents right in Katzenberger's limit, "normalisable for every κ_F > 0" false for
+the implemented (floored) correction; (iv) the pinned state's first order incomplete — the paired excess is the second-order fluctuation
+term; Part D not reproducible by the current code (run before the floor); 11 of 25 mutants surviving.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3aa-1 | major ((iv), Part G) | the pinned state omits the fluctuation term −J⁻¹½∂²f[C], of the same order through the leak's curved projected force; Part G's "unexplained" excess is that term | the second-order stationary mean in (iv) and `exp_gauge_fixman.second_order`; the paired differences within 0.93 s.e. of it, D‴.37's Part G within 1.7 s.e. |
+| D3aa-2 | major ((iii), title) | the floored correction's capped c_k makes the density p ∝ δ⁻¹ below δ_cap = 0.00126: not normalisable | (iii)'s law stated for the unfloored correction and the cap δ_cap with it (Part H: the exponent across the cap falls back toward −1, as predicted to 10⁻³); the title no longer claims the saturation non-attracting |
+| D3aa-3 | minor | W♯ maximises det ∇²_ΘJ (D-optimal), not the conditioning | "the D-optimal exact fit" throughout; the test renamed |
+| D3aa-4 | minor | "no excursion into the saturation" false at κ_F = 1 (|α_3| to 13.5) | (D), (E): the excursions along M at κ_F = 1 stated, none beyond a saturation; |α| ≤ 8.1 at κ_F = 2 |
+| D3aa-5 | minor | κ_F = 1's "within 1.3 s.e. of W♯" tests nothing (the zero's relaxation time 2·10⁶) | compared with the deterministic mean path; κ_F = 2 within 1.0–1.1 s.e. |
+| D3aa-6 | minor | the over-compensation from γ ≈ 2·10⁻³; the finite-γ correction drift P·F_c = (TᵀgT)⁻¹∇_WΦ missing | (i) and (A): the formula, the reversal from γ ≈ 2·10⁻³, the effective gain |
+| D3aa-7 | minor | Part C tests only the τ → 0 algebra | (C) called Katzenberger's limit; the finite-τ claim stated as untested there |
+| D3aa-8 | minor | equipartition with the mean of e, not the rms | ⟨e²⟩, τ̂ = m⟨F²⟩⟨e²⟩/p, p_eff reported (8.92–9.04 corrected, 8.06 without) |
+| D3aa-9 | minor | Part D run before the floor came in | Part D re-run with the current code; the run cache keyed by the code's version (`runcache.VERSION`) |
+| D3aa-10 | minor | 11 of 25 mutants survive (the floor, the tracked average, the analysis) | tests of the floor, the tracked average, κ's factor m, the analysis on synthetic records |
+| D3aa-11 | minor | forward references carry unproved claims (⟨u_k⟩ = −τ⟨g′_k⟩ "exactly") | the identity by one integration by parts, in the positions' quasi-stationary law (the global Gibbs law has none) |
+| D3aa-12 | minor | adaptive biasing force, well-tempered metadynamics, max-det/analytic centres, Helfand's stiff-limit term missing; "Fixman" needs a qualification | [S66] extended (search-verified or flagged); the audit's "New" narrowed |
+| D3aa-13 | cosmetic | 0.0045 → 0.0046; τ̂ 9.4·10⁻⁵ was D's; B's eigenvalues 16–19γ²τ and 29–30γ²τ; the md header | fixed |
+
+**Lesson.** A stationary mean has to be predicted to the order at which the fluctuations act: when the restoring force is curved on the
+scale of the distance to a boundary, its fluctuation term is of the same order as the drift balance, and a paired design resolves exactly
+that term. A limit statement must be made for the object the code implements, cap included; and a name ("best-conditioned") is checked
+by computing the quantity it names.

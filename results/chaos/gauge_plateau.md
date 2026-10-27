@@ -31,4 +31,56 @@ Masses uniform, toward class 3's saturation: the largest ΔJ/τ along the path 7
 
 Masses sharp, toward class 3's saturation: the largest ΔJ/τ along the path 8.211 (image 6 of 39); at every fourth image the profile 0.00, 8.04, 8.19, 8.17, 8.12, 7.90, 7.79, 7.74, 7.70, 7.68, the fit error 0.0000, 0.0357, 0.0360, 0.0360, 0.0359, 0.0354, 0.0352, 0.0350, 0.0349, 0.0349, the second width 0.40, 0.77, 0.91, 0.93, 0.96, 1.07, 1.12, 1.14, 1.15, 1.16.
 
+## C. The escapes at fixed masses 1/3 (γ = 0; 24 seeds, at most 400000 slow units; an escape: max|α_k| > 6)
+
+| τ | escapes | the rate (per slow unit, ± s.e.) | the median time | the rate × e^{ΔJ/τ} | the fit error at the escape |
+|---|---|---|---|---|---|
+| 0.00015 | 10/24 | 1.33e-6 ± 4.22e-7 | 4e+05 | 2.25e-4 | 0.0456 |
+| 0.0002 | 19/24 | 4.06e-6 ± 9.32e-7 | 1.6e+05 | 1.90e-4 | 0.0465 |
+| 0.0003 | 24/24 | 1.09e-5 ± 2.23e-6 | 6.65e+04 | 1.42e-4 | 0.0538 |
+
+The slope of log(rate) against 1/τ: 6.31e-4 (the lowest J on the escape set's boundary, ΔJ = 7.69e-4).
+
+## D. The dead zone at fixed masses 1/3 (γ = 0, τ = 0.0002, 16 seeds, 400000 slow units)
+
+A record is on the plateau when its second width exceeds 0.6 (A and B: the plateaus' configurations and the path's).
+
+| box | seeds that reach the plateau | fraction of the records on it (s_2 > 0.6), by quarters | fraction with max|α| > 6 | the largest |α|, by quarters | the fit error, by quarters |
+|---|---|---|---|---|---|
+| none | 16/16 | 0.179, 0.401, 0.535, 0.568 | 0.090, 0.358, 0.461, 0.559 | 15.0, 19.8, 21.0, 27.6 | 0.0395, 0.0425, 0.0439, 0.0448 |
+| L = (5.0, 3.0, 4.0) | 16/16 | 0.123, 0.086, 0.185, 0.157 | 0.000, 0.000, 0.000, 0.000 | 5.0, 5.0, 5.0, 5.0 | 0.0391, 0.0392, 0.0403, 0.0403 |
+
+## E. The full loop with the box (γ = 0.01, τ = 0.0001, 12 seeds, 1e+06 slow units)
+
+The box's vertices: 0.5579, 0.2063, 0.2358; 0.2947, 0.4695, 0.2358; 0.2947, 0.2063, 0.4990; W♯ = 0.3765, 0.2988, 0.3247.
+
+| κ_F | s | mean of W_1, W_2, W_3 (± s.e.) | std |
+|---|---|---|---|
+| 0 | 100000 | 0.3578 ± 0.0111, 0.3272 ± 0.0105, 0.3150 ± 0.0125 | 0.0385, 0.0364, 0.0434 |
+| 0 | 300000 | 0.3672 ± 0.0158, 0.3172 ± 0.0147, 0.3156 ± 0.0113 | 0.0547, 0.0509, 0.0392 |
+| 0 | 1e+06 | 0.3658 ± 0.0141, 0.3171 ± 0.0216, 0.3171 ± 0.0164 | 0.0490, 0.0747, 0.0569 |
+| 2 | 100000 | 0.3692 ± 0.0077, 0.3070 ± 0.0074, 0.3237 ± 0.0077 | 0.0267, 0.0255, 0.0265 |
+| 2 | 300000 | 0.3695 ± 0.0103, 0.3017 ± 0.0099, 0.3288 ± 0.0068 | 0.0358, 0.0342, 0.0236 |
+| 2 | 1e+06 | 0.3803 ± 0.0093, 0.2961 ± 0.0122, 0.3236 ± 0.0102 | 0.0322, 0.0424, 0.0354 |
+
+| κ_F | the masses at the end, by seed (the nearest vertex for κ_F = 0, its distance) | the largest |α| | the fit error (second half) |
+|---|---|---|---|
+| 0 | 0.342, 0.389, 0.269 (v2, 0.099); 0.371, 0.221, 0.408 (v3, 0.120); 0.296, 0.347, 0.356 (v2, 0.172); 0.470, 0.224, 0.306 (v1, 0.114); 0.354, 0.292, 0.355 (v3, 0.178); 0.316, 0.348, 0.336 (v2, 0.159); 0.316, 0.375, 0.309 (v2, 0.122); 0.388, 0.227, 0.384 (v3, 0.149); 0.366, 0.399, 0.235 (v2, 0.100); 0.364, 0.395, 0.242 (v2, 0.102); 0.431, 0.222, 0.347 (v1, 0.170); 0.377, 0.367, 0.257 (v2, 0.133) | 5.03 | 0.0257 |
+| 2 | 0.373, 0.308, 0.319 (0.010); 0.395, 0.260, 0.345 (0.039); 0.300, 0.375, 0.325 (0.076); 0.404, 0.263, 0.333 (0.036); 0.391, 0.311, 0.299 (0.026); 0.350, 0.290, 0.360 (0.036); 0.361, 0.275, 0.364 (0.039); 0.410, 0.282, 0.308 (0.034); 0.417, 0.290, 0.294 (0.040); 0.376, 0.378, 0.246 (0.080); 0.386, 0.242, 0.373 (0.057); 0.402, 0.279, 0.318 (0.026) | 5.01 | 0.026 |
+
+κ_F = 0: the records coincide with exp_gauge_drift.py's Part H (the same seeds without the box) up to the first record at which a coordinate has left B: 179000, 101000, 23000, 411000, 348000, 17000, 92000, 76000, 130000, 65000, 236000, 270000.
+
+κ_F = 2: the records coincide with exp_gauge_fixman.py's Part E (the same seeds without the box) up to the first record at which a coordinate has left B: never, 372000, 24000, 691000, 484000, 70000, 316000, 257000, 207000, 354000, 658000, 279000.
+
+## F. The two channels to the saturation in the stored runs
+
+| runs | class | seeds with records at |α_k| > 10 | such records | of them with W_k − |A_k|/a_max < 0.01 | > 0.05 | their mean fit error |
+|---|---|---|---|---|---|---|
+| no leak (exp_gauge_drift.py H) | 1 | 8/12 | 2350 | 2349 | 0 | 0.0245 |
+| no leak (exp_gauge_drift.py H) | 2 | 3/12 | 138 | 138 | 0 | 0.0244 |
+| no leak (exp_gauge_drift.py H) | 3 | 7/12 | 1373 | 1373 | 0 | 0.0244 |
+| the leak, no correction (exp_gauge_fixman.py F) | 1 | 2/16 | 516 | 0 | 516 | 0.0427 |
+| the leak, no correction (exp_gauge_fixman.py F) | 2 | 0/16 | 0 | 0 | 0 | — |
+| the leak, no correction (exp_gauge_fixman.py F) | 3 | 1/16 | 13 | 0 | 13 | 0.0408 |
+
 Numbers are produced by `experiments/exp_gauge_plateau.py`; nothing is edited by hand.

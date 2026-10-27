@@ -967,26 +967,33 @@ D‴.36's projection; the slow limit against the log-determinant law; the split-
 
 - Proposition D‴.36's instance at τ = 10⁻⁴; the correction κ_F(τ/m)(1 + Ŵ_k²/W_k²)/(W_k − Ŵ_k²/W_k) on the replicator's fitness, Ŵ_k from the
   classes' contributions (the masses form) or from the current amplitudes (the plug-in form), equal on M. (A) At κ_F = 1 the corrected drift
-  is 0.31, 0.07, 2·10⁻³ and 7·10⁻⁴ of the uncorrected at W = 1/3 for γ = 10⁻², 5·10⁻³, 10⁻³, 10⁻⁴ (O(γ²τ) against O(γτ)); at γ = 2·10⁻²
-  it over-compensates (1.6).
-- (B) At κ_F = 2 the corrected field's zero is the best-conditioned fit W♯ = (0.3765, 0.2988, 0.3247) to 2·10⁻⁴ or better, attracting, the
-  linearised spread there 0.040, 0.014, 0.0045 at γ = 10⁻², 10⁻³, 10⁻⁴ (∝ √γ); at κ_F = 1 the remainder's zero is attracting at γ = 10⁻² but
-  repelling at 10⁻³ and 10⁻⁴ — the neutral gain does not control it. (C) Near the saturation the density's exponent is −0.99, −0.00, +0.98
-  for κ_F = 0, 1, 2 (predicted κ_F − 1).
-- (D, E) The full loop over 10⁶ slow units (γ = 10⁻², 12 seeds): with either form no excursion into the saturation (without the correction
-  11–12% of the last quarter beyond it), the second half's mean within 1.3 (κ_F = 1) and 1.1 (κ_F = 2) standard errors of W♯, the spread
-  at κ_F = 2 the linearised limit's; the fit error 0.026 against 0.0245 without — the price of keeping every amplitude coupled to the fit
-  (equipartition), and the dither's level read back from it, 9.4·10⁻⁵.
+  is 0.31, 0.07, 2·10⁻³ and 7·10⁻⁴ of the uncorrected at W = 1/3 for γ = 10⁻², 5·10⁻³, 10⁻³, 10⁻⁴ (O(γ²τ) against O(γτ)); from
+  γ = 2·10⁻³ on it is reversed (the finite-γ projection weighs the correction's drift more than the dither's: 74% and 57% of their slow
+  limits at γ = 10⁻²), at γ = 2·10⁻² by the factor 1.6.
+- (B) At κ_F = 2 the corrected field's zero is the D-optimal fit W♯ = (0.3765, 0.2988, 0.3247) (the largest det ∇²_ΘJ; not the
+  best-conditioned — the condition number is nearly flat along M) to 2·10⁻⁴ or better, attracting, the linearised spread there 0.040,
+  0.014, 0.0046 at γ = 10⁻², 10⁻³, 10⁻⁴ (∝ √γ); at κ_F = 1 the remainder's zero is attracting at γ = 10⁻² but repelling at 10⁻³ and 10⁻⁴.
+  (C) In Katzenberger's limit near the saturation the density's exponent is −0.99, −0.00, +0.98 for κ_F = 0, 1, 2 (predicted κ_F − 1);
+  (H) across the implemented floor's cap (δ_cap = 0.00126) it falls back toward −1, as predicted to 10⁻³.
+- (D, E) In the full loop (γ = 10⁻², 12 seeds, 10⁶ slow units; the plug-in form re-run with the implemented floor, the masses form with Â fixed) the correction keeps the amplitudes out of the saturation (the seeds' mean of the largest |α_1| 4–6 against 6.6 → 11.3 without, no
+  record beyond a saturation; at κ_F = 1 excursions along M into a layer, 1% of the third class's last-quarter records with |α_3| > 10);
+  at κ_F = 2 the second half's mean is within 1.07 s.e. of W♯ and of the mean path (plug-in) and within 1.0 (masses form); at κ_F = 1
+  within 1.5 s.e. of both W♯ and the mean path, which the run cannot tell apart; equipartition with the rms fit error: p_eff = 8.96–9.04
+  with the correction, 8.06 without (a saturated amplitude holds no fit energy), the dither's level read back to 0.4%.
 - (F) With the leak (γ = 3·10⁻³, ε = 10⁻⁴, 16 seeds): two seeds' positions escape the exact fit's well in every form; the masses form keeps
   the masses where the leak holds them (0.31–0.35), the plug-in form moves them over 0.21–0.46, a running average of Â drifts with the
-  escape; on the other 14 seeds the bias reverses as predicted (within 1.1 s.e.).
-- (G) Inside the leak's first-order window (γ = 10⁻², ε = 3·10⁻⁴, 16 seeds): the bias (−0.0013, +0.0011, +0.0002) without the correction is
-  gone at κ_F = 1 (all components ≤ 0.0003) and reversed at κ_F = 2 (+0.0012, −0.0005, −0.0007); on paired seeds the correction's own shift
-  agrees with the first order to 10% (κ_F = 1) and 4% (κ_F = 2).
+  escape; on the other 14 seeds the bias reverses as predicted (within 1.1 s.e. of the first order, 1.3 of the second).
+- (G) Inside the leak's window (γ = 10⁻², ε = 3·10⁻⁴, 16 seeds): the shifts (−0.0013, +0.0011, +0.0002), (+0.0000, +0.0003, −0.0003),
+  (+0.0012, −0.0005, −0.0007) at κ_F = 0, 1, 2 are within 1.03 s.e. of the second order — the drift balance plus the fluctuations'
+  term through the leak's curvature, (−0.0004, +0.0002, +0.0002) at κ_F = 0 —, the paired differences within 0.93 s.e. of it (the first
+  order 1.2–4.8 s.e. off): "the bias gone at κ_F = 1" is the finite-γ over-compensation cancelled by the fluctuation term. The same term
+  accounts for Proposition D‴.37's Part G at ε = 10⁻⁴ and 10⁻³ (within 1.7 s.e.).
 
 Tests (`tests/test_gauge_fixman.py`): the correction as (τ/2)∂_βℓ along M; no correction without dither; the slow-limit cancellation; the
-gain's zero at W♯; the density exponents; the general form reducing to the closed form; the masses form equal to the plug-in form on M and
-blind to an amplitude's excursion at fixed masses; the tracked contributions fixed on M.
+gain's zero at W♯; the density exponents and the floor's cap; the general form reducing to the closed form; the masses form equal to the
+plug-in form on M and blind to an amplitude's excursion at fixed masses; the tracked contributions fixed on M and relaxing at their time
+constant; kappa() as the leak's projected stiffness; the analysis' statistics on synthetic records (`tests/test_runcache.py`: the cache
+key carries the code's version).
 
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
