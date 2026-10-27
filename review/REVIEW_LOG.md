@@ -1546,3 +1546,39 @@ mutants surviving (about 20 not equivalent).
 **Lesson.** The soft-analysis limit held; the claims resting on finite-ε pictures and on a discretisation tuned to the showcase targets did
 not. Sweep the small parameter decades past the experiment, measure instantaneous rates rather than accumulated displacements, feed
 symmetric inputs, and check that each test can tell the claimed formula from a wrong one.
+
+## Round 38 (adversarial review of Proposition D‴.49, the rich transit in the closed loop, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ak: the draft of Proposition D‴.49 and its code at b59721f
+(`review/REVIEW_round38_D3ak.md`): Parts A and C reproduced from the committed raw file; the real loop re-run with an independent C
+integrator (DOPRI5, Q kept exactly) against the repository's `real_loop` and every real-loop row of the md; the exact averaged loop
+along the frozen periodic orbit (an FFT fixed point) against the leading order `OrbitBumps`; sweeps of the loop's own knobs (k_e from 2
+to 40, ω, the amplitude, a quasi-periodic reference), bumps moved toward the range, close bumps, 1% measurement noise, Part D to
+ε = 10⁻¹⁰; 30 mutants.
+
+**Verdicts (D3ak).** The orbit filter and its 1/k_e factor right; but (i)'s averaged loop was the leading-order truncation (the orbit
+taken to be the reference), which misplaces the first entry by 7% and gets the identity or count wrong in 9 of 10 settings, where the
+exact frozen-orbit average reproduces the real loop; the averaging hypothesis fails on the active block (its centres relax 5–13 times
+faster than the reference); the count of formed kernels depended on the knob (six at k_e = 2–3 with three expelled, five at k_e = 20,
+four at ω = 1); "never formed" false within 1–2σ of the range; 1% noise expels 12 kernels; 24 of 30 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ak-1 | major ((i)) | the averaged loop is the leading-order truncation along the reference | the exact averaged loop along the frozen periodic orbit (`FrozenOrbit`, the contraction e ↦ L[r(x_m + e)] for k_e > Lip r) and a C integrator of the real loop (5baef23); (i) restated, the leading order kept as such with its additive error; Part A rerun (e7ed133): the same entrants and coefficients, the entries within 0.4 in τ |
+| D3ak-2 | major ((ii), proof) | averaging fails on the active block | (ii): averaging a statement about the inactive kernels' duals, the active block's agreement numerical |
+| D3ak-3 | major ((ii), (iii)) | low gain expels formed kernels | Part B sweeps k_e = 2 … 40 (e7ed133); (iii)(a): below k_e ≈ 4 six kernels, three stranded at \|x\| ≈ 1.5 with \|w\| = 0.51–0.82 |
+| D3ak-4 | major ((ii)) | the count depends on where the near ties fall | (ii): one kernel per feature at masses small against the entries' margins (D‴.51); Part B: five at k_e = 20, four at ω = 1 and with a quasi-periodic reference, in both loops |
+| D3ak-5 | major ((i), (iii)) | "never formed" false near the range | Part C: bumps 0.92σ, 1.6σ, 2.9σ, 3.9σ below the range; (iii)(c) |
+| D3ak-6 | major (draft) | measurement noise without a leak | Part E (noise with and without D‴.46's mirror leak) and E2 (the leak's strength, e7ed133); (iii)(b): the leak holds the kernels at 1% only at a strength that halves the amplitudes — its hold and its bias tied —, and every leak fails at 2% |
+| D3ak-7 | major (tests) | 24 of 30 mutants survive | `tests/test_closed_transit_loop.py` (5baef23): the C loop against the Python loop, the leak, the frozen orbit as the periodic solution, the exact averaged loop against the real loop |
+| D3ak-8 | minor ((iii)) | transit time ∝ k_e only for large k_e | (iv): τ₁/k_e = 4.9 at k_e = 2, 12.7–13.9 from 4 to 40 |
+| D3ak-9 | minor (D) | Part D's ε and horizon | Part D at 10⁻⁶ and 10⁻⁸: Wasserstein–Fisher–Rao seven kernels in three clusters, then three; fixed centres six |
+| D3ak-10, 11 | minor | the price in tracking; "keep their starting positions" | (ii), (iv) restated; the inactive displacements reported (0.119 at 10⁻⁴) |
+| D3ak-12, 13 | minor | near ties flip with the evaluation point; the steady state's statement and bound | (i): the frozen orbit's choice, not the reference's; the contraction and its factor Lip(r)/k_e |
+| D3ak-14 | minor (novelty) | Wang–Hill, Boffi–Slotine, Fabri–Kadirkamanathan, RAN/MRAN/GAP-RBF uncited | Status: cited |
+| D3ak-15 | minor ((ii)) | close bumps at 0.83σ merge | (open; the open loop's resolution limit is Proposition D‴.52) |
+| D3ak-16 | cosmetic | tables, entry times beyond their grid | entries interpolated in the md |
+
+**Lesson.** The draft was tested at one point of the controller's parameter space, where the leading-order picture happened to give
+the right features. Compute the averaged system the theorem delivers — the frozen nonlinear orbit — not its truncation; sweep the loop's
+own knobs; move the "unvisited" feature toward the range; and add the smallest realistic perturbation to a law with no leak.
