@@ -176,6 +176,7 @@ def d_job(args):
     sq = np.sqrt(DT) * Lc
     kk, cpsi, s2 = 2.0 / A_MAX, A_MAX ** 2 / (4 * beta * E.G[0]), np.diag(Sig)[0::3] * DT
     psi0 = cpsi * np.cosh(kk * Th[:, 0])
+    psi_start = psi0.copy()
     for k in range(nb * N_BATCH):
         a = base.features(Th)[0]
         ap = 1 - (a / A_MAX) ** 2
@@ -201,7 +202,9 @@ def d_job(args):
         acc[k_] /= nb
     T = nb * N_BATCH * DT
     print(f"[{time.time() - t0:.0f}s] D {name} tau {tau:g}", flush=True)
-    return dict(name=name, tau=tau, tk=tk, **acc, se_mart=np.sqrt(m2) / T, out_box=out_box / (nb * N_BATCH),
+    # Σ_n(E_n[ψ_k(α_(n+1))] − ψ_k(α_n)) = ψ_k(end) − ψ_k(start) − (the martingale's sum): the run's E[Lψ_k] + E[b_k] is its boundary term
+    # (ψ_k(end) − ψ_k(start))/T, O(1/T), less the martingale's mean, whose error se_mart is
+    return dict(name=name, tau=tau, tk=tk, **acc, se_mart=np.sqrt(m2) / T, boundary=(psi0 - psi_start) / T, out_box=out_box / (nb * N_BATCH),
                 tk_hat=qv / (2 * E.G[0] * T), tk_hat_noise=qv_noise / (2 * E.G[0] * T), closed=closed(W, tk))
 
 
@@ -303,18 +306,30 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
         L_ += ["", "The whole identity and the Euler chain's bias (the chain's exact per-step bias b_k = E_n[ψ_k(α_(n+1)) − ψ_k(α_n)]/Δt − Lψ_k, "
                "the Gaussian increment's expectation in closed form, so that E[Lψ_k] = −E[b_k] exactly; the error of E[Lψ_k] from the "
                "martingale increments ψ_k(α_(n+1)) − E_n[ψ_k(α_(n+1))]):", "",
-               "| noise | τ | E[Lψ_k] (± its martingale error) | −E[b_k] | E[Lψ_k] + E[b_k] over that error | the bias E[b_k] over τ_kE[g′_k] | "
-               "τ_k/τ̂_k: the amplitudes' quadratic variation, with the drift's part, without |", "|---|---|---|---|---|---|---|"]
-        zf = []
+               "| noise | τ | E[Lψ_k] (± its martingale error) | −E[b_k] | E[Lψ_k] + E[b_k] over that error | of which the boundary term "
+               "(ψ_k(end) − ψ_k(start))/T | the bias E[b_k] over τ_kE[g′_k] | "
+               "τ_k/τ̂_k: the amplitudes' quadratic variation, with the drift's part, without |", "|---|---|---|---|---|---|---|---|"]
+        zf, zb, det = [], [], []
         for r in D:
             lp, bi = r['lpsi'].mean(axis=0), r['bias'].mean(axis=0)
-            z = (lp + bi) / r['se_mart']; zf += list(z)
+            bd = r.get('boundary', np.full(3, np.nan))
+            if np.all(r['se_mart'] > 0):
+                z = (lp + bi) / r['se_mart']; zf += list(z); zb += list(bd / r['se_mart'])
+                zs, bs = ', '.join(f'{v:+.2f}' for v in z), ', '.join(f'{v:+.2f}' for v in bd / r['se_mart'])
+            else:                                                     # no noise on the amplitudes: the martingale is zero
+                det.append((r['name'], np.abs(lp + bi - bd).max()))
+                zs = '— (no amplitude noise: ' + ', '.join(f'{v:+.2e}' for v in lp + bi) + ')'
+                bs = ', '.join(f'{v:+.2e}' for v in bd)
             L_.append(f"| {r['name']} | {r['tau']:g} | {', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(lp, r['se_mart']))} | "
-                      f"{', '.join(f'{-v:+.2e}' for v in bi)} | {', '.join(f'{v:+.2f}' for v in z)} | "
-                      f"{', '.join(f'{v:+.4f}' for v in bi / -r['gp'].mean(axis=0))} | "
-                      f"{', '.join(f'{a / b:.4f}, {a / c:.4f}' for a, b, c in zip(r['tk'], r['tk_hat'], r['tk_hat_noise']))} |")
-        zi, zf = np.array(zi), np.array(zf)
-        L_ += ["", f"The whole identity: χ² = {float(zf @ zf):.1f} for {len(zf)} values (largest |z| {np.abs(zf).max():.2f}). (i)'s box-free form: "
+                      f"{', '.join(f'{-v:+.2e}' for v in bi)} | {zs} | {bs} | "
+                      f"{', '.join(f'{v:+.4f}' for v in bi / -r['gp'].mean(axis=0)) if np.all(r['tk'] > 0) else '— (τ_k = 0)'} | "
+                      f"{', '.join(f'{a / b:.4f}, {a / c:.4f}' for a, b, c in zip(r['tk'], r['tk_hat'], r['tk_hat_noise'])) if np.all(r['tk'] > 0) else '—'} |")
+        zi, zf, zb = np.array(zi), np.array(zf), np.array(zb)
+        L_ += ["", f"The whole identity (the runs with noise on the amplitudes): χ² = {float(zf @ zf):.1f} for {len(zf)} values (largest |z| "
+               f"{np.abs(zf).max():.2f}; {int((zf > 0).sum())} of them positive, their mean {zf.mean():+.2f}); E[Lψ_k] + E[b_k] is exactly the boundary "
+               "term (ψ_k(end) − ψ_k(start))/T less the martingale's mean, so that without the boundary term χ² = "
+               f"{float((zf - zb) @ (zf - zb)):.1f} (largest |z| {np.abs(zf - zb).max():.2f}, mean {(zf - zb).mean():+.2f})"
+               + (''.join(f"; '{n}': E[Lψ_k] + E[b_k] is the boundary term to {e:.1e}" for n, e in det)) + ". (i)'s box-free form: "
                f"the largest |z| {np.abs(zi).max():.1f}, its residual the box's term.", ""]
     if Ee is not None:
         ws = Q.w_sharp(); wt = w_sharp_weighted(levels(noises()['correlated E']))

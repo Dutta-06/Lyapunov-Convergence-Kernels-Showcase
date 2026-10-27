@@ -82,7 +82,10 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   exact fit, the saturation repelling (Proposition D‴.38); and without the prior the dithered loop has no stationary law — the energy is bounded on the unconstrained coordinates, and the
   positions climb, at a rate e^{−ΔJ/τ}, onto a plateau of approximate fits with saturated amplitudes — which a dead zone on a box of
   the unconstrained coordinates restores — without bias for the exact fits inside it, though the stationary averages still weigh the
-  plateau where it meets the box —, the gauge's saturation becoming a wall where the drift ends (Proposition D‴.39); and measurement noise, entering along the descent's own directions, does not select among the exact fits at all in continuous time —
+  plateau where it meets the box —, the gauge's saturation becoming a wall where the drift ends (Proposition D‴.39); and for any noise on the positions the masses' averaged fitness is the generator's image of a function of one amplitude — at leading
+  order only each amplitude's own noise intensity drives its class's mass —, so dithering the centres and widths only freezes the masses,
+  and a correction at the classes' levels, read from the amplitudes' quadratic variation, cancels the noise's selection
+  (Proposition D‴.40); and measurement noise, entering along the descent's own directions, does not select among the exact fits at all in continuous time —
   the Wong–Zakai term cancels the Itô drift exactly —, while an update that draws it afresh selects (label-noise SGD's flat-minimum bias,
   here an interior target for the masses), and correlated draws select through the increment's second moment: a linear-response filter
   over the normal modes, from the Hessian's trace to its log-determinant as a Markov noise slows, concave for every colour — on the masses
@@ -100,8 +103,8 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   irrepresentable condition (Proposition D‴.46); small starts put the kernels on branches where their signs freeze and the law becomes an exponentiated gradient: the limit is the
   start's projection onto the sign-constrained least-squares fits, wrong-signed kernels dying out (Proposition D‴.47); from small masses the kernels enter one at a time — the inverse scale space flow, on the scale (mass)^{−1/2} from zero amplitudes and
   log(1/mass) on branches —, and with the paradigm's moving centres the entered kernels slide onto the target's features while the others
-  stay put: one kernel per feature (Proposition D‴.48); rounds 7–31 of the
-  review log cover all of them up to D‴.39, and their remarks.
+  stay put: one kernel per feature (Proposition D‴.48); rounds 7–33 and 35–37
+  of the review log cover all of them up to D‴.48, and their remarks.
 
 ---
 

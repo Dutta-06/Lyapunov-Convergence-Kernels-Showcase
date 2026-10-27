@@ -1014,6 +1014,18 @@ Tests (`tests/test_gauge_plateau.py`): the dead zone inactive inside the box, mi
 coordinates and J + V coercive; the box's wall and vertices; a run inside the box bit for bit the unboxed one.
 
 
+## Proposition D‴.40 — the gauge under general noise (`exp_gauge_noise.py` → `chaos/gauge_noise.md`)
+
+- (A) The trace formula against the closed form at three points of M for eight noises (isotropic, the amplitudes only, the centres and widths only, levels (2, 1, ½)τ, three random correlated covariances, Part E's): the replicator flows agree to 1.3·10⁻⁸–1.0·10⁻⁶; with the centres and widths only the fitness is below 5.3·10⁻¹¹. (B) Katzenberger's limit drift at γ = 10⁻⁵ against the closed form's flow: within 1.1·10⁻⁴–8.8·10⁻⁴; the centres' and widths' noise alone: drift 8·10⁻¹⁶, diffusion 10⁻³⁶. (C) At finite γ the centres' and widths' dither alone moves the masses at O(γ²τ) (drift per γτ 3.2·10⁻⁴ … 8.0·10⁻⁷ at γ = 10⁻² … 10⁻⁵) with a diffusion below 10⁻²²: the gauge frozen.
+- (D) The identity in simulation at fixed masses inside the box (2·10⁵ slow units; isotropic, amplitudes-only and correlated noise at τ = 10⁻³, 10⁻², the centres and widths alone at 10⁻²): the box-free form fails by up to 58 errors, its residual the box's term; the whole identity with the Euler chain's exact per-step bias (0.2–1.9% of the noise's term): χ² = 24.8 for 18 values (|z| ≤ 1.71; one seed for all runs, the diagonal-noise runs' twelve values three streams'), the boundary term below 0.03 errors; the centres and widths alone: the identity to 7·10⁻¹⁹; τ̂_k from the quadratic variation within 1.4% of τ_k.
+- (E) The full loop inside the box (γ = 0.01, τ = 10⁻⁴, 12 seeds, 10⁶ slow units): the centres and widths dithered only — the masses within 2·10⁻⁴ of their start; with the barrier at κ_F = 1 — at W♯ within 8·10⁻⁴; the correlated noise at levels (2, 1, ½)τ without a correction — the masses drift (0.10 from W♯ over the second half); with the masses form at the classes' levels (κ_F = 2) — toward W♯_τ (the first mass 0.409, 0.428, 0.440 at 10⁵, 3·10⁵, 10⁶; the second half 0.022 from W♯_τ).
+
+Tests (`tests/test_gauge_noise.py`): the noise mask; the correlated-noise path; the trace formula's reductions (isotropic, amplitudes
+only, centres and widths only); only each amplitude's own variance at leading order under correlated noise; the levels and the per-class
+correction; the pointwise gauge identity, the generator applied to ψ_k and the chain's closed-form expectation; the weighted analytic
+centre.
+
+
 ## Proposition D‴.41 — measurement noise on the gauge (`exp_gauge_label.py` → `chaos/gauge_label.md`)
 
 - Proposition D‴.36's instance without dither; the measured error r + ξ in both laws, ξ independent over the quadrature nodes, of intensity v.
