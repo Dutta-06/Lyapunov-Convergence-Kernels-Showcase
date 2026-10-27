@@ -132,7 +132,7 @@ def lr_factor(lam, h, corr):
     lam = np.asarray(lam, float)
     a = 1.0 - h * lam
     G, R = corr_sums(a, corr)
-    return 1.0 - 2 * h * lam * R + (h * lam) ** 2 * (1.0 + 2 * G) / (1.0 - a * a)
+    return 1.0 - 2 * h * lam * R + h * lam * (1.0 + 2 * G) / (2.0 - h * lam)      # (hλ)²/(1 − a²), stable as hλ → 0
 
 
 def filtered_covariance(A, P, Sig, h, corr):

@@ -82,6 +82,8 @@ def rhs(s, z, Phi, h, corr):
     d = Phi.shape[1]
     w, P = z[:d], np.exp(z[d:])
     D = np.maximum(np.sqrt(w * w + 4 * P * P), 1e-300)                         # an atom underflowing to D = 0 stays where it is
+    if not np.all(np.isfinite(D)):
+        return np.full_like(z, np.nan)                                          # an overshooting trial stage: the integrator rejects it
     om = weights(Phi, D, h, corr)
     return np.r_[-project(Phi, D, om * w), -om]
 

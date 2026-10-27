@@ -222,6 +222,8 @@ def test_the_linear_response_factor():
         assert abs(LN.lr_factor(lam, h, ('block', kb)) - e2) < 1e-10 * e2
     assert abs(LN.lr_factor(1.3, 0.1, ('fresh',)) - (1 + 0.13 / (2 - 0.13))) < 1e-14
     assert abs(LN.lr_factor(1.3, 0.1, ('block', 1)) - LN.lr_factor(1.3, 0.1, ('fresh',))) < 1e-14
+    for corr in (('fresh',), ('ar1', 0.9), ('block', 4), ('gauss', 3.0)):  # a mode that is not restored passes the noise unchanged,
+        assert np.allclose(LN.lr_factor(np.array([0.0, 1e-18, 1e-12]), 0.5, corr), 1.0, atol=1e-10)   # also when 1 − hλ rounds to 1
     tc, h = 2.0, 1e-5                                                     # finely sampled AR(1): 1/(1 + λτ_c), Ψ = log(1 + λτ_c)/τ_c,
     for lam in (0.1, 1.5, 20.0):                                          # up to O(hλ)
         assert abs(LN.lr_factor(lam, h, ('ar1', np.exp(-h / tc))) * (1 + lam * tc) - 1) < 2 * h * lam + 1e-6

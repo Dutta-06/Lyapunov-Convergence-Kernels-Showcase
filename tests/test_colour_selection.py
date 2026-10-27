@@ -85,6 +85,10 @@ def test_the_reduced_flow():
     z = np.r_[w0, np.log(P0)]
     om = CS.weights(Phi, np.sqrt(w0 ** 2 + 4 * P0 ** 2), 0, ('ou', 10.0))
     assert np.allclose(CS.rhs(0.0, z, Phi, 0, ('ou', 10.0))[40:], -om)    # d log P/ds = −ω
+    D1 = np.full(40, 1e-300); D1[idx] = np.abs(ws[idx])                   # at a 4-sparse fit K has 6 zero eigenvalues: the
+    assert np.all(np.isfinite(CS.weights(Phi, D1, 0.5, ('ar1', 0.9))))    # finite-step weights stay finite there
+    with np.errstate(over='ignore'):                                      # an overshooting trial stage returns NaN (rejected)
+        assert np.all(np.isnan(CS.rhs(0.0, np.r_[w0, np.full(40, 1e3)], Phi, 0.5, ('fresh',))))
     c = (Phi ** 2).sum(axis=0)
     wbp = CS.basis_pursuit(Phi, y, c)
     _, Ww, _ = CS.reduced_flow(Phi, w0, P0, 2000.0, 0, ('fresh',))
