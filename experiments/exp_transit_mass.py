@@ -8,7 +8,7 @@ near tie and the predictions made from the sliding path alone (`rich_transit`).
 
 A. The near-tie law: one bump between the kernels at 0.0 and 0.1, δ from the midpoint (amplitudes 0.3, 0.8, 2.0; δ = 10⁻⁴, 10⁻³, 10⁻²;
    ε = 10⁻⁵ … 10⁻¹⁰): the runner-up's share of the bump against x = μ*/ε^{1/2} (μ* its margin when the entrant enters), against the
-   inner problem's share at the same x (`near_tie_inner`, at the exact tie: the limit ε → 0 at fixed x), the Gibbs split 1/(1 + e^{κx}) (κ = πρ(2c)^{1/2}/a) and the
+   inner problem's share at the same x (`near_tie_inner`, at the exact tie: the limit ε → 0 at fixed x), the Gibbs split 1/(1 + e^{κx}) (κ = πρ(2c)^{1/2}) and the
    frozen coefficient K'³ρ⁻³/(|A|(x − Δ)³) (Δ the inner problem's pull, B). A2: the inner problems not stationary within 8 doublings of
    s, two doublings later (their drift).
 B. The entrant's overshoot η_c(α_A)/(Λ₀ρ) (`overshoot`) against the pull Δ(A) the inner problem exerts on a frozen runner-up (x = 200) and
@@ -19,8 +19,11 @@ D. Prediction from the path, out of sample: 48 random three-bump targets (D‴.4
    at ε = 10⁻⁵, 10⁻⁶, 10⁻⁷, 10⁻⁸ (formed: |w| > 10⁻²max|A*|; recovered: exactly the path's kernels formed).
 E. The predicted ε_c over 400 random targets: the fraction predicted not to recover at ε, entry- and creep-limited, and their slopes in
    log ε (local, and fitted where between 10 targets and half of them fail).
+F. The predicted tail checked: every target of E with 10⁻¹² ≤ ε_c ≤ 10⁻⁷, the loop at 3ε_c (predicted to fail) and ε_c/3 (to recover).
+The sliding paths are relaxed with the block's least-squares polish (`sliding_iss(polish=True)`: the same paths, without the fast flow's
+crawl along the block's slow modes).
 
-Output: results/chaos/transit_mass.md and transit_mass_raw.npz (`--from-raw` regenerates the md; `--only A,A2,B,C,D,E`).
+Output: results/chaos/transit_mass.md and transit_mass_raw.npz (`--from-raw` regenerates the md; `--only A,A2,B,C,D,E,F`).
 """
 import os
 import sys
@@ -45,10 +48,12 @@ EPS_A = (1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10)
 TAU_A = 1.32                                                          # the run to 1.32 τ_entry (the relaxation after it)
 AMPS_B = (0.1, 0.2, 0.3, 0.5, 0.8, 1.2, 2.0, 4.0)
 X_B, OFF_B, EPS_B = 200.0, 1e-3, 1e-10
+XI0_B = (100.0, 200.0, 400.0, 800.0)                                  # B: the inner problem's starts behind the wall
 CREEP_TARGET, EPS_C = 10, (1e-9, 2e-9, 3.5e-9, 7e-9, 1.4e-8, 3e-8)
 N_D, SEED_D, EPS_D = 48, 51, (1e-5, 1e-6, 1e-7, 1e-8)
 N_E, SEED_E = 400, 52
 EPS_GRID_E = tuple(10.0 ** -k for k in np.arange(4, 12.5, 0.5))
+F_RANGE, F_FAC = (1e-12, 1e-7), 3.0
 
 
 def setup():
@@ -119,16 +124,22 @@ def part_A2(rows):
 
 
 def b_run(A):
+    """The pull on a frozen runner-up in the inner problem — matched: its outer margin at the entrant's arrival less its final ξ — at the
+    exact tie and at the offset δ, from the starts XI0_B behind the wall (the entrant's far-field creep makes the pull converge like 1/xi0:
+    extrapolated to xi0 → ∞ from the last two), against the loop's (x − ξ_r(∞), x the runner-up's margin at the entry over ε^{1/2})."""
     L, K, c0 = setup()
     ov = float(RT.overshoot(L, A))
-    fr = RT.near_tie_inner(L, K, A, 0.05, 0.1, 0.0, X_B, both=False)
+    tie = [RT.near_tie_inner(L, K, A, 0.05, 0.1, 0.0, X_B, both=False, xi0=x0) for x0 in XI0_B]
     L, K, c0, cs, f, g, w_, n_, mu = near_tie_case(A, OFF_B)
     taus, W, cc, Lam = X.run_moving(L, K, f, c0, EPS_B, TAU_A / abs(g[w_]), 'paradigm', n_t=331)
     x = mu / np.sqrt(EPS_B)
     xi_r = float(RT.inner_xi(L, abs(W[-1][n_])))
-    fr_off = RT.near_tie_inner(L, K, A, cs, c0[w_], c0[n_], X_B, both=False)
-    return dict(A=A, overshoot=ov, delta_inner=float(X_B - fr['xi_r']), xi_e=fr['xi_e'], delta_inner_off=float(X_B - fr_off['xi_r']),
-                x_loop=float(x), delta_loop=float(x - xi_r), inner_ok=bool(fr['stationary'] and fr_off['stationary']))
+    off = [RT.near_tie_inner(L, K, A, cs, c0[w_], c0[n_], X_B, both=False, xi0=x0) for x0 in XI0_B]
+    ext = lambda v: 2 * v[-1] - v[-2]                                  # Richardson, the error ∝ 1/xi0
+    pt, po = [r['pull'] for r in tie], [r['pull'] for r in off]
+    return dict(A=A, overshoot=ov, pull_tie=pt, pull_off=po, delta_inner=float(ext(pt)), delta_inner_off=float(ext(po)),
+                xi_e=tie[-1]['xi_e'], x_loop=float(x), delta_loop=float(x - xi_r),
+                inner_ok=bool(all(r['stationary'] for r in tie + off)))
 
 
 def part_B():
@@ -141,7 +152,7 @@ def c_run(args):
     eps, cs, As = args
     L, K, c0 = setup()
     f = X.bumps_target(K, cs, As)
-    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C))
+    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C), polish=True)
     te = 1.3 * R['events'][-1][0]
     taus, W, cc, Lam = X.run_moving(L, K, f, c0, eps, te, 'paradigm')
     sm = X.summarize(K, f, c0, taus, W, cc, X.TH_ACT * np.abs(As).max())
@@ -155,7 +166,7 @@ def part_C():
     L, K, c0 = setup()
     cs, As = random_targets(21, X.N_RAND)[CREEP_TARGET]
     f = X.bumps_target(K, cs, As)
-    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C))
+    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C), polish=True)
     pred = RT.recovery_threshold(L, K, f, c0, R, X.TH_ACT * np.abs(As).max())
     with Pool(N_WORKERS) as pool:
         rows = pool.map(c_run, [(e, cs, As) for e in EPS_C])
@@ -166,7 +177,7 @@ def d_pred(args):
     n, cs, As = args
     L, K, c0 = setup()
     f = X.bumps_target(K, cs, As)
-    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C))
+    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C), polish=True)
     pred = RT.recovery_threshold(L, K, f, c0, R, X.TH_ACT * np.abs(As).max())
     return dict(n=n, cs=cs.tolist(), As=As.tolist(), path=X.net_entries(R), slide_n=int(R['act'].sum()),
                 slide_rms=float(R['hist'][-1][3]), te=float(1.3 * R['events'][-1][0]), pred=pred)
@@ -191,6 +202,29 @@ def part_D():
     return dict(preds=preds, loops=loops)
 
 
+def f_run(args):
+    n, eps = args
+    L, K, c0 = setup()
+    cs, As = random_targets(SEED_E, N_E)[n]
+    f = X.bumps_target(K, cs, As)
+    R = RT.sliding_iss(L, K, f, c0, np.ones(X.D_C), polish=True)
+    path = X.net_entries(R)
+    r = d_loop((n, cs, As, eps, 1.3 * R['events'][-1][0], path))
+    return dict(n=n, eps=eps, ok=r['ok'], n_act=r['n_act'], order=r['order'], path=path)
+
+
+def part_F(Ee):
+    """The loop on E's predicted tail: each target with F_RANGE[0] ≤ ε_c ≤ F_RANGE[1] at F_FAC·ε_c and ε_c/F_FAC."""
+    from multiprocessing import Pool
+    pe = Ee['preds']
+    ec = {p['n']: min(p['eps_entry'], p['eps_creep']) for p in pe}
+    sel = sorted(n for n, v in ec.items() if F_RANGE[0] <= v <= F_RANGE[1])
+    jobs = [(n, F_FAC * ec[n]) for n in sel] + [(n, ec[n] / F_FAC) for n in sel]
+    with Pool(N_WORKERS) as pool:
+        rows = pool.map(f_run, jobs)
+    return dict(rows=rows, sel=sel, below=int(sum(1 for v in ec.values() if v < F_RANGE[0])))
+
+
 def part_E():
     from multiprocessing import Pool
     tg = random_targets(SEED_E, N_E)
@@ -200,10 +234,10 @@ def part_E():
                        for p in preds])
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None, A2=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, A2=None, F=None):
     fmt = E.fmt
     L, K, c0 = setup()
-    kap = np.pi * np.sqrt(2 * L.c) / L.A
+    kap = np.pi * np.sqrt(2 * L.c)
     Kp3 = (8 / np.pi ** 3) * L.A / (L.m * np.sqrt(2 * L.c))
     L_ = ['# Proposition D‴.51: the transit at a finite mass (`exp_transit_mass.py`)', '',
           "The free law with moving centres (Proposition D‴.48(iii); m = 12, G = 1, γ = 0.1, a_max = 1, c = 0.025), Gaussian kernels of width "
@@ -215,7 +249,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None, A2=None):
                "One bump between the kernels at 0.0 and 0.1, δ from their midpoint; μ* the runner-up's margin when the entrant enters, "
                "x = μ*/ε^{1/2}; the runner-up's share |w_r|/(|w_e| + |w_r|) of the bump in the loop (at 1.32 τ_entry) against the ε-free inner "
                "problem's at the same x (its limit ε → 0 at fixed x: the bump at the midpoint, the runner-up x behind; the loop's ratio to it → 1 "
-               f"as δ ∝ ε^{{1/2}}x → 0), the Gibbs split 1/(1 + e^{{κx}}) (κ = πρ(2c)^{{1/2}}/a = {kap:.4f}) and the frozen "
+               f"as δ ∝ ε^{{1/2}}x → 0), the Gibbs split 1/(1 + e^{{κx}}) (κ = πρ(2c)^{{1/2}} = {kap:.4f}) and the frozen "
                f"coefficient K'³ρ⁻³/(|A|(x − Δ)³) (K'³ = {Kp3:.4f}; Δ from B):", '',
                "| A | δ | ε | x | share: loop | inner problem | loop/inner | Gibbs split | frozen | the runner-up's centre |",
                "|---|---|---|---|---|---|---|---|---|---|"]
@@ -240,17 +274,21 @@ def report(A=None, B=None, C=None, D=None, Ee=None, A2=None):
     if B is not None:
         L_ += ["## B. The entrant's overshoot and the runner-up's pull", '',
                "The overshoot η_c(α_A)/(Λ₀ρ) (an entered kernel's dual beyond its wall, in units of ε^{1/2}ρ) against the pull Δ the inner "
-               f"problem exerts on a frozen runner-up (x = {X_B:g}; at the exact tie and at δ = {OFF_B:g}) and the loop's (δ = {OFF_B:g}, "
-               f"ε = {EPS_B:g}: Δ = x − ξ_r(∞), ξ_r read from the runner-up's coefficient); I∞ = overshoot − Δ:", '',
-               "| A | overshoot | Δ: inner, tie | I∞ | Δ: inner, δ | Δ: loop (x) | tie − δ | δ − loop |", "|---|---|---|---|---|---|---|---|"]
-        L_ += [f"| {r['A']:g} | {r['overshoot']:.4f} | {r['delta_inner']:.4f}{'' if r.get('inner_ok', True) else ' (not stationary)'} | "
-               f"{r['overshoot'] - r['delta_inner']:.4f} | {r['delta_inner_off']:.4f} | {r['delta_loop']:.4f} ({r['x_loop']:.4g}) | "
-               f"{r['delta_inner'] - r['delta_inner_off']:.4f} | {r['delta_inner_off'] - r['delta_loop']:.4f} |" for r in B]
+               f"problem exerts on a frozen runner-up (x = {X_B:g}; matched: the runner-up's outer margin at the entrant's arrival less its "
+               f"final ξ) at the exact tie and at δ = {OFF_B:g}, from the starts xi0 = {', '.join(f'{v:g}' for v in XI0_B)} behind the wall "
+               "(the entrant's far-field creep: the pull converges like 1/xi0; ∞ the extrapolation from the last two), and the loop's "
+               f"(δ = {OFF_B:g}, ε = {EPS_B:g}: Δ = x − ξ_r(∞), ξ_r read from the runner-up's coefficient); I∞ = overshoot − Δ (tie, ∞):", '',
+               "| A | overshoot | Δ: inner, tie (xi0 = " + ', '.join(f'{v:g}' for v in XI0_B) + ", ∞) | I∞ | Δ: inner, δ (∞) | Δ: loop (x) | "
+               "δ − loop |", "|---|---|---|---|---|---|---|"]
+        L_ += [f"| {r['A']:g} | {r['overshoot']:.4f} | {', '.join(f'{v:.4f}' for v in r['pull_tie'])}, {r['delta_inner']:.4f}"
+               f"{'' if r.get('inner_ok', True) else ' (not stationary)'} | {r['overshoot'] - r['delta_inner']:.4f} | "
+               f"{r['delta_inner_off']:.4f} | {r['delta_loop']:.4f} ({r['x_loop']:.4g}) | {r['delta_inner_off'] - r['delta_loop']:.4f} |"
+               for r in B]
         lam0 = RT.transit_scale(L, 1.0)
         Bs = sorted(B, key=lambda r: r['A'])
         inc = [(b['overshoot'] - a['overshoot']) / np.log(b['A'] / a['A']) for a, b in zip(Bs[:-1], Bs[1:])]
         L_ += ['', "The overshoot's growth per unit log A between consecutive amplitudes: " + ', '.join(f'{v:.4f}' for v in inc) +
-               f"; the exponential branch's slope a²/(4GcΛ₀ρ) = {L.A ** 2 / (4 * L.G * L.c * lam0):.4f} (Λ₀ = {lam0:.4f}).", '']
+               f"; the exponential branch's slope a/(4GcΛ₀ρ) = {L.A / (4 * L.G * L.c * lam0):.4f} (Λ₀ = {lam0:.4f}).", '']
     if C is not None:
         p = C['pred']
         L_ += ['## C. The creep', '',
@@ -303,6 +341,24 @@ def report(A=None, B=None, C=None, D=None, Ee=None, A2=None):
             sl = np.polyfit(np.log(G_[m]), np.log(fr[k][m]), 1)[0] if m.sum() >= 2 else float('nan')
             fits.append(f"{name} {sl:.3f} (ε = {G_[m].max():.3g} … {G_[m].min():.3g})")
         L_ += ['', "Least-squares slopes in log ε where between 10 targets and half of them fail: " + '; '.join(fits) + '.', '']
+    if F is not None and Ee is not None:
+        pe = {p['n']: p for p in Ee['preds']}
+        rows = F['rows']
+        hi = [r for r in rows if r['eps'] > min(pe[r['n']]['eps_entry'], pe[r['n']]['eps_creep'])]
+        lo = [r for r in rows if r not in hi]
+        bind = lambda n: 'entry' if pe[n]['eps_entry'] <= pe[n]['eps_creep'] else 'creep'
+        L_ += ['## F. The predicted tail against the loop', '',
+               f"Every target of E with {F_RANGE[0]:g} ≤ ε_c ≤ {F_RANGE[1]:g} ({len(F['sel'])} targets; {F['below']} more below "
+               f"{F_RANGE[0]:g}, not run), the loop at {F_FAC:g}ε_c (predicted not to recover) and at ε_c/{F_FAC:g} (predicted to recover):", '',
+               "| | runs | as predicted | binding: entry | binding: creep |", "|---|---|---|---|---|",
+               f"| {F_FAC:g}ε_c | {len(hi)} | {sum(1 for r in hi if not r['ok'])} | {sum(1 for r in hi if bind(r['n']) == 'entry')} | "
+               f"{sum(1 for r in hi if bind(r['n']) == 'creep')} |",
+               f"| ε_c/{F_FAC:g} | {len(lo)} | {sum(1 for r in lo if r['ok'])} | {sum(1 for r in lo if bind(r['n']) == 'entry')} | "
+               f"{sum(1 for r in lo if bind(r['n']) == 'creep')} |", '']
+        bad = [r for r in hi if r['ok']] + [r for r in lo if not r['ok']]
+        L_ += ["Not as predicted (target, ε/ε_c, the binding threshold, formed against the path's): " +
+               ('; '.join(f"({r['n']}, {r['eps'] / min(pe[r['n']]['eps_entry'], pe[r['n']]['eps_creep']):.3g}, {bind(r['n'])}, "
+                          f"{r['order']} vs {r['path']})" for r in bad) or 'none') + '.', '']
     L_.append('Numbers are produced by `experiments/exp_transit_mass.py`; nothing is edited by hand.')
     return '\n'.join(L_) + '\n'
 
@@ -312,14 +368,15 @@ def main():
     md = os.path.join(OUT, 'transit_mass.md')
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
-    keys = ('A', 'B', 'C', 'D', 'E', 'A2')
+    keys = ('A', 'B', 'C', 'D', 'E', 'A2', 'F')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[get(k) for k in keys]))
         return
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('B', part_B), ('A', part_A), ('A2', lambda: part_A2(res['A'])), ('C', part_C), ('D', part_D), ('E', part_E)):
+    for k, fn in (('B', part_B), ('A', part_A), ('A2', lambda: part_A2(res['A'])), ('C', part_C), ('D', part_D), ('E', part_E),
+                  ('F', lambda: part_F(res['E']))):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

@@ -36,14 +36,14 @@ def test_inner_profile_is_the_small_mass_limit_of_the_mirror_map():
 
 def test_overshoot_on_the_exponential_branch():
     """The overshoot −inner_xi(A) = η_c(α_A)/(Λ₀ρ); for large A the branch is exponential, w ≈ (ca/(2m))e^{2α/a}, so the overshoot grows like
-    (a²/(4GcΛ₀))·log A, and two kernels whose duals differ by Δξ carry coefficients in the ratio e^{−κΔξ}, κ = πρ(2c)^{1/2}/a."""
+    (a/(4GcΛ₀))·log A, and two kernels whose duals differ by Δξ carry coefficients in the ratio e^{−κΔξ}, κ = πρ(2c)^{1/2}."""
     A = np.array([0.3, 0.8, 2.0, 20.0, 200.0])
     ov = RT.overshoot(L, A)
     assert np.allclose(ov, -RT.inner_xi(L, A))
     lam0 = RT.transit_scale(L, 1.0)
     slope = (ov[-1] - ov[-2]) / np.log(10.0)
-    assert abs(slope / (L.A ** 2 / (4 * L.G * L.c * lam0)) - 1) < 1e-3
-    kap = np.pi * np.sqrt(2 * L.c) / L.A
+    assert abs(slope / (L.A / (4 * L.G * L.c * lam0)) - 1) < 1e-3
+    kap = np.pi * np.sqrt(2 * L.c)
     w1, w2 = RT.inner_coef(L, -6.0), RT.inner_coef(L, -6.0 + 1.5)
     assert abs(np.log(w1 / w2) / (kap * 1.5) - 1) < 2e-3
 
@@ -52,7 +52,7 @@ def test_near_tie_inner_problem():
     """At an exact tie (x = 0) the inner problem splits the bump equally; at small x the split is the Gibbs one 1/(1 + e^{κx}); far behind,
     the runner-up keeps the frozen coefficient K'³ρ⁻³(x − Δ)⁻³, Δ the pull a frozen runner-up feels (the overshoot less I∞ > 0)."""
     K, c0 = grid()
-    kap = np.pi * np.sqrt(2 * L.c) / L.A
+    kap = np.pi * np.sqrt(2 * L.c)
     Kp3 = (8 / np.pi ** 3) * L.A / (L.m * np.sqrt(2 * L.c))
     r0 = RT.near_tie_inner(L, K, 0.8, 0.05, 0.1, 0.0, 0.0)
     assert abs(r0['share'] - 0.5) < 1e-6 and abs(r0['c_e'] - 0.05) < 1e-6 and abs(r0['c_r'] - 0.05) < 1e-6
@@ -77,7 +77,7 @@ def test_near_tie_loop_against_the_inner_problem():
     f = X.bumps_target(K, (0.051,), (0.8,))
     g = K.phi(c0).T @ f / K.xs.size
     mu = 1 - abs(g[10]) / abs(g[11])
-    kap = np.pi * np.sqrt(2 * L.c) / L.A
+    kap = np.pi * np.sqrt(2 * L.c)
     for eps, tol in ((1e-9, 0.02), (1e-6, 0.10)):
         taus, W, cc, Lam = X.run_moving(L, K, f, c0, eps, 1.32 / abs(g[11]), 'paradigm', n_t=111)
         share = abs(W[-1][10]) / (abs(W[-1][10]) + abs(W[-1][11]))
@@ -133,3 +133,40 @@ def test_recovery_threshold_on_the_lost_near_tie():
     assert p['eps_c'] == p['eps_creep'] and p['eps_entry'] > 1e-7
     P = RT.path_duals(K, f, R)
     assert RT.creep_reaches(L, K, P, 15, 2e-8, c0[15]) and not RT.creep_reaches(L, K, P, 15, 1e-9, c0[15])
+
+
+def test_entry_pull_is_the_matched_frozen_pull():
+    """`entry_pull` on a path's first entry (one bump 10⁻³ off the midpoint) gives the frozen runner-up's matched pull of the two-kernel
+    inner problem — its outer margin at the entrant's arrival less its final ξ — whatever the start, which it converges in like 1/xi0."""
+    import exp_mirror_transit as X
+    K, c0 = grid()
+    f = X.bumps_target(K, (0.051,), (0.8,))
+    R = RT.sliding_iss(L, K, f, c0, np.ones(21), polish=True)
+    P = RT.path_duals(K, f, R)
+    k = int(np.argmin(np.abs(np.array(P['taus']) - R['events'][0][0])))
+    pulls = []
+    for xi0 in (100.0, 200.0):
+        ep = RT.entry_pull(L, K, f, R, P, k, 11, [10], xi0=xi0)['pull'][10]
+        fr = RT.near_tie_inner(L, K, 0.8, 0.051, 0.1, 0.0, 200.0, both=False, xi0=xi0)
+        assert abs(ep - fr['pull']) < 1e-3
+        pulls.append(ep)
+    assert 0 < pulls[0] - pulls[1] < 0.2                                 # the far-field creep's 1/xi0 tail
+
+
+def test_rearranging_entry_pull_is_measured():
+    """Part E's target 327: the third entry sends an active kernel on to another feature, so κ_ij = 444 and the near-tie estimate alone
+    predicts a lost near tie up to ε ≈ 7·10⁻¹⁰; the measured pull puts the entry threshold above 10⁻⁷, and the loop at 2·10⁻⁹ forms exactly
+    the path's kernels."""
+    import exp_mirror_transit as X
+    import exp_transit_mass as T
+    Lx, K, c0 = T.setup()
+    cs, As = T.random_targets(T.SEED_E, T.N_E)[327]
+    f = X.bumps_target(K, cs, As)
+    R = RT.sliding_iss(L, K, f, c0, np.ones(21), polish=True)
+    th = X.TH_ACT * np.abs(As).max()
+    p0 = RT.recovery_threshold(L, K, f, c0, R, th, n_creep=0, measured_pull=False)
+    p1 = RT.recovery_threshold(L, K, f, c0, R, th, n_creep=0)
+    assert p0['entry'][3] > 100 and p0['eps_entry'] < 1e-9 < 1e-7 < p1['eps_entry']
+    r = T.d_loop((327, cs, As, 2e-9, 1.3 * R['events'][-1][0], X.net_entries(R)))
+    assert r['ok']
+

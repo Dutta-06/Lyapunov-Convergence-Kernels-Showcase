@@ -192,3 +192,28 @@ def test_sliding_iss_ties_and_seeds():
         assert [(e[1], e[2]) for e in R['events']] == [(e[1], e[2]) for e in ref['events']] and all(R['relaxed'])
         assert max(abs(e1[0] - e2[0]) for e1, e2 in zip(R['events'], ref['events'])) < 1e-6
         assert np.abs(np.sort(R['c'][R['act']]) - CSTAR).max() < 1e-6
+
+
+def test_polish_reproduces_the_sliding_path_and_resolves_close_bumps():
+    """`sliding_iss(polish=True)` (the block's sign-constrained least-squares fit after the first t_fast) gives the same path as the fast
+    flow on random three-bump targets, and relaxes two bumps 0.05 apart — where the flow crawls along the block's Δ⁶ mode — to the exact
+    two-kernel fit at once."""
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'experiments'))
+    import exp_mirror_transit as X
+    import exp_transit_mass as T
+    L, K, c0 = T.setup()
+    for cs, As in T.random_targets(21, 3):
+        f = X.bumps_target(K, cs, As)
+        R0 = RT.sliding_iss(L, K, f, c0, np.ones(21))
+        R1 = RT.sliding_iss(L, K, f, c0, np.ones(21), polish=True)
+        assert [(j, k) for t, j, k, c in R0['events']] == [(j, k) for t, j, k, c in R1['events']]
+        assert max(abs(a[0] - b[0]) for a, b in zip(R0['events'], R1['events'])) < 1e-9
+        assert np.abs(R0['w'] - R1['w']).max() < 1e-9 and np.abs(R0['c'] - R1['c'])[R0['act']].max() < 1e-9
+    cs = (0.032 - 0.05 * 0.6 / 1.4, 0.032 + 0.05 * 0.8 / 1.4)
+    f = X.bumps_target(K, cs, (0.8, 0.6))
+    R = RT.sliding_iss(L, K, f, c0, np.ones(21), polish=True)
+    a = np.flatnonzero(R['act'])
+    assert a.size == 2 and all(R['relaxed']) and R['hist'][-1][3] < 1e-12
+    assert np.abs(np.sort(R['c'][a]) - np.array(cs)).max() < 1e-9 and np.abs(R['w'][a] - np.array([0.8, 0.6])).max() < 1e-9
