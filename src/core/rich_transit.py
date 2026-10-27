@@ -681,7 +681,9 @@ def _entry_pull_deviation(L, K, fstar, R, k, i, idx, blk, si, tr, st, Ptr, cb, a
 
 
 def recovery_threshold(L, K, fstar, c0, R, th_abs, n_creep=4, eps_lo=1e-14, eps_hi=1e-3, n_bisect=14, measured_pull=True):
-    """The mass below which the loop forms exactly the sliding path's kernels, predicted from the path alone (Proposition D‴.51(iii)):
+    """An estimate of the mass below which the loop forms exactly the sliding path's kernels, from the path alone (Proposition D‴.51(iv);
+    the leading order — referee round 39 measured the loop's own threshold at 0.77 of it, median over 48 random targets; equal masses only,
+    the path's duals pinned at ±1):
     (a) at each entry i, every kernel j that never enters is pulled toward its wall by the entrant's overshoot — it is formed when its
     margin μ_j(τ_i) < ε^{1/2}x_θ(A_i)κ_ij, x_θ(A) = ln(|A|/θ − 1)/κ (κ = πρ(2c)^{1/2} the inner layer's Gibbs rate, θ the formation
     threshold th_abs), κ_ij = s_j⟨Δr_iφ_j⟩/(s_i⟨Δr_iφ_i⟩) (Δr_i the residual the entry removes, φ_i the entrant after its relaxation) —

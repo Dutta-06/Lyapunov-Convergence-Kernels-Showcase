@@ -1582,3 +1582,48 @@ four at ω = 1); "never formed" false within 1–2σ of the range; 1% noise expe
 **Lesson.** The draft was tested at one point of the controller's parameter space, where the leading-order picture happened to give
 the right features. Compute the averaged system the theorem delivers — the frozen nonlinear orbit — not its truncation; sweep the loop's
 own knobs; move the "unvisited" feature toward the range; and add the smallest realistic perturbation to a law with no leak.
+
+
+## Round 39 (adversarial review of Proposition D‴.51, the transit at a finite mass, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3al: the draft of Proposition D‴.51 and its code at aab77ca
+(`review/REVIEW_round39_D3al.md`): every number of the draft's numerics against the md and raw file (Part D's 48 predictions
+reproduced bit for bit); (i) re-derived; the loop's own thresholds bisected on all 48 of Part D's targets, 16 of Part F's, single-bump
+near ties, D‴.48's target 10 and Part D's target 2 with its middle bump moved; controlled loops (the runner-up's centre frozen, one or
+both centres held fixed until the entry, exact ties made by unequal masses); the Part E paths' margins; 34 mutants.
+
+**Verdicts (D3al).** (i) right, at the rate ε^{1/2} (not ε), the power law 6.7% off at ξ = 15 (not "more than 20% below 15"); (ii)'s
+leading order right at a symmetric tie, but its finite-margin correction is the partners' differential approach creep (the loop's
+x_θ = 6.39, 7.10, 8.19 at μ* = 0.0035, 0.034, 0.099; the Gibbs value with both centres held fixed), exact ties made by unequal masses do
+not split ½, a runner-up on the entrant's near side is passed over, and a near-tie loser is mobile and migrates to an unfitted feature;
+(iv) false as stated — the loop fails below the predicted mass on most targets (median ε_loop/ε_c ≈ 0.65 where an entry binds), with
+outliers from ×0.13 to ×10⁵ —, which Part D's decade grid cannot see (a predictor without its entry threshold still scores 183/192);
+(v) the predictor's statistics, not the loop's; 16 of 34 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3al-1 | major ((iv)) | (iv) false as stated; the decade grid hides it | (iv) restated as a leading-order estimate with its measured error; Part G: the loop's threshold bisected on D's 48 targets (ε_loop/ε_c median 0.771, quartiles 0.545, 0.917, 36 of 48 within ×2; entry-bound 0.917, 0.771, 0.545 as ε_c grows past 2·10⁻⁶ and 10⁻⁴); G2: F's five outliers bisected (×9.1 … 1.15·10⁵) |
+| D3al-2 | major ((ii)) | the finite-margin correction is the partners' differential approach creep; unequal-mass ties | (ii)(a), (b); H(1) free / runner-up fixed / both fixed; HI: the inner problem's own x_θ = 6.40, 6.30, 6.27 (below the Gibbs 6.54); the loop's rise over it 0.53–0.60 times the approach-creep difference (a²b/(π²c))((g′_r/g_r)² − (g′_e/g_e)²)/x_θ; H(2): 0.885 and 0.997; tests |
+| D3al-3 | major ((ii), (iii)) | a near-tie loser migrates | (ii)(c), the cubic displacement scale in (iii); H(3): the loop's threshold ∝ μ*^{3.52}, ×7–240 below (μ*/x_θ)²; the estimate's restart from the pulled margin not implemented (stated) |
+| D3al-4 | major (code) | `entry_pull` integrates past the next entry (D27, ×43) | stated in (iv) and the numerics; the first version's 186/192 reported; the cap not implemented |
+| D3al-5 | major (code) | the creep criterion's false alarms and misses | stated in (iv) and the numerics (G, G2); the criterion unchanged |
+| D3al-6 | major ((ii)) | a near-side runner-up is passed over (E117) | (ii)(d) and its premise in (ii); H(4) with the Gibbs split's 41% at x = 0.52; test |
+| D3al-7 | minor | "the gap shrinking during the slide" | (ii): the runner-up falls further behind, its share below the Gibbs split |
+| D3al-8 | minor | the creep formula's mass factor b, not b^{3/2}; ρ ≠ 1 untested | Part B's formula and the status; a test of 𝒲's dependence on ρξ alone |
+| D3al-9 | minor ((i)) | "20%"; the rate | (i): 6.7% at ξ = 15, 19% at 8.3, 65% at 3, the next orders 1 − 8(κξ)⁻² + 64(κξ)⁻⁴ (derived; test); the rate ε^{1/2} |
+| D3al-10 | minor (B) | the reference's error; no frozen control; the 1/x² term | Part B: starts to xi0 = 3200, a three-term extrapolation; the runner-up's centre held fixed (within 0.003 of the inner problem); free − fixed against the formula 1.00–1.01 at x ≈ 347, the excess a 1/x² term growing with A |
+| D3al-11 | minor (proof) | the sublevel set's zero coefficients; the plateau; the D‴.53 citation | proof of (ii): Łojasiewicz where both coefficients stay nonzero (the slide onto the feature — the threshold's regime), the large-x plateau and its recession on s ~ x⁴; the loop's convergence on bounded s-intervals |
+| D3al-12 | minor ((iii)) | the first-order scale is not a threshold; the core law at ξ = 3 | (iii) restated as scales, the core law's overstatement noted; Part C's bracket (0.72, 1.43)ε_c reported as such |
+| D3al-13 | minor ((v)) | the predictor's fractions; h⁴ untested | (v) restated as the estimate's statistics; h⁴ dropped |
+| D3al-14 | minor | the out-of-sample history | disclosed in the numerics |
+| D3al-15 | minor | κ_ij an underived heuristic moving x the wrong way | (iv): named a heuristic; HP: the estimate's own x = 6.25, 6.15, 5.85 against the loop's 6.39, 7.10, 8.19 |
+| D3al-16 | minor (tests) | 16 of 34 mutants survive | six tests: the profile's next orders and ρξ scaling, the inner threshold below the Gibbs value, the approach creep (free against both fixed), unequal masses, the near side, the estimate's bias on D's target 7 (pins ε_c and x_θ's scale) |
+| D3al-17 | minor (novelty) | Gissin et al., exact regularisation, the linearised Bregman ISS, AGF | the Classical paragraph and the literature note S76 |
+| D3al-18 | minor | equal masses only in the code | (iv) and `recovery_threshold`'s docstring: equal masses |
+| D3al-19 | cosmetic | the temperature; docstrings; Part E's wording; D39 | a/(4Gc); `recovery_threshold` cites (iv); Part B's docstring; Part E's columns named as not exclusive and the predictor's; D39's ε_c noted as outside any asymptotic regime |
+
+**Lesson.** A threshold predictor checked at masses a decade apart agreed on 96% of the runs while biased by a factor of about two on
+most targets and wrong by 10–10⁵ on others, and the same grid scored a predictor with half its mechanism removed at 183/192. The cheap,
+decisive check is to bisect the loop's own threshold and report ε_loop/ε_c, beside ablations that must score worse; and a leading-order
+law at fixed x is to be validated where its predictions are used, the next-order mechanism isolated by a controlled run (here: freezing
+the centres before the entry) before it is folded into a predictor.
