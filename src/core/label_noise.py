@@ -24,7 +24,9 @@ rates λ_i, λ_l, a = 1 − hλ) is weighted by
 while the cross term ⟨∇ψ·n ξ⟩ vanishes by the same antisymmetry as the Wong–Zakai cancellation (tr(R(A)M·B) = 0, R(A)M symmetric). The
 per-step-variance law (1 − ρ)/(1 + ρ) is the case f ≡ 1 (λ_maxτ_c ≪ 1); for AR(1) noise of correlation time τ_c sampled finely,
 f_ii → 1/(1 + λ_iτ_c), and on a flat-metric gradient flow with label noise (the covariance ∝ the Hessian H on M) the selected potential
-becomes tr Ψ(H), Ψ′ = f: the trace for white noise, (1/τ_c) log det(I + τ_cH) in the continuum limit.
+becomes tr Ψ(H), Ψ′ = f: the trace for white noise, (1/τ_c) log det(I + τ_cH) in the continuum limit. The log-determinant is the
+AR(1) (Markov, white-innovation) noise's: a smooth noise of the same correlation time (Gaussian step correlations, `corr_sums`'
+('gauss', k)) has f_ii ≈ (λτ_c)⁻² for λτ_c ≫ 1 and a bounded Ψ (referee round 30).
 
 This module: the fields, the Wong–Zakai term (for any node covariance), the closed-form selection, Ψ_ℓ and its minimiser, the per-step
 factor of AR(1) noise, the correlation sums, the linear-response factor and the filtered covariance, its potential.
@@ -93,8 +95,10 @@ def ar1_factor(rho):
 
 
 def corr_sums(a, corr):
-    """(G(a), R(a)) = (Σ_{d≥1}ρ_da^d, Σ_{d≥1}ρ_da^{d−1}) for the noise's step correlations ρ_d: corr = ('fresh',), ('ar1', ρ) (ρ_d = ρ^d) or
-    ('block', k) (ρ_d = (1 − d/k)₊, a draw kept k steps, averaged over the phase); `a` a number or a square matrix (the matrix functions)."""
+    """(G(a), R(a)) = (Σ_{d≥1}ρ_da^d, Σ_{d≥1}ρ_da^{d−1}) for the noise's step correlations ρ_d: corr = ('fresh',), ('ar1', ρ) (ρ_d = ρ^d),
+    ('block', k) (ρ_d = (1 − d/k)₊, a draw kept k steps, averaged over the phase) or ('gauss', k) (ρ_d = exp(−½(d/k)²), a smooth noise of
+    correlation time kh, the sums truncated at d = 9k); `a` a number, an array (elementwise) or a square matrix (the matrix functions;
+    for 'gauss' through its eigendecomposition)."""
     a = np.asarray(a, float)
     I = np.eye(a.shape[0]) if a.ndim == 2 else 1.0
     mul = (lambda x, y: x @ y) if a.ndim == 2 else (lambda x, y: x * y)
@@ -107,6 +111,15 @@ def corr_sums(a, corr):
         k = int(corr[1]); R = 0.0 * a; pw = I + 0.0 * a
         for d in range(1, k):
             R = R + (1.0 - d / k) * pw; pw = mul(pw, a)
+    elif corr[0] == 'gauss':
+        k = float(corr[1]); d = np.arange(1, int(np.ceil(9 * k)) + 1)
+        rd = np.exp(-0.5 * (d / k) ** 2)
+        sums = lambda z: (rd[None, :] * np.power(z.reshape(-1, 1).astype(complex), d[None, :] - 1)).sum(axis=1).reshape(z.shape)
+        if a.ndim == 2:
+            ev, V = np.linalg.eig(a)
+            R = ((V * sums(ev)[None, :]) @ np.linalg.inv(V)).real
+        else:
+            R = sums(np.atleast_1d(a)).real.reshape(a.shape)
     else:
         raise ValueError(corr)
     return mul(a, R), R

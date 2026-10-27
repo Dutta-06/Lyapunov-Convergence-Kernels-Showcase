@@ -243,3 +243,70 @@ def test_the_filtered_covariance_weights_the_pairs_of_modes():
              + h * h * L[:, None] * L[None, :] * (1 + G[:, None] + G[None, :]) / (1 - a[:, None] * a[None, :]))
         assert np.abs(Cf[k:, k:] - f * C[k:, k:]).max() < 1e-12 * np.abs(C).max()
         assert np.abs(Cf[:k]).max() < 1e-12 * np.abs(C).max()
+
+
+def test_smooth_correlations_and_the_slow_limit_at_a_finite_step():
+    from scipy.linalg import solve_discrete_lyapunov
+    k = 30.0                                                              # Gaussian step correlations exp(−½(d/k)²): the sums,
+    d = np.arange(1, 3000); rd = np.exp(-0.5 * (d / k) ** 2)              # scalar and matrix (through an eigendecomposition)
+    for a in (0.95, -0.4, 0.999):
+        G, R = LN.corr_sums(a, ('gauss', k))
+        assert abs(G - (rd * a ** d).sum()) < 1e-12 and abs(R - (rd * a ** (d - 1)).sum()) < 1e-12
+    Q = np.linalg.qr(np.random.default_rng(2).standard_normal((4, 4)))[0]
+    B = Q @ np.diag([0.9, 0.5, -0.3, 0.99]) @ Q.T
+    Gm = LN.corr_sums(B, ('gauss', k))[0]
+    assert np.abs(Gm - Q @ np.diag([LN.corr_sums(x, ('gauss', k))[0] for x in (0.9, 0.5, -0.3, 0.99)]) @ Q.T).max() < 1e-12
+    h = 0.25                                                              # a smooth slow noise: f ≈ (λτ_c)⁻², an AR(1) one 1/(1 + λτ_c)
+    for lam, tc in ((1.0, 400.0), (0.1, 4000.0)):
+        assert abs(LN.lr_factor(lam, h, ('gauss', tc / h)) * (lam * tc) ** 2 - 1) < 2e-2
+    rng = np.random.default_rng(1)                                        # AR(1) at τ_c → ∞ and a finite step: τ_cΣ_f → X_h,
+    n, kk, tc = 6, 2, 1e8                                                 # X_h − BX_hBᵀ = 2hS, the pair (i, l) weighted by
+    V = np.linalg.qr(rng.standard_normal((n, n)))[0] + 0.3 * rng.standard_normal((n, n))   # 2/(λ_i + λ_l − hλ_iλ_l)
+    lam = np.array([0.0, 0.0, 0.3, 1.0, 2.5, 6.0]); Vi = np.linalg.inv(V)
+    A = V @ np.diag(-lam) @ Vi; P = V[:, :kk] @ Vi[:kk, :]
+    Ub = (np.eye(n) - P) @ rng.standard_normal((n, 4)); Sig = Ub @ Ub.T
+    Cf = Vi @ (tc * LN.filtered_covariance(A, P, Sig, h, ('ar1', float(np.exp(-h / tc))))) @ Vi.T
+    C = Vi @ Sig @ Vi.T; L = lam[kk:]
+    pair = 2 / (L[:, None] + L[None, :] - h * L[:, None] * L[None, :])
+    assert np.abs(Cf[kk:, kk:] - pair * C[kk:, kk:]).max() < 1e-5 * np.abs(pair * C[kk:, kk:]).max()
+    Bn = np.diag(1 - h * L)
+    assert np.abs(solve_discrete_lyapunov(Bn, 2 * h * C[kk:, kk:]) - pair * C[kk:, kk:]).max() < 1e-12 * np.abs(C).max()
+
+
+def test_the_amplitude_coordinates_target():
+    from scipy.optimize import minimize
+    net, base, loop = _loop()
+    Wm = np.abs(E.A_BUMP) / net.a_max
+    P = E.G[0] * np.mean(base.features(E.exact_rep(net, np.ones(3) / 3))[4] ** 2, axis=0)
+    Wa = LN.w_label(P, Wm, coord='a')
+    c = (3 * np.abs(E.A_BUMP) / net.a_max) ** 2                            # the strictly convex potential, minimised directly
+    pot = lambda W: float(np.sum(P * ((3 * W) ** 2 / 2 + 2 * c * np.log(3 * W) + 3 * c ** 2 / (2 * (3 * W) ** 2))))
+    res = minimize(lambda w: pot(np.r_[w, 1 - w.sum()]), np.array([0.3, 0.45]), method='Nelder-Mead',
+                   options=dict(xatol=1e-12, fatol=1e-16, maxiter=20000))
+    assert np.abs(np.r_[res.x, 1 - res.x.sum()] - Wa).max() < 1e-6
+    assert np.abs(Wa - LN.w_label(P, Wm)).max() > 1e-2                    # not the α-coordinates' target
+    u = LN.selection(loop, E.exact_rep(net, Wa), 3 * Wa, coord='a')       # the closed form's replicator flow is stationary there
+    assert np.abs(u - u.mean()).max() < 1e-9 * np.abs(u).max()
+    u0 = LN.selection(loop, E.exact_rep(net, Wa), 3 * Wa)
+    assert np.abs(u0 - u0.mean()).max() > 1e-3 * np.abs(u0).max()
+
+
+def test_heun_with_dither_and_label_noise():
+    net, base, loop = _loop(gamma=0.3)
+    W = np.array([0.40, 0.25, 0.35]); b0 = 3 * W
+    T0 = E.exact_rep(net, W) + 0.02 * np.random.default_rng(5).standard_normal((3, 3))
+    v, dt, tau = 1e-3, 0.25, 1e-3
+
+    class Both(_Draws):
+        def standard_normal(self, shape):
+            z = self.rng.standard_normal(shape); self.out.append(z); return z
+    rng = Both(base.N, 11)
+    T1, b1 = loop.run_dithered(T0, b0, dt, dt, tau, rng, label_v=v, label_scheme='heun')
+    xi = np.sqrt(v * base.N / dt) * rng.out[0]; dW = np.sqrt(2 * tau * dt * loop.G)[None, :] * rng.out[1]
+    d1, g1 = loop.drift(T0, b0, xi)
+    Tp, lp = T0 + dt * d1 + dW, np.log(b0) + dt * g1 / b0                 # the dither in the predictor and in the step, once each
+    lp = lp - np.log(np.exp(lp).sum() / 3)
+    d2, g2 = loop.drift(Tp, np.exp(lp), xi)
+    Th, lb = T0 + 0.5 * dt * (d1 + d2) + dW, np.log(b0) + 0.5 * dt * (g1 / b0 + g2 / np.exp(lp))
+    lb = lb - np.log(np.exp(lb).sum() / 3)
+    assert np.allclose(T1, Th, rtol=0, atol=1e-13) and np.allclose(b1, np.exp(lb), rtol=0, atol=1e-13)

@@ -186,17 +186,25 @@ def d_job(args):
     return dict(gamma=gamma, Wc=Wc, s=s, ito=ito, wz=wz, D=float(np.abs(D).max()), ito3=ito3, frac_full=pred(C_full), frac_amp=pred(C_amp))
 
 
+H2_F = (X.H2_ID, 2 * X.H2_ID, 4 * X.H2_ID)                                    # Part F: the second derivatives' steps, extrapolated
+
+
 def f_job(args):
-    """Part F: Katzenberger's drift at m = 6 under the dither masked per coordinate (α, centre, width), and m = 3's with the same mask."""
+    """Part F: Katzenberger's drift at m = 6 under the dither masked per coordinate (α, centre, width), and m = 3's with the same mask —
+    Richardson-extrapolated in the second derivatives' step h2 (the central differences' error is O(h2²), and the drifts here are small
+    enough for it to matter: referee round 30), from (h2, 2h2); the same from (2h2, 4h2) gives the resolution."""
     mask, gamma, Wc, s = args
     n, m = 2, 6
     F, chart, coords, S, loop, beta_of = instance(n, gamma)
     Sm = S.copy(); Sm[np.arange(3 * m), np.arange(3 * m)] *= np.tile(np.asarray(mask, float), m)
-    d = GDR.limit_drift(F, chart, coords, np.r_[Wc, s], Sm, h=X.H_ID, h2=X.H2_ID)[0]
     F3, chart3, coords3, S3 = X.instance(gamma)
     S3m = S3.copy(); S3m[np.arange(9), np.arange(9)] *= np.tile(np.asarray(mask, float), 3)
-    d3 = GDR.limit_drift(F3, chart3, coords3, np.asarray(Wc, float), S3m, h=X.H_ID, h2=X.H2_ID)[0]
-    return dict(mask=mask, gamma=gamma, Wc=Wc, s=s, cls=d[:2] / (gamma * TAU), law=(3 / m) * d3 / (gamma * TAU), frac=d[2:] / (gamma * TAU))
+    d = np.array([GDR.limit_drift(F, chart, coords, np.r_[Wc, s], Sm, h=X.H_ID, h2=h2)[0] for h2 in H2_F]) / (gamma * TAU)
+    d3 = np.array([GDR.limit_drift(F3, chart3, coords3, np.asarray(Wc, float), S3m, h=X.H_ID, h2=h2)[0] for h2 in H2_F]) * (3 / m) / (gamma * TAU)
+    rich = lambda x, i: (4 * x[i] - x[i + 1]) / 3
+    dR, dR2, d3R, d3R2 = rich(d, 0), rich(d, 1), rich(d3, 0), rich(d3, 1)
+    return dict(mask=mask, gamma=gamma, Wc=Wc, s=s, cls=dR[:2], law=d3R, frac=dR[2:], cls_h2=d[0, :2], law_h2=d3[0],
+                res_cls=np.abs(dR - dR2)[:2], res_law=np.abs(d3R - d3R2), res_frac=np.abs(dR - dR2)[2:])
 
 
 @cached
@@ -310,12 +318,26 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
                       f"{r['almax']:.2f} | {E.fmt(r['fit'])} |")
         L_.append("")
     if Ff is not None:
+        rich = 'res_cls' in Ff[0]
         L_ += ["## F. Anisotropic dither at m = 6: the class drift against the per-class law, the fractions' drift (per γτ)", "",
+               ("Richardson-extrapolated in the second derivatives' step h2 from (h2, 2h2), h2 = " + f"{H2_F[0]:g}" + "; the resolution: the same "
+                "from (2h2, 4h2), its difference; a ratio is printed only where both drifts exceed ten times their resolution. At h2 alone the "
+                "central differences' O(h2²) error is a few percent of these drifts (referee round 30)." if rich else ""), "",
                "| the mask (α, centre, width) | the fractions | γ | the class drift (W_1, W_2) | the per-class law (m = 3's × 3/m) | their ratio | "
-               "the fractions' drift |", "|---|---|---|---|---|---|---|"]
+               "the resolution (class drift; law) | the ratio at h2 alone | the fractions' drift (± resolution) |", "|---|---|---|---|---|---|---|---|---|"]
         for r in Ff:
-            L_.append(f"| {tuple(r['mask'])} | {', '.join(f'{x:.2f}' for x in r['s'])} | {r['gamma']:g} | {v(r['cls'], 6)} | {v(r['law'], 6)} | "
-                      f"{', '.join(f'{a / b:.4f}' for a, b in zip(r['cls'], r['law']))} | {', '.join(f'{x:+.3e}' for x in r['frac'])} |")
+            if rich:
+                ok = (np.abs(r['cls']) > 10 * r['res_cls']) & (np.abs(r['law']) > 10 * r['res_law'])
+                rat = ', '.join(f'{a / b:.4f}' if o else 'unresolved' for a, b, o in zip(r['cls'], r['law'], ok))
+                res_ = f"{', '.join(f'{x:.1e}' for x in r['res_cls'])}; {', '.join(f'{x:.1e}' for x in r['res_law'])}"
+                rat_h2 = ', '.join(f'{a / b:.4f}' for a, b in zip(r['cls_h2'], r['law_h2']))
+                fr = ', '.join(f'{x:+.3e} ± {e:.0e}' for x, e in zip(r['frac'], r['res_frac']))
+            else:
+                rat = ', '.join(f'{a / b:.4f}' for a, b in zip(r['cls'], r['law'])); res_ = rat_h2 = '—'
+                fr = ', '.join(f'{x:+.3e}' for x in r['frac'])
+            ve = lambda x: ', '.join(f'{y:+.4e}' for y in x)
+            L_.append(f"| {tuple(r['mask'])} | {', '.join(f'{x:.2f}' for x in r['s'])} | {r['gamma']:g} | {ve(r['cls'])} | {ve(r['law'])} | "
+                      f"{rat} | {res_} | {rat_h2} | {fr} |")
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_classes.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'

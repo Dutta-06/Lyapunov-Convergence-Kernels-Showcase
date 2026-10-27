@@ -25,8 +25,10 @@ C. The full loop with measurement noise only (τ = 0, γ = 10⁻², v = V_C, fro
    map of the noiseless flow from the state, every REC_PHI slow units): its least-squares slope and its end displacement, against
    (1 − ρ)/(1 + ρ) times part A's Itô drift at W₀ and against the linear-response prediction — Katzenberger's drift of the filtered
    covariance Σ_f (`label_noise.filtered_covariance`: the increment's second moment, the cross term h²∂²Φ[F, ⟨Uξ⟩] included) times the
-   per-step variance's factor; zero for Heun. (The raw masses' window means carry the O(v) shift of the normal fluctuations' mean, which
-   builds up from the start on M.)
+   per-step variance's factor; zero for Heun — at W₀ and averaged along the seeds' mean path with the least-squares slope's kernel
+   6s(S − s)/S³ (referee round 30: over S_C the prediction's W₃ moves by 0.7–2%). (The raw masses' window means carry the O(v) shift of
+   the normal fluctuations' mean, which builds up from the start on M.) C2: the same at the large step h = 8 (hλ_max ≈ 1.6: the
+   prediction is for any step h < 2/λ_max), fresh and AR(1) draws at ρ = ±1/2, SEEDS_C2 × S_C2 slow units.
 D. The example: the scalar factorisation f(u, v) = uv fitted to y = 1 with label noise, u̇ = (ξ − r)v, v̇ = (ξ − r)u, r = uv − y. The
    rescaling symmetry's Noether charge Q = u² − v² is conserved by the gradient flow and, pathwise, by every noise field (v, u) — so by the
    Stratonovich (Heun) dynamics —; an Euler step gives exactly Q_{n+1} = Q_n(1 − (ξ_n − r_n)²h²) whatever the noise sequence, so E[Q]
@@ -49,15 +51,20 @@ F. A generic overparametrised network: f(x) = Σ_h a_h tanh(w_hx + b_h), H_F uni
    against the leading-order Itô prediction −(V_F/4)|P_T∇T|² (P_T the orthogonal projection onto TΓ, ∇T by central differences) times the
    per-step factor, and against the linear-response prediction −(V_F/4)(1 − ρ)/(1 + ρ)∇T·P_T∇trΨ(K) (K = JᵀJ/n, Ψ′ = φ: label noise's
    potential tr Ψ(K), the trace for white noise, (1/τ_c)log det(I + τ_cK) for a slow one); no exact identity here.
-G. The noise's colour moves the target. (G1) The zero of the per-update selection on the simplex — Katzenberger's drift of the filtered
-   covariance Σ_f at the step DT for AR(1) draws of correlation time τ_c — continued from τ_c = 0 (W_ℓ's finite-γ version) to τ_c = 2·10⁴
-   at γ = 10⁻² and 10⁻⁵, with its stability. (G2) The slow limit: for label noise Σ = −mAM on M (A = ∂F, M the mobility), so
-   φ(A) → (τ_cA)⁻¹ turns τ_cΣ_f into −A_DΣQᵀ = m·QMQᵀ — the flow's own mobility on the normal space, a thermal noise in the flow's metric —:
-   at three points, that limit's residual and symmetry, and the direction of the slow noise's selection against the dither's (Σ = 2τG,
-   Proposition D‴.37) and against the fresh noise's (the cosines; the ratio of the dither's drift to its normal part's).
+G. The noise's colour on the gauge. (G1a) The zero of the per-update selection on the simplex — Katzenberger's drift of the filtered
+   covariance Σ_f at the step DT for AR(1) draws of correlation time τ_c — continued from τ_c = 0 (W_ℓ's finite-γ version) to τ_c = 10⁵
+   at γ = 10⁻² and 10⁻⁵, with its stability and the softest normal rate there (the guard W > (1 + 10⁻⁶)W_min, referee round 30). (G1b)
+   The whole zero set at τ_c = 0, 10, …, 10⁵ (fsolve and the drift field's flow from 21 starts; stable zeros, saddles, unstable ones)
+   and the basin of W₀: for fresh draws one interior target, for slow ones several stable zeros, each with one class's mass large and the
+   others near their saturation, and W♯ an unstable node (round 30). (G2) The slow limit: for label noise Σ = −mAM on M (A = ∂F, M the
+   mobility), so φ(A) → (τ_cA)⁻¹ turns τ_cΣ_f into −A_DΣQᵀ = m·QMQᵀ in the continuum — the flow's own mobility on the normal space, a
+   thermal noise in the flow's metric — and into X_h (X_h − BX_hBᵀ = 2hS) at the step h: at three points, both residuals, and the
+   direction of the slow noise's selection against the dither's (Σ = 2τG, Proposition D‴.37) and the fresh noise's (the cosines; the
+   ratio of the dither's drift to its normal part's); at τ_c = 10⁴, AR(1) draws against a smooth noise (Gaussian step correlations),
+   whose f ≈ (λτ_c)⁻² makes Ψ bounded — the log-determinant is the AR(1) noise's.
 
-Output: results/chaos/gauge_label.md and gauge_label_raw.npz (GL_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D,E,F,G`, A
-includes A2).
+Output: results/chaos/gauge_label.md and gauge_label_raw.npz (GL_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,C2,D,E,F,G`,
+A includes A2; `--reanalyse-C` recomputes Part C's and C2's summaries from their stored runs).
 """
 import os
 import sys
@@ -88,6 +95,9 @@ GAMMA_C, V_C, W0_C, S_C, REC_S, REC_PHI = 1e-2, 5e-5, (0.40, 0.25, 0.35), 2e5, 1
 SEEDS_C = tuple(range(800, 804))
 SCHEMES_C = (('ito', 0.0, DT), ('ito', 0.0, DT / 2), ('ar1', -0.5, DT), ('ar1', -1 / 3, DT), ('ar1', 1 / 3, DT), ('ar1', 0.6, DT),
              ('ar1', 0.8, DT), ('ar1', 0.9, DT), ('ar1', 0.95, DT), ('heun', 0.0, DT), ('heun', 0.9, DT))
+SEEDS_C2, S_C2 = tuple(range(820, 828)), 3.2e5                                # C2: a large step (hλ_max ≈ 1.6), referee round 30
+SCHEMES_C2 = (('ito', 0.0, 8.0), ('ar1', 0.5, 8.0), ('ar1', -0.5, 8.0))
+N_PATH_C = 9                                                                  # points of the mean path for the path-averaged prediction
 GAMMAS_A2, W_A2, TAUN_A2 = (1e-1, 1e-2, 1e-3, 1e-4, 1e-5), ((0.40, 0.25), (1 / 3, 1 / 3)), (0.016, 0.16, 1.6)   # τ_n over the period
 SIG2_D, DT_D, T_D, N_PATHS_D, UV0_D, SEED_D = 0.01, 1e-3, 100.0, 400, (2.0, 0.5), 900
 SCHEMES_D = (('ito', 0.0), ('ar1', -1 / 3), ('ar1', 1 / 3), ('ar1', 0.6), ('block', 4), ('ar1', 0.9), ('ar1', 0.99), ('ar1', 0.999),
@@ -225,53 +235,154 @@ def g_drift(gamma, w, corr, h=None, parts=False):
     return (d, A, P, Sig, (F, chart, coords, S0)) if parts else d
 
 
-TAUC_G = (0.0,) + tuple(np.geomspace(5.0, 2e4, 22))
+TAUC_G = (0.0,) + tuple(np.geomspace(5.0, 1e5, 50))                           # G1: the branch from W_ℓ's finite-γ version, continued
+TAUC_M = (0.0, 10.0, 100.0, 1e3, 1e4, 1e5)                                    # G1: the whole zero set and the basins
+GUARD_G = 1 + 1e-6                                                            # zeros only with every W_k above GUARD_G·W_min,k
+W0_NB = (0.40, 0.27)                                                          # W₀'s neighbour (0.40, 0.27, 0.33)
+
+
+def g_corr(tc):
+    return ('fresh',) if tc == 0 else ('ar1', float(np.exp(-DT / tc)))
+
+
+def g_dr(gamma, w, corr, Wm):
+    """Part G's drift with the guard (NaN within GUARD_G of a saturation or where the limit map fails)."""
+    W = np.r_[w, 1 - np.sum(w)]
+    if np.any(W <= GUARD_G * Wm):
+        return np.full(2, np.nan)
+    try:
+        return g_drift(gamma, np.asarray(w, float), corr)
+    except Exception:
+        return np.full(2, np.nan)
+
+
+def g_ref(gamma, corr, Wm):
+    """The drift's scale at W₀ (Part C's start): the unit of the stability exponents at (γ, τ_c)."""
+    return float(np.abs(g_dr(gamma, np.asarray(W0_C[:2], float), corr, Wm)).max())
+
+
+def g_zero(gamma, start, corr, Wm, ref=None):
+    """A zero of the drift from `start` (fsolve on the drift over its scale there) and its two stability exponents (the eigenvalues of the
+    drift's Jacobian over `ref`, by default the drift's scale at W₀), or None."""
+    from scipy.optimize import fsolve
+    sc = np.abs(g_dr(gamma, start, corr, Wm)).max()
+    if not np.isfinite(sc) or sc == 0:
+        return None
+    w = fsolve(lambda w_: np.nan_to_num(g_dr(gamma, w_, corr, Wm) / sc, nan=1e3), np.asarray(start, float), xtol=1e-12)
+    d = g_dr(gamma, w, corr, Wm)
+    if not np.all(np.isfinite(d)) or np.abs(d).max() > 1e-6 * sc:
+        return None
+    ref = g_ref(gamma, corr, Wm) if ref is None else ref
+    J = np.array([(g_dr(gamma, w + 1e-6 * e, corr, Wm) - g_dr(gamma, w - 1e-6 * e, corr, Wm)) / 2e-6 for e in np.eye(2)]).T / ref
+    if not np.all(np.isfinite(J)):
+        return None
+    return w, np.sort(np.linalg.eigvals(J).real)
+
+
+def g_flow(gamma, start, corr, Wm, n=400, step=2e-3, ref=None):
+    """The drift field's flow from `start` (steps of length ≤ `step` in W along the drift) until it nears a zero; the end polished to the
+    zero by `g_zero` → (the zero or the last point, 'zero' / 'boundary' / 'steps', the stable zero's exponents or None)."""
+    w = np.asarray(start, float).copy()
+    for k in range(n):
+        d = g_dr(gamma, w, corr, Wm)
+        if not np.all(np.isfinite(d)):
+            return w, 'boundary', None
+        nd = np.abs(np.r_[d, -d.sum()]).max()
+        if k == 0:
+            sc = nd
+        if nd < 3e-3 * sc:
+            break
+        w = w + step * d / nd
+    z = g_zero(gamma, w, corr, Wm, ref)
+    return (z[0], 'zero', z[1]) if z is not None and z[1].max() < 0 else (w, 'steps', None)
+
+
+def g_soft(gamma, w):
+    """The softest normal relaxation rate at the chart point w (the smallest nonzero −Re λ(A))."""
+    F, chart, coords, S0 = X.instance(gamma)
+    lam = np.sort(-np.linalg.eigvals(GDR._jac(F, chart(np.asarray(w, float)), X.H_ID)).real)
+    return float(lam[lam > 1e-9 * lam.max()].min())
+
+
+def g_starts(Wm):
+    g = np.linspace(0.0, 1.0, 9)[1:-1]
+    return [np.array([Wm[0] + a * (1 - Wm.sum()), Wm[1] + b * (1 - Wm.sum())]) for a in g for b in g if a + b < 1]
 
 
 @cached
 def g1_job(gamma):
-    """Part G1: the zero of the filtered selection continued in τ_c (rows τ_c, W_1..3, its two stability exponents per unit drift scale);
-    stops where no zero is left with every W_k above 1.0005 W_min,k."""
-    from scipy.optimize import fsolve
+    """Part G1a: the zero continued in τ_c from W_ℓ's finite-γ version (rows τ_c, W_1..3, its two stability exponents, the softest normal
+    rate there); stops where no zero is left with every W_k above GUARD_G·W_min,k."""
     Wm = np.abs(E.A_BUMP) / A_MAX
-
-    def dr(w, corr):
-        W = np.r_[w, 1 - w.sum()]
-        return np.full(2, np.nan) if np.any(W <= 1.0005 * Wm) else g_drift(gamma, w, corr)
     net, base = E.setup()
     P = E.G[0] * np.mean(base.features(E.exact_rep(net, np.ones(3) / 3))[4] ** 2, axis=0)
     start = ito_zero(gamma, LN.w_label(P, Wm))[0][:2]
     rows, last = [], None
     for tc in TAUC_G:
-        corr = ('fresh',) if tc == 0 else ('ar1', float(np.exp(-DT / tc)))
-        sc = np.abs(dr(start, corr)).max()
-        w = fsolve(lambda w_: np.nan_to_num(dr(w_, corr) / sc, nan=1e3), start, xtol=1e-12)
-        d = dr(w, corr)
-        if not np.all(np.isfinite(d)) or np.abs(d).max() > 1e-6 * sc:
-            last = dict(tc=tc, drift=np.r_[dr(start, corr), -dr(start, corr).sum()] / sc)
+        z = g_zero(gamma, start, g_corr(tc), Wm)
+        if z is None:
+            d = g_dr(gamma, start, g_corr(tc), Wm)
+            last = dict(tc=tc, drift=np.r_[d, -d.sum()] / np.abs(np.r_[d, -d.sum()]).max())
             break
-        lam = np.linalg.eigvals(np.array([(dr(w + 1e-6 * e, corr) - dr(w - 1e-6 * e, corr)) / 2e-6 for e in np.eye(2)]).T / sc).real
-        rows.append(np.r_[tc, w, 1 - w.sum(), np.sort(lam)])
+        w, lam = z
+        rows.append(np.r_[tc, w, 1 - w.sum(), lam, g_soft(gamma, w)])
         start = w
     return dict(gamma=gamma, rows=np.array(rows), stop=last, W_min=Wm)
 
 
 @cached
+def g1m_job(args):
+    """Part G1b at (γ, τ_c): every zero found from a grid of 21 starts on the representable simplex — by fsolve (any zero) and by the drift
+    field's flow from each start (the stable ones; fsolve alone misses those near a saturation) —, distinct to 10⁻⁵, with its stability
+    exponents and softest normal rate; and where the flow from W₀ and from W₀'s neighbour ends."""
+    import warnings
+    warnings.filterwarnings('ignore')
+    gamma, tc = args
+    Wm = np.abs(E.A_BUMP) / A_MAX
+    corr = g_corr(tc)
+    found = []
+    add = lambda z: found.append(z) if z is not None and not any(np.abs(z[0] - f[0]).max() < 1e-5 for f in found) else None
+    ref = g_ref(gamma, corr, Wm)
+    for st in g_starts(Wm):
+        add(g_zero(gamma, st, corr, Wm, ref))
+        w, why, lam = g_flow(gamma, st, corr, Wm, ref=ref)
+        if why == 'zero':
+            add((w, lam))
+    zeros = [np.r_[w, 1 - w.sum(), lam, g_soft(gamma, w)] for w, lam in sorted(found, key=lambda z: tuple(z[0]))]
+    flows = {}
+    for name, st in (('W0', np.asarray(W0_C[:2], float)), ('W0_nb', np.asarray(W0_NB, float))):
+        w, why, lam = g_flow(gamma, st, corr, Wm, ref=ref)
+        flows[name] = dict(end=np.r_[w, 1 - w.sum()], why=why)
+    return dict(gamma=gamma, tc=tc, zeros=np.array(zeros), flows=flows, W_min=Wm)
+
+
+TC_SLOW, TC_SMOOTH = 1e6, 1e4
+
+
+@cached
 def g2_job(args):
-    """Part G2 at one point: the slow limit τ_cΣ_f against −A_DΣQᵀ (= m·QMQᵀ when Σ = −mAM) at τ_c = 10⁶, the latter's asymmetry, and the
-    drifts (W_1..3) of the slow noise, the dither (Σ = 2τG), the dither's normal part and the fresh noise."""
+    """Part G2 at one point: the slow limit τ_cΣ_f at τ_c = 10⁶ against its finite-step value X_h (X_h − BX_hBᵀ = 2hS, B = I + hA: the pair
+    (i, l) weighted by 2/(λ_i + λ_l − hλ_iλ_l)) and against the continuum's −A_DΣQᵀ (= m·QMQᵀ when Σ = −mAM), the latter's asymmetry; the
+    drifts (W_1..3) of the slow noise, the dither (Σ = 2τG), the dither's normal part, the fresh noise, and of AR(1) and smooth (Gaussian
+    step correlations) noise at τ_c = 10⁴."""
+    from scipy.linalg import solve_discrete_lyapunov
     gamma, w = args
-    tc = 1e6
+    tc = TC_SLOW
     d_slow, A, P, Sig, (F, chart, coords, S0) = g_drift(gamma, w, ('ar1', float(np.exp(-DT / tc))), parts=True)
     n = A.shape[0]; Q = np.eye(n) - P
     AD = np.linalg.solve(A - np.abs(np.linalg.eigvals(A)).max() * P, Q)
     Mn = -AD @ Sig @ Q.T
     Sf = LN.filtered_covariance(A, P, Sig, DT, ('ar1', float(np.exp(-DT / tc))))
+    k = int(round(np.trace(P))); Nb = np.linalg.svd(Q)[0][:, :n - k]
+    AN = Nb.T @ A @ Nb; B = np.eye(n - k) + DT * AN
+    Xh = Nb @ solve_discrete_lyapunov(B, 2 * DT * (Nb.T @ Q @ Sig @ Q.T @ Nb)) @ Nb.T
     lim = lambda S_: GDR.limit_drift(F, chart, coords, np.asarray(w, float), S_, h=X.H_ID, h2=X.H2_ID)[0]
     full = lambda d: np.r_[d, -d.sum()]
     return dict(gamma=gamma, w=np.asarray(w, float), lim_res=float(np.abs(tc * Sf - Mn).max() / np.abs(Mn).max()),
+                lim_res_h=float(np.abs(tc * Sf - Xh).max() / np.abs(Xh).max()), soft=g_soft(gamma, w),
                 asym=float(np.abs(Mn - Mn.T).max() / np.abs(Mn).max()), slow=full(d_slow), dither=full(lim(S0)), dither_n=full(lim(Q @ S0 @ Q.T)),
-                fresh=full(lim(Sig)))
+                fresh=full(lim(Sig)), ar1_4=full(g_drift(gamma, w, ('ar1', float(np.exp(-DT / TC_SMOOTH))))),
+                gauss_4=full(g_drift(gamma, w, ('gauss', TC_SMOOTH / DT))))
 
 
 def part_B():
@@ -520,24 +631,47 @@ def corr_of(scheme, rho):
     return {'ito': ('fresh',), 'ar1': ('ar1', rho), 'block': ('block', int(rho)), 'heun': ('ar1', rho)}[scheme]
 
 
-def c_prediction():
-    """Part C's linear-response predictions at W₀ per unit v, one per scheme of SCHEMES_C: the per-step factor times Katzenberger's drift of
+def c_prediction_at(w, schemes):
+    """The linear-response predictions at the chart point w per unit v, one per scheme: the per-step factor times Katzenberger's drift of
     the filtered covariance Σ_f at the scheme's step (zero for Heun), (W_1, W_2, W_3)."""
     F, chart, coords, S0 = X.instance(GAMMA_C)
     net, base = E.setup()
     loop = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=GAMMA_C)
-    w = np.asarray(W0_C[:2], float); x0 = chart(w)
+    w = np.asarray(w, float); x0 = chart(w)
     U0 = LN.flat_fields(loop, x0, beta_of); Sig = U0.T @ U0 / U0.shape[0]
     A = GDR._jac(F, x0, X.H_ID); P = GDR.spectral_projection(A, GDR._jac(chart, w, X.H_ID))[0]
     out = []
-    for scheme, rho, dt in SCHEMES_C:
+    for scheme, rho, dt in schemes:
         d = np.zeros(2) if scheme == 'heun' else factor_C(scheme, rho) * GDR.limit_drift(
             F, chart, coords, w, LN.filtered_covariance(A, P, Sig, dt, corr_of(scheme, rho)), h=X.H_ID, h2=X.H2_ID)[0]
         out.append(np.r_[d, -d.sum()])
     return np.array(out)
 
 
-def summarise_C(runs, ito0, lr=None):
+def c_prediction():
+    """Part C's linear-response predictions at W₀ (`c_prediction_at`), one per scheme of SCHEMES_C."""
+    return c_prediction_at(W0_C[:2], SCHEMES_C)
+
+
+def c_prediction_path(runs, schemes):
+    """The predictions averaged along each scheme's mean path ȳ(s) (the seeds' mean of the gauge coordinate) with the least-squares slope's
+    kernel 6s(S − s)/S³ (the slope of y(s) = ∫d is ∫d(s)6s(S − s)/S³ds), by the trapezoid rule on N_PATH_C points (referee round 30: over
+    S_C the prediction's W₃ moves by 0.7–2%)."""
+    out = []
+    for scheme, rho, dt in schemes:
+        rs = [r for r in runs if r['scheme'] == scheme and abs(r['rho'] - rho) < 1e-12 and r['dt'] == dt]
+        Y = np.mean([r['y'] for r in rs], axis=0)
+        if scheme == 'heun':
+            out.append(np.zeros(3)); continue
+        idx = np.unique(np.round(np.linspace(0, len(Y) - 1, N_PATH_C)).astype(int))
+        sv, S = Y[idx, 0] - Y[0, 0], Y[-1, 0] - Y[0, 0]
+        d = np.array([c_prediction_at(Y[i, 1:3], [(scheme, rho, dt)])[0] for i in idx])
+        K = 6 * sv * (S - sv) / S ** 3
+        out.append(np.trapezoid(K[:, None] * d, sv, axis=0) / np.trapezoid(K, sv))
+    return np.array(out)
+
+
+def summarise_C(runs, ito0, lr=None, lr_path=None, schemes=SCHEMES_C):
     """Per scheme: the gauge coordinate's least-squares slope (per unit slow time) and end displacement y(S_C) − W₀, mean ± s.e. over the
     seeds, against the prediction (1 − ρ)/(1 + ρ)·v·(Itô drift at W₀), and their ratios to v·(Itô drift at W₀) on its largest component;
     with `lr` (c_prediction) also against the linear-response prediction v·lr, the slope over it per component (± s.e.)."""
@@ -545,7 +679,7 @@ def summarise_C(runs, ito0, lr=None):
     W0 = np.asarray(W0_C, float)
     se = lambda M: M.std(axis=0, ddof=1) / np.sqrt(len(M))
     k = int(np.argmax(np.abs(ito0)))
-    for i_, (scheme, rho, dt) in enumerate(SCHEMES_C):
+    for i_, (scheme, rho, dt) in enumerate(schemes):
         rs = [r for r in runs if r['scheme'] == scheme and abs(r['rho'] - rho) < 1e-12 and r['dt'] == dt]
         R = np.array([r['rec'] for r in rs])
         slope = np.array([np.polyfit(r['y'][:, 0], r['y'][:, 1:], 1)[0] for r in rs])
@@ -558,10 +692,13 @@ def summarise_C(runs, ito0, lr=None):
         if lr is not None:
             out[-1].update(lr=V_C * lr[i_], over_lr=(slope.mean(axis=0) / (V_C * lr[i_]) if scheme != 'heun' else np.full(3, np.nan)),
                            over_lr_se=(se(slope) / np.abs(V_C * lr[i_]) if scheme != 'heun' else np.full(3, np.nan)))
+        if lr_path is not None:
+            out[-1].update(lrp=V_C * lr_path[i_], over_lrp=(slope.mean(axis=0) / (V_C * lr_path[i_]) if scheme != 'heun' else np.full(3, np.nan)),
+                           over_lrp_se=(se(slope) / np.abs(V_C * lr_path[i_]) if scheme != 'heun' else np.full(3, np.nan)))
     return out
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None, C2=None):
     fmt = E.fmt
     v3 = lambda v, p=4: ', '.join(f'{x:.{p}f}' for x in v)
     L_ = ["# Proposition D‴.41: measurement noise on the gauge (`exp_gauge_label.py`)", "",
@@ -627,6 +764,35 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None):
                 L_.append(f"| {v3(np.r_[w, 1 - sum(w)], 3)} | {', '.join(f'{x:+.4e}' for x in d)} | {', '.join(f'{x:+.4e}' for x in cl)} | "
                           f"{np.abs(d - cl).max() / np.abs(d).max():.1e} |")
             L_.append("")
+    def c_table(Ci, ito0):
+        rows = []
+        if 'lr' in Ci[0]:
+            path = 'lrp' in Ci[0]
+            rows += ["| noise | (1 − ρ)/(1 + ρ) | dy/ds, the least-squares slope (± s.e.) | predicted (1 − ρ)/(1 + ρ)·v·(Itô drift) | "
+                     "the linear-response prediction at W₀ | " + ("the same averaged along the mean path | " if path else "") +
+                     "the ratio to v·(Itô drift) (± s.e.) | the slope over the linear-response prediction at W₀ (± s.e.) | " +
+                     ("the slope over the path-averaged prediction (± s.e.) | " if path else "") + "y(S) − W₀ (± s.e.) | the largest |α| | the mean fit error |",
+                     "|---|---|---|---|---|" + ("---|" if path else "") + "---|---|" + ("---|" if path else "") + "---|---|---|"]
+            for r in Ci:
+                heun = r['scheme'] == 'heun'
+                ol = '—' if heun else ', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(r['over_lr'], r['over_lr_se']))
+                olp = ('—' if heun else ', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(r['over_lrp'], r['over_lrp_se']))) if path else ''
+                rows.append(f"| {name_C(r['scheme'], r['rho'], r['dt'])} | {r['factor']:.4f} | "
+                            f"{', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(r['slope'], r['slope_se']))} | "
+                            f"{', '.join(f'{v:+.3e}' for v in r['pred']) if not heun else '0'} | "
+                            f"{', '.join(f'{v:+.3e}' for v in r['lr']) if not heun else '0'} | " +
+                            ((f"{', '.join(f'{v:+.3e}' for v in r['lrp']) if not heun else '0'} | ") if path else "") +
+                            f"{r['ratio']:+.4f} ± {r['ratio_se']:.4f} | {ol} | " + (f"{olp} | " if path else "") +
+                            f"{', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(r['end'], r['end_se']))} | {r['almax']:.2f} | {fmt(r['fit'])} |")
+        else:
+            rows += ["| noise | (1 − ρ)/(1 + ρ) | dy/ds, the least-squares slope (± s.e.) | predicted (1 − ρ)/(1 + ρ)·v·(Itô drift) | the ratio to v·(Itô drift) (± s.e.) | "
+                     "y(S) − W₀ (± s.e.) | the largest |α| | the mean fit error |",
+                     "|---|---|---|---|---|---|---|---|"]
+            for r in Ci:
+                rows.append(f"| {name_C(r['scheme'], r['rho'], r['dt'])} | {r['factor']:.3f} | {', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(r['slope'], r['slope_se']))} | "
+                            f"{', '.join(f'{v:+.3e}' for v in r['pred'])} | {r['ratio']:+.4f} ± {r['ratio_se']:.4f} | "
+                            f"{', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(r['end'], r['end_se']))} | {r['almax']:.2f} | {fmt(r['fit'])} |")
+        return rows
     if C is not None:
         Ci, ito0 = C['sum'], C['ito0']
         L_ += [f"## C. The full loop with measurement noise only (τ = 0, γ = {GAMMA_C:g}, v = {V_C:g}, from W₀ = {v3(W0_C, 2)}, "
@@ -634,27 +800,16 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None):
                f"The gauge coordinate y(s) = Φ(z(s)): the noiseless flow ({L_MAP:g} slow units) from the state every {REC_PHI:g} slow units. Part A's "
                f"Itô drift at W₀ (γ = {GAMMA_C:g}, per unit v): {', '.join(f'{v:+.4e}' for v in ito0)}; the ratio is taken on W_{Ci[0]['k'] + 1}. "
                "The linear-response prediction: the per-step factor times Katzenberger's drift of the filtered covariance Σ_f at the scheme's step "
-               "(the increment's second moment, `label_noise.filtered_covariance`), times v; zero for Heun's scheme.", ""]
-        if 'lr' in Ci[0]:
-            L_ += ["| noise | (1 − ρ)/(1 + ρ) | dy/ds, the least-squares slope (± s.e.) | predicted (1 − ρ)/(1 + ρ)·v·(Itô drift) | "
-                   "the linear-response prediction | the ratio to v·(Itô drift) (± s.e.) | the slope over the linear-response prediction (± s.e.) | "
-                   "y(S) − W₀ (± s.e.) | the largest |α| | the mean fit error |",
-                   "|---|---|---|---|---|---|---|---|---|---|"]
-            for r in Ci:
-                ol = ('—' if r['scheme'] == 'heun' else ', '.join(f'{a:.4f} ± {b:.4f}' for a, b in zip(r['over_lr'], r['over_lr_se'])))
-                L_.append(f"| {name_C(r['scheme'], r['rho'], r['dt'])} | {r['factor']:.4f} | "
-                          f"{', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(r['slope'], r['slope_se']))} | "
-                          f"{', '.join(f'{v:+.3e}' for v in r['pred']) if r['scheme'] != 'heun' else '0'} | "
-                          f"{', '.join(f'{v:+.3e}' for v in r['lr']) if r['scheme'] != 'heun' else '0'} | {r['ratio']:+.4f} ± {r['ratio_se']:.4f} | "
-                          f"{ol} | {', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(r['end'], r['end_se']))} | {r['almax']:.2f} | {fmt(r['fit'])} |")
-        else:
-            L_ += ["| noise | (1 − ρ)/(1 + ρ) | dy/ds, the least-squares slope (± s.e.) | predicted (1 − ρ)/(1 + ρ)·v·(Itô drift) | the ratio to v·(Itô drift) (± s.e.) | "
-                   "y(S) − W₀ (± s.e.) | the largest |α| | the mean fit error |",
-                   "|---|---|---|---|---|---|---|---|"]
-            for r in Ci:
-                L_.append(f"| {name_C(r['scheme'], r['rho'], r['dt'])} | {r['factor']:.3f} | {', '.join(f'{a:+.3e} ± {b:.1e}' for a, b in zip(r['slope'], r['slope_se']))} | "
-                          f"{', '.join(f'{v:+.3e}' for v in r['pred'])} | {r['ratio']:+.4f} ± {r['ratio_se']:.4f} | "
-                          f"{', '.join(f'{a:+.2e} ± {b:.1e}' for a, b in zip(r['end'], r['end_se']))} | {r['almax']:.2f} | {fmt(r['fit'])} |")
+               "(the increment's second moment, `label_noise.filtered_covariance`), times v; zero for Heun's scheme" +
+               (f"; at W₀, and averaged along the seeds' mean path with the least-squares slope's kernel 6s(S − s)/S³ ({N_PATH_C} points)" if 'lrp' in Ci[0] else "") +
+               ".", ""]
+        L_ += c_table(Ci, ito0)
+        L_ += ["", f"The limit map's residual drift at its end: at most {max(r['res'] for r in Ci):.1e}.", ""]
+    if C2 is not None:
+        Ci = C2['sum']
+        L_ += [f"## C2. A large step (h = {SCHEMES_C2[0][2]:g}, hλ_max ≈ 1.6; γ = {GAMMA_C:g}, v = {V_C:g}, from W₀, {Ci[0]['n']} seeds, {S_C2:g} slow units)", "",
+               "The linear-response prediction holds for any step h < 2/λ_max; Part C's columns.", ""]
+        L_ += c_table(Ci, C2['ito0'])
         L_ += ["", f"The limit map's residual drift at its end: at most {max(r['res'] for r in Ci):.1e}.", ""]
     if D is not None:
         L_ += [f"## D. The example: the scalar factorisation f = uv with label noise (σ² = {SIG2_D:g}, step {DT_D:g}, T = {T_D:g}, {N_PATHS_D} paths, "
@@ -715,30 +870,52 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None, A2=None, G=None):
         L_ += ["", "No exact identity holds here: the leading-order law (the per-step factor times the linear-response weights, Heun's zero) on a "
                "generic network.", ""]
     if G is not None:
-        L_ += [f"## G. The noise's colour moves the target (AR(1) draws of correlation time τ_c at the step {DT:g})", "",
-               "G1. The zero of the per-update selection on the simplex, continued in τ_c (τ_c = 0: fresh draws), with its two stability exponents "
-               "(the eigenvalues of the drift's Jacobian over the drift's scale at the previous zero):", "",
-               "| γ | τ_c | the zero W | W − W_min | the stability exponents |", "|---|---|---|---|---|"]
+        L_ += [f"## G. The noise's colour on the gauge: one target for fresh draws, several for slow ones (AR(1) draws of correlation time τ_c, step {DT:g})", "",
+               f"G1a. The zero of the per-update selection on the simplex continued in τ_c from τ_c = 0 (fresh draws), with its two stability exponents "
+               f"(the eigenvalues of the drift's Jacobian over the drift's scale at W₀) and the softest normal relaxation rate λ_soft there "
+               f"(zeros only with every W_k above (1 + {GUARD_G - 1:.0e})W_min,k):", "",
+               "| γ | τ_c | the zero W | W/W_min − 1 | the stability exponents | λ_soft·τ_c |", "|---|---|---|---|---|---|"]
         for g in G['G1']:
             for r in g['rows']:
-                L_.append(f"| {g['gamma']:g} | {r[0]:.4g} | {v3(r[1:4])} | {', '.join(f'{x:.2e}' for x in r[1:4] - g['W_min'])} | "
-                          f"{', '.join(f'{x:+.3g}' for x in r[4:6])} |")
+                L_.append(f"| {g['gamma']:g} | {r[0]:.4g} | {v3(r[1:4])} | {', '.join(f'{x:.2e}' for x in r[1:4] / g['W_min'] - 1)} | "
+                          f"{', '.join(f'{x:+.3g}' for x in r[4:6])} | {r[6] * r[0]:.3g} |")
             if g['stop'] is not None:
-                L_.append(f"| {g['gamma']:g} | {g['stop']['tc']:.4g} | no zero with W > 1.0005 W_min: the drift at the last zero "
-                          f"{', '.join(f'{x:+.3f}' for x in g['stop']['drift'])} (over its scale) | | |")
-        L_ += ["", "G2. The slow limit: τ_cΣ_f → −A_DΣQᵀ = m·QMQᵀ (A_D the group inverse of A, Q = I − P), the flow's own mobility on the normal "
-               "space; the selection's direction against the dither's (Σ = 2τG) and the fresh noise's —", "",
-               "| γ | W | τ_cΣ_f against −A_DΣQᵀ (τ_c = 10⁶) | −A_DΣQᵀ's asymmetry | the slow noise's drift (normalised) | the dither's | "
+                L_.append(f"| {g['gamma']:g} | {g['stop']['tc']:.4g} | no zero left above the guard: the drift at the last zero "
+                          f"{', '.join(f'{x:+.3f}' for x in g['stop']['drift'])} (over its scale) | | | |")
+        if 'G1m' in G:
+            L_ += ["", "G1b. The whole zero set at fixed τ_c (fsolve and the drift field's flow from 21 starts on the representable simplex, distinct "
+                   "to 10⁻⁵; stable: both exponents negative; a saddle: one positive; unstable: both; zeros within 10⁻⁴ of a saturation, W_k/W_min,k − 1 "
+                   f"< 10⁻⁴, apart), and where the flow ends from W₀ = {v3(W0_C)} (Part C's start) and from its neighbour "
+                   f"{v3(np.r_[W0_NB, 1 - sum(W0_NB)])}:", "",
+                   "| γ | τ_c | stable zeros (exponents) | saddles | unstable zeros | zeros at a saturation | the flow from W₀ ends at | from its neighbour |",
+                   "|---|---|---|---|---|---|---|---|"]
+            at_sat = lambda z: np.min(z[:3] / G['G1'][0]['W_min'] - 1) < 1e-4
+            kind = lambda z: 'sat' if at_sat(z) else ('stable' if z[4] < 0 and z[3] < 0 else ('unstable' if min(z[3], z[4]) > 0 else 'saddle'))
+            for r in G['G1m']:
+                zs = [z for z in r['zeros']] if len(r['zeros']) else []
+                col = lambda k_: '; '.join(f"{v3(z[:3])} ({', '.join(f'{x:+.3g}' for x in z[3:5])})" for z in zs if kind(z) == k_) or '—'
+                fl = lambda f: f"{v3(f['end'])} ({f['why']})"
+                L_.append(f"| {r['gamma']:g} | {r['tc']:.4g} | {col('stable')} | {col('saddle')} | {col('unstable')} | {col('sat')} | "
+                          f"{fl(r['flows']['W0'])} | {fl(r['flows']['W0_nb'])} |")
+        L_ += ["", f"G2. The slow limit: τ_cΣ_f (τ_c = {TC_SLOW:.0e}) against its finite-step value X_h (X_h − BX_hBᵀ = 2hS, the pair (i, l) "
+               "weighted by 2/(λ_i + λ_l − hλ_iλ_l)) and against the continuum's −A_DΣQᵀ = m·QMQᵀ (A_D the group inverse of A, Q = I − P), the flow's "
+               "own mobility on the normal space; the selection's direction against the dither's (Σ = 2τG) and the fresh noise's; and at "
+               f"τ_c = {TC_SMOOTH:.0e} AR(1) draws against a smooth noise of the same correlation time (Gaussian step correlations exp(−½(dh/τ_c)²)) —", "",
+               "| γ | W | τ_cΣ_f against X_h | against −A_DΣQᵀ | λ_soft·τ_c | −A_DΣQᵀ's asymmetry | the slow noise's drift (normalised) | the dither's | "
                "cos(slow, dither) | cos(slow, the dither's normal part) | cos(slow, fresh) | the dither's drift over its normal part's | "
-               "the slow noise's drift over the dither's normal part's, × 2ττ_c/m (the effective temperature m·v_h/(2τ_c) over τ) |",
-               "|---|---|---|---|---|---|---|---|---|---|---|"]
+               "the slow noise's drift over the dither's normal part's, × 2ττ_c/m (the effective temperature m·v_h/(2τ_c) over τ) | "
+               f"τ_c = {TC_SMOOTH:.0e}: cos(AR(1), dither) | cos(smooth, dither) | cos(smooth, AR(1)) | the smooth noise's drift over the AR(1)'s (norms) |",
+               "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         nrm = lambda d: d / np.abs(d).max()
         cos = lambda a, b: float(a @ b / np.linalg.norm(a) / np.linalg.norm(b))
         for r in G['G2']:
-            L_.append(f"| {r['gamma']:g} | {v3(np.r_[r['w'], 1 - r['w'].sum()], 3)} | {r['lim_res']:.1e} | {r['asym']:.1e} | {v3(nrm(r['slow']))} | "
+            ext = (f"{cos(r['ar1_4'], r['dither']):+.4f} | {cos(r['gauss_4'], r['dither']):+.4f} | {cos(r['gauss_4'], r['ar1_4']):+.4f} | "
+                   f"{np.linalg.norm(r['gauss_4']) / np.linalg.norm(r['ar1_4']):.3e} |") if 'gauss_4' in r else "— | — | — | — |"
+            L_.append(f"| {r['gamma']:g} | {v3(np.r_[r['w'], 1 - r['w'].sum()], 3)} | {r.get('lim_res_h', np.nan):.1e} | {r['lim_res']:.1e} | "
+                      f"{r.get('soft', np.nan) * TC_SLOW:.3g} | {r['asym']:.1e} | {v3(nrm(r['slow']))} | "
                       f"{v3(nrm(r['dither']))} | {cos(r['slow'], r['dither']):+.5f} | {cos(r['slow'], r['dither_n']):+.5f} | {cos(r['slow'], r['fresh']):+.4f} | "
                       f"{', '.join(f'{a / b:.4f}' for a, b in zip(r['dither'], r['dither_n']))} | "
-                      f"{', '.join(f'{a / b * 2 * GD.TAU * 1e6 / 3:.4f}' for a, b in zip(r['slow'], r['dither_n']))} |")
+                      f"{', '.join(f'{a / b * 2 * GD.TAU * TC_SLOW / 3:.4f}' for a, b in zip(r['slow'], r['dither_n']))} | " + ext)
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_label.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -750,9 +927,20 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF'], A2=get('A2'), G=get('G')))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF'], A2=get('A2'), G=get('G'), C2=get('C2')))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEFG')
+    if '--reanalyse-C' in sys.argv:                                            # Part C's (and C2's) summaries with the path-averaged prediction
+        res = dict(old)
+        ito0 = next(r['ito'] for r in res['A'] if r['gamma'] == GAMMA_C and np.allclose(np.r_[r['w'], 1 - r['w'].sum()], W0_C))
+        for key, runs_key, schemes in (('C', 'C_runs', SCHEMES_C), ('C2', 'C2_runs', SCHEMES_C2)):
+            if runs_key in res:
+                runs = res[runs_key]
+                lr = c_prediction_at(W0_C[:2], schemes); lrp = c_prediction_path(runs, schemes)
+                res[key] = dict(ito0=ito0, lr=lr, lr_path=lrp, sum=summarise_C(runs, ito0, lr, lrp, schemes))
+        E.save(raw, **res)
+        open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF'], A2=res.get('A2'), G=res.get('G'), C2=res.get('C2')))
+        return
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEFG') | {'C2'}
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -762,6 +950,9 @@ def main():
         if 'C' in parts:
             h['C'] = pool.map_async(c_series, [(sc, rho, dt, sd, S_C, V_C, GAMMA_C, W0_C) for sc, rho, dt in SCHEMES_C for sd in SEEDS_C],
                                     chunksize=1)
+        if 'C2' in parts:
+            h['C2'] = pool.map_async(c_series, [(sc, rho, dt, sd, S_C2, V_C, GAMMA_C, W0_C) for sc, rho, dt in SCHEMES_C2 for sd in SEEDS_C2],
+                                     chunksize=1)
         if 'D' in parts:
             h['D'] = pool.map_async(d_job, list(SCHEMES_D), chunksize=1)
         if 'E' in parts:
@@ -774,6 +965,7 @@ def main():
             h['A2'] = pool.map_async(a2_job, [(g, w) for g in GAMMAS_A2 for w in W_A2], chunksize=1)
         if 'G' in parts:
             h['G1'] = pool.map_async(g1_job, [1e-2, 1e-5], chunksize=1)
+            h['G1m'] = pool.map_async(g1m_job, [(g, tc) for g in (1e-2, 1e-5) for tc in TAUC_M], chunksize=1)
             h['G2'] = pool.map_async(g2_job, [(g, w) for g in (1e-2, 1e-5) for w in ((0.40, 0.25), (1 / 3, 1 / 3), (0.30, 0.45))], chunksize=1)
         if 'A' in h:
             res['A'] = h['A'].get(); E.save(raw, **res); log('A')
@@ -787,15 +979,16 @@ def main():
         if 'F' in h:
             res['F'] = dict(pred=f_prediction(), runs=h['F'].get()); E.save(raw, **res); log('F')
         if 'G1' in h:
-            res['G'] = dict(G1=h['G1'].get(), G2=h['G2'].get()); E.save(raw, **res); log('G')
-        if 'C' in h:
-            runs = h['C'].get()
-            ito0 = next(r['ito'] for r in res['A'] if r['gamma'] == GAMMA_C and np.allclose(np.r_[r['w'], 1 - r['w'].sum()], W0_C))
-            res['C_runs'] = runs
-            lr = c_prediction()
-            res['C'] = dict(ito0=ito0, lr=lr, sum=summarise_C(runs, ito0, lr))
-            E.save(raw, **res); log('C')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF'], A2=res.get('A2'), G=res.get('G')))
+            res['G'] = dict(G1=h['G1'].get(), G1m=h['G1m'].get(), G2=h['G2'].get()); E.save(raw, **res); log('G')
+        for key, schemes in (('C', SCHEMES_C), ('C2', SCHEMES_C2)):
+            if key in h:
+                runs = h[key].get()
+                ito0 = next(r['ito'] for r in res['A'] if r['gamma'] == GAMMA_C and np.allclose(np.r_[r['w'], 1 - r['w'].sum()], W0_C))
+                res[key + '_runs'] = runs
+                lr = c_prediction_at(W0_C[:2], schemes); lrp = c_prediction_path(runs, schemes)
+                res[key] = dict(ito0=ito0, lr=lr, lr_path=lrp, sum=summarise_C(runs, ito0, lr, lrp, schemes))
+                E.save(raw, **res); log(key)
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF'], A2=res.get('A2'), G=res.get('G'), C2=res.get('C2')))
 
 
 if __name__ == '__main__':
