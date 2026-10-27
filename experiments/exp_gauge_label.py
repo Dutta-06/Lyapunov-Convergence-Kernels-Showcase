@@ -29,6 +29,11 @@ E. A diagonal linear network, w = u⊙u − v⊙v ∈ ℝ^d fitted to n < d samp
    1 − 4h²(g_i − ξ̃_i)² (g = ∇_wL, ξ̃ = Xᵀξ/n), so E[P_i] decays at 4V_Ec_i/n times the per-step factor (c_i = Σ_jX_ji²): label noise's
    sparsifying selection (the Lasso of label-noise gradient descent) set by the per-step variance; the measured rates, and the interpolant
    the noiseless gradient flow reaches from the end state (its ℓ¹ norm, its distance from w*, against the start's).
+F. A generic overparametrised network: f(x) = Σ_h a_h tanh(w_hx + b_h), H_F units, fitted to N_F points of sin(πx) on [−1, 1], started on
+   the interpolating manifold Γ (a Gauss–Newton projection of a random draw); label noise of intensity V_F; the sharpness
+   T = (1/n)Σ_j‖∇f(x_j)‖² (tr of the Gauss–Newton matrix) of the projection onto Γ along the run: its initial slope (a quadratic fit)
+   against the leading-order Itô prediction −(V_F/4)|P_T∇T|² (P_T the orthogonal projection onto TΓ, ∇T by central differences) times the
+   per-step factor; no exact identity here.
 
 Output: results/chaos/gauge_label.md and gauge_label_raw.npz (GL_WORKERS; `--from-raw` regenerates the md; `--only A,B,C,D`).
 """
@@ -64,6 +69,7 @@ SCHEMES_C = (('ito', 0.0, DT), ('ito', 0.0, DT / 2), ('ar1', -0.5, DT), ('ar1', 
 SIG2_D, DT_D, T_D, N_PATHS_D, UV0_D, SEED_D = 0.01, 1e-3, 100.0, 400, (2.0, 0.5), 900
 SCHEMES_D = (('ito', 0.0), ('ar1', -1 / 3), ('ar1', 1 / 3), ('ar1', 0.6), ('block', 4), ('heun', 0.0))   # 'block': redrawn every k steps
 D_E, N_E, ALPHA_E, V_E, DT_E, T_E, P_E, SEED_E = 40, 10, 0.5, 0.001, 1e-3, 250.0, 8, 950
+H_F, N_F, V_F, DT_F, T_F, P_F, SEED_F, SEED_NF = 20, 8, 1e-3, 2e-3, 200.0, 8, 15, 3
 L_MAP = 5e4                                                                    # the limit map's horizon (the slowest normal rate ≈ 3·10⁻⁴: e⁻¹⁵)
 
 
@@ -226,6 +232,69 @@ def e_job(args):
                          tr=trH(u, v)))
 
 
+def mlp_parts():
+    xs = np.linspace(-1, 1, N_F); ys = np.sin(np.pi * xs)
+    rng = np.random.default_rng(SEED_F)
+    t0 = np.r_[0.5 * rng.standard_normal(H_F), 4 * rng.standard_normal(H_F), 2 * rng.standard_normal(H_F)]
+
+    def jac(t):                                                                # f (P, n) and ∇_θf (P, 3H, n)
+        a, w, b = t[..., :H_F], t[..., H_F:2 * H_F], t[..., 2 * H_F:]
+        th = np.tanh(w[..., :, None] * xs[None, None, :] + b[..., :, None]); s2 = 1 - th ** 2
+        f = np.einsum('ph,phn->pn', a, th)
+        return f, np.concatenate([th, a[..., :, None] * s2 * xs[None, None, :], a[..., :, None] * s2], axis=1)
+
+    def project(t, iters=30):                                                  # Gauss–Newton (minimum-norm) steps onto Γ
+        for _ in range(iters):
+            f, J = jac(t)
+            d = np.linalg.solve(np.einsum('pin,pim->pnm', J, J), (f - ys[None, :])[..., None])[..., 0]
+            t = t - np.einsum('pin,pn->pi', J, d)
+        return t
+    sharp = lambda t: (jac(t)[1] ** 2).sum(axis=(1, 2)) / N_F
+    return xs, ys, t0, jac, project, sharp
+
+
+def f_prediction():
+    """The leading-order Itô slope of T at the start, −(V_F/4)|P_T∇T|², and the normal relaxation rates there."""
+    xs, ys, t0, jac, project, sharp = mlp_parts()
+    t = project(t0[None, :])[0]
+    hh = 1e-5
+    gT = np.array([(sharp((t + hh * e)[None, :])[0] - sharp((t - hh * e)[None, :])[0]) / (2 * hh) for e in np.eye(3 * H_F)])
+    J = jac(t[None, :])[1][0]                                                  # (3H, n)
+    PT = np.eye(3 * H_F) - J @ np.linalg.solve(J.T @ J, J.T)
+    lam = np.linalg.eigvalsh(J.T @ J / N_F)
+    return dict(slope=-(V_F / 4) * float(gT @ PT @ gT), T0=float(sharp(t[None, :])[0]), lam=lam,
+                resid=float(np.abs(jac(t[None, :])[0][0] - ys).max()))
+
+
+def f_job(args):
+    """Part F, one scheme: the sharpness of the projection onto Γ at 11 times, its initial slope (a quadratic fit)."""
+    scheme, rho = args
+    xs, ys, t0, jac, project, sharp = mlp_parts()
+    t = project(np.repeat(t0[None, :], P_F, axis=0))
+    rng = np.random.default_rng(SEED_NF)
+    rho_ = rho if scheme == 'ar1' else 0.0
+    kb = int(rho) if scheme == 'block' else 1
+    h = DT_F
+    sx = np.sqrt(V_F * N_F / h * (1 - rho_) / (1 + rho_) / kb)
+    xi = sx * rng.standard_normal((P_F, N_F))
+    N = int(round(T_F / h)); every = N // 10; rec = []
+    grad = lambda t, xi: (lambda f, J: np.einsum('pin,pn->pi', J, f - ys[None, :] - xi) / N_F)(*jac(t))
+    for k in range(N + 1):
+        if k % every == 0:
+            rec.append((k * h, float(sharp(project(t.copy())).mean())))
+        if k == N:
+            break
+        if k > 0 and k % kb == 0:
+            xi = rho_ * xi + np.sqrt(1 - rho_ ** 2) * sx * rng.standard_normal((P_F, N_F))
+        g = grad(t, xi)
+        if scheme == 'heun':
+            t = t - 0.5 * h * (g + grad(t - h * g, xi))
+        else:
+            t = t - h * g
+    rec = np.array(rec)
+    return dict(scheme=scheme, rho=rho, rec=rec, slope=float(np.polyfit(rec[:, 0], rec[:, 1], 2)[1]))
+
+
 def name_C(scheme, rho, dt):
     out = {'ito': 'afresh each step', 'heun': 'Heun (Stratonovich)', 'block': f'redrawn every {int(rho)} steps'}.get(scheme, f'AR(1), ρ = {rho:+.3f}')
     return out if dt == DT else f'{out}, step {dt:g}'
@@ -255,7 +324,7 @@ def summarise_C(runs, ito0):
     return out
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
     fmt = E.fmt
     v3 = lambda v, p=4: ', '.join(f'{x:.{p}f}' for x in v)
     L_ = ["# Proposition D‴.41: measurement noise on the gauge (`exp_gauge_label.py`)", "",
@@ -322,6 +391,18 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                "1 − 4h²(g_i − ξ̃_i)²: the label noise's selection — the effective initialisation scale shrinking at the rates 4Vc_i/n, the interpolant "
                "descending tr ∇²L = (4/n)Σ_ic_i√(w_i² + 4P_i²), a weighted ℓ¹ norm as P → 0 — is set by the per-step variance; Heun's scheme keeps "
                "the P_i, and the interpolant does not move.", ""]
+    if Ff is not None:
+        pr = Ff['pred']
+        L_ += [f"## F. A generic network: {H_F} tanh units, {N_F} points of sin(πx), V = {V_F:g}, step {DT_F:g}, T = {T_F:g}, {P_F} paths", "",
+               f"At the start (on Γ, residual {pr['resid']:.1e}): the sharpness T = {pr['T0']:.5f}; the normal relaxation rates (eigenvalues of "
+               f"JᵀJ/n) {pr['lam'].min():.3e} … {pr['lam'].max():.3e}; the leading-order Itô slope −(V/4)|P_T∇T|² = {pr['slope']:.4e}.", "",
+               "| noise | the predicted factor | T of the projection onto Γ at t = 0, 40, …, 200 | dT/dt at 0 (a quadratic fit) | "
+               "over the Itô prediction | over the measured Itô slope |", "|---|---|---|---|---|---|"]
+        s0 = next(r['slope'] for r in Ff['runs'] if r['scheme'] == 'ito')
+        for r in Ff['runs']:
+            L_.append(f"| {name_C(r['scheme'], r['rho'], DT)} | {factor_C(r['scheme'], r['rho']):.3f} | {', '.join(f'{x:.5f}' for x in r['rec'][::2, 1])} | "
+                      f"{r['slope']:+.3e} | {r['slope'] / pr['slope']:+.3f} | {r['slope'] / s0:+.3f} |")
+        L_ += ["", "No exact identity holds here: the leading-order law (the per-step factor, Heun's zero) on a generic network.", ""]
     L_.append("Numbers are produced by `experiments/exp_gauge_label.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -332,9 +413,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -348,6 +429,8 @@ def main():
             h['D'] = pool.map_async(d_job, list(SCHEMES_D), chunksize=1)
         if 'E' in parts:
             h['E'] = pool.map_async(e_job, list(SCHEMES_D), chunksize=1)
+        if 'F' in parts:
+            h['F'] = pool.map_async(f_job, list(SCHEMES_D), chunksize=1)
         if 'A' in parts or 'C' in parts:
             h['A'] = pool.map_async(a_job, [(g, w) for g in GAMMAS_A for w in W_A], chunksize=1)
         if 'A' in h:
@@ -357,13 +440,15 @@ def main():
         for k in 'DE':
             if k in h:
                 res[k] = h[k].get(); E.save(raw, **res); log(k)
+        if 'F' in h:
+            res['F'] = dict(pred=f_prediction(), runs=h['F'].get()); E.save(raw, **res); log('F')
         if 'C' in h:
             runs = h['C'].get()
             ito0 = next(r['ito'] for r in res['A'] if r['gamma'] == GAMMA_C and np.allclose(np.r_[r['w'], 1 - r['w'].sum()], W0_C))
             res['C_runs'] = runs
             res['C'] = dict(ito0=ito0, sum=summarise_C(runs, ito0))
             E.save(raw, **res); log('C')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
 
 
 if __name__ == '__main__':
