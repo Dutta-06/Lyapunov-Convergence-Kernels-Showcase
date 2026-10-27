@@ -81,10 +81,12 @@ def flat_fields(loop, x, beta_of, m=3):
     return np.concatenate([UT.reshape(UT.shape[0], -1), Ul[:, :m - 1] - Ul[:, m - 1:]], axis=1)
 
 
-def wong_zakai(loop, x, beta_of, h=1e-4, m=3):
-    """⟨(U·∇)U⟩_ρ = (1/N)Σ_x ∂_{U_x}U_x at the flat point x (central differences), (m·p + m − 1,)."""
+def wong_zakai(loop, x, beta_of, h=1e-4, m=3, weights=None):
+    """⟨w(U·∇)U⟩_ρ = (1/N)Σ_x w_x ∂_{U_x}U_x at the flat point x (central differences), (m·p + m − 1,); w ≡ 1 unless `weights` (the noise's
+    variance profile over the nodes, heteroscedastic noise) is given."""
     U0 = flat_fields(loop, x, beta_of, m)
+    wt = np.ones(U0.shape[0]) if weights is None else np.asarray(weights, float)
     out = np.zeros(U0.shape[1])
     for i in range(U0.shape[0]):
-        out += (flat_fields(loop, x + h * U0[i], beta_of, m)[i] - flat_fields(loop, x - h * U0[i], beta_of, m)[i]) / (2 * h)
+        out += wt[i] * (flat_fields(loop, x + h * U0[i], beta_of, m)[i] - flat_fields(loop, x - h * U0[i], beta_of, m)[i]) / (2 * h)
     return out / U0.shape[0]

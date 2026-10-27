@@ -9,7 +9,8 @@ enters along the descent's own fields U_x = (β_iG∇_ϑΦ̃(x; ϑ_i), γ(Φ̃(x
 A. The identity at three points of M and γ = 10⁻², 10⁻⁵ (Katzenberger's limit with the covariance Σ = v⟨UUᵀ⟩_ρ at the point, in the flat
    coordinates of exp_gauge_drift.py): the Itô drift ½∂²Φ[Σ], the Wong–Zakai term (v/2)∂Φ⟨(U·∇)U⟩_ρ, their sum (the Stratonovich drift,
    zero by the proposition), the diffusion along M (zero), and the closed form on the masses in the slow-replicator limit,
-   ū_k = −(v/2)β_kG_α⟨Φ_k²⟩_ρ(1 − (a_k/a_max)⁴), against the Itô drift.
+   ū_k = −(v/2)β_kG_α⟨Φ_k²⟩_ρ(1 − (a_k/a_max)⁴), against the Itô drift; and the same sum for heteroscedastic noise (the variance along the
+   orbit modulated by 1 + 0.8 sin t — the cancellation needs the noise's weights to be the loss's).
 B. The selection's target: P_k = G_α⟨Φ_k²⟩_ρ, the minimiser W_ℓ of Ψ_ℓ = (v/4)Σ_kP_k(β_ka′_k)² on the simplex (against Proposition
    D‴.38's W♯), and the closed form's replicator flow linearised there.
 C. The full loop with measurement noise only (τ = 0, γ = 10⁻², v = V_C, from W₀ = (0.40, 0.25, 0.35), SEEDS_C × S_C slow units): the noise
@@ -97,8 +98,11 @@ def a_job(args):
     W = np.r_[w, 1 - w.sum()]
     u = LN.selection(loop, E.exact_rep(net, W), 3 * W)
     closed = gamma * W * (u - W @ u)
+    wt = 1 + 0.8 * np.sin(2 * np.pi * np.arange(U0.shape[0]) / U0.shape[0]); wt = wt / wt.mean()   # heteroscedastic noise
+    ito_h = GDR.limit_drift(F, chart, coords, w, (U0 * wt[:, None]).T @ U0 / U0.shape[0], h=X.H_ID, h2=X.H2_ID)[0]
+    wz_h = Jw @ P @ (0.5 * LN.wong_zakai(loop, x0, beta_of, weights=wt))
     return dict(gamma=gamma, w=w, ito=np.r_[ito, -ito.sum()], wz=np.r_[wz, -wz.sum()], D=D, lam=lam, closed=closed,
-                fit=float(np.abs(loop.residual(E.exact_rep(net, W), 3 * W)).max()))
+                fit=float(np.abs(loop.residual(E.exact_rep(net, W), 3 * W)).max()), ito_h=np.r_[ito_h, -ito_h.sum()], wz_h=np.r_[wz_h, -wz_h.sum()])
 
 
 def part_B():
@@ -343,6 +347,15 @@ def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
                       f"{', '.join(f'{v:+.4e}' for v in r['closed'])} | {rel:.4f} |")
         L_ += ["", f"The exact fit's residual at these points: {max(r['fit'] for r in A):.1e}; the normal relaxation rates "
                f"{np.abs(A[0]['lam']).min():.3e} … {np.abs(A[0]['lam']).max():.3e}.", ""]
+        if 'ito_h' in A[0]:
+            L_ += ["Heteroscedastic noise (the variance along the orbit modulated by 1 + 0.8 sin t, mean 1): the Itô drift and the Stratonovich "
+                   "drift (their sum with the Wong–Zakai term) —", "",
+                   "| γ | W | the Itô drift | the Stratonovich drift | its size over the Itô drift's |", "|---|---|---|---|---|"]
+            for r in A:
+                W = np.r_[r['w'], 1 - r['w'].sum()]; tot = r['ito_h'] + r['wz_h']
+                L_.append(f"| {r['gamma']:g} | {v3(W, 3)} | {', '.join(f'{x:+.4e}' for x in r['ito_h'])} | {', '.join(f'{x:+.3e}' for x in tot)} | "
+                          f"{np.abs(tot).max() / np.abs(r['ito_h']).max():.2e} |")
+            L_.append("")
     if B is not None:
         L_ += ["## B. The selection's target", "",
                f"P_k = G_α⟨Φ_k²⟩_ρ = {v3(B['P'])}; W_min = {v3(B['W_min'])}.", "",
