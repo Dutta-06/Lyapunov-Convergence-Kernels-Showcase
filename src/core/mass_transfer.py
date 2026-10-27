@@ -152,7 +152,9 @@ class ReplicatorCohesionLoop:
         Proposition D‴.41: `label_v` > 0 adds measurement noise ξ to the residual that drives both laws, independent over the quadrature
         nodes, of intensity v (⟨ξh⟩_ρ has the variance v⟨h²⟩_ρ per unit time): 'ito' draws it afresh at each step (variance vN/dt), 'ar1'
         correlates successive draws by ρ = `label_rho` at the same intensity (per-step variance vN(1 − ρ)/((1 + ρ)dt), started stationary),
-        'heun' is Heun's predictor–corrector with the same draw in both stages (the Stratonovich interpretation)."""
+        'heun' is Heun's predictor–corrector with the same draw in both stages (the Stratonovich interpretation; with `label_rho` ≠ 0 the
+        draws are the AR(1) sequence, a coloured noise integrated as an ordinary differential equation), the predictor renormalised to
+        Σβ = m like every step when `balanced`."""
         Th, lb = np.array(Th, float), np.log(np.array(beta, float))
         m = Th.shape[0]
         sq = np.sqrt(2.0 * tau * dt * self.G)[None, :]
@@ -165,7 +167,7 @@ class ReplicatorCohesionLoop:
                 raise ValueError(label_scheme)
             if label_scheme == 'heun' and self.fixman_A is not None and self.fixman_TA:
                 raise NotImplementedError("the tracked contributions with Heun's scheme")
-            rho = float(label_rho) if label_scheme == 'ar1' else 0.0
+            rho = float(label_rho) if label_scheme in ('ar1', 'heun') else 0.0
             s_xi = np.sqrt(label_v * self.base.N / dt * (1 - rho) / (1 + rho))
             xi = s_xi * rng.standard_normal(self.base.N)
         n = int(round(S_end / dt))
@@ -186,6 +188,8 @@ class ReplicatorCohesionLoop:
             dW = sq * rng.standard_normal(Th.shape) if noise_L is None else (Ld @ rng.standard_normal(Th.size)).reshape(Th.shape)
             if label_v and label_scheme == 'heun':
                 Tp, lp = Th + dt * dT + dW, lb + dt * db / b
+                if self.balanced:
+                    lp = lp - np.log(np.exp(lp).sum() / m)
                 dT2, db2 = self.drift(Tp, np.exp(lp), xi)
                 Th, lb = Th + 0.5 * dt * (dT + dT2) + dW, lb + 0.5 * dt * (db / b + db2 / np.exp(lp))
             else:

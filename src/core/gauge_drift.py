@@ -30,11 +30,25 @@ def _d2(f, x, u, v, h):
     return (f(x + h * (u + v)) - f(x + h * (u - v)) - f(x - h * (u - v)) + f(x - h * (u + v))) / (4 * h * h)
 
 
-def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False, F1=None):
+def spectral_projection(A, Jg):
+    """P, the projection onto T = range Jg along range A, without A's eigenvectors: P = Jg(WᵀJg)⁻¹Wᵀ, W spanning ker Aᵀ = (range A)^⊥ (the
+    left singular vectors of A for its dim T smallest singular values); and L = (WᵀJg)⁻¹Wᵀ, the chart coordinates of P (P = Jg L)."""
+    k = Jg.shape[1]
+    W = np.linalg.svd(A)[0][:, -k:]
+    L = np.linalg.solve(W.T @ Jg, W.T)
+    return Jg @ L, L
+
+
+def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False, F1=None, method='eig', cond_max=1e8):
     """The drift and the diffusion of the coordinates w = coords(x) of Katzenberger's limit at the point chart(w0) of M, for the noise
     covariance Sigma (per unit time) and an optional perturbation F1 of the drift of the same order (its part ∂w P F1(x0) is added).
     Returns (drift (dim w), diffusion (dim w × dim w), the nonzero eigenvalues of A); with `by_noise` the drift is also split by the noise
-    coordinates (Sigma diagonal), as a (n, dim w) array (F1's part not included in the split)."""
+    coordinates (Sigma diagonal), as a (n, dim w) array (F1's part not included in the split).
+    method 'eig': A's eigenbasis, as in the module's formulas — used unless the computed eigenvector matrix has a condition number above
+    cond_max (a degenerate eigenvalue, where it is ill-determined); method 'schur' (then): the same formulas without eigenvectors —
+    ½∂²Φ[S] = ½(I − P)∂²γ[LSLᵀ] − ½P∂²F[X], X the symmetric solution of AX + XAᵀ = S − PSPᵀ (X = X_N + PSQᵀA_Dᵀ + A_DQSPᵀ, Q = I − P,
+    A_D = (A − σP)⁻¹Q, X_N from the Lyapunov equation of A − σP with QSQᵀ; Bartels–Stewart), ∂²F[X] = Σ_k μ_k∂²F[q_k, q_k] over X's
+    eigenpairs; the eigenvalues then lose their imaginary parts of the size of the differences' error."""
     w0 = np.asarray(w0, float)
     x0 = chart(w0)
     n, k = len(x0), len(w0)
@@ -45,6 +59,14 @@ def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False, F1
     lam, V = lam[o], V[:, o]
     if np.abs(lam[:k]).max() > 1e-6 * np.abs(lam).max() or np.abs(A @ Jg).max() > 1e-6 * np.abs(A).max() * np.abs(Jg).max():
         raise ValueError('the chart is not a manifold of equilibria of F here')
+    if method == 'eig':
+        Vc = np.c_[Jg, V[:, k:].real]
+        if np.abs(lam[k:].imag).max() > 1e-12 * np.abs(lam).max() or np.linalg.cond(Vc) > cond_max:
+            method = 'schur'
+    if method == 'schur':
+        if np.abs(lam[k:].imag).max() > 1e-6 * np.abs(lam).max():
+            raise ValueError('complex eigenvalues off M (not handled)')
+        return _limit_drift_schur(F, chart, coords, w0, x0, A, Jg, np.sort(lam[k:].real)[::-1], Sigma, h, h2, by_noise, F1)
     if np.abs(lam[k:].imag).max() > 1e-12 * np.abs(lam).max():
         raise ValueError('complex eigenvalues off M (not handled)')
     lam = np.r_[np.zeros(k), lam[k:].real]
@@ -84,6 +106,46 @@ def limit_drift(F, chart, coords, w0, Sigma, h=1e-4, h2=2e-3, by_noise=False, F1
         parts = np.array([drift_for(np.diag(np.eye(n)[i] * Sigma[i, i])) for i in range(n)])
         return drift, diff, lam[k:], parts
     return drift, diff, lam[k:]
+
+
+def _limit_drift_schur(F, chart, coords, w0, x0, A, Jg, lam, Sigma, h, h2, by_noise, F1):
+    """`limit_drift`'s method 'schur' (its docstring)."""
+    from scipy.linalg import solve_continuous_lyapunov
+    n, k = len(x0), len(w0)
+    P, L = spectral_projection(A, Jg)
+    Q = np.eye(n) - P
+    As = A - np.abs(lam).max() * P                                            # nonsingular, the same as A on range Q
+    AD = np.linalg.solve(As, Q)
+    Jw = _jac(coords, x0, h)
+
+    def drift_for(S):
+        C = L @ S @ L.T
+        d2P = np.zeros(n)
+        for i in range(k):
+            for j in range(i, k):
+                c = C[i, j] if i == j else C[i, j] + C[j, i]
+                if c != 0.0:
+                    g2 = _d2(chart, w0, np.eye(k)[i], np.eye(k)[j], h2)
+                    d2P += 0.5 * c * (g2 - P @ g2)
+        X = solve_continuous_lyapunov(As, Q @ S @ Q.T) + P @ S @ Q.T @ AD.T + AD @ Q @ S @ P.T
+        mu, qv = np.linalg.eigh(0.5 * (X + X.T))
+        d2P -= 0.5 * P @ sum(mu[i] * _d2(F, x0, qv[:, i], qv[:, i], h2) for i in range(n))
+        Dy = P @ S @ P.T
+        ito = np.zeros(k)
+        for i in range(n):
+            for j in range(n):
+                if Dy[i, j] != 0.0:
+                    ito += 0.5 * Dy[i, j] * _d2(coords, x0, np.eye(n)[i], np.eye(n)[j], h2)
+        return Jw @ d2P + ito
+
+    drift = drift_for(Sigma)
+    if F1 is not None:
+        drift = drift + Jw @ P @ F1(x0)
+    diff = Jw @ P @ Sigma @ P.T @ Jw.T
+    if by_noise:
+        parts = np.array([drift_for(np.diag(np.eye(n)[i] * Sigma[i, i])) for i in range(n)])
+        return drift, diff, lam, parts
+    return drift, diff, lam
 
 
 def limit_map(F, x, S_end, rtol=1e-12, atol=1e-14):

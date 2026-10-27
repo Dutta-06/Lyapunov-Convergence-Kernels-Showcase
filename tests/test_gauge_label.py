@@ -3,7 +3,11 @@ Proposition D‴.41 (PARADIGM.md §5d): measurement noise on the gauge. Checked 
 fields U_x of `label_noise.fields` (the drift with r + ξ minus the drift with r is (1/N)Σ_xξ(x)U_x, on the positions and the log-masses);
 on M the fields are orthogonal to the gauge's tangent in the flow's metric (no diffusion along M); the Itô drift and the Wong–Zakai term
 cancel at a point of M (the Stratonovich drift vanishes); the closed form's stationary point W_ℓ minimises Ψ_ℓ and is interior; the AR(1)
-noise at ρ = 0 is the Euler scheme bit for bit, and Heun's scheme without noise is the explicit trapezoidal rule.
+noise at ρ = 0 is the Euler scheme bit for bit, and Heun's scheme without noise is the explicit trapezoidal rule; the draws of the AR(1)
+noise (per-step variance vN(1 − ρ)/((1 + ρ)dt), stationary innovations) and one Heun step with correlated noise off M against hand-coded
+steps (one draw per step, the corrector reusing it, the predictor renormalised); the weighted and the covariance Wong–Zakai terms against
+the field derivatives; the linear-response factor against the exact stationary moments of the residual–noise system, its continuum limits,
+and the filtered covariance against the pairwise factors in an eigenbasis.
 """
 import os
 import sys
@@ -121,3 +125,121 @@ def test_the_diagonal_network_example():
     g = ((u * u - v * v) @ X.T - y - xi) @ X / n
     un, vn = u - h * 2 * g * u, v + h * 2 * g * v
     assert np.allclose(un * vn, u * v * (1 - 4 * h * h * g * g), rtol=1e-12)
+
+
+class _Draws:
+    """An rng that records the label noise's draws (shape (N,)) and returns zeros for any other shape (no dither)."""
+    def __init__(self, N, seed):
+        self.N, self.rng, self.out = N, np.random.default_rng(seed), []
+
+    def standard_normal(self, shape):
+        if tuple(np.atleast_1d(shape)) == (self.N,):
+            self.out.append(self.rng.standard_normal(self.N)); return self.out[-1]
+        return np.zeros(shape)
+
+
+def _recording(loop):
+    seen, drift = [], loop.drift
+
+    def rec(Th, b, xi=None):
+        seen.append(None if xi is None else np.array(xi)); return drift(Th, b, xi)
+    loop.drift = rec
+    return seen
+
+
+def test_the_ar1_draws():
+    net, base, loop = _loop()
+    W = np.array([0.40, 0.25, 0.35])
+    v, dt, rho = 3e-4, 0.25, 0.6
+    seen, rng = _recording(loop), _Draws(base.N, 3)
+    loop.run_dithered(E.exact_rep(net, W), 3 * W, 5 * dt, dt, 0.0, rng, label_v=v, label_scheme='ar1', label_rho=rho)
+    s = np.sqrt(v * base.N / dt * (1 - rho) / (1 + rho))                 # the per-step std at the intensity v, started stationary
+    assert len(seen) == 5 and len(rng.out) == 5
+    xi = s * rng.out[0]
+    for k in range(5):
+        if k:
+            xi = rho * xi + np.sqrt(1 - rho ** 2) * s * rng.out[k]
+        assert np.allclose(seen[k], xi, rtol=1e-13, atol=0)
+
+
+def test_heun_with_correlated_noise_off_the_manifold():
+    net, base, loop = _loop(gamma=0.3)
+    W = np.array([0.40, 0.25, 0.35]); b0 = 3 * W
+    T0 = E.exact_rep(net, W) + 0.05 * np.random.default_rng(4).standard_normal((3, 3))
+    v, dt, rho = 1e-3, 0.25, 0.5
+    rng = _Draws(base.N, 9)
+    T1, b1 = loop.run_dithered(T0, b0, 2 * dt, dt, 0.0, rng, label_v=v, label_scheme='heun', label_rho=rho)
+    assert len(rng.out) == 2                                              # one draw per step: the corrector reuses the predictor's
+    s = np.sqrt(v * base.N / dt * (1 - rho) / (1 + rho))
+    xi = s * rng.out[0]
+    Th, lb = T0.copy(), np.log(b0)
+    for k in range(2):
+        if k:
+            xi = rho * xi + np.sqrt(1 - rho ** 2) * s * rng.out[1]
+        d1, g1 = loop.drift(Th, np.exp(lb), xi)
+        Tp, lp = Th + dt * d1, lb + dt * g1 / np.exp(lb)
+        lp = lp - np.log(np.exp(lp).sum() / 3)                            # the predictor renormalised to Σβ = m
+        d2, g2 = loop.drift(Tp, np.exp(lp), xi)
+        Th, lb = Th + 0.5 * dt * (d1 + d2), lb + 0.5 * dt * (g1 / np.exp(lb) + g2 / np.exp(lp))
+        lb = lb - np.log(np.exp(lb).sum() / 3)
+    assert np.allclose(T1, Th, rtol=0, atol=1e-13) and np.allclose(b1, np.exp(lb), rtol=0, atol=1e-13)
+    assert np.abs(T1 - T0).max() > 1e-3                                   # and it moved
+
+
+def test_the_weighted_and_the_covariance_wong_zakai_terms():
+    import exp_gauge_drift as X
+    import exp_gauge_label as GL
+    F, chart, coords, S0 = X.instance(1e-2)
+    net, base, loop = _loop()
+    x0 = chart(np.array([0.40, 0.25]))
+    Dd = LN.field_derivatives(loop, x0, GL.beta_of)                        # D[j, i] = ∂_{U_j}U_i
+    N = base.N
+    wt = 1 + 0.8 * np.sin(2 * np.pi * np.arange(N) / N)
+    direct = np.einsum('x,xxk->k', wt, Dd) / N
+    assert np.allclose(LN.wong_zakai(loop, x0, GL.beta_of, weights=wt), direct, rtol=1e-10, atol=0)
+    assert np.allclose(LN.wong_zakai(loop, x0, GL.beta_of, cov=np.diag(wt)), direct, rtol=1e-12, atol=0)
+    assert np.allclose(LN.wong_zakai(loop, x0, GL.beta_of), np.einsum('xxk->k', Dd) / N, rtol=1e-10, atol=0)
+    C = np.exp(-np.abs(np.subtract.outer(np.arange(N), np.arange(N))) / 5.0)
+    assert np.allclose(LN.wong_zakai(loop, x0, GL.beta_of, cov=C), np.einsum('ij,jik->k', C, Dd) / N, rtol=1e-12, atol=0)
+
+
+def test_the_linear_response_factor():
+    from scipy.linalg import solve_discrete_lyapunov
+    for lam, h, rho in ((3.8, 0.01, 0.9), (0.5, 0.25, 0.6), (2.0, 0.1, -0.4), (1.0, 0.05, 0.0), (0.2, 0.25, 0.999)):
+        a = 1 - h * lam                                                   # (r, ξ): ξ' = ρξ + √(1 − ρ²)z, r' = ar + hλξ; e = r − ξ
+        S = solve_discrete_lyapunov(np.array([[a, h * lam], [0.0, rho]]), np.diag([0.0, 1 - rho ** 2]))
+        e2 = S[0, 0] - 2 * S[0, 1] + S[1, 1]
+        assert abs(LN.lr_factor(lam, h, ('ar1', rho) if rho else ('fresh',)) - e2) < 1e-10 * e2
+    for lam, h, kb in ((1.3, 0.1, 4), (6.0, 0.05, 3), (0.4, 0.25, 7)):      # a draw kept kb steps, averaged over the phase: the
+        a, S = 1 - h * lam, np.zeros((2, 2))                              # periodic covariance of (r, ξ), E[e²] over a period
+        for it in range(400 * kb):
+            if it % kb == 0:
+                S[0, 1] = S[1, 0] = 0.0; S[1, 1] = 1.0
+            if it >= 399 * kb:
+                e2 = (e2 if it > 399 * kb else 0.0) + (S[0, 0] - 2 * S[0, 1] + S[1, 1]) / kb
+            S = np.array([[a * a * S[0, 0] + 2 * a * h * lam * S[0, 1] + (h * lam) ** 2 * S[1, 1], a * S[0, 1] + h * lam * S[1, 1]],
+                          [a * S[0, 1] + h * lam * S[1, 1], S[1, 1]]])
+        assert abs(LN.lr_factor(lam, h, ('block', kb)) - e2) < 1e-10 * e2
+    assert abs(LN.lr_factor(1.3, 0.1, ('fresh',)) - (1 + 0.13 / (2 - 0.13))) < 1e-14
+    assert abs(LN.lr_factor(1.3, 0.1, ('block', 1)) - LN.lr_factor(1.3, 0.1, ('fresh',))) < 1e-14
+    tc, h = 2.0, 1e-5                                                     # finely sampled AR(1): 1/(1 + λτ_c), Ψ = log(1 + λτ_c)/τ_c,
+    for lam in (0.1, 1.5, 20.0):                                          # up to O(hλ)
+        assert abs(LN.lr_factor(lam, h, ('ar1', np.exp(-h / tc))) * (1 + lam * tc) - 1) < 2 * h * lam + 1e-6
+        assert abs(LN.lr_potential(lam, h, ('ar1', np.exp(-h / tc)))[0] * tc / np.log(1 + lam * tc) - 1) < 2 * h * lam + 1e-6
+
+
+def test_the_filtered_covariance_weights_the_pairs_of_modes():
+    rng = np.random.default_rng(1)
+    n, k, h = 7, 2, 0.05
+    V = np.linalg.qr(rng.standard_normal((n, n)))[0] + 0.3 * rng.standard_normal((n, n))   # a non-orthogonal eigenbasis
+    lam = np.array([0.0, 0.0, 0.3, 1.0, 2.5, 2.5, 10.0])                  # a kernel of dimension k, a double rate, hλ_max = 0.5
+    Vi = np.linalg.inv(V); A = V @ np.diag(-lam) @ Vi; P = V[:, :k] @ Vi[:k, :]
+    Ub = (np.eye(n) - P) @ rng.standard_normal((n, 5)); Sig = Ub @ Ub.T
+    for corr in (('fresh',), ('ar1', 0.6), ('ar1', -0.4), ('ar1', 0.95), ('block', 4)):
+        Cf = Vi @ LN.filtered_covariance(A, P, Sig, h, corr) @ Vi.T
+        C = Vi @ Sig @ Vi.T
+        a = 1 - h * lam[k:]; G, R = LN.corr_sums(a, corr); L = lam[k:]
+        f = (1 - h * (L[:, None] * R[:, None] + L[None, :] * R[None, :])
+             + h * h * L[:, None] * L[None, :] * (1 + G[:, None] + G[None, :]) / (1 - a[:, None] * a[None, :]))
+        assert np.abs(Cf[k:, k:] - f * C[k:, k:]).max() < 1e-12 * np.abs(C).max()
+        assert np.abs(Cf[:k]).max() < 1e-12 * np.abs(C).max()

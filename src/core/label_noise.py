@@ -15,7 +15,19 @@ drawn afresh at each update it moves by −(v/2)∂Φ⟨(U·∇)U⟩_ρ, which o
 
 the amplitudes' part of (v/4)tr(G∇²J) (the rest of the trace is constant on M); its minimiser on the simplex is interior.
 
-This module: the fields, the Wong–Zakai term, the closed-form selection, Ψ_ℓ and its minimiser, the per-step factor of AR(1) noise.
+A correlated noise sequence (step correlations ρ_d) selects through the per-step second moment of the whole increment h(F + ⟨Uξ⟩_ρ),
+not of the noise alone: the normal deviation n responds to the past draws and, at linear response, the pair (i, l) of normal modes (decay
+rates λ_i, λ_l, a = 1 − hλ) is weighted by
+
+    f_il = 1 − h(λ_iR(a_i) + λ_lR(a_l)) + h²λ_iλ_l(1 + G(a_i) + G(a_l))/(1 − a_ia_l),   G(a) = Σ_{d≥1}ρ_da^d,  R(a) = G(a)/a,
+
+while the cross term ⟨∇ψ·n ξ⟩ vanishes by the same antisymmetry as the Wong–Zakai cancellation (tr(R(A)M·B) = 0, R(A)M symmetric). The
+per-step-variance law (1 − ρ)/(1 + ρ) is the case f ≡ 1 (λ_maxτ_c ≪ 1); for AR(1) noise of correlation time τ_c sampled finely,
+f_ii → 1/(1 + λ_iτ_c), and on a flat-metric gradient flow with label noise (the covariance ∝ the Hessian H on M) the selected potential
+becomes tr Ψ(H), Ψ′ = f: the trace for white noise, (1/τ_c) log det(I + τ_cH) in the continuum limit.
+
+This module: the fields, the Wong–Zakai term (for any node covariance), the closed-form selection, Ψ_ℓ and its minimiser, the per-step
+factor of AR(1) noise, the correlation sums, the linear-response factor and the filtered covariance, its potential.
 """
 import numpy as np
 
@@ -43,11 +55,14 @@ def fields(loop, Th, beta):
     return UT, Ul
 
 
-def selection(loop, Th, beta, v=1.0):
-    """The closed form on M in the slow-replicator limit: ū_k = −(v/2)β_kG_α⟨Φ_k²⟩_ρ(1 − q_k²), q_k = (a_k/a_max)², (m,)."""
+def selection(loop, Th, beta, v=1.0, coord='alpha'):
+    """The closed form on M in the slow-replicator limit: ū_k = −(v/2)β_kG_α⟨Φ_k²⟩_ρ(a′_k² − a_ka″_k) = −(v/2)β_kG_α⟨Φ_k²⟩_ρ(1 − q_k²),
+    q_k = (a_k/a_max)², for an Euler step in the network's amplitude parameter α (a = a_max tanh(α/a_max)); with coord='a' (an Euler step in
+    the amplitude a itself) the update's own Itô term adds −aa″: (a′_k² − 2a_ka″_k) = (1 − q_k)(1 + 3q_k). (m,)"""
     a, c, s, diff, phi = loop.base.features(Th)
     q = (a / loop.base.net.a_max) ** 2
-    return -0.5 * v * beta * loop.G[0] * np.mean(phi ** 2, axis=0) * (1 - q ** 2)
+    f = (1 - q ** 2) if coord == 'alpha' else (1 - q) * (1 + 3 * q)
+    return -0.5 * v * beta * loop.G[0] * np.mean(phi ** 2, axis=0) * f
 
 
 def psi(W, P, W_min, v=1.0, m=3):
@@ -56,12 +71,14 @@ def psi(W, P, W_min, v=1.0, m=3):
     return 0.25 * v * float(np.sum(np.asarray(P, float) * (m * (W - np.asarray(W_min, float) ** 2 / W)) ** 2))
 
 
-def w_label(P, W_min):
+def w_label(P, W_min, coord='alpha'):
     """The minimiser W_ℓ of Ψ_ℓ on the simplex: P_k(W_k − W_min,k²/W_k)(1 + W_min,k²/W_k²) equal (increasing in W_k from 0 at W_min,k),
-    so W_ℓ,k > W_min,k for every k when Σ_kW_min,k < 1."""
+    so W_ℓ,k > W_min,k for every k when Σ_kW_min,k < 1; coord='a' (`selection`): P_k(W_k − W_min,k²/W_k)(1 + 3W_min,k²/W_k²) equal, the
+    minimiser of the strictly convex (v/2)Σ_kG_αP_k(β_k²/2 + 2c_k log β_k + 3c_k²/(2β_k²)), c_k = (mA_k/a_max)²."""
     from scipy.optimize import brentq
     P = np.asarray(P, float); Wm = np.asarray(W_min, float)
-    g = lambda W, k: P[k] * (W - Wm[k] ** 2 / W) * (1 + Wm[k] ** 2 / W ** 2)
+    t = 1.0 if coord == 'alpha' else 3.0
+    g = lambda W, k: P[k] * (W - Wm[k] ** 2 / W) * (1 + t * Wm[k] ** 2 / W ** 2)
     W_of = lambda mu, k: brentq(lambda W: g(W, k) - mu, Wm[k], 1.0 + 10 * Wm[k])
     hi = min(g(1.0, k) for k in range(len(P)))
     mu = brentq(lambda mu: sum(W_of(mu, k) for k in range(len(P))) - 1.0, 1e-12 * hi, hi)
@@ -69,9 +86,70 @@ def w_label(P, W_min):
 
 
 def ar1_factor(rho):
-    """The selection of AR(1) noise (successive draws correlated by ρ) over that of noise drawn afresh, at the same intensity: (1 − ρ)/(1 + ρ)
-    (the selection is set by the per-step variance, which the correlation lowers at a fixed intensity)."""
+    """The per-step variance of AR(1) noise (successive draws correlated by ρ) over that of noise drawn afresh, at the same intensity:
+    (1 − ρ)/(1 + ρ) — the ratio of their selections when hλ_max ≪ 1 − ρ (λ_maxτ_c ≪ 1); beyond, times the linear-response factors
+    (`lr_factor`, `filtered_covariance`)."""
     return (1.0 - rho) / (1.0 + rho)
+
+
+def corr_sums(a, corr):
+    """(G(a), R(a)) = (Σ_{d≥1}ρ_da^d, Σ_{d≥1}ρ_da^{d−1}) for the noise's step correlations ρ_d: corr = ('fresh',), ('ar1', ρ) (ρ_d = ρ^d) or
+    ('block', k) (ρ_d = (1 − d/k)₊, a draw kept k steps, averaged over the phase); `a` a number or a square matrix (the matrix functions)."""
+    a = np.asarray(a, float)
+    I = np.eye(a.shape[0]) if a.ndim == 2 else 1.0
+    mul = (lambda x, y: x @ y) if a.ndim == 2 else (lambda x, y: x * y)
+    if corr[0] == 'fresh':
+        R = 0.0 * a
+    elif corr[0] == 'ar1':
+        rho = float(corr[1])
+        R = rho * (np.linalg.inv(I - rho * a) if a.ndim == 2 else 1.0 / (1.0 - rho * a))
+    elif corr[0] == 'block':
+        k = int(corr[1]); R = 0.0 * a; pw = I + 0.0 * a
+        for d in range(1, k):
+            R = R + (1.0 - d / k) * pw; pw = mul(pw, a)
+    else:
+        raise ValueError(corr)
+    return mul(a, R), R
+
+
+def lr_factor(lam, h, corr):
+    """f_ii: the per-step second moment of the increment along a normal mode of decay rate λ (an Euler step h) over that of the noise, at
+    linear response: 1 − 2hλR(a) + h²λ²(1 + 2G(a))/(1 − a²), a = 1 − hλ (`corr_sums`); 1 + hλ/(2 − hλ) for fresh noise, → 1/(1 + λτ_c) for
+    AR(1) noise of correlation time τ_c = −h/log ρ as h → 0."""
+    lam = np.asarray(lam, float)
+    a = 1.0 - h * lam
+    G, R = corr_sums(a, corr)
+    return 1.0 - 2 * h * lam * R + (h * lam) ** 2 * (1.0 + 2 * G) / (1.0 - a * a)
+
+
+def filtered_covariance(A, P, Sig, h, corr):
+    """Σ_f, the per-step second moment of the increment h(F + ⟨Uξ⟩_ρ) near M over h²(the noise's per-step variance), at linear response,
+    for the covariance Sig of the noise's fields (normal to M): in an orthonormal basis of the normal space range(I − P) (A the drift's
+    Jacobian at the point of M, P the projection onto TM along range A, B = I + hA),
+        Σ_f = S + h(A R(B)S + S R(B)ᵀAᵀ) + h²A X Aᵀ,   X − BXBᵀ = S + G(B)S + SG(B)ᵀ,   S = (I − P)Sig(I − P)ᵀ,
+    the pair (i, l) of normal modes weighted by f_il (the module's docstring). Katzenberger's drift of Σ_f, times the per-step variance's
+    ratio to the fresh noise's, is the scheme's selection at order v."""
+    from scipy.linalg import solve_discrete_lyapunov
+    n = A.shape[0]
+    k = int(round(np.trace(P)))
+    Q = np.eye(n) - P
+    Nb = np.linalg.svd(Q)[0][:, :n - k]
+    AN = Nb.T @ A @ Nb
+    S = Nb.T @ Q @ Sig @ Q.T @ Nb
+    B = np.eye(n - k) + h * AN
+    G, R = corr_sums(B, corr)
+    X = solve_discrete_lyapunov(B, S + G @ S + S @ G.T)
+    Sf = S + h * (AN @ R @ S + S @ R.T @ AN.T) + h * h * AN @ X @ AN.T
+    return Nb @ Sf @ Nb.T
+
+
+def lr_potential(lam, h, corr, nodes=40):
+    """Ψ(λ) = ∫_0^λ f_ii (Gauss–Legendre): on a flat-metric gradient flow the scheme's selection descends tr Ψ(H) along M (λ for white
+    noise in the limit h → 0, log(1 + λτ_c)/τ_c for finely sampled AR(1) noise)."""
+    x, wq = np.polynomial.legendre.leggauss(nodes)
+    lam = np.atleast_1d(np.asarray(lam, float))
+    out = np.array([0.5 * l * np.sum(wq * lr_factor(0.5 * l * (x + 1), h, corr)) for l in lam])
+    return out
 
 
 def flat_fields(loop, x, beta_of, m=3):
@@ -81,9 +159,19 @@ def flat_fields(loop, x, beta_of, m=3):
     return np.concatenate([UT.reshape(UT.shape[0], -1), Ul[:, :m - 1] - Ul[:, m - 1:]], axis=1)
 
 
-def wong_zakai(loop, x, beta_of, h=1e-4, m=3, weights=None):
+def field_derivatives(loop, x, beta_of, h=1e-4, m=3):
+    """D[j, i] = ∂_{U_j}U_i at the flat point x (central differences), (N, N, m·p + m − 1)."""
+    U0 = flat_fields(loop, x, beta_of, m)
+    return np.array([(flat_fields(loop, x + h * U0[j], beta_of, m) - flat_fields(loop, x - h * U0[j], beta_of, m)) / (2 * h)
+                     for j in range(U0.shape[0])])
+
+
+def wong_zakai(loop, x, beta_of, h=1e-4, m=3, weights=None, cov=None):
     """⟨w(U·∇)U⟩_ρ = (1/N)Σ_x w_x ∂_{U_x}U_x at the flat point x (central differences), (m·p + m − 1,); w ≡ 1 unless `weights` (the noise's
-    variance profile over the nodes, heteroscedastic noise) is given."""
+    variance profile over the nodes, heteroscedastic noise) is given; with `cov` (N × N, the noise's covariance over the nodes, symmetric)
+    (1/N)Σ_{ij}C_ij∂_{U_j}U_i."""
+    if cov is not None:
+        return np.einsum('ij,jik->k', np.asarray(cov, float), field_derivatives(loop, x, beta_of, h, m)) / len(cov)
     U0 = flat_fields(loop, x, beta_of, m)
     wt = np.ones(U0.shape[0]) if weights is None else np.asarray(weights, float)
     out = np.zeros(U0.shape[1])

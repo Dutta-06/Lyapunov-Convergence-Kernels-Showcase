@@ -12,12 +12,21 @@ B. Katzenberger's limit at m = 6 and 9 (γ = 10⁻⁵, 10⁻²): the class masse
    (the ratio 3/m), the fractions' drift and diffusion.
 C. Proposition D‴.38's correction per class (the masses form at the class masses and contributions, `fixman_classes`, given to each of
    the class's particles) at κ_F = 1 and γ = 10⁻⁵: the corrected class drift against m = 3's; the fractions' drift.
-D. Measurement noise (Proposition D‴.41) at m = 6: the Itô drift, the Wong–Zakai term and their sum at equal and unequal splits.
+D. Measurement noise (Proposition D‴.41) at m = 6: the Itô drift, the Wong–Zakai term and their sum at equal and unequal splits, per
+   component — the class masses' Stratonovich residual over their own Itô drift and the fractions' over theirs; the class masses' Itô
+   drift over m = 3's at the same class masses (1 at the equal split: there co-located particles of equal mass get identical drifts and
+   identical noise, an invariant subspace on which the loop is the m = 3 loop); the fractions' Itô drift against the replicator flow of the
+   full trace's part (v/4)Σ_k⟨‖∇_ϑΦ̃_k‖²_G⟩_ρΣ_{i∈k}β_i² and of its amplitudes' part alone.
 E. The full loop at m = 6 (γ = 10⁻², τ = 10⁻⁴, SEEDS_E, S_E slow units) from equal fractions and from (0.2, 0.7, 0.5): the class masses'
    spread against Proposition D‴.37's Part H (m = 3, the same γ, τ) at half the time (B's ratio 3/m = 1/2), the fractions' change
    against B's drift at the start.
+F. Anisotropic dither (Proposition D‴.40's masks) at m = 6: Katzenberger's drift at γ = 10⁻³ … 10⁻⁶ with the noise on the amplitudes only
+   (1, 0, 0), on the centres and widths only (0, 1, 1), and isotropic (1, 1, 1), at the equal split and at (0.2, 0.7, 0.5): the class drift
+   per γτ against the per-class law (m = 3's with the same mask, times 3/m) and the fractions' drift per γτ — the frozen split and the
+   per-class law need the isotropic dither (the positions' law at fixed masses Gibbs); an anisotropic one correlates a class's barycentre
+   with its internal differences at unequal splits, and the fractions drift at O(γτ).
 
-Output: results/chaos/gauge_classes.md and gauge_classes_raw.npz (GC_WORKERS; `--from-raw` regenerates the md; `--only A,B,…`).
+Output: results/chaos/gauge_classes.md and gauge_classes_raw.npz (GC_WORKERS; `--from-raw` regenerates the md; `--only A,B,…,F`).
 """
 import os
 import sys
@@ -44,8 +53,10 @@ TAU, A_MAX, DT, REC = GD.TAU, 4.0, GD.DT, GD.REC
 WC_A = ((1 / 3, 1 / 3, 1 / 3), (0.30, 0.35, 0.35), (0.40, 0.25, 0.35))
 SPLITS_A = {2: ((0.5, 0.5, 0.5), (0.2, 0.7, 0.5), (0.05, 0.95, 0.3)), 3: ((1 / 3,) * 6, (0.2, 0.3, 0.6, 0.1, 0.4, 0.4), (0.05, 0.05, 0.9, 0.05, 0.2, 0.2))}
 POINTS_B = (((1 / 3, 1 / 3), (0.5, 0.5, 0.5)), ((1 / 3, 1 / 3), (0.2, 0.7, 0.5)), ((0.30, 0.35), (0.3, 0.6, 0.8)))
-POINTS_B3 = (((1 / 3, 1 / 3), (0.30, 0.30, 0.35, 0.35, 0.32, 0.36)), ((0.30, 0.35), (0.2, 0.3, 0.6, 0.1, 0.4, 0.4)))   # n = 3 at equal
-# fractions the cohesion's within-class modes are exactly degenerate, which the eigenbasis of `limit_drift` does not handle
+POINTS_B3 = (((1 / 3, 1 / 3), (0.30, 0.30, 0.35, 0.35, 0.32, 0.36)), ((0.30, 0.35), (0.2, 0.3, 0.6, 0.1, 0.4, 0.4)),
+             ((1 / 3, 1 / 3), (1 / 3,) * 6), ((0.30, 0.35), (1 / 3,) * 6))   # at n = 3's equal split the cohesion's within-class modes are
+# exactly degenerate: `limit_drift` then leaves A's eigenbasis for its Schur method
+MASKS_F, GAMMAS_F, POINTS_F = ((1, 0, 0), (0, 1, 1), (1, 1, 1)), (1e-3, 1e-4, 1e-5, 1e-6), (((1 / 3, 1 / 3), (0.5, 0.5, 0.5)), ((1 / 3, 1 / 3), (0.2, 0.7, 0.5)))
 GAMMAS_B = (1e-5, 1e-2)
 GAMMA_E, S_E, SEEDS_E = 1e-2, 4e5, tuple(range(1000, 1008))
 STARTS_E = ((0.5, 0.5, 0.5), (0.2, 0.7, 0.5))
@@ -159,7 +170,33 @@ def d_job(args):
     P = V[:, :k] @ np.linalg.inv(V)[:k, :]
     Jw = GDR._jac(coords, x0, X.H_ID)
     wz = Jw @ P @ (0.5 * LN.wong_zakai(loop, x0, beta_of, m=3 * n))
-    return dict(gamma=gamma, Wc=Wc, s=s, ito=ito, wz=wz, D=float(np.abs(D).max()))
+    F3, chart3, coords3, S3 = X.instance(gamma)                               # m = 3 at the same class masses
+    W3 = np.asarray(Wc, float); x3 = chart3(W3)
+    net, base = E.setup()
+    loop3 = MT.ReplicatorCohesionLoop(base, 1.0, 'compact', gamma=gamma)
+    U3 = LN.flat_fields(loop3, x3, lambda z: (lambda e: 3 * e / e.sum())(np.exp(np.r_[z, 0.0])))
+    ito3 = GDR.limit_drift(F3, chart3, coords3, W3, U3.T @ U3 / U3.shape[0], h=X.H_ID, h2=X.H2_ID)[0]
+    # the fractions' Itô drift from the replicator flow of (v/4)Σ_kC_kΣ_{i∈k}β_i²: ds_i/ds = −γ(v/2)C_kB_ks_i(s_i − Σ_{j∈k}s_j²)
+    Wf = np.r_[Wc, 1 - sum(Wc)]
+    UT = LN.fields(loop3, E.exact_rep(net, Wf), np.ones(3))[0]                # β = 1: G∇_ϑΦ̃ per class
+    C_full = np.mean(np.sum(UT ** 2 / E.G[None, None, :], axis=2), axis=0)    # ⟨‖∇_ϑΦ̃_k‖²_G⟩_ρ
+    C_amp = np.mean(UT[:, :, 0] ** 2 / E.G[0], axis=0)                        # its amplitudes' part
+    fr = np.asarray(s, float)
+    pred = lambda Ck: np.array([-gamma * 0.5 * Ck[k] * 6 * Wf[k] * fr[k] * (fr[k] - fr[k] ** 2 - (1 - fr[k]) ** 2) for k in range(3)])
+    return dict(gamma=gamma, Wc=Wc, s=s, ito=ito, wz=wz, D=float(np.abs(D).max()), ito3=ito3, frac_full=pred(C_full), frac_amp=pred(C_amp))
+
+
+def f_job(args):
+    """Part F: Katzenberger's drift at m = 6 under the dither masked per coordinate (α, centre, width), and m = 3's with the same mask."""
+    mask, gamma, Wc, s = args
+    n, m = 2, 6
+    F, chart, coords, S, loop, beta_of = instance(n, gamma)
+    Sm = S.copy(); Sm[np.arange(3 * m), np.arange(3 * m)] *= np.tile(np.asarray(mask, float), m)
+    d = GDR.limit_drift(F, chart, coords, np.r_[Wc, s], Sm, h=X.H_ID, h2=X.H2_ID)[0]
+    F3, chart3, coords3, S3 = X.instance(gamma)
+    S3m = S3.copy(); S3m[np.arange(9), np.arange(9)] *= np.tile(np.asarray(mask, float), 3)
+    d3 = GDR.limit_drift(F3, chart3, coords3, np.asarray(Wc, float), S3m, h=X.H_ID, h2=X.H2_ID)[0]
+    return dict(mask=mask, gamma=gamma, Wc=Wc, s=s, cls=d[:2] / (gamma * TAU), law=(3 / m) * d3 / (gamma * TAU), frac=d[2:] / (gamma * TAU))
 
 
 @cached
@@ -195,7 +232,7 @@ def summarise_E(runs, H_rec):
     return out
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None):
+def report(A=None, B=None, C=None, D=None, Ee=None, Ff=None):
     v = lambda x, p=4: ', '.join(f'{y:+.{p}f}' for y in x)
     L_ = ["# Proposition D‴.42: several particles per class (`exp_gauge_classes.py`)", "",
           f"Proposition D‴.36's instance with n particles per class (m = 3n) at the class's exact-fit position, τ = {TAU:g}; the class masses W_k "
@@ -233,15 +270,35 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                       f"{', '.join(f'{x:+.2e}' for x in r['fracc'])} |")
         L_.append("")
     if D is not None:
+        per = 'ito3' in D[0]
         L_ += ["## D. Measurement noise at m = 6 (per unit v): the Itô drift, the Wong–Zakai term, their sum (W_1, W_2, s_1, s_2, s_3)", "",
-               "| γ | W_1, W_2 | the fractions | the Itô drift | the Wong–Zakai term | their sum | its size over the Itô drift's | the diffusion along M |",
-               "|---|---|---|---|---|---|---|---|"]
+               "| γ | W_1, W_2 | the fractions | the Itô drift | the Wong–Zakai term | their sum | its size over the Itô drift's | " +
+               ("the class masses' sum over their Itô drift (W_1, W_2) | the fractions' sum over their Itô drift (largest) | the class Itô drift over "
+                "m = 3's (W_1, W_2) | " if per else "") + "the diffusion along M |",
+               "|---|---|---|---|---|---|---|" + ("---|---|---|" if per else "") + "---|"]
         for r in D:
             tot = r['ito'] + r['wz']
+            pc = ""
+            if per:
+                fi = np.abs(r['ito'][2:]).max()
+                pc = (f"{', '.join(f'{a / b:+.2e}' for a, b in zip(tot[:2], r['ito'][:2]))} | "
+                      + (f"{np.abs(tot[2:]).max() / fi:.2e} | " if fi > 1e-6 * np.abs(r['ito'][:2]).max() else "— (no Itô drift) | ")
+                      + f"{', '.join(f'{a / b:.4f}' for a, b in zip(r['ito'][:2], r['ito3']))} | ")
             L_.append(f"| {r['gamma']:g} | {', '.join(f'{x:.3f}' for x in r['Wc'])} | {', '.join(f'{x:.2f}' for x in r['s'])} | "
                       f"{', '.join(f'{x:+.3e}' for x in r['ito'])} | {', '.join(f'{x:+.3e}' for x in r['wz'])} | {', '.join(f'{x:+.2e}' for x in tot)} | "
-                      f"{np.abs(tot).max() / np.abs(r['ito']).max():.2e} | {r['D']:.1e} |")
+                      f"{np.abs(tot).max() / np.abs(r['ito']).max():.2e} | " + pc + f"{r['D']:.1e} |")
         L_.append("")
+        if per:
+            L_ += ["The fractions' Itô drift against the replicator flow of (v/4)Σ_kC_kΣ_{i∈k}β_i² — C_k = ⟨‖∇_ϑΦ̃_k‖²_G⟩_ρ (the full trace's part: the "
+                   "fractions' tangent moves no position, so no amplitude correction enters; this flow is minus the Wong–Zakai term's fractions, and "
+                   "the Itô drift differs from it by the cohesion's Stratonovich residual) and C_k = G_α⟨(∂_αΦ̃_k)²⟩_ρ (its amplitudes' part alone):", "",
+                   "| γ | W_1, W_2 | the fractions | the fractions' Itô drift | the full trace's flow | the amplitudes' part's flow |", "|---|---|---|---|---|---|"]
+            for r in D:
+                if np.abs(r['ito'][2:]).max() > 1e-6 * np.abs(r['ito'][:2]).max():
+                    L_.append(f"| {r['gamma']:g} | {', '.join(f'{x:.3f}' for x in r['Wc'])} | {', '.join(f'{x:.2f}' for x in r['s'])} | "
+                              f"{', '.join(f'{x:+.3e}' for x in r['ito'][2:])} | {', '.join(f'{x:+.3e}' for x in r['frac_full'])} | "
+                              f"{', '.join(f'{x:+.3e}' for x in r['frac_amp'])} |")
+            L_.append("")
     if Ee is not None:
         L_ += [f"## E. The full loop at m = 6 (γ = {GAMMA_E:g}, τ = {TAU:g}, {Ee[0]['n']} seeds, {S_E:g} slow units)", "",
                "| the start's fractions | the class masses at the end: mean; std over the seeds | m = 3 at half the time (Proposition D‴.37's Part H): "
@@ -251,6 +308,14 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                       f"{', '.join(f'{x:.4f}' for x in r['mean3'])}; {', '.join(f'{x:.4f}' for x in r['std3'])} (at {r['s3']:g}) | "
                       f"{', '.join(f'{a:+.4f} ± {b:.4f}' for a, b in zip(r['dfrac'], r['dfrac_se']))} | {', '.join(f'{x:.4f}' for x in r['frac_std'])} | "
                       f"{r['almax']:.2f} | {E.fmt(r['fit'])} |")
+        L_.append("")
+    if Ff is not None:
+        L_ += ["## F. Anisotropic dither at m = 6: the class drift against the per-class law, the fractions' drift (per γτ)", "",
+               "| the mask (α, centre, width) | the fractions | γ | the class drift (W_1, W_2) | the per-class law (m = 3's × 3/m) | their ratio | "
+               "the fractions' drift |", "|---|---|---|---|---|---|---|"]
+        for r in Ff:
+            L_.append(f"| {tuple(r['mask'])} | {', '.join(f'{x:.2f}' for x in r['s'])} | {r['gamma']:g} | {v(r['cls'], 6)} | {v(r['law'], 6)} | "
+                      f"{', '.join(f'{a / b:.4f}' for a, b in zip(r['cls'], r['law']))} | {', '.join(f'{x:+.3e}' for x in r['frac'])} |")
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_gauge_classes.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -262,9 +327,9 @@ def main():
     old = E.load(raw)
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[get(k) for k in 'ABCDEF']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
     from multiprocessing import Pool
     res = dict(old)
     t0 = time.time()
@@ -282,7 +347,9 @@ def main():
             h['C'] = pool.map_async(c_job, [(2, 1e-5, Wc, s) for Wc, s in POINTS_B], chunksize=1)
         if 'D' in parts:
             h['D'] = pool.map_async(d_job, [(g, Wc, s) for g in GAMMAS_B for Wc, s in POINTS_B], chunksize=1)
-        for k in 'ABCD':
+        if 'F' in parts:
+            h['F'] = pool.map_async(f_job, [(mk, g, Wc, s) for mk in MASKS_F for Wc, s in POINTS_F for g in GAMMAS_F], chunksize=1)
+        for k in 'ABCDF':
             if k in h:
                 res[k] = h[k].get(); E.save(raw, **res); log(k)
         if 'E' in h:
@@ -291,7 +358,7 @@ def main():
             z = E.load(os.path.join(OUT, 'gauge_drift_raw.npz'))
             res['E'] = summarise_E(runs, np.asarray(z['H_rec'], float))
             E.save(raw, **res); log('E')
-    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+    open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
 
 
 if __name__ == '__main__':
