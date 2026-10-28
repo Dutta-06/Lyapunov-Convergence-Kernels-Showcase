@@ -383,3 +383,36 @@ where a result is formal, sketched or numerical, the paper inherits that, and th
   sampled-data drift of the projection in closed form.
 - **Venue.** IEEE TAC or SIAM J. Control Optim. (the adaptive law, its Lyapunov function and the leak); COLT/NeurIPS-style venues for
   the implicit bias of the saturating unit and its branches.
+
+### 17. The rich transit of self-adaptive kernels: one kernel per feature from small masses, the sliding limit, exact recovery
+
+- **Claim.** From small masses the free law's kernels enter one at a time — the inverse scale space flow on the scale (mass)^{−1/2} from
+  zero amplitudes —, and with the paradigm's moving centres every entered kernel slides onto its feature while the others stay put: one
+  kernel per feature (Proposition D‴.48). The sliding limit holds under explicit hypotheses: between entries the loop is slaved to the
+  block's fit, each entry is an inner layer whose problem is a gradient flow of the fit in the mirror coordinate's metric, and the loop
+  converges to the sliding path at the rate (mass)^{1/2}, the entries' pulls and shifts its first correction (Theorem D‴.53). At a
+  finite mass a near tie is shared through a mass-free inner problem — an entry costs a kernel unless the margins it leaves are ≫
+  (mass)^{1/2} —, kernels left near their walls creep in, and the sliding path alone estimates the mass below which the loop forms
+  exactly its kernels (Proposition D‴.51). Separated features are recovered exactly, each by its starting kernel of largest
+  correlation, whatever the amplitudes, and at a finite separation the outcome is computable without the flow: the fitted skeleton — K
+  least-squares fits and piecewise linear duals — predicts it on all 1154 targets tested, against 903 for an amplitude-free dual
+  certificate (Theorem D‴.55).
+- **Rests on.** Propositions D‴.48 ((i), (ii) proved by Mosco convergence; (iii)(a) proved, (iii)(b) formal, the recovery numerical),
+  D‴.51 ((i) proved; (ii) on bounded intervals and where both coefficients stay nonzero; (iii) scales to first order; (iv) an estimate,
+  its error measured), Theorem D‴.53 (proved under (H1)–(H4), constants not uniform over targets, (H3) checked numerically), Theorem
+  D‴.55 ((i) proved in the continuum, (ii)'s order derived and measured, (iii) a sketch with Δ₀ not computed, the fitted skeleton the
+  path under the basin hypothesis); `src/core/rich_transit.py`, `rich_transit_nd.py`; `exp_mirror_transit.py`, `exp_transit_mass.py`,
+  `exp_transit_limit.py`, `exp_transit_certificate.py`.
+- **Novelty (audit).** The inverse scale space flow and linearised Bregman iterations (Burger–Gilboa–Osher–Xu; Osher–Ruan–Xiong–Yao–Yin),
+  the adaptive inverse scale space's recursion of nonnegative least-squares problems (Burger–Möller–Benning–Osher), saddle-to-saddle
+  dynamics at vanishing initialisation (Pesme–Flammarion; Berthier; Berthier–Pillaud-Vivien), alternating gradient flows (Kunin et
+  al.), sliding Frank–Wolfe and ADCG (Denoyelle–Duval–Peyré–Soubies; Boyd–Schiebinger–Recht), dual certificates for separated spikes
+  (Candès–Fernandez-Granda; de Castro–Gamboa; Duval–Peyré; Poon–Keriven–Peyré), Tikhonov's theorem and matched asymptotics are
+  classical; new is the moving-centre transit as the small-mass limit of an adaptive controller's kernel network — the sliding inverse
+  scale space, proved with its first correction —, the mass-free near-tie inner problem and the mass estimate it gives, and the fitted
+  skeleton as a flow-free predictor of exact recovery uniformly in the amplitudes.
+- **Missing.** In review: the transit in ℝⁿ and its Voronoi selection rule (D‴.54), close features and the resolution limit (D‴.52),
+  label noise as a Langevin dual (D‴.50), measurement noise and stopping (D‴.56, D‴.57), width mismatch as Gaussian quadrature (D‴.58),
+  the closed loop (D‴.49); D‴.55's Δ₀ and (iii)'s constants; the entry layers' convergence beyond small overlaps.
+- **Venue.** SIAM J. Math. Data Sci. or Found. Comput. Math. (the limit and the recovery); COLT/NeurIPS for the implicit-bias side; IEEE
+  TAC for the controller's kernel formation once D‴.49 is final.
