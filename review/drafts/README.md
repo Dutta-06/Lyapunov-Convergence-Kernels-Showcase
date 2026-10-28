@@ -12,7 +12,7 @@ round is applied and its numbers are final.
 | `D50.md` | D‴.50: the rich transit under label noise | round 40 applied; its rerun in progress |
 | `D51.md` (+ `D51_lit_S76.md`) | D‴.51: the transit at a finite mass | round 39 applied, numerics final |
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
-| `D53.md` | D‴.53: the sliding limit | round 41 applied; its rerun in progress |
+| `D53.md` | D‴.53: the sliding limit | round 41 applied, numerics final |
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 42 to apply; its rerun in progress |
 | `D55.md` | D‴.55: exact recovery by the sliding inverse scale space under separation | referee round 43 in progress |
 | `D56.md` | D‴.56: the transit under measurement noise | its Part B rerun in progress; referee round 45 next |

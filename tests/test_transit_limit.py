@@ -38,20 +38,25 @@ def test_isolated_entrant_inner_problem_descends_the_fit_to_its_feature():
     assert abs(w_end - A) < 1e-6 and abs(sol.y[1, -1] - cs) < 1e-6
 
 
+def run(n, eps):
+    """D‴.51's target n: its constants (`b_job`: converged pulls, s_θ, (H3)) and the loop against the path at the mass ε (`a_job`)."""
+    cs, As = TL.TM.random_targets(TL.SEED_A, TL.N_POOL)[n]
+    C = TL.b_job((n, cs, As))
+    saved = TL.EPS_A
+    try:
+        TL.EPS_A = (eps,)
+        r = TL.a_job(C)
+    finally:
+        TL.EPS_A = saved
+    return cs, As, C, r['rows'][0]
+
+
 def test_loop_reaches_the_path_with_its_first_order_correction():
     """A three-bump target whose path leaves margins ≥ 0.15 (D‴.51's target 39), the loop at ε = 10⁻¹⁰: exactly the path's kernels; the
     never-entering kernels on the core's profile; their centres displaced by the creep's εC_j; their duals off the path by ε^{1/2}·(the
     entries' pulls and shifts) + εD_j to 2·10⁻³ε^{1/2}; the entries' crossings at τ_k + ε^{1/2}(s_θ + σ_k) to 0.02ε^{1/2}."""
-    cs, As = TL.TM.random_targets(TL.SEED_A, TL.N_POOL)[39]
-    ok, mu = TL.eligible(cs, As)
-    assert ok and mu > 0.15
-    saved = TL.EPS_A
-    try:
-        TL.EPS_A = (1e-10,)
-        r = TL.a_job((39, cs, As, mu))
-    finally:
-        TL.EPS_A = saved
-    row = r['rows'][0]
+    cs, As, C, row = run(39, 1e-10)
+    assert C['ok'] and C['mu0'] > 0.15
     eps = row['eps']
     assert row['n_form'] == 3
     assert row['block'] < 1e-10
@@ -66,12 +71,26 @@ def test_loop_reaches_the_path_with_its_first_order_correction():
     # the never-entering kernels' coefficients: the core's profile at their path margins, a(εb)^{3/2}/(m(2c)^{1/2})·cos(πμ/2)/sin³(πμ/2)
     L, K, c0, f, R, P = TL.path_of(cs, As)
     never = [j for j in range(c0.size) if j not in P['ever']]
-    t_end = 1.3 * r['entries'][-1][0]
+    t_end = 1.3 * C['entries'][-1][0]
     k = len(P['taus']) - 1
     U = P['U'][k] + (t_end - P['taus'][k]) * (K.phi(P['centres'][k]).T @ P['res'][k] / K.xs.size)
     m = 1 - np.abs(U[never])
     prof = L.A * eps ** 1.5 / (L.m * np.sqrt(2 * L.c)) * np.cos(np.pi * m / 2) / np.sin(np.pi * m / 2) ** 3
     assert abs(row['w_never'] / prof.max() - 1) < 1e-2
+
+
+def test_sign_per_entry_and_the_shifts_on_a_sliding_target():
+    """D‴.51's target 41 at ε = 10⁻⁹ (referee round 41: its second entrant slides, its third arrives 4.8ε^{1/2} late): the duals to
+    1.7·10⁻³ε^{1/2} and the crossings to 0.045ε^{1/2} (about 3× the observed 5.7·10⁻⁴ and 0.015) with converged predictions — the
+    extrapolation in xi0 spread below 10⁻⁴ —; (H3): every entry's inner problem ends at the path's S_k; the block within 2·10⁻¹¹."""
+    cs, As, C, row = run(41, 1e-9)
+    assert max(C['s_spread']) < 1e-4 and max(C['p_spread']) < 1e-5
+    assert max(C['h3w']) < 1e-9 and max(C['h3c']) < 1e-9 and all(C['stationary'])
+    assert max(abs(s) for s in C['shifts']) > 1.0                       # an entry's shift matters here
+    assert row['n_form'] == 3 and row['block'] < 2e-11
+    res = np.array([d[2] - d[3] - d[4] for d in row['dev']])
+    assert np.abs(res).max() < 1.7e-3
+    assert max(abs(a - b) for _, a, b in row['cross']) < 0.045
 
 
 if __name__ == '__main__':

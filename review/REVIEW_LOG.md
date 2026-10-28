@@ -1627,3 +1627,42 @@ most targets and wrong by 10–10⁵ on others, and the same grid scored a predi
 decisive check is to bisect the loop's own threshold and report ε_loop/ε_c, beside ablations that must score worse; and a leading-order
 law at fixed x is to be validated where its predictions are used, the next-order mechanism isolated by a controlled run (here: freezing
 the centres before the entry) before it is folded into a predictor.
+
+
+## Round 41 (adversarial review of Theorem D‴.53, the sliding limit, and Lemma D‴.53a, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3an: the draft of Theorem D‴.53 and its code at 7f5d1e4
+(`review/REVIEW_round41_D3an.md`): the experiment rerun byte for byte; every number of the numerics against the md and raw file; the
+gradient-flow identity re-derived; the single-kernel fit's critical points on the real grid; the exact profile W^ε against 𝒲 for
+ε = 10⁻⁴ … 10⁻⁸; an independent integration of the loop; `entry_pull`'s convergence in xi0 and tolerance; conclusion (b) at four points
+of the window; the constants of all 48 targets and the full comparison on seven more; 27 mutants.
+
+**Verdicts (D3an).** The identity exact and the isolated entrant in the continuum correct; but the constants are not uniform — the
+inner problem's far-field creep tail ∝ g′²/v³ ranges from 2.5·10² to 7·10⁶ over the targets, and the five chosen ones (largest margins)
+happen to have fast entrants that barely slide —; Step 3's "bounded fundamental matrix" false (the entrant's dual depends on its centre at
+O(1)), though its conclusion survives a weighted estimate; the lemma's coupled case not proved; the predictions not converged (Richardson
+from xi0 = 400/800 off by up to 0.014 in s_θ); statement (a)'s integrals printed with the rate instead of ⟨r∂_cφ⟩; Step 1's relative error
+O(ε^{1/2}), not O(ε); 5 of 27 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3an-1 | major | non-uniform constants hidden by the targets | statement: the constants' dependence on μ₀, λ_k, v_k, g′_k, the slides and the gaps; *The regime* (ε^{1/2}\|s_θ + σ_k\| ≪ the gap, (1 + g′_k²/v_k³)ε^{1/4} ≪ 1); Part B: the constants of all 48 targets; Part A: eight targets of the twelve eligible |
+| D3an-2 | major | Step 3's bounded fundamental matrix false | Step 3: a weighted Gronwall estimate — the far field's couplings carry w_e = O(ξ_e⁻³) or 𝒲′ = O(ξ_e⁻⁴), integrable —, the creep tail's O(g′²/(v³X)) shift of the arrival, X = ε^{−1/4} |
+| D3an-3 | major | the lemma's coupled case | Lemma D‴.53a(iii): small overlaps under (H2), the block's Lyapunov estimate, the entrant's energy bound, LaSalle and the implicit function theorem; (H3) checked numerically at every entry of the 48 (Part B: the end within 3.1·10⁻¹¹ and 6.4·10⁻¹³) |
+| D3an-4 | major | unconverged predictions | `entry_pull`'s deviation form (ζ = ξ − the outer solution), Radau at rtol 10⁻¹⁰, second-order Richardson from xi0 = 1600, 3200, 6400 (spread ≤ 2.8·10⁻⁵ in s_θ on the eligible twelve); the loop at rtol 10⁻¹¹–10⁻¹³ |
+| D3an-5 | major | (a)'s integrals | ⟨r_{k(τ′)}∂_cφ(c_j⁰)⟩ in C_j and D_j |
+| D3an-6 | minor | Step 1's relative error | O(ε^{1/2}), a shift of ξ by O(ε^{1/2}) (O(ε) in u) |
+| D3an-7 | minor | (d)'s εD_j and the O(ε) remainder | (d): ε^{1/2}dev + O(ε^{3/4}) proved, the remainder O(ε) observed (falling ≈ √10 per decade in units of ε^{1/2}), its parts named |
+| D3an-8 | minor | a weak test | `tests/test_transit_limit.py`: target 41 at 10⁻⁹ — the sign per entry and the shifts (a per-kernel sign fails), the converged predictions' spread, (H3), the block and the residual at tight thresholds |
+| D3an-9 | minor | (H3) not recorded | Part B's (H3) column (the inner problem's end against S_k) and its stationarity |
+| D3an-10 | minor | implicit hypotheses | (H1) no exits stated; (H4) θ a regular value; v_k with its ρ; equal masses in the code |
+| D3an-11 | minor | Step 5 and (b)'s constant | (b): C ≥ 3/(2λ_k); Step 5 carries Step 3's error in the neutral directions |
+| D3an-12 | minor | (b) tested at the midpoints only | Part A: the window's start τ_k + 30ε^{1/2}log(1/ε) and end τ_{k+1} − ε^{1/4} |
+| D3an-13 | minor | numerics details | the paragraph rewritten from the rerun |
+| D3an-14 | minor | novelty | AGF (Kunin et al.), the sliding Frank–Wolfe and ADCG, Krupa–Szmolyan's blow-up cited |
+| D3an-15 | cosmetic | code nits | `near_tie_inner`'s docstring (the 1/xi0 tail); `loop_with_duals` raises on a failed segment |
+
+**Lesson.** A matched-asymptotics theorem is only as useful as its untracked constants are small, and the numerics decide what the reader
+believes about them: the targets with the largest margins also had fast entrants that barely slide, while elsewhere the inner problem's
+creep tail ∝ g′²/v³ makes the first-order correction 10²–10³ times larger. Print the constants of every target, converge the predictions
+past the effect being measured, and state the regime in which the expansion is informative.
