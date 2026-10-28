@@ -27,9 +27,10 @@ C. The closed loop of Proposition D‴.49 under its measurement noise (Part E th
    fractions shut and fully open, the first closing, the last reopening), each kernel's formation and its ejection beyond the range,
    and the fit's rms error over the last window (median, 5–95%). At s = S_EXTRA_C with the desired regressor, EXTRA_C's tests of the
    mechanism (referee round 50): the adaptation driven by the true error, the centres bounded, other gate thresholds and filters, another
-   noise seed.
+   noise seed. C2: the noise's beats — one tone (no difference frequencies), two tones far apart (a fast beat) and two close ones (a
+   slow beat), ungated at x_m.
 
-Usage: python experiments/exp_dead_zone.py [--only A,A2,B,C] [--from-raw] → results/chaos/dead_zone.md (+ _raw.npz).
+Usage: python experiments/exp_dead_zone.py [--only A,A2,B,C,C2] [--from-raw] → results/chaos/dead_zone.md (+ _raw.npz).
 """
 import os
 import sys
@@ -61,6 +62,8 @@ EXTRA_C = (('true error', 'none', dict(etrue=True)), ('box 1.2', 'none', dict(cb
            ('thresholds 2.0s, 2.5s', 'energy', dict(gate=(2.0, 2.5))), ('thresholds 2.0s, 2.5s', 'formation', dict(gate=(2.0, 2.5))),
            ('T_f = 40', 'energy', dict(Tf=40.0)), ('T_f = 40', 'formation', dict(Tf=40.0)),
            ('noise seed 8', 'none', dict(seed=8)), ('noise seed 8', 'energy', dict(seed=8)))
+C2_TONES = (('one tone, 20 rad/s', (20.0,), 0.02), ('one tone, 20 rad/s', (20.0,), 0.04), ('two tones, 10 and 30 rad/s', (10.0, 30.0), 0.02),
+            ('two tones, 20 and 20.07 rad/s', (20.0, 20.07), 0.02))   # C2: (name, frequencies, rms), ungated at x_m
 
 
 def stop_law(N, nK, delta=DELTA):
@@ -303,10 +306,22 @@ def kernel_events(entries, ts, C, Lam, cstar, outside):
     return sorted(out, key=lambda e: e['formed'])
 
 
+def noise_of(s, opts):
+    """C's measurement noise of rms s: 16 tones in 10–30 rad/s (seed opts['seed'], default 7), or the tones at opts['freqs'] with equal
+    amplitudes and random phases; None at s = 0."""
+    from src.core import closed_loop as CL
+    if s <= 0:
+        return None
+    if 'freqs' in opts:
+        fr = np.asarray(opts['freqs'], float)
+        return dict(w=fr, ph=np.random.default_rng(opts.get('seed', 7)).uniform(0, 2 * np.pi, fr.size), amp=np.full(fr.size, s * np.sqrt(2.0 / fr.size)))
+    return CL.tones(s, 10.0, 30.0, seed=opts.get('seed', 7))
+
+
 def c_job(args):
     """C: one closed loop (D‴.49's setting, the C integrator) — mode 'none', 'leak', 'energy' or 'formation', the regressor at x̃ or x_m,
     a variant `name` with its options (EXTRA_C: the adaptation driven by the true error, the centres bounded, the gate's thresholds or
-    filter, the noise's seed), dense outputs."""
+    filter, the noise's seed; C2: the noise's frequencies `freqs`, equal amplitudes of total rms s), dense outputs."""
     s, regx, mode, name, opts = args
     import exp_closed_transit as CT
     from src.core import closed_loop as CL
@@ -322,7 +337,7 @@ def c_job(args):
     gate = (dict(mode=mode, Tf=opts.get('Tf', TF_C), lo=lo_f * s, hi=hi_f * s, theta=th) if mode in ('energy', 'formation') and s > 0
             else None)
     r = CL.simulate(L, EPS_C, CT.C0, CT.SIG, (CT.CSTAR, CT.ASTAR, CT.SIG), CT.KE, (0.0, 1.0, CT.OM, 0.0, np.sqrt(2) * CT.OM), ts,
-                    noise=CL.tones(s, 10.0, 30.0, seed=opts.get('seed', 7)) if s > 0 else None, th=th, regx=regx,
+                    noise=noise_of(s, opts), th=th, regx=regx,
                     lam=(LEAK_C / Lam if mode == 'leak' else 0.0), gate=gate, etrue=opts.get('etrue', False),
                     cbox=opts.get('cbox', np.inf))
     act = np.abs(r['w'][-1]) > th
@@ -355,13 +370,20 @@ def part_C():
         return pool.map(c_job, jobs, chunksize=1)
 
 
+def part_C2():
+    from multiprocessing import Pool
+    jobs = [(s, True, 'none', f"{name}, s = {s:g}", dict(freqs=fr)) for name, fr, s in C2_TONES]
+    with Pool(N_WORKERS) as pool:
+        return pool.map(c_job, jobs, chunksize=1)
+
+
 def _mq(v, fmt='.3f'):
     """median [5%, 95%] of v"""
     v = np.asarray(v, float)
     return f"{np.median(v):{fmt}} [{np.quantile(v, 0.05):{fmt}}, {np.quantile(v, 0.95):{fmt}}]"
 
 
-def report(A=None, B=None, C=None, A2=None):
+def report(A=None, B=None, C=None, A2=None, C2=None):
     nK, N = 3, 61
     L_ = ["# Proposition D‴.57: the transit's dead zone (`exp_dead_zone.py`)", "",
           "D‴.56's setting — 21 Gaussian kernels of width 0.12 on a grid of spacing 0.1, 61 samples of [−1, 1]; three features at least "
@@ -491,7 +513,7 @@ def report(A=None, B=None, C=None, A2=None):
         lab = dict(none='ungated', leak=f'the mirror leak λΛ = {LEAK_C:g}', energy='the energy dead zone', formation='the formation dead zone')
         modes = ['none', 'leak', 'energy', 'formation']
         base = sorted((r for r in C if r.get('name', 'base') == 'base'), key=lambda r: (r['regx'], r['s'], modes.index(r['mode'])))
-        extra = [r for r in C if r.get('name', 'base') != 'base']
+        extra = [r for r in C if r.get('name', 'base') != 'base'] + list(C2 or [])
         reg = lambda r: 'x_m' if r['regx'] else 'x̃'
 
         def crow(r):
@@ -519,9 +541,10 @@ def report(A=None, B=None, C=None, A2=None):
         L_ += [f"| {reg(r)} | {r['s']:g} | {lab[r['mode']]} | {', '.join(f'{v:.3f}' for v in r['w'])} | "
                f"{', '.join(f'{v:.3f}' for v in r['c'])} |" for r in base]
         if extra:
-            L_ += ["", f"Tests of the mechanism at x_m, s = {S_EXTRA_C:g} (referee round 50): the adaptation driven by the true error x − x_m "
-                       "(the control and the gate by the measured one), the centres bounded to [−1.2, 1.2], other gate thresholds and "
-                       "filters, another noise seed:", "",
+            L_ += ["", f"Tests of the mechanism at x_m, s = {S_EXTRA_C:g} unless stated (referee round 50): the adaptation driven by the true "
+                       "error x − x_m (the control and the gate by the measured one), the centres bounded to [−1.2, 1.2], other gate "
+                       "thresholds and filters, another noise seed; C2: the noise's beats — one tone, two tones far apart, two close ones "
+                       "(the same rms):", "",
                    "| variant | adaptation | " + cols, "|---|---|---|---|---|---|---|---|---|---|"]
             L_ += [f"| {r['name']} | {lab[r['mode']]} | " + crow(r) for r in extra]
         tl = [r for r in base if r['regx'] and r['s'] == S_EXTRA_C] + extra
@@ -565,15 +588,15 @@ def main():
     md = os.path.join(OUT, 'dead_zone.md')
     old = E.load(raw)
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('A2')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('A2'), old.get('C2')))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'A2', 'B', 'C'}
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'A2', 'B', 'C', 'C2'}
     res = {k: v for k, v in old.items() if k not in parts}             # a part being rerun is not reported from the old raw
     t0 = time.time()
-    for k, fn in (('A', part_A), ('A2', part_A2), ('B', part_B), ('C', part_C)):
+    for k, fn in (('A', part_A), ('A2', part_A2), ('B', part_B), ('C', part_C), ('C2', part_C2)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('A2')))
+            open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('A2'), res.get('C2')))
 
 
 if __name__ == '__main__':

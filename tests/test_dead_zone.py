@@ -198,3 +198,15 @@ def test_the_formation_gate_drives_only_the_formed_kernels():
         assert np.abs(r['al'][:, rest]).max() == 0.0 and np.abs(r['c'][:, rest] - C0[rest]).max() == 0.0
         moved = max(abs(r['al'][-1, 10] - 2.0), abs(r['c'][-1, 10] - C0[10]))
         assert (moved > 0.05) if mode == 'formation' else (moved == 0.0)
+
+
+def test_noise_of_the_default_and_the_beat_tests():
+    """C's noise: by default D‴.49's 16 tones (`closed_loop.tones`, seed 7); with `freqs` the given tones at equal amplitudes, of total rms s;
+    none at s = 0."""
+    a, b = DZ.noise_of(0.02, {}), CL.tones(0.02, 10.0, 30.0, seed=7)
+    assert all(np.array_equal(a[k], b[k]) for k in ('w', 'ph', 'amp'))
+    nz = DZ.noise_of(0.02, dict(freqs=(20.0, 20.07)))
+    assert np.array_equal(nz['w'], [20.0, 20.07]) and abs(np.sqrt(np.sum(nz['amp'] ** 2) / 2) - 0.02) < 1e-15
+    t = np.linspace(0, 2000, 400001)
+    x = sum(A * np.sin(w * t + p) for A, w, p in zip(nz['amp'], nz['w'], nz['ph']))
+    assert abs(np.sqrt(np.mean(x ** 2)) / 0.02 - 1) < 0.02 and DZ.noise_of(0.0, dict(freqs=(20.0,))) is None
