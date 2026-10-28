@@ -2741,3 +2741,40 @@ leading orders without their range; misquotes.
 left the two-sided one comparing a test that spends α on one side with one that splits it; the measure that settles it — a score spending
 α exactly as the knot does — took one line of code. A decomposition is a claim about every cell, signs included: the part quoted only
 where it was a loss turned out to be a gain where it was not quoted.
+
+## Round 66 (adversarial review of Proposition D‴.54 as revised after round 62, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bm: Proposition D‴.54 as revised after round 62, with its code and results at
+6d48964 (`review/REVIEW_round66_D3bm.md`). The referee:
+- regenerated the md byte for byte and reran RP's and C4's rows bitwise;
+- continued the relative mode in exact arithmetic about a merged block on the far window and injected it into the full race;
+- reran C4's (4.9, 10⁻¹¹) at three absolute tolerances;
+- ran 34 single-point mutants.
+
+**Verdicts (D3bm).** Two majors. A held runner-up's s_d is not pin-independent: the hold starts only when the climb ends, so s_d shifts
+one for one with the climb's end (in the continuum +3.8%, +12.2%, +23.4%, +38% at x = 4.5, 4.9, 5.07, 5.48), and C3's capture at
+x = 5.07 belongs to the window. RP's continuation below the floor had the right sides but artefactual numbers: it was linearised about the
+run's own base after the run had left the merged state, and its "measured relaxation" was the pair's own feedback, extrapolated (the least
+|D| off by up to 54 decades, the climbs by up to 4·10⁴). Minors: C4's (4.9, 10⁻¹¹) an absolute-tolerance artefact (74 of 74 at
+atol ≤ 10⁻¹⁵); the c4_atol test vacuous (`np.isclose`'s default atol) and 17 of 34 mutants surviving; the rate check printed only where
+best, κ up to 0.62, the slaving condition unstated; "in the continuum" meaning the ε-free problem in exact arithmetic; RP's labels and a
+NaN; the overlap-singularity literature; slips.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bm-1 | major | s_d = the climb's end + the hold, not pin-independent | (v): s_d is the climb's end (\|D\| = 0.01σ) plus the hold, the hold starting when the climb ends (the merged pair's split frozen); the climbs from Part C's pin 9.9·10³ … 5.09·10⁴ against the continuum's 6.97–7.49·10⁴; the continuum's s_d 2.352·10⁷, 1.257·10⁶, 3.58·10⁵, 1.854·10⁵, 8.43·10⁴ (x = 3 … 5.48); the capture set's ends the window's; C3 and R: x = 5.07's capture the window's, bound in the continuum; RC prints the climb's and s_d's shifts, equal to 10⁻⁴ |
+| D3bm-2 | major | RP's continuation: the sides right, the numbers artefacts | New Part RC: R's race to s = 400 on the far window, then the merged block run on (`merged_rhs`) and the centres' perturbation evolved by the race's exact Jacobian about it (`PairSums`, the centre block of `critical_jac_nd`, midpoint matrix exponentials, the norm in logarithms), injected into the float64 race at 10⁻⁹σ after regrowth: the least \|D\| 10^{−98.7}, 10^{−36.0}, 10^{−27.6}, 10^{−24.7}, 10^{−19.0}, 10^{−13.4}, 10^{−7.7}σ (x = 3 … 7), the sides the layer's, the climbs, s_d; checks (16 substeps, the block's offset 0, the injection at 10⁻⁷ and 10⁻¹¹σ) and the validation at x = 7 (3.2725·10⁵ against 3.2727·10⁵); RP's continuation and `centroid_velocity` ("meas") removed |
+| D3bm-3 | minor | C4's (4.9, 10⁻¹¹) an absolute-tolerance artefact | `c4_atol` = min(10⁻¹⁴, 10⁻⁵ε); C4, C4b, C4M and C4W rerun: the two tolerances agree at 30 of 30 points, R's rule at 74 of 74; the artefact's 7.0·10⁻¹⁵σ dropped; C4's and C4M's captions give the tolerance |
+| D3bm-4 | minor | tests | `c4_atol` tested exactly; `PairSums`' force and block against central differences (float64, long double); `merged_rhs` against the race's right-hand side; `growth_rate`'s window; κ and the slaved law's error on the raw; RC on the raw (sides, x = 3's least and climb, the checks, the shift identity) and a golden `rc_job` (x = 5.48) |
+| D3bm-5 | minor | the rate check selective; κ; the slaving condition | RP prints the Jacobian against the slaved law at every float64 row (κ 0.506–0.620; error 0.0–10.1% of the largest rate, 0.4–10.1% at s ≈ 450, the most at x = 3); (v), the proof and the Status state the slaving condition and separate the identity (exact to first order) from the slaved law |
+| D3bm-6 | minor | "in the continuum" | (iv), (v), the proof and New: the ε-free inner problem in exact arithmetic; no float64 loop resolves the offset below x ≈ 6 |
+| D3bm-7 | minor | RP's presentation (unforced rows on pinned windows, an exact zero, a NaN) | the continuation rows leave RP (RC replaces them); RP's float64 sides are labelled per window, "None" where the pair stays merged |
+| D3bm-8 | minor | literature; New overstated | Status: the overlap singularities (Fukumizu–Amari 2000; Amari–Park–Ozeki 2006; Wei–Zhang–Cousseau–Ozeki–Amari 2008; Wei–Amari 2008), Saad–Solla's plateau (1995), duplicated units' critical sets (Şimşek et al. 2021; Zhang et al. 2021), balancedness (Du–Hu–Lee 2018) [memory]; New: the relative mode's law in this setting, and the window's pin and climb a caveat of the sampled setup, not a law |
+| D3bm-9 | cosmetic | slips | "within 2.3 steps"; "15–216 e-folds"; C4's artefact quote dropped |
+
+**Lesson.** A continuation below the floating-point floor is only as good as the state it is linearised about: continued over the run's
+own trajectory after that trajectory had left the merged state, a law of the right form gave the right sides and wrong numbers. Linearising
+the exact Jacobian about a merged base and injecting the result back into the full race gives the offset, the side, the climb and s_d with
+a validation built in — and showed that the hold begins only when the climb ends, so a departure time inherits the pin one for one. A
+tolerance "below the masses" is not enough when an outcome is decided at 10⁻¹⁴σ: the absolute tolerance sets the step on every
+component, the dormant ones included.

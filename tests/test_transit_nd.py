@@ -576,49 +576,77 @@ def test_the_relative_mode_with_the_centroid_slaved():
             assert abs(r['law'][1][1] / r['D'][1][1] - 1) < 0.03 and abs(r['law0'][1][1] / r['D'][1][1] - 1) < 0.03
 
 
-def test_in_the_continuum_the_near_tie_decides_the_side():
-    """Referee round 62: on WIN_FAR the block's rest does not move with W (∂c̄*/∂W at rounding), and the unforced relative mode, continued
-    below the floating-point floor, keeps the near tie's offset: toward feature 2 on C2's target, away on the mirror, the least |D| far
-    below the window's pin; forced by the centroid's measured relaxation, the same sides."""
-    a = TN.rp_job(('near tie', 4.9, 1.0, 64, TN.WIN_FAR))
-    b = TN.rp_job(('near tie mirrored', 4.9, 1.0, 64, TN.WIN_FAR))
-    assert a['N'] == 5751 and np.linalg.norm(a['dcdW']) < 1e-14
-    for r, side in ((a, 'toward'), (b, 'far')):
-        for m in ('none', 'meas'):
-            c = r['cont'][m]
-            assert c['side'] == side and c['least'] < 1e-20 and c['s_climb'] is not None
-    assert a['cont']['none']['e_least'] > 0.5 > -0.5 > b['cont']['none']['e_least']
-
-
-def test_the_continuation_starting_above_the_climb_runs_on():
-    """Referee round 62 (the far window's slow layer): at x = 5.48 on WIN_FAR |D| at s = 400 is still above D_CLIMB·σ; the continuation
-    stops only after |D| has been below it, so it reaches the layer's least |D| (≈ 10⁻¹⁹σ) and climbs back, on the near tie's side."""
-    r = TN.rp_job(('near tie', 5.48, 1.0, 64, TN.WIN_FAR))
-    assert np.linalg.norm(r['D'][0]) * TN.SIG > 0.1 * TN.D_CLIMB * TN.SIG
-    for m in ('none', 'meas'):
-        c = r['cont'][m]
-        assert c['least'] < 1e-15 and c['side'] == 'toward' and c['s_climb'] is not None and c['s_climb'] > 1e5
-
-
 def test_c4_atol_below_the_masses():
-    """Referee round 62's C4M at 10⁻¹⁷: the loop's absolute tolerance stays 10⁻¹⁴ wherever ε ≥ 10⁻¹⁴ (the committed rows) and is 10⁻⁵ε
-    below, where the state before the entry is at the masses' scale."""
-    assert TN.c4_atol(1e-10) == 1e-14 and TN.c4_atol(1e-13) == 1e-14 and TN.c4_atol(1e-14) == 1e-14
-    assert np.isclose(TN.c4_atol(1e-17), 1e-22, rtol=1e-12) and np.isclose(TN.c4_atol(6.5e-17), 6.5e-22, rtol=1e-12)
+    """Referee rounds 62 and 66: the loop's absolute tolerance is 10⁻¹⁴ down to ε = 10⁻⁹ and 10⁻⁵ε below — exactly (round 66: the earlier
+    test's `np.isclose` passed any value below 10⁻⁸, its default atol)."""
+    for e in (1e-8, 1e-9):
+        assert TN.c4_atol(e) == 1e-14
+    for e in (1e-10, 1e-11, 1e-12, 1e-13, 2e-12, 6.5e-17, 1e-17):
+        assert TN.c4_atol(e) == 1e-5 * e and TN.c4_atol(e) < 1e-14
 
 
-def test_the_centroid_velocity_extrapolation():
-    """Referee round 62: `centroid_velocity` on a centroid relaxing as e^{−ks} (k = 0.04): the measured velocity where it is resolved, then
-    extrapolated at the fitted rate along its direction."""
-    s = np.r_[np.linspace(-10.0, 0.0, 11), np.geomspace(1.0, 3e3, 2000)]
-    k, d = 0.04, np.array([0.6, 0.8])
-    cb = 0.3 + 1e-3 * np.exp(-k * s)[:, None] * d[None, :]
-    w = np.c_[np.full(s.size, 0.6), np.full(s.size, 0.4)]
-    C = np.stack([cb, cb], axis=1)                                      # both kernels at the centroid: c_b = cb
-    vb = TN.centroid_velocity(s, C, w, w.sum(1))
-    true = -k * 1e-3 * np.exp(-k * s)[:, None] * d[None, :]
-    late = s > 1500
-    assert np.all(np.abs(vb[late] / true[late] - 1) < 0.1)
+def test_pair_sums_force_and_the_block():
+    """Referee round 66: `PairSums.force` is the merged block's force F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩ and its Jacobian (against central
+    differences of F), in float64 and the long double; `block`'s ∂c̄*/∂W is −(∂F/∂c̄)⁻¹∂F/∂W."""
+    L = TN.law()
+    K = TN.window(1.0)
+    cs, As = TN.targets_C2(TN.MU_R)['near tie']
+    cb, W = cs[0] + np.array([0.004, -0.003]), 0.7
+    for dt in (np.float64, np.longdouble):
+        P = TN.PairSums(L, K, cs, As, dt)
+        F, dF = P.force(cb, W)
+        h = 1e-6
+        fd = np.stack([(P.force(cb + h * e_, W)[0] - P.force(cb - h * e_, W)[0]) / (2 * h) for e_ in np.eye(2)], axis=1)
+        assert np.allclose(dF, fd, rtol=1e-6, atol=1e-9 * np.abs(dF).max())
+        dW = (P.force(cb, W + h)[0] - P.force(cb, W - h)[0]) / (2 * h)
+        assert np.allclose(P.block(cb, W)[1], -np.linalg.solve(dF, dW), rtol=1e-6, atol=1e-12)
+    g = lambda c: np.exp(-((K.x1[:, None] - c[0]) ** 2 + (K.x2[None, :] - c[1]) ** 2) / (2 * TN.SIG ** 2))
+    r = sum(a * g(c) for c, a in zip(cs, As)) - W * g(cb)
+    want = np.array([(r * g(cb) * (K.x1[:, None] - cb[0])).sum(), (r * g(cb) * (K.x2[None, :] - cb[1])).sum()]) / TN.SIG ** 2 / K.N
+    assert np.allclose(TN.PairSums(L, K, cs, As, np.float64).force(cb, W)[0], want, rtol=1e-10, atol=1e-16)
+
+
+def test_the_merged_rhs():
+    """Referee round 66: `merged_rhs` at one centre is the race's coefficient law, and its centre moves at the pair's centroid velocity
+    (w_eċ_e + wċ_r)/W of the race's right-hand side with both kernels there."""
+    L = TN.law()
+    K = TN.window(1.0)
+    cs, As = TN.targets_C2(TN.MU_R)['near tie']
+    P = TN.PairSums(L, K, cs, As, np.float64)
+    lam0 = RT.transit_scale(L, 1.0)
+    y = np.r_[3.0, 2.0, cs[0] + np.array([0.01, -0.02])]
+    full_ = lam0 * P(0.0, np.r_[y[:4], y[2:4]])
+    w = RT.critical_w(L, y[:2])
+    got = TN.merged_rhs(P, lam0)(0.0, y)
+    assert np.allclose(got[:2], full_[:2], rtol=1e-14, atol=0)
+    assert np.allclose(got[2:], (w[0] * full_[2:4] + w[1] * full_[4:6]) / w.sum(), rtol=1e-14, atol=0)
+    assert np.allclose(full_[4:6] / w[1], full_[2:4] / w[0], rtol=1e-12, atol=0)    # each kernel's velocity ∝ its coefficient
+
+
+def test_the_growth_rate_window():
+    """Referee round 66: `growth_rate` fits log|D| over s ∈ [3·10³, 10⁴] only (an exponential's rate, the outputs outside ignored, None
+    below three outputs)."""
+    s = np.r_[np.linspace(0.0, 2.9e3, 30), np.linspace(3e3, 1e4, 50), np.linspace(1.01e4, 2e4, 30)]
+    D = np.c_[np.where((s >= 3e3) & (s <= 1e4), 1e-14 * np.exp(8e-4 * s), 1e3), np.zeros_like(s)]
+    assert abs(TN.growth_rate(s, D, np.arange(s.size)) / 8e-4 - 1) < 1e-9
+    assert TN.growth_rate(s, D, np.arange(30)) is None
+
+
+def test_the_rates_kappa_on_the_raw():
+    """Referee round 66: κ = W²/(2(w² + w_e²)) at the Jacobian's checks is 0.51–0.62 over RP's float64 rows, 0.61 at x = 3 on Part C's
+    window; the slaved law's error is at most 11% of the Jacobian's largest rate — about 10% at x = 3 on the far window at s ≈ 450, where
+    the centroid's modes are nearest the relative mode —, below 0.1% at s ≈ 5000 (raw)."""
+    raw = E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'transit_nd_raw.npz'))
+    ks = [j['kappa'] for r in raw['RP'] if r['prec'] == 64 for j in r['jac']]
+    assert 0.5 < min(ks) < 0.52 and 0.6 < max(ks) < 0.63
+    r3 = next(r for r in raw['RP'] if r['x'] == 3.0 and r.get('win') is None and r['top'] == 1.0 and r['prec'] == 64)
+    assert abs(r3['jac'][0]['kappa'] - 0.61) < 0.005
+    err = lambda j: max(abs(a - b) for a, b in zip(sorted(j['law']), sorted(j['jac']))) / max(abs(b) for b in j['jac'])
+    for r in raw['RP']:
+        for j in r['jac']:
+            assert err(j) < (0.11 if j['s'] < 1e3 else 1e-3)
+    f3 = next(r for r in raw['RP'] if r['x'] == 3.0 and r.get('win') is not None and list(r['win']) == list(TN.WIN_FAR))
+    assert err(f3['jac'][0]) > 0.09
 
 
 def test_the_long_mirror_race_and_the_race_job_reproduce_the_raw():
@@ -638,3 +666,49 @@ def test_c4m_outcome_follows_the_side():
     base = dict(n_fin=[1, 1, 1], captured=[], rms=1e-6, d_held=0.3, w_end=0.005)
     assert TN.c4m_outcome(dict(base, side='toward')) == 'held, unformed (toward)'
     assert TN.c4m_outcome(dict(base, side='far')) == 'held, unformed (far)'
+
+
+def _rc_main(raw):
+    return [r for r in raw['RC'] if r['sub'] == 4 and r['ymode'] == 'y' and r['inj'] == 1e-9]
+
+
+def test_the_continuum_rc_on_the_raw():
+    """Referee round 66: RC's continuum on the raw — the side the layer's at every gap (toward on C2's target, far on the mirror, the
+    least's share along e of that sign), the least |D| at x = 3 10^{−98.7}σ and its climb within 5% of 7.0·10⁴ in Part C's time, the
+    checks (16 substeps, the block's offset 0, the injection at 10⁻⁷ and 10⁻¹¹σ) within 0.02 dex of the least and 2·10⁻⁴ of s_d, and
+    s_d's shift from Part C's window (RP, top edge 1) the climb's to 10⁻³ wherever the climb moves by more than 10³ (raw)."""
+    raw = E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'transit_nd_raw.npz'))
+    N0, main = 1681, _rc_main(raw)
+    assert len(main) == 14
+    for r in main:
+        toward = r['name'] == 'near tie'
+        assert r['side'] == ('toward' if toward else 'far') and np.sign(r['e_least']) == (1 if toward else -1)
+        assert (r['s_d'] is not None) == toward
+    r3 = next(r for r in main if r['name'] == 'near tie' and r['x'] == 3.0)
+    assert -99.0 < r3['least'] < -98.4 and abs(r3['s_climb'] * N0 / r3['N'] / 7.0e4 - 1) < 0.05
+    ref = next(r for r in main if r['name'] == 'near tie' and r['x'] == 4.9)
+    checks = [r for r in raw['RC'] if not (r['sub'] == 4 and r['ymode'] == 'y' and r['inj'] == 1e-9)]
+    assert len(checks) == 4
+    for c in checks:
+        assert c['side'] == ref['side'] and abs(c['least'] - ref['least']) < 0.02 and abs(c['s_d'] / ref['s_d'] - 1) < 2e-4
+    pc = {r['x']: r for r in raw['RP'] if r['prec'] == 64 and r.get('win') is None and r['top'] == 1.0 and r['name'] == 'near tie'}
+    moved = 0
+    for r in main:
+        if r['name'] == 'near tie':
+            ds = r['s_d'] * N0 / r['N'] - pc[r['x']]['s_d']
+            dc = r['s_climb'] * N0 / r['N'] - pc[r['x']]['s_climb']
+            if abs(dc) > 1e3:
+                moved += 1
+                assert abs(ds / dc - 1) < 1e-3
+    assert moved == 6
+
+
+def test_rc_job_reproduces_the_raw():
+    """Referee round 66 (a golden job): `rc_job` at the near tie's x = 5.48 — the least |D|, its share along e and its s, the injection,
+    the climb's end and s_d — reproduces the committed raw."""
+    raw = E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'transit_nd_raw.npz'))
+    ref = next(r for r in _rc_main(raw) if r['name'] == 'near tie' and r['x'] == 5.48)
+    r = TN.rc_job(('near tie', 5.48))
+    assert r['side'] == ref['side']
+    for k in ('least', 'e_least', 's_least', 's_inj', 's_climb', 's_d'):
+        assert np.isclose(r[k], ref[k], rtol=1e-9, atol=0), k

@@ -103,11 +103,16 @@ C4M = ((7.0, 1e-13), (7.0, 1e-10), (7.0, 1e-17), (7.0, 2e-12), (7.0, 4.5e-12), (
        (7.0, 3.7e-17))  # C4M: the loop on the
 # mirrored target — the far rule's boundary s₂ ≈ s_θ and beyond s_{d,e} (the swap, referee round 58)
 R_LONG = ((7.0, 3e9), (10.0, 3e9))                                    # R: the mirror past its horizon — the swap and the entrant's race
-X_RP, TOPS_RP = (3.0, 4.9, 5.48, 6.04, 7.0), (0.95, 1.0, 1.5)           # RP: the gaps (formed runner-ups and a tail); the window's top edge
+X_RP, TOPS_RP = (3.0, 4.5, 4.9, 5.07, 5.48, 6.04, 7.0), (0.95, 1.0, 1.5)  # RP: the gaps (held and formed runner-ups, a tail); the top edge
 S_END_RP, S0_RP, S_MARKS_RP = 5e7, 400.0, (500.0, 700.0, 1000.0)        # RP: the run's end; the law from s₀; D reported at these s
 WIN_FAR, WIN_RIGHT = (-2.0, 2.0, -1.5, 2.0), (-1.0, 0.8, -1.0, 1.5)      # RP (referee round 62): (x₋, x₊, y₋, y₊) — every edge ≥ 11.67σ
                                                                         # from feature 0 (the continuum); the right edge 4.92σ from it
-D_CLIMB, S_JAC_RP = 1e-2, (450.0, 5e3)                                  # RP: the continuation to |D| = 1e-2σ; the Jacobian's checks at s
+D_CLIMB, S_JAC_RP = 1e-2, (450.0, 5e3)                                  # RP: the climb's end |D| = 1e-2σ; the Jacobian's checks at s
+X_RC, S1_RC, SUB_RC, INJ_RC = X_RP, 400.0, 4, 1e-9                         # RC (referee round 66): the gaps; the merged block from s₁; the matrix
+S_CONT_RC, N_CONT_RC, S_END_RC = 2e6, 800, 2e8                           # exponentials per output; the injection's |D| (σ); the continuation's
+                                                                        # end and outputs, the injected race's end (WIN_FAR's time)
+RC_CHECKS = (('near tie', 4.9, 16, 'y', 1e-9), ('near tie', 4.9, 4, 'zero', 1e-9), ('near tie', 4.9, 4, 'y', 1e-7),
+             ('near tie', 4.9, 4, 'y', 1e-11))                         # RC: 16 substeps, y = 0, the injection at 10⁻⁷ and 10⁻¹¹σ
 W_FC = np.geomspace(0.06, 0.003, 120)                                   # FC: the configuration's own fold (continuation in w)
 D_V3, AP_V3 = (5.0, 6.0, 7.0), (0.35, 0.7, 1.4, 2.8)                     # V3: the fold against A′/A (A = A_B)
 MAX_DOUBLINGS_B4X = 24                                                   # B4x: B4's unsettled problems continued
@@ -956,8 +961,10 @@ def fold_level(d2, A2, V):
 
 
 def c4_atol(eps):
-    """C4's absolute tolerance: 1e-14, or 10⁻⁵ε below ε = 10⁻¹⁴ (the loop's state before the entry is at the masses' scale)."""
-    return 1e-14 if eps >= 1e-14 else 1e-5 * eps
+    """C4's absolute tolerance: 1e-14, or 10⁻⁵ε below ε = 10⁻⁹ (the loop's state before the entry is at the masses' scale; referee round
+    66: the absolute tolerance sets the step on every component, the dormant kernels' α included, and at ε = 10⁻¹¹ and 10⁻¹⁴ the step's
+    error exceeded a formed runner-up's pin, which decides its side at 10⁻¹⁴σ)."""
+    return min(1e-14, 1e-5 * eps)
 
 
 def c4_job(args):
@@ -991,7 +998,7 @@ def c4_job(args):
         dense = t_e + se * np.r_[np.linspace(-100.0, 0.0, 51)[:-1], np.geomspace(0.1, (t2 - t_e) / se, N_OUT_C4)]
     taus = np.unique(np.r_[np.linspace(0, 1.3 * R['events'][-1][0], 27), dense])
     # the absolute tolerance below the masses (referee round 62's C4M at 10⁻¹⁷: at atol 1e-14 > ε the pre-entry state is unresolved
-    # and the loop enters before s = −2000; 1e-14 kept wherever ε ≥ 1e-14, so the earlier rows are unchanged)
+    # and the loop enters before s = −2000; referee round 66: 10⁻⁵ε wherever that is below 1e-14, the pin's side resolved)
     T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus, rtol=rtol, atol=c4_atol(eps))
     dist = np.linalg.norm(C[:, r0, :] - cs[0], axis=1) / SIG
     after = np.flatnonzero(taus > t_e)
@@ -1011,7 +1018,7 @@ def c4_job(args):
              w_max=float(np.abs(W[held, r0]).max()) if held.size else 0.0, d_held=float(dist[held].max()) if held.size else 0.0,
              d2=float(np.linalg.norm(cs[2] - cs[0]) / SIG), A2=float(As[2]), n_fin=bk['n_fin'], captured=bk['captured'],
              rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))), d_end=float(dist[-1]), w_end=float(abs(W[-1][r0])),
-             rtol=rtol, win=None if win is None else list(win), early=early, secs=time.time() - t0)
+             rtol=rtol, atol=c4_atol(eps), win=None if win is None else list(win), early=early, secs=time.time() - t0)
     print(f"  C4 {name} x {x} eps {eps:g} rtol {rtol:g}: {c3_outcome(r)}, side {side}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} "
           f"[{r['secs']:.0f}s]", flush=True)
     return r
@@ -1172,40 +1179,49 @@ class PairSums:
             out[2 + 2 * i:4 + 2 * i] = (dt(L.G * L.m * w[i]) * np.array([gp @ R @ Q[i], G[i] @ R @ qp]) / self.N).astype(float)
         return out
 
-    def block(self, cb, W):
-        """At the block's centre c̄ with the coefficient W: ⟨r, ∇²_cφ(c̄)⟩ (2 × 2, r = f* − Wφ(c̄)) and the rest's shift with W,
-        ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩; ∂F/∂c̄ = ⟨r, ∇²_cφ⟩ − W⟨∇_cφ∇_cφᵀ⟩)."""
+    def moments(self, cb, W):
+        """At one centre c̄ with the coefficient W (r = f* − Wφ(c̄)): F = ⟨r, ∇_cφ⟩, ⟨r, ∇²_cφ⟩, ⟨∇_cφ∇_cφᵀ⟩ and ⟨φ, ∇_cφ⟩, in dt."""
         dt, s2, N = self.dt, self.s2, self.N
         u, v = self.x1 - dt(cb[0]), self.x2 - dt(cb[1])
         g, q = np.exp(-u ** 2 / (2 * s2)), np.exp(-v ** 2 / (2 * s2))
         gp, qp, gpp, qpp = g * u / s2, q * v / s2, g * (u ** 2 / s2 - 1) / s2, q * (v ** 2 / s2 - 1) / s2
         R = self.F - dt(W) * np.outer(g, q)
+        F = np.array([gp @ R @ q, g @ R @ qp]) / N
         H = np.array([[gpp @ R @ q, gp @ R @ qp], [gp @ R @ qp, g @ R @ qpp]]) / N
         Q2 = np.array([[(gp @ gp) * (q @ q), (gp @ g) * (q @ qp)], [(gp @ g) * (q @ qp), (g @ g) * (qp @ qp)]]) / N
         pd = np.array([(g @ gp) * (q @ q), (g @ g) * (q @ qp)]) / N
-        return H.astype(float), np.linalg.solve((H - dt(W) * Q2).astype(float), pd.astype(float))
+        return F, H, Q2, pd
+
+    def block(self, cb, W):
+        """At the block's centre c̄ with the coefficient W: ⟨r, ∇²_cφ(c̄)⟩ (2 × 2, r = f* − Wφ(c̄)) and the rest's shift with W,
+        ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩; ∂F/∂c̄ = ⟨r, ∇²_cφ⟩ − W⟨∇_cφ∇_cφᵀ⟩)."""
+        _, H, Q2, pd = self.moments(cb, W)
+        return H.astype(float), np.linalg.solve((H - self.dt(W) * Q2).astype(float), pd.astype(float))
+
+    def force(self, cb, W):
+        """RC (referee round 66): the merged block's force F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩ and its Jacobian ∂F/∂c̄."""
+        F, H, Q2, _ = self.moments(cb, W)
+        return F.astype(float), (H - self.dt(W) * Q2).astype(float)
 
 
-def relative_law(P, s, C, w, W, i0, iend, D0, lam0, Gm, mode='rest', slaved=True, vb=None, stop=None):
+def relative_law(P, s, C, w, W, i0, iend, D0, lam0, Gm, slaved=True):
     """RP: the relative offset D = c_r − c_e (e the entrant, r the runner-up) integrated from the output i0 with D0 over the run's outputs
-    to iend, the coefficients frozen per output interval (exponential steps), stopped once |D| ≥ stop after it has been below stop (a
-    start above it — a slow window's layer not yet collapsed at i0 — does not stop it). With the block's centroid
-    c_b = (w_e c_e + w c_r)/W slaved — the midpoint c̄ = c_b + ρD, ρ = (w_e − w)/(2W) — the exact first order
+    to iend, the coefficients frozen per output interval (exponential steps; stopped where D stops being finite). With the block's
+    centroid c_b = (w_e c_e + w c_r)/W slaved — the midpoint c̄ = c_b + ρD, ρ = (w_e − w)/(2W) — the exact first order
         dD/ds = (2(w − w_e)/W)dc̄/ds + Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D
     becomes dD/ds = κ[Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(ρ′D + dc_b/ds)], κ = W²/(2(w² + w_e²)) (referee round 62: the rate is
-    κ times the coefficient; slaved=False: κ = 1, ρ′ = 0, round 58's law). dc_b/ds: 'rest' the block's rest moving with W,
-    (∂c̄*/∂W)dW/ds (`PairSums.block`); 'none' nothing (the continuum, where the rest does not move with W); 'meas' vb, the centroid's
-    velocity measured on the run. Returns (the outputs' indices, D at each (σ), ∂c̄*/∂W at each (σ per unit W))."""
+    κ times the coefficient; slaved=False: κ = 1, ρ′ = 0, round 58's law), dc_b/ds the block's rest moving with W, (∂c̄*/∂W)dW/ds
+    (`PairSums.block`): the pin, about the run's own pair (referee round 66: below the floor the relative mode is continued about a
+    merged block instead, RC). Returns (the outputs' indices, D at each (σ), ∂c̄*/∂W at each (σ per unit W))."""
     dWds = np.gradient(W, s)
     rho = (w[:, 0] - w[:, 1]) / (2 * W)
     drho = np.gradient(rho, s)
     Dl, idx, Ds, dc = np.asarray(D0, float).copy(), [i0], [np.asarray(D0, float) / SIG], [None]
-    armed = stop is not None and np.linalg.norm(Dl) < stop
     for i in range(i0, iend):
         Hb, dcdW = P.block(0.5 * (C[i, 0] + C[i, 1]), W[i])
         A = lam0 * 2 * Gm * w[i, 0] * w[i, 1] / W[i] * Hb
         k_ = 2 * (w[i, 1] - w[i, 0]) / W[i]
-        g = (k_ * dcdW * dWds[i] if mode == 'rest' else np.zeros(2) if mode == 'none' else k_ * np.asarray(vb[i], float))
+        g = k_ * dcdW * dWds[i]
         if slaved:
             kap = W[i] ** 2 / (2 * (w[i, 0] ** 2 + w[i, 1] ** 2))
             A, g = kap * (A + k_ * drho[i] * np.eye(2)), kap * (g + 0.0)
@@ -1214,47 +1230,23 @@ def relative_law(P, s, C, w, W, i0, iend, D0, lam0, Gm, mode='rest', slaved=True
         h_ = s[i + 1] - s[i]
         E1 = (V @ np.diag(np.exp(lv * h_)) @ Vi).real
         P1 = (V @ np.diag(np.where(np.abs(lv * h_) > 1e-12, np.expm1(lv * h_) / np.where(lv == 0, 1, lv), h_)) @ Vi).real
-        Dl = E1 @ Dl + P1 @ g
+        Dn = E1 @ Dl + P1 @ g
+        if not np.all(np.isfinite(Dn)):                                 # referee round 66: no NaN carried on
+            break
+        Dl = Dn
         idx.append(i + 1); Ds.append(Dl / SIG); dc.append(dcdW / SIG)
-        if stop is not None:
-            if armed and np.linalg.norm(Dl) >= stop:
-                break
-            armed = armed or np.linalg.norm(Dl) < stop
     return np.array(idx), np.array(Ds), dc
-
-
-def centroid_velocity(s, C, w, W):
-    """RP: the block's centroid c_b = (w_e c_e + w c_r)/W's velocity on the run, where resolved — above 10⁴ times its rounding (4 units
-    in the last place of the centres over the outputs' spacing) —, and beyond the last resolved output extrapolated along its direction
-    with the decay rate fitted over the last decade of the resolved |ċ_b| (referee round 62: the measured forcing of the continuation —
-    the centroid's relaxation onto its rest, which no window's shift dominates in the continuum)."""
-    cb = (w[:, :1] * C[:, 0] + w[:, 1:] * C[:, 1]) / W[:, None]
-    vb = np.gradient(cb, s, axis=0)
-    ds_ = np.gradient(s)
-    noise = 4 * np.finfo(float).eps * np.abs(cb).max() / np.maximum(ds_, 1e-300)
-    nv = np.linalg.norm(vb, axis=1)
-    ok = nv > 1e4 * noise
-    bad = np.flatnonzero(~ok & (s > 0))
-    i_f = int(bad[0]) - 1 if bad.size else len(s) - 1                 # the last output before the first unresolved one past the wall
-    if i_f >= len(s) - 1 or i_f < 1:
-        return vb
-    last = np.flatnonzero((np.arange(len(s)) <= i_f) & (nv >= 10 * nv[i_f]))
-    last = np.arange(last[-1] if last.size else max(i_f - 20, 0), i_f + 1)
-    k = -np.polyfit(s[last], np.log(nv[last]), 1)[0] if last.size > 2 else 0.0
-    out = vb.copy()
-    out[i_f + 1:] = vb[i_f] * np.exp(-max(k, 0.0) * (s[i_f + 1:] - s[i_f]))[:, None]
-    return out
 
 
 def rp_job(args):
     """RP (referee rounds 58 and 62): R's race (C2's near tie at μ = MU_R, the runner-up x behind the entrant) on Part C's window with
     the top edge at `top`, or on a window (x₋, x₊, y₋, y₊) (WIN_FAR: every edge ≥ 11.7σ from the block, the continuum; WIN_RIGHT: the
     right edge 4.92σ from it), the sums in float64 (prec 64) or the long double (80) (`PairSums`): the relative offset D = c_r − c_e at
-    S_MARKS_RP against `relative_law` from D(S0_RP) — the slaved-centroid law, and round 58's for comparison —; the law continued below
-    the floating-point floor, from S0_RP until |D| reaches D_CLIMB·σ (forced by the rest, unforced, forced by the centroid's measured
-    velocity): its least |D|, its share along e there, the side and the s at D_CLIMB; the Jacobian's eigenvalues nearest the relative
-    mode's at S_JAC_RP against the law's rates; the least |D| after the wall before the departure and its share along e; the side
-    (SIDE_R), the departure s_d (2σ, bisected on the dense output); the growth rate of |D| on s ∈ [3·10³, 10⁴]; the samples' count N."""
+    S_MARKS_RP against `relative_law` from D(S0_RP) — the slaved-centroid law, and round 58's for comparison —; the Jacobian's
+    eigenvalues nearest the relative mode's at S_JAC_RP against the law's rates; the least |D| after the wall before the departure and its
+    share along e; the side (SIDE_R), the departure s_d (2σ, bisected on the dense output) and the climb's end (|D| first back at
+    D_CLIMB·σ after its least; referee round 66: s_d is the climb's end plus the hold after it); the growth rate of |D| on
+    s ∈ [3·10³, 10⁴] (`growth_rate`); the samples' count N. Below the floating-point floor the relative mode is RC's."""
     name, x, top, prec = args[:4]
     win = tuple(args[4]) if len(args) > 4 and args[4] is not None else None
     from scipy.integrate import solve_ivp
@@ -1304,20 +1296,22 @@ def rp_job(args):
     at = lambda q: int(np.argmin(np.abs(s - q)))
 
     def marks(slaved):
-        idx, Ds, dc = relative_law(P, s, C, w, W, i0, i1, D[i0], lam0, Gm, 'rest', slaved)
+        idx, Ds, dc = relative_law(P, s, C, w, W, i0, i1, D[i0], lam0, Gm, slaved)
         return [Ds[int(np.argmin(np.abs(s[idx] - q)))].tolist() for q in S_MARKS_RP], dc[int(np.argmin(np.abs(s[idx] - S_MARKS_RP[1])))]
     law_, dcdW_at = marks(True)
     law0 = marks(False)[0]
-    iend = (dep if dep is not None else len(s) - 1)
-    vb = centroid_velocity(s, C, w, W)
-    cont = {}
-    for mode in ('rest', 'none', 'meas'):
-        idx, Ds, _ = relative_law(P, s, C, w, W, i0, iend, D[i0], lam0, Gm, mode, True, vb=vb, stop=D_CLIMB * SIG)
-        nrm = np.linalg.norm(Ds, axis=1)
-        j = int(np.argmin(nrm))
-        cont[mode] = dict(least=float(nrm[j]), e_least=float(Ds[j] @ ev / nrm[j]) if nrm[j] > 0 else None, s_least=float(s[idx[j]]),
-                          side=('toward' if Ds[-1] @ ev > 0 else 'far') if nrm[-1] > 0 else None,
-                          s_climb=float(s[idx[-1]]) if nrm[-1] >= D_CLIMB * (1 - 1e-12) else None)
+    up = [int(i) for i in held if i > i_min and np.linalg.norm(D[i]) >= D_CLIMB * SIG]
+    s_climb = None
+    if up:                                                             # the climb's end, bisected on the dense output (referee round 66)
+        a_, b_ = sol.t[up[0] - 1], sol.t[up[0]]
+        for _ in range(80):
+            m_ = 0.5 * (a_ + b_)
+            zm = sol.sol(m_)
+            if np.linalg.norm(zm[4:6] - zm[2:4]) >= D_CLIMB * SIG:
+                b_ = m_
+            else:
+                a_ = m_
+        s_climb = 0.5 * (a_ + b_) - t_wall
     jac = []
     for q in S_JAC_RP:
         i = at(q)
@@ -1330,11 +1324,10 @@ def rp_job(args):
         ej = np.linalg.eigvals(lam0 * j0(0.0, sol.y[:, i]))
         near = sorted(float(ej[q].real) for q in np.argsort(np.min(np.abs(ej[:, None] - kap * pr[None, :]), axis=1))[:2])
         jac.append(dict(s=float(s[i]), jac=near, law=(kap * pr).tolist(), law0=pr.tolist(), kappa=float(kap)))
-    gi = [i for i in post if 3e3 <= s[i] <= 1e4 and np.linalg.norm(D[i]) > 0]
-    grow = float(np.polyfit(s[gi], np.log(np.linalg.norm(D[gi], axis=1)), 1)[0]) if len(gi) > 2 else None
+    grow = growth_rate(s, D, post)
     out = dict(name=name, x=float(x), top=float(top), win=None if win is None else list(win), N=int(K.N), prec=int(prec),
                status=int(sol.status), nfev=int(sol.nfev), D=[(D[at(q)] / SIG).tolist() for q in S_MARKS_RP], law=law_, law0=law0,
-               dcdW=None if dcdW_at is None else np.asarray(dcdW_at).tolist(), cont=cont, jac=jac,
+               dcdW=None if dcdW_at is None else np.asarray(dcdW_at).tolist(), s_climb=s_climb, jac=jac,
                least=float(np.linalg.norm(D[i_min]) / SIG), s_least=float(s[i_min]),
                e_least=float(D[i_min] @ ev / np.linalg.norm(D[i_min])) if np.linalg.norm(D[i_min]) > 0 else None, side=side, s_d=s_d,
                grow=grow, w_layer=float(abs(w[at(1e3), 1])), ulp=float(np.spacing(abs(C[at(S_MARKS_RP[1]), 1, 1])) / SIG),
@@ -1342,6 +1335,132 @@ def rp_job(args):
     print(f"  RP {name} x {x:g} top {top:g} win {win} prec {prec}: D(700) {out['D'][1]}, law {out['law'][1]}, side {side}, s_d {s_d} "
           f"[{out['secs']:.0f}s]", flush=True)
     return out
+
+
+def growth_rate(s, D, idx, lo=3e3, hi=1e4):
+    """RP: |D|'s growth rate, the slope of log|D| against s fitted over the outputs idx with s in [lo, hi] (None below three outputs)."""
+    gi = [i for i in idx if lo <= s[i] <= hi and np.linalg.norm(D[i]) > 0]
+    return float(np.polyfit(s[gi], np.log(np.linalg.norm(D[gi], axis=1)), 1)[0]) if len(gi) > 2 else None
+
+
+def merged_rhs(P, lam0):
+    """RC (referee round 66): the merged block's flow (α_e, α_r, c_m) — both kernels at one centre c_m: the coefficients' laws as in the
+    race, the centre at the pair's centroid velocity Λ₀Gm((w_e² + w²)/W)⟨r, ∇_cφ(c_m)⟩ (each kernel's velocity ∝ its coefficient)."""
+    def rhs(s_, y):
+        out = P(s_, np.r_[y[:4], y[2:4]])
+        w = RT.critical_w(P.L, y[:2])
+        return lam0 * np.r_[out[:2], (w[0] * out[2:4] + w[1] * out[4:6]) / w.sum()]
+    return rhs
+
+
+def rc_job(args):
+    """RC (referee round 66): the relative mode in the continuum, continued about a merged block. R's race on WIN_FAR (`rp_job`'s run)
+    to s₁ = S1_RC; there the merged block — both kernels at the centroid c_b = (w_e c_e + w c_r)/W less its offset y = (∂F/∂c_b)⁻¹F(c_b)
+    off the merged rest (`PairSums.force`) — runs on (`merged_rhs`), and the centres' perturbation δc — δc_e = y − (w/W)D,
+    δc_r = y + (w_e/W)D, D the run's c_r − c_e at s₁ (ymode 'zero': y = 0) — by the race's exact Jacobian's centre block about it,
+    δc′ = J_cc δc (`critical_jac_nd`; the coefficients' coupling vanishes on a merged block at rest), in midpoint matrix exponentials,
+    `sub` per output interval (N_CONT_RC outputs, geometric to S_CONT_RC), the norm carried in logarithms: no floor. Past its least, once
+    the relative offset D = δc_r − δc_e has regrown to inj·σ and to twice its least, δc is injected into the float64 race — the merged
+    block's coefficients, its centre plus δc — run on (to S_END_RC) to the departure (2σ). Returns the least |D| (log₁₀ σ), its share
+    along e and its s, the contraction's e-folds from s₁ to it, the injection's s, the side (SIDE_R), the climb's end (|D| = D_CLIMB·σ)
+    and s_d — s in WIN_FAR's time."""
+    name, x = args[:2]
+    sub = int(args[2]) if len(args) > 2 else SUB_RC
+    ymode = args[3] if len(args) > 3 else 'y'
+    inj = float(args[4]) if len(args) > 4 else INJ_RC
+    from scipy.integrate import solve_ivp
+    from scipy.linalg import expm
+    t0 = time.time()
+    L = law(); c0 = full()[1]
+    K = window(WIN_FAR[3], WIN_FAR[0], WIN_FAR[1], WIN_FAR[2])
+    cs, As = targets_C2(MU_R)[name]
+    P = PairSums(L, K, cs, As, np.float64)
+    e, r = kidx(c0, (0, 2 * H)), kidx(c0, (H, 2 * H))
+    lam0 = RT.transit_scale(L, 1.0)
+    f = K.synth(cs, As)
+    j0 = RN.critical_jac_nd(L, K, f)
+    z0 = np.r_[RT._alpha_of(L, -lam0 * (XI0_R + np.array([0.0, x])), RT.eta_crit), c0[[e, r]].ravel()]
+    sw0 = XI0_R / abs(float(K.corr(c0[[e]], f)[0][0]))
+    tol = dict(method='LSODA', rtol=RTOL_R, atol=min(1e-13, RTOL_R * 1e-3), dense_output=True)
+    race = lambda s_, z: lam0 * P(s_, z)
+    jac = lambda s_, z: lam0 * j0(s_, z)
+    ss = np.linspace(0, 2 * sw0, 200)                                   # rp_job's outputs to the wall: the same t_wall
+    sol = solve_ivp(race, (0.0, 2 * sw0 + 2 * S1_RC), z0, jac=jac, t_eval=ss, **tol)
+    xi_e = -RT.eta_crit(L, sol.y[0]) / lam0
+    k = int(np.argmax(xi_e < 0))
+    t_wall = float(np.interp(0.0, -xi_e[k - 1:k + 1], sol.t[k - 1:k + 1]))
+    z1 = sol.sol(t_wall + S1_RC)
+    w1 = RT.critical_w(L, z1[:2])
+    C1 = z1[2:].reshape(2, 2)
+    W1 = w1.sum()
+    cb, D1 = (w1[0] * C1[0] + w1[1] * C1[1]) / W1, C1[1] - C1[0]
+    F1, dF1 = P.force(cb, W1)
+    y = np.linalg.solve(dF1, F1)
+    cm = cb - y
+    yv = y if ymode == 'y' else np.zeros(2)
+    dc = np.r_[yv - w1[1] / W1 * D1, yv + w1[0] / W1 * D1]
+    msol = solve_ivp(merged_rhs(P, lam0), (t_wall + S1_RC, t_wall + S_CONT_RC), np.r_[z1[:2], cm], **tol)
+    assert msol.status == 0, msol.message
+    ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
+    lnn, u = np.log(np.linalg.norm(dc)), dc / np.linalg.norm(dc)
+    lg0 = np.log10(np.linalg.norm(D1) / SIG)
+    least, s_inj = (np.inf, None, None), None
+    grid = np.geomspace(S1_RC, S_CONT_RC, N_CONT_RC)
+    for a_, b_ in zip(grid[:-1], grid[1:]):
+        hs = (b_ - a_) / sub
+        for j in range(sub):
+            zm = msol.sol(t_wall + a_ + (j + 0.5) * hs)
+            u = expm(lam0 * j0(0.0, np.r_[zm[:4], zm[2:4]])[2:, 2:] * hs) @ u
+            nu = np.linalg.norm(u)
+            lnn, u = lnn + np.log(nu), u / nu
+        Dv = u[2:] - u[:2]
+        lg = (lnn + np.log(np.linalg.norm(Dv)) - np.log(SIG)) / np.log(10)
+        if lg < least[0]:
+            least = (float(lg), float(Dv @ ev / np.linalg.norm(Dv)), float(b_))
+        if lg >= np.log10(inj) and lg > least[0] + np.log10(2.0):
+            s_inj = float(b_)
+            break
+    out = dict(name=name, x=float(x), sub=sub, ymode=ymode, inj=inj, N=int(K.N), lg_D1=float(lg0), least=least[0], e_least=least[1],
+               s_least=least[2], efolds=float((lg0 - least[0]) * np.log(10)), y=float(np.linalg.norm(y) / SIG), s_inj=s_inj,
+               side=None, s_climb=None, s_d=None)
+    if s_inj is not None:
+        zm = msol.sol(t_wall + s_inj)
+        dcv = np.exp(lnn) * u
+        zi = np.r_[zm[:2], zm[2:4] + dcv[:2], zm[2:4] + dcv[2:]]
+
+        def ev_dep(t_, z):
+            return np.linalg.norm(z[4:6] - cs[0]) / SIG - 2.0
+        ev_dep.terminal, ev_dep.direction = True, 1
+
+        def ev_side(t_, z):
+            return np.linalg.norm(z[4:6] - cs[0]) / SIG - SIDE_R
+        ev_side.direction = 1
+
+        def ev_climb(t_, z):
+            return np.linalg.norm(z[4:6] - z[2:4]) / SIG - D_CLIMB
+        ev_climb.direction = 1
+
+        def ev_far(t_, z):                                              # on the far side the race ends at its rests: stop there
+            return (z[4:6] - cs[0]) @ ev / SIG + SIDE_R
+        ev_far.terminal, ev_far.direction = True, -1
+        sol2 = solve_ivp(race, (t_wall + s_inj, t_wall + S_END_RC), zi, jac=jac, events=(ev_dep, ev_side, ev_climb, ev_far), **tol)
+        if sol2.t_events[1].size:
+            out['side'] = 'toward' if (sol2.y_events[1][0][4:6] - cs[0]) @ ev > 0 else 'far'
+        out['s_climb'] = float(sol2.t_events[2][0] - t_wall) if sol2.t_events[2].size else None
+        out['s_d'] = float(sol2.t_events[0][0] - t_wall) if sol2.t_events[0].size else None
+        out['status'] = int(sol2.status)
+    out['secs'] = time.time() - t0
+    print(f"  RC {name} x {x:g} sub {sub} {ymode} inj {inj:g}: least 10^{least[0]:.2f} ({least[1]:+.2f}) at {least[2]:.4g}, "
+          f"side {out['side']}, climb {out['s_climb']}, s_d {out['s_d']} [{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def part_RC():
+    """RC: every gap on both targets, and RC_CHECKS (the substeps, y, the injection's level) at x = 4.9."""
+    from multiprocessing import Pool
+    jobs = [(nm, x) for nm in ('near tie', 'near tie mirrored') for x in X_RC] + list(RC_CHECKS)
+    with Pool(N_WORKERS) as pool:
+        return pool.map(rc_job, jobs, chunksize=1)
 
 
 def part_RP():
@@ -1624,8 +1743,9 @@ def c4m_lines(C4M):
     if C4M is None:
         return []
     out = ["", "C4M. The loop on the mirrored target (features 1 and 2 reflected across the face: feature 2 on the entrant's side, the "
-           "runner-up displaced away from it), rtol as C4's, the absolute tolerance 10⁻¹⁴ or, below ε = 10⁻¹⁴, 10⁻⁵ε (`c4_atol`: at "
-           "10⁻¹⁴ the state before the entry, at the masses' scale, is unresolved there and the loop enters thousands of s early), the "
+           "runner-up displaced away from it), rtol as C4's, the absolute tolerance min(10⁻¹⁴, 10⁻⁵ε) (`c4_atol`: "
+           "at 10⁻¹⁴ the state before the entry, at the masses' scale, is unresolved at ε = 10⁻¹⁷ and the loop enters thousands of s "
+           "early), the "
            "outputs from s = −100 about the path's entry (s = (τ − τ_e)/ε^{1/2}; a row marked † has the grid of C4, from s = 10⁻⁷s₂, "
            "which can begin past the inner layer):", "",
            "| x | ε | side | the pair's closest approach (σ) | max w held | departure s | s₂ | kernels per feature (final) | the runner-up "
@@ -1664,8 +1784,8 @@ def c4m_outcome(r):
 
 
 def rp_lines(RP):
-    """RP's report: the relative offset against the slaved-centroid law (and round 58's), per window and arithmetic; the law continued
-    below the floating-point floor; the Jacobian's rates against the law's; s_d in the samples' time (referee round 62)."""
+    """RP's report: the relative offset against the slaved-centroid law (and round 58's), per window and arithmetic; the Jacobian's rates
+    against the law's at every row (referee round 66); s_d and the climb's end in the samples' time (referee round 62)."""
     if RP is None or not len(RP):
         return []
     N0 = window(1.0).N
@@ -1685,17 +1805,19 @@ def rp_lines(RP):
            + f" against the law integrated from s = {S0_RP:g} with the block's centroid c_b = (w_e c_e + w c_r)/W slaved to its rest — "
            "dD/ds = κ[Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(ρ′D + (∂c̄*/∂W)dW/ds)], κ = W²/(2(w² + w_e²)), ρ = (w_e − w)/(2W) "
            "(the midpoint c̄ = c_b + ρD), ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩, F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩ —; ∂c̄*/∂W (σ per unit W) at s = 700; "
-           "the least |D| after the wall before the departure and its share along e; the side, the departure s_d (in brackets times N₀/N: "
-           "in Part C's time) and |D|'s growth rate on s ∈ [3·10³, 10⁴]:", "",
+           "the least |D| after the wall before the departure and its share along e; the side, the climb's end (|D| back at "
+           f"{D_CLIMB:g}σ) and the departure s_d (in brackets times N₀/N: in Part C's time) and |D|'s growth rate on s ∈ [3·10³, 10⁴]:", "",
            "| target | x | window | N | sums | D at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP) + " (x, y) | the law | ∂c̄*/∂W (x, y) | "
-           "least \\|D\\| (its share along e) | side | s_d (×N₀/N) | growth rate |", "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+           "least \\|D\\| (its share along e) | side | climb's end (×N₀/N) | s_d (×N₀/N) | growth rate |",
+           "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     vec = lambda v: '—' if v is None else f"({v[0]:+.2e}, {v[1]:+.2e})"
     key = lambda r: (r['name'], r.get('win') is not None, str(r.get('win')), r['top'], r['prec'], r['x'])
     for r in sorted(RP, key=key):
         sd = 'none' if r['s_d'] is None else f"{r['s_d']:.4g} ({r['s_d'] * N0 / r.get('N', N0):.4g})"
+        sc = '—' if r.get('s_climb') is None else f"{r['s_climb']:.4g} ({r['s_climb'] * N0 / r.get('N', N0):.4g})"
         out.append(f"| {r['name']} | {r['x']:g} | {wname(r)} | {r.get('N', N0)} | {'long double' if r['prec'] == 80 else 'float64'} | "
                    + '; '.join(vec(v) for v in r['D']) + " | " + '; '.join(vec(v) for v in r['law']) + f" | {vec(r['dcdW'])} | "
-                   + f"{r['least']:.2e} (" + ('—' if r['e_least'] is None else f"{r['e_least']:+.2f}") + f") | {r['side']} | {sd} | "
+                   + f"{r['least']:.2e} (" + ('—' if r['e_least'] is None else f"{r['e_least']:+.2f}") + f") | {r['side']} | {sc} | {sd} | "
                    + ('—' if r['grow'] is None else f"{r['grow']:.3g}") + " |")
     std = sorted([r for r in RP if r['top'] == 1.0 and r['prec'] == 64 and r['name'] == 'near tie' and r.get('win') is None],
                  key=lambda r: r['x'])
@@ -1708,30 +1830,22 @@ def rp_lines(RP):
         if all('ulp' in r for r in std):
             out += ["The run's D is the difference of float64 centres, so D_y is quantised in steps of the runner-up's c_y's last place, "
                     + ', '.join(f"{r['ulp']:.3g}σ" for r in std) + f" (x = {', '.join(f'{r[chr(120)]:g}' for r in std)}): the pin "
-                    "at x = 3 is " + ', '.join(f"{abs(r['D'][1][1]) / r['ulp']:.0f}" for r in std if r['x'] == 3.0) + " such steps."]
-    jr = [r for r in RP if r.get('jac')]
+                    "at x = 3 is " + ', '.join(f"{abs(r['D'][1][1]) / r['ulp']:.0f}" for r in std if r['x'] == 3.0) + " such steps, the "
+                    "law there within " + ', '.join(f"{abs(r['law'][1][1] - r['D'][1][1]) / r['ulp']:.1f}" for r in std if r['x'] == 3.0)
+                    + " of them at s = 700."]
+    jr = [r for r in RP if r.get('jac') and r['prec'] == 64]
     if jr:
-        out += ["", "The rate (referee round 62): the Jacobian's eigenvalues nearest the relative mode's (the full two-kernel system, "
-                "Λ₀ times `critical_jac_nd`) against the slaved law's κλ_D·eig⟨r, ∇²_cφ⟩ and round 58's λ_D·eig⟨r, ∇²_cφ⟩ "
-                "(λ_D = Λ₀·2Gm ww_e/W): " + '; '.join(
+        js = [(r, j) for r in sorted(jr, key=key) for j in r['jac']]
+        err = [max(abs(a - b) for a, b in zip(sorted(j['law']), sorted(j['jac']))) / max(abs(b) for b in j['jac']) for r, j in js]
+        out += ["", "The rate (referee rounds 62 and 66), at every float64 row: the Jacobian's eigenvalues nearest the relative mode's (the "
+                "full two-kernel system, Λ₀ times `critical_jac_nd`) against the slaved law's κλ_D·eig⟨r, ∇²_cφ⟩ — its error over the largest rate — "
+                "and round 58's λ_D·eig⟨r, ∇²_cφ⟩ (λ_D = Λ₀·2Gm ww_e/W): " + '; '.join(
                     f"{r['name']}, x = {r['x']:g}, {wname(r)}, s = {j['s']:.4g}: " + ', '.join(f"{a:+.4g}" for a in j['jac'])
-                    + " against " + ', '.join(f"{a:+.4g}" for a in j['law']) + " (κ = " + f"{j['kappa']:.3f}" + "; round 58: "
-                    + ', '.join(f"{a:+.4g}" for a in j['law0']) + ")" for r in sorted(jr, key=key) for j in r['jac']
-                    if r['prec'] == 64 and (r['x'] in (4.9, 7.0)) and (r.get('win') is None and r['top'] == 1.0)) + "."]
-    cr = [r for r in RP if r.get('cont')]
-    if cr:
-        out += ["", f"The law continued below the floating-point floor, from s = {S0_RP:g} until |D| reaches {D_CLIMB:g}σ (D its own "
-                "variable, so not quantised by the centres' last place): its least |D| (log₁₀ σ), the share along e there, the side "
-                "(toward feature 2 or away) and the s at which |D| reaches the end (in brackets times N₀/N: in Part C's time) — forced by "
-                "the block's rest moving with W, unforced, and forced by the centroid's measured velocity (where resolved; beyond, "
-                "extrapolated along its direction at its fitted decay):", "",
-                "| target | x | window | sums | forced by the rest | unforced | forced by the measured centroid |", "|---|---|---|---|---|---|---|"]
-        cc = lambda c, n_: (f"{np.log10(c['least']):.1f} ({'—' if c['e_least'] is None else format(c['e_least'], '+.2f')}), "
-                            f"{c['side']}, " + ('—' if c['s_climb'] is None else f"{c['s_climb']:.4g}"
-                                                + ('' if n_ == N0 else f" ({c['s_climb'] * N0 / n_:.3g})"))) if c['least'] > 0 else 'exact zero'
-        for r in sorted(cr, key=key):
-            out.append(f"| {r['name']} | {r['x']:g} | {wname(r)} | {'long double' if r['prec'] == 80 else 'float64'} | "
-                       + ' | '.join(cc(r['cont'][m], r.get('N', N0)) for m in ('rest', 'none', 'meas')) + " |")
+                    + " against " + ', '.join(f"{a:+.4g}" for a in j['law']) + f" ({e_:.1%}; κ = {j['kappa']:.3f}; round 58: "
+                    + ', '.join(f"{a:+.4g}" for a in j['law0']) + ")" for (r, j), e_ in zip(js, err)) + ".",
+                f"Over these rows κ = {min(j['kappa'] for r, j in js):.3f}–{max(j['kappa'] for r, j in js):.3f} and the slaved law's error "
+                f"{min(err):.1%}–{max(err):.1%} of the largest rate: the slaving holds while the centroid's modes are faster than the "
+                "relative mode, its error growing as they near it."]
     for top in [t for t in TOPS_RP if t != 1.0]:
         pairs = [(a, b) for a in std for b in RP if b['top'] == top and b['prec'] == 64 and b['name'] == 'near tie' and b['x'] == a['x']
                  and b.get('win') is None]
@@ -1746,6 +1860,60 @@ def rp_lines(RP):
     out += [f"Long double against float64 (x = {a['x']:g}, top {a['top']:g}): D at s = 700 {vec(b['D'][1])} against {vec(a['D'][1])}, "
             f"the side {b['side']} against {a['side']}, s_d " + ('none' if b['s_d'] is None else f"{b['s_d']:.4g}") + " against "
             + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") + "." for a, b in p80]
+    out.append("")
+    return out
+
+
+def rc_lines(RC, RP=None):
+    """RC's report: the relative mode in the continuum (continued about a merged block, injected into the race) per gap and target, its
+    checks, and s_d against Part C's window's (RP) — the climb's end and the hold (referee round 66)."""
+    if RC is None or not len(RC):
+        return []
+    N0 = window(1.0).N
+    main_ = [r for r in RC if (r['sub'], r['ymode'], r['inj']) == (SUB_RC, 'y', INJ_RC)]
+    nf = main_[0]['N']
+    pc = lambda v: '—' if v is None else f"{v:.4g} ({v * N0 / nf:.4g})"
+    out = ["## RC. The relative mode in the continuum: continued about a merged block, injected into the race (referee round 66)", "",
+           f"On the window with every edge at least {min(edges(WIN_FAR)):.2f}σ from the block (N = {nf}; s in its time, in brackets "
+           f"times N₀/N: Part C's, N₀ = {N0}) R's race (`rp_job`'s) to s₁ = {S1_RC:g}; there the merged block — both kernels at the "
+           "centroid c_b less its offset y = (∂F/∂c_b)⁻¹F(c_b) off the merged rest — runs on (`merged_rhs`), and the centres' "
+           "perturbation (δc_e = y − (w/W)D, δc_r = y + (w_e/W)D) by the race's exact Jacobian's centre block about it, in midpoint "
+           f"matrix exponentials ({SUB_RC} per output, the norm in logarithms: no floor), until D = δc_r − δc_e, past its least, has "
+           f"regrown to {INJ_RC:g}σ (and to twice its least); there it is injected into the float64 race, run to the departure (2σ) or, "
+           f"on the far side, to its rests ({SIDE_R:g}σ beyond feature 0 away from feature 2). The least |D| (log₁₀ σ), its share along e "
+           "and its s; the contraction's e-folds from s₁; the injection's s; the side; the climb's end (|D| = "
+           f"{D_CLIMB:g}σ) and s_d:", "",
+           "| target | x | least \\|D\\|: log₁₀ σ (share along e), at s | e-folds | injected at s | side | climb's end | s_d |",
+           "|---|---|---|---|---|---|---|---|"]
+    for r in sorted(main_, key=lambda r: (r['name'], r['x'])):
+        out.append(f"| {r['name']} | {r['x']:g} | {r['least']:.2f} ({r['e_least']:+.2f}), {r['s_least']:.4g} | {r['efolds']:.0f} | "
+                   + ('—' if r['s_inj'] is None else f"{r['s_inj']:.4g}") + f" | {r['side']} | {pc(r['s_climb'])} | {pc(r['s_d'])} |")
+    ck = [r for r in RC if r not in main_]
+    ref = {(r['name'], r['x']): r for r in main_}
+    if ck:
+        out += ["", "Checks (the same gap; 16 substeps; y = 0 in the perturbation; the injection at another level): " + '; '.join(
+            f"{r['name']}, x = {r['x']:g}, {r['sub']} substeps, " + ('y' if r['ymode'] == 'y' else 'y = 0') + f", {r['inj']:g}σ: least "
+            f"{r['least']:.2f} against {ref[(r['name'], r['x'])]['least']:.2f}, s_d " + ('—' if r['s_d'] is None else f"{r['s_d']:.6g}")
+            + " against " + ('—' if ref[(r['name'], r['x'])]['s_d'] is None else f"{ref[(r['name'], r['x'])]['s_d']:.6g}") + f", the side "
+            f"{r['side']}" for r in ck if (r['name'], r['x']) in ref) + "."]
+    if RP is not None and len(RP):
+        far = {(q['name'], q['x']): q for q in RP if q.get('win') is not None and list(q['win']) == list(WIN_FAR)}
+        std = {q['x']: q for q in RP if q.get('win') is None and q['top'] == 1.0 and q['prec'] == 64 and q['name'] == 'near tie'}
+        val = [(r, far[(r['name'], r['x'])]) for r in main_ if (r['name'], r['x']) in far and far[(r['name'], r['x'])]['least'] > INJ_RC
+               and r['s_d'] is not None and far[(r['name'], r['x'])]['s_d'] is not None]
+        if val:
+            out += ["", "Where float64 resolves the offset itself (RP's least |D| on this window above the injection's level) the injected "
+                    "race's s_d against the plain run's: " + '; '.join(f"{r['name']}, x = {r['x']:g}: {r['s_d']:.5g} against {q['s_d']:.5g}"
+                                                                       for r, q in val) + "."]
+        cmp_ = [(r, std[r['x']]) for r in main_ if r['name'] == 'near tie' and r['x'] in std and r['s_d'] is not None
+                and std[r['x']]['s_d'] is not None and std[r['x']].get('s_climb') is not None and r['s_climb'] is not None]
+        if cmp_:
+            out += ["", "s_d is the climb's end plus the hold after it: on Part C's window (RP, top edge at 1) the climb starts from the pin, "
+                    "in the continuum from the layer's offset. In Part C's time — the climb's end, s_d and their shifts, the continuum's "
+                    "less the pin's: " + '; '.join(
+                        f"x = {r['x']:g}: climb {q['s_climb']:.4g} → {r['s_climb'] * N0 / nf:.4g}, s_d {q['s_d']:.4g} → "
+                        f"{r['s_d'] * N0 / nf:.4g} ({(r['s_d'] * N0 / nf) / q['s_d'] - 1:+.1%}; shifts {r['s_d'] * N0 / nf - q['s_d']:.3g} "
+                        f"and {r['s_climb'] * N0 / nf - q['s_climb']:.3g})" for r, q in sorted(cmp_, key=lambda t: t[0]['x'])) + "."]
     out.append("")
     return out
 
@@ -1854,7 +2022,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None, C4M=None):
 
 
 def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None,
-           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None, C4W=None):
+           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None, C4W=None, RC=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
@@ -2236,7 +2404,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
     if C4 is not None:
         L_ += ["## C4. The race: the gap held, the mass varied", "",
                f"C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{{1/2}}) at the masses {', '.join(f'{e:g}' for e in EPS_C4)} "
-               f"(rtol {RTOL_C3:g}): the runner-up's largest coefficient while within 2σ of feature 0 (after its entry) against the fold "
+               f"(rtol {RTOL_C3:g}, the absolute tolerance min(10⁻¹⁴, 10⁻⁵ε): `c4_atol`): the runner-up's largest coefficient while within 2σ of feature 0 (after its entry) against the fold "
                "c(d)ℓ(d) at feature 2's distance; its departure (2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against feature 2's own entry "
                "s₂ = (τ₂ − τ_e)/ε^{1/2}, its coefficient at the departure; the final kernels per feature and the outcome; at the tolerance "
                f"{RTOL_C4B:g} (C4b) the outcome, the largest coefficient held and the departure:", "",
@@ -2273,6 +2441,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
         L_.append("")
     L_ += r_lines(R, C3, C4, C4b, FC, C4M)
     L_ += rp_lines(RP)
+    L_ += rc_lines(RC, RP)
     if T3 is not None:
         L_ += ["## T3. The product rule at a vertex of hℤ³", "",
                f"The 8 kernels at the corners of the cube {{0, H}}³ (samples on a tensor grid of spacing {DS:g}), the feature (A = {A_B:g}) at "
@@ -2373,7 +2542,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
 
 
 KEYS = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2', 'C4b', 'R', 'VF', 'FC', 'C4M',
-        'RP', 'C4W')                                                           # the raw's parts, in `report`'s order
+        'RP', 'C4W', 'RC')                                                           # the raw's parts, in `report`'s order
 
 
 def main():
@@ -2396,7 +2565,7 @@ def main():
                   ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2), ('V', part_V), ('C3', part_C3),
                   ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4'])), ('C4', part_C4), ('B4x', lambda: part_B4x(res['B4'])),
                   ('V3', part_V3), ('D2', part_D2), ('C4b', part_C4b), ('R', part_R), ('VF', part_VF), ('FC', part_FC),
-                  ('C4M', part_C4M), ('RP', part_RP), ('C4W', part_C4W)):
+                  ('C4M', part_C4M), ('RP', part_RP), ('C4W', part_C4W), ('RC', part_RC)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
