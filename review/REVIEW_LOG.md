@@ -2372,3 +2372,43 @@ the centres' mobility. A gate on the error's energy cannot see that. The negativ
 thresholds, the true error in the adaptation, bounded centres, another metric. Run before writing the claim, they show its scope:
 one level, one regressor, one metric. And when a law holds "given the order", the draws where the order changes must be reported
 apart; a pooled mean hides them.
+
+## Round 59 (adversarial review of Proposition D‴.52 as revised after round 55, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bf: Proposition D‴.52 as revised after round 55, with its code and results
+at 03d01bb (`review/REVIEW_round59_D3bf.md`). The referee:
+- regenerated the md byte for byte and reran A, B, C/D and E cells bit-identically, E consuming the main rng as `e_job` does;
+- checked (i) on two pairs it was not tested on, and the null law at the true fit in all 15 E cells;
+- computed the score test at E's first fits, the runner-up's filter and its cosine with f₁ − f₀, the effective critical values;
+- ran the opposite-sign pair (0.8, −0.4) and the near-tie offset c̄ = 0.049 over separations (`detect.py`);
+- identified the transit's knots with the LARS knots on a fixed dictionary (τ₂λ₂ = 1 to 5·10⁻¹⁵ over 200 noisy pairs);
+- ran 36 single-point mutants and searched the literature.
+
+**Verdicts (D3bf).** The deterministic core, the new null law and the placement at the Cramér–Rao bound hold. But the knot's
+"near-Neyman–Pearson" power held at one offset only: across E's 15 cells the bound exceeds the knot's power by up to 0.31, and the
+matched-filter explanation predicts the opposite pattern (the runner-up's filter is best aligned where the power is worst). The losses
+come from what the knot adds to the filter — the minimum over the dictionary, and near a tie the margin's own noise —, and a score
+test computed from the same first fit sits at the bound in every cell. For an opposite-sign pair the knot test is biased (power below
+α). The second knot is the LARS second knot, so Δτ₂ is a spacing statistic with known conditional nulls, and the calibration is the
+parametric bootstrap at the fitted null. Minors: the resolution limit's offset dependence, the bootstrap conservative near a tie, D's
+jump variable, biased split cells, C's 200-draw thresholds, misquotes, E's data path untested (17 of 36 mutants surviving).
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bf-1 | major | "Near-Neyman–Pearson power" fails across the cell; the matched filter does not explain it | (iii): the knot falls below the bound by what it adds to the runner-up's filter — the dictionary's minimum (far kernels share the H0 tail), the margin's noise near a tie (it swaps the first entrant); (iv) new: the score z = ⟨r̂₁, ∂²_cφ(ĉ)⟩/(s‖R̂∂²_cφ(ĉ)‖) at the first fit, N(0, 1) under H0 and with the bound's mean under H1 to first order; Part S scores C's and E's draws: z's power −0.057 … +0.052 from the bound and +0.022 … +0.332 above the calibrated knot in all 15 E cells, its pooled size 0.0493 [0.0459, 0.0529] (t-version 0.0506) |
+| D3bf-2 | major | The knot test biased for opposite signs; only (0.8, 0.6) tested | Part F: (0.8, 0.6) and (0.8, −0.4) at 8 offsets × 3 levels × 6 separations; the knot's Δ₅₀ 1.846–3.344 times the bound's for (0.8, −0.4), its least power 0.000–0.025 in every cell, not monotone in Δ at c̄ = 0.032; both walls' knots at α/2 each (`knot_walls`, `walls_at_fit`) 1.707–1.840; z one-sided 0.965–1.058 for both signs; (iii) states the bias and the walls' remedy |
+| D3bf-3 | major | Novelty: the LARS knot, the spacing test, the parametric bootstrap, the resolution literature | (iii): τ_k = 1/λ_k on a fixed dictionary (u_j(τ) = τc_j(1/τ)), Δτ₂ a spacing of the sliding LARS path; Status: the spacing test (Tibshirani–Taylor–Lockhart–Tibshirani 2016), its power (Azaïs–De Castro–Mourareau 2018, 2017), the covariance test, McLachlan 1987, Harris, Helstrom, Shahram–Milanfar, Liu–Nehorai (Smith's criterion), Kulaitis–Munk–Werner, Neyman–Scott's C(α), Osher–Ruan–Xiong–Yao–Yin, Amari–Park–Ozeki, Wei–Amari, Dwivedi et al., Heinrich–Kahn; New narrowed to the delay law and its branches, the knot's losses measured, the score's two readings in the paradigm (the moving width's drive, the relative mode's rate) and the mobility-weighted rates |
+| D3bf-4 | minor | The limit depends on the offset; the no-tie condition | F gives Δ₅₀ per offset over both halves of the cell for six tests; (iii): near a tie, where the runner-up's margin is comparable with its noise (sd ≈ 0.16s), the quantile falls faster than 1/s |
+| D3bf-5 | minor | The bootstrap conservative near a tie; s known | (iii): "valid, conservatively near a tie; s known"; E prints Clopper–Pearson intervals (0.019 [0.011, 0.030], 0.022 [0.014, 0.033]; pooled 0.0457 [0.0424, 0.0492]) |
+| D3bf-6 | minor | D's jump variable | (v) and D: the positions jump at s ≈ 12Δ², where the pair stops being detected ((iii)'s order); D prints the position error against s/Δ² (≥ 0.2 in the 9 cells with s/Δ² ≥ 12, ≤ 0.152 in the 31 with s/Δ² ≤ 9.8) |
+| D3bf-7 | minor | The split's error below the bound in biased cells | (v): at the bound up to s ≈ 24Δ³, below it beyond, where the bounded split is no longer estimated without bias; D prints the split's error over its bound against s/Δ³ |
+| D3bf-8 | minor | C's thresholds from 200 H0 draws | C′: C's draws against the knot's law at the truth (20000 samples, `knot_walls`) and the score, with the threshold's false alarms and Δ₅₀'s bootstrap intervals |
+| D3bf-9 | minor | Misquotes and a floating-point count | B prints the flow's separation rate over its second-smallest (17.8, 21.4, 11.9 at Δ = 0.0125); E's within-0.05 count with a tolerance (13 of 15); the fixed threshold's out-of-sample range c̄ < 0.032 (0.027–0.044); E's std-ratio column names j₁ and j₁ ∓ 1; the near-dipole's own split error 500.7 |
+| D3bf-10 | minor | E's data path untested; tests on the code's own formulas | tests: `e_job` on a few draws (p against a direct `knot_law`, H0 from the one-bump fit, distinct seeds), `crb` on an orthogonal design and `np_power` against Φ(‖f₁ − f₀‖/s − z₀.₉₅), `d50_bootstrap` on a deterministic table, `knot_of` over several noise vectors (error ∝ s), the score statistic, the knot per wall, `f_job`/`s_job` on a few draws, F's report on synthetic jobs (24 tests) |
+| D3bf-11 | cosmetic | README; E's column; the quantile ratio | the drafts README updated; the realized size at the law's quantile printed with its interval beside the ratio |
+
+**Lesson.** A detection statistic is judged against the efficient test on the same data, not against its own calibration. The knot
+looked near-optimal at the offset where it was tuned; the score test, computed from the first fit the path already makes, sits at
+the Neyman–Pearson bound everywhere, and its two readings — the moving width's drive and the split mode's rate — are statistics the
+paradigm computes anyway. A test with a sign-dependent drift must be run for both signs before "counts two features" is written: for
+an opposite-sign pair the drift empties exactly the channel through which the knot comes early.

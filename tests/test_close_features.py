@@ -252,20 +252,218 @@ def test_the_report_on_synthetic_results():
 
 
 def test_the_e_report_on_synthetic_draws():
-    """E's rows and summary (round 55): the draws' H0 quantile against the law's, the threshold fixed at c̄ = CBAR applied beyond its
-    offset, the calibrated test's size and the powers, on hand-made draws (H0 delays uniform on [a, 2a], the bootstrap p-values i/100)."""
+    """E's rows and summary (rounds 55, 59): the draws' H0 quantile against the law's, the threshold fixed at c̄ = CBAR applied out of
+    sample (below CBAR) and beyond, the calibrated test's size with its Clopper–Pearson interval and the powers, on hand-made draws (H0
+    delays uniform on [a, 2a], the bootstrap p-values i/100)."""
     rng = np.random.default_rng(3)
     D, s = CF.CELLS_E[0]
     E_ = []
-    for cb, a in ((CF.CBAR, 1.0), (0.049, 0.1)):
+    for cb, a in ((0.0, 1.0), (CF.CBAR, 1.0), (0.049, 0.1)):
         d0 = a * (1 + rng.random(100))
         d1 = a * (0.5 + rng.random(100))
         E_.append(dict(D=D, s=s, cbar=cb, rows0=[dict(dt=float(x), p=i / 100, j=[5, 6]) for i, x in enumerate(d0)],
                        rows1=[dict(dt=float(x), p=0.0, j=[5, 7]) for x in d1], q_law=1.05 * float(np.quantile(d0, CF.ALPHA_C)),
                        ratio=np.full(21, 0.1), c1=cb, np=0.9))
     md = CF.report(E_=E_)
-    assert md.count(f'| {D:g}, {s:g} | ') == 2 and '| 0.050, 0.050 |' in md and '| 1.000, 0.050 |' in md
-    assert ("Over the 2 cells: the law's H0 quantile over the draws' 1.050–1.050 (median 1.050); the false alarms of the threshold fixed at "
-            f"c̄ = {CF.CBAR:g} 0.050–0.050 at c̄ ≤ {CF.CBAR:g} and 1.000–1.000 beyond, of the calibrated test 0.050–0.050 (nominal 0.05)") in md
+    lo, hi = CF.cp_int(5, 100)
+    ref = E_[1]
+    qref = np.quantile([q['dt'] for q in ref['rows0']], CF.ALPHA_C)
+    fa0 = np.mean(np.array([q['dt'] for q in E_[0]['rows0']]) < qref)
+    assert md.count(f'| {D:g}, {s:g} | ') == 3 and f'| 0.050, 0.050 [{lo:.3f}, {hi:.3f}] |' in md and f'| 1.000, 0.050 [{lo:.3f}, {hi:.3f}] |' in md
+    assert (f"the false alarms of the threshold fixed at c̄ = {CF.CBAR:g} {fa0:.3f}–{fa0:.3f} at c̄ < {CF.CBAR:g} (out of sample) and "
+            "1.000–1.000 beyond, of the calibrated test 0.050–0.050 (nominal 0.05)") in md
     pw = [np.mean(np.array([q['dt'] for q in e['rows1']]) < np.quantile([q['dt'] for q in e['rows0']], CF.ALPHA_C)) for e in E_]
-    assert f"power minus the oracle's {1 - max(pw):+.3f} … {1 - min(pw):+.3f}, within 0.05 in 0 of 2" in md
+    assert f"power minus the oracle's {1 - max(pw):+.3f} … {1 - min(pw):+.3f}, within 0.05 in 0 of 3" in md
+    assert '| 0.100; 0.100, 0.100 |' in md                                       # the fit's kernel j₁, then j₁ ∓ 1
+
+
+def test_e_job_on_a_few_draws(monkeypatch):
+    """Referee round 59: `e_job` draws H0 from the one-bump fit and H1 from the pair, one rng per cell; each draw's p is its knot against
+    the law bootstrapped at its own first fit (`knot_law` at (ĉ, ŵ), the noise s, the draw's own rng); the law at the truth and the
+    std ratio as defined; the cells' seeds distinct."""
+    monkeypatch.setattr(CF, 'R0_E', 2)
+    monkeypatch.setattr(CF, 'R1_E', 2)
+    monkeypatch.setattr(CF, 'M_E', 64)
+    monkeypatch.setattr(CF, 'M_LAW', 400)
+    seen = []
+    real = RT.sliding_iss
+    monkeypatch.setattr(RT, 'sliding_iss', lambda L, K, y, *a, **k: (seen.append(y.copy()), real(L, K, y, *a, **k))[1])
+    D, s, cb, seed = CF.e_jobs()[7]
+    r = CF.e_job((D, s, cb, seed))
+    L, K, c0 = CF.setup()
+    f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, D, cb), CF.PAIR_C)
+    c1, w1 = CF.one_fit(K, f1)
+    f0 = w1 * K.phi(np.array([c1]))[:, 0]
+    rng = np.random.default_rng(seed)
+    ys = [f0 + s * rng.standard_normal(K.xs.size) for _ in range(2)] + [f1 + s * rng.standard_normal(K.xs.size) for _ in range(2)]
+    assert len(seen) == 4 and all(np.array_equal(a, b) for a, b in zip(seen, ys))
+    for hyp, rows in ((0, r['rows0']), (1, r['rows1'])):
+        for k, q in enumerate(rows):
+            law = CF.knot_law(K, c0, q['c1'], q['w1'], s, 64, np.random.default_rng([seed, hyp, k]))
+            assert q['p'] == np.mean(law <= q['dt'])
+    assert r['q_law'] == np.quantile(CF.knot_law(K, c0, c1, w1, s, 400, np.random.default_rng([seed, 9])), CF.ALPHA_C)
+    Rm, Phi = CF.tangent_projector(K, c1, w1), K.phi(c0)
+    assert np.allclose(r['ratio'], np.sqrt(np.mean((Rm @ Phi) ** 2, axis=0) / np.mean(Phi ** 2, axis=0)))
+    assert len({j[3] for j in CF.e_jobs()}) == len(CF.e_jobs()) and len({j[3] for j in CF.c_jobs()}) == len(CF.c_jobs())
+    assert len({CF.f_seed(*j[:5]) for j in CF.f_jobs()}) == len(CF.f_jobs())
+
+
+def test_crb_and_np_power_closed_forms():
+    """Referee round 59: `crb` on an orthogonal design (JᵀJ diagonal) and `np_power` against Φ(‖f₁ − f₀‖/s − z₀.₉₅)."""
+    from scipy.stats import norm
+
+    class Ortho:
+        xs = np.zeros(4)
+
+        def phi(self, cs):
+            return np.array([[2.0, 0.0], [0.0, 3.0], [0.0, 0.0], [0.0, 0.0]])
+
+        def dphi(self, cs):
+            return np.array([[0.0, 0.0], [0.0, 0.0], [5.0, 0.0], [0.0, 7.0]])
+    w, s = np.array([0.8, 0.6]), 0.3
+    pos, split = CF.crb(Ortho(), None, w, s)
+    W = w.sum()
+    assert np.isclose(pos, s * np.sqrt((1 / (25 * w[0] ** 2) + 1 / (49 * w[1] ** 2)) / 2), rtol=1e-12)
+    assert np.isclose(split, s * np.sqrt(w[1] ** 2 / W ** 4 / 4 + w[0] ** 2 / W ** 4 / 9), rtol=1e-12)
+    L, K, c0 = CF.setup()
+    d = np.zeros(K.xs.size)
+    d[3] = 1.0
+    for a in (0.0, 1.0, 2.5):
+        f1 = (norm.ppf(0.95) + a) * 0.01 * d
+        assert np.isclose(CF.np_power(K, f1, 0 * d, 0.01), norm.cdf(a), rtol=1e-12)
+
+
+def test_d50_bootstrap_on_a_deterministic_table():
+    """Referee round 59: a power that steps from 0 to 1 between two grid separations crosses ½ at their geometric mean, in every
+    resample; `crossing` interpolates in log Δ."""
+    Ds = sorted(CF.DELTAS_C)
+    C = []
+    for s in CF.SIGMAS_C:
+        step = Ds[3] if s < 0.01 else Ds[5]
+        for D in Ds:
+            C.append(dict(D=D, s=s, hyp=0, rows=[dict(dt=float(v)) for v in np.linspace(10.0, 20.0, 20)]))
+            C.append(dict(D=D, s=s, hyp=1, rows=[dict(dt=1.0 if D >= step else 50.0) for _ in range(20)]))
+    ci, sl = CF.d50_bootstrap(C, n=20)
+    for s in CF.SIGMAS_C:
+        k = 3 if s < 0.01 else 5
+        g = np.sqrt(Ds[k - 1] * Ds[k])
+        assert np.isclose(ci[s][0], g) and np.isclose(ci[s][1], g) and ci[s][2] == 0
+    assert np.isclose(CF.crossing([1.0, 2.0, 4.0], [0.2, 0.4, 0.6]), 2 * np.sqrt(2))
+    assert np.isnan(CF.crossing([1.0, 2.0], [0.1, 0.3]))
+
+
+def test_the_knot_law_on_several_noise_vectors():
+    """Referee round 59: `knot_of` is the path's second knot to first order over several noise vectors — the error ∝ s."""
+    L, K, c0 = CF.setup()
+    f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, 0.025), CF.PAIR_C)
+    c1, w1 = CF.one_fit(K, f1)
+    y0 = w1 * K.phi(np.array([c1]))[:, 0]
+    err = {}
+    for s in (1e-3, 1e-4):
+        e = []
+        for k in range(6):
+            xi = np.random.default_rng(100 + k).standard_normal(K.xs.size)
+            R = RT.sliding_iss(L, K, y0 + s * xi, c0, np.ones(c0.size), max_events=2, polish=True, max_entries=2)
+            ent = [t for t, j, kk, c in R['events'] if kk == 'enter']
+            e.append(abs((ent[1] - ent[0]) / CF.knot_of(K, c0, c1, w1, s * xi[None, :])[0] - 1))
+        err[s] = np.array(e)
+    assert err[1e-3].max() < 1e-2 and 4 < np.median(err[1e-3]) / np.median(err[1e-4]) < 25
+
+
+def test_the_score_statistic():
+    """Referee round 59: z = ⟨r, R∂²_cφ⟩/(s‖R∂²_cφ‖) at a one-bump fit — zero on a one-bump target; on a close pair's one-bump fit the
+    signal ‖f₁ − f₀‖ (r ∥ R∂²_cφ) with the pair's sign sign(A₁A₂); N(0, 1) under one bump with noise; the width's z_σ equal to it to first
+    order; σ̂² − σ² → V/A on a close pair (the pair's variance added)."""
+    L, K, c0 = CF.setup()
+    y = 0.9 * K.phi(np.array([0.03]))[:, 0]
+    assert abs(CF.score_stats(K, y, 0.03, 0.9, 0.01)[0]) < 1e-9
+    for A in ((0.8, 0.6), (0.8, -0.4)):
+        D = 0.01                                                       # ϑ = 0.12, 0.25: r ∥ R∂²φ to O(ϑ²)
+        f1 = X.bumps_target(K, CF.pair_centres(*A, D), A)
+        c1, w1 = CF.one_fit(K, f1)
+        z = CF.score_stats(K, f1, c1, w1, 1.0)[0]
+        assert np.sign(z) == np.sign(A[0] * A[1]) and abs(z) / np.linalg.norm(f1 - w1 * K.phi(np.array([c1]))[:, 0]) > 0.99
+        sg, sd = CF.width_fit(K, f1, c1, w1)
+        V_A = A[0] * A[1] * D ** 2 / sum(A) ** 2
+        assert abs((sg ** 2 - K.sig ** 2) / V_A - 1) < 0.05
+    rng = np.random.default_rng(8)
+    f0 = 1.4 * K.phi(np.array([0.032]))[:, 0]
+    zs, ws = [], []
+    for _ in range(600):
+        yy = f0 + 0.01 * rng.standard_normal(K.xs.size)
+        c, w = CF.one_fit(K, yy)
+        zs.append(CF.score_stats(K, yy, c, w, 0.01)[0])
+        ws.append(CF.width_z(K, yy, c, w, 0.01))
+    zs, ws = np.array(zs), np.array(ws)
+    assert abs(zs.mean()) < 0.15 and 0.9 < zs.std() < 1.1
+    assert np.abs(ws - zs).max() < 0.05
+
+
+def test_the_knot_per_wall():
+    """Referee round 59: `knot_walls`' minimum is `knot_of`; `walls_at_fit` at the path's own first fit is the path's second knot."""
+    L, K, c0 = CF.setup()
+    Xi = 0.01 * np.random.default_rng(1).standard_normal((300, K.xs.size))
+    a, b = CF.knot_walls(K, c0, 0.032, 1.4, Xi)
+    assert np.array_equal(np.minimum(a, b), CF.knot_of(K, c0, 0.032, 1.4, Xi))
+    f1 = X.bumps_target(K, CF.pair_centres(0.8, -0.4, 0.025), (0.8, -0.4))
+    for k in range(3):
+        y = f1 + 0.01 * np.random.default_rng(20 + k).standard_normal(K.xs.size)
+        R = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), max_events=2, polish=True, max_entries=2)
+        ent = [t for t, j, kk, c in R['events'] if kk == 'enter']
+        h = R['hist'][1]
+        i = int(np.flatnonzero(h[2])[0])
+        tA, tB = CF.walls_at_fit(K, c0, y, float(h[1][i]), float(h[2][i]))
+        assert abs(min(tA, tB) / (ent[1] - ent[0]) - 1) < 1e-9
+
+
+def test_f_and_s_jobs_on_a_few_draws(monkeypatch):
+    """Referee round 59: `f_job`'s rows — the knot per wall at the path's first fit, the p-values against `knot_walls` at that fit with the
+    draw's rng, the law at the truth with its own; `s_job` regenerates C's labels in the job's order (its scores are those of `c_job`'s
+    labels at their one-bump fits)."""
+    monkeypatch.setattr(CF, 'M_E', 64)
+    monkeypatch.setattr(CF, 'M_LAW', 400)
+    A, cb, s, D = (0.8, -0.4), 0.032, 0.01, 0.025
+    r = CF.f_job((A, cb, s, D, 1, 3))
+    L, K, c0 = CF.setup()
+    seed = CF.f_seed(A, cb, s, D, 1)
+    N = K.xs.size
+    for k, q in enumerate(r['rows']):
+        assert abs(min(q['tA'], q['tB']) / q['dt'] - 1) < 1e-9
+        la, lb = CF.knot_walls(K, c0, q['c1'], q['w1'], s * np.random.default_rng([seed, 1, k]).standard_normal((64, N)))
+        assert q['p'] == np.mean(np.minimum(la, lb) <= q['dt']) and q['pA'] == np.mean(la <= q['tA']) and q['pB'] == np.mean(lb <= q['tB'])
+    f1 = X.bumps_target(K, CF.pair_centres(*A, D, cb), A)
+    c1, w1 = CF.one_fit(K, f1)
+    la, lb = CF.knot_walls(K, c0, c1, w1, s * np.random.default_rng([seed, 0]).standard_normal((400, N)))
+    assert r['q_law'] == np.quantile(np.minimum(la, lb), CF.ALPHA_C) and r['qB'] == np.quantile(lb, CF.ALPHA_C / 2)
+    seen = []
+    monkeypatch.setattr(RT, 'sliding_iss', lambda L_, K_, y, *a, **kw: (seen.append(y.copy()), dict(events=[]))[1])
+    Dc, sc, hc, sdc = CF.c_jobs()[3]
+    monkeypatch.setattr(CF, 'R_C', 3)
+    CF.c_job((Dc, sc, hc, sdc))
+    out = CF.s_job(('C', Dc, sc, CF.CBAR, hc, sdc, (3,), None))
+    for y, q in zip(seen, out[f'rows{hc}']):
+        c, w = CF.one_fit(K, y)
+        assert q['z'] == CF.score_stats(K, y, c, w, sc)[0]
+
+
+def test_the_f_report_on_synthetic_jobs():
+    """Referee round 59: F's report — Δ₅₀ per test from the rejections, '<'/'>' at the grid's ends, the false alarms at H0."""
+    s, cb = CF.SIGMAS_F[1], CF.CBAR
+    Ds = CF.DELTAS_F[s]
+    F = []
+    for A in CF.PAIRS_F:
+        sg = np.sign(A[0] * A[1])
+        for D in Ds:
+            k = Ds.index(D)
+            rows = [dict(dt=1.0 if i < 50 * k else 9.0, p=0.5, tA=9.0, tB=9.0, z=sg * (3.0 if i < 40 * k else 0.0),
+                         zs=sg * (3.0 if i < 40 * k else 0.0), w1=1.0) for i in range(200)]
+            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, rows=rows, q_law=2.0, qA=1.0, qB=1.0, np=min(1.0, 0.2 * (k + 1))))
+        rows0 = [dict(dt=1.0 if i < 20 else 9.0, p=0.01 if i < 10 else 0.5, tA=9.0, tB=9.0, z=0.0, zs=0.0, w1=1.0) for i in range(400)]
+        F.append(dict(A=A, cbar=cb, s=s, D=Ds[CF.H0_F], hyp=0, rows=rows0, q_law=2.0, qA=1.0, qB=1.0, np=0.0))
+    md = '\n'.join(CF.f_lines(F))
+    knot = CF.crossing(list(Ds), [min(1.0, 0.25 * j) for j in range(len(Ds))])
+    z = CF.crossing(list(Ds), [min(1.0, 0.2 * j) for j in range(len(Ds))])
+    npd = CF.crossing(list(Ds), [min(1.0, 0.2 * (j + 1)) for j in range(len(Ds))])
+    row = f"| {s:g} | {cb:g} | {knot:.4g}, > {Ds[-1]:g}, > {Ds[-1]:g}, {z:.4g}, {z:.4g}, {z:.4g}, {npd:.4g} | 0.050, 0.025, 0.000, 0.000, 0.000, 0.000 |"
+    assert md.count(row) == 2
+    assert '## F. Resolution across the grid cell, for both signs' in md
