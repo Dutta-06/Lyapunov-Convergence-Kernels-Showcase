@@ -2030,3 +2030,45 @@ happens at the predicted K in 26 of 30 draws, the others one kernel later.
 numerical setting before it is interpreted: the precision, the tolerances, the acceptance rules, the solver's success flags and the
 starting grid each moved it. A solver loop that reuses its last state must check the solve's status, or a failure looks like a converged
 chunk. And a novelty paragraph should first try the result's one-line continuation (σ* < σ), which here found the closest precedent.
+
+## Round 53 (adversarial review of Proposition D‴.54 as revised after round 49, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3az: the round-49 revision of Proposition D‴.54 — (v) rewritten as a race —
+and its code and results at 886793f (`review/REVIEW_round53_D3az.md`). The referee:
+- solved the ε-free reduced problem (C4's two kernels after feature 0's entry, features 1 and 2 in the residual) and compared it with
+  C3's and C4's outcomes;
+- mirrored C2's near tie across the face and ran the reduced problem and the loop on it;
+- computed the far branch of V's static rests and the fold in C4's own geometry;
+- traced the rtol-10⁻¹² run that C4b disagreed with, and scanned the side against the tolerance;
+- ran 25 single-replacement mutants and checked the literature.
+
+**Verdicts (D3az).** The projected second-moment law is right and the race is real: the ε-free problem reproduces C4's departures and
+predicts C3's and C4's outcomes. But the hold is one-sided. At the second-moment order the rests' energy does not depend on the
+coefficient at all; its w-dependence enters at the third moment, odd in the displacement, so the branch away from the unfitted feature
+is the mirror image of the branch toward it: there the coefficient grows and the rests never fold. The inner layer collapses the pair
+and keeps its direction, so the side is set by the start — but for formed runner-ups the collapse passes below double precision and the
+integration's error picks the side; C4b's one disagreement was such a run, held on the far side, not a saddle. C4's "stranded" tails
+never left their feature; V3's (5σ, 3.5) cell was an artefact of the continuation's start; the fold divided by was not the
+configuration's own; several numbers were hand-computed; 13 of 25 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3az-1 | major | The hold is one-sided; the race misses the far side | (v) rewritten with both sides: the rests on either side of the feature, E* − E₀ = −P²/(2B) at the second order (the same on both sides, no w), the hold odd — the third moment M₃ = w(1 − w²/w_e²)δ³ adds E*₃ = ∓(1/6)P₃(σ²ℓ)^{3/2}(1 − w/w_e)(w(1 + w/w_e))^{−1/2}, P₃ = A′√π(d/σ)³e^{−d²/(4σ²)}/(8σ²) — toward the feature the coefficient decays to the fold and races; away from it the rests continue without a fold and the coefficient grows; the side (c_r⁰ − c_e⁰)·e kept by the inner layer; on the far side a tail is formed iff its coefficient passes θ\|A\| before s₂ (s_θ < s₂: one kernel more than (iv)'s count). Proof: the third moment, its projection off span{φ, ∇φ}, the envelope theorem, the gradient flow on the rests. (iv): the count moves by one either way (−1 a formed runner-up captured, +1 at the destination for a capture tie, +1 a far-side tail). D‴.51(ii)(c) in PARADIGM.md qualified (the loser migrates when its offset from the entrant points toward the feature; otherwise it is held and grows). Code: `e3_law`, `e3_ratios` (V's and VF's secants against the law: toward 1.042, away 0.963 at 7σ, mean 1.0025), VF (the far branches: no fold to w = 10⁻⁴, secants < 0 at 48 of 48 per d, 12 of 12 in the plane), FC (the folds in C4's own geometry), R (the ε-free race on both targets), C4M (the loop on the mirrored target: at (7, 10⁻¹³) the tail held far grows to 0.0224 and feature 0 ends with two kernels; at (7, 10⁻¹⁰) it stays below θ\|A\|) |
+| D3az-2 | major | Rounding decides the side for formed runner-ups; C4b misdiagnosed | `race_job` and `c4_job` record the side (where the runner-up first passes SIDE_R = 0.05σ: a formed runner-up rests 0.13–0.20σ out), the pair's closest approach in the layer and the displacement along e at the end and at τ₂; C4's table prints the side for both tolerances (at rtol 10⁻¹² every run went toward but (4.9, 10⁻¹¹), far — C4b's disagreement —; at 10⁻¹³ all 30 toward); R's scan of the side against rtol (not toward at 6, 6, 3, 1, 0 of 8 gaps at 10⁻⁹ … 10⁻¹³, two merged to the last bit); (v) and the numerics: where the collapse passes below the centres' resolution the integration's error picks the side; C4b's disagreement is the far side, not the saddle; the departure of a formed runner-up includes the saddle exit from the offset, λ⁻¹ln(rest/offset) |
+| D3az-3 | minor | "Stranded … away from both features" wrong for C4 | `c3_outcome`: by the recorded distance — not departed (never 2σ from feature 0), stranded (left, at neither feature), unsettled (no distance recorded: C3, run before the record); `c2_job` records the runner-up's largest and final distance; (v): a tail not departed by s₂ stays near its feature; C2's ε = 10⁻¹⁰ tail: not departed by R's s_d (no hand claim) |
+| D3az-4 | minor | V3's (5σ, 3.5) cell an artefact | `v_job` continues from a bound state found by fresh starts (the entrant from −0.5σ … σ): the cell is 3.135 (fold at w = 0.42369), the test corrected |
+| D3az-5 | minor | The fold divided by is not the configuration's own | FC: the fold in C4's geometry, 0.01668 (3.0% below the line's 0.0172, feature 1's binding); C3 and C4 divide by it (`fc_fold`); the departures' coefficients 0.97–1.03 of it |
+| D3az-6 | minor | The race's statement underspecified | (v): the capture set {x: s_d(x) < s₂}, an interval about the fastest departure (x ≈ 5.5) widening on both sides as ε → 0; "the fold would be its edge only if the coefficient did not decay before s₂"; R tabulates s_d(x) from the ε-free problem at 23 gaps (rtol 10⁻¹³) and checks the rule on 74 loop outcomes (73 agree, one capture tie) |
+| D3az-7 | minor | Hand-computed or unrecorded numbers | the numerics quote the md only: T3's table prints the formed corners' and the frozen tails' relative errors (the tails 6.5–50% below the product), C4's ratios to the fold with three significant digits (no "0.00"), the secant count over distinct branches (223 steps, V3's repeated column counted once: `toward_branches`); "(and 10⁻¹¹)" dropped; W4's range −1.8·10⁻⁴ … −8.9·10⁻³; B4's grid error named the product rule's coarse-grid error |
+| D3az-8 | minor | (iv)'s sentence; the destination's count | (iv) rewritten as two sentences: the count's domain, then (v)'s three exceptions with the destination's |
+| D3az-9 | minor | Tests miss the round-49 code | tests: `t3_product` with the complements; D2's shift at the offset; C3's fold column; the secant line over V and V3 and each branch once; the third-moment law; `race_job` on both sides and for a formed runner-up (the side at SIDE_R); `race_rule` and R's report; `c4_job` recording the side on both targets; `inner_k`'s clock after a chunk and a zero drift (monkeypatched); T3's frozen-tail column |
+| D3az-10 | minor | "The binding softens" unsupported | dropped: the leading order's error is attributed to the higher moments; the third moment carries the hold |
+| D3az-11 | minor | The novelty's neighbours | Status: Chizat's conic particle gradient descent (a Wasserstein–Fisher–Rao particle flow for sparse deconvolution) and Chizat–Bach; Boursier–Flammarion's early alignment and spurious stationary points from small initialisation, Pesme–Flammarion's and Kunin et al.'s dormant units; Poon–Peyré's multi-dimensional super-resolution; "New" limited to the one-sided race |
+| D3az-12 | cosmetic | Dead code; formats | `w_unbind` removed with its test; A′/A printed 0.437, 0.875; the C4 table's side column makes "max w held" on the far side the grown coefficient |
+
+**Lesson.** A sign computed on one branch does not settle a drift whose sign comes from a broken symmetry: at the second-moment order the
+held runner-up's energy does not depend on its coefficient, so the hold lives at the third moment, odd in the displacement, and the
+mirrored geometry reverses it — a held tail that grows instead of leaving. The same symmetry sets a numerical trap: the inner layer
+collapses the pair below double precision before the instability chooses the side, so a side computed near that floor is a draw of the
+integration's error. Record the quantity that decides (the side, the pair's closest approach), compare tolerances where that quantity
+is resolved, and solve the ε-free problem, which reproduces the loop's departures in seconds, before scanning masses.
