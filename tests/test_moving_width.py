@@ -92,14 +92,95 @@ def test_outcome_classes_and_pairs():
 
 
 def test_the_g_report():
-    """G's table: the stalled block's largest |w| and the opposite-sign pair's distance per s, the loop's formed kernels and pairs."""
+    """G's tables (referee round 57): the stalled block (kernels, max|w|, distance, residual against the dipole infimum, its polishes);
+    the flow's largest |w| and distance; the last interval's exponents; K = v²(E − E_inf) at the last two outputs; Δv³/Δs against
+    3μ₀K; the moment's σ-share; the loop's snapshots with the closest pair's distance, coefficients and offset."""
     import exp_moving_width as M
-    flow = [dict(s=s, wmax=w, sep=d, rms=0.123) for s, w, d in zip(M.S_G, (0.9, 4.6, 20.0, 92.0, 425.0), (5.9, 0.29, 0.062, 0.013, 0.0029))]
-    G = [dict(dmin=0.4, q=9, entries=2, flow=flow, status=0,
-              loops=[dict(eps=1e-6, formed=4, pairs=[(4.5, -3.96)], wmax=5.33, rms=2e-10)])]
+    ws = (0.9, 4.6, 20.0, 92.0, 300.0, 425.0)
+    seps = (5.9, 0.29, 0.062, 0.013, 0.0042, 0.0029)
+    flow = [dict(s=s_, wmax=w, sep=d, rms=0.2 + 1 / w) for s_, w, d in zip(M.S_G, ws, seps)]
+    law = [dict(v=v, E=E, E_inf=0.02, rms_inf=0.2, p=[0.1, -0.35], mu0=0.1, dc=dc, ds=ds)
+           for v, E, dc, ds in ((300.0, 0.02 + 1e-5, 2e-4, 6e-4), (425.0, 0.02 + 5e-6, 1.4e-4, 4.2e-4))]
+    stalled = dict(n=4, wmax=3910.0, sep=1.9e-4, rms=0.2000001, polish=[dict(status=2, nfev=2900, accepted=True, wmax_ratio=4300.0)], nfev=10)
+    loops = [dict(eps=1e-8, tau=t, formed=4, pair=dict(d=d, w=(4.5, -3.96), off=o), pairs=[], wmax=5.33, rms=r)
+             for t, d, o, r in ((400.0, 4.6e-4, 0.008, 1.1e-11), (1600.0, 3e-4, 0.005, 5e-12))]
+    G = [dict(dmin=0.4, q=9, entries=2, stalled=stalled, flow=flow, law=law, status=0, loops=loops)]
     md = M.report(G=G)
-    assert ('| 0.4 | 9 | 2 | 0.9, 4.6, 20, 92, 425 | 5.90e+00, 2.90e-01, 6.20e-02, 1.30e-02, 2.90e-03 | +0.332, -0.326 | 1.23e-01 |'
-            in md)
+    ls = np.log(M.S_G[-1] / M.S_G[-2])
+    ex = M.dipole_exponents(flow)
+    exs = (f"{ex[0]:+.4f}, {ex[1]:+.4f}, {np.log(1.4e-4 / 2e-4) / ls:+.4f}, {np.log(4.2e-4 / 6e-4) / ls:+.4f}, "
+           f"{np.log((flow[-1]['rms'] - 0.2) / (flow[-2]['rms'] - 0.2)) / ls:+.4f}")
+    K2 = [300.0 ** 2 * 1e-5, 425.0 ** 2 * 5e-6]
+    vv = f"{(425.0 ** 3 - 300.0 ** 3) / (M.S_G[-1] - M.S_G[-2]):.5e}, {3 * 0.1 * K2[1]:.5e}"
+    assert (f"| 0.4 | 9 | 2 | 4, 3910, 1.90e-04, 2.000001e-01 (2.000000e-01), 2/2900/a/4.3e+03 | 0.9, 4.6, 20, 92, 300, 425 | "
+            f"5.90e+00, 2.90e-01, 6.20e-02, 1.30e-02, 4.20e-03, 2.90e-03 | {exs} | {K2[0]:.5e}, {K2[1]:.5e} | {vv} | "
+            f"{0.35 / np.hypot(0.1, 0.35):.3f} |") in md
+    assert '| 0.4 | 9 | 1e-08 | 1600 | 4 | 3.00e-04, +4.500/-3.960, 0.005 | none | 5.33 | 5.0e-12 |' in md
     ex = M.dipole_exponents([dict(s=1e9, wmax=1.0, sep=1.0), dict(s=1e11, wmax=100 ** (1 / 3), sep=100 ** (-1 / 3))])
     assert abs(ex[0] - 1 / 3) < 1e-12 and abs(ex[1] + 1 / 3) < 1e-12 and M.dipole_exponents(flow[:1] + [dict(flow[1], sep=None)]) is None
-    assert 'ε = 1e-06: 4, +4.500/-3.960, 5.33, 2.0e-10 |' in md
+
+
+def test_the_formed_kernels_pairs_and_outcomes():
+    """Referee round 57: `n_formed` counts |w| above 1% of the smallest |amplitude|; `pairs_of` at PAIR_TOL in |Δc|/σ + |Δlog σ|;
+    `outcome`'s classes at their thresholds — exact (idle entrants allowed), a coinciding pair, a cancellation (a coefficient beyond 1.5
+    times the largest amplitude, or a width below the samples' spacing), not fitted (an error 2·10⁻⁶ or a residual 2·10⁻⁸), a dipole
+    run-off or another budget stop (the stalled block)."""
+    import exp_moving_width as M
+    assert M.n_formed(dict(w=[0.009, 0.0095, -0.5]), [1.0, -0.9]) == 2
+    T = M.PAIR_TOL
+    assert M.pairs_of([[0.0, 0.1], [0.1 * T * 0.99, 0.1]], [1.0, 2.0]) == [(1.0, 2.0)]
+    assert M.pairs_of([[0.0, 0.1], [0.1 * T * 1.01, 0.1]], [1.0, 2.0]) == []
+    assert M.pairs_of([[0.0, 0.1], [0.0, 0.1 * np.exp(T * 0.99)]], [1.0, 2.0]) and not M.pairs_of([[0.0, 0.1], [0.0, 0.1 * np.exp(T * 1.01)]], [1, 2])
+    th = [[-0.5, 0.1], [0.0, 0.1], [0.5, 0.1]]
+    m = lambda **kw: dict(dict(w=[1.0, 1.0, 1.0], theta=th, rms=1e-9, err=[1e-7, 1e-7, 1e-7], oob=False), **kw)
+    As = [1.0, 1.0, 1.0]
+    assert M.outcome(m(), As) == 'exact'
+    assert M.outcome(m(w=[1.0, 1.0, 1.0, 1e-3, 1e-3], theta=th + [[0.9, 0.1], [0.9, 0.1]]), As) == 'exact'
+    assert M.outcome(m(err=[2e-6, 1e-7, 1e-7]), As) == 'not fitted' and M.outcome(m(rms=2e-8), As) == 'not fitted'
+    assert M.outcome(m(w=[1.0, 0.5, 0.5, 1.0], theta=[th[0], th[1], th[1], th[2]], err=[1e-7, 0.5, 1e-7]), As) == 'coinciding pair'
+    assert M.outcome(m(w=[1.6, 1.0, 1.0], err=[0.6, 1e-7, 1e-7]), As) == 'cancellation'
+    assert M.outcome(m(theta=[[-0.5, 0.005], th[1], th[2]], err=[0.1, 1e-7, 1e-7]), As) == 'cancellation'
+    st = dict(theta=[[0.0, 0.1], [0.0002, 0.1], [0.5, 0.1]], w=[500.0, -499.0, 1.0])
+    assert M.outcome(m(oob=True, stalled=st), As) == 'dipole run-off'
+    assert M.outcome(m(oob=True, stalled=dict(st, w=[5.0, -4.0, 1.0])), As) == 'stopped by the budget'
+    assert M.outcome(m(oob=True), As) == 'stopped by the budget'
+
+
+def test_the_width_split_cancels_the_third_moment():
+    """Referee round 57: a pair of unequal shares Δc apart fits one Gaussian to O(Δc⁴) when its widths split by (w_j − w_i)Δc²/(6Wσ);
+    with equal widths the best single Gaussian leaves the third moment, O(Δc³)."""
+    import exp_moving_width as M
+    from scipy.optimize import least_squares
+    x = np.linspace(-1, 1, 801)
+    g = lambda c, s: np.exp(-(x - c) ** 2 / (2 * s ** 2))
+    wi, wj, sb = 0.3, 0.5, 0.1
+    W = wi + wj
+    res = []
+    for dc in (0.02, 0.01):
+        ci, cj = -wj * dc / W, wi * dc / W
+        _, _, pred = M.width_split([[ci, sb], [cj, sb]], [wi, wj], 0, 1)
+        assert abs(pred - (wj - wi) * dc ** 2 / (6 * W * sb)) < 1e-15
+        for d in (0.0, pred):
+            f = wi * g(ci, sb - wj * d / W) + wj * g(cj, sb + wi * d / W)
+            sol = least_squares(lambda z: f - z[0] * g(z[1], z[2]), [W, 0.0, sb], xtol=1e-15, ftol=1e-15, gtol=1e-15)
+            res.append(np.sqrt(np.mean(sol.fun ** 2)))
+    (e0, e1), (h0, h1) = res[:2], res[2:]
+    assert e1 < 0.2 * e0 and 7 < e0 / h0 < 9 and 14 < e1 / h1 < 18               # O(Δc³) and O(Δc⁴): 8 and 16 per halving
+    dc_, ds_, pr_ = M.width_split([[0.01, 0.11], [-0.01, 0.1]], [0.5, 0.3], 0, 1)        # sorted by centre: i the left kernel
+    assert dc_ == 0.02 and abs(ds_ - 0.01) < 1e-15 and abs(pr_ - (0.5 - 0.3) * 0.02 ** 2 / (6 * 0.8 * 0.105)) < 1e-15
+
+
+def test_the_dipole_law_finds_the_infimum():
+    """Referee round 57: `dipole_law` on a pair ±v coalescing around a dipole p·∇_θφ beside two kernels: the pair (the largest |w| and its
+    nearest kernel of the other sign), v, the moment, and E_inf (the dipole fit's) ≈ 0 for a target that is that dipole exactly (the pair's
+    own error the third-order term p³/(24v²)·∇³φ)."""
+    import exp_moving_width as M
+    L = M.law()
+    K = M.MW.BumpsCW(M.XS, M.S0)
+    tb, p = np.array([0.1, 0.12]), np.array([0.002, -0.004])
+    f = K.synth(tb[None, :], np.array([0.5])) + K.dphi(tb[None, :])[:, 0, :] @ p
+    f = f + K.synth(np.array([[0.6, 0.1]]), np.array([0.4]))
+    v = 10.0
+    th = np.array([tb + p / (2 * v), tb - p / (2 * v), tb, [0.6, 0.1]])
+    d = M.dipole_law(L, K, f, th, np.array([v, -v, 0.5, 0.4]))
+    assert d['v'] == v and np.allclose(d['p'], p, rtol=1e-6) and d['E_inf'] < 1e-25 < d['E'] and d['mu0'] == 4 * L.G * L.c / L.A

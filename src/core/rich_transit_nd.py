@@ -186,9 +186,9 @@ def loop_nd(L, K, fstar, c0, eps, taus, b=None, rtol=1e-9, atol=1e-12, method='L
     return taus, critical_w(L, al, b0), sol.y[d:].T.reshape(-1, d, n), Lam, al
 
 
-def polish_block_nd(K, fstar, w, c, s):
+def polish_block_nd(K, fstar, w, c, s, info=False):
     """The block's fit from (w, c (k, n)) by sign-constrained least squares (trust-region reflective): min ½⟨(f* − Φ(c)w)²⟩ with
-    s_iw_i ≥ 0 (`rich_transit.polish_block` in ℝⁿ). Returns (w, c)."""
+    s_iw_i ≥ 0 (`rich_transit.polish_block` in ℝⁿ). Returns (w, c), with info also the solver's status and evaluations."""
     from scipy.optimize import least_squares
     c = np.atleast_2d(np.asarray(c, float))
     k, n, N = w.size, K.n, K.N
@@ -204,6 +204,8 @@ def polish_block_nd(K, fstar, w, c, s):
         dP = K.dphi(cc) * z[:k][None, :, None]
         return -np.c_[K.phi(cc), dP.reshape(N, k * n)] / np.sqrt(N)
     sol = least_squares(res, z0, jac=jac, bounds=(lo, hi), method='trf', xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=5000)
+    if info:
+        return sol.x[:k], sol.x[k:].reshape(k, n), dict(status=int(sol.status), nfev=int(sol.nfev))
     return sol.x[:k], sol.x[k:].reshape(k, n)
 
 
@@ -221,13 +223,16 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
     'solver_failed': as `rich_transit.sliding_iss` (referee round 48; a block whose chunk failed is left unrelaxed, without exits: round
     54). max_rhs: a budget of right-hand-side evaluations for the whole
     path, as `rich_transit.sliding_iss` ('out_of_budget', 'nfev'): a stiff block — fixed widths on a narrow feature, which LSODA hands to
-    Radau chunk after chunk — stops the path before the block that spent it is relaxed, instead of running for hours."""
+    Radau chunk after chunk — stops the path before the block that spent it is relaxed, instead of running for hours; that block's state
+    when the budget ran out is returned as 'stalled' (its kernels' indices, centres and coefficients; referee round 57), and each
+    block's polishes as 'polish_log' (the solver's status and evaluations, accepted or not, the largest coefficient over the block's)."""
     c0 = np.atleast_2d(np.asarray(c0, float))
     d, n = c0.shape
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
     act = np.zeros(d, bool)
     tau, ev, hist, relaxed, n_rej, n_stiff, n_redo, n_fail = 0.0, [], [], [], 0, 0, 0, 0
+    polish_log, stalled = [], None
     scale = float(np.abs(K.corr(c, fstar)[0]).max())
     rhs, jac = critical_rhs_nd(L, K, fstar), critical_jac_nd(L, K, fstar)
     nfev, out_of_budget = [0], False
@@ -267,6 +272,8 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
         k = idx.size
         z = np.r_[al[idx], c[idx].ravel()]
         elapsed, chunk, ok, polished, failed = 0.0, float(t_fast), False, not polish, False
+        plog = []
+        polish_log.append(plog)
         try:
             for _k in range(max_doublings + 1):
                 z, how = _RT.relax_chunk(rhs, z, chunk, jac=jac)
@@ -280,12 +287,13 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
                 if not polished:
                     w0 = critical_w(L, z[:k])
                     cz = z[k:].reshape(k, n)
-                    wp, cp = polish_block_nd(K, fstar, w0, cz, np.sign(u[idx]))
+                    wp, cp, pinfo = polish_block_nd(K, fstar, w0, cz, np.sign(u[idx]), info=True)
                     seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * np.abs(w0).max())
                     r0 = fstar - K.synth(cz, w0)
                     good = all(np.linalg.norm(cp[i] - cz[i]) <= polish_step * K.sig or
                                np.linalg.norm(cp[i] - _RT.ascent_target(K, r0, cz[i], np.sign(u[idx[i]]))) <= polish_step * K.sig
                                for i in seedy)
+                    plog.append(dict(pinfo, accepted=bool(good), wmax_ratio=float(np.abs(wp).max() / np.abs(w0).max())))
                     if good:
                         z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp.ravel()]
                         polished = True
@@ -304,6 +312,7 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
         except _RT._OutOfBudget:
             out_of_budget = True
             relaxed.append(False)
+            stalled = dict(idx=idx.copy(), c=z[k:].reshape(k, n).copy(), w=critical_w(L, z[:k]))   # the block when the budget ran out
             break
         relaxed.append(ok)
         al[idx] = z[:k]; c[idx] = z[k:].reshape(k, n)
@@ -319,7 +328,8 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', c[i].copy()))
     return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej,
-                stiff_redone=n_stiff, solver_redone=n_redo, solver_failed=n_fail, out_of_budget=out_of_budget, nfev=nfev[0])
+                stiff_redone=n_stiff, solver_redone=n_redo, solver_failed=n_fail, out_of_budget=out_of_budget, nfev=nfev[0],
+                polish_log=polish_log, stalled=stalled)
 
 
 def path_duals_nd(K, fstar, R):
