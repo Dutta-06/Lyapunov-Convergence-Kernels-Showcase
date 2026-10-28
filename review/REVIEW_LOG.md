@@ -1629,6 +1629,45 @@ law at fixed x is to be validated where its predictions are used, the next-order
 the centres before the entry) before it is folded into a predictor.
 
 
+## Round 40 (adversarial review of Proposition D‴.50, the rich transit under label noise, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3am: the draft of Proposition D‴.50, its code at 284bde6 and its results at 0cf2e9b
+(`review/REVIEW_round40_D3am.md`): the transit's response split with the scheme's tangent-linear model; the face Hessian of the designs;
+design 4's small coefficient; mutants of `tangent_projectors`, `linear_response` and `gibbs_rwm`; independent noise paths per σ; Part D's
+window against the face's crossing time; the convergence and the scheme's stability; Part A's small-temperature claims.
+
+**Verdicts (D3am).** The in-window failure of the first-order response is linear and finite-ε, not noise-nonlinear (its error the same
+at every σ); (ii) leaned on a Laplace expansion that is not uniform in ε where the support is smaller than the samples (design 3's face
+stiffnesses 2·10⁻¹²–6·10⁻¹⁰); (ii) lacked the hypothesis T·D_i ≪ w_i² (design 4's third coefficient); `tangent_projectors` and
+`linear_response` untested (8 of 8 mutants survived; `gibbs_rwm` pinned T to ±20% only); Part D a small fraction of the face's crossing,
+so no test of (iii); one noise path reused across σ overstated the precision; the convergence "from every start" unproved; the scheme ULA
+on an exponentially growing drift (transient in the strict sense); scope, novelty, labels and numbers overclaimed in places.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3am-1 | major | the windows' failure misread as noise-nonlinear | (iv): two windows — the noise's entry shift O(κ/\|u̇_j\|) and the entrant's finite-ε absorption O(N/(Λ·D_j\|P_{T⁻}φ_j\|²)) ∝ ε^{1/2}, an error linear in the noise; C reports both widths, the error outside the ×1, ×2, ×4 windows and inside, σ-independent as predicted |
+| D3am-2 | major | (ii) from a non-uniform Laplace expansion | (i)(b): the exact identity Cov_π(Φw) = T·ΦE_π[D]Φᵀ by integration by parts at every noise level; (i)(c) Laplace with its range, not uniform in the masses; (ii) derived from the exact identity, with the remainder R_off; A: the identity on the scheme's runs (2.1–2.2·10⁻²) against Laplace's 0.55 |
+| D3am-3 | major | (ii)'s hypothesis T·D_i ≪ w_i² | stated, with E_π[D] as the variance; B: E[D]/D(w_BP) and (T·D)^{1/2}/\|w\| reported (design 4's third coefficient 0.59 at σ = 0.3, where D(w_BP) misses) |
+| D3am-4 | major | untested response code | `tests/test_dual_langevin.py`: the response on an entries-only path equals κP_{T(τ)}W(τ) in closed form; the Gibbs identity pins the temperature (T at 1.1T fails) |
+| D3am-5 | major | D cannot test (iii) | D relabelled the local quasi-equilibrium with the window over the crossing time; (iii) formal and numerically untested (status) |
+| D3am-6 | major | same-path replication | `b_job`/`d_job`: four independent paths per design and σ, means ± spread across paths |
+| D3am-7 | minor | convergence from every start | (i): inf D_i > 0 on free curves ⇒ strong convexity ⇒ W₂ contraction (Bakry–Émery, synchronous coupling) at a rate ≥ min inf D_i·λ_min(ΦΦᵀ)/N, small at small masses |
+| D3am-8 | minor | the scheme's stability | (i): the scheme samples π up to O(h) over practical horizons, its drift grows exponentially (Roberts–Tweedie; Hutzenthaler–Jentzen–Kloeden) |
+| D3am-9 | minor | scope and novelty | free curves only; the Itô (Euler) reading not covered (Q drifts); (i) a corollary of D‴.45(iii) and (iv)(a); mirrored Langevin (Hsieh–Kavis–Rolland–Cevher) cited against mirror-Langevin diffusions |
+| D3am-10 | minor | A's "O(T) shift" | the label dropped; a small-T run (σ = 0.1): Cov(w) against T·D^{1/2}PD^{1/2} to 0.016 with P of rank 4 in ℝ⁸, the mean within 0.04 standard deviations |
+| D3am-11 | minor | A's Heun and Itô readings | the Heun drift ∝ h√t (no stationary law at a fixed step); the Itô rate left to the unit test |
+| D3am-12 | minor | C's residual mechanism | the active block's Ornstein–Uhlenbeck component κ²Σ_i1/(2Λλ_i); C: the residual over it 0.94–1.01 |
+| D3am-13 | minor | C's slope from different paths | every ε driven by one Brownian path on a common τ-grid; the slope per path 0.252 ± 0.006 |
+| D3am-14 | minor | numbers | the numerics rewritten from the rerun; B's relaxation times of the support's normal modes, the windows ≥ 30 of them |
+| D3am-15 | minor | exits dropped silently | `linear_response` raises on a path with exits; (iv) names the exits' first-order jump as not included |
+| D3am-16 | minor | (iii)'s wording | the limit ε → 0 at fixed σ, not uniform; the O(T^{3/2}) on the small-α branch only |
+| D3am-17 | cosmetic | +O(T²), dimensions, order of entries | fixed: (i)(c)'s O(T²); the entries keep their order while κ is small against their gaps |
+
+**Lesson.** A relative error that does not change with σ cannot be a nonlinearity in the noise: split a gap between a first-order theory
+and a simulation with the scheme's own tangent-linear model, size the exclusion windows by each mechanism's predicted width, and prefer
+the exact identities — here integration by parts, E_π[∇F∇Fᵀ] = T·E_π[∇²F] — to leading-order expansions whose uniformity fails exactly in
+the rich regime the proposition is about.
+
 ## Round 41 (adversarial review of Theorem D‴.53, the sliding limit, and Lemma D‴.53a, 2026-10-27)
 
 **Design.** One referee, not modifying the repository. D3an: the draft of Theorem D‴.53 and its code at 7f5d1e4

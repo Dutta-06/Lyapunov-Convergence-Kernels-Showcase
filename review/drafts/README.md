@@ -9,7 +9,7 @@ round is applied and its numbers are final.
 |---|---|---|
 | `D44.md` | D‴.44: coloured label noise under the replicator mass law on a kernel dictionary | its run resumed; referee round 34 after it |
 | `D49.md` | D‴.49: the rich transit in the closed loop | round 44 (D3aq) received; its revision's full rerun queued |
-| `D50.md` | D‴.50: the rich transit under label noise | round 40 applied; its rerun in progress |
+| `D50.md` | D‴.50: the rich transit under label noise | round 40 applied, numerics final; a referee round on the revision next |
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 42 applied (with (v), a tail's capture), numerics final; a referee round next |
 | `D55.md` | D‴.55: exact recovery by the sliding transit; the path's skeleton | round 46 (D3as) received, being applied |
