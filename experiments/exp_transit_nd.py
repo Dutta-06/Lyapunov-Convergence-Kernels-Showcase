@@ -95,11 +95,15 @@ RTOL_C4B = 1e-13                                                        # C4b: t
 N_OUT_C4 = 160                                                           # C4: outputs from feature 0's entry to feature 2's, log-spaced
 MU_R, XI0_R, RTOL_R, S_END_R, SIDE_R = 1e-9, 400.0, 1e-13, 3e8, 0.05                  # R: the ε-free race — the geometry's margin (feature 0 on the face
                                                                        # as ε → 0 at a fixed gap), the start, the tolerance, the horizon in s
-X_R_EXTRA = (2.5, 4.0, 4.5)                                             # R: gaps beyond C3's and C4's
+X_R_EXTRA = (2.5, 4.0, 4.5, 30.0)                                       # R: gaps beyond C3's and C4's (30: C2's far tail)
 S_MARKS_R = (1e4, 1e5, 1e6, 1e7, 1e8, 3e8)                              # R: the runner-up's coefficient and distance at these s
 X_RM = (3.0, 4.9, 7.0, 10.0, 17.3)                                      # R: the mirrored target's gaps (the far side)
 X_RS, RTOLS_RS, S_END_RS = (2.5, 3.0, 3.5, 4.0, 4.5, 4.9, 5.5, 6.0), (1e-9, 1e-10, 1e-11, 1e-12, 1e-13), 3e6   # R: the side's tolerance scan
-C4M = ((7.0, 1e-13), (7.0, 1e-10))                                      # C4M: the loop on the mirrored target
+C4M = ((7.0, 1e-13), (7.0, 1e-10), (7.0, 1e-17), (7.0, 2e-12), (7.0, 4.5e-12), (10.0, 2.5e-13), (10.0, 6e-13))  # C4M: the loop on the
+# mirrored target — the far rule's boundary s₂ ≈ s_θ and beyond s_{d,e} (the swap, referee round 58)
+R_LONG = ((7.0, 3e9), (10.0, 3e9))                                    # R: the mirror past its horizon — the swap and the entrant's race
+X_RP, TOPS_RP = (3.0, 4.9, 5.48, 6.04, 7.0), (0.95, 1.0, 1.5)           # RP: the gaps (formed runner-ups and a tail); the window's top edge
+S_END_RP, S0_RP, S_MARKS_RP = 5e7, 400.0, (500.0, 700.0, 1000.0)        # RP: the run's end; the law from s₀; D reported at these s
 W_FC = np.geomspace(0.06, 0.003, 120)                                   # FC: the configuration's own fold (continuation in w)
 D_V3, AP_V3 = (5.0, 6.0, 7.0), (0.35, 0.7, 1.4, 2.8)                     # V3: the fold against A′/A (A = A_B)
 MAX_DOUBLINGS_B4X = 24                                                   # B4x: B4's unsettled problems continued
@@ -981,7 +985,6 @@ def c4_job(args):
     ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
     e0 = int(o[0])
     far = [int(i) for i in after if dist[i] > SIDE_R]
-    i2 = int(np.argmin(np.abs(taus - t2)))
     side = None if not far else ('toward' if (C[far[0], r0] - cs[0]) @ ev > 0 else 'far')
     gap = np.linalg.norm(C[after, r0] - C[after, e0], axis=1) / SIG if after.size else np.array([np.nan])
     r = dict(name=name, side=side, closest=float(np.nanmin(gap)), x=x, eps=eps, mu=float(x * np.sqrt(eps)), tau_e=float(t_e), tau2=float(t2), s2=float((t2 - t_e) / np.sqrt(eps)),
@@ -990,7 +993,7 @@ def c4_job(args):
              w_max=float(np.abs(W[held, r0]).max()) if held.size else 0.0, d_held=float(dist[held].max()) if held.size else 0.0,
              d2=float(np.linalg.norm(cs[2] - cs[0]) / SIG), A2=float(As[2]), n_fin=bk['n_fin'], captured=bk['captured'],
              rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))), d_end=float(dist[-1]), w_end=float(abs(W[-1][r0])),
-             e_t2=float((C[i2, r0] - cs[0]) @ ev / SIG), w_t2=float(abs(W[i2][r0])), rtol=rtol, secs=time.time() - t0)
+             rtol=rtol, secs=time.time() - t0)
     print(f"  C4 {name} x {x} eps {eps:g} rtol {rtol:g}: {c3_outcome(r)}, side {side}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} "
           f"[{r['secs']:.0f}s]", flush=True)
     return r
@@ -1033,12 +1036,25 @@ def race_job(args):
     ss = np.unique(np.r_[np.linspace(0, 2 * sw0, 200), sw0 + np.geomspace(1e2, s_end, 400), sw0 + np.array(S_MARKS_R)])
     ss = ss[ss <= sw0 + s_end]
     sol = solve_ivp(lambda s_, z: lam0 * f0(s_, z), (0.0, ss[-1]), z0, method='LSODA', jac=lambda s_, z: lam0 * j0(s_, z), rtol=rtol,
-                    atol=min(1e-13, rtol * 1e-3), t_eval=ss)
+                    atol=min(1e-13, rtol * 1e-3), t_eval=ss, dense_output=True)
     al, C = sol.y[:2].T, sol.y[2:].T.reshape(-1, 2, 2)
     w = RT.critical_w(L, al)
     xi_e = -RT.eta_crit(L, al[:, 0]) / lam0
     k = int(np.argmax(xi_e < 0))
-    s = sol.t - float(np.interp(0.0, -xi_e[k - 1:k + 1], sol.t[k - 1:k + 1]))
+    t_wall = float(np.interp(0.0, -xi_e[k - 1:k + 1], sol.t[k - 1:k + 1]))
+    s = sol.t - t_wall
+
+    def crossing(i, g):
+        """The s at which g(z) changes sign between the outputs i − 1 and i, by bisection on the dense output (referee round 58: not
+        the output grid's point)."""
+        a_, b_ = sol.t[i - 1], sol.t[i]
+        for _ in range(80):
+            m_ = 0.5 * (a_ + b_)
+            if g(sol.sol(m_)) > 0:
+                b_ = m_
+            else:
+                a_ = m_
+        return 0.5 * (a_ + b_) - t_wall
     ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
     dist = np.linalg.norm(C[:, 1] - cs[0], axis=1) / SIG
     post = np.flatnonzero(s > 0)
@@ -1046,13 +1062,29 @@ def race_job(args):
     far = [int(i) for i in post if dist[i] > SIDE_R]
     side = None if not far else ('toward' if (C[far[0], 1] - cs[0]) @ ev > 0 else 'far')
     dep = next((int(i) for i in post if dist[i] > 2.0), None)
+    s_dep = (crossing(dep, lambda z: np.linalg.norm(z[4:6] - cs[0]) / SIG - 2.0) if dep is not None and dep - 1 in post else
+             (float(s[dep]) if dep is not None else None))
     at = lambda q: int(np.argmin(np.abs(s - q)))
     i3 = at(1e3)
     thr = TH_REL * abs(A_B)
-    grow = (next((float(s[i]) for i in post if s[i] > 1e3 and abs(w[i, 1]) > thr), None) if abs(w[i3, 1]) < thr else None)
+    grow = (next((float(s[i]) for i in post if s[i] > 1e3 and (dep is None or i < dep) and abs(w[i, 1]) > thr), None)
+            if abs(w[i3, 1]) < thr else None)                          # before the departure only (referee round 58)
+    i_cl = int(post[np.argmin(gap)])
+    dcl = C[i_cl, 1] - C[i_cl, 0]
+    e_cl = float(dcl @ ev / np.linalg.norm(dcl)) if np.linalg.norm(dcl) > 0 else None
     marks = [q for q in S_MARKS_R if q <= s[-1] * (1 + 1e-9)]
+    sw = next((int(i) for i in post if abs(w[i, 1]) > abs(w[i, 0])), None)            # the swap: the runner-up outgrows the entrant
+    dist_e = np.linalg.norm(C[:, 0] - cs[0], axis=1) / SIG
+    dep_e = next((int(i) for i in post if dist_e[i] > 2.0), None)                     # the entrant leaves feature 0
+    wz = lambda z: np.abs(RT.critical_w(L, z[:2]))
+    s_sw = crossing(sw, lambda z: wz(z)[1] - wz(z)[0]) if sw is not None and sw - 1 in post else None
+    s_de = crossing(dep_e, lambda z: np.linalg.norm(z[2:4] - cs[0]) / SIG - 2.0) if dep_e is not None and dep_e - 1 in post else None
+    near_e = [float(np.linalg.norm(C[-1, 0] - c_) / SIG) for c_ in cs]
     out = dict(name=name, x=float(x), rtol=rtol, s_end=float(s[-1]), status=int(sol.status), side=side, closest=float(gap.min()),
-               s_d=float(s[dep]) if dep is not None else None, w_dep=float(abs(w[dep - 1, 1])) if dep is not None else None,
+               e_closest=e_cl,
+               s_swap=s_sw, s_de=s_de,
+               e_dest=int(np.argmin(near_e)), e_dest_d=float(min(near_e)), w_e_end=float(abs(w[-1, 0])),
+               s_d=s_dep, s_d_grid=float(s[dep]) if dep is not None else None, w_dep=float(abs(w[dep - 1, 1])) if dep is not None else None,
                d_dep=float(dist[dep]) if dep is not None else None, d_pre=float(dist[dep - 1]) if dep is not None else None,
                s_layer=float(s[i3]), w_layer=float(abs(w[i3, 1])), marks=marks, w_marks=[float(abs(w[at(q), 1])) for q in marks],
                d_marks=[float(dist[at(q)]) for q in marks], s_theta=grow, d_end=float(dist[-1]), w_end=float(abs(w[-1, 1])),
@@ -1072,7 +1104,150 @@ def part_R():
     with Pool(N_WORKERS) as pool:
         out = pool.map(race_job, jobs, chunksize=1)
     n1, n2 = len(x_R()), len(X_RM)
-    return dict(main=out[:n1], mirror=out[n1:n1 + n2], scan=out[n1 + n2:])
+    with Pool(N_WORKERS) as pool:
+        long_ = pool.map(race_job, [('near tie mirrored', x, RTOL_R, se) for x, se in R_LONG], chunksize=1)
+    return dict(main=out[:n1], mirror=out[n1:n1 + n2], scan=out[n1 + n2:], long=long_)
+
+
+def window(top):
+    """Part C's samples with the window's top edge at `top` (`full`'s is 1)."""
+    xs = np.arange(-1, 1 + 1e-9, DS)
+    return RN.BumpsGrid2(xs, np.arange(-1, top + 1e-9, DS), SIG)
+
+
+class PairSums:
+    """R's two-kernel right-hand side (`RN.critical_rhs_nd` for the entrant and the runner-up, features 1 and 2 in the residual) with every
+    sum over the samples — the target, the residual and its correlations — in the dtype dt: float64, or numpy's long double (the 80-bit
+    format on x86-64, unit roundoff 5.4·10⁻²⁰); the state stays float64."""
+
+    def __init__(self, L, K, cs, As, dt):
+        self.L, self.dt = L, dt
+        self.x1, self.x2 = K.x1.astype(dt), K.x2.astype(dt)
+        self.s2, self.N = dt(SIG) ** 2, dt(K.N)
+        self.F = sum(dt(a) * np.outer(self.g(self.x1, c[0]), self.g(self.x2, c[1])) for c, a in zip(cs, As))
+
+    def g(self, x, c):
+        return np.exp(-(x - self.dt(c)) ** 2 / (2 * self.s2))
+
+    def __call__(self, s_, z):
+        dt, L = self.dt, self.L
+        w, M = RT.critical_w(L, z[:2]), RT.curve_mobility(L, z[:2], 0.0)
+        C = z[2:].reshape(2, 2)
+        G, Q = [self.g(self.x1, c[0]) for c in C], [self.g(self.x2, c[1]) for c in C]
+        R = self.F - dt(w[0]) * np.outer(G[0], Q[0]) - dt(w[1]) * np.outer(G[1], Q[1])
+        out = np.empty(6)
+        for i in range(2):
+            gp, qp = G[i] * (self.x1 - dt(C[i, 0])) / self.s2, Q[i] * (self.x2 - dt(C[i, 1])) / self.s2
+            out[i] = M[i] * float(G[i] @ R @ Q[i] / self.N)
+            out[2 + 2 * i:4 + 2 * i] = (dt(L.G * L.m * w[i]) * np.array([gp @ R @ Q[i], G[i] @ R @ qp]) / self.N).astype(float)
+        return out
+
+    def block(self, cb, W):
+        """At the block's centre c̄ with the coefficient W: ⟨r, ∇²_cφ(c̄)⟩ (2 × 2, r = f* − Wφ(c̄)) and the rest's shift with W,
+        ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩; ∂F/∂c̄ = ⟨r, ∇²_cφ⟩ − W⟨∇_cφ∇_cφᵀ⟩)."""
+        dt, s2, N = self.dt, self.s2, self.N
+        u, v = self.x1 - dt(cb[0]), self.x2 - dt(cb[1])
+        g, q = np.exp(-u ** 2 / (2 * s2)), np.exp(-v ** 2 / (2 * s2))
+        gp, qp, gpp, qpp = g * u / s2, q * v / s2, g * (u ** 2 / s2 - 1) / s2, q * (v ** 2 / s2 - 1) / s2
+        R = self.F - dt(W) * np.outer(g, q)
+        H = np.array([[gpp @ R @ q, gp @ R @ qp], [gp @ R @ qp, g @ R @ qpp]]) / N
+        Q2 = np.array([[(gp @ gp) * (q @ q), (gp @ g) * (q @ qp)], [(gp @ g) * (q @ qp), (g @ g) * (qp @ qp)]]) / N
+        pd = np.array([(g @ gp) * (q @ q), (g @ g) * (q @ qp)]) / N
+        return H.astype(float), np.linalg.solve((H - dt(W) * Q2).astype(float), pd.astype(float))
+
+
+def rp_job(args):
+    """RP (referee round 58): R's race (C2's near tie at μ = MU_R, the runner-up x behind the entrant) on the window with the top edge at
+    `top`, the sums in float64 (prec 64) or the long double (80) (`PairSums`): the relative offset D = c_r − c_e at S_MARKS_RP against
+    the pin law integrated from D(S0_RP),
+        dD/ds = Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(∂c̄*/∂W)dW/ds
+    (the relative mode's exact first order, its forcing the block's rest moving with W: `PairSums.block`); the least |D| after the wall
+    before the departure and its share along e; the side (SIDE_R), the departure s_d (2σ, bisected on the dense output); the growth rate
+    of |D| on s ∈ [3·10³, 10⁴]."""
+    name, x, top, prec = args
+    from scipy.integrate import solve_ivp
+    t0 = time.time()
+    L = law(); c0 = full()[1]
+    K = window(top)
+    cs, As = targets_C2(MU_R)[name]
+    P = PairSums(L, K, cs, As, np.longdouble if prec == 80 else np.float64)
+    e, r = kidx(c0, (0, 2 * H)), kidx(c0, (H, 2 * H))
+    lam0 = RT.transit_scale(L, 1.0)
+    f = K.synth(cs, As)
+    j0 = RN.critical_jac_nd(L, K, f)
+    z0 = np.r_[RT._alpha_of(L, -lam0 * (XI0_R + np.array([0.0, x])), RT.eta_crit), c0[[e, r]].ravel()]
+    sw0 = XI0_R / abs(float(K.corr(c0[[e]], f)[0][0]))
+    ss = np.unique(np.r_[np.linspace(0, 2 * sw0, 200), sw0 + np.geomspace(1e2, S_END_RP, 1200)])
+    sol = solve_ivp(lambda s_, z: lam0 * P(s_, z), (0.0, ss[-1]), z0, method='LSODA', jac=lambda s_, z: lam0 * j0(s_, z), rtol=RTOL_R,
+                    atol=min(1e-13, RTOL_R * 1e-3), t_eval=ss, dense_output=True)
+    al, C = sol.y[:2].T, sol.y[2:].T.reshape(-1, 2, 2)
+    w = RT.critical_w(L, al)
+    xi_e = -RT.eta_crit(L, al[:, 0]) / lam0
+    k = int(np.argmax(xi_e < 0))
+    t_wall = float(np.interp(0.0, -xi_e[k - 1:k + 1], sol.t[k - 1:k + 1]))
+    s = sol.t - t_wall
+    D, cb, W = C[:, 1] - C[:, 0], C.mean(1), w.sum(1)
+    ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
+    dist = np.linalg.norm(C[:, 1] - cs[0], axis=1) / SIG
+    post = np.flatnonzero(s > 0)
+    dep = next((int(i) for i in post if dist[i] > 2.0), None)
+    far = [int(i) for i in post if dist[i] > SIDE_R]
+    side = None if not far else ('toward' if (C[far[0], 1] - cs[0]) @ ev > 0 else 'far')
+    s_d = None
+    if dep is not None and dep - 1 in post:
+        a_, b_ = sol.t[dep - 1], sol.t[dep]
+        for _ in range(80):
+            m_ = 0.5 * (a_ + b_)
+            zm = sol.sol(m_)
+            if np.linalg.norm(zm[4:6] - cs[0]) / SIG > 2.0:
+                b_ = m_
+            else:
+                a_ = m_
+        s_d = 0.5 * (a_ + b_) - t_wall
+    held = post if dep is None else post[post < dep]
+    i_min = int(held[np.argmin(np.linalg.norm(D[held], axis=1))])
+    # the pin law from s₀, the forcing through the rest's W-shift, exponential steps with the coefficients frozen per output interval
+    i0 = int(np.argmin(np.abs(s - S0_RP)))
+    i1 = int(np.argmin(np.abs(s - max(S_MARKS_RP)))) + 1
+    dWds = np.gradient(W, s)
+    Dl, law_at, dcdW_at = D[i0].copy(), {}, None
+    Gm = L.G * L.m
+    for i in range(i0, i1):
+        Hb, dcdW = P.block(cb[i], W[i])
+        A = lam0 * 2 * Gm * w[i, 0] * w[i, 1] / W[i] * Hb
+        lv, V = np.linalg.eig(A)
+        Vi = np.linalg.inv(V)
+        h_ = s[i + 1] - s[i]
+        E1 = (V @ np.diag(np.exp(lv * h_)) @ Vi).real
+        P1 = (V @ np.diag(np.where(np.abs(lv * h_) > 1e-12, np.expm1(lv * h_) / np.where(lv == 0, 1, lv), h_)) @ Vi).real
+        Dl = E1 @ Dl + P1 @ (2 * (w[i, 1] - w[i, 0]) / W[i] * dcdW * dWds[i])
+        for q in S_MARKS_RP:
+            if s[i] < q <= s[i + 1]:
+                law_at[q] = (Dl / SIG).tolist()
+                if q == S_MARKS_RP[1]:
+                    dcdW_at = (dcdW / SIG).tolist()
+    at = lambda q: int(np.argmin(np.abs(s - q)))
+    gi = [i for i in post if 3e3 <= s[i] <= 1e4 and np.linalg.norm(D[i]) > 0]
+    grow = float(np.polyfit(s[gi], np.log(np.linalg.norm(D[gi], axis=1)), 1)[0]) if len(gi) > 2 else None
+    out = dict(name=name, x=float(x), top=float(top), prec=int(prec), status=int(sol.status), nfev=int(sol.nfev),
+               D=[(D[at(q)] / SIG).tolist() for q in S_MARKS_RP], law=[law_at.get(q) for q in S_MARKS_RP], dcdW=dcdW_at,
+               least=float(np.linalg.norm(D[i_min]) / SIG), s_least=float(s[i_min]),
+               e_least=float(D[i_min] @ ev / np.linalg.norm(D[i_min])) if np.linalg.norm(D[i_min]) > 0 else None, side=side, s_d=s_d,
+               grow=grow,
+               w_layer=float(abs(w[at(1e3), 1])), secs=time.time() - t0)
+    print(f"  RP {name} x {x:g} top {top:g} prec {prec}: D(700) {out['D'][1]}, law {out['law'][1]}, side {side}, s_d {s_d} "
+          f"[{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def part_RP():
+    """RP: the relative mode's pin — the formed gaps and a tail on Part C's window in float64, x = 4.9 in the long double and on the
+    mirrored target, the formed gaps 3, 4.9, 6.04 with the window's top edge nearer (0.95) and farther (1.5, also in the long double)."""
+    from multiprocessing import Pool
+    jobs = ([('near tie', x, 1.0, 64) for x in X_RP] + [('near tie', 4.9, 1.0, 80), ('near tie mirrored', 4.9, 1.0, 64)]
+            + [('near tie', x, top, 64) for top in TOPS_RP if top != 1.0 for x in (3.0, 4.9, 6.04)] + [('near tie', 4.9, 1.5, 80)])
+    with Pool(N_WORKERS) as pool:
+        return pool.map(rp_job, jobs, chunksize=1)
 
 
 def fold_job(args):
@@ -1346,7 +1521,59 @@ def c4m_lines(C4M):
     for r in C4M:
         out.append(f"| {r['x']:g} | {r['eps']:g} | {r['side']} | {r['closest']:.1e} | {r['w_max']:.4g} | "
                    + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none') + f" | {r['s2']:.3g} | {', '.join(map(str, r['n_fin']))} | "
-                   f"{r['w_end']:.4g}, {r['d_end']:.3f} | {c3_outcome(r)} |")
+                   f"{r['w_end']:.4g}, {r['d_end']:.3f} | {c4m_outcome(r)} |")
+    return out
+
+
+def c4m_outcome(r):
+    """C4M's outcome: `c3_outcome`, an unformed runner-up that never left 2σ labelled by its side whatever the residual (referee round 58:
+    'not departed' and 'one kernel' told the far side's held tails apart only by the residual's cut)."""
+    o = c3_outcome(r)
+    if o in ('not departed', 'one kernel') and r.get('d_held', 2.0) < 2.0 and r.get('w_end', 1.0) < TH_REL * A_B:
+        return f"held, unformed ({r['side']})"
+    return o
+
+
+def rp_lines(RP):
+    """RP's report: the relative offset against the pin law, per window and arithmetic."""
+    if RP is None or not len(RP):
+        return []
+    edge = lambda top: (top - 2 * H) / SIG
+    out = ["## RP. The relative mode: the pin (referee round 58)", "",
+           "R's race (the near tie at μ → 0, the runner-up x behind the entrant) with the sums over the samples in float64 or in the 80-bit "
+           "long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window and with its top edge moved (the block "
+           + ', '.join(f"{edge(t):.2f}σ" for t in TOPS_RP) + " below it): the relative offset D = c_r − c_e (σ) at s = "
+           + ', '.join(f"{q:g}" for q in S_MARKS_RP) + f" against the pin law integrated from s = {S0_RP:g} — dD/ds = Λ₀(2Gm ww_e/W)"
+           "⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(∂c̄*/∂W)dW/ds, the relative mode's first order forced by the block's rest moving with W, "
+           "∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩) —; ∂c̄*/∂W (σ per unit W) at s = 700; the least |D| after the wall "
+           "before the departure and its share along e; the side, the departure s_d and |D|'s growth rate on s ∈ [3·10³, 10⁴]:", "",
+           "| target | x | top edge (σ above the block) | sums | D at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP) + " (x, y) | the law "
+           "| ∂c̄*/∂W (x, y) | least \\|D\\| (its share along e) | side | s_d | growth rate |",
+           "|---|---|---|---|---|---|---|---|---|---|---|"]
+    vec = lambda v: '—' if v is None else f"({v[0]:+.2e}, {v[1]:+.2e})"
+    for r in sorted(RP, key=lambda r: (r['name'], r['top'], r['prec'], r['x'])):
+        out.append(f"| {r['name']} | {r['x']:g} | {r['top']:g} ({edge(r['top']):.2f}) | {'long double' if r['prec'] == 80 else 'float64'} | "
+                   + '; '.join(vec(v) for v in r['D']) + " | " + '; '.join(vec(v) for v in r['law']) + f" | {vec(r['dcdW'])} | "
+                   + f"{r['least']:.2e} (" + ('—' if r['e_least'] is None else f"{r['e_least']:+.2f}") + f") | {r['side']} | "
+                   + ('none' if r['s_d'] is None else f"{r['s_d']:.4g}") + " | " + ('—' if r['grow'] is None else f"{r['grow']:.3g}") + " |")
+    std = sorted([r for r in RP if r['top'] == 1.0 and r['prec'] == 64 and r['name'] == 'near tie' and r['x'] < 6.5], key=lambda r: r['x'])
+    if std:
+        rat = lambda r, i: (f"{r['law'][i][1] / r['D'][i][1]:.3f}" if r['law'][i] is not None and r['D'][i][1] != 0 else '—')
+        out += ["", "On Part C's window, the formed runner-ups: the law's D_y over the run's at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP)
+                + ": " + '; '.join(f"x = {r['x']:g}: " + ', '.join(rat(r, i) for i in range(len(S_MARKS_RP))) for r in std) + "."]
+        for top in [t for t in TOPS_RP if t != 1.0]:
+            pairs = [(a, b) for a in std for b in RP if b['top'] == top and b['prec'] == 64 and b['name'] == 'near tie' and b['x'] == a['x']]
+            if pairs:
+                out.append(f"The top edge at {top:g} ({edge(top):.2f}σ): ∂c̄*/∂W along y {pairs[0][1]['dcdW'][1]:.3g}σ against {pairs[0][0]['dcdW'][1]:.3g}σ; "
+                           + '; '.join(f"x = {a['x']:g}: D_y at s = 700 {b['D'][1][1]:.3g} (the law {b['law'][1][1]:.3g}) against {a['D'][1][1]:.3g}, "
+                                       f"the side {b['side']}, s_d " + ('none' if b['s_d'] is None else f"{b['s_d']:.4g}") + " against "
+                                       + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") for a, b in pairs) + ".")
+        p80 = [(a, b) for a in RP for b in RP if a['top'] == b['top'] and a['x'] == b['x'] and a['name'] == b['name'] and a['prec'] == 64
+               and b['prec'] == 80]
+        out += [f"Long double against float64 (x = {a['x']:g}, top {a['top']:g}): D at s = 700 {vec(b['D'][1])} against {vec(a['D'][1])}, "
+                f"the side {b['side']} against {a['side']}, s_d " + ('none' if b['s_d'] is None else f"{b['s_d']:.4g}") + " against "
+                + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") + "." for a, b in p80]
+    out.append("")
     return out
 
 
@@ -1366,11 +1593,13 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
            f"passes {SIDE_R:g}σ from feature 0: toward feature 2, or away), "
            "the pair's closest approach in the inner layer, its coefficient after the layer (s = 10³), its departure s_d (2σ from feature 0) "
            "and its coefficient there:", "",
-           "| x | side | closest approach (σ) | w after the layer | s_d | w at s_d | at s = 10⁵: w, distance (σ) |", "|---|---|---|---|---|---|---|"]
+           "| x | side | closest approach (σ; its share along e) | w after the layer | s_d | w at s_d | at s = 10⁵: w, distance (σ) |",
+           "|---|---|---|---|---|---|---|"]
     for r in sorted(R['main'], key=lambda r: r['x']):
         i5 = r['marks'].index(1e5) if 1e5 in r['marks'] else None
         m5 = '—' if i5 is None else f"{r['w_marks'][i5]:.4g}, {r['d_marks'][i5]:.3f}"
-        out.append(f"| {r['x']:g} | {r['side']} | {r['closest']:.1e} | {r['w_layer']:.4g} | "
+        out.append(f"| {r['x']:g} | {r['side']} | {r['closest']:.1e}" + (f" ({r['e_closest']:+.2f})" if r.get('e_closest') is not None else '')
+                   + f" | {r['w_layer']:.4g} | "
                    + (f"{r['s_d']:.4g} | {r['w_dep']:.4g}" if r['s_d'] is not None else f"none by {r['s_end']:.2g} | —") + f" | {m5} |")
     sd = {round(r['x'], 3): r['s_d'] for r in R['main']}
     rows, agree, ties = [], 0, 0
@@ -1405,6 +1634,17 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
             out.append(f"| {r['x']:g} | {r['side']} | {r['closest']:.1e} | {r['w_layer']:.4g} | {', '.join(f'{w:.3g}' for w in r['w_marks'])} | "
                        f"{r['d_end']:.3f} | " + (f"{r['s_theta']:.3g}" if r['s_theta'] is not None else '—') + " | "
                        + (f"{r['s_d']:.3g}" if r['s_d'] is not None else 'none') + " |")
+    if R.get('long') is not None and len(R['long']):
+        out += ["", "The mirror past R's horizon (referee round 58): the coefficients at the end, the s at which the runner-up outgrows "
+                    "the entrant (the swap), the entrant's departure (2σ from feature 0) and the feature it ends nearest (its distance), "
+                    "the runner-up's distance from feature 0 at the end:", "",
+                "| x | s_end | w: runner-up, entrant | the swap s | the entrant's departure s | the entrant ends at feature (σ) | the "
+                "runner-up's distance (σ) |", "|---|---|---|---|---|---|---|"]
+        for r in sorted(R['long'], key=lambda r: r['x']):
+            out.append(f"| {r['x']:g} | {r['s_end']:.3g} | {r['w_end']:.4g}, {r['w_e_end']:.4g} | "
+                       + (f"{r['s_swap']:.3g}" if r.get('s_swap') is not None else 'none') + ' | '
+                       + (f"{r['s_de']:.3g}" if r.get('s_de') is not None else 'none') + f" | {r['e_dest']} ({r['e_dest_d']:.3f}) | "
+                       f"{r['d_end']:.3f} |")
     if R.get('scan') is not None and len(R['scan']):
         rts = sorted({r['rtol'] for r in R['scan']}, reverse=True)
         out += ["", f"The side against the tolerance (to s = {S_END_RS:g}): per gap the closest approach at the tightest tolerance and the "
@@ -1432,7 +1672,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
 
 
 def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None,
-           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None):
+           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
@@ -1739,6 +1979,14 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                        "A′ (V) and away (VF):", "", "| d/σ | side | secant / the law's (displacement) |", "|---|---|---|"]
             L_ += [f"| {r['d']:g} | {'toward' if r.get('side', 1) == 1 else 'away'} | "
                    + ', '.join(f"{q:.3f} ({al:+.3f})" for _, q, al in qs) + " |" for r, qs in e3 if qs]
+            two = {}
+            for r, qs in e3:
+                if qs and abs(qs[0][0] - 0.28) < 0.05:
+                    two.setdefault(r['d'], {})[r.get('side', 1)] = qs[0][1]
+            mean2 = [(d_, (v[1] + v[-1]) / 2) for d_, v in sorted(two.items()) if 1 in v and -1 in v]
+            if mean2:
+                L_ += ["", "The two sides' mean at w ≈ 0.28 (an even next order enters the two ratios with opposite signs): "
+                       + ', '.join(f"d = {d_:g}σ: {m_:.5f}" for d_, m_ in mean2) + "."]
         L_ += vf_lines(VF)
         if V3 is not None:
             L_ += ["", "V3. The fold's constant against the unfitted feature's amplitude: c = w_f/ℓ(d) (one dimension, A = "
@@ -1841,6 +2089,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
         L_ += c4m_lines(C4M)
         L_.append("")
     L_ += r_lines(R, C3, C4, C4b, FC)
+    L_ += rp_lines(RP)
     if T3 is not None:
         L_ += ["## T3. The product rule at a vertex of hℤ³", "",
                f"The 8 kernels at the corners of the cube {{0, H}}³ (samples on a tensor grid of spacing {DS:g}), the feature (A = {A_B:g}) at "
@@ -1940,22 +2189,28 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
     return '\n'.join(L_) + '\n'
 
 
+KEYS = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2', 'C4b', 'R', 'VF', 'FC', 'C4M',
+        'RP')                                                           # the raw's parts, in `report`'s order
+
+
 def main():
     raw = os.path.join(OUT, 'transit_nd_raw.npz')
     md = os.path.join(OUT, 'transit_nd.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2', 'C4b', 'R', 'VF', 'FC', 'C4M')
+    keys = KEYS
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = dict(old)
+    if res.get('C3') is not None:                                      # round 47's w_unbind, never reported (referee round 58)
+        res['C3'] = [{k: v for k, v in r.items() if k != 'w_unbind'} for r in res['C3']]
     t0 = time.time()
     for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('T', part_T), ('D', part_D), ('B4', part_B4), ('H', part_H),
                   ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2), ('V', part_V), ('C3', part_C3),
                   ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4'])), ('C4', part_C4), ('B4x', lambda: part_B4x(res['B4'])),
                   ('V3', part_V3), ('D2', part_D2), ('C4b', part_C4b), ('R', part_R), ('VF', part_VF), ('FC', part_FC),
-                  ('C4M', part_C4M)):
+                  ('C4M', part_C4M), ('RP', part_RP)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

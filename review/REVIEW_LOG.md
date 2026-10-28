@@ -2189,3 +2189,44 @@ prefactor was off by 2; (i)'s scope was overstated; C's stalls were reported at 
 finite mass: there the pair keeps moving, and where it lands — and when — depends on ε. The same holds for a symmetry argument about
 signs: a one-sign target is not a one-sign fit once features sit closer than the kernels' starting width. Follow the configuration past
 the horizon chosen for the expected outcome, and test the sign rule on the targets built to break it.
+
+## Round 58 (adversarial review of Proposition D‴.54 as revised after round 53, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3be: Proposition D‴.54's round-53 revision with its code and results at edb5dd3
+(`review/REVIEW_round58_D3be.md`). The referee:
+- regenerated the md (byte for byte) and reran four cells against the raw (bitwise);
+- re-derived (v)'s moments, projections and third-moment law and checked them by quadrature at 5, 6, 7σ;
+- continued V's far branch upward through w_e, R's mirrored problem to s = 10¹¹, and the loop on the mirror at ε = 10⁻¹⁷;
+- traced c_r − c_e through the collapse at two tolerances on C2's target, its mirror and a y-reflection, with the full variational
+  equation;
+- ran c4_job at the far rule's boundary;
+- ran 29 mutants and searched the literature.
+
+**Verdicts (D3be).** The third-moment law, the reduction on the rests and the far rule at its boundary hold. Two statements of (v) were
+wrong, and both fed (iv)'s count:
+- **The far side ends in a swap.** E*₃ is monotone in w, so the far runner-up grows through w_e and outgrows the entrant, which then
+  races and is captured at small enough ε.
+- **Formed runner-ups' side and s_d.** For these the side and s_d were attributed to the inner layer, but at rtol 10⁻¹³ they go toward
+  on the target and its mirror alike, pinned at about 10⁻¹⁴σ. The referee read this as a rounding floor.
+
+Minor issues: the proof's linear pull, far tails described as collapsed, s_d quantised to its output grid, hand-computed numbers, a
+literature neighbour, 16 of 29 mutants surviving, and dead outputs.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3be-1 | major | The far side ends in a swap | R continues the mirror to s = 3·10⁹ (x = 7, 10): the swap at 8.63·10⁸, 8.73·10⁸, the entrant's departure at 1.38·10⁹, 1.39·10⁹, the entrant fitting feature 2; C4M adds 10⁻¹⁷ ([1, 1, 1], the entrant captured). (v): ∂_wE*₃ ≠ 0 on (0, A), the swap and the entrant's race; the far +1 iff s_θ < s₂ < s_{d,e}. (iv): the exception per runner-up and the windows. The title and PARADIGM D‴.51(ii)(c) (two places): "grows until it outgrows the entrant, which then migrates in its turn" |
+| D3be-2 | major | Formed runner-ups' side and s_d: "a rounding floor" | The offset is not rounding: the pair's relative mode obeys exactly dD/ds = (2Gm ww_e/W)⟨r, ∇²φ(c̄)⟩D + (2(w − w_e)/W)dc̄/ds (the lighter kernel trails a moving block), and on samples the block's rest moves with W near the window's edge, ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ = 1.14·10⁻¹²σ along y, 5σ below the top edge. Part RP (`PairSums`, `rp_job`; the sums in float64 or the 80-bit long double). The pin law (no fitted constant) gives 0.902, 0.988, 1.005 of the measured pins at x = 3, 4.9, 5.48. The pin is the same in the long double and on the mirror. With the edge nearer (4.67σ) it grows by ∂c̄*/∂W's factor and s_d falls; with the edge 8.33σ away it vanishes, the pairs collapse to identical centres, and the side becomes the arithmetic's: x = 4.9 goes to the far side and stays. (v): a tail's side is the layer's; a formed runner-up's is the block drift's, so its side and s_d belong to the sampled problem. R records the closest approach's share along e: +0.87 … +0.89 formed (the pin, −y), +0.58 … +0.48 tails (the layer, +0.48). The scan's looser tolerances do not resolve the pin. The relative-coordinate formulation was tried: in float64 the block force's rounding enters D's equation at the same level, so the precision test uses the long double instead |
+| D3be-3 | minor | The linear pull | proof: δ from the block's centre c_b, c_b and the coefficients slaved by the projection alone; "the linear pull moves the block" |
+| D3be-4 | minor | The reduction's justification; far tails | proof: the reduction holds while the rest's rate exceeds the coefficient's drift, failing at the fold; (v): "collapsed … held" for x ≲ 8.6, far tails (0.056–0.36σ) without a rest, waiting by their mobility ∝ w |
+| D3be-5 | minor | C4M only far from its boundary; labels | C4M adds the four boundary runs (x = 7 at 2·10⁻¹², 4.5·10⁻¹²; x = 10 at 2.5·10⁻¹³, 6·10⁻¹³) and 10⁻¹⁷; the held unformed tails labelled by their side (`c4m_outcome`) |
+| D3be-6 | minor | s_d quantised | `race_job`: the departure, the swap and the entrant's departure bisected on the dense output; the grid point kept (`s_d_grid`) |
+| D3be-7 | minor | Numbers | the md prints the two sides' mean (1.00242 at 7σ) and R at x = 30 (s_d 3.21·10⁶, the closest approach 0.36σ); C4's tolerance and T3's range corrected; the proof cites no referee's trace; the floating-point-resolution sentence dropped |
+| D3be-8 | minor | 16 of 29 mutants survive | tests: the golden report (the committed md from the committed raw), the mirrored race's s_θ ≈ 5.7·10⁶ and none for a formed runner-up, the bisected departure within its grid step, `c3_outcome` at 1.5σ and 2.5σ, `c4m_outcome`, `PairSums` against the critical right-hand side, the pin law on two windows |
+| D3be-9 | minor | Literature | the over-specified mixtures' moments (Chen 1995; Ho–Nguyen 2016; Dwivedi et al. 2020) as the hold's static neighbour; Pesme–Flammarion's "successively activated", Kunin et al.'s "dormant"; "New" drops "the side kept by the inner layer" for formed runner-ups and "adds a kernel on the far side" |
+| D3be-10 | cosmetic | Dead outputs | c4_job's e_t2, w_t2 dropped; C3's stale w_unbind stripped from the raw; R's s_θ only before the departure |
+
+**Lesson.** The referee saw an offset that did not move with the tolerance or with a mirror image, and called it a rounding floor. The
+law of the relative mode explains it instead. A lighter kernel trails a moving block, so whatever moves the block's rest (here the
+sampling window's edge, through ⟨φ, ∇φ⟩ ≠ 0) pins a formed runner-up's offset deterministically. The test that tells physics from
+arithmetic is to change one and keep the other: the long double kept the pin, and moving the window's edge removed it. An unexplained
+floor is a hypothesis about the arithmetic only until a law for it is written down and tried.

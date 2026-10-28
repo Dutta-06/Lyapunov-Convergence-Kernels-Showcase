@@ -246,6 +246,8 @@ The hold's third-moment law (`e3_law`: E*₃ = ∓(1/6)P₃(M₂*)^{3/2}(1 − w
 | 6.5 | away | 0.930 (-0.044), 0.779 (-0.080), 0.634 (-0.132) |
 | 7 | away | 0.963 (-0.021), 0.878 (-0.038), 0.784 (-0.064) |
 
+The two sides' mean at w ≈ 0.28 (an even next order enters the two ratios with opposite signs): d = 5σ: 1.41973, d = 5.5σ: 1.12067, d = 6σ: 1.03614, d = 6.5σ: 1.00994, d = 7σ: 1.00242.
+
 VF. The far side (the tail started away from A′): the rest's displacement along e (σ; negative: away) at w = 0.3, 0.03, 0.003, 0.001, the fold, and the secant dE*/dw along the branch:
 
 | n | d/σ | displacement at w = 0.3, 0.03, 0.003, 0.001 | fold | dE*/dw: steps < 0 of all, range |
@@ -350,127 +352,140 @@ C4M. The loop on the mirrored target (features 1 and 2 reflected across the face
 | x | ε | side | the pair's closest approach (σ) | max w held | departure s | s₂ | kernels per feature (final) | the runner-up at the end: w, distance from feature 0 (σ) | outcome |
 |---|---|---|---|---|---|---|---|---|---|
 | 7 | 1e-13 | far | 1.8e-08 | 0.02235 | none | 3.07e+07 | 2, 1, 1 | 0.02234, 0.001 | bound |
-| 7 | 1e-10 | far | 1.8e-08 | 0.005422 | none | 9.7e+05 | 1, 1, 1 | 0.00541, 0.016 | not departed |
+| 7 | 1e-10 | far | 1.8e-08 | 0.005422 | none | 9.7e+05 | 1, 1, 1 | 0.00541, 0.016 | held, unformed (far) |
+| 7 | 1e-17 | far | 1.1e-01 | 0.8 | none | 3.07e+09 | 1, 1, 1 | 0.8, 0.000 | captured |
+| 7 | 2e-12 | far | 1.8e-08 | 0.008708 | none | 6.86e+06 | 2, 1, 1 | 0.008697, 0.004 | bound |
+| 7 | 4.5e-12 | far | 1.8e-08 | 0.007412 | none | 4.57e+06 | 1, 1, 1 | 0.007401, 0.006 | held, unformed (far) |
+| 10 | 2.5e-13 | far | 2.0e-03 | 0.01046 | none | 1.94e+07 | 2, 1, 1 | 0.01045, 0.002 | bound |
+| 10 | 6e-13 | far | 3.9e-03 | 0.006553 | none | 1.25e+07 | 1, 1, 1 | 0.006542, 0.004 | held, unformed (far) |
 
 ## R. The race without ε (referee round 53)
 
 C2's near tie at μ → 0 (1e-09) with only feature 0's entrant and runner-up active and features 1 and 2 in the residual: the inner problem (the entrant 400 behind its wall, the runner-up x behind it) in s = (τ − τ_e)/ε^{1/2} to 3e+08 — C4 without its horizon s₂ —, rtol 1e-13: the side the runner-up leaves feature 0 to (its displacement along e where it first passes 0.05σ from feature 0: toward feature 2, or away), the pair's closest approach in the inner layer, its coefficient after the layer (s = 10³), its departure s_d (2σ from feature 0) and its coefficient there:
 
-| x | side | closest approach (σ) | w after the layer | s_d | w at s_d | at s = 10⁵: w, distance (σ) |
+| x | side | closest approach (σ; its share along e) | w after the layer | s_d | w at s_d | at s = 10⁵: w, distance (σ) |
 |---|---|---|---|---|---|---|
-| 2.5 | toward | 2.4e-15 | 0.1096 | 4.805e+07 | 0.02908 | 0.1102, 0.152 |
-| 3 | toward | 3.5e-15 | 0.07927 | 2.362e+07 | 0.02547 | 0.07972, 0.188 |
-| 3.5729 | toward | 5.0e-15 | 0.05393 | 9.277e+06 | 0.02133 | 0.05415, 0.245 |
-| 4 | toward | 7.4e-15 | 0.04018 | 4.077e+06 | 0.0191 | 0.04024, 0.302 |
-| 4.2554 | toward | 9.3e-15 | 0.03363 | 2.327e+06 | 0.01755 | 0.03357, 0.346 |
-| 4.5 | toward | 1.1e-14 | 0.02832 | 1.233e+06 | 0.01722 | 0.02814, 0.399 |
-| 4.9 | toward | 1.5e-14 | 0.02135 | 3.21e+05 | 0.01674 | 0.02081, 0.534 |
-| 5.0709 | toward | 1.7e-14 | 0.01892 | 1.52e+05 | 0.01639 | 0.01797, 0.652 |
-| 5.4772 | toward | 2.3e-14 | 0.01419 | 6.204e+04 | 0.0143 | 0.7, 6.079 |
-| 6.0363 | toward | 5.8e-14 | 0.00956 | 8.682e+04 | 0.00966 | 0.7, 6.079 |
-| 7 | toward | 1.8e-08 | 0.004905 | 9.711e+04 | 0.004949 | 0.7, 6.079 |
-| 7.1919 | toward | 1.0e-07 | 0.004309 | 1.001e+05 | 0.004364 | 0.7, 6.079 |
-| 8.589 | toward | 2.4e-04 | 0.001764 | 1.215e+05 | 0.00179 | 0.001775, 0.125 |
-| 10 | toward | 6.8e-03 | 0.0007993 | 1.52e+05 | 0.0008189 | 0.0008035, 0.091 |
-| 10.2121 | toward | 9.3e-03 | 0.0007168 | 1.578e+05 | 0.0007368 | 0.0007205, 0.092 |
-| 12.1666 | toward | 5.6e-02 | 0.0002941 | 2.293e+05 | 0.0003293 | 0.0002955, 0.114 |
-| 14.4841 | toward | 1.4e-01 | 0.0001271 | 3.459e+05 | 0.000145 | 0.0001277, 0.164 |
-| 16.957 | toward | 2.1e-01 | 6.243e-05 | 5.623e+05 | 9.325e-05 | 6.266e-05, 0.223 |
-| 17.2631 | toward | 2.2e-01 | 5.774e-05 | 5.837e+05 | 7.706e-05 | 5.796e-05, 0.229 |
-| 17.3 | toward | 2.2e-01 | 5.721e-05 | 5.837e+05 | 7.433e-05 | 5.742e-05, 0.230 |
-| 20.5557 | toward | 2.8e-01 | 2.772e-05 | 1e+06 | 5.606e-05 | 2.781e-05, 0.286 |
-| 24.4949 | toward | 3.2e-01 | 1.384e-05 | 1.726e+06 | 2.441e-05 | 1.387e-05, 0.328 |
-| 24.5 | toward | 3.2e-01 | 1.382e-05 | 1.726e+06 | 2.428e-05 | 1.386e-05, 0.328 |
+| 2.5 | toward | 2.4e-15 (+0.88) | 0.1096 | 4.756e+07 | 0.02908 | 0.1102, 0.152 |
+| 3 | toward | 3.5e-15 (+0.88) | 0.07927 | 2.346e+07 | 0.02547 | 0.07972, 0.188 |
+| 3.5729 | toward | 5.0e-15 (+0.87) | 0.05393 | 9.198e+06 | 0.02133 | 0.05415, 0.245 |
+| 4 | toward | 7.4e-15 (+0.88) | 0.04018 | 4.032e+06 | 0.0191 | 0.04024, 0.302 |
+| 4.2554 | toward | 9.3e-15 (+0.88) | 0.03363 | 2.275e+06 | 0.01755 | 0.03357, 0.346 |
+| 4.5 | toward | 1.1e-14 (+0.89) | 0.02832 | 1.21e+06 | 0.01722 | 0.02814, 0.399 |
+| 4.9 | toward | 1.5e-14 (+0.88) | 0.02135 | 3.191e+05 | 0.01674 | 0.02081, 0.534 |
+| 5.0709 | toward | 1.7e-14 (+0.88) | 0.01892 | 1.497e+05 | 0.01639 | 0.01797, 0.652 |
+| 5.4772 | toward | 2.3e-14 (+0.89) | 0.01419 | 6.083e+04 | 0.0143 | 0.7, 6.079 |
+| 6.0363 | toward | 5.8e-14 (+0.97) | 0.00956 | 8.402e+04 | 0.00966 | 0.7, 6.079 |
+| 7 | toward | 1.8e-08 (+0.58) | 0.004905 | 9.566e+04 | 0.004949 | 0.7, 6.079 |
+| 7.1919 | toward | 1.0e-07 (+0.57) | 0.004309 | 9.797e+04 | 0.004364 | 0.7, 6.079 |
+| 8.589 | toward | 2.4e-04 (+0.52) | 0.001764 | 1.2e+05 | 0.00179 | 0.001775, 0.125 |
+| 10 | toward | 6.8e-03 (+0.50) | 0.0007993 | 1.516e+05 | 0.0008189 | 0.0008035, 0.091 |
+| 10.2121 | toward | 9.3e-03 (+0.50) | 0.0007168 | 1.573e+05 | 0.0007368 | 0.0007205, 0.092 |
+| 12.1666 | toward | 5.6e-02 (+0.49) | 0.0002941 | 2.234e+05 | 0.0003293 | 0.0002955, 0.114 |
+| 14.4841 | toward | 1.4e-01 (+0.48) | 0.0001271 | 3.458e+05 | 0.000145 | 0.0001277, 0.164 |
+| 16.957 | toward | 2.1e-01 (+0.48) | 6.243e-05 | 5.451e+05 | 9.325e-05 | 6.266e-05, 0.223 |
+| 17.2631 | toward | 2.2e-01 (+0.48) | 5.774e-05 | 5.754e+05 | 7.706e-05 | 5.796e-05, 0.229 |
+| 17.3 | toward | 2.2e-01 (+0.48) | 5.721e-05 | 5.791e+05 | 7.433e-05 | 5.742e-05, 0.230 |
+| 20.5557 | toward | 2.8e-01 (+0.48) | 2.772e-05 | 9.881e+05 | 5.606e-05 | 2.781e-05, 0.286 |
+| 24.4949 | toward | 3.2e-01 (+0.48) | 1.384e-05 | 1.714e+06 | 2.441e-05 | 1.387e-05, 0.328 |
+| 24.5 | toward | 3.2e-01 (+0.48) | 1.382e-05 | 1.715e+06 | 2.428e-05 | 1.386e-05, 0.328 |
+| 30 | toward | 3.6e-01 (+0.48) | 6.458e-06 | 3.207e+06 | 1.569e-05 | 6.473e-06, 0.361 |
 
 The rule — captured iff s_d(x) < s₂ = (τ₂ − τ_e)ε^{−1/2} (C3's s₂ from C4's τ₂ − τ_e = 9.699) — against the loops' outcomes: 73 of 74 agree, 1 capture ties:
 
 | loops | x | ε | s₂ | s_d | predicted | the loop's outcome |
 |---|---|---|---|---|---|---|
-| C3 | 3 | 1e-08 | 9.7e+04 | 2.36e+07 | not departed | bound |
-| C3 | 3.57 | 7.05e-09 | 1.16e+05 | 9.28e+06 | not departed | bound |
-| C3 | 4.26 | 4.97e-09 | 1.38e+05 | 2.33e+06 | not departed | bound |
-| C3 | 5.07 | 3.5e-09 | 1.64e+05 | 1.52e+05 | captured | captured |
-| C3 | 5.48 | 3e-09 | 1.77e+05 | 6.2e+04 | captured | captured |
-| C3 | 6.04 | 2.47e-09 | 1.95e+05 | 8.68e+04 | captured | captured |
-| C3 | 7.19 | 1.74e-09 | 2.33e+05 | 1e+05 | captured | captured |
-| C3 | 8.59 | 1.22e-09 | 2.78e+05 | 1.22e+05 | captured | captured |
-| C3 | 10.2 | 8.63e-10 | 3.3e+05 | 1.58e+05 | captured | captured |
-| C3 | 12.2 | 6.08e-10 | 3.93e+05 | 2.29e+05 | captured | captured |
+| C3 | 3 | 1e-08 | 9.7e+04 | 2.35e+07 | not departed | bound |
+| C3 | 3.57 | 7.05e-09 | 1.16e+05 | 9.2e+06 | not departed | bound |
+| C3 | 4.26 | 4.97e-09 | 1.38e+05 | 2.28e+06 | not departed | bound |
+| C3 | 5.07 | 3.5e-09 | 1.64e+05 | 1.5e+05 | captured | captured |
+| C3 | 5.48 | 3e-09 | 1.77e+05 | 6.08e+04 | captured | captured |
+| C3 | 6.04 | 2.47e-09 | 1.95e+05 | 8.4e+04 | captured | captured |
+| C3 | 7.19 | 1.74e-09 | 2.33e+05 | 9.8e+04 | captured | captured |
+| C3 | 8.59 | 1.22e-09 | 2.78e+05 | 1.2e+05 | captured | captured |
+| C3 | 10.2 | 8.63e-10 | 3.3e+05 | 1.57e+05 | captured | captured |
+| C3 | 12.2 | 6.08e-10 | 3.93e+05 | 2.23e+05 | captured | captured |
 | C3 | 14.5 | 4.29e-10 | 4.68e+05 | 3.46e+05 | captured | captured |
-| C3 | 17 | 3.13e-10 | 5.48e+05 | 5.62e+05 | not departed | capture tie |
-| C3 | 17.3 | 3.02e-10 | 5.58e+05 | 5.84e+05 | not departed | unsettled |
-| C3 | 20.6 | 2.13e-10 | 6.65e+05 | 1e+06 | not departed | unsettled |
-| C3 | 24.5 | 1.5e-10 | 7.92e+05 | 1.73e+06 | not departed | unsettled |
-| C4 | 3 | 1e-08 | 9.71e+04 | 2.36e+07 | not departed | bound |
-| C4 | 3 | 1e-09 | 3.07e+05 | 2.36e+07 | not departed | bound |
-| C4 | 3 | 1e-10 | 9.7e+05 | 2.36e+07 | not departed | bound |
-| C4 | 3 | 1e-11 | 3.07e+06 | 2.36e+07 | not departed | bound |
-| C4 | 3 | 1e-12 | 9.7e+06 | 2.36e+07 | not departed | bound |
-| C4 | 4.9 | 1e-08 | 9.72e+04 | 3.21e+05 | not departed | bound |
-| C4 | 4.9 | 1e-09 | 3.07e+05 | 3.21e+05 | not departed | bound |
-| C4 | 4.9 | 1e-10 | 9.7e+05 | 3.21e+05 | captured | captured |
-| C4 | 4.9 | 1e-11 | 3.07e+06 | 3.21e+05 | captured | bound |
-| C4 | 4.9 | 1e-12 | 9.7e+06 | 3.21e+05 | captured | captured |
-| C4 | 7 | 1e-08 | 9.72e+04 | 9.71e+04 | captured | captured |
-| C4 | 7 | 1e-09 | 3.07e+05 | 9.71e+04 | captured | captured |
-| C4 | 7 | 1e-10 | 9.7e+05 | 9.71e+04 | captured | captured |
-| C4 | 7 | 1e-11 | 3.07e+06 | 9.71e+04 | captured | captured |
-| C4 | 7 | 1e-12 | 9.7e+06 | 9.71e+04 | captured | captured |
+| C3 | 17 | 3.13e-10 | 5.48e+05 | 5.45e+05 | captured | capture tie |
+| C3 | 17.3 | 3.02e-10 | 5.58e+05 | 5.75e+05 | not departed | unsettled |
+| C3 | 20.6 | 2.13e-10 | 6.65e+05 | 9.88e+05 | not departed | unsettled |
+| C3 | 24.5 | 1.5e-10 | 7.92e+05 | 1.71e+06 | not departed | unsettled |
+| C4 | 3 | 1e-08 | 9.71e+04 | 2.35e+07 | not departed | bound |
+| C4 | 3 | 1e-09 | 3.07e+05 | 2.35e+07 | not departed | bound |
+| C4 | 3 | 1e-10 | 9.7e+05 | 2.35e+07 | not departed | bound |
+| C4 | 3 | 1e-11 | 3.07e+06 | 2.35e+07 | not departed | bound |
+| C4 | 3 | 1e-12 | 9.7e+06 | 2.35e+07 | not departed | bound |
+| C4 | 4.9 | 1e-08 | 9.72e+04 | 3.19e+05 | not departed | bound |
+| C4 | 4.9 | 1e-09 | 3.07e+05 | 3.19e+05 | not departed | bound |
+| C4 | 4.9 | 1e-10 | 9.7e+05 | 3.19e+05 | captured | captured |
+| C4 | 4.9 | 1e-11 | 3.07e+06 | 3.19e+05 | captured | bound |
+| C4 | 4.9 | 1e-12 | 9.7e+06 | 3.19e+05 | captured | captured |
+| C4 | 7 | 1e-08 | 9.72e+04 | 9.57e+04 | captured | captured |
+| C4 | 7 | 1e-09 | 3.07e+05 | 9.57e+04 | captured | captured |
+| C4 | 7 | 1e-10 | 9.7e+05 | 9.57e+04 | captured | captured |
+| C4 | 7 | 1e-11 | 3.07e+06 | 9.57e+04 | captured | captured |
+| C4 | 7 | 1e-12 | 9.7e+06 | 9.57e+04 | captured | captured |
 | C4 | 10 | 1e-08 | 9.73e+04 | 1.52e+05 | not departed | not departed |
 | C4 | 10 | 1e-09 | 3.07e+05 | 1.52e+05 | captured | captured |
 | C4 | 10 | 1e-10 | 9.7e+05 | 1.52e+05 | captured | captured |
 | C4 | 10 | 1e-11 | 3.07e+06 | 1.52e+05 | captured | captured |
 | C4 | 10 | 1e-12 | 9.7e+06 | 1.52e+05 | captured | captured |
-| C4 | 17.3 | 1e-08 | 9.76e+04 | 5.84e+05 | not departed | not departed |
-| C4 | 17.3 | 1e-09 | 3.07e+05 | 5.84e+05 | not departed | not departed |
-| C4 | 17.3 | 1e-10 | 9.7e+05 | 5.84e+05 | captured | captured |
-| C4 | 17.3 | 1e-11 | 3.07e+06 | 5.84e+05 | captured | captured |
-| C4 | 17.3 | 1e-12 | 9.7e+06 | 5.84e+05 | captured | captured |
-| C4 | 24.5 | 1e-08 | 9.79e+04 | 1.73e+06 | not departed | not departed |
-| C4 | 24.5 | 1e-09 | 3.08e+05 | 1.73e+06 | not departed | not departed |
-| C4 | 24.5 | 1e-10 | 9.71e+05 | 1.73e+06 | not departed | not departed |
-| C4 | 24.5 | 1e-11 | 3.07e+06 | 1.73e+06 | captured | captured |
-| C4 | 24.5 | 1e-12 | 9.7e+06 | 1.73e+06 | captured | captured |
-| C4b | 3 | 1e-08 | 9.71e+04 | 2.36e+07 | not departed | bound |
-| C4b | 3 | 1e-09 | 3.07e+05 | 2.36e+07 | not departed | bound |
-| C4b | 3 | 1e-10 | 9.7e+05 | 2.36e+07 | not departed | bound |
-| C4b | 3 | 1e-11 | 3.07e+06 | 2.36e+07 | not departed | bound |
-| C4b | 3 | 1e-12 | 9.7e+06 | 2.36e+07 | not departed | bound |
-| C4b | 4.9 | 1e-08 | 9.72e+04 | 3.21e+05 | not departed | bound |
-| C4b | 4.9 | 1e-09 | 3.07e+05 | 3.21e+05 | not departed | bound |
-| C4b | 4.9 | 1e-10 | 9.7e+05 | 3.21e+05 | captured | captured |
-| C4b | 4.9 | 1e-11 | 3.07e+06 | 3.21e+05 | captured | captured |
-| C4b | 4.9 | 1e-12 | 9.7e+06 | 3.21e+05 | captured | captured |
-| C4b | 7 | 1e-08 | 9.72e+04 | 9.71e+04 | captured | captured |
-| C4b | 7 | 1e-09 | 3.07e+05 | 9.71e+04 | captured | captured |
-| C4b | 7 | 1e-10 | 9.7e+05 | 9.71e+04 | captured | captured |
-| C4b | 7 | 1e-11 | 3.07e+06 | 9.71e+04 | captured | captured |
-| C4b | 7 | 1e-12 | 9.7e+06 | 9.71e+04 | captured | captured |
+| C4 | 17.3 | 1e-08 | 9.76e+04 | 5.79e+05 | not departed | not departed |
+| C4 | 17.3 | 1e-09 | 3.07e+05 | 5.79e+05 | not departed | not departed |
+| C4 | 17.3 | 1e-10 | 9.7e+05 | 5.79e+05 | captured | captured |
+| C4 | 17.3 | 1e-11 | 3.07e+06 | 5.79e+05 | captured | captured |
+| C4 | 17.3 | 1e-12 | 9.7e+06 | 5.79e+05 | captured | captured |
+| C4 | 24.5 | 1e-08 | 9.79e+04 | 1.72e+06 | not departed | not departed |
+| C4 | 24.5 | 1e-09 | 3.08e+05 | 1.72e+06 | not departed | not departed |
+| C4 | 24.5 | 1e-10 | 9.71e+05 | 1.72e+06 | not departed | not departed |
+| C4 | 24.5 | 1e-11 | 3.07e+06 | 1.72e+06 | captured | captured |
+| C4 | 24.5 | 1e-12 | 9.7e+06 | 1.72e+06 | captured | captured |
+| C4b | 3 | 1e-08 | 9.71e+04 | 2.35e+07 | not departed | bound |
+| C4b | 3 | 1e-09 | 3.07e+05 | 2.35e+07 | not departed | bound |
+| C4b | 3 | 1e-10 | 9.7e+05 | 2.35e+07 | not departed | bound |
+| C4b | 3 | 1e-11 | 3.07e+06 | 2.35e+07 | not departed | bound |
+| C4b | 3 | 1e-12 | 9.7e+06 | 2.35e+07 | not departed | bound |
+| C4b | 4.9 | 1e-08 | 9.72e+04 | 3.19e+05 | not departed | bound |
+| C4b | 4.9 | 1e-09 | 3.07e+05 | 3.19e+05 | not departed | bound |
+| C4b | 4.9 | 1e-10 | 9.7e+05 | 3.19e+05 | captured | captured |
+| C4b | 4.9 | 1e-11 | 3.07e+06 | 3.19e+05 | captured | captured |
+| C4b | 4.9 | 1e-12 | 9.7e+06 | 3.19e+05 | captured | captured |
+| C4b | 7 | 1e-08 | 9.72e+04 | 9.57e+04 | captured | captured |
+| C4b | 7 | 1e-09 | 3.07e+05 | 9.57e+04 | captured | captured |
+| C4b | 7 | 1e-10 | 9.7e+05 | 9.57e+04 | captured | captured |
+| C4b | 7 | 1e-11 | 3.07e+06 | 9.57e+04 | captured | captured |
+| C4b | 7 | 1e-12 | 9.7e+06 | 9.57e+04 | captured | captured |
 | C4b | 10 | 1e-08 | 9.73e+04 | 1.52e+05 | not departed | not departed |
 | C4b | 10 | 1e-09 | 3.07e+05 | 1.52e+05 | captured | captured |
 | C4b | 10 | 1e-10 | 9.7e+05 | 1.52e+05 | captured | captured |
 | C4b | 10 | 1e-11 | 3.07e+06 | 1.52e+05 | captured | captured |
 | C4b | 10 | 1e-12 | 9.7e+06 | 1.52e+05 | captured | captured |
-| C4b | 17.3 | 1e-08 | 9.76e+04 | 5.84e+05 | not departed | not departed |
-| C4b | 17.3 | 1e-09 | 3.07e+05 | 5.84e+05 | not departed | not departed |
-| C4b | 17.3 | 1e-10 | 9.7e+05 | 5.84e+05 | captured | captured |
-| C4b | 17.3 | 1e-11 | 3.07e+06 | 5.84e+05 | captured | captured |
-| C4b | 17.3 | 1e-12 | 9.7e+06 | 5.84e+05 | captured | captured |
-| C4b | 24.5 | 1e-08 | 9.79e+04 | 1.73e+06 | not departed | not departed |
-| C4b | 24.5 | 1e-09 | 3.08e+05 | 1.73e+06 | not departed | not departed |
-| C4b | 24.5 | 1e-10 | 9.71e+05 | 1.73e+06 | not departed | not departed |
-| C4b | 24.5 | 1e-11 | 3.07e+06 | 1.73e+06 | captured | captured |
-| C4b | 24.5 | 1e-12 | 9.7e+06 | 1.73e+06 | captured | captured |
+| C4b | 17.3 | 1e-08 | 9.76e+04 | 5.79e+05 | not departed | not departed |
+| C4b | 17.3 | 1e-09 | 3.07e+05 | 5.79e+05 | not departed | not departed |
+| C4b | 17.3 | 1e-10 | 9.7e+05 | 5.79e+05 | captured | captured |
+| C4b | 17.3 | 1e-11 | 3.07e+06 | 5.79e+05 | captured | captured |
+| C4b | 17.3 | 1e-12 | 9.7e+06 | 5.79e+05 | captured | captured |
+| C4b | 24.5 | 1e-08 | 9.79e+04 | 1.72e+06 | not departed | not departed |
+| C4b | 24.5 | 1e-09 | 3.08e+05 | 1.72e+06 | not departed | not departed |
+| C4b | 24.5 | 1e-10 | 9.71e+05 | 1.72e+06 | not departed | not departed |
+| C4b | 24.5 | 1e-11 | 3.07e+06 | 1.72e+06 | captured | captured |
+| C4b | 24.5 | 1e-12 | 9.7e+06 | 1.72e+06 | captured | captured |
 
 The mirrored target (feature 2 across the face: the runner-up held on the far side): the side, the closest approach, the coefficient after the layer and at s = 10000, 100000, 1e+06, 1e+07, 1e+08, 3e+08, the distance from feature 0 at the end, the first s at which a coefficient below θ|A| has grown past it, the departure:
 
 | x | side | closest (σ) | w after the layer | w at the marks | distance at the end (σ) | s at θ\|A\| | departure |
 |---|---|---|---|---|---|---|---|
-| 3 | toward | 3.3e-15 | 0.0793 | 0.0798, 0.0797, 0.0784, 0.0632, 0.7, 0.7 | 6.079 | — | 2.36e+07 |
-| 4.9 | toward | 1.5e-14 | 0.02136 | 0.0215, 0.0208, 0.7, 0.7, 0.7, 0.7 | 6.079 | — | 3.21e+05 |
+| 3 | toward | 3.3e-15 | 0.0793 | 0.0798, 0.0797, 0.0784, 0.0632, 0.7, 0.7 | 6.079 | — | 2.35e+07 |
+| 4.9 | toward | 1.5e-14 | 0.02136 | 0.0215, 0.0208, 0.7, 0.7, 0.7, 0.7 | 6.079 | — | 3.2e+05 |
 | 7 | far | 1.8e-08 | 0.004907 | 0.00494, 0.00495, 0.00543, 0.0105, 0.0593, 0.153 | 0.105 | 5.71e+06 | none |
 | 10 | far | 6.8e-03 | 0.0007995 | 0.000803, 0.000804, 0.00106, 0.00517, 0.0544, 0.148 | 0.107 | 1.57e+07 | none |
 | 17.3 | far | 1.3e-01 | 5.722e-05 | 5.74e-05, 5.74e-05, 6.24e-05, 0.00182, 0.0509, 0.145 | 0.108 | 2.28e+07 | none |
+
+The mirror past R's horizon (referee round 58): the coefficients at the end, the s at which the runner-up outgrows the entrant (the swap), the entrant's departure (2σ from feature 0) and the feature it ends nearest (its distance), the runner-up's distance from feature 0 at the end:
+
+| x | s_end | w: runner-up, entrant | the swap s | the entrant's departure s | the entrant ends at feature (σ) | the runner-up's distance (σ) |
+|---|---|---|---|---|---|---|
+| 7 | 3e+09 | 0.8, 0.7 | 8.63e+08 | 1.38e+09 | 2 (0.000) | 0.000 |
+| 10 | 3e+09 | 0.8, 0.7 | 8.73e+08 | 1.39e+09 | 2 (0.000) | 0.000 |
 
 The side against the tolerance (to s = 3e+06): per gap the closest approach at the tightest tolerance and the side at rtol 1e-09, 1e-10, 1e-11, 1e-12, 1e-13 (None: the pair merged — the runner-up never 0.05σ from feature 0):
 
@@ -488,6 +503,33 @@ The side against the tolerance (to s = 3e+06): per gap the closest approach at t
 Runs not toward, per tolerance: 1e-09: 6 of 8; 1e-10: 6 of 8; 1e-11: 3 of 8; 1e-12: 1 of 8; 1e-13: 0 of 8.
 
 FC. The static fold in C4's own geometry (Part C's samples; the entrant and the runner-up's centre free, its coefficient held): toward feature 2: the fold at w = 0.016679, the rest there 0.842σ from feature 0 (+0.840σ along e); away from it: no fold down to w = 0.003 (the rest 0.591σ, -0.578σ along e); toward, feature 1 removed: the fold at w = 0.017196, the rest there 0.853σ from feature 0 (+0.853σ along e).
+
+## RP. The relative mode: the pin (referee round 58)
+
+R's race (the near tie at μ → 0, the runner-up x behind the entrant) with the sums over the samples in float64 or in the 80-bit long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window and with its top edge moved (the block 4.67σ, 5.00σ, 8.33σ below it): the relative offset D = c_r − c_e (σ) at s = 500, 700, 1000 against the pin law integrated from s = 400 — dD/ds = Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(∂c̄*/∂W)dW/ds, the relative mode's first order forced by the block's rest moving with W, ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩) —; ∂c̄*/∂W (σ per unit W) at s = 700; the least |D| after the wall before the departure and its share along e; the side, the departure s_d and |D|'s growth rate on s ∈ [3·10³, 10⁴]:
+
+| target | x | top edge (σ above the block) | sums | D at s = 500, 700, 1000 (x, y) | the law | ∂c̄*/∂W (x, y) | least \|D\| (its share along e) | side | s_d | growth rate |
+|---|---|---|---|---|---|---|---|---|---|---|
+| near tie | 3 | 0.95 (4.67) | float64 | (+3.24e-16, -1.13e-13); (+1.39e-15, -1.14e-13); (+1.55e-14, -1.24e-13) | (+4.07e-16, -1.13e-13); (+1.39e-15, -1.14e-13); (+1.70e-14, -1.25e-13) | (-3.60e-14, +3.37e-11) | 1.10e-13 (+0.88) | toward | 2.289e+07 | 0.0033 |
+| near tie | 4.9 | 0.95 (4.67) | float64 | (+1.57e-15, -4.54e-13); (+4.76e-15, -4.60e-13); (+3.42e-14, -4.81e-13) | (+1.58e-15, -4.54e-13); (+5.08e-15, -4.60e-13); (+4.39e-14, -4.88e-13) | (-3.60e-14, +3.37e-11) | 4.52e-13 (+0.88) | toward | 3.073e+05 | 0.000842 |
+| near tie | 6.04 | 0.95 (4.67) | float64 | (+3.63e-09, -9.92e-11); (+5.09e-13, -1.08e-12); (+9.12e-14, -1.08e-12) | (+5.04e-12, -1.22e-12); (+1.06e-14, -1.04e-12); (+6.98e-14, -1.09e-12) | (-3.60e-14, +3.37e-11) | 1.07e-12 (+0.92) | toward | 7.489e+04 | 0.000369 |
+| near tie | 3 | 1 (5.00) | float64 | (+0.00e+00, -4.07e-15); (-4.63e-17, -4.26e-15); (+4.63e-16, -3.89e-15) | (+1.33e-17, -3.81e-15); (+3.94e-17, -3.84e-15); (+4.78e-16, -4.16e-15) | (-1.11e-15, +1.14e-12) | 3.15e-15 (+0.89) | toward | 2.346e+07 | 0.00326 |
+| near tie | 4.9 | 1 (5.00) | float64 | (+9.25e-17, -1.52e-14); (+2.31e-16, -1.57e-14); (+8.33e-16, -1.65e-14) | (+4.98e-17, -1.53e-14); (+1.44e-16, -1.55e-14); (+1.28e-15, -1.64e-14) | (-1.04e-15, +1.14e-12) | 1.50e-14 (+0.89) | toward | 3.191e+05 | 0.000829 |
+| near tie | 5.48 | 1 (5.00) | float64 | (+6.32e-12, -2.51e-13); (+1.85e-16, -2.35e-14); (+1.34e-15, -2.41e-14) | (+1.23e-15, -2.32e-14); (+2.12e-16, -2.36e-14); (+1.67e-15, -2.47e-14) | (-1.08e-15, +1.14e-12) | 2.23e-14 (+0.94) | toward | 6.101e+04 | 0.000542 |
+| near tie | 6.04 | 1 (5.00) | float64 | (+7.06e-09, -1.80e-10); (+7.28e-13, -8.23e-14); (+4.49e-14, -4.22e-14) | (+1.77e-11, -6.81e-13); (+3.09e-16, -3.52e-14); (+2.10e-15, -3.66e-14) | (-1.26e-15, +1.14e-12) | 5.93e-14 (+0.97) | toward | 8.439e+04 | 0.000362 |
+| near tie | 7 | 1 (5.00) | float64 | (+1.02e-05, -1.48e-07); (+8.46e-08, -2.94e-09); (+1.98e-08, -1.45e-09) | (+3.84e-07, -7.89e-09); (+2.61e-11, -1.65e-12); (+1.32e-12, -2.57e-13) | (-1.17e-15, +1.14e-12) | 1.81e-08 (+0.58) | toward | 9.566e+04 | 0.000161 |
+| near tie | 4.9 | 1 (5.00) | long double | (+9.25e-17, -1.54e-14); (+1.85e-16, -1.55e-14); (+5.55e-16, -1.65e-14) | (+5.04e-17, -1.53e-14); (+1.46e-16, -1.55e-14); (+1.28e-15, -1.64e-14) | (-1.22e-15, +1.14e-12) | 1.50e-14 (+0.88) | toward | 3.192e+05 | 0.000828 |
+| near tie | 3 | 1.5 (8.33) | float64 | (+4.63e-17, +3.70e-16); (-4.63e-17, +0.00e+00); (+2.31e-16, +0.00e+00) | (-1.24e-19, +9.18e-20); (+1.77e-19, +8.88e-20); (-4.46e-19, +1.13e-19) | (-5.48e-17, -2.74e-17) | 0.00e+00 (—) | toward | 2.919e+07 | 0.00263 |
+| near tie | 4.9 | 1.5 (8.33) | float64 | (+6.70e-11, -1.86e-12); (-4.63e-17, -1.85e-16); (+4.63e-17, -1.85e-16) | (+3.12e-14, -1.21e-15); (-8.98e-19, +2.44e-19); (-4.30e-19, +1.05e-19) | (+6.66e-17, -2.75e-17) | 0.00e+00 (—) | far | none | 0.000676 |
+| near tie | 6.04 | 1.5 (8.33) | float64 | (+2.91e-06, -4.12e-08); (+1.96e-10, -6.90e-12); (+1.18e-13, -1.09e-14) | (+6.76e-08, -1.31e-09); (+2.39e-16, -1.59e-17); (+8.55e-19, -9.79e-19) | (+3.61e-17, +2.74e-17) | 3.70e-14 (+0.64) | toward | 1.076e+05 | 0.00027 |
+| near tie | 4.9 | 1.5 (8.33) | long double | (+6.70e-11, -1.86e-12); (+9.25e-17, -3.70e-16); (+0.00e+00, +0.00e+00) | (+3.12e-14, -1.21e-15); (-7.25e-21, +2.19e-22); (-6.65e-21, +6.56e-22) | (+5.37e-19, -2.37e-20) | 0.00e+00 (—) | far | none | 0.00046 |
+| near tie mirrored | 4.9 | 1 (5.00) | float64 | (+0.00e+00, -1.50e-14); (-1.85e-16, -1.55e-14); (-9.25e-16, -1.61e-14) | (-4.96e-17, -1.53e-14); (-1.47e-16, -1.55e-14); (-1.28e-15, -1.64e-14) | (+1.32e-15, +1.14e-12) | 1.50e-14 (+0.88) | toward | 3.198e+05 | 0.000824 |
+
+On Part C's window, the formed runner-ups: the law's D_y over the run's at s = 500, 700, 1000: x = 3: 0.937, 0.902, 1.071; x = 4.9: 1.010, 0.988, 0.993; x = 5.48: 0.092, 1.005, 1.026; x = 6.04: 0.004, 0.427, 0.867.
+The top edge at 0.95 (4.67σ): ∂c̄*/∂W along y 3.37e-11σ against 1.14e-12σ; x = 3: D_y at s = 700 -1.14e-13 (the law -1.14e-13) against -4.26e-15, the side toward, s_d 2.289e+07 against 2.346e+07; x = 4.9: D_y at s = 700 -4.6e-13 (the law -4.6e-13) against -1.57e-14, the side toward, s_d 3.073e+05 against 3.191e+05; x = 6.04: D_y at s = 700 -1.08e-12 (the law -1.04e-12) against -8.23e-14, the side toward, s_d 7.489e+04 against 8.439e+04.
+The top edge at 1.5 (8.33σ): ∂c̄*/∂W along y -2.74e-17σ against 1.14e-12σ; x = 3: D_y at s = 700 0 (the law 8.88e-20) against -4.26e-15, the side toward, s_d 2.919e+07 against 2.346e+07; x = 4.9: D_y at s = 700 -1.85e-16 (the law 2.44e-19) against -1.57e-14, the side far, s_d none against 3.191e+05; x = 6.04: D_y at s = 700 -6.9e-12 (the law -1.59e-17) against -8.23e-14, the side toward, s_d 1.076e+05 against 8.439e+04.
+Long double against float64 (x = 4.9, top 1): D at s = 700 (+1.85e-16, -1.55e-14) against (+2.31e-16, -1.57e-14), the side toward against toward, s_d 3.192e+05 against 3.191e+05.
+Long double against float64 (x = 4.9, top 1.5): D at s = 700 (+9.25e-17, -3.70e-16) against (-4.63e-17, -1.85e-16), the side far against far, s_d none against none.
 
 ## T3. The product rule at a vertex of hℤ³
 

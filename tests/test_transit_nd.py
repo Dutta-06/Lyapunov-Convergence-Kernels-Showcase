@@ -11,6 +11,7 @@ warnings.filterwarnings('ignore')
 
 from src.core import rich_transit as RT
 from src.core import rich_transit_nd as RN
+import exp_cohesion_leak as E
 import exp_mirror_transit as X
 import exp_transit_mass as TM
 import exp_transit_nd as TN
@@ -413,6 +414,8 @@ def test_the_race_job_both_sides():
     r = TN.race_job(('near tie', 7.0, 1e-10, 3e5))
     assert r['side'] == 'toward' and r['s_d'] is not None and 5e4 < r['s_d'] < 2e5 and r['w_layer'] < TN.TH_REL * TN.A_B
     assert r['d_dep'] > 2.0 >= r['d_pre'] and abs(r['s_layer'] / 1e3 - 1) < 0.05            # the departure at 2σ; the layer's end at 10³
+    assert r['s_d_grid'] / 1.04 < r['s_d'] <= r['s_d_grid'] and r['s_theta'] is None        # bisected within the grid step (round 58)
+    assert r['e_closest'] is not None and r['e_closest'] > 0                                 # the collapse keeps the layer's side (a tail)
     m = TN.race_job(('near tie mirrored', 7.0, 1e-10, 3e5))
     assert m['side'] == 'far' and m['s_d'] is None and m['d_end'] < 2.0 and m['w_end'] > m['w_layer'] > 0
     assert m['closest'] < 1e-6 and r['closest'] < 1e-6                     # the inner layer's collapse
@@ -498,3 +501,50 @@ def test_the_third_moment_law_of_the_hold():
         r = TN.v_job((1, 7.0, TN.AP_V, side))
         q = TN.e3_ratios(r)
         assert q and abs(q[0][0] - 0.28) < 0.05 and abs(q[0][1] - 1) < 0.06 and np.sign(q[0][2]) == side
+
+
+def test_the_report_reproduces_the_committed_md():
+    """Golden (referee round 58): the report from the committed raw is the committed md, byte for byte."""
+    out = os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos')
+    old = E.load(os.path.join(out, 'transit_nd_raw.npz'))
+    assert TN.report(*[old.get(k) for k in TN.KEYS]) == open(os.path.join(out, 'transit_nd.md')).read()
+
+
+def test_the_mirror_race_grows_past_theta_and_a_formed_runner_up_does_not():
+    """R's far side (round 58): at the gap 7 the held tail's coefficient passes θ|A| near s = 5.7·10⁶; a formed runner-up (x = 3) is above
+    θ|A| after the layer, so it has no s_θ."""
+    m = TN.race_job(('near tie mirrored', 7.0, TN.RTOL_R, 1e7))
+    assert m['side'] == 'far' and m['s_theta'] is not None and 5e6 < m['s_theta'] < 6.5e6 and m['s_d'] is None
+    f = TN.race_job(('near tie mirrored', 3.0, TN.RTOL_R, 1e5))
+    assert f['w_layer'] > TN.TH_REL * TN.A_B and f['s_theta'] is None
+
+
+def test_the_outcome_labels_of_held_runner_ups():
+    """c3_outcome at d_held = 1.5σ and 2.5σ; C4M's held unformed tails labelled by their side whatever the residual (round 58)."""
+    base = dict(n_fin=[1, 1, 1], captured=[], rms=1e-6)
+    assert TN.c3_outcome(dict(base, d_held=1.5)) == 'not departed' and TN.c3_outcome(dict(base, d_held=2.5)) == 'stranded'
+    for rms in (1e-12, 1e-6):
+        assert TN.c4m_outcome(dict(base, rms=rms, d_held=0.3, w_end=0.005, side='far')) == 'held, unformed (far)'
+    assert TN.c4m_outcome(dict(base, n_fin=[2, 1, 1], d_held=0.3, w_end=0.02, side='far')) == 'bound'
+
+
+def test_pair_sums_are_the_critical_right_hand_side():
+    """RP's `PairSums` (float64 and the long double) against `critical_rhs_nd` for the race's pair at a generic state."""
+    L = TN.law()
+    K, c0 = TN.full()
+    cs, As = TN.targets_C2(TN.MU_R)['near tie']
+    f = K.synth(cs, As)
+    z = np.r_[3.0, 2.0, cs[0] + np.array([0.01, -0.02]), cs[0] + np.array([0.03, 0.01])]
+    want = RN.critical_rhs_nd(L, K, f)(0.0, z)
+    for dt in (np.float64, np.longdouble):
+        assert np.allclose(TN.PairSums(L, K, cs, As, dt)(0.0, z), want, rtol=1e-11, atol=1e-16)
+
+
+def test_the_pin_law_at_the_window_edge():
+    """RP (round 58): on Part C's window the formed runner-up (x = 4.9) pins 1.55·10⁻¹⁴σ along −y, the law (the block's rest moving with W
+    through the window's top edge, ∂c̄*/∂W = 1.14·10⁻¹²σ) within 3%, toward feature 2; with the edge 8.3σ away the pin and the shift vanish."""
+    r = TN.rp_job(('near tie', 4.9, 1.0, 64))
+    assert -1.7e-14 < r['D'][1][1] < -1.4e-14 and abs(r['law'][1][1] / r['D'][1][1] - 1) < 0.03 and r['side'] == 'toward'
+    assert abs(r['dcdW'][1] / 1.14e-12 - 1) < 0.01 and abs(r['dcdW'][0]) < 1e-14 and r['s_d'] is not None
+    e = TN.rp_job(('near tie', 4.9, 1.5, 64))
+    assert np.linalg.norm(e['D'][1]) < 1e-15 and np.linalg.norm(e['dcdW']) < 1e-15
