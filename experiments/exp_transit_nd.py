@@ -93,7 +93,7 @@ X_C4 = (3.0, 4.9, 7.0, 10.0, 17.3, 24.5)                                 # C4: t
 EPS_C4 = (1e-8, 1e-9, 1e-10, 1e-11, 1e-12)
 RTOL_C4B = 1e-13                                                        # C4b: the race again at a tighter tolerance (a saddle's passage)
 N_OUT_C4 = 160                                                           # C4: outputs from feature 0's entry to feature 2's, log-spaced
-MU_R, XI0_R, RTOL_R, S_END_R = 1e-9, 400.0, 1e-13, 3e8                  # R: the ε-free race — the geometry's margin (feature 0 on the face
+MU_R, XI0_R, RTOL_R, S_END_R, SIDE_R = 1e-9, 400.0, 1e-13, 3e8, 0.05                  # R: the ε-free race — the geometry's margin (feature 0 on the face
                                                                        # as ε → 0 at a fixed gap), the start, the tolerance, the horizon in s
 X_R_EXTRA = (2.5, 4.0, 4.5)                                             # R: gaps beyond C3's and C4's
 S_MARKS_R = (1e4, 1e5, 1e6, 1e7, 1e8, 3e8)                              # R: the runner-up's coefficient and distance at these s
@@ -1003,7 +1003,8 @@ def race_job(args):
     0's entrant (0, 2H) and runner-up (H, 2H) active and features 1 and 2 left in the residual: `inner_k`'s inner problem (the entrant from
     XI0_R behind its wall, the runner-up x behind it) on the full target, integrated in s = (τ − τ_e)/ε^{1/2} to s_end beyond the
     entrant's wall — C4 with s₂ = ∞. Records the pair's closest approach |c_r − c_e| after the wall (the inner layer's collapse), the side
-    the runner-up leaves feature 0 to (its displacement along e, feature 0 → feature 2, where it first passes 0.2σ; None if it never does),
+    the runner-up leaves feature 0 to (its displacement along e, feature 0 → feature 2, where it first passes SIDE_R·σ after the wall — a
+    formed runner-up's rest can be 0.15σ away; None if it never does), its displacement along e at the end,
     its departure s_d (2σ from feature 0), its coefficient after the layer (s = 10³), at the departure (the last output before) and at
     S_MARKS_R, its distance there, and the first s after the layer at which a coefficient below θ|A| has grown past it."""
     name, x = args[:2]
@@ -1032,7 +1033,7 @@ def race_job(args):
     dist = np.linalg.norm(C[:, 1] - cs[0], axis=1) / SIG
     post = np.flatnonzero(s > 0)
     gap = np.linalg.norm(C[post, 1] - C[post, 0], axis=1) / SIG
-    far = [int(i) for i in post if dist[i] > 0.2]
+    far = [int(i) for i in post if dist[i] > SIDE_R]
     side = None if not far else ('toward' if (C[far[0], 1] - cs[0]) @ ev > 0 else 'far')
     dep = next((int(i) for i in post if dist[i] > 2.0), None)
     at = lambda q: int(np.argmin(np.abs(s - q)))
@@ -1045,6 +1046,7 @@ def race_job(args):
                d_dep=float(dist[dep]) if dep is not None else None, d_pre=float(dist[dep - 1]) if dep is not None else None,
                s_layer=float(s[i3]), w_layer=float(abs(w[i3, 1])), marks=marks, w_marks=[float(abs(w[at(q), 1])) for q in marks],
                d_marks=[float(dist[at(q)]) for q in marks], s_theta=grow, d_end=float(dist[-1]), w_end=float(abs(w[-1, 1])),
+               e_end=float((C[-1, 1] - cs[0]) @ ev / SIG),
                secs=time.time() - t0)
     print(f"  R {name} x {x:g} rtol {rtol:g}: side {side}, closest {out['closest']:.1e}σ, s_d {out['s_d']}, w after the layer "
           f"{out['w_layer']:.4g}, at the end {out['w_end']:.4g} ({out['d_end']:.2f}σ) [{out['secs']:.0f}s]", flush=True)
@@ -1363,7 +1365,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
     sd = {round(r['x'], 3): r['s_d'] for r in R['main']}
     rows, agree, ties = [], 0, 0
     tau21 = (np.median([r['s2'] * np.sqrt(r['eps']) for r in C4]) if C4 is not None else None)
-    for lab, rs in (('C4', C4), ('C4b', C4b), ('C3', [r for r in (C3 or []) if r['name'] == 'near tie'])):
+    for lab, rs in (('C4', C4), ('C4b', C4b), ('C3', [r for r in (C3 if C3 is not None else []) if r['name'] == 'near tie'])):
         for r in (rs if rs is not None else []):
             x = float(r['x']) if 'x' in r else float(r['mu'] / np.sqrt(r['eps']))
             s2 = r['s2'] if 's2' in r else (tau21 / np.sqrt(r['eps']) if tau21 is not None else None)
@@ -1383,7 +1385,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
                 "| loops | x | ε | s₂ | s_d | predicted | the loop's outcome |", "|---|---|---|---|---|---|---|"]
         out += [f"| {lab} | {x:.3g} | {e:g} | {s2:.3g} | " + (f"{d:.3g}" if d is not None else 'none') + f" | {p} | {a} |"
                 for lab, x, e, s2, d, p, a in sorted(rows, key=lambda q: (q[0], q[1], -q[2]))]
-    if R.get('mirror'):
+    if R.get('mirror') is not None and len(R['mirror']):
         out += ["", "The mirrored target (feature 2 across the face: the runner-up held on the far side): the side, the closest approach, "
                     "the coefficient after the layer and at s = " + ', '.join(f"{q:g}" for q in S_MARKS_R) + ", the distance from feature 0 "
                     "at the end, the first s at which a coefficient below θ|A| has grown past it, the departure:", "",
@@ -1393,7 +1395,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
             out.append(f"| {r['x']:g} | {r['side']} | {r['closest']:.1e} | {r['w_layer']:.4g} | {', '.join(f'{w:.3g}' for w in r['w_marks'])} | "
                        f"{r['d_end']:.3f} | " + (f"{r['s_theta']:.3g}" if r['s_theta'] is not None else '—') + " | "
                        + (f"{r['s_d']:.3g}" if r['s_d'] is not None else 'none') + " |")
-    if R.get('scan'):
+    if R.get('scan') is not None and len(R['scan']):
         rts = sorted({r['rtol'] for r in R['scan']}, reverse=True)
         out += ["", f"The side against the tolerance (to s = {S_END_RS:g}): per gap the closest approach at the tightest tolerance and the "
                     "side at rtol " + ', '.join(f"{q:g}" for q in rts) + " (none: still at the saddle):", "",

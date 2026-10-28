@@ -408,6 +408,15 @@ def test_the_race_job_both_sides():
     m = TN.race_job(('near tie mirrored', 7.0, 1e-10, 3e5))
     assert m['side'] == 'far' and m['s_d'] is None and m['d_end'] < 2.0 and m['w_end'] > m['w_layer'] > 0
     assert m['closest'] < 1e-6 and r['closest'] < 1e-6                     # the inner layer's collapse
+    assert r['e_end'] > TN.SIDE_R and m['e_end'] < -TN.SIDE_R               # the side, read again at the end
+
+
+def test_the_race_side_of_a_formed_runner_up():
+    """A formed runner-up (x = 2.5: its coefficient stays above θ|A|) rests about 0.13σ from feature 0, inside the old 0.2σ side
+    threshold: the side is read at SIDE_R and agrees with its displacement along e at the end."""
+    r = TN.race_job(('near tie', 2.5, 1e-9, 1e5))
+    assert TN.SIDE_R < r['d_end'] < 0.2 and r['s_d'] is None and r['w_end'] > TN.TH_REL * TN.A_B
+    assert r['side'] in ('toward', 'far') and (r['e_end'] > 0) == (r['side'] == 'toward') and abs(r['e_end']) > 0.95 * r['d_end']
 
 
 def test_race_rule_and_the_r_report():
