@@ -12,7 +12,8 @@ A. The rules on ℝ: for τ/σ in TAUS_A and K ≤ K_A, the half-squeeze rule's 
    their j-th differences in K against j!·binom(1/2, j)(−2)^j) and the tail's share against ₂F₁(−½, −½; 1; t²) − 1. A3: the scaled
    Gauss–Hermite rules (`wide_feature.scaled_rule`) at the natural Fock and the Mercer-zero scalings against the half-squeeze one (their
    ratios per kernel against (2 − λ)/λ and 1/q), and the variance of least error (`best_scale`): one parameter's share of the optimum's
-   gain over the rule (referee round 48).
+   gain over the rule (referee round 48). A4: (v), the frame continued to features narrower than the kernels (σ*/σ in NARROW_A): the
+   Gauss–Hermite cosine sum's error (`narrow_rule`) against the series at |t|.
 B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in three
    numerical variants (VARIANTS_B: the polish step and the starting grid's offset; referee round 48): after each entry the relaxed
    block's relative error against the optimal fit with as many kernels on the same samples (variable projection from the block and
@@ -45,6 +46,7 @@ OUT = os.environ.get('WM_OUT', os.path.join(os.path.dirname(__file__), '..', 're
 N_WORKERS = int(os.environ.get('WM_WORKERS', '2'))
 SIG = 0.12
 TAUS_A, K_A, K_A2 = (0.25, 0.5, 1.0, 2.0), 10, 30
+NARROW_A = (0.5, 0.8)                                                 # A4: σ*/σ < 1
 E_FLOOR, G_FLOOR = 1e-10, 1e-13                                      # below them double precision cannot place the optimum, the grid's error
 TAUS_B, A_B, C_B, K_B = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0), 0.8, 0.03, 12
 X_B = np.linspace(-1.6, 1.6, 321)
@@ -91,7 +93,15 @@ def part_A():
         for K in (5, 10, 20, 30):
             s2, f2 = W.mehler_series(K, t)
             share.append(dict(r=r_, K=K, share=s2 / f2 - 1))
-    return dict(rows=rows, ratios=ratios, share=share)
+    narrow = []
+    for q in NARROW_A:
+        ss, t = q * SIG, (1 - q) / (1 + q)
+        for K in range(1, K_A + 1):
+            s2, f2 = W.mehler_series(K, t)
+            if np.sqrt(s2) < G_FLOOR:
+                break
+            narrow.append(dict(q=q, K=K, t=t, e=W.narrow_error(*W.narrow_rule(K, SIG, ss), SIG, ss), e_series=float(np.sqrt(s2))))
+    return dict(rows=rows, ratios=ratios, share=share, narrow=narrow)
 
 
 def blocks(R):
@@ -302,6 +312,16 @@ def report(A=None, B=None, C=None, D=None):
                 L_.append(f"| {r_:g} | {a['e_hs'] / b['e_hs']:.3f} ({1 / t:.3f}) | {a['e_fock'] / b['e_fock']:.3f} ({(2 - lam) / lam:.3f}) | "
                           f"{a['e_mercer'] / b['e_mercer']:.3f} ({1 / q:.3f}) | {cell(rows[0])} | "
                           + (f"{opt[-1]['K']}, {cell(opt[-1])}" if opt else '—') + ' |')
+        if 'narrow' in A:
+            L_ += ['', '### A4. Narrower features: the continued frame', '',
+                   "σ* < σ: the nodes imaginary in conjugate pairs, the K-term sum e^{−x²/(2σ²)}Σ_k b_k cos(η_kx/σ²) at the Hermite-zero "
+                   "frequencies η_k = (2σ²|sinh r|)^{1/2}z_k (`narrow_rule`); its relative L² error (trapezoid) against the Mehler series at "
+                   "|t| = (σ − σ*)/(σ + σ*), and the ratios per kernel against 1/|t|:", '',
+                   '| σ*/σ | 1/|t| | K: error (relative difference from the series) | ratio per kernel at the last K |', '|---|---|---|---|']
+            for q in NARROW_A:
+                rs = [x for x in A['narrow'] if x['q'] == q]
+                L_.append(f"| {q:g} | {1 / rs[0]['t']:.4f} | " + ', '.join(f"{x['K']}: {x['e']:.3e} ({abs(x['e'] / x['e_series'] - 1):.0e})"
+                                                                         for x in rs) + f" | {rs[-2]['e'] / rs[-1]['e']:.4f} |")
         from scipy.special import hyp2f1
         L_ += ['', "The tail's share Σ_{n>2K}/(first term) against ₂F₁(−½, −½; 1; t²) − 1 (the share's limit if the ratios' leading "
                "coefficients govern the tail):", '', '| τ/σ | t | K = 5 | 10 | 20 | 30 | ₂F₁(−½, −½; 1; t²) − 1 |', '|---|---|---|---|---|---|---|']

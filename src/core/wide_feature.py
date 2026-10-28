@@ -77,6 +77,23 @@ def best_scale(K, sig, sig_star, A=1.0):
     return float(vhs * np.exp(res.x)), float(res.fun)
 
 
+def narrow_rule(K, sig, sig_star, A=1.0):
+    """(v): the half-squeeze frame continued to a feature narrower than the kernels (σ* < σ, r < 0): the nodes iη_k, η_k =
+    (2σ²|sinh r|)^{1/2}z_k, in conjugate pairs, the K-term sum real — e^{−x²/(2σ²)}Σ_k b_k cos(η_kx/σ²), b_k = A(σ*/σ)^{1/2}w_k
+    exp(η_k²/(2σ²) − η_k²/(2σ(σ + σ*))) (Derevianko–Plonka's Hermite-zero cosine sums) → (η, b)."""
+    z, w = gh(K)
+    eta = np.sqrt(2 * sig ** 2 * abs(np.sinh(np.log(sig_star / sig)))) * z
+    return eta, A * np.sqrt(sig_star / sig) * w * np.exp(eta ** 2 / (2 * sig ** 2) - eta ** 2 / (2 * sig * (sig + sig_star)))
+
+
+def narrow_error(eta, b, sig, sig_star, A=1.0, per=400):
+    """The relative L² error of `narrow_rule`'s cosine sum against Aφ_{σ*}, by the trapezoid rule on ±40σ* with spacing σ*/per."""
+    h = sig_star / per
+    x = np.arange(-40 * per, 40 * per + 1) * h
+    fK = np.exp(-x ** 2 / (2 * sig ** 2)) * (np.cos(np.outer(x, eta) / sig ** 2) @ b)
+    return float(np.sqrt(h * np.sum((A * np.exp(-x ** 2 / (2 * sig_star ** 2)) - fK) ** 2)) / (A * np.sqrt(np.sqrt(np.pi) * sig_star)))
+
+
 def grid(sig, sig_star, span=14.0, per_sig=10):
     """A trapezoid grid on [−span·σ*, span·σ*] with spacing σ/per_sig (the integrands are Gaussians of width ≥ σ/√2: the rule's error is
     of order exp(−π²(σ·per_sig)²/σ²) — far below double precision)."""

@@ -140,3 +140,16 @@ def test_scaled_rules_and_the_best_scale():
     assert eo <= eb * (1 + 1e-9) and eb < e_hs and 0.98 < vb / V['hs'] < 1.0
     e1 = W.optimal_fit(*W.half_squeeze(1, SIG, s_)[:1], SIG, s_)[2]
     assert abs(W.best_scale(1, SIG, s_)[1] / e1 - 1) < 1e-6
+
+
+def test_the_frame_continues_to_narrower_features():
+    """(v): for σ* < σ the Gauss–Hermite cosine sum at the frequencies (2σ²|sinh r|)^{1/2}z_k has the error of the Mehler series at
+    |t| = (σ − σ*)/(σ + σ*) — the half-squeeze rule with imaginary nodes in conjugate pairs."""
+    for q in (0.5, 0.8):
+        s_ = q * SIG
+        t = (1 - q) / (1 + q)
+        for K in (1, 3, 6):
+            e = W.narrow_error(*W.narrow_rule(K, SIG, s_), SIG, s_)
+            assert abs(e / np.sqrt(W.mehler_series(K, t)[0]) - 1) < 1e-10
+    eta, b = W.narrow_rule(4, SIG, 0.5 * SIG)
+    assert np.allclose(eta, -eta[::-1]) and np.allclose(b, b[::-1])
