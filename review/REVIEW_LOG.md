@@ -2448,3 +2448,49 @@ log. Minors: an unfixed range (95.7%), "not the stop", pooled entry statistics, 
 residual is 10⁻¹⁰; the check that settles it — rerun the same solver from the same state with only the suspect setting changed — took
 a variant of B, and moved two of the three ranges. A miss measured against an optimum below the experiment's own floor is evidence about
 the solver, not about basins; and a statistic pooled over regimes is not to be quoted for one of them.
+
+## Round 45 (adversarial review of Proposition D‴.56's first draft, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3ar: Proposition D‴.56, the transit under measurement noise, with its code and
+results (`review/REVIEW_round45_D3ar.md`). The referee regenerated the md byte for byte and reproduced Part B bit for bit on 1200 paths;
+recomputed all 40 noiseless paths and their responses (entry gaps, margins, R_K's trace, the union bound per target, a KS test of
+|R_Kξ|²/s² against χ²₅₅, the PIT of W·s under each target's limit law); checked `path_response` against central finite differences on six
+targets of their own (near ties of 0.86% and 1.1%, a same-sign and an opposite-sign close pair, amplitudes 1 : 0.1); ran 19 mutants;
+audited Part E's raw paths (time-outs, short paths, Radau paths, exits after the (K + 1)-th entry, zero gaps) and reproduced three
+anomalous ones with and without the polish; ran the two stopping rules on amplitudes (1, 0.3, 0.1), on K = 5 and to K + 8 entries; fitted
+the oracle from the truth on 400 draws; searched the literature.
+
+**Verdicts (D3ar).** The first-order response is right (second order in h on every target), and so are the window's law for small s and
+the oracle at the K-th fit. Wrong: (ii) applied along the noiseless order where noisy draws swap near-tied entries (the swaps cause most
+of the "exact, criterion ≥ 1" disagreements), and a probability "+O(s²)" from a local expansion; past the first noise kernel the solver
+returned non-fits flagged as relaxed — an edge kernel leaving the window with a coefficient up to 2.65·10⁹, thresholds relative to max|w|,
+exit/re-entry bursts at one τ —; the largest relative gap is not a stopping rule without s (it needs the path past the stop over a horizon
+chosen knowing K, and fails with the amplitude range, with K = 5 and with the horizon); the tests did not protect the published numbers
+(the criterion's intermediate rows, `b_job`, `e_job` and the report untested). Minors: the limit law untested, a circular χ² check of the
+late stops, novelty, Part E's selection and a wall-clock budget, (D)'s wording, D‴.53's hypotheses, index bookkeeping.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ar-1 | major | (ii) linearised along the noiseless order where it breaks | (i): the ball's radius — r₁ = min(1 − \|u⁰_j(τ_k)\|)/\|U_{k,j}\| over the kernels not yet entered, the later entrants included (a near tie is the later entrant's small margin), and the blocks' nondegeneracy; (ii): the order criterion over every entry's not-yet-entered kernels (`U_all`); B: the order kept, the swaps 0, 2, 26, 64, 81, the order criterion agreeing per draw on 400, 400, 398, 392, 372, every disagreement within the level's largest linear-dual error of the wall; B2: 20 targets of small radius (r₁ 0.0026 … 0.019) at s = 0.001, 0.003, 0.01, the order kept on 400, 389, 344 against 399.8 ± 0.4, 388.3 ± 3.1, 337.5 ± 6.7 |
+| D3ar-2 | major | The probability "+O(s²)" unproved; the union bound never computed | (ii) two-sided on the ball: the order kept if crit < 1 − C\|ξ\|², not if crit > 1 + C\|ξ\|²; P(crit < 1) the first-order probability, off by at most P(\|crit − 1\| ≤ C\|ξ\|²) + P(\|ξ\| > r₀) — of order s where failures are frequent; B: the linear model's expected counts with z (+0.2, +1.0, −2.0, −0.6, +1.3) and the union bound 0.1, 7.7, 40.0, 219.6, 400 (capped) against 0, 2, 27, 103, 273 failures |
+| D3ar-3 | major | Non-fits past the first noise kernel flagged as relaxed | `sliding_iss` (4fd8082): `box` keeps the centres in the window ± 2σ and stops the path with 'runaway' when a relaxation carries one out; `w_scale` thresholds on the data's scale; `max_rhs` a deterministic budget; `ev_iter` maps entries to iterations; `relax_chunk` redoes failed solves and the opt-in exit rule (`exit_kkt`) lets a kernel leave only if its correlation stays inward without its own contribution (1c5a996); (iv): past τ_K + W the fit can have no minimiser; E rerun: the runaway paths reported, no exit after the (K + 1)-th entry on any path |
+| D3ar-4 | major | The largest relative gap not a stopping rule without s | (iv): a selection over a fixed horizon, not a stopping time, needing the path past the stop; it selects the K-th entry iff W/τ_K exceeds every other relative gap of the horizon — the features' own (growing with the amplitude range and K) and the later noise kernels' (not bounded uniformly); Status: the rule presumes features of the kernels' width; E's four families: on the exact paths the rule selects the K-th exactly where W/τ_K exceeds both kinds of gaps — failing from s = 0.1 by the noise kernels' gaps (base), from s = 0.03 by the amplitude range (wide: the features' gaps 2.38–3.3 against W/τ_K 11.9, 4.87, 0.502) |
+| D3ar-5 | major | The tests do not protect the numbers | seven new tests (finite differences of the duals at every entry against `U_all[k]`, the criteria's rows, radius and union bound, classification and both rules, a seeded `b_draw`, Part E's report on hand-built paths, the box, `w_scale` and the budget on the runaway draw): 13 of 13 mutants killed, the referee's survivors among them |
+| D3ar-6 | minor | The limit law of sW untested | C on the first order's regime (the order kept, crit < 1); the PIT of W·s under each target's law, KS p = 0.28, 0.88, 0.03, 5.5·10⁻⁵, 4.5·10⁻¹⁴: W ∝ 1/s and its limit law for s ≤ 0.01; the draws keeping the order with crit ≥ 1 (0, 0, 0, 2, 7) and the swaps counted apart, with W_pred < 0 |
+| D3ar-7 | minor | The χ² check of the late stops circular | (D): the path's own late stops 15, 12, 20, 18, 8 against the binomial law 18.4 ± 4.2, …, 9.6 ± 3.0 (p = 0.48, 0.15, 0.63, 0.71, 0.74) |
+| D3ar-8 | minor | Novelty overstated | Osher–Ruan–Xiong–Yao–Yin, Vaškevičius–Kanade–Rebeschini, Wainwright's primal–dual witness, Duval–Peyré, the sliding Frank–Wolfe and ADCG, the covariance test, Ahn–Horenstein, Morozov, Yao–Rosasco–Caponnetto, Burger–Resmerita–He cited; New restricted to the off-grid, moving-centre first-order response, the order criterion, its two-sided form and the limit law of sW; "unbiased at first order" |
+| D3ar-9 | minor | Part E scored on exact paths against the path's own fit; a wall-clock limit | both rules scored on every finished path against the oracle polished from the truth; a budget of 3·10⁶ right-hand-side evaluations |
+| D3ar-10 | minor | (D) overstates the gap rule, mislabels the error | "over the first K + 1 entries"; "the K-th entry's fit" |
+| D3ar-11 | minor | D‴.53 applied to any data | the loop follows the noisy path on [0, τ_K + W), on draws whose path satisfies (H1)–(H4) |
+| D3ar-12 | minor | Index mismatches | `ev_iter` maps entries to fits; paths with later exits flagged (none in the rerun) |
+| D3ar-13 | cosmetic | The recursion's start and the noise model unstated | (i): τ₀ = 0, δτ₀ = 0, δu(0) = 0, R₀ = I; the noise i.i.d. Gaussian of variance s² in (ii)–(iv) |
+
+**Beyond the report.** E's rerun under the box finished in 10 h on two workers: of the 100 base paths per level 94, 94, 81, 69 finished
+within the budget, and a runaway kernel stopped 19–26 of them before the horizon — the fit without a minimiser is the common case past
+the first noise kernel, not an anomaly. The largest-gap rule's success is exactly its condition (W/τ_K above every other gap) on all 11
+rows, so its failures are attributed per row to the noise kernels' or the features' own gaps.
+
+**Lesson.** A first-order statement is applied only where the order it linearises along holds: near ties make the later entrants'
+margins the binding ones, and a draw that swaps two entries is outside the expansion however small its dual error looks. A path past
+its last justified event needs its own existence checked before its fits are scored — here the fit had no minimiser, and a "relaxed"
+flag computed on the solution's own scale certified a kernel at c = −1.86 with w = 2.65·10⁹.
