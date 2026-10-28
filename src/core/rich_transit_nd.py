@@ -208,7 +208,7 @@ def polish_block_nd(K, fstar, w, c, s):
 
 
 def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
-                   max_doublings=14, polish=True, max_entries=None, polish_step=1.0, polish_wfrac=1e-2, exit_kkt=False):
+                   max_doublings=14, polish=True, max_entries=None, polish_step=1.0, polish_wfrac=1e-2, exit_kkt=False, max_rhs=None):
     """The sliding inverse scale space in ℝⁿ (`rich_transit.sliding_iss` with the centres c (d, n)): the inactive kernels stay where they
     are, their u_j growing at ⟨rφ(c_j)⟩; the entrants (every kernel whose |u_j| reaches ρ_j within tie_tol of the first: ties enter
     together) join the block with the coefficient `seed`; the block relaxes by the fast flow (polished by least squares after the first
@@ -218,7 +218,9 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
     is accepted only if every kernel whose coefficient is below polish_wfrac·max|w| lands within polish_step kernel widths of its start
     or of the end of its correlation's ascent (`rich_transit.ascent_target`), else tried again after each doubling (`sliding_iss`).
     max_entries: stop as soon as that many kernels have entered, before the block relaxes. exit_kkt and the counts 'solver_redone',
-    'solver_failed': as `rich_transit.sliding_iss` (referee round 48)."""
+    'solver_failed': as `rich_transit.sliding_iss` (referee round 48). max_rhs: a budget of right-hand-side evaluations for the whole
+    path, as `rich_transit.sliding_iss` ('out_of_budget', 'nfev'): a stiff block — fixed widths on a narrow feature, which LSODA hands to
+    Radau chunk after chunk — stops the path before the block that spent it is relaxed, instead of running for hours."""
     c0 = np.atleast_2d(np.asarray(c0, float))
     d, n = c0.shape
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
@@ -227,6 +229,15 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
     tau, ev, hist, relaxed, n_rej, n_stiff, n_redo, n_fail = 0.0, [], [], [], 0, 0, 0, 0
     scale = float(np.abs(K.corr(c, fstar)[0]).max())
     rhs, jac = critical_rhs_nd(L, K, fstar), critical_jac_nd(L, K, fstar)
+    nfev, out_of_budget = [0], False
+    if max_rhs is not None:
+        rhs_ = rhs
+
+        def rhs(s_, y_):
+            nfev[0] += 1
+            if nfev[0] > max_rhs:
+                raise _RT._OutOfBudget
+            return rhs_(s_, y_)
     for _ in range(max_events):
         w = np.where(act, critical_w(L, al), 0.0)
         r = fstar - K.synth(c, w)
@@ -255,38 +266,43 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
         k = idx.size
         z = np.r_[al[idx], c[idx].ravel()]
         elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
-        for _k in range(max_doublings + 1):
-            z, how = _RT.relax_chunk(rhs, z, chunk, jac=jac)
-            n_stiff += how == 1
-            n_redo += how == 2
-            elapsed += chunk
-            if how == 3:
-                n_fail += 1
-                break
-            if not polished:
-                w0 = critical_w(L, z[:k])
-                cz = z[k:].reshape(k, n)
-                wp, cp = polish_block_nd(K, fstar, w0, cz, np.sign(u[idx]))
-                seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * np.abs(w0).max())
-                r0 = fstar - K.synth(cz, w0)
-                good = all(np.linalg.norm(cp[i] - cz[i]) <= polish_step * K.sig or
-                           np.linalg.norm(cp[i] - _RT.ascent_target(K, r0, cz[i], np.sign(u[idx[i]]))) <= polish_step * K.sig
-                           for i in seedy)
-                if good:
-                    z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp.ravel()]
-                    polished = True
-                else:
-                    n_rej += 1
-            wi = critical_w(L, z[:k])
-            ci = z[k:].reshape(k, n)
-            g, h = K.corr(ci, fstar - K.synth(ci, wi))
-            big = np.abs(wi) > exit_tol * np.abs(wi).max()
-            si = np.sign(u[idx])
-            if (np.all(np.abs(g[big]) <= gtol * scale) and np.all(np.abs(wi[big, None] * h[big]) <= gtol * scale)
-                    and np.all(si[~big] * g[~big] <= gtol * scale)):
-                ok = True
-                break
-            chunk = elapsed
+        try:
+            for _k in range(max_doublings + 1):
+                z, how = _RT.relax_chunk(rhs, z, chunk, jac=jac)
+                n_stiff += how == 1
+                n_redo += how == 2
+                elapsed += chunk
+                if how == 3:
+                    n_fail += 1
+                    break
+                if not polished:
+                    w0 = critical_w(L, z[:k])
+                    cz = z[k:].reshape(k, n)
+                    wp, cp = polish_block_nd(K, fstar, w0, cz, np.sign(u[idx]))
+                    seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * np.abs(w0).max())
+                    r0 = fstar - K.synth(cz, w0)
+                    good = all(np.linalg.norm(cp[i] - cz[i]) <= polish_step * K.sig or
+                               np.linalg.norm(cp[i] - _RT.ascent_target(K, r0, cz[i], np.sign(u[idx[i]]))) <= polish_step * K.sig
+                               for i in seedy)
+                    if good:
+                        z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp.ravel()]
+                        polished = True
+                    else:
+                        n_rej += 1
+                wi = critical_w(L, z[:k])
+                ci = z[k:].reshape(k, n)
+                g, h = K.corr(ci, fstar - K.synth(ci, wi))
+                big = np.abs(wi) > exit_tol * np.abs(wi).max()
+                si = np.sign(u[idx])
+                if (np.all(np.abs(g[big]) <= gtol * scale) and np.all(np.abs(wi[big, None] * h[big]) <= gtol * scale)
+                        and np.all(si[~big] * g[~big] <= gtol * scale)):
+                    ok = True
+                    break
+                chunk = elapsed
+        except _RT._OutOfBudget:
+            out_of_budget = True
+            relaxed.append(False)
+            break
         relaxed.append(ok)
         al[idx] = z[:k]; c[idx] = z[k:].reshape(k, n)
         own = None
@@ -299,7 +315,7 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', c[i].copy()))
     return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej,
-                stiff_redone=n_stiff, solver_redone=n_redo, solver_failed=n_fail)
+                stiff_redone=n_stiff, solver_redone=n_redo, solver_failed=n_fail, out_of_budget=out_of_budget, nfev=nfev[0])
 
 
 def path_duals_nd(K, fstar, R):

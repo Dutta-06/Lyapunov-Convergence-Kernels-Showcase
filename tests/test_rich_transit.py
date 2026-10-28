@@ -297,3 +297,23 @@ def test_leaves_with_the_kernels_own_contribution_removed():
     assert RT.leaves(si, g, wi, big).tolist() == [True, True, True, False]
     assert RT.leaves(si, g, wi, big, own).tolist() == [False, True, True, False]
     assert not RT.leaves(si, g, wi, np.ones(4, bool), own).any()
+
+
+def test_the_nd_path_stops_at_its_rhs_budget():
+    """`sliding_iss_nd(max_rhs=…)`: a budget of right-hand-side evaluations for the whole path, deterministic; spent, the path stops before
+    the block that spent it is relaxed (out_of_budget, that block unrelaxed); a budget the path never reaches leaves it unchanged."""
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'experiments'))
+    import exp_mirror_transit as X
+    from src.core import rich_transit_nd as RN
+    c0 = np.linspace(-1, 1, 21)
+    f = X.bumps_target(K, np.array([-0.5, 0.6]) + 0.013, np.array([0.8, -0.5]))
+    KN = RN.BumpsND(K.xs[:, None], K.sig)
+    R = RN.sliding_iss_nd(L, KN, f, c0[:, None], np.ones(21), polish=True, max_events=6)
+    assert not R['out_of_budget'] and R['nfev'] == 0 and all(R['relaxed'])
+    Rb = RN.sliding_iss_nd(L, KN, f, c0[:, None], np.ones(21), polish=True, max_events=6, max_rhs=10 ** 7)
+    assert not Rb['out_of_budget'] and 0 < Rb['nfev'] <= 10 ** 7
+    assert [e[:3] for e in Rb['events']] == [e[:3] for e in R['events']] and np.array_equal(Rb['w'], R['w'])
+    Rs = RN.sliding_iss_nd(L, KN, f, c0[:, None], np.ones(21), polish=True, max_events=6, max_rhs=50)
+    assert Rs['out_of_budget'] and Rs['relaxed'] == [False] and Rs['nfev'] == 51
