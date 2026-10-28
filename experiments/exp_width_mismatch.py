@@ -43,6 +43,7 @@ E_FLOOR, G_FLOOR = 1e-10, 1e-13                                      # below the
 TAUS_B, A_B, C_B, K_B = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0), 0.8, 0.03, 12
 X_B = np.linspace(-1.6, 1.6, 321)
 LEVELS_C, N_DRAW_C, TAU_C, K_C, DELTA = (1e-4, 1e-3, 1e-2), 10, 1.0, 10, 0.1
+KS_D, J_MAX_D = (10, 20, 40, 80, 160, 320), 7                        # D: the tail ratio's K and the ratios' degree checked
 MAX_DOUBLINGS = 24                                                    # the fast flow to 10⁵·2²⁴ ≈ 1.7·10¹²: a block's slowest relaxations
 
 
@@ -165,6 +166,50 @@ def part_C():
         return pool.map(c_job, [(s, q) for s in LEVELS_C for q in range(N_DRAW_C)], chunksize=1)
 
 
+def d_job(args):
+    """D: the tail ratio at (K, t), with enough terms for t^{2j} to fall below 10⁻¹⁷ (40/ln(1/t) of them, at least 40)."""
+    K, t = args
+    n = max(40, int(np.ceil(40 / np.log(1 / t))))
+    return dict(K=K, t=t, ratio=W.tail_ratio(K, t, n_terms=n), n_terms=n)
+
+
+def lead_coeffs(j_max):
+    """The ratios P_j(K) = D_{2K+2j,K}/D_{2K,K} as polynomials in K: the j-th divided difference over K = 1 … j + 1 (the leading
+    coefficient, exact) and the (j + 1)-th over K = 1 … j + 2 (zero for degree j)."""
+    from fractions import Fraction
+
+    def dd(ps):
+        return ps[0][1] if len(ps) == 1 else (dd(ps[1:]) - dd(ps[:-1])) / (ps[-1][0] - ps[0][0])
+    out = []
+    for j in range(1, j_max + 1):
+        pts = [(K, Fraction(W.gh_defects(K, 2 * K + 2 * j)[2 * K + 2 * j], W.gh_defects(K, 2 * K)[2 * K])) for K in range(1, j + 3)]
+        lead = dd(pts[:j + 1])
+        out.append(dict(j=j, lead=(lead.numerator, lead.denominator), next_dd=float(dd(pts))))
+    return out
+
+
+def part_D():
+    from multiprocessing import Pool
+    ts = tuple(float(W.params(SIG, sigma_star(r_))['t']) for r_ in (1.0, 2.0)) + (0.5, 0.8)
+    with Pool(N_WORKERS) as pool:
+        rows = pool.map(d_job, [(K, t) for t in ts for K in KS_D], chunksize=1)
+    return dict(rows=rows, lead=lead_coeffs(J_MAX_D))
+
+
+def flank(r_, c, w):
+    """B: the residual's correlation with a kernel at c, C(c) = ⟨r, φ_σ(· − c)⟩ on the samples, after a block (c, w) on the feature of
+    τ/σ = r_, on a fine grid of c: min C/max C (zero or positive where C ≥ 0) and its largest values' distances beyond the outermost
+    nodes, left and right (in σ)."""
+    ss = sigma_star(r_)
+    f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
+    r = f - np.exp(-(X_B[:, None] - np.asarray(c)[None, :]) ** 2 / (2 * SIG ** 2)) @ np.asarray(w)
+    cg = np.linspace(X_B[0], X_B[-1], 3201)
+    C = np.exp(-(X_B[:, None] - cg[None, :]) ** 2 / (2 * SIG ** 2)).T @ r / X_B.size
+    lo, hi = float(np.min(c)), float(np.max(c))
+    L, R = cg < lo, cg > hi
+    return float(C.min() / C.max()), float((lo - cg[L][np.argmax(C[L])]) / SIG), float((cg[R][np.argmax(C[R])] - hi) / SIG)
+
+
 def predict_stop(s, rf, N):
     """(i)'s prediction of the discrepancy stop: the first K with e_K²rf² ≤ s²((1 + δ)² − 1 + 2K/N), and the error there."""
     ss = sigma_star(TAU_C)
@@ -175,7 +220,7 @@ def predict_stop(s, rf, N):
     return -1, np.nan
 
 
-def report(A=None, B=None, C=None):
+def report(A=None, B=None, C=None, D=None):
     L_ = ['# Proposition D‴.58: the transit under width mismatch (`exp_width_mismatch.py`)', '',
           f"Kernels of width σ = {SIG}; a feature Aφ_σ*(· − c*), σ* = σ(1 + (τ/σ)²)^{{1/2}}; t = (σ* − σ)/(σ* + σ), λ = τ²/(σ² + σ*²) "
           "(`src/core/wide_feature.py`).", '']
@@ -238,7 +283,11 @@ def report(A=None, B=None, C=None):
                 rat = f"{b['blocks'][i - 1]['e'] / o['e']:.3f}" if i and b['blocks'][i - 1]['k'] == o['k'] - 1 else '—'
                 L_.append(f"| {o['k']} | {o['tau']:.4g} | {o['e']:.4e} | {o['e_opt']:.4e} | {o['e'] / o['e_opt']:.6f} | "
                           f"{o['dc'] / SIG:.1e} | {o['dc_hs'] / SIG:.3f} | {o['e_hs']:.4e} | {rat} |")
-            L_.append('')
+            opt = [o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < 1e-3]
+            fl = [flank(b['r'], o['c'], o['w']) for o in opt]
+            L_ += ['', "The residual's correlation C(c) = ⟨r, φ_σ(· − c)⟩ after the optimal blocks (K = "
+                   + ', '.join(str(o['k']) for o in opt) + f"): min C/max C within ±{max(abs(x[0]) for x in fl):.0e}, its peaks beyond "
+                   "the outermost nodes at (left, right) " + ', '.join(f"({x[1]:.2f}, {x[2]:.2f})σ" for x in fl) + '.', '']
     if C is not None:
         N = X_B.size
         L_ += ['## C. Under noise', '',
@@ -261,6 +310,26 @@ def report(A=None, B=None, C=None):
             fmt = lambda v, f_: f"{np.median(v):{f_}} [{np.min(v):{f_}}, {np.max(v):{f_}}]" if len(v) else '—'
             L_.append(f"| {s:g} | {fmt(ks, 'g')} ({len(ks)}/{len(ds)} stopped) | {Kp} | {fmt(es, '.3e')} | {ep:.3e} | {fmt(at, 'g')} | "
                       f"{fmt(kg, 'g')} |")
+    if D is not None:
+        from scipy.special import hyp2f1
+        ts = sorted({r['t'] for r in D['rows']})
+        Ks = sorted({r['K'] for r in D['rows']})
+        by = {(r['t'], r['K']): r for r in D['rows']}
+        L_ += ['', '## D. The tail of the exact series (the sharp constant, conjectural)', '',
+               "The half-squeeze rule's squared error over the series' first term, Σ_j t^{2j}(2K)!/(2K + 2j)!·(D_{2K+2j,K}/D_{2K,K})² (the "
+               "defects exact, by the remainders modulo He_K), against ₂F₁(−½, −½; 1; t²), the sum of the terms' limits binom(1/2, j)²t^{2j}; "
+               "K times the gap in parentheses:", '',
+               '| t | ₂F₁ | ' + ' | '.join(f'K = {K}' for K in Ks) + ' |', '|---|---|' + '---|' * len(Ks)]
+        for t in ts:
+            F = float(hyp2f1(-0.5, -0.5, 1.0, t * t))
+            L_.append(f"| {t:.4g} | {F:.6f} | " + ' | '.join(f"{by[(t, K)]['ratio']:.6f} ({K * (by[(t, K)]['ratio'] - F):+.3f})"
+                                                           for K in Ks) + ' |')
+        cat = lambda j: comb(2 * (j - 1), j - 1) // j
+        L_ += ['', 'The ratios D_{2K+2j,K}/D_{2K,K} are polynomials in K of degree j (the (j + 1)-th divided difference over K = 1 … j + 2: '
+               + ', '.join(f"{r['next_dd']:g}" for r in D['lead']) + ') with the leading coefficients '
+               + ', '.join(f"{r['lead'][0]}/{r['lead'][1]}" if r['lead'][1] != 1 else f"{r['lead'][0]}" for r in D['lead']) + ' at j = 1 … ' + str(len(D['lead'])) + ' — −C_{j−1}/2^{j−1} '
+               + ('at every j' if all(r['lead'][0] * 2 ** (r['j'] - 1) == -cat(r['j']) * r['lead'][1] for r in D['lead']) else 'NOT at every j')
+               + ' (C the Catalan numbers), binom(1/2, j)(−2)^j.']
     L_ += ['', 'Numbers are produced by `experiments/exp_width_mismatch.py`; nothing is edited by hand.']
     return '\n'.join(L_) + '\n'
 
@@ -270,14 +339,14 @@ def main():
     raw = os.path.join(OUT, 'width_mismatch_raw.npz')
     md = os.path.join(OUT, 'width_mismatch.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C')
+    keys = ('A', 'B', 'C', 'D')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C)):
+    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

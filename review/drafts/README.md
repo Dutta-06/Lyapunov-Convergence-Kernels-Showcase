@@ -13,3 +13,4 @@ round is applied and its numbers are final.
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 42 applied (with (v), a tail's capture), numerics final; a referee round next |
 | `D56.md` | D‴.56: the transit under measurement noise | numerics A–E final (Part E rerun with the Radau fallback); referee round 45 running |
+| `D58.md` | D‴.58: the transit under width mismatch — wider features as kernel quadratures | first full run (A–D) in the numerics; a first referee round next |
