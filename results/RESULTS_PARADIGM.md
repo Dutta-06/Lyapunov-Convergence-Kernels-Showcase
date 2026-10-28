@@ -1240,6 +1240,102 @@ path recovers three bumps exactly; the loop at ε = 10⁻⁵ forms the same thre
 coefficients below the core's bound before the first entry; the Wasserstein–Fisher–Rao metric's centres on their limit; the inverse
 scale space path ends at weighted basis pursuit (one-sided: the sign-constrained one) and the loop at ε = 10⁻⁶ follows it.
 
+
+## Proposition D‴.51 — the transit at a finite mass (`exp_transit_mass.py` → `chaos/transit_mass.md`)
+
+- (A) One bump between the kernels at 0.0 and 0.1, δ from their midpoint (A = 0.3, 0.8, 2; δ = 0.0001, 0.001, 0.01; ε = 10⁻⁵ … 10⁻¹⁰;
+  the loop to 1.32 τ_entry): the runner-up's share over the ε-free inner problem's at the same x = μ*/ε^{1/2} is 1.0000–1.0064 at
+  δ = 0.0001, 1.0001–1.0668 at 0.001 and 1.0002–1.5448 at 0.01 (x from 0.11 to 3413; at δ = 0.01 1.3858–1.5448 at x = 10.79, the
+  partners' approach creep at the actual geometry), the inner problem stationary on 51 of 54 and the other 3 (x ≈ 34.1–34.7) drifting
+  by at most 9.8·10⁻⁴ of their share from s = 4.69·10⁶ to 1.88·10⁷. Whatever the amplitude the shares are 0.48, 0.437, 0.309, 0.073 at
+  x = 0.11, 0.35, 1.1, 3.5 against the Gibbs split 1/(1 + e^{κx}) (κ = 0.7025) 0.481, 0.439, 0.316, 0.080; far behind, the runner-up
+  keeps the frozen coefficient K'³ρ⁻³/(|A|(x − Δ)³) (K'³ = 0.0962), 3.04·10⁻¹² at x = 3413 (A = 0.8). It slides onto the bump with the
+  entrant while x ≲ 11 and stays within 0.011 of its start from x ≈ 34.
+- (B) The overshoot η_c(α_A)/(Λ₀ρ) is 3.6500, 4.6370, 5.2143, 5.9415, 6.6105, 7.1877, 7.9149, 8.9016 for A = 0.1, 0.2, 0.3, 0.5, 0.8, 1.2,
+  2, 4, growing by 1.4240, 1.4237, 1.4236, 1.4235, 1.4235, 1.4235, 1.4235 per unit log A between consecutive amplitudes — the exponential
+  branch's slope a/(4GcΛ₀ρ) = 1.4235 (Λ₀ = 7.0248); the inner profile against its core power law, 𝒲(ξ)/(K'³ξ⁻³) − 1 = −6.7%, −14.0%,
+  −19.1%, −39.5%, −65.2% at ξ = 15, 10, 8.3, 5, 3. The matched pull on a frozen runner-up at the exact tie (x = 200), from the starts
+  xi0 = 400, 800, 1600, 3200 behind the wall (the entrant's far-field creep: a/xi0 + b/xi0²) extrapolated: 2.2300, 3.1749, 3.7275,
+  4.4238, 5.0644, 5.6171, 6.3134, 7.2582, so I∞ = 1.42–1.64, growing slowly with A; at δ = 0.001 2.2776 … 7.2970. The loop's (δ = 0.001;
+  ε = 10⁻⁸, 10⁻⁹, 10⁻¹⁰, x = 34.66, 109.6, 346.6) with the runner-up's centre held fixed is the inner problem's to +0.0024 to +0.0028,
+  +0.0008, −0.0007; free, it exceeds that by the runner-up's approach creep, 0.3753–0.4381, 0.1170–0.1228, 0.0366–0.0371, against
+  (a²b/(π²c))(g′_r/g_r)²/x = 0.3667, 0.1159, 0.0367 (ratios 1.02–1.20, 1.01–1.06, 1.00–1.01: the excess falls tenfold as x triples, a
+  1/x² term growing with A).
+- (C) The creep on target 10 of D‴.48's random targets (centres −0.752, 0.112, 0.488, amplitudes 0.868, −0.412, −0.514; the path's
+  kernels 2, 14, 12): predicted from the path, the entry threshold 6.12·10⁻⁷ (kernel 3 at the entry of 2, margin 0.00489) and the creep
+  thresholds 4.88·10⁻⁹, 1.36·10⁻⁶, 5.56·10⁻⁵, 2.62·10⁻⁶ (kernels 15, 3, 11, 13): ε_c = 4.88·10⁻⁹, kernel 15's creep. The loop forms the
+  path's kernels at ε/ε_c = 0.205, 0.41, 0.717 and enters kernel 15 in place of 12 at 1.43, 2.87, 6.14 (the inactive kernels' largest
+  displacement 0.0884, 0.0884, 0.138, then 0.288).
+- (D) 48 random three-bump targets (seed 51; the path exact — three kernels, rms residual < 10⁻⁸ — on all 48): the loop recovers 32, 38,
+  42, 47 of them at ε = 10⁻⁵, 10⁻⁶, 10⁻⁷, 10⁻⁸, the estimate predicts 27, 36, 43, 47 and agrees on 43, 46, 47, 48 (5 and 2 recovered
+  though not predicted at 10⁻⁵ and 10⁻⁶, 1 not recovered though predicted at 10⁻⁷) — a grid a decade apart, which does not measure the
+  estimate's accuracy (G).
+- (E) 400 random targets (seed 52): the fraction predicted not to recover is 0.7700, 0.4650, 0.2400, 0.1225, 0.0700, 0.0300, 0.0150,
+  0.0075 at ε = 10⁻⁴, 10⁻⁵, …, 10⁻¹¹, by a near tie 0.6950, 0.2775, 0.1050, 0.0300, 0.0125, 0.0025 and by the creep 0.7025, 0.4250,
+  0.2125, 0.1175, 0.0650, 0.0300 at ε = 10⁻⁴ … 10⁻⁹ (not exclusive); the least-squares slopes in log ε are 0.294 (all, ε = 10⁻⁵ … 10⁻⁹:
+  ≈ ε^{1/4}), 0.462 (a near tie, 3.16·10⁻⁵ … 10⁻⁷: ≈ ε^{1/2}) and 0.285 (the creep, 10⁻⁵ … 10⁻⁹). These are the estimate's fractions;
+  the loop's own were not measured.
+- (F) Every target of E with 10⁻¹² ≤ ε_c ≤ 10⁻⁷ (48; 1 more below 10⁻¹², not run; 7 bound by an entry, 41 by the creep): at ε_c/3 all
+  48 recover, as predicted; at 3ε_c 43 fail and five creep-bound targets recover (8, 115, 117, 216, 267) — their loop thresholds,
+  bracketed and bisected as in G, at 9.11, 1.15·10⁵, 2.33·10³, 9.93 and 225 times ε_c: false alarms of the creep criterion.
+- (G) The loop's own threshold on D's 48 targets, bracketed from ε_c by factors 4 and bisected 4 times in log ε (the bracket ×1.09):
+  ε_loop/ε_c has the median 0.771 (quartiles 0.545, 0.917) and the range 0.131–94.5; it is below 1 on 41, within ×1.5 on 20 and within
+  ×2 on 36. Where an entry binds (32 targets) 0.648 (0.545, 0.808), the range 0.131–43.3 — by the predicted mass 0.917 for ε_c ≤ 2·10⁻⁶
+  (5 targets), 0.771 between 2·10⁻⁶ and 10⁻⁴ (17), 0.545 above (10): the bias grows with the binding margin —; where the creep binds
+  (16) 0.844 (0.545, 8.24), the range 0.324–94.5. The outliers: target 2 at 0.131 (its first entry's runner-up migrating to an unfitted
+  bump, H(3)); targets 15, 28, 45, 46 at 94.5, 25.8, 16.7, 19.9, the creep criterion's false alarms; target 27 at 43.3, a pull measured
+  on a block relaxation slower than the time to the next entry.
+- (H) Near-tie controls. (1) The single bump (A = 0.8) at δ = 0.001, 0.01, 0.03 from the midpoint (μ* = 0.0035, 0.0341, 0.0989): the
+  runner-up's formation threshold x_θ = 6.392, 7.100, 8.189 free, 5.315, 5.819, 6.373 with the runner-up's centre held fixed until the
+  entrant's arrival and 6.557, 6.546, 6.520 with both centres; the inner problem's own at the exact tie 6.404, 6.300, 6.272 for A = 0.3,
+  0.8, 2, below the Gibbs value ln(|A|/θ − 1)/κ = 6.541; the free loop's rise over it, 0.091, 0.800, 1.889, is 0.597, 0.581, 0.528 times
+  the partners' approach-creep difference (a²b/(π²c))((g′_r/g_r)² − (g′_e/g_e)²)/x_θ = 0.153, 1.376, 3.580; the estimate's own x for
+  this runner-up is 6.252, 6.145, 5.853 (x_θκ_ij with κ_ij = 0.956, 0.939, 0.895, over the frozen pull's Δ + ξ_θ = 5.146, 5.443, 5.722).
+  (2) Exact ties made by unequal masses: the farther kernel's share 0.8849 and 0.8854 at ε = 10⁻⁸ and 10⁻¹⁰ (b = 1.2000, the bump at
+  0.07625; both kernels formed, as on the path) and 0.9972, 0.9973 (b = 1.6260, the bump at 0.08; kernel 12 alone, where the path forms
+  11 and 12). (3) D's target 2 with its middle bump moved to c₂ = 0.043, 0.046, 0.048: the first entry's runner-up (kernel 11, μ* =
+  0.01890, 0.00866, 0.00177) forms and ends on the unfitted bump at 0.632, the loop's threshold 1.32·10⁻⁶, 9.55·10⁻⁸, 3.27·10⁻¹⁰
+  (ε_loop/μ*² = 0.00371, 0.00127, 0.000104; slope 3.52 in log–log); at c₂ = 0.03, 0.035, 0.04 the extra kernel is another (4, at
+  −0.655). (4) E's target 117: kernel 14, between the third entrant (13) and its bump, reaches at most 10⁻⁷, 4.15·10⁻⁶, 6.53·10⁻⁴
+  (θ = 0.00896) at x = 5.186, 1.640, 0.519 as the entrant slides through it (their closest approach 0.0053, 0.0716, 0.0000), where the
+  Gibbs split would give it 0.026, 0.240, 0.410; the loop forms kernels 12, 13, 2, the path's.
+
+Tests (`tests/test_transit_mass.py`): the inner profile is the small-mass limit of the mirror map (not the core's power law), with the
+next orders 1 − 8(κξ)⁻² + 64(κξ)⁻⁴ and a dependence on ρξ alone; the overshoot's slope on the exponential branch and the Gibbs ratio of
+two duals; the inner problem's tie (½), its Gibbs split, the frozen tail and its sign symmetry, and the loop's share against it; the
+inner threshold below the Gibbs value; the partners' approach creep raising the loop's threshold (free against both centres fixed);
+unequal masses breaking the tie; a near-side runner-up passed over; the path's duals reaching their walls at the entries; the predicted
+mass on D‴.48's lost near tie (the creep's, kernel 15) and the creep's monotonicity in ε; `entry_pull` as the frozen runner-up's matched
+pull, with its 1/xi0 tail; a rearranging entry's measured pull against the near-tie estimate (E's target 327); the estimate overstating
+the loop's threshold at a large margin (D's target 7).
+
+
+## Theorem D‴.53 — the sliding limit (`exp_transit_limit.py` → `chaos/transit_limit.md`)
+
+- (B) D‴.51's 48 out-of-sample three-bump targets (seed 51), equal masses ε: 12 have an exact path with simple entries, no exits and
+  margins ≥ 0.05. Over the 48 the approach speeds v_k lie in 0.00132–0.125, the slides in 0.000176–0.302, |s_θ + σ_k| in
+  2.698–9.856·10⁴ and the largest pull per entry in 1.17–3704 — the extreme values on the slowest entrants (v_k ≤ 0.008, six excluded
+  targets) —, λ_k in 0.0215–0.0883; s_θ and the pulls by second-order Richardson in xi0 from 1600, 3200, 6400 (`entry_pull`'s deviation
+  form, Radau at rtol 10⁻¹⁰), their spread against the same from 800, 1600, 3200 at most 2.8·10⁻⁵ in s_θ and 1.3·10⁻⁶ in the pulls on
+  the twelve (up to 13 and 0.52 on the slowest entrants); (H3) holds at every entry, the inner problem's end within 3.1·10⁻¹¹
+  (coefficients) and 6.4·10⁻¹³ (centres) of the path's S_k, every inner problem stationary.
+- (A) The loop at ε = 10⁻⁶ … 10⁻¹¹ (rtol 10⁻¹¹ for ε ≥ 10⁻⁸, 10⁻¹² at 10⁻⁹ and 10⁻¹³ for ε ≤ 10⁻¹⁰) on eight of the twelve (targets 39,
+  24, 19, 6, 41, 10, 33, 4): it forms the path's three kernels throughout; the never-entering kernels' largest coefficient is
+  28.2–391·ε^{3/2} from 10⁻¹⁰ on (31.5–527·ε^{3/2} at 10⁻⁶; slopes 1.501–1.504 in log ε) and their centres move by the creep's εC_j to
+  within 0.08–0.20 at 10⁻⁶ and 5·10⁻⁴–1.5·10⁻³ at 10⁻¹¹ (slopes 1.001–1.002); the block is within 1.4·10⁻¹⁵–5.6·10⁻¹³ of S_k at the
+  midpoints at 10⁻¹¹ (slopes 1.23–1.53) and within 4·10⁻¹⁰–3·10⁻⁷ at (b)'s window's end; the duals' deviation is the first order — the
+  median obs/pred 0.998–1.0005 at 10⁻⁶ and 1.0000 from 10⁻⁹ on —, the largest |obs − pred| (in units of ε^{1/2}) falling by 1.6–5.5 per
+  decade below 10⁻⁷, most near √10 (a remainder O(ε) in u), to 2.9·10⁻⁵–6.2·10⁻⁴ at 10⁻¹¹, while the pulls alone leave 0.0019–0.39:
+  the entries' shifts are the rest of the first order; the coefficients cross θ at s_θ + σ_k to within 3.6·10⁻⁴–9.5·10⁻³ at 10⁻¹¹. At
+  10⁻⁶ targets 6 and 4 lie outside the regime — their blocks 0.186 and 0.481 from S_k at a midpoint, an entry within ε^{1/2}|s_θ + σ|
+  of the next (gaps 0.219 and 0.142 in τ) —, inside it from 10⁻⁷ on.
+
+Tests (`tests/test_transit_limit.py`): an isolated entrant's inner problem descends the fit (E never increases, Lemma D‴.53a) and ends
+on its feature; on target 39 at ε = 10⁻¹⁰ the loop forms exactly the path's kernels, the never-entering kernels' coefficients are the
+core's profile at their path margins, their displacements the creep's εC_j, their duals off the path by ε^{1/2}·(the entries' pulls and
+shifts) + εD_j — the shifts' term needed —, and the entries cross at τ_k + ε^{1/2}(s_θ + σ_k); on target 41 at 10⁻⁹ (an entrant that
+slides, one that arrives late) the sign per entry and the shifts, with converged predictions, (H3) at every entry and the block at S_k.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

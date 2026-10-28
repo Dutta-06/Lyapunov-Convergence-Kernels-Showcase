@@ -92,6 +92,7 @@ found the construction.
 - [S73] P. A. Ioannou, P. V. Kokotović. *Adaptive Systems with Reduced Models*. Springer, 1983; P. A. Ioannou, J. Sun. *Robust Adaptive Control*. Prentice Hall, 1996 (the σ-modification — a leakage term in the adaptation law — and the ultimate boundedness of the parameters under bounded disturbances; the classical drift of the unmodified law under a decaying regressor and a bounded disturbance; from memory). M. Bodson, S. Sastry, B. D. O. Anderson, I. Mareels, R. R. Bitmead. *Nonlinear averaging theorems, and the determination of parameter convergence rates in adaptive control*. Systems & Control Letters 7(3), 1986 (two-time-scale averaging of adaptive systems); B. D. O. Anderson, R. R. Bitmead, C. R. Johnson, P. V. Kokotović, R. L. Kosut, I. Mareels, L. Praly, B. D. Riedle. *Stability of Adaptive Systems: Passivity and Averaging Analysis*. MIT Press, 1986; S. Sastry, M. Bodson. *Adaptive Control: Stability, Convergence and Robustness*. Prentice Hall, 1989 (the averaged system with the filtered regressor's cross-correlation; from memory). B. Gao, L. Pavel. *Discounted mirror descent dynamics in concave games*. CDC 2019, 5942–5947; A. R. Romano, L. Pavel. *Continuous-time discounted mirror-descent dynamics in monotone concave games*. IEEE TAC 66(11):5451–5458, 2021, arXiv:1912.03460 (a leak in the dual coordinates of a continuous-time mirror flow: its rest points are the equilibria perturbed by the mirror map's regulariser, unique for monotone games, converging as the leak vanishes, with Fenchel-coupling Lyapunov functions). P. Coucheney, B. Gaujal, P. Mertikopoulos. *Penalty-regulated dynamics and robust learning procedures in games*. Math. Oper. Res. 40(3):611–633, 2015 (the replicator's entropic case: exponentially discounted payoffs with a smooth best response). J. Pérolat et al. *From Poincaré recurrence to convergence in imperfect information games: finding equilibrium via regularization*. ICML 2021; K. Abe et al. *Adaptively perturbed mirror descent for learning in games*. ICML 2024 (regularisation toward a reference with a decreasing Lyapunov function; from this round's referee's search). N. Azizan, S. Lale, B. Hassibi. *Explicit regularization via regularizer mirror descent*. arXiv:2202.10788 (explicit regularisation through mirror descent). F. Alvarez, J. Bolte, O. Brahic (SICON 2004, [S74]); H. Attouch (1996, from memory): Tikhonov (viscosity) selection as the regularisation vanishes. J. Duchi, S. Shalev-Shwartz, Y. Singer, A. Tewari. *Composite objective mirror descent*. COLT 2010 (a proximal method — not a dual leak); L. Xiao. *Dual averaging methods for regularized stochastic learning and online optimization*. JMLR 11:2543–2596, 2010. R. Tibshirani. *Regression shrinkage and selection via the lasso*. J. R. Stat. Soc. B 58(1):267–288, 1996; P. Zhao, B. Yu. *On model selection consistency of Lasso*. JMLR 7:2541–2563, 2006; M. J. Wainwright. *Sharp thresholds for high-dimensional and noisy sparsity recovery using ℓ₁-constrained quadratic programming (Lasso)*. IEEE Trans. Inf. Theory 55(5):2183–2202, 2009 (the irrepresentable condition; from memory). Mirror-descent adaptation laws with Bregman Lyapunov functions (Boffi–Slotine, [S72]). The precedents of Proposition D‴.46 (search-verified for their bibliographic details and abstracts where stated): a leak in a mirror flow's dual coordinates, its perturbed rest point, its Bregman Lyapunov function and the vanishing-leak selection are established; what is specific here is their realisation on the paradigm's (α, β) law with Q kept, its bound in the adaptive loop, and the starting masses' LASSO weights.
 - [S74] J. Kivinen, M. K. Warmuth. *Exponentiated gradient versus gradient descent for linear predictors*. Inform. Comput. 132(1):1–63, 1997 (multiplicative updates as mirror descent with the relative entropy; their sign-constrained and ± pair (EG±) forms; for the free law's branches, Proposition D‴.47, also Hessian–Riemannian flows on constrained domains — Alvarez–Bolte–Brahic —, nonnegative least squares — Lawson–Hanson — and the hyperbolic entropy of u² − v² parametrisations — Ghai–Hazan–Singer, Woodworth et al.).
 - [S75] S. Pesme, N. Flammarion. *Saddle-to-saddle dynamics in diagonal linear networks*. NeurIPS 2023, arXiv:2304.00488 (at vanishing initialisation the time-rescaled gradient flow of a depth-2 diagonal network follows a piecewise-constant jump process ending at the minimum-ℓ¹ interpolator, its recursion the adaptive inverse scale space method of M. Burger, M. Möller, M. Benning, S. Osher, Math. Comp. 82:269–299, 2013; for the rich transit, Proposition D‴.48, also Berthier's incremental learning, JMLR 2023, and Berthier–Pillaud-Vivien's inverse scale space limits of mirror flows, 2026).
+- [S76] D. Gissin, S. Shalev-Shwartz, A. Daniely. *The implicit bias of depth*. ICLR 2020 (a depth separation for incremental learning in deep linear models: an exponentially small initialisation needed at depth 2, a polynomially small one sufficing at depth ≥ 3; for the transit at a finite mass, Proposition D‴.51, also the linearised Bregman inverse scale space of Osher–Ruan–Xiong–Yao–Yin, ACHA 2016, a smoothing family of the inverse scale space with a damping κ, with sign-consistency and early-stopping results at finite κ; exact regularisation, Friedlander–Tseng, SIAM J. Optim. 2007, and Yin's analysis of linearised Bregman, SIAM J. Imaging Sci. 2010: a finite smoothing parameter beyond which the sparse solution is recovered exactly, set by a Lagrange multiplier; the alternating gradient flows of Kunin et al., NeurIPS 2025: the small-initialisation regime of two-layer networks as dormant units maximising a utility and active ones minimising the loss; the exponentiated-gradient / Hedge weights of Littlestone–Warmuth and Freund–Schapire; matched asymptotic expansions, Kevorkian–Cole and Holmes; Duval–Peyré's grid-based BLASSO; Pesme–Flammarion and Berthier are [S75]'s, Kivinen–Warmuth [S74]'s; web search, October 2026, the appendices of Pesme–Flammarion's, Berthier's and Kunin et al.'s papers not re-read).
 - [S49] R. T. Rockafellar. *Monotone operators and the proximal point algorithm*. SIAM J. Control Optim. 14(5):877–898, 1976 (the proximal point method: a quadratic penalty toward a centre moved to the last iterate — iterated Tikhonov regularisation; the leak toward a moving centre is its continuous-time form; for a maximal monotone operator the iterates are bounded iff a zero exists, the precedent of the adaptive prior's lost a-priori bound). M. Hanke, C. W. Groetsch. *Nonstationary iterated Tikhonov regularization*. J. Optim. Theory Appl. 98(1):37–53, 1998 (iterated Tikhonov regularisation: on a quadratic, each step contracts the error in the eigendirection of curvature h by σ/(h + σ), the complement 1 − h/(h + σ) of the Tikhonov filter factor h/(h + σ), i.e. the residual factor; the bound h/(h + σ)² ≤ 1/(4σ) is ridge regression's AM–GM bound on the filter factors). S. Zhang, A. Choromanska, Y. LeCun. *Deep learning with elastic averaging SGD*. NeurIPS 2015 (workers pulled elastically toward a centre variable that moves toward their average: the coupled pair dynamics of the class means and the prior's atoms; its stability analysis of the worker–centre map on a quadratic, in the learning and the moving rate, is the discrete-time form of the pair matrix). S. J. Nowlan, G. E. Hinton. *Simplifying neural networks by soft weight-sharing*. Neural Computation 4(4):473–493, 1992; K. Ullrich, E. Meeds, M. Welling. *Soft weight-sharing for neural network compression*. ICLR 2017 (a mixture prior on the weights whose centres are learned with them; its hard limit is a K-means quantiser of the weights). The precedents of Theorem D‴.23. (Details from memory; not re-verified here.)
 
 ## Claim-by-claim verdicts
@@ -707,6 +708,41 @@ found the construction.
   feature quantisation at small initialisation (Maennel–Bousquet–Gelly 2018) are related. Numerics: `exp_mirror_transit.py`. Verdict: the
   limit theorem Berthier–Pillaud-Vivien's route for an ε-dependent family, (ii) their entropic case; the sliding transit, as a gradient-flow
   limit, apparently new (formal).
+- **Proposition D‴.51 (the transit at a finite mass).** Matched asymptotic expansions and boundary layers are classical (Kevorkian–Cole;
+  Holmes); the inverse scale space flow's jumps at small initialisation are smoothed by a finite one in Pesme–Flammarion's saddle-to-saddle
+  dynamics, Berthier's incremental learning and the alternating gradient flows of Kunin et al., which describe the small-initialisation
+  limit of two-layer networks as dormant units maximising a utility and active ones minimising the loss; the depth separation of
+  incremental learning — a polynomially small initialisation suffices at depth ≥ 3, an exponentially small one is needed at depth 2 — is
+  Gissin–Shalev-Shwartz–Daniely's; the linearised Bregman inverse scale space (Osher–Ruan–Xiong–Yao–Yin) is a smoothing family of the
+  inverse scale space with sign-consistency at a finite damping κ, whose coefficients κ·shrink(z) are exactly zero below the wall and
+  linear beyond it; exact regularisation (Friedlander–Tseng; Yin's analysis of linearised Bregman) is a finite smoothing parameter beyond
+  which the sparse solution is recovered exactly, set by a dual certificate; exponentiated gradient and entropic mirror maps at a
+  temperature are Kivinen–Warmuth's and Ghai–Hazan–Singer's ([S76]). What is specific here: the free law's inner profile at the wall (the
+  critical curve's mirror coordinate, its power and exponential branches, the power law's correction), the overshoot of an entering
+  kernel and its pull on the runner-up, the near-tie inner problem with its Gibbs split for coinciding kernels and its plateau tail, the
+  margin it requires (ε^{1/2}, not ε^{1/3}) — the counterpart of Gissin et al.'s depth separation for the free law, whose coefficient
+  below the wall, ∝ ε^{3/2}, is a depth-3 unit's —, the finite-margin mechanisms that bias it (the partners' differential approach creep,
+  unequal masses, the losers' migration, the near side), the creep's scales, and an estimate of the mass for exact recovery from the
+  sliding path, with its error measured against the loop — where the linearised Bregman flow has no tails, no creep and no migrating
+  losers, and exact regularisation's threshold is the static counterpart. Numerics: `exp_transit_mass.py`. Verdict: the
+  vanishing-initialisation limit and its jump process are known, and smoothing families of the inverse scale space exist; the free law's
+  finite-mass structure at the walls — its power-law tail below the wall, the near-tie inner problem, the creep and the migrating losers
+  it causes — is not, as far as we found (S76 below).
+- **Theorem D‴.53 (the sliding limit).** Tikhonov's theorem and singular perturbations (Tikhonov; Vasil'eva–Butuzov; Fenichel), matched
+  asymptotic expansions with an intermediate cut (Kaplun; Eckhaus), LaSalle's invariance principle, gradient flows of fits and their
+  Łojasiewicz convergence, and the blow-up of a non-hyperbolic point (Krupa–Szmolyan; here the wall, where the mobility ∝ |w|^{4/3}
+  vanishes, is resolved by the inner coordinate instead) are classical; the inverse scale space flow as the small-initialisation limit of
+  diagonal networks and of mirror flows, its jumps resolved by a time reparametrisation (Pesme–Flammarion; Berthier–Pillaud-Vivien),
+  where the active part is fixed and no centres move, the alternating gradient flows of Kunin et al. — dormant units maximising a
+  utility, active ones minimising a cost, proved for diagonal linear networks; the closest precedent for "between entries the loop is
+  slaved to the block's fit" —, and the sliding Frank–Wolfe and ADCG algorithms (Denoyelle–Duval–Peyré–Soubies; Boyd–Schiebinger–Recht),
+  discrete-time analogues of the sliding path (an atom added, then all amplitudes and positions jointly refined), are known ([S75],
+  [S76]). What is specific here: the convergence of the paradigm's loop with moving centres to the sliding inverse scale space — the
+  limit D‴.48(iii)(b) proved under explicit hypotheses —, its inner problem as a gradient flow of the fit in the mirror coordinate's
+  metric (which makes each entry layer convergent and identifies its end with the path's block), and the first-order correction — the
+  entries' pulls and shifts — with the constants it depends on. Numerics: `exp_transit_limit.py`. Verdict: classical
+  singular-perturbation tools applied to a new object: the sliding transit, formal in Proposition D‴.48, proved under (H1)–(H4), with
+  constants that are not uniform over targets.
 
 ### J. Periodic orbits of the finite-m closed loop near the critical points of the averaged loss
 
@@ -763,6 +799,37 @@ found the construction.
 
 - **Prior.** The proof is the energy-dissipation argument of [S3] Thm 3.2, with the perturbation absorbed by Young's inequality and the limit transferred by Talagrand (Otto–Villani).
 - **Verdict: elementary given [S3].** Its role is to reduce Conjecture H.6 to an averaging estimate.
+
+### S76. The transit at a finite mass (Proposition D‴.51): near ties, the overshoot, the creep
+
+*Verdict: the vanishing-initialisation limit and its jump process are known, and smoothing families of the inverse scale space exist;
+the free law's finite-mass structure at the walls — its power-law tail below the wall, the near-tie inner problem, the creep and the
+migrating losers it causes — is not, as far as we found.* Pesme–Flammarion (NeurIPS 2023, "Saddle-to-saddle dynamics in diagonal linear
+networks") and Berthier (JMLR 2023, incremental learning) prove that as the initialisation vanishes the time-rescaled trajectory converges
+to a jump process visiting saddles (a LARS-like recursion); the alternating gradient flows of Kunin et al. (NeurIPS 2025) describe the
+same small-initialisation regime for two-layer networks as dormant units maximising a utility and active ones minimising the loss, and
+prove convergence to gradient flow for diagonal linear networks as the initialisation vanishes. These work in the limit and in general
+position; we found no treatment of what a small but finite initialisation does at a near tie (two coordinates reaching the threshold
+within the smoothing width), of the coefficient an entering coordinate's dual carries beyond its threshold, or of a margin condition for
+the finite-initialisation trajectory to keep the limit's support (web search, October 2026; flag: the appendices of these papers not
+re-read). Gissin–Shalev-Shwartz–Daniely (ICLR 2020, "The implicit bias of depth") show a depth separation for incremental learning in
+deep linear models — an exponentially small initialisation needed at depth 2, a polynomially small one sufficing at depth ≥ 3 —; the
+margin ε^{1/2} of D‴.51(ii) is its counterpart for the free law, whose coefficient below the wall, ∝ ε^{3/2} (D‴.48(o)), is a depth-3
+unit's. The linearised Bregman inverse scale space (Osher–Ruan–Xiong–Yao–Yin, ACHA 2016) is a smoothing family of the inverse scale space
+with a damping κ (the flow as κ → ∞), with sign-consistency and early-stopping results at finite κ; its coefficients are κ·shrink(z) —
+exactly zero below the threshold and linear beyond it —, so it has no tail below the wall, no creep and no migrating losers, and its near
+ties are shared linearly, not by a Gibbs split. Exact regularisation (Friedlander–Tseng, SIAM J. Optim. 2007; Yin's analysis of
+linearised Bregman, SIAM J. Imaging Sci. 2010): a finite smoothing parameter beyond which the sparse solution is recovered exactly, set
+by a Lagrange multiplier (a dual certificate) — the static counterpart of a mass for exact recovery read off the path. The Gibbs split is
+the exponentiated-gradient / Hedge weight ratio (Littlestone–Warmuth; Freund–Schapire; Kivinen–Warmuth): two experts whose cumulative gains
+differ by δ carry weights in the ratio e^{−ηδ} — here it appears inside the inner layer of the paradigm's transit, the free law's critical
+curve being an exponential (entropic) mirror map beyond the wall at the temperature a/(4Gc) in its mirror coordinate (D‴.47 found the
+same on branches at 1/(γa₀)). Matched asymptotic expansions are classical (Kevorkian–Cole; Holmes). The creep is the paradigm's own (the
+mass in the position law's drift, D‴.48(iii)(a)); its scales, the partners' differential approach creep that shifts the near-tie
+threshold, the losers' migration, and the estimate of the mass for exact recovery from the sliding path — with its error measured against
+the loop's own bisected thresholds — are new to this program, a finite-mass counterpart of super-resolution's grid/off-the-grid
+questions (Duval–Peyré's grid-based BLASSO recovering pairs of spikes around an off-grid one: there by the regularisation, here by the
+transit's near ties).
 
 ---
 

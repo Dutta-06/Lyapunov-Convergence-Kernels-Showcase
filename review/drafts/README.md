@@ -10,9 +10,7 @@ round is applied and its numbers are final.
 | `D44.md` | D‴.44: coloured label noise under the replicator mass law on a kernel dictionary | its run resumed; referee round 34 after it |
 | `D49.md` | D‴.49: the rich transit in the closed loop | round 38 applied, numerics final; referee round 44 in progress |
 | `D50.md` | D‴.50: the rich transit under label noise | round 40 applied; its rerun in progress |
-| `D51.md` (+ `D51_lit_S76.md`) | D‴.51: the transit at a finite mass | round 39 applied, numerics final |
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
-| `D53.md` | D‴.53: the sliding limit | round 41 applied, numerics final |
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 42 being applied; its reruns (B4, H, C, T2, W, C2) in progress |
 | `D55.md` | D‴.55: exact recovery by the sliding transit; the path's skeleton | round 43 applied, numerics final; referee round 46 next |
 | `D56.md` | D‴.56: the transit under measurement noise | Part B rerun done, Part E in progress; referee round 45 next |

@@ -103,8 +103,13 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   irrepresentable condition (Proposition D‴.46); small starts put the kernels on branches where their signs freeze and the law becomes an exponentiated gradient: the limit is the
   start's projection onto the sign-constrained least-squares fits, wrong-signed kernels dying out (Proposition D‴.47); from small masses the kernels enter one at a time — the inverse scale space flow, on the scale (mass)^{−1/2} from zero amplitudes and
   log(1/mass) on branches —, and with the paradigm's moving centres the entered kernels slide onto the target's features while the others
-  stay put: one kernel per feature (Proposition D‴.48); rounds 7–33 and 35–37
-  of the review log cover all of them up to D‴.48, and their remarks.
+  stay put: one kernel per feature (Proposition D‴.48); at a finite mass a near tie is shared through an inner problem that does not
+  depend on the mass, so an entry costs a kernel unless the margins it leaves are ≫ (mass)^{1/2}, kernels left near their walls creep
+  into them, and the sliding path alone estimates the mass below which the loop forms exactly its kernels — within a factor 2 of the
+  loop's own threshold on three targets in four (Proposition D‴.51); and the sliding limit is proved: between entries the loop is
+  slaved to the block's fit, each entry is an inner layer of which the fit is a Lyapunov function, and the loop converges to the
+  sliding path at the rate (mass)^{1/2}, the entries' pulls and shifts its first correction (Theorem D‴.53); rounds 7–33, 35–37, 39
+  and 41 of the review log cover all of them up to D‴.53, and their remarks.
 
 ---
 
