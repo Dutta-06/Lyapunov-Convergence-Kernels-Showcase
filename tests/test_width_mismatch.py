@@ -108,12 +108,12 @@ def test_the_report_on_synthetic_results():
     B = [dict(r=0.25, var='base', blocks=[blk(1, 1e-2 * (1 + 5e-4), 1e-2, True), blk(2, 1e-3 * (1 + 2e-3), 1e-3, False)],
               events=[(1.0, 10, 'enter', 0.0), (2.0, 11, 'enter', 0.0)], relaxed=[True, False], stiff=0, redone=0, failed=0, rejected=0)]
     md = WM.report(B=B)
-    assert '| 0.25 | base | 1 | 2, 1.00e-03, False | — | 1/2 | 0, 0, 0 | 0 | 0 |' in md
+    assert '| 0.25 | base | 1 | 2, 1.00e-03, 1.002, False | — | 1/2 | 0, 0, 0 | 0 | 0 |' in md
     B[0]['blocks'][1]['polish'] = [dict(status=0, nfev=5000, accepted=True), dict(status=1, nfev=12, accepted=False, e0=1.0, e1=1.0)]
     B[0]['entries'] = [dict(it=0, j=10, u0=0.0, rate=0.5, rate_max=0.5, t_wall=2.0, t_min=2.0),
                        dict(it=1, j=11, u0=0.9, rate=0.1, rate_max=0.4, t_wall=1.0, t_min=1.0)]
     md = WM.report(B=B)
-    assert '| 2, 1.00e-03, False | 0/5000/a 1/12/r | 1/2 |' in md                 # the first non-optimal block's polishes (round 54)
+    assert '| 2, 1.00e-03, 1.002, False | 0/5000/a 1/12/r | 1/2 |' in md                 # the first non-optimal block's polishes (round 54)
     assert ('the entrant had the largest current rate |⟨rφ_j⟩| in 1; its rate over the largest a median 0.62 (range 0.250–1.00), its '
             'dual |u_j| at the block\'s start a median 0.450 (least 0.000)') in md
     assert ('Of the 1 entrants joining a block, 1 start beyond its outermost node (a median 0.58σ, range 0.58–0.58σ, beyond it) and 0 '
@@ -190,8 +190,8 @@ def test_the_quoted_cells_on_synthetic_results():
               runaway=False, rf=rf),
          dict(s=1e-2, k=[1, 2], rms=[0.05, 0.02], err=[0.2, 0.1], at=[1, 1], gaps=[0.5], runaway=False, rf=rf)]
     md = WM.report(B=B, C=C)
-    assert '| 0.25 | base | 1, 2 | 3, 3.00e-08, False | 0/5000/a 1/12/r | 3/4 | 1, 2, 3 | 4 | 1 |' in md
-    assert '| 0.25 | grid +0.05 | 1 | 2, 5.00e-07, True | — | 2/2 | 0, 0, 0 | 0 | 0 |' in md
+    assert '| 0.25 | base | 1, 2 | 3, 3.00e-08, 1.002, False | 0/5000/a 1/12/r | 3/4 | 1, 2, 3 | 4 | 1 |' in md
+    assert '| 0.25 | grid +0.05 | 1 | 2, 5.00e-07, 1.2, True | — | 2/2 | 0, 0, 0 | 0 | 0 |' in md
     assert '| 1 | base | 1, 2, 3 | none | — | 3/3 | 0, 0, 0 | 0 | 0 |' in md
     assert ("Over every width and variant: the optimal blocks' optimum errors down to 2.00e-03; the non-optimal blocks' from 2.00e-03 down "
             "(1 of 3 failed the stationarity test); non-optimal blocks with an optimum above 10⁻⁷: 2; the non-optimal blocks' errors "
@@ -248,3 +248,17 @@ def test_the_stop_law():
     md = WM.report(C=C)
     assert (f"| 0.001 | {Kr:.2f} | " + ', '.join(f"{K}: {p:.3f}" for K, p in P.items() if p >= 5e-4) + f" | {P[4]:.3f} | "
             f"{2 * P[4]:.1f} of 2 | 2 |") in md
+
+
+def test_b2_variable_projection_from_the_blocks():
+    """B2 (round 54): from the half-squeeze nodes themselves both starts reach one optimum; the summary counts the blocks in the optimum's
+    basin overall and each path's first non-optimal block (B2 in the paths' order)."""
+    yh, _ = WM.W.half_squeeze(2, WM.SIG, WM.sigma_star(1.0))
+    q = WM.b2_job((1.0, 'base', 2, WM.C_B + np.sort(yh)))
+    assert abs(q['e_block'] / q['e_rule'] - 1) < 1e-9 and 0 < q['e_rule'] < 0.1
+    B2 = [dict(r=1.0, var='base', k=10, e_block=1.0, e_rule=1.0), dict(r=1.0, var='base', k=11, e_block=5.0, e_rule=1.0),
+          dict(r=0.5, var='base', k=6, e_block=3.0, e_rule=1.0)]
+    line = WM.b2_line(B2)[0]
+    assert line == ("Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 1 of 3; in the others it "
+                    "ends 3–5 times above it. From the first non-optimal block of each path: 1 of 2 (the others 3 times above it).")
+    assert WM.b2_line(None) == []

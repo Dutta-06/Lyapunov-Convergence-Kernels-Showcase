@@ -175,6 +175,47 @@ def part_B():
         return pool.map(b_job, [(r_, v[0]) for v in VARIANTS_B for r_ in TAUS_B], chunksize=1)
 
 
+def b2_job(args):
+    """B2 (referee round 54): from one of B's non-optimal blocks, variable projection (Levenberg–Marquardt on the centres) started at the
+    block's own centres and at the half-squeeze nodes — whether the block lies in the basin of the best optimum found (its relaxation
+    unfinished) or at another stationary point."""
+    r_, var, k, c = args
+    warnings.filterwarnings('ignore')
+    K = RT.Bumps(X_B, SIG)
+    ss = sigma_star(r_)
+    f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
+    rf = float(np.sqrt(np.mean(f ** 2)))
+    yh, _ = W.half_squeeze(k, SIG, ss)
+    return dict(r=r_, var=var, k=k, e_block=sample_fit(K.phi, f, c)[2] / rf, e_rule=sample_fit(K.phi, f, C_B + yh)[2] / rf)
+
+
+def part_B2(B):
+    """B2: `b2_job` from every non-optimal block of B."""
+    from multiprocessing import Pool
+    jobs = [(b['r'], b['var'], o['k'], np.asarray(o['c'])) for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL]
+    with Pool(N_WORKERS) as pool:
+        return pool.map(b2_job, jobs, chunksize=1)
+
+
+def b2_line(B2):
+    """B2's summary: the non-optimal blocks from which variable projection reaches the best optimum found (within OPT_TOL)."""
+    if B2 is None or not len(B2):
+        return []
+    best = [min(q['e_block'], q['e_rule']) for q in B2]
+    hit = [abs(q['e_block'] / b - 1) < OPT_TOL for q, b in zip(B2, best)]
+    worse = [q['e_block'] / b for q, b, h in zip(B2, best, hit) if not h]
+    seen, first = set(), []                                            # each path's first non-optimal block (B2 keeps the paths' order)
+    for i, q in enumerate(B2):
+        if (q['r'], q['var']) not in seen:
+            seen.add((q['r'], q['var']))
+            first.append(i)
+    fw = [B2[i]['e_block'] / best[i] for i in first if not hit[i]]
+    return [f"Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in {sum(hit)} of {len(B2)}"
+            + (f"; in the others it ends {min(worse):.3g}–{max(worse):.3g} times above it" if worse else '')
+            + f". From the first non-optimal block of each path: {sum(hit[i] for i in first)} of {len(first)}"
+            + (f" (the others {', '.join(f'{v:.3g}' for v in sorted(fw))} times above it)" if fw else '') + ".", '']
+
+
 def gap_share(x):
     """A3: the share of the half-squeeze rule's gap to the optimal fit that the best one-parameter variance recovers; an optimum the
     one-parameter rule beats is unconverged (referee round 54)."""
@@ -336,7 +377,7 @@ def stop_law(s, rf, N, k_max=12):
     return float(Kr), {K: cdf[K] - cdf[K - 1] for K in range(1, k_max + 1)}
 
 
-def report(A=None, B=None, C=None, D=None):
+def report(A=None, B=None, C=None, D=None, B2=None):
     L_ = ['# Proposition D‴.58: the transit under width mismatch (`exp_width_mismatch.py`)', '',
           f"Kernels of width σ = {SIG}; a feature Aφ_σ*(· − c*), σ* = σ(1 + (τ/σ)²)^{{1/2}}; t = (σ* − σ)/(σ* + σ), λ = τ²/(σ² + σ*²) "
           "(`src/core/wide_feature.py`).", '']
@@ -430,7 +471,8 @@ def report(A=None, B=None, C=None, D=None):
                                                                      + ')' for n, st, sh, nf, rp in VARIANTS_B)
                + ". 'Relaxed': the block passed the stationarity test. The first non-optimal block's polishes as status/evaluations/accepted "
                "(status 0: the budget was spent first).", '',
-               '| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum\'s error, relaxed | its polishes | '
+               '| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum\'s error, block / optimum, relaxed | its '
+               'polishes | '
                'relaxed blocks | chunks redone (stall, failure), failed | polish rejected | exits |', '|---|---|---|---|---|---|---|---|---|']
         for r_ in TAUS_B:
             for v in VARIANTS_B:
@@ -440,7 +482,7 @@ def report(A=None, B=None, C=None, D=None):
                 opt = [o['k'] for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL]
                 bad = next((o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL), None)
                 L_.append(f"| {r_:g} | {v[0]} | {', '.join(map(str, opt)) or '—'} | "
-                          + (f"{bad['k']}, {bad['e_opt']:.2e}, {bad['relaxed']}" if bad else 'none') + f" | "
+                          + (f"{bad['k']}, {bad['e_opt']:.2e}, {bad['e'] / bad['e_opt']:.4g}, {bad['relaxed']}" if bad else 'none') + f" | "
                           + (polish_cell(bad) if bad else '—') + f" | "
                           f"{sum(o['relaxed'] for o in b['blocks'])}/{len(b['blocks'])} | {b['stiff']}, {b['redone']}, {b['failed']} | "
                           f"{b['rejected']} | {sum(e[2] == 'exit' for e in b['events'])} |")
@@ -451,6 +493,7 @@ def report(A=None, B=None, C=None, D=None):
                   "test); "
                   f"non-optimal blocks with an optimum above 10⁻⁷: {sum(o['e_opt'] > 1e-7 for o in no)}; the non-optimal blocks' errors "
                   f"{min(o['e'] for o in no):.2e} … {max(o['e'] for o in no):.2e}." if no else "none."), '']
+        L_ += b2_line(B2)
         L_ += entry_lines(B)
         for b in [x for x in B if x['var'] == VARIANTS_B[0][0]]:
             L_ += [f"### τ/σ = {b['r']:g}, {b['var']} (events: " + ', '.join(f"{j}{'+' if k == 'enter' else '−'}" for t_, j, k, c in b['events'])
@@ -543,14 +586,14 @@ def main():
     raw = os.path.join(OUT, 'width_mismatch_raw.npz')
     md = os.path.join(OUT, 'width_mismatch.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'D')
+    keys = ('A', 'B', 'C', 'D', 'B2')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D)):
+    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D), ('B2', lambda: part_B2(res['B']))):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

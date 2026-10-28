@@ -2114,3 +2114,40 @@ from the dictionary's grid. The cure was the law itself: the second knot to firs
 margins over projected Gaussian rates, which reproduces the path's knot to 10⁻⁸ and gives a per-draw calibration by bootstrapping it at
 the data's own first fit. The same exercise showed the statistic's strength: its power at the true offset sits at the Neyman–Pearson
 bound, because the runner-up's projected kernel is nearly the matched filter of the pair's deviation from one bump.
+
+## Round 54 (adversarial review of Proposition D‴.58 as revised after round 48, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3ba: Proposition D‴.58's round-48 revision with its code and results at 265a133
+(`review/REVIEW_round54_D3ba.md`). The referee:
+- checked (i) and (v) from scratch at 80 digits against closed-form Gaussian integrals (to 10⁻⁵²–10⁻⁸⁰), and (ii)'s rates to K = 40;
+- regenerated the md (byte for byte) and checked every quoted number of (A)–(D);
+- instrumented the polish-2σ paths (the polish's status and evaluations, the flow continued, variable projection and LM from each stalled
+  block) and reran B with the polish's budget raised;
+- rebuilt the duals from the raw and read every entry;
+- exercised `sliding_iss`'s failure branch by monkeypatching the solver;
+- ran 56 mutants and searched the literature (snippets only).
+
+**Verdicts (D3ba).** (i), (v) and (ii)'s rates hold; C(c) ≥ 0 with double zeros holds after all 147 optimal blocks. But the account of
+where the transit's optimal ranges end was refuted: they end where the block's polish spends its 5000 evaluations, not at a
+double-precision floor — with 5·10⁴ the ranges grow by two kernels. The flank-entry mechanism was misattributed (the entrant is the
+kernel of the least time to the wall, never the largest current rate). The round-48 failure branch of `sliding_iss` and
+`sliding_iss_nd` crashed or reused stale correlations, 38 of 56 mutants survived, and several numbers were misquoted.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ba-1 | major | The ranges' end is the polish's budget, not double precision | `sliding_iss(polish_nfev=, repolish=)`; the polish's status, evaluations and acceptance recorded per block (`polish_log`, also in `sliding_iss_nd`); B rerun in five variants (base; polish 2σ; grid +0.05; 5·10⁴ evaluations; 5·10⁴ repeated up to three times); B's table prints the first non-optimal block's polishes and its block/optimum; Part B2: variable projection from every non-optimal block. Outcome: the ranges K ≤ 4, 7, 9, 11 (5·10⁴) and 4, 7, 9, 12 (repeated) at τ/σ ≤ 1, optima down to 1.6·10⁻⁹; variable projection from the first non-optimal block of every path reaches the optimum (19 of 19) — the repeated polish stops on its gradient test 1.012, 2.677, 1.121 times above it at τ/σ = ¼, ½, ¾ —, from 13 of the 83 later blocks. (iii), (B), status: "double precision" and "ε_mach" dropped; the block relaxes to the optimum as far as its relaxation is carried |
+| D3ba-2 | major | The entry mechanism | `sliding_iss` records each entry (the entrant's rate and the largest, its dual at the block's start, the time to the wall); B prints the entries (the largest current rate in 68 of 390; 339 of 360 entrants beyond the block's outermost node, a median 1.40σ; 21 between its nodes with earlier-charged duals); (iii): the next entrant is the kernel of the least time to the wall, (1 − \|u_j\|)/\|C(c_j)\| |
+| D3ba-3 | major | The failure branch of `sliding_iss` / `sliding_iss_nd` | `relax_chunk`: a failed chunk is halved (LSODA, then Radau) down to a quarter before it counts as failed; the iteration's correlations are computed after the chunk loop in every case; the counts (stalls, redone, failed) recorded; tests with a fake solver (halving, Radau, never, partial failure), the counts and the exit rule on a relaxed block |
+| D3ba-4 | major | 38 of 56 mutants survive | tests: the Fock and Mercer-zero closed forms and the best variance, A3/A4 and B's and C's cells on synthetic results, the stop's law, the entries line, B2's line and job; the exit rule wired into the path |
+| D3ba-5 | minor | "96–100%" | 95.7–100%; A3 flags an optimum the retuned rule beats by more than 10⁻⁹ ("optimum unconverged": τ/σ = ½, K = 8) |
+| D3ba-6 | minor | (iv) deterministic; e_K misattributed | `stop_law`: the rms's expectation s(b_K² + 1 − 2K/N)^{1/2} and scatter, P(stop at K); (iv) states the stop's law; C prints K(s), P(stop at K) and the expected against the observed stops |
+| D3ba-7 | minor | (C)'s gap and entries | C prints where the largest gap falls against the stop; "to 11 entries" |
+| D3ba-8 | minor | "q numerically" | q > t proved (the increasing (x − 1)/(x + 1) at β² against σ*/σ) |
+| D3ba-9 | minor | Proof gaps | the atoms' bound E He_n(√2Z)² ≤ 4ⁿn!((3/4)ⁿ + (1/4)ⁿ)/2; Cramér's \|He_n(x)\| ≤ κ(n!)^{1/2}e^{x²/4} with the two-dimensional Mehler kernel at a = ϑ/(1 + ϑ) < ½; (v)'s measure on the imaginary axis (Mehler at ρ = \|t\|) |
+| D3ba-10 | minor | Literature | Derevianko–Plonka (open: whether their frequencies are (v)'s), Plonka–Riebe–Cuyt, Kuo–Sloan–Woźniakowski, Karvonen–Oates–Girolami; the classical-rule discrepancy stated |
+| D3ba-11 | cosmetic | Captions and wording | A's caption; "passed the relaxation's test" for "stationary"; the trapezoid-to-series difference attributed to rounding of the nodes, weights or residual |
+
+**Lesson.** A plateau in a relaxed error is a claim about the arithmetic only after the solver's own limits are ruled out. Here every
+range ended where the polish spent its budget or stopped on its gradient test, and a better-conditioned solver started from the very
+same block — variable projection, which eliminates the amplitudes — reached the optimum every time. Record the inner solver's status
+next to the result it produced, and restart a stall with a different method before naming its cause.

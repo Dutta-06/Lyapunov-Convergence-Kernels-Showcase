@@ -4,7 +4,7 @@ Kernels of width σ = 0.12; a feature Aφ_σ*(· − c*), σ* = σ(1 + (τ/σ)²
 
 ## A. The rules on ℝ
 
-Relative L² errors: the half-squeeze rule (nodes τ(σ/σ*)^{1/2}z_k, amplitudes A(σ*/σ)^{1/2}w_k exp(y_k²/(2σ(σ + σ*)))) by the trapezoid rule and by the Mehler series (their relative difference), the series' first term's share of the squared error; moment matching (nodes τz_k, amplitudes A(σ*/σ)w_k); the half-squeeze nodes with least-squares amplitudes; the optimal K-kernel fit (variable projection; not computed below 1e-10, the double-precision floor). Rows stop where the series falls below 1e-13 (the trapezoid rule's floor). Ratios per kernel e_{K−1}/e_K; the optimum's nodes over the half-squeeze nodes (range over the nodes).
+Relative L² errors: the half-squeeze rule (nodes τ(σ/σ*)^{1/2}z_k, amplitudes A(σ*/σ)^{1/2}w_k exp(y_k²/(2σ(σ + σ*)))) by the trapezoid rule and by the Mehler series (their relative difference), the series' first term's share of the squared error; moment matching (nodes τz_k, amplitudes A(σ*/σ)w_k); the half-squeeze nodes with least-squares amplitudes; the optimal K-kernel fit (variable projection; not computed below 1e-10, where its solve stops short of the optimum — A3 marks the optimum unconverged where the one-parameter rule beats it). Rows stop where the series falls below 1e-13 (the trapezoid rule's floor). Ratios per kernel e_{K−1}/e_K; the optimum's nodes over the half-squeeze nodes (range over the nodes).
 
 ### τ/σ = 0.25 (1/t = 65.9848, 1/λ = 33.0000)
 
@@ -76,14 +76,14 @@ D_{2K+2j,K}/D_{2K,K} (integers) for j = 1, …, 4 and K = 1, …, 30; their j-th
 
 ### A3. Scaled rules
 
-The Gauss–Hermite rule of N(0, v) for the reweighted mixing law (`scaled_rule`) at the half-squeeze variance v_hs = τ²σ/σ*, the natural Fock scaling v_hs/cosh r and the Mercer-zero scaling τ²(1 + 2τ²/σ²)^{−1/2}: their ratios per kernel at the last K against 1/t, (2 − λ)/λ = (1 − t + t²)/t and 1/q, q = (β² − 1)/(β² + 1), β² = (1 + 2τ²/σ²)^{1/2}; the variance of least error (`best_scale`): v/v_hs, its error and the optimal fit's over the rule's, at K = 1 and at the last K with an optimum:
+The Gauss–Hermite rule of N(0, v) for the reweighted mixing law (`scaled_rule`) at the half-squeeze variance v_hs = τ²σ/σ*, the natural Fock scaling v_hs/cosh r and the Mercer-zero scaling τ²(1 + 2τ²/σ²)^{−1/2}: their ratios per kernel at the last K against 1/t, (2 − λ)/λ = (1 − t + t²)/t and 1/q, q = (β² − 1)/(β² + 1), β² = (1 + 2τ²/σ²)^{1/2}; the variance of least error (`best_scale`): v/v_hs, its error and the optimal fit's over the rule's, at K = 1 and at the last K with an optimum (in brackets the share of the gap to the optimum that the variance recovers, (e_hs − e_best)/(e_hs − min(e_opt, e_best)); 'optimum unconverged' where e_best < e_opt by more than a relative 1e-09); over all K with an optimum the shares 93.0%–100.0% (1 optima unconverged):
 
 | τ/σ | half-squeeze (1/t) | Fock ((2 − λ)/λ) | Mercer-zero (1/q) | K = 1: v/v_hs, e_best/e_hs, e_opt/e_hs | the last K: K, v/v_hs, e_best/e_hs, e_opt/e_hs |
 |---|---|---|---|---|---|
-| 0.25 | 63.583 (65.985) | 63.500 (65.000) | 34.018 (33.971) | 0.99954, 0.99994, 0.99994 | 5, 0.99995, 0.99997, 0.99997 |
-| 0.5 | 17.489 (17.944) | 17.079 (17.000) | 9.916 (9.899) | 0.99381, 0.99922, 0.99922 | 8, 0.99959, 0.99959, 0.99960 |
-| 1 | 5.680 (5.828) | 5.034 (5.000) | 3.751 (3.732) | 0.94281, 0.99272, 0.99272 | 10, 0.99678, 0.99608, 0.99605 |
-| 2 | 2.551 (2.618) | 2.021 (2.000) | 2.021 (2.000) | 0.74536, 0.96523, 0.96523 | 10, 0.98131, 0.97968, 0.97877 |
+| 0.25 | 63.583 (65.985) | 63.500 (65.000) | 34.018 (33.971) | 0.99954, 0.99994, 0.99994 (100.0%) | 5, 0.99995, 0.99997, 0.99997 (100.0%) |
+| 0.5 | 17.489 (17.944) | 17.079 (17.000) | 9.916 (9.899) | 0.99381, 0.99922, 0.99922 (100.0%) | 8, 0.99959, 0.99959, 0.99960 (100.0%, optimum unconverged) |
+| 1 | 5.680 (5.828) | 5.034 (5.000) | 3.751 (3.732) | 0.94281, 0.99272, 0.99272 (100.0%) | 10, 0.99678, 0.99608, 0.99605 (99.1%) |
+| 2 | 2.551 (2.618) | 2.021 (2.000) | 2.021 (2.000) | 0.74536, 0.96523, 0.96523 (100.0%) | 10, 0.98131, 0.97968, 0.97877 (95.7%) |
 
 ### A4. Narrower features: the continued frame
 
@@ -105,30 +105,47 @@ The tail's share Σ_{n>2K}/(first term) against ₂F₁(−½, −½; 1; t²) �
 
 ## B. The transit
 
-The sliding path (polished; a kernel leaves only if its correlation stays inward with its own contribution removed) on f* = 0.8φ_σ*(· − 0.03) sampled at 321 points of [-1.6, 1.6], 21 kernels started at the grid −1, −0.9, …, 1, to 13 entries, the fast flow's chunks up to 10⁵·2^24: after each entry the relaxed block's relative rms error against the optimal fit with as many kernels on the same samples (the better of variable projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within 0.001. Three numerical variants: base (polish step 1σ, grid shifted by 0), polish 2σ (polish step 2σ, grid shifted by 0), grid +0.05 (polish step 1σ, grid shifted by 0.05).
+The sliding path (polished; a kernel leaves only if its correlation stays inward with its own contribution removed) on f* = 0.8φ_σ*(· − 0.03) sampled at 321 points of [-1.6, 1.6], 21 kernels started at the grid −1, −0.9, …, 1, to 13 entries, the fast flow's chunks up to 10⁵·2^24: after each entry the relaxed block's relative rms error against the optimal fit with as many kernels on the same samples (the better of variable projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within 0.001. The numerical variants: base (polish step 1σ, grid shifted by 0, the polish's budget 5000 evaluations), polish 2σ (polish step 2σ, grid shifted by 0, the polish's budget 5000 evaluations), grid +0.05 (polish step 1σ, grid shifted by 0.05, the polish's budget 5000 evaluations), polish 2σ, 5·10⁴ evaluations (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations), polish 2σ, 5·10⁴, repeated (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, repeated up to 3 times). 'Relaxed': the block passed the stationarity test. The first non-optimal block's polishes as status/evaluations/accepted (status 0: the budget was spent first).
 
-| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum's error, relaxed | relaxed blocks | chunks redone (stall, failure), failed | polish rejected | exits |
-|---|---|---|---|---|---|---|---|
-| 0.25 | base | 1, 2, 3, 4 | 5, 1.61e-09, True | 12/12 | 0, 0, 0 | 13 | 1 |
-| 0.25 | polish 2σ | 1, 2, 3, 4 | 5, 1.61e-09, True | 12/12 | 0, 0, 0 | 0 | 2 |
-| 0.25 | grid +0.05 | 1, 2, 3, 4 | 5, 1.61e-09, True | 12/12 | 0, 0, 0 | 0 | 2 |
-| 0.5 | base | 1, 2, 3, 4, 5 | 6, 6.30e-08, True | 12/12 | 3, 5, 0 | 182 | 0 |
-| 0.5 | polish 2σ | 1, 2, 3, 4, 5 | 6, 6.30e-08, True | 12/12 | 0, 0, 0 | 3 | 1 |
-| 0.5 | grid +0.05 | 1, 2, 3, 4, 5 | 6, 6.30e-08, True | 12/12 | 2, 5, 0 | 143 | 0 |
-| 0.75 | base | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, True | 12/12 | 1, 7, 0 | 138 | 0 |
-| 0.75 | polish 2σ | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, True | 12/12 | 0, 0, 0 | 0 | 0 |
-| 0.75 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, True | 12/12 | 1, 3, 0 | 88 | 0 |
-| 1 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 5.22e-08, True | 12/12 | 0, 0, 0 | 12 | 0 |
-| 1 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 5.22e-08, True | 12/12 | 0, 0, 0 | 0 | 0 |
-| 1 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 10 | 9, 2.96e-07, True | 12/12 | 2, 3, 0 | 110 | 0 |
-| 1.5 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | 12/12 | 0, 1, 0 | 71 | 0 |
-| 1.5 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | 12/12 | 0, 0, 0 | 0 | 0 |
-| 1.5 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | 12/12 | 0, 0, 0 | 0 | 0 |
-| 2 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | 12/12 | 0, 0, 0 | 13 | 0 |
-| 2 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | 12/12 | 0, 0, 0 | 0 | 0 |
-| 2 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | 12/12 | 0, 0, 0 | 0 | 0 |
+| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum's error, block / optimum, relaxed | its polishes | relaxed blocks | chunks redone (stall, failure), failed | polish rejected | exits |
+|---|---|---|---|---|---|---|---|---|
+| 0.25 | base | 1, 2, 3, 4 | 5, 1.61e-09, 10.85, True | 0/5000/a | 12/12 | 0, 0, 0 | 13 | 1 |
+| 0.25 | polish 2σ | 1, 2, 3, 4 | 5, 1.61e-09, 10.95, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 2 |
+| 0.25 | grid +0.05 | 1, 2, 3, 4 | 5, 1.61e-09, 10.96, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 2 |
+| 0.25 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4 | 5, 1.61e-09, 1.012, True | 1/30240/a | 12/12 | 0, 0, 0 | 2 | 1 |
+| 0.25 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4 | 5, 1.61e-09, 1.012, True | 1/30240/a 1/1/r | 12/12 | 0, 0, 0 | 2 | 0 |
+| 0.5 | base | 1, 2, 3, 4, 5 | 6, 6.30e-08, 14.34, True | 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r | 12/12 | 3, 5, 0 | 182 | 0 |
+| 0.5 | polish 2σ | 1, 2, 3, 4, 5 | 6, 6.30e-08, 1.46, True | 0/5000/a | 12/12 | 0, 0, 0 | 3 | 1 |
+| 0.5 | grid +0.05 | 1, 2, 3, 4, 5 | 6, 6.30e-08, 14.19, True | 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r | 12/12 | 2, 5, 0 | 143 | 0 |
+| 0.5 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 4.605, True | 0/50000/a | 12/12 | 0, 0, 0 | 0 | 0 |
+| 0.5 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 2.677, True | 0/50000/a 0/50000/a 1/1/r | 12/12 | 0, 0, 0 | 1 | 0 |
+| 0.75 | base | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, 7.53, True | 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r | 12/12 | 1, 7, 0 | 138 | 0 |
+| 0.75 | polish 2σ | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, 1.642, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 0 |
+| 0.75 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, 8.656, True | 0/5000/r | 12/12 | 1, 3, 0 | 88 | 0 |
+| 0.75 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 6.81e-10, 2.305, True | 0/50000/a | 12/12 | 0, 0, 0 | 0 | 0 |
+| 0.75 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 6.81e-10, 1.121, True | 0/50000/a 0/50000/a 1/1/r | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 5.22e-08, 1.771, True | 0/5000/a | 12/12 | 0, 0, 0 | 12 | 0 |
+| 1 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 5.22e-08, 1.771, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 10 | 9, 2.96e-07, 4.241, True | 1/3635/r 1/3620/r 1/3720/r 1/3725/r 1/3618/r 1/3600/r 1/3648/r 1/3682/r 1/3722/r 1/3604/r 1/3685/r 1/3689/r 1/3684/r 1/3608/r 1/3624/r 1/3594/r 1/3881/r 1/3658/r 1/4129/r 1/3699/r 1/3648/r 1/3718/r 1/3616/r 1/3553/r | 12/12 | 2, 3, 0 | 110 | 0 |
+| 1 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 | 12, 1.61e-09, 1.465, True | 0/50000/a | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1.5 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 1, 0 | 71 | 0 |
+| 1.5 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1.5 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1.5 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 1.5 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 2 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 13 | 0 |
+| 2 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 2 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 2 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
+| 2 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
 
-Over every width and variant: the optimal blocks' optimum errors down to 5.22e-08; the non-optimal blocks' from 2.96e-07 down (0 of 69 unrelaxed); non-optimal blocks with an optimum above 10⁻⁷: 1.
+Over every width and variant: the optimal blocks' optimum errors down to 1.61e-09; the non-optimal blocks' from 2.96e-07 down (0 of 102 failed the stationarity test); non-optimal blocks with an optimum above 10⁻⁷: 1; the non-optimal blocks' errors 3.51e-11 … 1.26e-06.
+
+Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 32 of 102; in the others it ends 1–2.28e+06 times above it. From the first non-optimal block of each path: 19 of 19.
+
+
+The entries (390 over the variants that record them): the entrant had the largest current rate |⟨rφ_j⟩| in 68; its rate over the largest a median 0.30 (range 0.001–1.00), its dual |u_j| at the block's start a median 0.946 (least 0.000): the entrant is the kernel of the least time to the wall, (1 − |u_j|)/|⟨rφ_j⟩|, its dual charged during the earlier blocks. Of the 360 entrants joining a block, 339 start beyond its outermost node (a median 1.40σ, range 0.11–4.38σ, beyond it) and 21 between its nodes (their duals at the block's start 0.371, 0.759, 0.999, 0.877, 0.611, 0.237, 0.780, 0.663, 0.997, 0.918, 0.862, 0.904, 0.827, 0.838, 0.692, 0.838, 0.983, 0.992, 0.989, 0.816, 0.967).
 
 ### τ/σ = 0.25, base (events: 10+, 11+, 8+, 12+, 13+, 7+, 16+, 14+, 4+, 5+, 4−, 17+, 3+, 9+)
 
@@ -246,13 +263,13 @@ The residual's correlation C(c) = ⟨r, φ_σ(· − c)⟩ after the optimal blo
 
 ## C. Under noise
 
-τ/σ = 1, 10 draws per level, the path to 10 entries: the discrepancy rule's stop (kernels), its prediction from (i) and the predicted error there, the stopped fit's relative error (median [range]), the kernels within 4σ* of the feature at the stop, the largest relative gap's kernel count.
+τ/σ = 1, 10 draws per level, the path to 11 entries: the discrepancy rule's stop (kernels), its prediction from (i) and the predicted error there, the stopped fit's relative error (median [range]), the kernels within 4σ* of the feature at the stop, the largest relative gap's kernel count (in how many draws it is the stop's).
 
 | s | stop: kernels (median [range]) | predicted | error at the stop: median [range] | predicted | kernels at the feature | largest gap at |
 |---|---|---|---|---|---|---|
-| 0.0001 | 6 [6, 6] (10/10 stopped) | 6 | 8.712e-05 [7.949e-05, 1.053e-04] | 9.533e-05 | 6 [6, 6] | 5 [4, 9] |
-| 0.001 | 4 [4, 5] (10/10 stopped) | 4 | 1.712e-03 [5.808e-04, 1.813e-03] | 1.769e-03 | 4 [4, 5] | 4 [2, 5] |
-| 0.01 | 3 [3, 4] (10/10 stopped) | 3 | 1.079e-02 [3.814e-03, 1.274e-02] | 1.057e-02 | 3 [3, 4] | 2 [2, 4] |
+| 0.0001 | 6 [6, 6] (10/10 stopped) | 6 | 8.712e-05 [7.949e-05, 1.053e-04] | 9.533e-05 | 6 [6, 6] | 5 [4, 9] (the stop in 0) |
+| 0.001 | 4 [4, 5] (10/10 stopped) | 4 | 1.712e-03 [5.808e-04, 1.813e-03] | 1.769e-03 | 4 [4, 5] | 4 [2, 5] (the stop in 4) |
+| 0.01 | 3 [3, 4] (10/10 stopped) | 3 | 1.079e-02 [3.814e-03, 1.274e-02] | 1.057e-02 | 3 [3, 4] | 2 [2, 4] (the stop in 1) |
 
 At the stop (K kernels): the error over the oracle's s(2K/N)^{1/2} (the variance alone, the right support), over the bias–variance prediction (e_K²‖f*‖²_N + 2Ks²/N)^{1/2} — e_K the noiseless optimum's error with K kernels (B's base path at τ/σ = 1) — and over the discrepancy rule's bound s((1 + δ)² − 1 + 4K/N)^{1/2}; paths with a runaway kernel before the stop:
 
@@ -261,6 +278,14 @@ At the stop (K kernels): the error over the oracle's s(2K/N)^{1/2} (the variance
 | 0.0001 | 1.10 [1.01, 1.33] | 0.915 [0.835, 1.106] | 0.483 | 0 |
 | 0.001 | 2.66 [0.81, 2.81] | 0.990 [0.745, 1.348] | 0.871 | 0 |
 | 0.01 | 1.93 [0.59, 2.28] | 1.024 [0.573, 1.209] | 0.627 | 0 |
+
+The stop as a margin (`stop_law`): the first-term formula's K(s) (the root of K = log((1 − t²)^{1/4}(πK)^{1/4}‖f*‖_N/(s(2δ + δ²)^{1/2}))/log(1/t), whose ceiling is the predicted stop), and the probability of the stop at each K — the rms's expectation s(b_K² + 1 − 2K/N)^{1/2} and its scatter from the noise's chi-square and its cross term with the bias, b_K = e_K‖f*‖_N/s, e_K the half-squeeze rule's error, in the normal approximation (the rms falls along the path) —; the expected number of the draws stopping at the predicted K against the observed:
+
+| s | K(s) | P(stop at K) | at the predicted K | expected | observed |
+|---|---|---|---|---|---|
+| 0.0001 | 5.26 | 5: 0.005, 6: 0.993, 7: 0.001 | 0.993 | 9.9 of 10 | 10 |
+| 0.001 | 3.91 | 4: 0.789, 5: 0.210, 6: 0.001 | 0.789 | 7.9 of 10 | 7 |
+| 0.01 | 2.55 | 3: 0.986, 4: 0.012 | 0.986 | 9.9 of 10 | 9 |
 
 ## D. The tail of the exact series (the sharp constant, conjectural)
 
