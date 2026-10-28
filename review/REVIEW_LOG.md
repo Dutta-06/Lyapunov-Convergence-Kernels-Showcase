@@ -2809,7 +2809,7 @@ size the gap is ≈3%); the Liu–Nehorai/Smith sentence; loose ends.
 **Lesson.** A difference between two tests, each calibrated by its own Monte Carlo law, is only as accurate as the two calibrations agree:
 two independent 20000-sample laws that share their whole lower tail in distribution still differ in their sampled quantiles, and that
 difference produced the "gain" in 5 of 6 cells. Drawing both laws from the same samples is a one-seed change that makes the part exactly
-zero, as the inequality bounding it (the full knot never later than the pair's own) requires. And a test written to kill a mutant must
+zero, as the inequality bounding it (the full knot never later than the pair's own) requires [**erratum, round 75 (D3bv-7):** the inequality makes the part ≥ 0 at a common threshold — the share of H1 draws whose two knots straddle it —, not zero; it is zero here because no draw's knots straddle the common threshold, which round 73 counted]. And a test written to kill a mutant must
 execute the mutated function: checking a report on hand-made rows cannot see a broken score, width statistic or margin upstream.
 
 ## Round 68 (adversarial review of Proposition D‴.59 as revised after round 61, 2026-10-28)
@@ -2876,7 +2876,7 @@ offset as a pattern (c̄ = 0.08 is 0.02 from the next kernel, the mirror of 0.02
 **Lesson.** An inequality settles one side. "Never later" with equal quantiles shows the minimum cannot lose at the tie; that it gains
 nothing is a separate fact about the draws, and a script should count it rather than print it as a consequence. A Monte Carlo difference
 needs its standard error before its extremes are read, and on a grid with mirror symmetry an offset and its mirror are one data point
-seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets.
+seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets [**erratum, round 75 (D3bv-1):** the fall is the weak null's ((0.8, −0.4), |ŵ| ≈ 0.4); the strong null (|ŵ| ≈ 1.4) holds its level until next to the tie, and the weak null's shifted centres are binned by their own distance].
 
 ## Round 69 (adversarial review of Proposition D‴.60 as revised after round 63, 2026-10-28)
 
@@ -2956,3 +2956,38 @@ polish, and changing two settings at once could not say which binds; recorded st
 answer it end by end. A floor claimed for the arithmetic is shown by changing the arithmetic: the same solve with its residual in long
 double passes it from the block and from the optimum alike, and the gap by optimum shows the floor soft rather than a threshold. A
 comparison of conditioning is a statement about units unless it is scale-free.
+
+## Round 75 (adversarial review of Proposition D‴.52 as revised after round 73, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bv: Proposition D‴.52 as revised after round 73, with its code and results at
+3dc9443 (`review/REVIEW_round75_D3bv.md`). The referee:
+- regenerated the md byte for byte, compared the raw with round 71's and reran all 15 U jobs bit-identically;
+- recomputed the minimum's part in the population (10⁶ shared law samples and 10⁵ fresh H1 draws per cell, the vectorised fits checked
+  against E's 21000 draws);
+- re-derived the part's decomposition at a common threshold and off the tie, and checked the excess statistic draw by draw;
+- split the size by distance by null and by the null's own centre;
+- ran 44 single-point mutants of round 73's code and round 73's surviving ones again.
+
+**Verdicts (D3bv).** No major issue. Reproducibility, the numbers, the inequality and the part's decomposition, the excess statistic
+(round-off, balanced in sign), the paired standard errors, the tie's zero (also in the population: 0 of 600 000 draws between the knots)
+and the size by distance as computed hold. Minors: the size's fall with the distance is the weak null's (|ŵ| ≈ 0.4, trend z = −3.83); the
+strong null (|ŵ| ≈ 1.4) holds its level, and the weak null's centres at s = 0.03 sit 0.0097 off their label c̄, so pooling by c̄ did not
+pool mirrors; (iii) quoted the extremes of nine noisy estimates as the off-tie loss (0.034–0.087 in the population); three sources cited
+for results they do not contain (Azaïs–Gassiat–Mercadier for N^{−1/4}; Dacunha-Castelle–Gassiat as if for the regression model; Amar–Weiss
+tagged [snippets]); older reporting code caught only by the md diff. Cosmetic: zero standard errors printed at the tie; infinite knots
+dropped by a filter; wording and log loose ends.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bv-1 | minor | The size by distance pools two nulls | F bins each H0 null by its own centre's distance to the nearest kernel (`null_distance`) and prints the line per pair (`size_by_distance`): the strong null (0.8, 0.6) 0.0517, 0.0471, 0.0421, 0.0450, 0.0383 and the weak (0.8, −0.4) 0.0508, 0.0429, 0.0379, 0.0296, 0.0325 at 0, 0.02, 0.032, 0.045, 0.049; (iii) and the Numerics: the knot holds its level, the fall with the distance is the weak null's; an erratum in place at round 73's Lesson |
+| D3bv-2 | minor | The off-tie loss quoted by its extremes | E′ pools the part per offset over its three cells with its standard error (−0.104 ± 0.012, −0.085 ± 0.011, −0.029 ± 0.008 at c̄ = 0, 0.02, 0.032); (iii) quotes these |
+| D3bv-3 | minor | Sources | Status: Dacunha-Castelle–Gassiat 1997, 1999 as the mixture analogue (population mixtures, positive weights) and the regression analogue in additive noise (Davies 1977, 1987; Liu–Shao 2003; Gassiat 2002 [memory]); the n^{−1/4} order from Chen 1995 and Chen–Chen–Kalbfleisch 2001 [memory]; Azaïs–Gassiat–Mercadier 2006 for the cost of searching a large parameter set, the analogue of the dictionary's minimum; Amar–Weiss [memory]; El Korso et al. beside Liu–Nehorai, with their HAL records |
+| D3bv-4 | minor | Older reporting code untested | Tests: `f_alloc_lines` per pair and offset (H1 rows left out, qA ≠ qB, a `q_law`, a ŵ < 0 row, the α = 0.01 figures); `smith_line` with a non-integer power; `f_lines`' range and equal-size lines; E′'s margin with mu0 ≠ mu_true; `size_by_distance` with H1 rows and a p exactly at α |
+| D3bv-5 | cosmetic | Zero standard errors at the tie | E′ prints the discordant draws and their 95% bound instead (0 of 400: at most 0.0075 per cell, 0.0012 over the 2400 draws) |
+| D3bv-6 | cosmetic | Infinite knots dropped | E′ counts an infinite path knot beside a finite own knot as an exceedance and prints the draws with a finite own knot (21000 of 21000) |
+| D3bv-7 | cosmetic | Wording and log loose ends | "holds its level"; the threshold falls between the two knots of no H1 draw; "3293 of 21000" over all cells; E′'s header normalises by the null's own first entrant, and U prints that f₁'s and f₀'s first entrants coincide (15 of 15 cells); the Status's nested dashes; an erratum in place at round 71's Lesson |
+
+**Lesson.** A trend in pooled cells can belong to one of its parts. The size's fall with the distance is the weak null's, and the strong
+null holds its level until the tie: before reading a pattern, split by what sets the statistic's scale (here s/|ŵ|) and bin by the
+quantity the pattern is about (the null's own centre, not its label). And the range of nine noisy estimates describes their noise: a
+pooled value with its error is the statement.

@@ -654,6 +654,9 @@ def test_the_e_prime_report_with_the_runner_ups_knot():
     assert f"0.1000, {0.005 / s_:.3f}, {0.1 / 0.005:.2f} |" in md               # sd(μ̂) of the uncensored margins 0.10/0.11
     assert f"({cb:g}, {D:g}, {s_:g}) +0.2500" in md and '0.0000 at most apart' in md
     assert '| — |' in '\n'.join(CF.e_prime_lines(E_, S))
+    U[0]['mu0'] = 0.2                                                      # referee round 75 (EM02): the null's margin, not mu_true
+    assert f"0.2000, {0.005 / s_:.3f}, {0.2 / 0.005:.2f} |" in '\n'.join(CF.e_prime_lines(E_, S, U))
+    U[0]['mu0'] = 0.1
     U[0].pop('mu0')                                                        # referee round 73: no null margin without U's mu0
     assert f"| —, {0.005 / s_:.3f}, — |" in '\n'.join(CF.e_prime_lines(E_, S, U))
 
@@ -987,32 +990,45 @@ def test_e_prime_lines_the_tie_and_the_parts_errors_on_the_raw():
         own = np.array(u['t2_1']) < u['q2']
         dd = (d1 < e['q_law']).astype(float) - own.astype(float)
         part = float(np.mean(d1 < e['q_law']) - np.mean(own))
-        assert f"({e['cbar']:g}, {e['D']:g}, {e['s']:g}) {part:+.4f} ({np.std(dd, ddof=1) / np.sqrt(dd.size):.3f})" in md
+        se = (f"0 discordant of {dd.size}: ≤ {1 - 0.05 ** (1 / dd.size):.4f}" if not np.any(dd != 0)
+              else f"{np.std(dd, ddof=1) / np.sqrt(dd.size):.3f}")
+        assert f"({e['cbar']:g}, {e['D']:g}, {e['s']:g}) {part:+.4f} ({se})" in md
         r = np.r_[d0, d1] / np.r_[u['t2_0'], u['t2_1']] - 1
         exc_n += int(np.sum(r > 0)); exc_all += r.size; exc_max = max(exc_max, float(r.max()))
         if u['q2'] == u['q_full']:
             betw += int(np.sum((d1 < u['q2']) & ~own)); n1 += own.size
     assert exc_max < 1e-10 and n1 == 2400
-    assert (f"exceeds it in {exc_n} of {exc_all} draws, by at most {exc_max:.1e} relative" in md
-            and f"no H1 draw falls between them ({betw} of {n1} in those cells" in md and betw == 0)
+    assert (f"exceeds it in {exc_n} of {exc_all} draws ({exc_all} with a finite own knot), by at most {exc_max:.1e} relative" in md
+            and f"the threshold falls between the two knots of no H1 draw ({betw} of {n1} in those cells" in md and betw == 0)
+    assert "(0 discordant of 400: ≤ 0.0075)" in md
     no_u = '\n'.join(CF.e_prime_lines(raw['E'], raw['S'], None))
     assert no_u.count('| —, ') == len(raw['E']) and 'The minimum' not in no_u
 
 
 def test_the_size_by_distance_to_the_nearest_kernel():
-    """Referee round 73 (D3bt-4): `f_alloc_lines` pools an offset with its mirror about the tie (c̄ and 0.1 − c̄: the same distance to
-    the nearest kernel) for the calibrated knot's size."""
+    """Referee rounds 73, 75 (D3bt-4, D3bv-1; F04, F05, F09): `size_by_distance` per pair — each H0 null at the bin of its own centre's
+    distance to the nearest kernel (an offset and its mirror about the tie pooled; a null shifted off its c̄ binned by its own centre) —,
+    H1 rows left out, a p-value exactly at α no rejection, the interval the size's; `f_alloc_lines` prints it."""
     s, D = CF.SIGMAS_F[0], CF.DELTAS_F[CF.SIGMAS_F[0]][CF.H0_F]
+    a = CF.ALPHA_C
     row = lambda p: dict(p=p, tA=1.0, tB=2.0, z=0.0, w1=1.0)
-    F = [dict(A=CF.PAIRS_F[0], cbar=0.02, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.01), row(0.5), row(0.5), row(0.5)]),
-         dict(A=CF.PAIRS_F[0], cbar=0.08, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.005), row(0.03), row(0.5), row(0.5)]),
-         dict(A=CF.PAIRS_F[0], cbar=0.049, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.5)] * 4)]
-    keys = ('knot',)
-    out = '\n'.join(CF.f_alloc_lines(F, {(A, k): [] for A in CF.PAIRS_F for k in keys},
-                                     {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys))
+    A0, A1 = CF.PAIRS_F
+    F = [dict(A=A0, cbar=0.02, c1=0.02, w1=1.4, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.01), row(a), row(0.5), row(0.5)]),
+         dict(A=A0, cbar=0.08, c1=0.08, w1=1.4, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.005), row(0.03), row(0.5), row(0.5)]),
+         dict(A=A0, cbar=0.02, c1=0.02, w1=1.4, s=s, D=D, hyp=1, qA=1.0, qB=1.0, rows=[row(0.0)] * 4),
+         dict(A=A1, cbar=0.045, c1=0.0547, w1=0.43, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.001)] * 2 + [row(0.5)] * 2),
+         dict(A=A1, cbar=0.032, c1=0.032, w1=0.40, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.5)] * 4)]
+    out = '\n'.join(CF.size_by_distance(F))
     lo, hi = CF.cp_int(3, 8)
-    assert f"0.02 (c̄ = 0.02, 0.08): 0.3750 [{lo:.4f}, {hi:.4f}], 0.1250" in out
-    assert "0.049 (c̄ = 0.049): 0.0000 [" in out
+    assert f"Pair {A0} (|ŵ| 1.400–1.400; the null's centre at most 0.0000 from c̄)" in out
+    assert f"0.02: 0.3750 [{lo:.4f}, {hi:.4f}], 0.1250." in out
+    lo, hi = CF.cp_int(2, 4)
+    assert f"Pair {A1} (|ŵ| 0.400–0.430; the null's centre at most 0.0097 from c̄)" in out
+    assert "0.032: 0.0000 [" in out and f"0.045: 0.5000 [{lo:.4f}, {hi:.4f}], 0.5000." in out
+    keys = ('knot',)
+    full = '\n'.join(CF.f_alloc_lines(F, {(A, k): [] for A in CF.PAIRS_F for k in keys},
+                                      {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys))
+    assert out in full
 
 
 def test_equal_size_line_below_alpha_and_cells_that_do_not_count():
@@ -1033,3 +1049,85 @@ def test_equal_size_line_below_alpha_and_cells_that_do_not_count():
     line = CF.equal_size_line(F, A, {(s, CF.OFFSETS_F[0]): 1.0, (s, CF.OFFSETS_F[1]): 1.0, (s, CF.OFFSETS_F[2]): 1.0})
     assert "at p < α′ = 0.0405, its H0 size 0.0500 against the one-sided z's 0.0500" in line
     assert f"{x:.3f} [{x:.3f}, {x:.3f}]" in line and "smaller in" in line and "of 1" in line
+
+
+
+def test_e_prime_counts_an_infinite_path_knot_and_the_first_entrants():
+    """Referee round 75 (D3bv-6, -7): an infinite path knot beside a finite own knot is the worst exceedance, counted (not dropped), the
+    denominator every draw; f₁'s and f₀'s first entrants (U's j1, j10) are counted where U records them."""
+    D, s_ = CF.CELLS_E[0]
+    cb = CF.OFFSETS_E[0]
+    rows0 = [dict(dt=1.0 if i < 2 else 3.0, p=0.5, c1=0.0, w1=1.0) for i in range(10)]
+    rows1 = [dict(dt=np.inf if i == 0 else 1.0, p=0.5, c1=0.0, w1=1.0) for i in range(4)]
+    E_ = [dict(D=D, s=s_, cbar=cb, rows0=rows0, rows1=rows1, np=0.5, q_law=2.0)]
+    row = lambda: dict(z=0.0, t=0.0, zs=0.0, z2=0.0, swap=False, mu=0.1, mu_u=0.1, dfit=0.0, w1=1.0)
+    S = [dict(kind='E', D=D, s=s_, cbar=cb, rows0=[row() for _ in range(10)], rows1=[row() for _ in range(4)], mu_true=0.1, cos2=0.9)]
+    U = [dict(D=D, s=s_, cbar=cb, q2=2.0, q_full=2.0, t2_0=[1.0] + [3.0] * 9, t2_1=[1.0, 1.0, 1.0, 3.0], first_0=[False] * 10,
+              first_1=[False] * 4, mu0=0.1, j1=7, j10=7)]
+    md = '\n'.join(CF.e_prime_lines(E_, S, U))
+    assert "exceeds it in 1 of 14 draws (14 with a finite own knot), by at most inf relative" in md
+    assert "f₁'s and f₀'s first entrants (S's normalisation of μ̂, U's of μ₀) coincide in 1 of 1 cells" in md
+    U[0]['j10'] = 8
+    assert "coincide in 0 of 1 cells" in '\n'.join(CF.e_prime_lines(E_, S, U))
+    U[0].pop('j10')
+    assert "f₁'s and f₀'s first entrants (S's" not in '\n'.join(CF.e_prime_lines(E_, S, U))
+
+
+def test_smith_line_with_a_non_integer_power_and_the_bound_itself(monkeypatch):
+    """Referee round 75 (D3bv-4): with sd = 2s/Δ^{2.6} the line prints the power 2.60 and the integer power's constants at round(2.6) =
+    3 from both separations; unpatched, its power and constant are those of `crb_sep` at SMITH_D."""
+    L, K, c0 = CF.setup()
+    line = CF.smith_line(K)
+    for A in CF.SMITH_PAIRS:
+        for known in (False, True):
+            sd = [CF.crb_sep(K, CF.pair_centres(*A, D), np.array(A), 1.0, known) for D in CF.SMITH_D]
+            p = float(np.log(sd[1] / sd[0]) / np.log(CF.SMITH_D[0] / CF.SMITH_D[1]))
+            c = sd[0] * CF.SMITH_D[0] ** p
+            assert f"({A[0]:g}, {A[1]:g}), {'known' if known else 'unknown'}: {c:.3g}·s/Δ^{p:.2f}, sd = Δ at s ≈ {1 / c:.3g}Δ^{p + 1:.2f}" in line
+    monkeypatch.setattr(CF, 'crb_sep', lambda K, cs, w, s, known=False: 2.0 * s / abs(cs[1] - cs[0]) ** 2.6)
+    line = CF.smith_line(K)
+    ci = [2.0 / D ** 2.6 * D ** 3 for D in CF.SMITH_D]
+    assert (f"unknown: 2·s/Δ^2.60, sd = Δ at s ≈ 0.5Δ^3.60 (with sd ∝ s/Δ^3 exactly: s ≈ {1 / ci[0]:.3g}Δ^4, {1 / ci[1]:.3g}Δ^4 from "
+            f"Δ = {CF.SMITH_D[0]:g}, {CF.SMITH_D[1]:g})") in line
+
+
+def test_f_alloc_lines_on_rows_that_differ_by_pair_and_offset():
+    """Referee round 75 (D3bv-4; FA01, FA03–FA07): per pair and offset its own rejections at the fit's-sign wall; H1 rows left out of
+    every H0 statistic; the sizes at α = 0.01 by the fit's sign (a row with ŵ < 0 flips its z's side) over the H0 draws only."""
+    s, D = CF.SIGMAS_F[0], CF.DELTAS_F[CF.SIGMAS_F[0]][CF.H0_F]
+    A0, A1 = CF.PAIRS_F
+    r = lambda p, a, b, z, w: dict(p=p, tA=a, tB=b, z=z, w1=w)
+    F = [dict(A=A0, cbar=0.0, c1=0.0, w1=1.4, s=s, D=D, hyp=0, qA=1.0, qB=2.0, q_law=0.5,
+              rows=[r(0.001, 0.5, 1.5, 3.0, 1.0), r(0.002, 2.0, 0.5, 0.0, 1.0)]),
+         dict(A=A0, cbar=0.02, c1=0.02, w1=1.4, s=s, D=D, hyp=0, qA=1.0, qB=2.0, q_law=0.5,
+              rows=[r(0.003, 0.5, 1.5, -3.0, -1.0), r(0.5, 2.0, 0.5, 0.0, 1.0)]),
+         dict(A=A1, cbar=0.0, c1=0.0, w1=0.4, s=s, D=D, hyp=0, qA=1.0, qB=2.0, q_law=0.5,
+              rows=[r(0.004, 2.0, 0.5, -3.0, 1.0), r(0.5, 2.0, 0.5, 2.7, 1.0)]),
+         dict(A=A0, cbar=0.0, c1=0.0, w1=1.4, s=s, D=D, hyp=1, qA=1.0, qB=2.0, q_law=0.5,
+              rows=[r(0.0, 0.5, 1.5, 9.0, 1.0)] * 5)]
+    keys = ('knot',)
+    out = '\n'.join(CF.f_alloc_lines(F, {(A, k): [] for A in CF.PAIRS_F for k in keys},
+                                     {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys))
+    assert f"Pair {A0} under H0: of the calibrated knot's 3 rejections 2 at the wall of the fit's sign (0.667; per offset 0: 1/2, 0.02: 1/1)." in out
+    assert f"Pair {A1} under H0: of the calibrated knot's 1 rejections 0 at the wall of the fit's sign (0.000; per offset 0: 0/1)." in out
+    assert "The sizes at α = 0.01 over the 6 H0 draws" in out
+    k = lambda n: f"{n / 6:.4f} [{CF.cp_int(n, 6)[0]:.4f}, {CF.cp_int(n, 6)[1]:.4f}]"
+    assert f"knot (calibrated) {k(4)}" in out and f"z, one-sided toward the same sign {k(3)}" in out
+    assert f"z, one-sided toward the opposite sign {k(1)}" in out and f"\\|z\\| {k(4)}" in out
+
+
+def test_f_report_prints_the_noise_range_and_the_equal_size_lines():
+    """Referee round 75 (D3bv-4): `f_lines` prints the range of s/|ŵ| over F's draws and each pair's equal-size line."""
+    s, cb = CF.SIGMAS_F[1], CF.CBAR
+    Ds = CF.DELTAS_F[s]
+    F = []
+    for A in CF.PAIRS_F:
+        for D in Ds:
+            wf = 0.5 if A == CF.PAIRS_F[0] else 2.0
+            rows = [dict(dt=9.0, p=0.5, pA=0.5, pB=0.5, tA=9.0, tB=9.0, z=0.0, zs=0.0, w1=wf) for i in range(20)]
+            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, rows=rows, q_law=2.0, qA=1.0, qB=1.0, np=0.5, c1=cb, w1=wf))
+        rows0 = [dict(dt=9.0, p=0.5, pA=0.5, pB=0.5, tA=9.0, tB=9.0, z=0.0, zs=0.0, w1=1.0) for i in range(40)]
+        F.append(dict(A=A, cbar=cb, s=s, D=Ds[CF.H0_F], hyp=0, rows=rows0, q_law=2.0, qA=1.0, qB=1.0, np=0.0, w1=1.0, c1=cb))
+    md = '\n'.join(CF.f_lines(F))
+    assert f"s/|ŵ|, over F's draws (each at its own fit; referee rounds 67 and 71): {s / 2.0:.4f}–{s / 0.5:.4f}" in md
+    assert md.count('at equal size (referee round 71)') == 2

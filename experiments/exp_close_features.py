@@ -795,9 +795,9 @@ def e_prime_lines(E_, S, U=None):
            "f₁ − f₀; the knot's powers (oracle, calibrated) and, against its law at the truth (as the runner-up's own knot), its size and "
            "power; the Neyman–Pearson bound; under H0 the share of draws whose first entrant is not the noiseless one, and the runner-up's "
            "margin μ = 1 − wall·u_{j₂} noiseless at the null f₀ (referee round 71: the null's, as its standard deviation is the H0 "
-           "draws'; H1's before), its standard deviation over s — uncensored (referee round 67): u_{j₂} = ⟨yφ_{j₂}⟩ over "
-           "the noiseless first entrant's |⟨yφ_{j₁}⟩|, not over the largest, which censors μ̂ at 0 where j₂ leads — and the margin over "
-           "that standard deviation:", '',
+           "draws'; H1's before; over f₀'s first entrant's |⟨f₀φ_{j}⟩|), its standard deviation over s — uncensored (referee round 67): "
+           "u_{j₂} = ⟨yφ_{j₂}⟩ over |⟨yφ_{j₁}⟩|, j₁ f₁'s first entrant, not over the largest, which censors μ̂ at 0 where j₂ leads — and "
+           "the margin over that standard deviation (the two first entrants coincide where U records them: the summary):", '',
            '| Δ, s | c̄ | z: size [CP], power | \\|z\\| power | t size | z_σ: size, power | z₂: size, power (cos) | knot: oracle, calibrated; '
            "against its law at the truth: size, power | the runner-up's own knot: size, power | Neyman–Pearson | first entrant swapped "
            "(H0) | margin μ, sd(μ̂)/s, μ/sd(μ̂) |",
@@ -833,14 +833,15 @@ def e_prime_lines(E_, S, U=None):
                 own1 = np.array(u['t2_1']) < u['q2']
                 dd = (d1 < e['q_law']).astype(float) - own1.astype(float)      # referee round 73: the part's paired standard error
                 summ[-1].update(u0=float(np.mean(np.array(u['t2_0']) < u['q2'])), u1=float(np.mean(own1)),
-                                first=float(np.mean(u['first_0'])), se=float(np.std(dd, ddof=1) / np.sqrt(dd.size)))
+                                first=float(np.mean(u['first_0'])), se=float(np.std(dd, ddof=1) / np.sqrt(dd.size)),
+                                nd=int(np.sum(dd != 0)), nn=int(dd.size))
                 if 'q_full' in u:                                       # referee round 71: the two laws from the same samples
                     t2a, dta = np.r_[u['t2_0'], u['t2_1']].astype(float), np.r_[d0, d1].astype(float)
-                    ok = np.isfinite(t2a) & np.isfinite(dta) & (t2a > 0)
-                    exc = dta[ok] / t2a[ok] - 1                         # the full knot over the own one, draw by draw
+                    ok = np.isfinite(t2a) & (t2a > 0)                    # referee round 75: an infinite path knot beside a finite own
+                    exc = np.where(np.isfinite(dta[ok]), dta[ok] / t2a[ok] - 1, np.inf)   # one is the worst exceedance, counted
                     summ[-1].update(dq=abs(u['q_full'] - e['q_law']), eq=bool(u['q2'] == u['q_full']),
                                     betw=int(np.sum((d1 < u['q2']) & ~own1)), n1=int(own1.size),
-                                    exc=(int(np.sum(exc > 0)), float(exc.max()) if exc.size else 0.0, int(exc.size)))
+                                    exc=(int(np.sum(exc > 0)), float(exc.max()) if exc.size else 0.0, int(t2a.size), int(ok.sum())))
     dz = np.array([q['z'] - q['np'] for q in summ]); dk = np.array([q['z'] - q['cal'] for q in summ])
     dn = np.array([q['np'] - q['knot'] for q in summ])
     k0, n0 = sum(q['k0'] for q in summ), sum(q['n0'] for q in summ)
@@ -866,24 +867,43 @@ def e_prime_lines(E_, S, U=None):
                 f"{', '.join(f'{q['z2']:.3f}' for q in tie)} (the margin's noise).",
                 "The minimum's part (referee round 67) — the full knot against its own law at the truth less the runner-up's own knot, per cell "
                 "(c̄, Δ, s), with its standard error over the paired H1 draws (referee round 73; the laws' own Monte Carlo error not included): "
-                + '; '.join(f"({q['cb']:g}, {q['D']:g}, {q['s']:g}) {q['law1'] - q['u1']:+.4f}" + (f" ({q['se']:.3f})" if 'se' in q else '')
-                            for q in uu)
-                + f": at c̄ ≤ 0.032 {min(q['law1'] - q['u1'] for q in far):+.4f} … {max(q['law1'] - q['u1'] for q in far):+.4f}"
+                + '; '.join(f"({q['cb']:g}, {q['D']:g}, {q['s']:g}) {q['law1'] - q['u1']:+.4f}" + part_se(q) for q in uu)
+                + f": at c̄ ≤ 0.032 {min(q['law1'] - q['u1'] for q in far):+.4f} … {max(q['law1'] - q['u1'] for q in far):+.4f} (pooled per "
+                "offset over its cells, with its standard error: " + '; '.join(
+                    f"c̄ = {cb:g} {np.mean([q['law1'] - q['u1'] for q in far if q['cb'] == cb]):+.4f} ("
+                    f"{np.sqrt(sum(q['se'] ** 2 for q in far if q['cb'] == cb)) / sum(q['cb'] == cb for q in far):.4f})"
+                    for cb in sorted({q['cb'] for q in far}) if all('se' in q for q in far if q['cb'] == cb)) + ")"
                 + (f", at c̄ ≥ 0.045 {min(q['law1'] - q['u1'] for q in near):+.4f} … {max(q['law1'] - q['u1'] for q in near):+.4f}"
                    if near else '') + f". U's share of H0 draws whose first entrant is j₂ against S's swaps: "
                 f"{max(abs(q['first'] - q['swap']) for q in uu):.4f} at most apart."
+                + (f" f₁'s and f₀'s first entrants (S's normalisation of μ̂, U's of μ₀) coincide in "
+                   f"{sum(u_['j1'] == u_['j10'] for u_ in U)} of {len(U)} cells (referee round 75)." if U is not None and len(U)
+                   and all('j10' in u_ for u_ in U) else '')
                 + (f" Both laws from the same samples (referee round 71): the full knot's α quantile from U's samples equals E's at the truth "
                    f"to {max(q['dq'] for q in uu if 'dq' in q):.1e}, and the own knot's equals it in "
                    f"{sum(q['eq'] for q in uu if 'eq' in q)} of {sum('eq' in q for q in uu)} cells (c̄ = "
                    f"{', '.join(sorted({f'{q['cb']:g}' for q in uu if q.get('eq')}))}: the pair sets the whole tail). The full knot is "
-                   "never later than the own knot — the minimum over the kernels' knots, the own knot among them (draw by draw the path's "
-                   f"exceeds it in {sum(q['exc'][0] for q in uu if 'exc' in q)} of {sum(q['exc'][2] for q in uu if 'exc' in q)} draws, by "
-                   f"at most {max(q['exc'][1] for q in uu if 'exc' in q):.1e} relative: round-off) —, so at a common threshold the "
-                   "minimum's part is the share of H1 draws between the two knots, ≥ 0: where the quantiles coincide the minimum cannot lose, "
-                   f"and it gains nothing there because no H1 draw falls between them ({sum(q['betw'] for q in uu if q.get('eq'))} of "
-                   f"{sum(q['n1'] for q in uu if q.get('eq'))} in those cells; referee round 73)."
+                   "never later than the own knot — the minimum over the kernels' knots, the own knot among them (draw by draw, over all "
+                   f"cells, the path's exceeds it in {sum(q['exc'][0] for q in uu if 'exc' in q)} of {sum(q['exc'][2] for q in uu if 'exc' in q)} "
+                   f"draws ({sum(q['exc'][3] for q in uu if 'exc' in q)} with a finite own knot), by at most "
+                   f"{max(q['exc'][1] for q in uu if 'exc' in q):.1e} relative: round-off) —, so at a common threshold the minimum's part is "
+                   "the share of H1 draws whose two knots straddle it, ≥ 0: where the quantiles coincide the minimum cannot lose, and it gains "
+                   f"nothing there because the threshold falls between the two knots of no H1 draw ({sum(q['betw'] for q in uu if q.get('eq'))} "
+                   f"of {sum(q['n1'] for q in uu if q.get('eq'))} in those cells"
+                   + (f", no discordant draw: the share at most {1 - 0.05 ** (1 / sum(q['n1'] for q in uu if q.get('eq'))):.4f} at 95%"
+                      if all(q.get('nd') == 0 for q in uu if q.get('eq')) else '') + "; referee rounds 73, 75)."
                    if any('dq' in q for q in uu) else ''), '']
     return out
+
+
+def part_se(q):
+    """The minimum's part's paired standard error — or, with no discordant draw, the count and the one-sided 95% bound 1 − 0.05^{1/n} on
+    the share between the knots (referee round 75: a zero count's standard error is degenerate)."""
+    if 'se' not in q:
+        return ''
+    if q.get('nd') == 0:
+        return f" (0 discordant of {q['nn']}: ≤ {1 - 0.05 ** (1 / q['nn']):.4f})"
+    return f" ({q['se']:.3f})"
 
 
 def own_knot(u):
@@ -891,6 +911,39 @@ def own_knot(u):
     if u is None:
         return '—'
     return f"{np.mean(np.array(u['t2_0']) < u['q2']):.3f}, {np.mean(np.array(u['t2_1']) < u['q2']):.3f}"
+
+
+def null_distance(c, h):
+    """The distance of a centre to the nearest kernel of the grid of spacing h (mirror-symmetric about the tie at h/2)."""
+    return min(c % h, h - c % h)
+
+
+def size_by_distance(F):
+    """F's calibrated knot's size by the H0 null's own distance to the nearest kernel (referee rounds 73, 75), per pair — the two nulls
+    differ (the one-bump fits' |ŵ| ≈ 1.4 and 0.4) and the weak one's centre c₁ moves off c̄ with s —: each null at the bin of the
+    offsets' distances {d(c̄)} nearest its own d(c₁) (mirrors about the tie pooled), the size at α (Clopper–Pearson 95%), at 0.01."""
+    h = 2.0 / (X.D_C - 1)
+    grid = sorted({round(null_distance(cb, h), 6) for cb in OFFSETS_F})
+    out = []
+    for A in PAIRS_F:
+        h0 = [r for r in F if tuple(r['A']) == tuple(A) and r['hyp'] == 0]
+        if not h0:
+            continue
+        byd = {}
+        for r in h0:
+            d = min(grid, key=lambda g: abs(g - null_distance(r.get('c1', r['cbar']), h)))
+            byd.setdefault(d, []).extend(q['p'] for q in r['rows'])
+        cells = []
+        for d, pc in sorted(byd.items()):
+            pc = np.array(pc)
+            k5, k1 = int(np.sum(pc < ALPHA_C)), int(np.sum(pc < 0.01))
+            ci = cp_int(k5, pc.size)
+            cells.append(f"{d:g}: {k5 / pc.size:.4f} [{ci[0]:.4f}, {ci[1]:.4f}], {k1 / pc.size:.4f}")
+        ws = [abs(r['w1']) for r in h0 if 'w1' in r]
+        sh = max(abs(r.get('c1', r['cbar']) - r['cbar']) for r in h0)
+        out.append(f"Pair {A} (" + (f"|ŵ| {min(ws):.3f}–{max(ws):.3f}; " if ws else '') + f"the null's centre at most {sh:.4f} from c̄), the size by the null's own "
+                   "distance to the nearest kernel (mirrors about the tie pooled; referee rounds 73, 75): " + '; '.join(cells) + '.')
+    return out
 
 
 def f_alloc_lines(F, least, small, names, keys):
@@ -936,21 +989,7 @@ def f_alloc_lines(F, least, small, names, keys):
                            f"{k1 / pc.size:.4f}")
         out.append(f"The calibrated knot's size per offset over both pairs' H0 draws (α = {ALPHA_C:g} with Clopper–Pearson 95%, then α = 0.01): "
                    + '; '.join(per) + '.')
-        h = 2.0 / (X.D_C - 1)                                          # referee round 73: the cell is mirror-symmetric about the tie
-        byd = {}
-        for cb in OFFSETS_F:
-            pc = [q['p'] for r in F if r['hyp'] == 0 and r['cbar'] == cb for q in r['rows']]
-            if pc:
-                d = round(min(cb % h, h - cb % h), 6)
-                byd.setdefault(d, ([], []))[0].append(cb)
-                byd[d][1].extend(pc)
-        cells = []
-        for d, (cbs, pc) in sorted(byd.items()):
-            pc = np.array(pc)
-            k5, k1 = int(np.sum(pc < ALPHA_C)), int(np.sum(pc < 0.01))
-            ci = cp_int(k5, pc.size)
-            cells.append(f"{d:g} (c̄ = {', '.join(f'{c:g}' for c in cbs)}): {k5 / pc.size:.4f} [{ci[0]:.4f}, {ci[1]:.4f}], {k1 / pc.size:.4f}")
-        out.append("By the distance to the nearest kernel (c̄ and its mirror about the tie pooled; referee round 73): " + '; '.join(cells) + '.')
+        out += size_by_distance(F)
         out.append('')
     comp = []                                                           # referee round 67: the walls test's own components at α/2
     for A in PAIRS_F:
@@ -1056,7 +1095,7 @@ def u_job(args):
     g0 = Phi.T @ f0
     j10 = int(np.argmax(np.abs(g0)))                                   # the null's own first entrant (referee round 73; j₁ in every cell)
     out = dict(D=D, s=s, cbar=cbar, j2=int(j2), q2=q2, q_full=float(np.quantile(knot_of(K, c0, c1, w1, Xi), ALPHA_C)),
-               mu0=float(1 - pd[2] * g0[j2] / abs(g0[j10])))
+               mu0=float(1 - pd[2] * g0[j2] / abs(g0[j10])), j1=j1, j10=j10)
     k = 0
     for h, n in zip((0, 1), ns):
         t2, first = [], []
