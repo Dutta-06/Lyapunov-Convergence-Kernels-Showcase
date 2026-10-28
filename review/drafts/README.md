@@ -13,4 +13,5 @@ round is applied and its numbers are final.
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 47 (D3at) applied — (v) rebuilt as a fold law, C3 and V, the n-D product rule at the true offsets (T3) —, numerics final; a referee round on the revision next |
 | `D56.md` | D‴.56: the transit under measurement noise | numerics A–E final (Part E rerun with the Radau fallback); referee round 45 running |
+| `D57.md` | D‴.57: the transit's dead zone — the energy dead zone freezes the last block, the formation dead zone is the discrepancy principle; in the closed loop neither keeps the kernels in the window | numerics A–C complete; a first referee round next |
 | `D58.md` | D‴.58: the transit under width mismatch — wider features as kernel quadratures | first full run (A–D) in the numerics; a first referee round next |
