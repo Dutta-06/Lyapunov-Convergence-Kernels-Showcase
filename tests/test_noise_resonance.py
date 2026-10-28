@@ -168,7 +168,16 @@ def test_report_on_synthetic_results():
     assert "D‴.49's 16 tones" in md and 'one tone 21.37' in md
     assert f"| without {NR.TERM_NAMES['corr']} | +5.00e-04, -2.00e-03, +4.00e-03 | 0.500, 1.000, 1.000 |" in md
     assert '| quasi-static envelopes | +2.50e-04, -2.00e-03, +4.00e-03 | 0.250, 1.000, 1.000 |' in md
-    assert '| 12 | 10 | 15.76 | 0.02 | > 0.03 | 0.03 |' in md
+    assert '| 12 | 10 | 15.76 | 0.02 (1/1) / 0.02 | — / — | 0.03 (1/1) / 0.03 | 3 (3 leaves) |' in md
+
+
+def test_the_leaving_levels_over_seeds():
+    """Referee round 56: per kernel the least level at which a seed left (how many there), the level from which every seed left at
+    every level above, and '*' where a seed left at one level and stayed at a higher one."""
+    row = lambda x, sd, left: dict(m=12.0, ke=10.0, s=x, opts=dict(seed=sd), left=left, sqrtK=15.76)
+    rs = [row(0.01, 7, [-1, -1, -1]), row(0.01, 1, [40, -1, -1]), row(0.02, 7, [30, 50, -1]), row(0.02, 1, [20, -1, -1]),
+          row(0.03, 7, [25, -1, -1]), row(0.03, 1, [10, -1, 60])]
+    assert NR.c_cells(rs) == ['0.01 (1/2) / 0.02', '0.02 (1/2) / — *', '0.03 (1/2) / —']
 
 
 def test_the_control_averages_are_time_averages():
