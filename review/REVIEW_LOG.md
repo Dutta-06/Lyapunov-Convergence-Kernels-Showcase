@@ -2282,3 +2282,46 @@ potential but a conservation law: Q, conserved by the noiseless free law for eve
 drift on it is a one-line Itô computation — and its zero is exactly the gauge equilibrium the referee measured. Medians over instances where
 every method agrees hide what distinguishes the methods; the rows have to be split by the instances where the candidate answers differ. A
 reduced flow is validated in the limit it claims — σ²τ_c/h → 0 here — and against the projected state, not the raw mean.
+
+## Round 56 (adversarial review of Proposition D‴.60's first draft, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bc: Proposition D‴.60's first draft with its code and results at 17d6217
+(`review/REVIEW_round56_D3bc.md`). The referee:
+- regenerated the md (byte for byte) and reran an A row and a full B3 cell (bit-identical);
+- re-derived (i), `second_order` term by term, the per-kernel √K_max,i = (Gm)^{1/2}|w_i|/(σe^{1/2}) and the design bound (m ≲ 4.83);
+- ran controls on the loop: nine half-integer tones at m = 3 and 12, k_e = 5–40 at 13.1 and 41.3, the commensurate 21.4 against 21.3
+  over 60 periods, 300 periods at 21.37 and with the 16 tones, the 16 tones one at a time and in pairs;
+- split the exact second order into its response to the forcing's constant part and to its 2ω part;
+- traced an ejection, reran C's thresholds under three more seeds, with single tones, a band above √K_max and the WFR metric;
+- ran 42 mutants and searched the literature (snippets).
+
+**Verdicts (D3bc).** (i) is correct and classical, `second_order` is right term by term, the even part converges to s²⟨θ₂⟩ with an
+error ∝ s², and the drift's resonance is real (⟨w₂⟩ at m = 12 over m = 3: 20 at 13.1, 1.1 at 41.3). But (iii)'s causal chain is
+unsupported: a kernel leaves its feature by a sudden ejection that single resonant tones at twice the rms never cause, and a band moved
+above √K_max still ejects at m = 12 while m = 3 never does; C's thresholds were single-seed and not monotone; the averaging's failure is
+the commensurability of the tones' combinations with the reference's harmonics, not slow beats (and Krylov–Bogoliubov does not apply);
+the odd part alternates or grows secularly instead of being a start offset; ⟨w₂⟩ saturates after about 130 periods; the four sources
+are D‴.31(iv)(c)'s and D‴.33(i)'s; the WFR threshold claim had no data; several numbers were hand-computed; 19 of 42 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bc-1 | major | (iii)'s mechanism and design rule unsupported | (iii) numerical: ejection a first-passage event of multi-tone noise, its level falling with Gmw and with resonance and rising with k_e; the rule (√K_max below the band) removes the resonance, not the ejection. C2: one tone 13.1, 15.7, 21.3 at s = 0.02, 0.04 never ejects (0.069); the band 25–75: m = 3 never to s = 0.08, m = 12 from 0.06; m = 4.8, 6, 8 from 0.08, 0.06, 0.03; tone pairs (18.9/22.5, 18.9/22.4, four seeds' phases) never at 0.02 |
+| D3bc-2 | major | Thresholds single-seed, horizon-bound, non-monotone | C over the seeds 7, 1, 2, 3: per kernel the least level a seed left at (how many), the level from which every seed left at every level above, '*' where a seed leaves at one level and stays at a higher, the median period of leaving (118–256); "within 300 periods" |
+| D3bc-3 | major | The averaging-failure condition; KB | (ii) and its proof: the averaged loop is the response to the quadratic forcing's constant part; the 2ω_k and ω_j ± ω_k parts give period-mean increments rotating by ω_kT — bounded unless commensurate with ω_ref, of the averaged part's order where K(t) crosses ω_k²; "slow beats" and KB dropped; B3: WFR single tones 0.9996–1.0010 against the 16 tones' 0.874–1.022 |
+| D3bc-4 | major | The odd part is not a start offset | (ii): rotating Floquet increments, bounded by about 1/\|sin(ω_kT/2)\|, secular at commensurability; B4 prints the first kernel's centre odd part per period (+0.338, −0.312, … at 13.1; −0.032, +0.030, … at 21.3; rotating at 21.37) and the commensurate 21.4's coefficient odd part per s growing to −0.467 |
+| D3bc-5 | major | "⟨θ₂⟩ grows with time" | B4 (300 periods, s = 0.00125, 0.0025): the first kernel's ⟨w₂⟩ +221, +591, +874, +1.01·10³ at the periods 30, 100, 200, 300 (13.1), +225 to +234 from period 200 (16 tones); (ii): a second-order offset reached with the slow coefficient mode's time constant |
+| D3bc-6 | major | Novelty overstated | Status: the sources D‴.31(iv)(c), D‴.33(i), the k_e sign D‴.33(iv); Widrow et al., Glover, Gibson–Annaswamy–Lavretsky, Riedle–Kokotović, Sanders–Verhulst–Murdock, Neishtadt; New: the exact non-averaged second order with its commensurability condition, the mobility Gmw as the stiffness with √K_i and the bound on m, the ejection data |
+| D3bc-7 | minor | k_e as damping only | (iii): the oscillator's damping and D‴.33(iv)'s rectification, whose sign k_e reverses |
+| D3bc-8 | minor | No WFR threshold data | C2: WFR at k_e = 5 and 10, s = 0.02, 0.04, 0.08: never (largest distance 0.023) |
+| D3bc-9 | minor | (ii) cannot reach (iii)'s levels | Status: the even part 0.8122 of s²⟨w₂⟩ at s = 0.005 near the resonance; (iii)'s levels start at 0.0075 |
+| D3bc-10 | minor | Per-kernel resonances; the jitter's ratio | C's caption per kernel, each law's own fitted state (a bug fixed: m = 3 had used m = 12's; now 7.88, 5.25, 6.57 against 15.76, 10.51, 13.13); (i): √K_i = (Gm)^{1/2}\|w_i\|/(σe^{1/2}); A: each kernel's jitter peaks near its own √K_i, far above them the paradigm's jitter is mostly the centres' mobility |
+| D3bc-11 | minor | 19 of 42 mutants survive | tests: `b3_job` on two periods (NP_B, MARKS_B, S_B3 monkeypatched), `b2_jobs`' labels, the envelopes' ē coupling against central differences of the law, the blur at x_m + ē and the correlation at x_m against direct tone averages, C's caption at each law's fitted state — 10 of 10 targeted mutants killed; 24 tests pass |
+| D3bc-12 | minor | Hand-computed numbers | A prints the ranges per metric, B3 the centres' ratios at every s (0.9796–1.0013, 0.9201–1.0048, 0.6994–1.0121); 1.0%, 0.58%, 0.12%, 248, 8% and 3% replaced by printed values |
+| D3bc-13 | minor | B's "averaged / loop" includes the odd part | the column dropped; B compares the averaged loop with the loop's even part only |
+| D3bc-14 | cosmetic | Empty terms; the bound; the 16 tones' odd part | "three sources carry the drift" (B2); C2 prints the bound m ≲ 4.83; the odd part's departure for the 16 tones (2.78·10⁻⁴ against s⟨w₁⟩ = 4.80·10⁻⁴) |
+
+**Lesson.** A mechanism confirmed on the quantity it predicts — here the drift's size, resonant as claimed — is not thereby the cause of
+the event it is used to explain. The controls that separate the two cost one run each: the resonant tone alone at twice the level, the
+band moved above the resonance, intermediate m. They turned a design rule into a condition that removes the resonance but not the
+ejection. And a period mean over a periodic orbit is a Floquet sum: each tone's contribution rotates by ω_kT, so commensurability, not the
+slowness of a beat, decides whether it averages out.

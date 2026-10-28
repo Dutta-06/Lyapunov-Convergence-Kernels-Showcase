@@ -517,10 +517,10 @@ def b3_lines(B3, B=None):
            "phases moved by π): its period means' half-sum less the fit (the even orders, s²⟨w₂⟩ + O(s⁴)) and half-difference (the odd "
            f"orders, s⟨w₁⟩ + O(s³)), at period {MARKS_B[-1]}; the averaged loop's Δw (B, at the largest s) over s²⟨w₂⟩:", "",
            "| metric | noise | ⟨w₂⟩ | even part / s²⟨w₂⟩ at s = " + ', '.join(f"{q:g}" for q in S_B3) + " | the averaged loop (B) / s²⟨w₂⟩ "
-           f"| odd part at s = {S_B3[-1]:g}: loop (s⟨w₁⟩) | ⟨c₂⟩ | even part / s²⟨c₂⟩ at s = {S_B3[-1]:g} |",
+           f"| odd part at s = {S_B3[-1]:g}: loop (s⟨w₁⟩) | ⟨c₂⟩ | even part / s²⟨c₂⟩ at s = " + ', '.join(f"{q:g}" for q in S_B3) + " |",
            "|---|---|---|---|---|---|---|---|"]
     key = lambda r: (r['metric'] != 'paradigm', r['freqs'] is None, r['freqs'] or [0])
-    q_even, q_avg = {q: [] for q in S_B3}, {}
+    q_even, q_avg, q_even_c = {q: [] for q in S_B3}, {}, {q: [] for q in S_B3}
     for r in sorted(B3, key=key):
         w2, c2 = r['w2'][-1], r['c2'][-1]
         cells = []
@@ -537,12 +537,19 @@ def b3_lines(B3, B=None):
             avg = ', '.join(f"{x:.3f}" for x in qa)
         top = r['rows'][-1]
         odd = ', '.join(f"{a:+.2e} ({S_B3[-1] * c:+.2e})" for a, c in zip(top['odd_w'][-1], r['w1'][-1]))
-        ec = ', '.join(f"{a / (S_B3[-1] ** 2 * c):.4f}" for a, c in zip(top['even_c'][-1], c2))
+        ecs = []
+        for row in r['rows']:
+            qc = [a / (row['s'] ** 2 * c) for a, c in zip(row['even_c'][-1], c2)]
+            q_even_c[row['s']] += qc
+            ecs.append(', '.join(f"{x:.4f}" for x in qc))
+        ec = '; '.join(ecs)
         out.append(f"| {r['metric']} | {noise_label(r['freqs'])} | {', '.join(f'{x:+.4g}' for x in w2)} | {'; '.join(cells)} | {avg} | {odd} | "
                    f"{', '.join(f'{x:+.4g}' for x in c2)} | {ec} |")
     rng = lambda xs: f"[{min(xs):.4f}, {max(xs):.4f}]" if xs else '—'
     out += ["", "The even part over the exact second order: " + '; '.join(f"{rng(q_even[q])} at s = {q:g}" for q in S_B3)
-            + " (the relative error falls as s²); the averaged loop over it at s = " + f"{S_B3[-1]:g}: "
+            + " (the relative error falls as s²); the centres' even part over s²⟨c₂⟩: " + '; '.join(f"{rng(q_even_c[q])} at s = {q:g}"
+                                                                                                 for q in S_B3)
+            + "; the averaged loop over it at s = " + f"{S_B3[-1]:g}: "
             + '; '.join(f"{k[0]}, {k[1]}: {rng(v)}" for k, v in q_avg.items()) + ".", ""]
     return out
 
@@ -587,9 +594,14 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
         q19 = ratio_range(A, 'qs_c', 'var_c', lambda r: r['om'] >= 19)
         mob = '; '.join(f"{r['metric']}: v = {', '.join(f'{x:.3g}' for x in r['v'])}, μ = {', '.join(f'{x:.3g}' for x in r['mu'])}"
                         for r in [next(q for q in A if q['metric'] == mt) for mt in METRICS if any(q['metric'] == mt for q in A)])
-        L_ += ["", f"The loop over its linearisation: centres [{lo:.4f}, {hi:.4f}], coefficients [{lw:.4f}, {hw:.4f}]; the quasi-static law "
-                   f"over the linearisation, centres: [{q10[0]:.3f}, {q10[1]:.3f}] at ω ≥ 10, [{q19[0]:.3f}, {q19[1]:.3f}] at ω ≥ 19. The "
-                   f"mobilities at the fit: {mob}.", ""]
+        per_m = '; '.join(f"{mt}: centres [{ratio_range(A, 'sim_c', 'var_c', lambda r, m_=mt: r['metric'] == m_)[0]:.4f}, "
+                          f"{ratio_range(A, 'sim_c', 'var_c', lambda r, m_=mt: r['metric'] == m_)[1]:.4f}], coefficients "
+                          f"[{ratio_range(A, 'sim_w', 'var_w', lambda r, m_=mt: r['metric'] == m_)[0]:.4f}, "
+                          f"{ratio_range(A, 'sim_w', 'var_w', lambda r, m_=mt: r['metric'] == m_)[1]:.4f}]"
+                          for mt in METRICS if any(q['metric'] == mt for q in A))
+        L_ += ["", f"The loop over its linearisation: centres [{lo:.4f}, {hi:.4f}], coefficients [{lw:.4f}, {hw:.4f}] (per metric: {per_m}); "
+                   f"the quasi-static law over the linearisation, centres: [{q10[0]:.3f}, {q10[1]:.3f}] at ω ≥ 10, [{q19[0]:.3f}, "
+                   f"{q19[1]:.3f}] at ω ≥ 19. The mobilities at the fit: {mob}.", ""]
     if B is not None:
         evn = {}
         for r3 in (B3 if B3 is not None else []):
@@ -600,14 +612,14 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
                "period means of w and c (the loop's from dense outputs) against the loop averaged over the fast tones (the mean state and "
                "the complex envelopes of the first order, exact along the orbit; the quadratic terms' tone averages): Δw = w̄ − A, Δc = "
                f"c̄ − c* at the periods {', '.join(str(m) for m in MARKS_B)}:", "",
-               "| metric | noise | s | Δw: loop (averaged), at " + ', '.join(str(m) for m in MARKS_B) + " | averaged / loop: Δw at "
-               f"{MARKS_B[-1]} | averaged / the loop's even part (B3) | Δc at {MARKS_B[-1]}: loop (averaged) |", "|---|---|---|---|---|---|---|"]
+               "| metric | noise | s | Δw: loop (averaged), at " + ', '.join(str(m) for m in MARKS_B) + " | averaged / the loop's even "
+               f"part (B3; the loop's own Δw includes its odd part), at {MARKS_B[-1]} | Δc at {MARKS_B[-1]}: loop (averaged) |",
+               "|---|---|---|---|---|---|"]
         key = lambda r: (r['metric'] != 'paradigm', r['freqs'] is None, r['freqs'] or [0], r['s'])
         for r in sorted(B, key=key):
             cells = '; '.join(', '.join(f"{a:+.2e} ({b:+.2e})" for a, b in zip(r['dw_sim'][j], r['dw_env'][j])) for j in range(len(MARKS_B)))
             ev = evn.get((r['metric'], tuple(r['freqs'] or ()), r['s']))
             L_.append(f"| {r['metric']} | {noise_label(r['freqs'])} | {r['s']:g} | {cells} | "
-                      f"{', '.join(f'{b / a:.3f}' for a, b in zip(r['dw_sim'][-1], r['dw_env'][-1]))} | "
                       + ('—' if ev is None else ', '.join(f'{b / a:.3f}' for a, b in zip(ev, r['dw_env'][-1]))) + ' | '
                       + ', '.join(f"{a:+.2e} ({b:+.2e})" for a, b in zip(r['dc_sim'][-1], r['dc_env'][-1])) + " |")
         L_.append("")
@@ -640,12 +652,12 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
                       f"{', '.join(f'{x:+.3f}' for x in r['odd_c_per'])} |")
         L_.append("")
     if C is not None:
-        Lk = law(12.0)
-        al0, c0, idx = DZ.fitted_state(Lk, EPS, CT.CSTAR, CT.ASTAR)
         xm = np.sin(np.linspace(0, 2 * np.pi, 2001))
         kk = []
-        for m_ in M_C:
-            o = orbit_terms(law(m_), EPS, al0[idx], c0[idx], 'paradigm', xm)
+        for m_ in M_C:                                                 # each law's own fitted state (as `c_job`'s)
+            Lk = law(m_)
+            al0, c0, idx = DZ.fitted_state(Lk, EPS, CT.CSTAR, CT.ASTAR)
+            o = orbit_terms(Lk, EPS, al0[idx], c0[idx], 'paradigm', xm)
             kk.append(f"m = {m_:g}: " + ', '.join(f"{v:.2f}" for v in np.sqrt((o['mu'] * o['ph'] ** 2 + o['v'] * o['w'] * o['d1'] ** 2).max(0))))
         L_ += ["## C. Leaving the features: the error gain, the centres' mobility, the seeds", "",
                f"The paradigm's metric, D‴.49's noise of rms s (16 tones in 10–30 rad/s; the seeds {', '.join(map(str, SEEDS_C))} draw their "
@@ -666,10 +678,15 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
                           + (f"{np.median(per_):.0f} ({len(per_)} leaves)" if per_ else '—') + " |")
         L_.append("")
     if C2 is not None:
+        L12 = law(12.0)
+        al_, c_, ix_ = DZ.fitted_state(L12, EPS, CT.CSTAR, CT.ASTAR)
+        o_ = orbit_terms(L12, EPS, al_[ix_], c_[ix_], 'paradigm', np.sin(np.linspace(0, 2 * np.pi, 2001)))
+        S_ = float((o_['w'] ** 2 * o_['d1'] ** 2).sum(1).max())
         L_ += ["## C2. Controls (k_e and m as stated)", "",
-               f"The same loop and horizon: one tone; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12; the "
-               "Wasserstein–Fisher–Rao metric; tone pairs 18.9/22.5 (the difference 3.6 = 18ω) and 18.9/22.4 (17.5ω) under four seeds' "
-               "phases. Per run the period each kernel left (−1: never) and its largest period-averaged distance from the feature:", "",
+               f"The same loop and horizon: one tone; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12 (the design "
+               f"bound m ≲ ω_lo²/(G max_t Σ_iw_i²(∂_cφ_i)²) = {100.0 / (L12.G * S_):.2f} at ω_lo = 10, the band's lower edge: √K_max at "
+               "ω_lo); the Wasserstein–Fisher–Rao metric; tone pairs 18.9/22.5 (the difference 3.6 = 18ω) and 18.9/22.4 (17.5ω) under four "
+               "seeds' phases. Per run the period each kernel left (−1: never) and its largest period-averaged distance from the feature:", "",
                "| control | m | k_e | noise | s | left at the period | largest distance |", "|---|---|---|---|---|---|---|"]
         for r in C2:
             o = r['opts']

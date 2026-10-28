@@ -320,3 +320,104 @@ def test_the_b3_report_on_synthetic_results():
     assert '1.0100, 1.0000, 1.0000; 1.0100, 1.0000, 1.0000; 1.0100, 1.0000, 1.0000 | 1.050, 1.000, 1.000 |' in md
     assert f"[1.0000, 1.0100] at s = {s:g}" in md and 'paradigm, one tone 21.37: [1.0000, 1.0500]' in md
     assert NR.b3_lines(None) == [] and '## B3' in NR.report(B3=B3)
+
+
+def test_the_envelopes_couple_through_the_mean_error():
+    """Referee round 56: at ē ≠ 0 the envelopes' own terms (μ′φΘw + μ∂_cφΘc)ē and (v′∂_cφΘw + v∂²_cφΘc)ē are the adaptation law
+    linearised at the mean state — central differences of μ(w)φ(x_m; c) and v(w)∂_cφ(x_m; c) along (Θw, Θc) —, the regressor at x_m."""
+    L, al0, c0, idx = _fit()
+    om, e = 15.0, 0.05
+    nz = dict(w=np.array([om]), ph=np.array([0.0]), amp=np.array([0.0]))             # N = 0 and E = 0 below: D = 0
+    rhs, n = NR.envelope_rhs(L, NR.EPS, 'paradigm', nz, CT.KE, CT.CSTAR, CT.ASTAR)
+    rng = np.random.default_rng(11)
+    Z = np.r_[0.0, rng.standard_normal(6)] + 1j * np.r_[0.0, rng.standard_normal(6)]
+    w0, c0_ = CT.ASTAR * 1.02, CT.CSTAR + 0.004
+    t = 2.0
+    out = rhs(t, np.r_[e, w0, c0_, Z.real, Z.imag])
+    dZ = out[7:14] + 1j * out[14:21]
+    xm = np.sin(CT.OM * t)
+
+    def law_terms(w, c):
+        _, mu, v = NR.mobilities(L, NR.EPS, NR.alpha_of(L, NR.EPS, w, np.sign(w) * 3.0), 'paradigm')
+        u = (xm - c) / CT.SIG
+        ph = np.exp(-u ** 2 / 2)
+        return mu * ph, v * ph * u / CT.SIG
+    h = 1e-6
+    for part in (np.real, np.imag):
+        tw, tc = part(Z[1:4]), part(Z[4:7])
+        (gp, kp), (gm, km) = law_terms(w0 + h * tw, c0_ + h * tc), law_terms(w0 - h * tw, c0_ - h * tc)
+        assert np.allclose(part(dZ[1:4] + 1j * om * Z[1:4]), e * (gp - gm) / (2 * h), rtol=1e-6, atol=1e-12)
+        assert np.allclose(part(dZ[4:7] + 1j * om * Z[4:7]), e * (kp - km) / (2 * h), rtol=1e-6, atol=1e-12)
+
+
+def test_the_blur_and_the_correlation_at_a_mean_error():
+    """Referee round 56: at ē ≠ 0 the blur is the direct tone average of −½θ₁ᵀ∇²_θf̂θ₁ at x_m + ē (where the control evaluates f̂) and
+    the regressors' correlation that of ∂_θ(Γg)·θ₁(e₁ + n) with the regressor at x_m."""
+    L, al0, c0, idx = _fit()
+    om, e = 15.0, 0.04
+    nz = dict(w=np.array([om]), ph=np.array([0.3]), amp=np.array([1e-3]))
+    mk = lambda terms: NR.envelope_rhs(L, NR.EPS, 'paradigm', nz, CT.KE, CT.CSTAR, CT.ASTAR, terms=terms)[0]
+    rhs_all, rhs_no_blur, rhs_no_corr = mk(NR.TERMS), mk(('ctl', 'cross', 'corr')), mk(('ctl', 'cross', 'blur'))
+    rng = np.random.default_rng(4)
+    Z = (rng.standard_normal(7) + 1j * rng.standard_normal(7)) * 1e-3
+    w, c = CT.ASTAR * 0.99, CT.CSTAR - 0.002
+    y = np.r_[e, w, c, Z.real, Z.imag]
+    t = 2.0
+    rot = np.exp(1j * np.linspace(0, 2 * np.pi, 4001)[:-1])
+    tw, tc = np.real(Z[1:4, None] * rot[None, :]), np.real(Z[4:7, None] * rot[None, :])
+
+    def kern(x):
+        u = (x - c) / CT.SIG
+        ph = np.exp(-u ** 2 / 2)
+        return ph, ph * u / CT.SIG, ph * (u ** 2 - 1) / CT.SIG ** 2
+    xm = np.sin(CT.OM * t)
+    _, d1s, d2s = kern(xm + e)
+    blur = -0.5 * np.mean((2 * d1s[:, None] * tw * tc + w[:, None] * d2s[:, None] * tc ** 2).sum(0))
+    assert np.isclose(rhs_all(t, y)[0] - rhs_no_blur(t, y)[0], blur, rtol=1e-10, atol=1e-18)
+    phr, d1r, d2r = kern(xm)
+    _, mu, dmu, v, dv = NR.curve(L, NR.EPS, NR.alpha_of(L, NR.EPS, w, np.sign(w) * 3.0), 'paradigm')
+    D = np.real((Z[0] + nz['amp'][0] * np.exp(1j * nz['ph'][0])) * rot)
+    cw = np.mean((dmu[:, None] * phr[:, None] * tw + mu[:, None] * d1r[:, None] * tc) * D[None, :], axis=1)
+    cc = np.mean((dv[:, None] * d1r[:, None] * tw + v[:, None] * d2r[:, None] * tc) * D[None, :], axis=1)
+    assert np.allclose(rhs_all(t, y)[1:7] - rhs_no_corr(t, y)[1:7], np.r_[cw, cc], rtol=1e-10, atol=1e-18)
+    _, d1x, _ = kern(xm + e)                                                            # the regressor point matters here
+    assert np.abs(d1x - d1r).max() > 0.1 * np.abs(d1r).max()
+
+
+def test_b2_drops_each_average_once_and_adds_the_quasi_static_envelopes():
+    jobs = NR.b2_jobs()
+    assert [NR.variant_label(dict(terms=list(j[3]), quasi=j[4])) for j in jobs] == \
+        [f"without {NR.TERM_NAMES[t]}" for t in NR.TERMS] + ['quasi-static envelopes']
+    assert all(j[:3] == NR.B2_CASE for j in jobs) and jobs[-1][3] == NR.TERMS
+
+
+def test_b3_job_on_a_short_horizon(monkeypatch):
+    """Referee round 56: `b3_job`'s bookkeeping on two periods — the half-sum of the loop under ±s·n less the fit over s²⟨w₂⟩ within 1%
+    at s = 0.002, the half-difference near s⟨w₁⟩, the second order's means at the marks."""
+    monkeypatch.setattr(NR, 'NP_B', 2)
+    monkeypatch.setattr(NR, 'MARKS_B', (1, 2))
+    monkeypatch.setattr(NR, 'S_B3', (0.002, 0.004))
+    r = NR.b3_job(('paradigm', (21.37,)))
+    w2, w1 = np.array(r['w2']), np.array(r['w1'])
+    assert w2.shape == (2, 3) and r['status'] == 0 and [q['s'] for q in r['rows']] == [0.002, 0.004]
+    q0 = r['rows'][0]
+    assert np.abs(np.array(q0['even_w']) - 0.002 ** 2 * w2).max() < 0.01 * np.abs(0.002 ** 2 * w2).max()
+    assert np.abs(np.array(q0['odd_w']) - 0.002 * w1).max() < 0.2 * np.abs(0.002 * w1).max()
+    L, al0, c0, idx = _fit()
+    W1, C1, W2, C2, _ = NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', DZ.noise_of(1.0, dict(freqs=(21.37,))), CT.KE, 2)
+    assert np.allclose(w2, W2) and np.allclose(r['c2'], C2)
+
+
+def test_the_c_report_uses_each_laws_own_fitted_state():
+    """Referee round 56: the per-kernel √K in C's caption — each law's own fitted state (√K ∝ m^{1/2} when the centres' term
+    dominates: m = 3 at half m = 12's), the first kernel's equal to the orbit's √K max."""
+    C = [dict(m=m, ke=10.0, s=0.01, left=[-1, -1, -1], sqrtK=0.0) for m in NR.M_C]
+    md = NR.report(C=C)
+    cap = md.split('at its largest: ')[1].split(':\n')[0]
+    vals = {float(p.split(':')[0].split('=')[1]): [float(x) for x in p.split(':')[1].split(',')] for p in cap.split('; ')}
+    assert np.allclose(np.array(vals[3.0]) * 2, vals[12.0], rtol=1e-2)
+    for m in NR.M_C:
+        L = NR.law(m)
+        al0, c0, idx = DZ.fitted_state(L, NR.EPS, CT.CSTAR, CT.ASTAR)
+        o = NR.orbit_terms(L, NR.EPS, al0[idx], c0[idx], 'paradigm', np.sin(np.linspace(0, 2 * np.pi, 2001)))
+        assert abs(vals[m][0] - np.sqrt(o['K'].max())) < 0.02
