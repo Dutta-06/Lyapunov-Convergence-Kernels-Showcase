@@ -1977,3 +1977,56 @@ race whose clock runs ε^{−1/2} faster in τ. A scan along one line of the par
 from such a race; holding x fixed and varying ε can, and an outcome decided near a saddle has to be checked at two tolerances. For the
 second round running, two balanced terms had been expanded under different constraints. The cheapest test was the limit in which the
 leading order must be exact (A′ → 0).
+
+## Round 48 (adversarial review of Proposition D‴.58's first draft, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3au: Proposition D‴.58's first draft and its code and results at 44b8aa3
+(`review/REVIEW_round48_D3au.md`). The referee:
+- checked (i) from scratch in 80–160-digit arithmetic (the nodes by Newton, the rule's error in closed form, the defects from the nodes,
+  every constant of the proof) at τ/σ = ¼ … 3, K ≤ 20;
+- computed the scaled Gauss–Hermite rules' errors in closed form to K = 60 (moment matching, the half-squeeze, the natural Fock and the
+  Mercer-zero scalings, the best variance);
+- continued the frame to σ* < σ;
+- computed P_j(K) exactly for j ≤ 10, K ≤ 40 and extended Part D at t = 0.8 to K = 1280;
+- checked C(c) on ℝ after the continuum optima;
+- read Part B from the raw (gradients and Hessians at the first non-optimal blocks, the objective along the segment to the optimum, LM
+  from the blocks, the fast flow continued with solve_ivp's status) and reran it with the polish step, gtol and the grid's offset changed
+  one at a time;
+- read Part C per draw;
+- ran 42 mutants and a literature search (snippets only).
+
+**Verdicts (D3au).** (i)'s algebra is right to 30–46 digits, and the ₂F₁ conjecture is better supported than the status said. The rest
+fails where it interprets numerics at the edge of double precision:
+- K* and "a non-optimal stationary point beyond K*" are numerical: a floor near e_opt ≈ 10⁻⁷, the polish's acceptance radius, the
+  starting grid and LSODA's silent failures in `relax_chunk` account for every K*;
+- the enter/exit cycles are an exit rule that does not re-relax;
+- (iv)'s oracle reading is contradicted by its own data: the tolerance's bias dominates;
+- (v) is wrong: the frame continues exactly to narrower features, Derevianko–Plonka's class;
+- the novelty paragraph misplaced the closest precedents;
+- 19 of 42 mutants survived, 14 of 17 in the experiment's analysis layer.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3au-1 | major | K* is not a property of the dynamics | (iii), (B), the status: K*'s values and law dropped — the transit forms the optimum wherever double-precision relaxation resolves it; Part B in three variants (base, the polish step 2σ, the grid shifted by 0.05), per block whether the relaxation became stationary, per path the chunks redone, the polish's rejections and the exits: the blocks optimal to K = 4, 5, 7, 9, 12, 12 at τ/σ = ¼ … 2 in every variant but one block (τ/σ = 1, the grid shifted, K = 9, its optimum at 3.0·10⁻⁷); beyond, every block (69 of 69) passes the stationarity test but stays at 1–3·10⁻⁷ above optima below 3·10⁻⁷ (round-48 commit 2fe6a28) |
+| D3au-2 | major | `relax_chunk` ignored solve_ivp's failures | `rich_transit.relax_chunk`: a failed LSODA solve is redone by Radau, then as two half chunks to depth RELAX_SPLITS; the return says how the chunk ran; `sliding_iss` and `sliding_iss_nd` count `solver_redone` and `solver_failed`, a failed chunk ending its relaxation unrelaxed; a test reproduces LSODA's failure at 3·10¹¹ from a relaxed block (1c5a996). B's paths: chunks redone 0–3 times after a stall and 0–7 after a failed solve, none failed |
+| D3au-3 | major | "Beyond K* a non-optimal stationary point; the path wanders through exits and re-entries" | the sentences dropped; the KKT exit rule (`exit_kkt=True`: a kernel leaves only if its correlation stays inward with its own contribution removed) in B and C — 0–2 exits per path, no cycles (1c5a996, 2fe6a28) |
+| D3au-4 | major | (iv)'s oracle reading contradicted; the norm | (iv): the stopped error ≈ (e_K²‖f*‖²_N + 2Ks²/N)^{1/2} ≤ s((1 + δ)² − 1 + 4K/N)^{1/2}, a bias up to the tolerance beside the oracle's variance, the oracle reached only when δ = O(K/N); ‖·‖_N the sample rms; Part C's paths confined to ±2σ of the window, thresholds on max\|y\|, the KKT exit rule: the stops at the predicted 6, 4, 3 in 26 of 30 draws (the others one later), the error 0.92, 0.99, 1.02 times the bias–variance prediction (median), at most 0.87 of the bound, 1.1–2.7 times the oracle |
+| D3au-5 | major | (v) wrong | (v) rewritten: for σ* < σ the nodes are imaginary in conjugate pairs and the K-term sum is a Gaussian of the kernels' width times a cosine sum at Hermite-zero frequencies (Derevianko–Plonka's class), its error the series of (i) at \|t\|; `narrow_rule`, `narrow_error`, Part A4: at σ*/σ = 0.5 and 0.8 the error is the series to 3·10⁻¹⁴ and 1·10⁻¹⁰ (K ≤ 10), its ratio per kernel 2.92 and 8.77 against 3 and 9; a test (532ef9e) |
+| D3au-6 | major | Novelty and literature | the status: Derevianko–Plonka as (v)'s construction, Plonka–Riebe–Cuyt 2026, Kuo–Woźniakowski 2012, Kuo–Sloan–Woźniakowski 2017, Tang 1993, Steinwart–Hush–Scovel, Fasshauer–McCourt, Janszky–Vinogradov 1990, Szabó et al. 1996, Morozov's discrepancy principle for the noise trade-off; (ii) and Part A3 (`scaled_rule`, `scalings`): the natural Fock scaling falls at λ/(2 − λ) and the Mercer-zero scaling at q per kernel, both slower than t (63.50, 17.08, 5.034, 2.021 and 34.02, 9.916, 3.751, 2.021 against the half-squeeze rule's 63.58, 17.49, 5.680, 2.551 at τ/σ = ¼, ½, 1, 2); "stalls beyond K*" dropped (cd1efb7) |
+| D3au-7 | major | The analysis layer untested | tests (36b4cf1): `optimal_fit` at odd K and unsymmetric; `ls_amplitudes` against the Gram solve where a 10⁻³ cut-off changes everything; `gh_defects` at K = 25–40; `sigma_star`, `blocks`, `sample_fit`; the stop's 2K/N; Part D's term count; `lead_coeffs`' degree check on a fake table; the report on synthetic results (A2's coefficients, B's threshold, C's stop at (1 + δ)s, D's Catalan verdict): 15 of the 17 experiment mutants killed (the two survivors in `c_job`, which a unit test does not run) |
+| D3au-8 | minor | δ_t and the nodes misquoted; δ_t treated as constant | (iii), (A): δ_t(K) 0.078% → 0.040%, 0.73% → 0.40%, 3.5% → 2.1% at τ/σ = ½, 1, 2 from K = 1 to 8–10; the optimum's nodes within 0.008% (¼) – 5.2% (2) of the rule's; A3's best single variance (`best_scale`) recovers 96–100% of the gap |
+| D3au-9 | minor | Proof gaps | proof of (i): the termwise integration dominated for small t (E\|He_n(√2Z)\| ≤ Cⁿ(n!)^{1/2}) and extended by analytic continuation; Uspensky's theorem for the product Gauss–Hermite rule; the rate exact as a K-th root (status) |
+| D3au-10 | minor | (ii) unconditional; "2^K" | (ii): the order of the rates proved for λ and λ/(2 − λ), the rates numerical (A3); the gain ≈ 0.6K^{−1/4}(λ/t)^K, a factor up to 2 per kernel |
+| D3au-11 | minor | (iii)'s wording | C ≥ 0 stated after an optimal block; "moving out with K" and "alternating flanks" dropped — the entrants come mostly from the flanks (126 of 128 within the optimal ranges; Beyond the report) |
+| D3au-12 | minor | "Optimal" not certified | "the best local optimum found" ((iii), (B)) |
+| D3au-13 | cosmetic | Wording and numbers | integer-valued polynomials; 10⁻¹⁵ … 3·10⁻⁵; the trapezoid–series difference ~10⁻¹⁷ (10⁻¹³ the cut-off); the status's P_j evidence (j ≤ 10, K ≤ 40, the j-th differences −(2j − 3)!!) and the referee's extension of Part D (K = 640, 1280 at t = 0.8) |
+
+**Beyond the report.** Checking (iii)'s flank rule against the rerun: within the optimal ranges 126 of 128 entrants start beyond the
+block's outermost node; the two others, at τ/σ = 2 with the grid shifted, start between two nodes (wide nodes, a kernel of the grid
+between them first to its wall), and the blocks they join are still optimal. (iii) now says "mostly from the flanks". Part C's stop
+happens at the predicted K in 26 of 30 draws, the others one kernel later.
+
+**Lesson.** A number reported as a property of a dynamics — here the first block the transit misses — has to be invariant under every
+numerical setting before it is interpreted: the precision, the tolerances, the acceptance rules, the solver's success flags and the
+starting grid each moved it. A solver loop that reuses its last state must check the solve's status, or a failure looks like a converged
+chunk. And a novelty paragraph should first try the result's one-line continuation (σ* < σ), which here found the closest precedent.
