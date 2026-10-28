@@ -91,6 +91,7 @@ T3_X = ((1.0, 1.0, 1.0), (2.0, 2.0, 2.0), (1.0, 2.0, 3.0), (0.5, 3.0, 5.0), (3.0
         (5.9, 9.0, 9.0), (5.95, 9.0, 9.0), (6.0, 9.0, 9.0))                # the last three: a corner between x_θ(H/√2) and x_θ(H/2)
 X_C4 = (3.0, 4.9, 7.0, 10.0, 17.3, 24.5)                                 # C4: the near tie's gap held fixed while ε varies (round 49)
 EPS_C4 = (1e-8, 1e-9, 1e-10, 1e-11, 1e-12)
+RTOL_C4B = 1e-13                                                        # C4b: the race again at a tighter tolerance (a saddle's passage)
 N_OUT_C4 = 160                                                           # C4: outputs from feature 0's entry to feature 2's, log-spaced
 D_V3, AP_V3 = (5.0, 6.0, 7.0), (0.35, 0.7, 1.4, 2.8)                     # V3: the fold against A′/A (A = A_B)
 MAX_DOUBLINGS_B4X = 24                                                   # B4x: B4's unsettled problems continued
@@ -767,7 +768,9 @@ def v_job(args):
     """V: the tail's local minimum near its feature — the entrant (w_e, c_e) and the tail's centre free, its coefficient w fixed — for the
     coefficients W_V by continuation (the tail started at the feature), its displacement along e and across it (σ units); where it runs
     off (beyond 2σ) the fold, located by bisection in log w between the last bound and the first unbound coefficient (from the last
-    bound state)."""
+    bound state). If the tail is unbound at the grid's top (V3's large A′), the continuation starts nearer A (12 coefficients from 0.99A
+    down to the grid); `top` the first coefficient, and no rows if the tail is unbound even there (the fold above it). The continuation
+    stops if the entrant leaves its feature (|c_e| > 2σ: off V's branch, for A′ > A the entrant goes to A′)."""
     n, dd = args[:2]
     Ap = args[2] if len(args) > 2 else AP_V
     from scipy.optimize import least_squares
@@ -777,11 +780,18 @@ def v_job(args):
         s_ = least_squares(res, p0, args=(w,), method='lm', xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=20000)
         return s_.x, float(np.linalg.norm(s_.x[1 + n:])) <= 2 * SIG
     ws = W_V if n == 1 else W_V[::4]
+    if not settle(np.r_[A_B - ws[0], np.zeros(n), 1e-3 * SIG * e], ws[0])[1]:
+        ws = np.r_[np.geomspace(0.99 * A_B, ws[0], 13)[:-1], ws]
     p = np.r_[A_B - ws[0], np.zeros(n), 1e-3 * SIG * e]
-    rows, fold, along_fold = [], None, None
+    rows, fold, along_fold, left = [], None, None, False
     for w in ws:
         q, bound = settle(p, w)
+        if np.linalg.norm(q[1:1 + n]) > 2 * SIG:
+            left = True
+            break
         if not bound:
+            if not rows:
+                break
             lo, hi, pl = float(w), float(rows[-1]['w']), p.copy()
             for _ in range(14):
                 m_ = float(np.sqrt(lo * hi))
@@ -796,7 +806,7 @@ def v_job(args):
         ct = q[1 + n:]
         rows.append(dict(w=float(w), we=float(q[0]), along=float(ct @ e) / SIG, across=float(np.linalg.norm(ct - (ct @ e) * e)) / SIG))
         p = q
-    return dict(n=n, d=dd, Ap=Ap, rows=rows, fold=fold, along_fold=along_fold)
+    return dict(n=n, d=dd, Ap=Ap, rows=rows, fold=fold, along_fold=along_fold, top=float(ws[0]), entrant_left=left)
 
 
 def part_V():
@@ -849,8 +859,10 @@ def c4_job(args):
     """C4: C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{1/2}) at the mass ε: the loop (rtol RTOL_C3) with
     N_OUT_C4 outputs log-spaced from feature 0's entry τ_e to feature 2's own entry τ₂ on the path; the runner-up's distance from feature 0
     and its coefficient; its departure (the first output at which it is 2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against τ₂'s, its
-    coefficient there and its largest after the entry; the kernels formed per feature at the end and the outcome (`c3_outcome`)."""
-    x, eps = args
+    coefficient there and its largest after the entry; the kernels formed per feature at the end and the outcome (`c3_outcome`); a third
+    argument sets the tolerance (C4b)."""
+    x, eps = args[:2]
+    rtol = args[2] if len(args) > 2 else RTOL_C3
     t0 = time.time()
     L = law(); K, c0 = full()
     cs, As = targets_C2(x * np.sqrt(eps))['near tie']
@@ -865,7 +877,7 @@ def c4_job(args):
     r0 = int(o[1])
     dense = t_e + (t2 - t_e) * np.geomspace(1e-7, 1.0, N_OUT_C4)
     taus = np.unique(np.r_[np.linspace(0, 1.3 * R['events'][-1][0], 27), dense])
-    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus, rtol=RTOL_C3, atol=1e-14)
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus, rtol=rtol, atol=1e-14)
     dist = np.linalg.norm(C[:, r0, :] - cs[0], axis=1) / SIG
     after = np.flatnonzero(taus > t_e)
     dep = next((int(i) for i in after if dist[i] > 2.0), None)
@@ -877,8 +889,8 @@ def c4_job(args):
              w_max=float(np.abs(W[held, r0]).max()) if held.size else 0.0, d_held=float(dist[held].max()) if held.size else 0.0,
              d2=float(np.linalg.norm(cs[2] - cs[0]) / SIG), A2=float(As[2]), n_fin=bk['n_fin'], captured=bk['captured'],
              rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))), d_end=float(dist[-1]), w_end=float(abs(W[-1][r0])),
-             secs=time.time() - t0)
-    print(f"  C4 x {x} eps {eps:g}: {c3_outcome(r)}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} [{r['secs']:.0f}s]", flush=True)
+             rtol=rtol, secs=time.time() - t0)
+    print(f"  C4 x {x} eps {eps:g} rtol {rtol:g}: {c3_outcome(r)}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} [{r['secs']:.0f}s]", flush=True)
     return r
 
 
@@ -886,6 +898,13 @@ def part_C4():
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
         return pool.map(c4_job, [(x, e) for x in X_C4 for e in EPS_C4], chunksize=1)
+
+
+def part_C4b():
+    """C4b: C4's points at the tolerance RTOL_C4B (an outcome decided near a saddle can depend on the integration's error)."""
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(c4_job, [(x, e, RTOL_C4B) for x in X_C4 for e in EPS_C4], chunksize=1)
 
 
 def b4x_job(x):
@@ -1059,7 +1078,7 @@ def b4u_note(B4, B4u, B4x=None):
 
 
 def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None,
-           C4=None, B4x=None, V3=None, D2=None):
+           C4=None, B4x=None, V3=None, D2=None, C4b=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
@@ -1298,18 +1317,28 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                "−0.55)); 'window edge': feature 0 (0.8) at (0.96, 0) with −0.7 at (−0.4, 0.5) and 0.9 at (−0.3, −0.5). The loop to 1.3 "
                "times the path's last entry; feature 0's entrant and runner-up (the target's correlations at the start) and its nearest "
                "kernel; the runner-up's share in the loop (of the kernels started nearest feature 0) against the edge's 2-kernel inner "
-               "problem p(x; t) at its gap (T), and its coefficient at the first output after the entry against the later features' "
-               "unbinding level max A′(d/σ)e^{−d²/(4σ²)} (A′, d their amplitudes and distances from feature 0); the kernels formed for "
+               "problem p(x; t) at its gap (T), and its coefficient at the first output after the entry against the fold c(d)ℓ(d) of the "
+               "same-sign features after it ((v); V's c(d) at A′/A = 0.875, interpolated in d and held at its last value beyond 7σ — there a "
+               "lower estimate: c(d) grows with d), the largest; the kernels formed for "
                "feature 0 (|w| > 1% of its amplitude; by their final positions) against the rule 1 + [x < x_θ(t)], and the formed kernels "
                "that ended at another feature than the one they started nearest (captured):", "",
                "| target | ε | entrant, runner-up, nearest | margin μ, gap x = μ/ε^{1/2} | runner-up's share: loop, p(x; t) | the runner-up "
-               "after the entry: \\|w\\| (τ), unbinding level | formed for feature 0: loop, rule | captured (kernel: start's feature → "
+               "after the entry: \\|w\\| (τ), the fold (d) | formed for feature 0: loop, rule | captured (kernel: start's feature → "
                "end's) | formed = the path's | max\\|w − w_path\\| | rms residual |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+        cs2 = targets_C2()
+
+        def c2_fold(name):
+            cs_, As_ = cs2[name]
+            lv = [(fold_level(float(np.linalg.norm(cs_[j] - cs_[0]) / SIG), abs(float(As_[j])), V), float(np.linalg.norm(cs_[j] - cs_[0]) / SIG))
+                  for j in range(1, len(cs_)) if As_[j] * As_[0] > 0]
+            lv = [q for q in lv if q[0] is not None]
+            return max(lv) if lv else None
         for r in sorted(C2, key=lambda r: (r['name'], -r['eps'])):
             x = r['mu'] / np.sqrt(r['eps'])
             pr = f"{float(p_edge(T, x, r['t_off'])):.4g}" if T is not None and x <= T['x'][-1] else '—'
             rule = str(1 + int(x < xth(r['t_off']))) if xth is not None else '—'
-            tail = (f"{r['w_tail']:.3g} ({r['tau_tail']:.1f}), {r['w_unbind']:.2g}" if 'w_tail' in r else '—')
+            fo = c2_fold(r['name'])
+            tail = (f"{r['w_tail']:.3g} ({r['tau_tail']:.1f}), " + (f"{fo[0]:.2g} ({fo[1]:.2f}σ)" if fo else '—') if 'w_tail' in r else '—')
             cap = (', '.join(f"{pt(j)}: {a} → {b}" for j, a, b in r['captured']) or 'none') if 'captured' in r else '—'
             gone = 'captured' in r and any(j == r['r0'] for j, a, b in r['captured'])
             L_.append(f"| {r['name']} | {r['eps']:g} | {pt(r['e0'])}, {pt(r['r0'])}, {pt(r['nearest0'])} | {r['mu']:.3e}, {x:.3g} | "
@@ -1343,17 +1372,23 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             L_.append(f"| {r['d']:g} | {', '.join(cells)} | {fold} |")
         if V3 is not None:
             L_ += ["", "V3. The fold's constant against the unfitted feature's amplitude: c = w_f/ℓ(d) (one dimension, A = "
-                   f"{A_B:g}) at A′/A = " + ', '.join(f"{a / A_B:.3g}" for a in AP_V3) + ":", "",
+                   f"{A_B:g}) at A′/A = " + ', '.join(f"{a / A_B:.3g}" for a in AP_V3) + " (where the tail is unbound at w = "
+                   f"{W_V[0]:g} the continuation starts at 0.99A; '>' the tail unbound from there on, the fold above it; '<' bound down to "
+                   f"w = {W_V[-1]:g}; 'entrant to A′' where the entrant leaves its feature for A′ — off the branch):", "",
                    "| d/σ | " + ' | '.join(f"A′/A = {a / A_B:.3g}" for a in AP_V3) + " |", "|---|" + "---|" * len(AP_V3)]
             for d_ in D_V3:
                 cells = []
                 for a in AP_V3:
                     r3 = next((q for q in V3 if q['d'] == d_ and q['Ap'] == a), None)
-                    if r3 is None or r3['fold'] is None:
-                        cells.append('—')
-                        continue
                     lev = a * d_ ** 2 * np.exp(-d_ ** 2 / 4)
-                    cells.append(f"{np.sqrt(r3['fold'][0] * r3['fold'][1]) / lev:.3f}")
+                    if r3 is None:
+                        cells.append('—')
+                    elif r3.get('entrant_left') and r3['fold'] is None:
+                        cells.append('entrant to A′')
+                    elif r3['fold'] is None:
+                        cells.append(f"> {r3.get('top', W_V[0]) / lev:.3f}" if not r3['rows'] else f"< {W_V[-1] / lev:.3g}")
+                    else:
+                        cells.append(f"{np.sqrt(r3['fold'][0] * r3['fold'][1]) / lev:.3f}")
                 L_.append(f"| {d_:g} | " + ' | '.join(cells) + " |")
         for r in [r for r in V if r['n'] == 2]:
             L_ += ["", f"The plane, d = {r['d']:g}σ along the diagonal: " + '; '.join(
@@ -1399,15 +1434,31 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                f"C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{{1/2}}) at the masses {', '.join(f'{e:g}' for e in EPS_C4)} "
                f"(rtol {RTOL_C3:g}): the runner-up's largest coefficient while within 2σ of feature 0 (after its entry) against the fold "
                "c(d)ℓ(d) at feature 2's distance; its departure (2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against feature 2's own entry "
-               "s₂ = (τ₂ − τ_e)/ε^{1/2}, its coefficient at the departure; the final kernels per feature and the outcome:", "",
-               "| x | ε | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per feature (final) | outcome |",
-               "|---|---|---|---|---|---|---|---|"]
+               "s₂ = (τ₂ − τ_e)/ε^{1/2}, its coefficient at the departure; the final kernels per feature and the outcome; at the tolerance "
+               f"{RTOL_C4B:g} (C4b) the outcome, the largest coefficient held and the departure:", "",
+               "| x | ε | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per feature (final) | outcome | "
+               f"rtol {RTOL_C4B:g}: outcome, max w held, departure s |",
+               "|---|---|---|---|---|---|---|---|---|"]
+        b_ = {(r['x'], r['eps']): r for r in (C4b or [])}
+        agree, differ = 0, []
         for r in sorted(C4, key=lambda r: (r['x'], -r['eps'])):
             fl = fold_level(r['d2'], r['A2'], V)
             rel = lambda w: f"{w:.3g}" + (f" ({w / fl:.2f})" if fl else '')
+            rb = b_.get((r['x'], r['eps']))
+            if rb is not None:
+                same = c3_outcome(rb) == c3_outcome(r)
+                agree += same
+                if not same:
+                    differ.append(f"x = {r['x']:g}, ε = {r['eps']:g}: {c3_outcome(r)} at {RTOL_C3:g} (max w held {r['w_max']:.4g}, the runner-up "
+                                  f"{r['d_end']:.2g}σ from feature 0 at the end), {c3_outcome(rb)} at {RTOL_C4B:g} ({rb['w_max']:.4g})")
+            tb = ('—' if rb is None else f"{c3_outcome(rb)}, {rb['w_max']:.3g}, "
+                  + (f"{rb['s_dep']:.3g}" if rb['s_dep'] is not None else 'none'))
             L_.append(f"| {r['x']:g} | {r['eps']:g} | {rel(r['w_max'])} | " + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none')
                       + f" | {r['s2']:.3g} | " + (rel(r['w_dep']) if r['w_dep'] is not None else '—') + f" | "
-                      f"{', '.join(map(str, r['n_fin']))} | {c3_outcome(r)} |")
+                      f"{', '.join(map(str, r['n_fin']))} | {c3_outcome(r)} | {tb} |")
+        if b_:
+            L_ += ["", f"The two tolerances give the same outcome at {agree} of {len(C4)} points" + ("; they differ at " + '; '.join(differ)
+                   if differ else '') + "."]
         L_.append("")
     if T3 is not None:
         L_ += ["## T3. The product rule at a vertex of hℤ³", "",
@@ -1504,7 +1555,7 @@ def main():
     raw = os.path.join(OUT, 'transit_nd_raw.npz')
     md = os.path.join(OUT, 'transit_nd.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2')
+    keys = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2', 'C4b')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
@@ -1514,7 +1565,7 @@ def main():
     for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('T', part_T), ('D', part_D), ('B4', part_B4), ('H', part_H),
                   ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2), ('V', part_V), ('C3', part_C3),
                   ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4'])), ('C4', part_C4), ('B4x', lambda: part_B4x(res['B4'])),
-                  ('V3', part_V3), ('D2', part_D2)):
+                  ('V3', part_V3), ('D2', part_D2), ('C4b', part_C4b)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
