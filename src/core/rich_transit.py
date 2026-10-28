@@ -215,8 +215,30 @@ def polish_block(K, fstar, w, c, s):
     return sol.x[:n], sol.x[n:]
 
 
+def ascent_target(K, r, c, s, step=None, max_steps=4000):
+    """Where a kernel with a near-zero coefficient of sign s at c is carried in the residual r: while its coefficient is small r barely
+    changes and its centre climbs s⟨rφ(c)⟩ (ċ ∝ w⟨r∂_cφ⟩, w of sign s), so the end of that ascent — the local maximum of s⟨rφ(c)⟩ it
+    reaches. Plain gradient ascent with steps of σ/40 in the gradient's direction, stopped where the gradient changes direction."""
+    c = np.array(c, float).reshape(-1)
+    step = K.sig / 40 if step is None else step
+    nd = c.size > 1 or np.ndim(K.xs) != 1
+    nx = K.N if hasattr(K, 'N') else K.xs.size
+    grad = lambda cc: s * (K.dphi(cc[None, :] if nd else cc).reshape(nx, -1).T @ r) / nx
+    g = grad(c)
+    for _ in range(max_steps):
+        gn = float(np.linalg.norm(g))
+        if gn == 0:
+            break
+        c_new = c + step * g / gn
+        g2 = grad(c_new)
+        if float(np.dot(g, g2)) <= 0:
+            break
+        c, g = c_new, g2
+    return c
+
+
 def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
-                max_doublings=14, polish=False, max_entries=None):
+                max_doublings=14, polish=False, max_entries=None, polish_step=1.0, polish_wfrac=1e-2):
     """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
     left the block), their u_j growing at ⟨rφ(c_j)⟩ (r the active block's residual); the entrants — every kernel whose |u_j| reaches ρ_j
     within the relative tie_tol of the first, so that exact ties enter together — join the active block with the coefficient `seed` (the
@@ -228,12 +250,17 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     dict(events = [(τ, j, 'enter'/'exit', c_j)], hist = [(τ, c, w, rms)], c, w, act, relaxed = [whether each relaxation became
     stationary]). polish=True (a dictionary only): after the first t_fast the block is moved to its fit's stationary point by
     `polish_block` — the flow's end when no other stationary point lies on its way — and checked there, the flow resuming if needed.
+    The polish is accepted only if every kernel whose coefficient is still below polish_wfrac·max|w| (near its seed) lands within
+    polish_step kernel widths of where the flow would carry it — its start, or the end of its correlation's ascent (`ascent_target`):
+    such a kernel's centre is undetermined by the fit, and the solve can carry it into another feature's basin (referee round 43); a kernel
+    with a coefficient moves where the fit takes it. Otherwise the flow goes on and the polish is tried again after each doubling. The
+    count of rejected polishes is returned as 'polish_rejected'.
     max_entries: stop as soon as that many kernels have entered, before the block relaxes (the path's events up to that entry)."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
     act = np.zeros(d, bool)
-    tau, ev, hist, relaxed = 0.0, [], [], []
+    tau, ev, hist, relaxed, n_rej = 0.0, [], [], [], 0
     nx = K.xs.size
     scale = float(np.abs(K.phi(c).T @ K.filt(fstar)).max()) / nx
     rhs = critical_rhs(L, K, fstar)
@@ -266,14 +293,23 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         idx = np.flatnonzero(act)
         n = idx.size
         z = np.r_[al[idx], c[idx]]
-        elapsed, chunk, ok = 0.0, float(t_fast), False
+        elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
         for _k in range(max_doublings + 1):
             sol = solve_ivp(rhs, (0, chunk), z, method='LSODA', rtol=1e-10, atol=1e-13)
             z = sol.y[:, -1]
             elapsed += chunk
-            if polish and _k == 0:
-                wp, cp = polish_block(K, fstar, critical_w(L, z[:n]), z[n:], np.sign(u[idx]))
-                z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp]
+            if not polished:
+                w0 = critical_w(L, z[:n])
+                wp, cp = polish_block(K, fstar, w0, z[n:], np.sign(u[idx]))
+                seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * np.abs(w0).max())
+                r0 = K.filt(fstar - K.phi(z[n:]) @ w0)
+                good = all(abs(cp[i] - z[n + i]) <= polish_step * K.sig or
+                           abs(cp[i] - ascent_target(K, r0, z[n + i], np.sign(u[idx[i]]))[0]) <= polish_step * K.sig for i in seedy)
+                if good:
+                    z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp]
+                    polished = True
+                else:
+                    n_rej += 1
             wi = critical_w(L, z[:n])
             ri = K.filt(fstar - K.phi(z[n:]) @ wi)
             g = K.phi(z[n:]).T @ ri / nx
@@ -291,7 +327,7 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
             if not big[k] and si[k] * g[k] < 0:
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', float(c[i])))
-    return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed)
+    return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej)
 
 
 def wfr_inactive_rhs(L, K, fstar, rho):

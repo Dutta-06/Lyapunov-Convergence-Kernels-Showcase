@@ -217,3 +217,14 @@ def test_polish_reproduces_the_sliding_path_and_resolves_close_bumps():
     a = np.flatnonzero(R['act'])
     assert a.size == 2 and all(R['relaxed']) and R['hist'][-1][3] < 1e-12
     assert np.abs(np.sort(R['c'][a]) - np.array(cs)).max() < 1e-9 and np.abs(R['w'][a] - np.array([0.8, 0.6])).max() < 1e-9
+
+
+def test_ascent_target_climbs_to_the_residuals_nearest_peak():
+    """`ascent_target`: a near-seed kernel's centre climbs s⟨rφ(c)⟩ — from 0.3 in the residual φ(·; 0) to 0 (within the step), and for the
+    sign −1 away from it; with two bumps of r it stops at the nearer peak's basin."""
+    K = RT.Bumps(np.linspace(-1, 1, 61), 0.12)
+    r = K.phi(np.array([0.0]))[:, 0]
+    assert abs(RT.ascent_target(K, r, 0.3, 1.0)[0]) <= 0.12 / 40 + 1e-12
+    assert RT.ascent_target(K, r, 0.3, -1.0)[0] > 0.3
+    r2 = K.phi(np.array([-0.4]))[:, 0] + K.phi(np.array([0.5]))[:, 0]
+    assert abs(RT.ascent_target(K, r2, 0.3, 1.0)[0] - 0.5) < 0.02 and abs(RT.ascent_target(K, r2, -0.2, 1.0)[0] + 0.4) < 0.02
