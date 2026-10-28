@@ -108,7 +108,17 @@ def test_the_report_on_synthetic_results():
     B = [dict(r=0.25, var='base', blocks=[blk(1, 1e-2 * (1 + 5e-4), 1e-2, True), blk(2, 1e-3 * (1 + 2e-3), 1e-3, False)],
               events=[(1.0, 10, 'enter', 0.0), (2.0, 11, 'enter', 0.0)], relaxed=[True, False], stiff=0, redone=0, failed=0, rejected=0)]
     md = WM.report(B=B)
-    assert '| 0.25 | base | 1 | 2, 1.00e-03, False | 1/2 | 0, 0, 0 | 0 | 0 |' in md
+    assert '| 0.25 | base | 1 | 2, 1.00e-03, False | — | 1/2 | 0, 0, 0 | 0 | 0 |' in md
+    B[0]['blocks'][1]['polish'] = [dict(status=0, nfev=5000, accepted=True), dict(status=1, nfev=12, accepted=False, e0=1.0, e1=1.0)]
+    B[0]['entries'] = [dict(it=0, j=10, u0=0.0, rate=0.5, rate_max=0.5, t_wall=2.0, t_min=2.0),
+                       dict(it=1, j=11, u0=0.9, rate=0.1, rate_max=0.4, t_wall=1.0, t_min=1.0)]
+    md = WM.report(B=B)
+    assert '| 2, 1.00e-03, False | 0/5000/a 1/12/r | 1/2 |' in md                 # the first non-optimal block's polishes (round 54)
+    assert ('the entrant had the largest current rate |⟨rφ_j⟩| in 1; its rate over the largest a median 0.62 (range 0.250–1.00), its '
+            'dual |u_j| at the block\'s start a median 0.450 (least 0.000)') in md
+    x = dict(e_hs=1.0, e_best=0.5, e_opt=0.4)
+    assert WM.gap_share(x) == '83.3%' and WM.gap_share(dict(x, e_opt=0.6)) == '100.0%, optimum unconverged'
+    assert WM.gap_share(dict(x, e_opt=0.5 * (1 + 1e-12))) == '100.0%'                 # within UNCONV: not flagged
     C = [dict(s=1e-3, q=0, k=[1, 2, 3], rms=[5e-3, 1.05e-3, 0.9e-3], err=[0.02, 0.005, 0.004], at=[1, 2, 3], gaps=[0.5, 0.2], exits=0,
               stiff=0, runaway=False, relaxed=[True] * 3, rf=0.25)]
     md = WM.report(C=C)

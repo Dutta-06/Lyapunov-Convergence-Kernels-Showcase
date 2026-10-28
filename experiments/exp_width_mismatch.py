@@ -54,8 +54,12 @@ LEVELS_C, N_DRAW_C, TAU_C, K_C, DELTA = (1e-4, 1e-3, 1e-2), 10, 1.0, 10, 0.1
 KS_D, J_MAX_D = (10, 20, 40, 80, 160, 320), 7                        # D: the tail ratio's K and the ratios' degree checked
 MAX_DOUBLINGS = 24                                                    # chunks to 10⁵·2²⁴ ≈ 1.7·10¹² (beyond ~10¹¹ LSODA fails from relaxed
                                                                       # states and `relax_chunk` redoes the chunk by Radau: round 48)
-VARIANTS_B = (('base', 1.0, 0.0), ('polish 2σ', 2.0, 0.0), ('grid +0.05', 1.0, 0.05))   # B: (name, polish_step, the starting grid's shift)
+VARIANTS_B = (('base', 1.0, 0.0, 5000, 0), ('polish 2σ', 2.0, 0.0, 5000, 0), ('grid +0.05', 1.0, 0.05, 5000, 0),
+              ('polish 2σ, 5·10⁴ evaluations', 2.0, 0.0, 50_000, 0), ('polish 2σ, 5·10⁴, repeated', 2.0, 0.0, 50_000, 3))
+# B: (name, the polish step, the starting grid's shift, the polish's budget of evaluations, its repetitions after the stationarity test —
+# the last two variants: referee round 54)
 OPT_TOL = 1e-3                                                        # B: a block is the optimal fit if its error is within 0.1% of it
+UNCONV = 1e-9                                                         # A3: an optimum the one-parameter rule beats by more is unconverged
 BOX_C = 2.0                                                           # C: the noisy path's centres in the samples' window ± BOX_C·σ
 
 
@@ -132,7 +136,7 @@ def sample_fit(Phi_of, f, y0):
 
 def b_job(args):
     r_, var = args
-    name, step, shift = next(v for v in VARIANTS_B if v[0] == var)
+    name, step, shift, nfev, rep_ = next(v for v in VARIANTS_B if v[0] == var)
     warnings.filterwarnings('ignore')
     t0 = time.time()
     L, _, c0 = TM.setup()
@@ -141,10 +145,10 @@ def b_job(args):
     ss = sigma_star(r_)
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
     R = RT.sliding_iss(L, K, f, c0, np.ones(c0.size), polish=True, max_events=3 * K_B, tol=0.0, max_entries=K_B + 1,
-                       max_doublings=MAX_DOUBLINGS, polish_step=step, exit_kkt=True)
+                       max_doublings=MAX_DOUBLINGS, polish_step=step, exit_kkt=True, polish_nfev=nfev, repolish=rep_)
     rf = float(np.sqrt(np.mean(f ** 2)))
     out = []
-    for b in blocks(R):
+    for i, b in enumerate(blocks(R)):
         if b['k'] == 0:
             continue
         yh, _ = W.half_squeeze(b['k'], SIG, ss)
@@ -153,18 +157,56 @@ def b_job(args):
         out.append(dict(k=b['k'], tau=b['tau'], c=b['c'], w=b['w'], e=b['rms'] / rf, e_opt=rms_o / rf, c_opt=c_o, relaxed=b['relaxed'],
                         dc=float(np.abs(b['c'] - c_o).max()) if c_o.size == b['c'].size else np.nan,
                         dc_hs=float(np.abs(b['c'] - (C_B + np.sort(yh))).max()),
-                        e_hs=W.l2_error(*W.half_squeeze(b['k'], SIG, ss), SIG, ss)))
+                        e_hs=W.l2_error(*W.half_squeeze(b['k'], SIG, ss), SIG, ss),
+                        polish=R['polish_log'][i] if i < len(R['polish_log']) else []))
     print(f"  B tau/sigma {r_} ({var}): {len(out)} blocks, errors " + ', '.join(f"{o['e']:.2e}" for o in out) +
           f" [{time.time() - t0:.0f}s]", flush=True)
     return dict(r=r_, var=var, blocks=out, events=[(float(e[0]), int(e[1]), e[2], float(e[3])) for e in R['events']],
                 relaxed=R['relaxed'], stiff=R['stiff_redone'], redone=R['solver_redone'], failed=R['solver_failed'],
-                rejected=R['polish_rejected'], secs=time.time() - t0)
+                rejected=R['polish_rejected'], entries=R['entry_info'], secs=time.time() - t0)
 
 
 def part_B():
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
         return pool.map(b_job, [(r_, v[0]) for v in VARIANTS_B for r_ in TAUS_B], chunksize=1)
+
+
+def gap_share(x):
+    """A3: the share of the half-squeeze rule's gap to the optimal fit that the best one-parameter variance recovers; an optimum the
+    one-parameter rule beats is unconverged (referee round 54)."""
+    ref = min(x['e_opt'], x['e_best'])
+    sh = (x['e_hs'] - x['e_best']) / (x['e_hs'] - ref) if x['e_hs'] > ref else np.nan
+    return f"{sh:.1%}" + (', optimum unconverged' if x['e_best'] < x['e_opt'] * (1 - UNCONV) else '')
+
+
+def gap_range(A):
+    """The range of `gap_share` over A's rows with an optimum, and how many optima the variance beats."""
+    xs = [x for x in A['rows'] if 'e_opt' in x and x['e_hs'] > min(x['e_opt'], x['e_best'])]
+    if not xs:
+        return '—'
+    sh = [(x['e_hs'] - x['e_best']) / (x['e_hs'] - min(x['e_opt'], x['e_best'])) for x in xs]
+    return f"{min(sh):.1%}–{max(sh):.1%} ({sum(x['e_best'] < x['e_opt'] * (1 - UNCONV) for x in xs)} optima unconverged)"
+
+
+def polish_cell(o):
+    """A block's polishes: status/evaluations/accepted (status 0: the budget spent first; referee round 54)."""
+    return ' '.join(f"{p['status']}/{p['nfev']}/{'a' if p['accepted'] else 'r'}" for p in o.get('polish', [])) or '—'
+
+
+def entry_lines(B):
+    """B's entries (`sliding_iss`'s entry_info): the entrant's rate against the largest inactive rate, its dual before the entry, and
+    whether the entrant had the largest rate — it is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (referee round 54)."""
+    es = [e for b in B for e in (b.get('entries') if b.get('entries') is not None else [])]
+    if not es:
+        return []
+    rel = np.array([abs(e['rate']) / e['rate_max'] for e in es])
+    u0 = np.array([abs(e['u0']) for e in es])
+    top = int(sum(abs(abs(e['rate']) - e['rate_max']) <= 1e-12 * e['rate_max'] for e in es))
+    return ['', f"The entries ({len(es)} over the variants that record them): the entrant had the largest current rate |⟨rφ_j⟩| in "
+                f"{top}; its rate over the largest a median {np.median(rel):.2f} (range {rel.min():.3f}–{rel.max():.2f}), its dual |u_j| at the "
+                f"block's start a median {np.median(u0):.3f} (least {u0.min():.3f}): the entrant is the kernel of the least time to the wall, "
+                "(1 − |u_j|)/|⟨rφ_j⟩|, its dual charged during the earlier blocks.", '']
 
 
 def c_job(args):
@@ -261,7 +303,8 @@ def report(A=None, B=None, C=None, D=None):
                "Relative L² errors: the half-squeeze rule (nodes τ(σ/σ*)^{1/2}z_k, amplitudes A(σ*/σ)^{1/2}w_k exp(y_k²/(2σ(σ + σ*)))) by "
                "the trapezoid rule and by the Mehler series (their relative difference), the series' first term's share of the squared "
                "error; moment matching (nodes τz_k, amplitudes A(σ*/σ)w_k); the half-squeeze nodes with least-squares amplitudes; the "
-               f"optimal K-kernel fit (variable projection; not computed below {E_FLOOR:g}, the double-precision floor). Rows stop "
+               f"optimal K-kernel fit (variable projection; not computed below {E_FLOOR:g}, where its solve stops short of the optimum — A3 marks "
+               "the optimum unconverged where the one-parameter rule beats it). Rows stop "
                f"where the series falls below {G_FLOOR:g} (the trapezoid rule's floor). Ratios per kernel e_{{K−1}}/e_K; the optimum's "
                "nodes over the half-squeeze nodes (range over the nodes).", '']
         for r_ in TAUS_A:
@@ -298,7 +341,10 @@ def report(A=None, B=None, C=None, D=None):
                    "The Gauss–Hermite rule of N(0, v) for the reweighted mixing law (`scaled_rule`) at the half-squeeze variance v_hs = τ²σ/σ*, "
                    "the natural Fock scaling v_hs/cosh r and the Mercer-zero scaling τ²(1 + 2τ²/σ²)^{−1/2}: their ratios per kernel at the last "
                    "K against 1/t, (2 − λ)/λ = (1 − t + t²)/t and 1/q, q = (β² − 1)/(β² + 1), β² = (1 + 2τ²/σ²)^{1/2}; the variance of least "
-                   "error (`best_scale`): v/v_hs, its error and the optimal fit's over the rule's, at K = 1 and at the last K with an optimum:", '',
+                   "error (`best_scale`): v/v_hs, its error and the optimal fit's over the rule's, at K = 1 and at the last K with an optimum "
+                   "(in brackets the share of the gap to the optimum that the variance recovers, (e_hs − e_best)/(e_hs − min(e_opt, e_best)); "
+                   f"'optimum unconverged' where e_best < e_opt by more than a relative {UNCONV:g}); over all K with an optimum the shares "
+                   + gap_range(A) + ":", '',
                    '| τ/σ | half-squeeze (1/t) | Fock ((2 − λ)/λ) | Mercer-zero (1/q) | K = 1: v/v_hs, e_best/e_hs, e_opt/e_hs | the last K: K, '
                    'v/v_hs, e_best/e_hs, e_opt/e_hs |', '|---|---|---|---|---|---|']
             for r_ in TAUS_A:
@@ -308,7 +354,8 @@ def report(A=None, B=None, C=None, D=None):
                 q = (b2 - 1) / (b2 + 1)
                 a, b = rows[-2], rows[-1]
                 opt = [x for x in rows if 'e_opt' in x]
-                cell = lambda x: f"{x['v_best']:.5f}, {x['e_best'] / x['e_hs']:.5f}, " + (f"{x['e_opt'] / x['e_hs']:.5f}" if 'e_opt' in x else '—')
+                cell = lambda x: (f"{x['v_best']:.5f}, {x['e_best'] / x['e_hs']:.5f}, " + (f"{x['e_opt'] / x['e_hs']:.5f}" if 'e_opt' in x else '—')
+                                  + (f" ({gap_share(x)})" if 'e_opt' in x else ''))
                 L_.append(f"| {r_:g} | {a['e_hs'] / b['e_hs']:.3f} ({1 / t:.3f}) | {a['e_fock'] / b['e_fock']:.3f} ({(2 - lam) / lam:.3f}) | "
                           f"{a['e_mercer'] / b['e_mercer']:.3f} ({1 / q:.3f}) | {cell(rows[0])} | "
                           + (f"{opt[-1]['K']}, {cell(opt[-1])}" if opt else '—') + ' |')
@@ -336,10 +383,13 @@ def report(A=None, B=None, C=None, D=None):
                "−1, −0.9, …, 1, to " + f"{K_B + 1} entries, the fast flow's chunks up to 10⁵·2^{MAX_DOUBLINGS}: after each entry the relaxed "
                "block's relative rms error against the optimal fit with as many kernels on the same samples (the better of variable "
                f"projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within "
-               f"{OPT_TOL:g}. Three numerical variants: " + ', '.join(f"{n} (polish step {st:g}σ, grid shifted by {sh:g})"
-                                                                   for n, st, sh in VARIANTS_B) + '.', '',
-               '| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum\'s error, relaxed | relaxed blocks | '
-               'chunks redone (stall, failure), failed | polish rejected | exits |', '|---|---|---|---|---|---|---|---|']
+               f"{OPT_TOL:g}. The numerical variants: " + ', '.join(f"{n} (polish step {st:g}σ, grid shifted by {sh:g}, the polish's budget "
+                                                                     f"{nf:g} evaluations" + (f", repeated up to {rp} times" if rp else '')
+                                                                     + ')' for n, st, sh, nf, rp in VARIANTS_B)
+               + ". 'Relaxed': the block passed the stationarity test. The first non-optimal block's polishes as status/evaluations/accepted "
+               "(status 0: the budget was spent first).", '',
+               '| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum\'s error, relaxed | its polishes | '
+               'relaxed blocks | chunks redone (stall, failure), failed | polish rejected | exits |', '|---|---|---|---|---|---|---|---|---|']
         for r_ in TAUS_B:
             for v in VARIANTS_B:
                 b = next((x for x in B if x['r'] == r_ and x['var'] == v[0]), None)
@@ -349,13 +399,17 @@ def report(A=None, B=None, C=None, D=None):
                 bad = next((o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL), None)
                 L_.append(f"| {r_:g} | {v[0]} | {', '.join(map(str, opt)) or '—'} | "
                           + (f"{bad['k']}, {bad['e_opt']:.2e}, {bad['relaxed']}" if bad else 'none') + f" | "
+                          + (polish_cell(bad) if bad else '—') + f" | "
                           f"{sum(o['relaxed'] for o in b['blocks'])}/{len(b['blocks'])} | {b['stiff']}, {b['redone']}, {b['failed']} | "
                           f"{b['rejected']} | {sum(e[2] == 'exit' for e in b['events'])} |")
         ok = [o['e_opt'] for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL]
         no = [o for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL]
         L_ += ['', f"Over every width and variant: the optimal blocks' optimum errors down to {min(ok):.2e}; the non-optimal blocks' "
-               + (f"from {max(o['e_opt'] for o in no):.2e} down ({sum(not o['relaxed'] for o in no)} of {len(no)} unrelaxed); "
-                  f"non-optimal blocks with an optimum above 10⁻⁷: {sum(o['e_opt'] > 1e-7 for o in no)}." if no else "none."), '']
+               + (f"from {max(o['e_opt'] for o in no):.2e} down ({sum(not o['relaxed'] for o in no)} of {len(no)} failed the stationarity "
+                  "test); "
+                  f"non-optimal blocks with an optimum above 10⁻⁷: {sum(o['e_opt'] > 1e-7 for o in no)}; the non-optimal blocks' errors "
+                  f"{min(o['e'] for o in no):.2e} … {max(o['e'] for o in no):.2e}." if no else "none."), '']
+        L_ += entry_lines(B)
         for b in [x for x in B if x['var'] == VARIANTS_B[0][0]]:
             L_ += [f"### τ/σ = {b['r']:g}, {b['var']} (events: " + ', '.join(f"{j}{'+' if k == 'enter' else '−'}" for t_, j, k, c in b['events'])
                    + ")", '',
@@ -374,7 +428,7 @@ def report(A=None, B=None, C=None, D=None):
     if C is not None:
         N = X_B.size
         L_ += ['## C. Under noise', '',
-               f"τ/σ = {TAU_C:g}, {N_DRAW_C} draws per level, the path to {K_C} entries: the discrepancy rule's stop (kernels), its "
+               f"τ/σ = {TAU_C:g}, {N_DRAW_C} draws per level, the path to {K_C + 1} entries: the discrepancy rule's stop (kernels), its "
                "prediction from (i) and the predicted error there, the stopped fit's relative error (median [range]), the kernels within "
                "4σ* of the feature at the stop, the largest relative gap's kernel count.", '',
                '| s | stop: kernels (median [range]) | predicted | error at the stop: median [range] | predicted | kernels at the feature '
