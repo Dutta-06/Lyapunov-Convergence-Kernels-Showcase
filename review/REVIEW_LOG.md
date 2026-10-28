@@ -2625,3 +2625,46 @@ a threshold on a null triple, "lands" a threshold on a distance still falling as
 coefficients displace. Measured instead — the centre of mass and net coefficient against the feature, a lower tolerance, a longer
 horizon, a scan of the separation —, the loop's dipole turned out to follow the block's own runaway law in the loop's time, which
 predicts the landed coefficient's ε^{−1/6}.
+
+## Round 63 (adversarial review of Proposition D‴.60 as revised after round 56, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bj: Proposition D‴.60 as revised after round 56, with its code and results at
+ada0e1c (`review/REVIEW_round63_D3bj.md`). The referee:
+- regenerated the md byte for byte and reran B4 and C/C2 cells bit-identically;
+- re-derived (i) and the proof of (ii), computed the linearised loop's monodromy (the Floquet multipliers) and checked the second
+  order's first order against B4's odd part;
+- ran the loop to 1200 periods at 21.4 and with the 16 tones, at further tones, and the averaged loop at 13.05 and 13.15 beside 13.1;
+- ran 149 ejection controls (round 56's ejecting pair, C2's pairs under four seeds, single tones, integer-multiple tones, WFR to
+  s = 0.32, eight more seeds, m between 3.5 and 5.5) and decomposed the band control into roll-off and resonance;
+- ran 51 single-point mutants and searched the literature.
+
+**Verdicts (D3bj).** The first order, the oscillator law and the exact second order hold. But (ii)'s "bounded unless commensurate, where
+secular" was false — the linearised loop is exponentially stable (multipliers 0.99400, 0.99245, 0.99237: every coherent sum saturates
+with the slow modes' τ) —, the averaging failure at 13.1 is its commensurate 2ω part (13.05 and 13.15 cross the same resonance and
+average well), the 16 tones' saturation was a 300-period snapshot, and "single tones and tone pairs do not eject" fails: round 56's
+pair still ejects. The resonance attribution was not isolated (most of the band effect is roll-off) and the bound on m is no
+threshold. Minors: sources and "New"; single-seed controls; "after hundreds of periods" and "first passage"; the WFR margin; the 0.3
+cut counting slow excursions; B3's asymptotics; 21 behaviour-changing mutants surviving; the peaks below √K_i; two wordings.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bj-1 | major | Single tones and pairs do eject; "multi-tone" unsupported | (iii): single tones drift but never jump (the largest distance ≤ 0.363 at s = 0.08), pairs and bands jump — a pair one ω_ref apart from s = 0.04, D‴.49's own pair with its draw's phases at s = 0.02; C2: single tones at 10, 13.1, 15, 15.7, 16, 21.3 and pairs 17.5, 17.75, 18ω_ref and one ω_ref apart under four seeds, and D‴.49's own pair, at s = 0.02–0.08; jumps (beyond 0.6) reported apart from leaves |
+| D3bj-2 | major | "Bounded unless commensurate, where secular" false | (ii) and the proof: the period means as Floquet sums, \|m_j\| = \|δ\|\|ρ^j − e^{iΩjT}\|/\|ρ − e^{iΩT}\|, at commensurability an offset \|δ\|/(1 − ρ) reached with τ; F: the monodromy's multipliers against m and the metric (0.99400, 0.99245, 0.99237 at m = 12; τ = 166, 132, 131 periods), the Floquet recursion against the loop's odd part (3.38·10⁻³ … 2.40·10⁻² of its largest, ∝ s² relative), the commensurate tones' saturation (21.4: −0.5230 against the loop's −0.521 at period 1200) |
+| D3bj-3 | major | The averaging domain misattributed | (ii): the averaged loop's error is the dropped parts' Floquet sums, large where 2ω_k or ω_j ± ω_k is commensurate; B5: at 13.05, 13.1, 13.15 the constant part (the half-sum at φ and φ + π/2) is +154, +153.6, +153.1, the 2ω part −1.02, +69.84, −1.584, the averaged loop 0.959–1.085 of the constant part at all three |
+| D3bj-4 | major | The 16 tones' saturation a snapshot | B4 to 1200 periods: the single tones saturate (13.1's first coefficient +1.13·10³ from period 900), the 16 tones stay within [+235.7, +290.1], [−93.63, −87.06], [+123.4, +139.1] over the periods 601–1200 |
+| D3bj-5 | major | The resonance attribution not isolated; the bound no threshold | A2: the resonance factor (the jitter over its roll-off alone) 1.088–1.495 from m = 2 to 12, 1.225 at the bound; the band moved to 25–75 cuts the jitter 2.92, 2.61, 2.79-fold, of which the roll-off 2.24, 2.21, 2.22 and the resonance 1.31, 1.18, 1.25; (i): the bound "reduces" the resonance; C2's m scan under four seeds: the first jump at s = 0.08, 0.06, 0.06, 0.06, 0.04, 0.04, 0.03 for m = 3.5 … 8 — smooth |
+| D3bj-6 | minor | Novelty and sources | Status: the Floquet response, averaging with periodic signals and k·ω = 0 classical; Riedle–Cyr–Kokotović 1984, Kokotović–Riedle–Praly 1985, Fu–Sastry 1987, LMS's non-Wiener shifts; New limited to the instance (Gmw as the stiffness, the exact second order with centres as Floquet sums, the ejection data) |
+| D3bj-7 | minor | Single-seed controls | C2 under the seeds 7, 1, 2, 3 (the draw's pair with its own phases) |
+| D3bj-8 | minor | "After hundreds of periods", "first passage" | (iii): a drift on the slow modes, then a jump; C3 (eleven seeds at the threshold): the first kernel leaves at the periods 114–274 (τ = 131–166) with its coefficient risen 1.071–1.159-fold — (ii)'s s²⟨w₂⟩ at saturation, +0.094 … +0.116 against +0.064 … +0.143 — its centre still at the feature, then jumps beyond 0.6 within 0–1 periods; C prints the leave periods per level against τ |
+| D3bj-9 | minor | The WFR margin | C2 to s = 0.32: jumps from 0.12 at k_e = 5, none to 0.24 at k_e = 10 (one at 0.32) |
+| D3bj-10 | minor | The 0.3 cut counts slow excursions | C, C2 and C3 report the jumps (the largest distance beyond 0.6) apart from the leaves |
+| D3bj-11 | minor | B3's asymptotics | B3 prints the remainders per doubling of s (cubic and quartic but on the 16 tones' first kernel); the caption "mostly ∝ s²" |
+| D3bj-12 | minor | 21 behaviour-changing mutants survive | tests (32): `b4_job` on two periods (even_c included), `c_noise`/`c_job` options reaching `simulate` (seed, band, freqs, metric, k_e), C2's labels, `monodromy` against the loop, the Floquet means, `b5_job`, `c3_job`'s statistics |
+| D3bj-13 | cosmetic | "Peaks near √K_i" | (i) and A2: about 10% below √K_i (0.898, 0.871, 0.887 at m = 12) |
+| D3bj-14 | cosmetic | Wordings | the rectification's sign reversal dropped; the slow modes in the plural |
+
+**Lesson.** A dichotomy ("bounded unless commensurate, then secular") is checked by the one computation that decides it — here the
+monodromy's spectrum, which makes every coherent sum saturate with the slow modes' time constant. A control is informative where the
+effect was seen: rerunning the pair that had ejected showed that it still ejects, and the special tone's ordinary neighbours placed the
+averaging failure in its commensurate 2ω part. And a leave is an event with an anatomy: measured, it is the second-order offset built
+up on the slow modes, then a jump.

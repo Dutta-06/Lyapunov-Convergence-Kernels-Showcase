@@ -168,7 +168,7 @@ def test_report_on_synthetic_results():
     assert "D‴.49's 16 tones" in md and 'one tone 21.37' in md
     assert f"| without {NR.TERM_NAMES['corr']} | +5.00e-04, -2.00e-03, +4.00e-03 | 0.500, 1.000, 1.000 |" in md
     assert '| quasi-static envelopes | +2.50e-04, -2.00e-03, +4.00e-03 | 0.250, 1.000, 1.000 |' in md
-    assert '| 12 | 10 | 15.76 | 0.02 (1/1) / 0.02 | — / — | 0.03 (1/1) / 0.03 | 3 (3 leaves) |' in md
+    assert '| 12 | 10 | 15.76 | 0.02 (1/1) / 0.02 | — / — | 0.03 (1/1) / 0.03 | 3 (0) | 3 [3, 5] |' in md
 
 
 def test_the_leaving_levels_over_seeds():
@@ -421,3 +421,140 @@ def test_the_c_report_uses_each_laws_own_fitted_state():
         al0, c0, idx = DZ.fitted_state(L, NR.EPS, CT.CSTAR, CT.ASTAR)
         o = NR.orbit_terms(L, NR.EPS, al0[idx], c0[idx], 'paradigm', np.sin(np.linspace(0, 2 * np.pi, 2001)))
         assert abs(vals[m][0] - np.sqrt(o['K'].max())) < 0.02
+
+
+def test_the_monodromy_and_the_floquet_means_are_the_linearised_loops():
+    """Referee round 63: the Floquet recursion's period means over three periods equal the period means of `second_order`'s first order
+    from the same start (in the first period to the trapezoid's error on the start's fast transient, later to 10⁻⁷), and the unforced
+    multipliers lie inside the unit circle with the three slow coefficient modes first."""
+    L, al0, c0, idx = _fit()
+    nz = DZ.noise_of(1.0, dict(freqs=(21.4,)))
+    a, ph = float(nz['amp'][0]), float(nz['ph'][0])
+    M, P, G, H = NR.monodromy(L, NR.EPS, al0[idx], c0[idx], 'paradigm', CT.KE, 21.4, ph)
+    Z = NR.floquet_means(M, P, a * G, a * H, 21.4, 3)
+    W1, C1, _, _, _ = NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', nz, CT.KE, 3)
+    for X, Y in ((Z[:, 1:4], W1), (Z[:, 4:7], C1)):
+        assert np.abs(X[1:] - Y[1:]).max() < 1e-7 * np.abs(Y).max() and np.abs(X[0] - Y[0]).max() < 1e-3 * np.abs(Y).max()
+    rho = np.sort(np.abs(np.linalg.eigvals(M)))[::-1]
+    assert 0.99 < rho[2] <= rho[0] < 0.995 and rho[3] < 0.3
+
+
+def test_f_job_and_its_report(monkeypatch):
+    """F's job at m = 12 (two B4 tones, one commensurate tone, 20 periods): the multipliers and time constants, the Floquet sums against
+    a synthetic B4 whose odd part is the sums plus a known error, the saturation at the commensurate tone equal to the recursion's
+    limit."""
+    monkeypatch.setattr(NR, 'FREQS_B4', ((21.4,), None, (21.3,)))
+    monkeypatch.setattr(NR, 'OM_COMM_F', (21.4,))
+    monkeypatch.setattr(NR, 'NP_B4', 20)
+    r = NR.f_job(('paradigm', 12.0))
+    assert len(r['rho']) == 7 and 120 < min(r['tau'][:3]) and max(r['tau'][:3]) < 180 and set(r['mode'][:3]) == {'w1', 'w2', 'w3'}
+    fz = np.array(r['sums']['21.4']['w'])
+    assert fz.shape == (20, 3)
+    L, al0, c0, idx = _fit()
+    nz = DZ.noise_of(1.0, dict(freqs=(21.4,)))
+    a = float(nz['amp'][0])
+    M, P, G, H = NR.monodromy(L, NR.EPS, al0[idx], c0[idx], 'paradigm', CT.KE, 21.4, float(nz['ph'][0]))
+    far = NR.floquet_means(M, P, a * G, a * H, 21.4, 4000)[-1]
+    assert np.allclose(r['comm']['21.4']['sat'], far, rtol=1e-3, atol=1e-6)
+    B4 = [dict(freqs=[21.4], s=s, odd_w_all=(fz * (1 + 0.01 * (s / 0.00125) ** 2)).tolist()) for s in (0.00125, 0.0025)]
+    md = '\n'.join(NR.f_lines([r], B4))
+    assert '21.4: 1.00e-02 (s = 0.00125), 4.00e-02 (s = 0.0025), ×4.00' in md and '| 21.4 | 107 |' in md
+
+
+def test_b4_job_on_two_periods(monkeypatch):
+    """Referee round 63: `b4_job`'s bookkeeping on two periods — the even part per s² near ⟨w₂⟩ (`second_order`), the odd part per s
+    near ⟨w₁⟩, the full arrays' marks equal to the marked rows, the centre's per-period odd part."""
+    monkeypatch.setattr(NR, 'NP_B4', 2)
+    monkeypatch.setattr(NR, 'MARKS_B4', (1, 2))
+    r = NR.b4_job(((21.37,), 0.002))
+    L, al0, c0, idx = _fit()
+    W1, C1, W2, C2, _ = NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', DZ.noise_of(1.0, dict(freqs=(21.37,))), CT.KE, 2)
+    assert np.abs(np.array(r['even_w']) - W2).max() < 0.02 * np.abs(W2).max()
+    assert np.abs(np.array(r['odd_w']) - W1).max() < 0.25 * np.abs(W1).max()                 # 21.37's odd part: its O(s³) is large
+    assert np.abs(np.array(r['even_c']) - C2).max() < 0.1 * np.abs(C2).max()                  # the centres' even part (round 63)
+    assert np.allclose(r['even_w_all'], r['even_w']) and np.allclose(r['odd_w_all'], r['odd_w']) and len(r['odd_c_per']) == 2
+
+
+def test_c_noise_and_c_job_pass_their_options(monkeypatch):
+    """Referee round 63: `c_noise` and `c_job` hand the seed, the band, the tones, the phases, the metric and k_e to the loop."""
+    o = NR.c_noise(0.02, dict(freqs=(18.9, 22.5), ph=(0.1, 0.2)))
+    assert np.allclose(o['w'], [18.9, 22.5]) and np.allclose(o['ph'], [0.1, 0.2]) and np.allclose(o['amp'], 0.02)
+    a, b = NR.c_noise(0.02, dict(seed=1)), NR.c_noise(0.02, dict(seed=2))
+    assert len(a['w']) == 16 and not np.allclose(a['w'], b['w']) and 10 <= a['w'].min() and a['w'].max() <= 30
+    c = NR.c_noise(0.02, dict(band=(25.0, 75.0), seed=3))
+    assert 25 <= c['w'].min() and c['w'].max() <= 75
+    d1, d2 = NR.c_noise(0.04, dict(freqs=(13.1,), seed=1)), NR.c_noise(0.04, dict(freqs=(13.1,), seed=2))
+    assert d1['ph'][0] != d2['ph'][0] and np.isclose(d1['amp'][0], 0.04 * np.sqrt(2))
+    seen = {}
+
+    def fake(L, al0, c0, astar, ts, noise, metric, ke=None, x_init=None):
+        seen.update(m=L.m, noise=noise, metric=metric, ke=ke, n=len(ts))
+        n = len(ts)
+        return dict(c=np.tile(c0, (n, 1)), w=np.zeros((n, c0.size)), al=np.zeros((n, c0.size)), x=np.zeros(n))
+    monkeypatch.setattr(NR, 'simulate', fake)
+    r = NR.c_job((6.0, 5.0, 0.03, dict(metric='wfr', freqs=(18.9, 22.4), seed=3)))
+    assert seen['metric'] == 'wfr' and seen['ke'] == 5.0 and np.isclose(seen['m'], 6.0) and np.allclose(seen['noise']['w'], [18.9, 22.4])
+    assert np.allclose(seen['noise']['ph'], NR.c_noise(0.03, dict(freqs=(18.9, 22.4), seed=3))['ph'])
+    assert r['left'] == [-1, -1, -1] and r['w_left'] == [None] * 3 and r['opts']['freqs'] == [18.9, 22.4]
+
+
+def test_c2_cases_and_their_report():
+    """Referee round 63: C2's cases (four seeds per case, the draw's own pair with its phases), their grouping over the seeds and the
+    jumps counted apart from the leaves."""
+    cases = NR.c2_cases()
+    labs = {c[0] for c in cases}
+    assert labs == {'one tone', 'tone pair', "the draw's pair", 'band 25–75', 'm', 'WFR'}
+    fr, ph = NR.draw_pair()
+    assert abs(fr[0] - 18.9015) < 1e-3 and abs(fr[1] - 22.5019) < 1e-3 and abs((fr[1] - fr[0]) / CT.OM - 18.0019) < 1e-3
+    assert sum(c[0] == "the draw's pair" for c in cases) == 4 and all('ph' in c[4] for c in cases if c[0] == "the draw's pair")
+    pair = [c for c in cases if c[0] == 'tone pair' and c[4]['freqs'] == (18.9, 22.5) and c[3] == 0.02]
+    assert sorted(c[4]['seed'] for c in pair) == sorted(NR.SEEDS_C)
+    rs = [dict(label='tone pair', m=12.0, ke=10.0, s=0.08, opts=dict(freqs=[18.9, 22.5], seed=sd), left=lf, maxdev=md)
+          for sd, lf, md in ((7, [124, -1, -1], [0.95, 0.1, 0.1]), (1, [69, -1, -1], [0.36, 0.1, 0.1]), (2, [-1, -1, -1], [0.2, 0.1, 0.1]))]
+    md = '\n'.join(NR.c2_lines(rs))
+    assert '| tone pair | paradigm | 12 | 10 | tones 18.9/22.5 (difference 18ω) | 0.08 | 3 | 2 (1), 0 (0), 0 (0) | 69–124 | 0.950, 0.100, 0.100 |' in md
+
+
+def test_leave_stats_and_the_c3_report():
+    """Referee round 63: at a leave the coefficient there and the mean offset over the periods leave − 30 … leave − 6; C3's rows."""
+    Wp = np.tile(np.array([0.9, -0.6, 0.75]), (60, 1)) + np.linspace(0, 0.1, 60)[:, None] * np.array([1, 0, 0])[None, :]
+    Cp = np.tile(CT.CSTAR, (60, 1))
+    Cp[:, 0] += np.r_[np.full(40, -0.01), np.full(20, -0.9)]
+    left = NR.left_periods(np.abs(Cp - CT.CSTAR), NR.LEFT_C)
+    w_left, pre = NR.leave_stats(Wp, Cp, left)
+    assert left == [41, -1, -1] and np.isclose(w_left[0], Wp[40, 0]) and np.isclose(pre[0], -0.01) and pre[1] is None
+    md = '\n'.join(NR.c3_lines([dict(m=12.0, ke=10.0, s=0.02, opts=dict(seed=7), left=left, maxdev=[0.9, 0.0, 0.0], w_left=w_left,
+                                      pre=pre, W=Wp.tolist(), C=Cp.tolist())]))
+    assert "| D‴.49's 16 tones | 0.02 | 7 | 1 | 41 | 0.900 → 0.968 | -0.010 | 0.90 | -1.42 |" in md
+
+
+def test_b5_splits_the_second_order_by_the_phase(monkeypatch):
+    """Referee round 63: the second order at φ and φ + π/2 — the constant part (their half-sum) does not depend on φ, the 2ω part (their
+    half-difference) turns by 2Δφ: at φ + π/4 the half-difference of the shifted pair is the first pair's turned by π/2."""
+    monkeypatch.setattr(NR, 'NP_B', 2)
+    monkeypatch.setattr(NR, 'MARKS_B', (1, 2))
+    L, al0, c0, idx = _fit()
+    nz = DZ.noise_of(1.0, dict(freqs=(21.37,)))
+    run = lambda dph: NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', dict(nz, ph=np.asarray(nz['ph']) + dph), CT.KE, 2)[2]
+    a, b, c, d = run(0.0), run(np.pi / 2), run(np.pi / 4), run(3 * np.pi / 4)
+    assert np.allclose((a + b) / 2, (c + d) / 2, rtol=1e-6, atol=1e-9 * np.abs(a).max())
+    r = NR.b5_job(('paradigm', 21.37))
+    assert np.allclose(r['w2'], a) and np.allclose(r['w2_shift'], b) and len(r['w_env']) == 2
+    md = '\n'.join(NR.b5_lines([r]))
+    assert '| paradigm | 21.37 | 213.7 |' in md
+
+
+def test_a2_rows_split_the_roll_off_from_the_resonance(monkeypatch):
+    """Referee round 63: at K = 0 the jitter is the roll-off alone and the resonance factor at the smallest law nearer one; the peaks
+    within 20% of √K_i."""
+    monkeypatch.setattr(NR, 'M_A2', (3.0, 12.0))
+    monkeypatch.setattr(NR, 'OM_A2', np.linspace(4.0, 40.0, 145))
+    rows = NR.a2_rows()
+    assert len(rows) == 4
+    f = {(r['m'], tuple(r['band'])): np.array(r['jit']) / np.array(r['jit0']) for r in rows}
+    assert np.all(f[(12.0, (10.0, 30.0))] > f[(3.0, (10.0, 30.0))]) and np.all(f[(3.0, (10.0, 30.0))] > 1)
+    for r in rows:
+        if r['m'] == 12.0:
+            assert np.all(np.abs(np.array(r['peak']) / np.array(r['sqrtK']) - 1) < 0.2)
+    md = '\n'.join(NR.a2_lines(rows))
+    assert 'of which the roll-off' in md

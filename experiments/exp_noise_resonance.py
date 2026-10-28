@@ -20,16 +20,24 @@ B. The second order: one tone at OM_B or D‴.49's 16 tones, of rms s ∈ S_B, b
 B3. The exact second order: the loop expanded about the fit to second order in the noise along the orbit, without averaging
    (`second_order`), against the loop's even part in the noise (its period means under s·n and −s·n, half-summed: the drift) and its odd
    part (half-differenced), at s ∈ S_B3 and B's tones, both metrics; the averaged loop (B) against it.
-B4. The long horizon and commensurability (referee round 56): the loop's even and odd parts per s² and s at s ∈ S_B4 over NP_B4 periods,
-   at one tone (21.37; 21.4 = 107ω and 21.3 = 106.5ω, ω the reference's; 13.1 = 65.5ω) and D‴.49's 16 tones: whether the even part
-   saturates and whether the odd part stays bounded.
+B4. The long horizon and commensurability (referee rounds 56 and 63): the loop's even and odd parts per s² and s at s ∈ S_B4 over NP_B4
+   periods (≥ 5 time constants of the slow modes), at one tone (21.37; 21.4 = 107ω and 21.3 = 106.5ω, ω the reference's; 13.1 = 65.5ω
+   and its neighbours 13.05, 13.15) and D‴.49's 16 tones: the even part's saturation, the odd part against the Floquet sums (F).
+B5. The averaged loop against the exact second order's constant part (referee round 63): `second_order` at the tone's phase φ and
+   φ + π/2 — their half-sum the constant part's response, their half-difference the 2ω part's — at 13.1 (2ω = 131ω) and its neighbours
+   13.05, 13.15 (2ω = 130.5ω, 131.5ω), against `envelope_means`.
+F. The Floquet multipliers of the loop linearised at the fit (referee round 63), per metric and law; the first order's period means by
+   the Floquet recursion against B4's odd parts; the commensurate tones' saturation.
+A2. Resonance against roll-off (referee round 63; quasi-static): the 16 tones' centre jitter with K and with K = 0 per law and band; the
+   quasi-static peaks against √K_i.
 C. The leaving levels: the levels of D‴.49's noise at which a formed kernel leaves its feature within NP_C periods (D‴.57's Part D),
    the paradigm's metric, against the error gain k_e (KE_C) and the law's m (M_C: the centres' mobility Gmw), under the noise's seeds
    SEEDS_C (the tones' frequencies and phases) — with √K_max's place against the noise band 10–30 rad/s. C2: controls at k_e = 10 —
    single tones, the band moved to 25–75 rad/s (above √K_max), m between 3 and 12, the Wasserstein–Fisher–Rao metric, tone pairs whose
-   difference is commensurate with the reference or not (referee round 56).
+   difference is commensurate with the reference or not (referee round 56) — under four seeds, the pairs at 0.02 … 0.08 and D‴.49's own
+   pair with the draw's phases (referee round 63). C3: the anatomy of a leave — the formed kernels' period means through it.
 
-Usage: python experiments/exp_noise_resonance.py [--only A,B,B2,B3,B4,C,C2] [--from-raw] → results/chaos/noise_resonance.md (+ _raw.npz).
+Usage: python experiments/exp_noise_resonance.py [--only A,A2,B,B2,B3,B4,B5,C,C2,C3,F] [--from-raw] → results/chaos/noise_resonance.md (+ _raw.npz).
 """
 import os
 import sys
@@ -55,13 +63,18 @@ S_B, NP_B, MARKS_B, OM_B = (0.0025, 0.005), 30, (3, 10, 30), (13.1, 21.37, 29.3)
 B2_CASE = ('paradigm', (21.37,), 0.005)
 KE_C, M_C, NP_C = (5.0, 10.0, 20.0, 40.0), (3.0, 12.0), 300
 SEEDS_C = (7, 1, 2, 3)                                                 # C: the noise's seeds (7 is D‴.49's), referee round 56
-C2_CASES = ([('one tone', 12.0, 10.0, s_, dict(freqs=(f,))) for f in (13.1, 15.7, 21.3) for s_ in (0.02, 0.04)]
-            + [('band 25–75', m_, 10.0, s_, dict(band=(25.0, 75.0))) for m_ in (3.0, 12.0) for s_ in (0.02, 0.04, 0.06, 0.08)]
-            + [('m', m_, 10.0, s_, {}) for m_ in (4.8, 6.0, 8.0) for s_ in (0.01, 0.015, 0.02, 0.03, 0.04, 0.06, 0.08)]
-            + [('WFR', 12.0, ke_, s_, dict(metric='wfr')) for ke_ in (5.0, 10.0) for s_ in (0.02, 0.04, 0.08)]
-            + [('tone pair', 12.0, 10.0, 0.02, dict(freqs=fr, seed=sd)) for fr in ((18.9, 22.5), (18.9, 22.4)) for sd in SEEDS_C])
-NP_B4, MARKS_B4, S_B4 = 300, (1, 3, 10, 30, 60, 100, 150, 200, 250, 300), (0.00125, 0.0025)
-FREQS_B4 = ((21.37,), None, (21.4,), (21.3,), (13.1,))
+TONES_C2 = (10.0, 13.1, 15.0, 15.7, 16.0, 21.3)                       # C2's single tones (50ω, 65.5ω, 75ω, 78.5ω, 80ω, 106.5ω)
+PAIRS_C2 = ((18.9, 22.5), (18.9, 22.4), (18.9, 22.45), (20.0, 20.2))  # C2's pairs: differences 18ω, 17.5ω, 17.75ω, 1ω
+M_SCAN_C2 = (3.5, 4.0, 4.5, 4.83, 5.5, 6.0, 8.0)                       # C2's laws between C's m = 3 and 12 (the bound 4.83)
+NP_B4, MARKS_B4, S_B4 = 1200, (1, 3, 10, 30, 100, 300, 600, 900, 1200), (0.00125, 0.0025)
+FREQS_B4 = ((21.37,), None, (21.4,), (21.3,), (13.1,), (13.05,), (13.15,))
+BAND_B4 = (601, 1200)                                                  # B4: the 16 tones' bands over these periods
+M_F, OM_COMM_F = (3.0, 3.5, 4.0, 4.5, 4.83, 5.5, 6.0, 8.0, 12.0), (10.0, 15.0, 21.4, 25.0, 29.4)
+OM_B5 = (13.05, 13.1, 13.15)
+M_A2, BANDS_A2, OM_A2 = (2.0, 3.0, 4.0, 4.83, 6.0, 8.0, 12.0), ((10.0, 30.0), (25.0, 75.0)), np.linspace(4.0, 40.0, 721)
+JUMP_C = 0.6                                                           # C, C2: a leave whose largest distance exceeds this is a jump
+C3_CASES = ([(12.0, 10.0, s_, dict(seed=sd)) for s_ in (0.02, 0.03) for sd in range(1, 12)]
+            + [(12.0, 10.0, 0.08, dict(freqs=(f,), seed=sd)) for f in (13.1, 15.0) for sd in (7, 1)])
 LEV_C = (0.005, 0.0075, 0.01, 0.0125, 0.015, 0.02, 0.025, 0.03, 0.04, 0.06, 0.08)
 LEFT_C = 0.3
 TERMS = ('ctl', 'cross', 'blur', 'corr')
@@ -393,10 +406,13 @@ def variant_label(r):
 
 def c_noise(s, opts):
     """C's noise of rms s: D‴.49's 16 tones in 10–30 rad/s (opts seed), in another band (opts band), or the tones opts freqs (equal
-    amplitudes, the seed's phases)."""
+    amplitudes, the seed's phases, or the phases opts ph)."""
     from src.core import closed_loop as CL
     if 'band' in opts:
         return CL.tones(s, *opts['band'], seed=opts.get('seed', 7))
+    if 'ph' in opts:
+        fr = np.asarray(opts['freqs'], float)
+        return dict(w=fr, ph=np.asarray(opts['ph'], float), amp=np.full(fr.size, s * np.sqrt(2.0 / fr.size)))
     return DZ.noise_of(s, {k: v for k, v in opts.items() if k in ('freqs', 'seed')})
 
 
@@ -409,16 +425,14 @@ def c_job(args):
     metric = opts.get('metric', 'paradigm')
     warnings.filterwarnings('ignore')
     t0 = time.time()
-    L = law(m)
-    al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
-    k = 8
-    ts = np.linspace(0, NP_C * 2 * np.pi / CT.OM, NP_C * k + 1)
-    r = simulate(L, al0, c0, CT.ASTAR, ts, c_noise(s, opts), metric, ke)
-    dev = np.abs(r['c'][:-1].reshape(NP_C, k, c0.size).mean(1)[:, idx] - CT.CSTAR)
+    r, L, al0, c0, idx, Wp, Cp = c_run(m, ke, s, opts)
+    dev = np.abs(Cp - CT.CSTAR)
     o = orbit_terms(L, EPS, al0[idx], c0[idx], metric, np.sin(np.linspace(0, 2 * np.pi, 2001)))
-    out = dict(m=m, ke=ke, s=s, opts={k_: (list(v) if isinstance(v, tuple) else v) for k_, v in opts.items()}, left=left_periods(dev, LEFT_C),
+    left = left_periods(dev, LEFT_C)
+    w_left, pre = leave_stats(Wp, Cp, left)
+    out = dict(m=m, ke=ke, s=s, opts={k_: (list(v) if isinstance(v, tuple) else v) for k_, v in opts.items()}, left=left,
                maxdev=dev.max(0).tolist(), w_end=[float(r['w'][-1, i]) for i in idx], sqrtK=float(np.sqrt(o['K'].max())),
-               secs=time.time() - t0)
+               c_end=[float(r['c'][-1, i]) for i in idx], w_left=w_left, pre=pre, secs=time.time() - t0)
     print(f"  C m {m:g} k_e {ke:g} s {s:g} {out['opts']}: left {out['left']} [{out['secs']:.0f}s]", flush=True)
     return out
 
@@ -434,11 +448,209 @@ def b4_job(args):
     Wp, Cp = sim_means(L, 'paradigm', nz, CT.KE, NP_B4)
     Wm, Cm = sim_means(L, 'paradigm', dict(nz, ph=np.asarray(nz['ph']) + np.pi), CT.KE, NP_B4)
     mk = [m - 1 for m in MARKS_B4]
-    out = dict(freqs=None if freqs is None else list(freqs), s=s, even_w=(((Wp + Wm) / 2 - CT.ASTAR)[mk] / s ** 2).tolist(),
-               odd_w=(((Wp - Wm) / 2)[mk] / s).tolist(), even_c=(((Cp + Cm) / 2 - CT.CSTAR)[mk] / s ** 2).tolist(),
-               odd_c=(((Cp - Cm) / 2)[mk] / s).tolist(), odd_c_per=((Cp - Cm)[:12, 0] / (2 * s)).tolist(), secs=time.time() - t0)
+    ew, ow = ((Wp + Wm) / 2 - CT.ASTAR) / s ** 2, ((Wp - Wm) / 2) / s
+    ec, oc = ((Cp + Cm) / 2 - CT.CSTAR) / s ** 2, ((Cp - Cm) / 2) / s
+    out = dict(freqs=None if freqs is None else list(freqs), s=s, even_w=ew[mk].tolist(), odd_w=ow[mk].tolist(), even_c=ec[mk].tolist(),
+               odd_c=oc[mk].tolist(), odd_c_per=oc[:12, 0].tolist(), even_w_all=ew.tolist(), odd_w_all=ow.tolist(),
+               even_c_all=ec.tolist(), secs=time.time() - t0)
     print(f"  B4 {noise_label(out['freqs'])} s {s:g}: even/s² at {MARKS_B4[-1]}: {', '.join(f'{x:+.4g}' for x in out['even_w'][-1])} "
           f"[{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def monodromy(L, eps, al, c, metric, ke, om=None, ph=0.0):
+    """F (referee round 63): the loop linearised at the exact fit along x_m(t) — `second_order`'s first order, the state (e₁, w₁, c₁) of
+    the formed kernels, e₁ the true error and d₁ = e₁ + n the measured one — over one period T = 2π/ω_ref from t = 0: the monodromy
+    M = Φ(T, 0), P = (1/T)∫₀ᵀΦ(t, 0)dt and, for the forcing n = Re(e^{i(ωt + ph)}), G, the state at T from zero, and H, its period mean
+    (complex: the responses to cos and sin); the first order's period means follow by the recursion in `floquet_means`. Returns (M, P)
+    or (M, P, G, H)."""
+    from scipy.integrate import solve_ivp
+    w, mu, _, v, _ = curve(L, eps, al, metric)
+    nk = c.size
+    d = 1 + 2 * nk
+    T = 2 * np.pi / CT.OM
+
+    def A_b(t):
+        u = (np.sin(CT.OM * t) - c) / CT.SIG
+        ph_ = np.exp(-u ** 2 / 2)
+        d1 = ph_ * u / CT.SIG
+        A = np.zeros((d, d))
+        A[0, 0], A[0, 1:1 + nk], A[0, 1 + nk:] = -ke, -ph_, -w * d1
+        A[1:1 + nk, 0], A[1 + nk:, 0] = mu * ph_, v * d1
+        return A, np.r_[(w * d1).sum() - ke, mu * ph_, v * d1]          # the forcing's column: −f̂′ − k_e, μφ, v∂_cφ
+    nf = om is not None
+
+    def rhs(t, y):
+        A, b = A_b(t)
+        Phi = y[:d * d].reshape(d, d)
+        out = [(A @ Phi).ravel(), Phi.ravel()]
+        if nf:
+            zc, zs = y[2 * d * d:2 * d * d + d], y[2 * d * d + 2 * d:2 * d * d + 3 * d]
+            out += [A @ zc + b * np.cos(om * t + ph), zc, A @ zs + b * np.sin(om * t + ph), zs]
+        return np.concatenate(out)
+    y0 = np.zeros(2 * d * d + (4 * d if nf else 0))
+    y0[:d * d] = np.eye(d).ravel()
+    sol = solve_ivp(rhs, (0.0, T), y0, method='DOP853', rtol=1e-11, atol=1e-14, max_step=min(0.05, 0.2 / om) if nf else 0.05)
+    y = sol.y[:, -1]
+    M, P = y[:d * d].reshape(d, d), y[d * d:2 * d * d].reshape(d, d) / T
+    if not nf:
+        return M, P
+    o = 2 * d * d
+    return M, P, y[o:o + d] + 1j * y[o + 2 * d:o + 3 * d], (y[o + d:o + 2 * d] + 1j * y[o + 3 * d:o + 4 * d]) / T
+
+
+def floquet_means(M, P, G, H, om, NP):
+    """The first order's period means over NP periods from z₀ = 0 (the loop starts at the fit, e = 0) by the Floquet recursion: over the
+    period j the tone is Re(e^{iωjT}·e^{i(ωt′ + ph)}), so z_{j+1} = Mz_j + Re(e^{iωjT}G) and ⟨z⟩_j = Pz_j + Re(e^{iωjT}H). On each slow
+    mode of M (multiplier ρ) the increments rotate by ωT and add up to |δ||ρ^j − e^{iωjT}|/|ρ − e^{iωT}|: bounded, at commensurability
+    the offset |δ|/(1 − ρ) reached with the mode's time constant."""
+    T = 2 * np.pi / CT.OM
+    z, out = np.zeros(M.shape[0]), []
+    for j in range(NP):
+        rot = np.exp(1j * om * j * T)
+        out.append(P @ z + np.real(rot * H))
+        z = M @ z + np.real(rot * G)
+    return np.array(out)
+
+
+def f_job(args):
+    """F: per metric and law (m) the linearised loop's Floquet multipliers (by modulus), the time constants −1/ln|ρ| (periods) and each
+    mode's largest component (e, w_i, c_i); for the paradigm's metric at m = 12 also the first order's period means by the Floquet
+    recursion for B4's single tones (per unit rms, NP_B4 periods: the loop's odd part per s) and, at the commensurate tones OM_COMM_F, the
+    period means of the first three periods and the saturation P(I − M)⁻¹Re(G) + Re(H) (per unit rms)."""
+    metric, m = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    L = law(m)
+    al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+    al, c = al0[idx], c0[idx]
+    M, P = monodromy(L, EPS, al, c, metric, CT.KE)
+    ev, V = np.linalg.eig(M)
+    o = np.argsort(-np.abs(ev))
+    names = ['e'] + [f'w{q + 1}' for q in range(c.size)] + [f'c{q + 1}' for q in range(c.size)]
+    out = dict(metric=metric, m=m, rho=np.abs(ev[o]).tolist(), imag=float(np.abs(ev.imag).max()),
+               tau=[float(-1 / np.log(abs(x))) for x in ev[o] if 1e-300 < abs(x) < 1],
+               mode=[names[int(np.argmax(np.abs(V[:, k])))] for k in o])
+    if metric == 'paradigm' and m == 12.0:
+        sums, comm = {}, {}
+        for fr in [f for f in FREQS_B4 if f is not None]:
+            nz = DZ.noise_of(1.0, dict(freqs=fr))
+            a = float(nz['amp'][0])
+            _, _, G, H = monodromy(L, EPS, al, c, metric, CT.KE, fr[0], float(nz['ph'][0]))
+            Z = floquet_means(M, P, a * G, a * H, fr[0], NP_B4)
+            sums[f"{fr[0]:g}"] = dict(w=Z[:, 1:1 + c.size].tolist(), c=Z[:, 1 + c.size:].tolist())
+        for om in OM_COMM_F:
+            nz = DZ.noise_of(1.0, dict(freqs=(om,)))
+            a = float(nz['amp'][0])
+            _, _, G, H = monodromy(L, EPS, al, c, metric, CT.KE, om, float(nz['ph'][0]))
+            Z = floquet_means(M, P, a * G, a * H, om, 3)
+            sat = P @ np.linalg.solve(np.eye(M.shape[0]) - M, np.real(a * G)) + np.real(a * H)
+            comm[f"{om:g}"] = dict(first=Z.tolist(), sat=sat.tolist())
+        out.update(sums=sums, comm=comm)
+    out['secs'] = time.time() - t0
+    print(f"  F {metric} m {m:g}: |ρ| {', '.join(f'{x:.5f}' for x in out['rho'][:4])}, τ {', '.join(f'{x:.1f}' for x in out['tau'][:3])} "
+          f"[{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def b5_job(args):
+    """B5 (referee round 63): at one tone the exact second order (`second_order`) under the tone's phase φ and φ + π/2: the second order
+    is the response to the products of the first order's tones, ½Re(AB̄) (φ-free) + ½Re(ABe^{2iφ}), so the half-sum of the two runs is the
+    constant part's response and the half-difference the 2ω part's; against them the averaged loop (`envelope_means` at s = S_B[−1],
+    per s²), at MARKS_B."""
+    metric, om = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    L = law()
+    al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+    nz = DZ.noise_of(1.0, dict(freqs=(om,)))
+    _, _, W2a, C2a, sa = second_order(L, EPS, al0[idx], c0[idx], metric, nz, CT.KE, NP_B)
+    _, _, W2b, C2b, sb = second_order(L, EPS, al0[idx], c0[idx], metric, dict(nz, ph=np.asarray(nz['ph']) + np.pi / 2), CT.KE, NP_B)
+    s = S_B[-1]
+    We, Ce, se = envelope_means(L, EPS, metric, DZ.noise_of(s, dict(freqs=(om,))), CT.KE, NP_B)
+    mk = [q - 1 for q in MARKS_B]
+    out = dict(metric=metric, om=om, status=[sa, sb, se], w2=W2a[mk].tolist(), w2_shift=W2b[mk].tolist(), c2=C2a[mk].tolist(),
+               c2_shift=C2b[mk].tolist(), w_env=((We[mk] - CT.ASTAR) / s ** 2).tolist(), c_env=((Ce[mk] - CT.CSTAR) / s ** 2).tolist(),
+               secs=time.time() - t0)
+    print(f"  B5 {metric} {om:g}: ⟨w₂⟩ at {MARKS_B[-1]} {', '.join(f'{x:+.4g}' for x in out['w2'][-1])}, shifted "
+          f"{', '.join(f'{x:+.4g}' for x in out['w2_shift'][-1])} [{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def a2_rows():
+    """A2 (referee round 63; quasi-static — A's oscillator law —, the paradigm's metric): per law (M_A2) each kernel's √K_i (its largest
+    (μ_iφ_i² + v_iw_i(∂_cφ_i)²)^{1/2} on the orbit) and the frequency on OM_A2 where its centre jitter per unit amplitude — the rms over
+    the orbit of |v_i∂_cφ_iY|/√2, Y = (iω − f̂′)/(K − ω² + ik_eω) — peaks; per band (BANDS_A2, seed 7's draw) the 16 tones' centre jitter
+    per unit rms, and with K = 0 — the K-independent roll-off —, their ratio the resonance factor."""
+    from src.core import closed_loop as CL
+    xm = np.sin(np.linspace(0, 2 * np.pi, 2001)[:-1])
+    rows = []
+    for m in M_A2:
+        L = law(m)
+        al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+        o = orbit_terms(L, EPS, al0[idx], c0[idx], 'paradigm', xm)
+        sqk = np.sqrt((o['mu'] * o['ph'] ** 2 + o['v'] * o['w'] * o['d1'] ** 2).max(0))
+        g = o['v'][None, :] * o['d1']                                    # (orbit, kernel): v_i∂_cφ_i
+        jit = lambda Y, amp: np.sqrt(np.mean((np.abs(g[:, :, None] * Y[:, None, :] * amp[None, None, :]) ** 2 / 2).sum(2), axis=0))
+        per = np.array([jit(transfer(o, np.array([w_]), CT.KE)[0], np.ones(1)) for w_ in OM_A2])     # (ω, kernel)
+        for band in (BANDS_A2 if m in (3.0, 12.0) else BANDS_A2[:1]):
+            nz = CL.tones(1.0, *band, seed=7)
+            om, amp = np.asarray(nz['w'], float), np.asarray(nz['amp'], float)
+            Y0 = (1j * om[None, :] - o['f1'][:, None]) / (-om[None, :] ** 2 + 1j * CT.KE * om[None, :])
+            rows.append(dict(m=m, band=list(band), sqrtK=sqk.tolist(), peak=OM_A2[np.argmax(per, axis=0)].tolist(),
+                             jit=jit(transfer(o, om, CT.KE)[0], amp).tolist(), jit0=jit(Y0, amp).tolist()))
+    return rows
+
+
+def draw_pair():
+    """D‴.49's draw (seed 7): its two tones nearest 18.9 and 22.5 rad/s and their phases — the difference 18.0019ω_ref, a beat of 521
+    periods against the orbit's 18th harmonic (referee rounds 56 and 63)."""
+    from src.core import closed_loop as CL
+    nz = CL.tones(1.0, 10.0, 30.0, seed=7)
+    j = [int(np.argmin(np.abs(nz['w'] - f))) for f in (18.9, 22.5)]
+    return tuple(float(nz['w'][q]) for q in j), tuple(float(nz['ph'][q]) for q in j)
+
+
+def c_run(m, ke, s, opts):
+    """C's loop: the metric (opts metric, default the paradigm's) at the law's m and the error gain k_e, the noise of rms s (`c_noise`),
+    from the fitted state for NP_C periods (8 outputs a period). Returns the run, the formed kernels' indices and their period means of
+    w and c."""
+    L = law(m)
+    al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+    k = 8
+    ts = np.linspace(0, NP_C * 2 * np.pi / CT.OM, NP_C * k + 1)
+    r = simulate(L, al0, c0, CT.ASTAR, ts, c_noise(s, opts), opts.get('metric', 'paradigm'), ke)
+    per = lambda z: z[:-1].reshape(NP_C, k, c0.size).mean(1)[:, idx]
+    return r, L, al0, c0, idx, per(r['w']), per(r['c'])
+
+
+def leave_stats(Wp, Cp, left):
+    """Per formed kernel at its leave (the first period LEFT_C from its feature): its period-mean coefficient there, and the mean signed
+    offset of its period-mean centre over the periods leave − 30 … leave − 6 (None where it never left)."""
+    out_w, out_pre = [], []
+    for q, p in enumerate(left):
+        if p < 0:
+            out_w.append(None), out_pre.append(None)
+            continue
+        i = p - 1
+        lo, hi = max(i - 30, 0), max(i - 5, 1)
+        out_w.append(float(Wp[i, q])), out_pre.append(float(np.mean(Cp[lo:hi, q] - CT.CSTAR[q])))
+    return out_w, out_pre
+
+
+def c3_job(args):
+    """C3 (referee round 63): the anatomy of a leave — C's loop at (m, k_e, s, opts) with the formed kernels' period means of w and c
+    over NP_C periods, the leave periods, the largest distances, the coefficient at the leave and the mean offset before it."""
+    m, ke, s, opts = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    r, L, al0, c0, idx, Wp, Cp = c_run(m, ke, s, dict(opts))
+    dev = np.abs(Cp - CT.CSTAR)
+    left = left_periods(dev, LEFT_C)
+    w_left, pre = leave_stats(Wp, Cp, left)
+    out = dict(m=m, ke=ke, s=s, opts={k_: (list(v) if isinstance(v, tuple) else v) for k_, v in dict(opts).items()}, left=left,
+               maxdev=dev.max(0).tolist(), w_left=w_left, pre=pre, W=Wp.tolist(), C=Cp.tolist(), secs=time.time() - t0)
+    print(f"  C3 m {m:g} k_e {ke:g} s {s:g} {out['opts']}: left {left} [{out['secs']:.0f}s]", flush=True)
     return out
 
 
@@ -459,7 +671,8 @@ def b_jobs():
 
 
 def b3_jobs():
-    return [(mt, (om,)) for mt in METRICS for om in OM_B] + [(mt, None) for mt in METRICS]
+    return ([(mt, (om,)) for mt in METRICS for om in OM_B] + [(mt, None) for mt in METRICS]
+            + [('paradigm', (om,)) for om in OM_B5 if om not in OM_B])
 
 
 def b2_jobs():
@@ -485,16 +698,52 @@ def part_B2():
     return _pool_map(b_job, b2_jobs())
 
 
-def part_B3():
-    return _pool_map(b3_job, b3_jobs())
+def part_B3(old=None):
+    """B3's jobs; those already in `old` (the raw's B3, keyed by metric and tones) are kept, not rerun (referee round 63 adds 13.1's
+    neighbours)."""
+    have = {(r['metric'], tuple(r['freqs']) if r['freqs'] is not None else None): r for r in (old if old is not None else [])}
+    todo = [j for j in b3_jobs() if j not in have]
+    new = dict(zip(todo, _pool_map(b3_job, todo))) if todo else {}
+    return [have.get(j, new.get(j)) for j in b3_jobs()]
 
 
 def part_C():
     return _pool_map(c_job, [(m, ke, s, dict(seed=sd)) for m in M_C for ke in KE_C for s in LEV_C for sd in SEEDS_C])
 
 
+def c2_cases():
+    """C2's cases (referee rounds 56 and 63): (label, m, k_e, s, opts), each under SEEDS_C but D‴.49's own pair (the draw's phases)."""
+    fr, ph = draw_pair()
+    return ([('one tone', 12.0, 10.0, s_, dict(freqs=(f,), seed=sd)) for f in TONES_C2 for s_ in (0.04, 0.06, 0.08) for sd in SEEDS_C]
+            + [('tone pair', 12.0, 10.0, s_, dict(freqs=p, seed=sd)) for p in PAIRS_C2 for s_ in (0.02, 0.04, 0.06, 0.08) for sd in SEEDS_C]
+            + [("the draw's pair", 12.0, 10.0, s_, dict(freqs=fr, ph=ph)) for s_ in (0.02, 0.04, 0.06, 0.08)]
+            + [('band 25–75', m_, 10.0, s_, dict(band=(25.0, 75.0), seed=sd)) for m_ in (3.0, 12.0) for s_ in (0.02, 0.04, 0.06, 0.08)
+               for sd in SEEDS_C]
+            + [('m', m_, 10.0, s_, dict(seed=sd)) for m_ in M_SCAN_C2 for s_ in (0.02, 0.03, 0.04, 0.06, 0.08) for sd in SEEDS_C]
+            + [('WFR', 12.0, ke_, s_, dict(metric='wfr', seed=sd)) for ke_ in (5.0, 10.0) for s_ in (0.02, 0.04, 0.08, 0.12, 0.16, 0.24, 0.32)
+               for sd in SEEDS_C])
+
+
 def part_C2():
-    return [dict(r, label=lab) for (lab, *_), r in zip(C2_CASES, _pool_map(c_job, [cs[1:] for cs in C2_CASES]))]
+    cases = c2_cases()
+    return [dict(r, label=lab) for (lab, *_), r in zip(cases, _pool_map(c_job, [cs[1:] for cs in cases]))]
+
+
+def part_C3():
+    fr, ph = draw_pair()
+    return _pool_map(c3_job, list(C3_CASES) + [(12.0, 10.0, s_, dict(freqs=fr, ph=ph)) for s_ in (0.02, 0.04, 0.06, 0.08)])
+
+
+def part_F():
+    return _pool_map(f_job, [('paradigm', m) for m in M_F] + [('wfr', 12.0)])
+
+
+def part_B5():
+    return _pool_map(b5_job, [('paradigm', om) for om in OM_B5])
+
+
+def part_A2():
+    return a2_rows()
 
 
 def part_B4():
@@ -547,10 +796,19 @@ def b3_lines(B3, B=None):
                    f"{', '.join(f'{x:+.4g}' for x in c2)} | {ec} |")
     rng = lambda xs: f"[{min(xs):.4f}, {max(xs):.4f}]" if xs else '—'
     out += ["", "The even part over the exact second order: " + '; '.join(f"{rng(q_even[q])} at s = {q:g}" for q in S_B3)
-            + " (the relative error falls as s²); the centres' even part over s²⟨c₂⟩: " + '; '.join(f"{rng(q_even_c[q])} at s = {q:g}"
+            + " (the relative error mostly ∝ s²: the remainders per doubling below); the centres' even part over s²⟨c₂⟩: " + '; '.join(f"{rng(q_even_c[q])} at s = {q:g}"
                                                                                                  for q in S_B3)
             + "; the averaged loop over it at s = " + f"{S_B3[-1]:g}: "
             + '; '.join(f"{k[0]}, {k[1]}: {rng(v)}" for k, v in q_avg.items()) + ".", ""]
+    sc = []
+    for r in sorted(B3, key=key):                                       # referee round 63: the remainders' scaling per doubling of s
+        rows = sorted(r['rows'], key=lambda q: q['s'])
+        ro = [np.array(q['odd_w'][-1]) - q['s'] * np.array(r['w1'][-1]) for q in rows]
+        re_ = [np.array(q['even_w'][-1]) - q['s'] ** 2 * np.array(r['w2'][-1]) for q in rows]
+        f = lambda R_: '; '.join(', '.join(f"×{a / b:.3g}" for a, b in zip(R_[i + 1], R_[i])) for i in range(len(R_) - 1))
+        sc.append(f"{r['metric']}, {noise_label(r['freqs'])}: odd {f(ro)}; even {f(re_)}")
+    out += [f"The remainders at period {MARKS_B[-1]} per doubling of s (s = " + ' → '.join(f"{q:g}" for q in S_B3) + "), per kernel — the odd part's "
+            "less s⟨w₁⟩ (×8 if cubic) and the even part's less s²⟨w₂⟩ (×16 if quartic): " + ' | '.join(sc) + ".", ""]
     return out
 
 
@@ -571,7 +829,264 @@ def c_cells(rs, nq=3):
     return out
 
 
-def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
+def f_lines(F, B4=None):
+    """F's report: the multipliers per metric and law; the Floquet sums against B4's odd parts; the commensurate tones."""
+    if F is None:
+        return []
+    out = ["## F. The linearised loop's Floquet multipliers (referee round 63)", "",
+           "The loop linearised at the fit along the orbit (e, the formed kernels' w and c) over one period of the reference: the monodromy's "
+           "multipliers |ρ| by modulus, the slow modes' time constants −1/ln|ρ| in periods and each mode's largest component:", "",
+           "| metric | m | \\|ρ\\| | τ of the three slowest (periods) | their largest components | the largest imaginary part |",
+           "|---|---|---|---|---|---|"]
+    for r in sorted(F, key=lambda r: (r['metric'] != 'paradigm', r['m'])):
+        out.append(f"| {r['metric']} | {r['m']:g} | {', '.join(f'{x:.5f}' for x in r['rho'][:5])} | {', '.join(f'{x:.1f}' for x in r['tau'][:3])} | "
+                   f"{', '.join(r['mode'][:3])} | {r['imag']:.1e} |")
+    base = next((r for r in F if r['metric'] == 'paradigm' and r['m'] == 12.0 and 'sums' in r), None)
+    if base is not None and B4 is not None:
+        out += ["", "The first order's period means by the Floquet recursion (z_{j+1} = Mz_j + Re(e^{iωjT}G), ⟨z⟩_j = Pz_j + Re(e^{iωjT}H)) "
+                f"against the loop's odd part per s (B4, all {NP_B4} periods, the coefficients): the largest difference over the largest "
+                "Floquet mean, per s, and its growth per doubling of s (×4: the odd part's O(s³) remainder):", ""]
+        cells = []
+        for fr in [f for f in FREQS_B4 if f is not None]:
+            sm = base['sums'].get(f"{fr[0]:g}")
+            rows = sorted([r for r in B4 if r['freqs'] == list(fr) and 'odd_w_all' in r], key=lambda r: r['s'])
+            if sm is None or not rows:
+                continue
+            fz = np.array(sm['w'])
+            dif = [float(np.abs(np.array(r['odd_w_all']) - fz).max() / np.abs(fz).max()) for r in rows]
+            cells.append(f"{fr[0]:g}: " + ', '.join(f"{d:.2e} (s = {r['s']:g})" for d, r in zip(dif, rows))
+                         + (f", ×{dif[1] / dif[0]:.2f}" if len(dif) > 1 and dif[0] > 0 else ''))
+        out.append('; '.join(cells) + ".")
+    if base is not None:
+        T = 2 * np.pi / CT.OM
+        out += ["", "At the commensurate tones (ωT ∈ 2πℤ: the increments add on every slow mode and saturate at P(I − M)⁻¹Re(G) + Re(H)), "
+                "per unit rms: the first kernel's centre period means at the periods 1–3, the coefficients' saturation and the centres':", "",
+                "| ω | ω/ω_ref | centre 1, periods 1–3 | the coefficients' saturation | the centres' saturation |", "|---|---|---|---|---|"]
+        nk = len(CT.CSTAR)
+        for om, cm in sorted(base['comm'].items(), key=lambda kv: float(kv[0])):
+            Z, sat = np.array(cm['first']), np.array(cm['sat'])
+            out.append(f"| {om} | {float(om) / CT.OM:g} | {', '.join(f'{x:+.4f}' for x in Z[:, 1 + nk])} | "
+                       f"{', '.join(f'{x:+.4f}' for x in sat[1:1 + nk])} | {', '.join(f'{x:+.4f}' for x in sat[1 + nk:])} |")
+    out.append("")
+    return out
+
+
+def b4_lines(B4):
+    """B4's report (referee round 63: NP_B4 periods, ≥ 5 time constants): the even part per s² and the odd part per s at the marks,
+    the 16 tones' bands over BAND_B4, the first kernel's centre per period."""
+    if B4 is None:
+        return []
+    out = ["## B4. The long horizon and commensurability", "",
+           f"The paradigm's metric, the loop under s·n and −s·n for {NP_B4} periods: the even part of the coefficients' period means per s² "
+           f"and the odd part per s at the periods {', '.join(str(m) for m in MARKS_B4)} (kernel by kernel), at s = "
+           f"{', '.join(f'{q:g}' for q in S_B4)}; the reference's ω = {CT.OM:g} (21.4 = 107ω, 21.3 = 106.5ω, 13.1 = 65.5ω: its 2ω = 131ω; "
+           "13.05, 13.15: 2ω = 130.5ω, 131.5ω):", "",
+           "| noise | s | even part / s² (w), at the periods | odd part / s (w), at the periods | the centres' even part / s² at the "
+           "last period | the first kernel's centre, odd part / s, periods 1–12 |", "|---|---|---|---|---|---|"]
+    for r in sorted(B4, key=lambda r: (r['freqs'] is None, r['freqs'] or [0], r['s'])):
+        ev = '; '.join(', '.join(f"{x:+.3g}" for x in row) for row in r['even_w'])
+        od = '; '.join(', '.join(f"{x:+.3g}" for x in row) for row in r['odd_w'])
+        out.append(f"| {noise_label(r['freqs'])} | {r['s']:g} | {ev} | {od} | {', '.join(f'{x:+.3g}' for x in r['even_c'][-1])} | "
+                   f"{', '.join(f'{x:+.3f}' for x in r['odd_c_per'])} |")
+    band = [r for r in B4 if r['freqs'] is None and 'even_w_all' in r]
+    if band:
+        a, b = BAND_B4
+        out += ["", f"D‴.49's 16 tones over the periods {a}–{b}: per kernel the least and largest even part per s² of the coefficients "
+                "and of the centres, and the odd part per s of the coefficients:", ""]
+        for r in sorted(band, key=lambda r: r['s']):
+            rng = lambda key: '; '.join(f"[{lo:+.4g}, {hi:+.4g}]" for lo, hi in zip(np.array(r[key])[a - 1:b].min(0),
+                                                                               np.array(r[key])[a - 1:b].max(0)))
+            out.append(f"s = {r['s']:g}: w {rng('even_w_all')}; c {rng('even_c_all')}; odd w {rng('odd_w_all')}.")
+    out.append("")
+    return out
+
+
+def b5_lines(B5):
+    """B5's report: the exact second order's constant and 2ω parts (the phase shifted by π/2) against the averaged loop."""
+    if B5 is None:
+        return []
+    out = ["## B5. The averaged loop against the second order's constant part (referee round 63)", "",
+           f"One tone, {NP_B} periods: the exact second order's ⟨w₂⟩ (`second_order`) at the tone's phase φ and at φ + π/2 — their half-sum "
+           "the response to the constant part of the forcing (φ-free), their half-difference the 2ω part's (∝ e^{2iφ}) —, and the averaged "
+           f"loop's Δw/s² (s = {S_B[-1]:g}) over the exact second order and over its constant part, at the periods "
+           f"{', '.join(str(m) for m in MARKS_B)}:", "",
+           "| metric | ω | 2ω/ω_ref | ⟨w₂⟩ (exact) | the constant part | the 2ω part | averaged / exact | averaged / the constant part |",
+           "|---|---|---|---|---|---|---|---|"]
+    for r in sorted(B5, key=lambda r: (r['metric'] != 'paradigm', r['om'])):
+        a, b, e = np.array(r['w2']), np.array(r['w2_shift']), np.array(r['w_env'])
+        const, two = (a + b) / 2, (a - b) / 2
+        f = lambda X: '; '.join(', '.join(f"{x:+.4g}" for x in row) for row in X)
+        g = lambda X: '; '.join(', '.join(f"{x:.3f}" for x in row) for row in X)
+        out.append(f"| {r['metric']} | {r['om']:g} | {2 * r['om'] / CT.OM:g} | {f(a)} | {f(const)} | {f(two)} | {g(e / a)} | {g(e / const)} |")
+    out.append("")
+    return out
+
+
+def a2_lines(A2):
+    """A2's report: the quasi-static peaks against √K_i; the 16 tones' jitter with and without K — the resonance factor — per law and
+    band, and the band's effect split into its roll-off and its resonance."""
+    if A2 is None:
+        return []
+    out = ["## A2. Resonance against roll-off (quasi-static; referee round 63)", "",
+           "A's oscillator law, the paradigm's metric: per law each kernel's √K_i and the frequency at which its centre jitter per unit "
+           "amplitude peaks (on ω = 4 … 40); seed 7's 16 tones in the band, per unit rms: the centre jitter (rms over the orbit and the "
+           "tones), the same with K = 0 (the roll-off alone), and their ratio, the resonance factor:", "",
+           "| m | band | √K_i | the peaks (/ √K_i) | jitter | jitter at K = 0 | resonance factor |", "|---|---|---|---|---|---|---|"]
+    for r in sorted(A2, key=lambda r: (r['band'], r['m'])):
+        out.append(f"| {r['m']:g} | {'–'.join(f'{x:g}' for x in r['band'])} | {', '.join(f'{x:.2f}' for x in r['sqrtK'])} | "
+                   + ', '.join(f"{p:.2f} ({p / k:.3f})" for p, k in zip(r['peak'], r['sqrtK'])) + f" | {', '.join(f'{x:.4f}' for x in r['jit'])} | "
+                   f"{', '.join(f'{x:.4f}' for x in r['jit0'])} | {', '.join(f'{a / b:.3f}' for a, b in zip(r['jit'], r['jit0']))} |")
+    lines = []
+    for m in sorted({r['m'] for r in A2}):
+        lo = next((r for r in A2 if r['m'] == m and r['band'] == list(BANDS_A2[0])), None)
+        hi = next((r for r in A2 if r['m'] == m and r['band'] == list(BANDS_A2[1])), None)
+        if lo is None or hi is None:
+            continue
+        tot = [a / b for a, b in zip(lo['jit'], hi['jit'])]
+        roll = [a / b for a, b in zip(lo['jit0'], hi['jit0'])]
+        lines.append(f"m = {m:g}: the jitter falls by {', '.join(f'{x:.2f}' for x in tot)} from {'–'.join(f'{x:g}' for x in BANDS_A2[0])} to "
+                     f"{'–'.join(f'{x:g}' for x in BANDS_A2[1])}, of which the roll-off {', '.join(f'{x:.2f}' for x in roll)} and the resonance "
+                     f"{', '.join(f'{a / b:.2f}' for a, b in zip(tot, roll))}")
+    if lines:
+        out += ["", '; '.join(lines) + "."]
+    out.append("")
+    return out
+
+
+def leaves_by_level(rs, jump=JUMP_C):
+    """Per level: the leaves (kernel-runs that left), those that jumped (largest distance > jump) and the leave periods."""
+    out = {}
+    for r in rs:
+        d = out.setdefault(r['s'], dict(n=0, leaves=0, jumps=0, periods=[]))
+        d['n'] += 1
+        for q, p in enumerate(r['left']):
+            if p >= 0:
+                d['leaves'] += 1
+                d['jumps'] += int(r['maxdev'][q] > jump)
+                d['periods'].append(p)
+    return out
+
+
+def c2_groups(C2):
+    """C2's runs grouped by control, law, gain, noise (the seeds pooled) and level."""
+    gs = {}
+    for r in C2:
+        o = dict(r['opts'])
+        o.pop('seed', None)
+        key = (r['label'], o.get('metric', 'paradigm'), r['m'], r['ke'], c2_noise_label(o), r['s'])
+        gs.setdefault(key, []).append(r)
+    return gs
+
+
+def c2_noise_label(o):
+    if 'band' in o:
+        return '16 tones in ' + '–'.join(f"{x:g}" for x in o['band'])
+    if 'freqs' in o:
+        fr = list(o['freqs'])
+        lab = noise_label(fr) if len(fr) == 1 else 'tones ' + '/'.join(f"{f:g}" for f in fr)
+        if len(fr) == 2:
+            lab += f" (difference {abs(fr[1] - fr[0]) / CT.OM:.4g}ω)"
+        return lab + (", the draw's phases" if 'ph' in o else '')
+    return "D‴.49's 16 tones"
+
+
+def c2_lines(C2):
+    """C2's report (referee round 63): per control, law, gain, noise and level, over the seeds: the runs, the kernels that left (0.3 away)
+    and those that jumped (> JUMP_C), the leave periods and the largest distances."""
+    if C2 is None:
+        return []
+    L12 = law(12.0)
+    al_, c_, ix_ = DZ.fitted_state(L12, EPS, CT.CSTAR, CT.ASTAR)
+    o_ = orbit_terms(L12, EPS, al_[ix_], c_[ix_], 'paradigm', np.sin(np.linspace(0, 2 * np.pi, 2001)))
+    S_ = float((o_['w'] ** 2 * o_['d1'] ** 2).sum(1).max())
+    out = ["## C2. Controls (k_e and m as stated)", "",
+           f"The same loop and horizon, each case under the seeds {', '.join(map(str, SEEDS_C))} (the tones' phases; for a band also its "
+           "frequencies) unless the draw's phases are given: one tone; tone pairs of total rms s — their difference a multiple of the "
+           "reference's ω (18ω, 1ω), half of one (17.5ω) or between (17.75ω), and D‴.49's own pair 18.9015/22.5019 (18.0019ω) with the "
+           "draw's phases —; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12 (the design bound m ≲ "
+           f"ω_lo²/(G max_t Σ_iw_i²(∂_cφ_i)²) = {100.0 / (L12.G * S_):.2f} at ω_lo = 10); the Wasserstein–Fisher–Rao metric to s = 0.32. Per "
+           f"group the kernels that left their feature ({LEFT_C:g} away, period-averaged) — 'jumped' if their largest distance exceeds "
+           f"{JUMP_C:g} (out of the orbit's range) —, the leave periods and the largest distances over the runs:", "",
+           "| control | metric | m | k_e | noise | s | runs | left: per kernel (jumped) | leave periods | largest distances (per kernel, max over runs) |",
+           "|---|---|---|---|---|---|---|---|---|---|"]
+    order = {'one tone': 0, 'tone pair': 1, "the draw's pair": 2, 'band 25–75': 3, 'm': 4, 'WFR': 5}
+    for key, rs in sorted(c2_groups(C2).items(), key=lambda kv: (order.get(kv[0][0], 9), kv[0][1:])):
+        lab, mt, m, ke, nz, s = key
+        nq = len(rs[0]['left'])
+        lefts = [sum(r['left'][q] >= 0 for r in rs) for q in range(nq)]
+        jumps = [sum(r['left'][q] >= 0 and r['maxdev'][q] > JUMP_C for r in rs) for q in range(nq)]
+        per = sorted(p for r in rs for p in r['left'] if p >= 0)
+        out.append(f"| {lab} | {mt} | {m:g} | {ke:g} | {nz} | {s:g} | {len(rs)} | "
+                   + ', '.join(f"{a} ({b})" for a, b in zip(lefts, jumps)) + " | "
+                   + ('—' if not per else (f"{per[0]}" if len(per) == 1 else f"{per[0]}–{per[-1]}")) + " | "
+                   + ', '.join(f"{max(r['maxdev'][q] for r in rs):.3f}" for q in range(nq)) + " |")
+    out.append("")
+    return out
+
+
+def c3_lines(C3, B4=None):
+    """C3's report: per run the leaves, the coefficient's drift to the leave, the mean offset before it and where the kernel ends."""
+    if C3 is None:
+        return []
+    out = ["## C3. The anatomy of a leave (referee round 63)", "",
+           f"C's loop (m = 12, k_e = 10 unless stated), the formed kernels' period means over {NP_C} periods: per kernel that left, the "
+           "leave period, the coefficient there against its start, the mean signed offset of the centre over the periods leave − 30 … "
+           f"leave − 6, its largest distance (> {JUMP_C:g}: a jump) and the centre at the end:", "",
+           "| noise | s | seed | kernel | leave period | w: start → leave | mean offset before | largest distance | centre at the end |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    for r in sorted(C3, key=lambda r: (c2_noise_label({k: v for k, v in r['opts'].items() if k != 'seed'}), r['s'], r['opts'].get('seed', 7))):
+        nz = c2_noise_label({k: v for k, v in r['opts'].items() if k != 'seed'})
+        W, C = np.array(r['W']), np.array(r['C'])
+        for q, p in enumerate(r['left']):
+            if p < 0:
+                continue
+            out.append(f"| {nz} | {r['s']:g} | {r['opts'].get('seed', '—')} | {q + 1} | {p} | {W[0, q]:.3f} → {r['w_left'][q]:.3f} | "
+                       f"{r['pre'][q]:+.3f} | {r['maxdev'][q]:.2f} | {C[-1, q]:+.2f} |")
+    out.append("")
+    grp = {}                                                           # the leaves summed up: the band's runs per level, the single tones
+    for r in C3:
+        tone = 'freqs' in r['opts'] and len(r['opts']['freqs']) == 1
+        if 'freqs' in r['opts'] and not tone:
+            continue
+        W, dev = np.array(r['W']), np.abs(np.array(r['C']) - CT.CSTAR)
+        for q, p in enumerate(r['left']):
+            if p >= 0:
+                key = 'single tones' if tone else f"the 16 tones at s = {r['s']:g}"
+                pj = int(np.argmax(dev[:, q] > JUMP_C)) + 1 if (dev[:, q] > JUMP_C).any() else None
+                grp.setdefault(key, []).append((p, r['w_left'][q] / W[0, q], r['pre'][q], r['maxdev'][q], q,
+                                                r['opts'].get('seed'), None if pj is None else pj - p))
+    span = lambda v, f_: f"{min(v):{f_}}" if min(v) == max(v) else f"{min(v):{f_}} … {max(v):{f_}}"
+    parts = []
+    for key in sorted(grp, key=lambda k: (k == 'single tones', k)):
+        xs = grp[key]
+        k1 = [x for x in xs if x[4] == 0]
+        runs = {x[5] for x in xs}
+        parts.append(f"{key}: {len(xs)} leaves ({len(k1)} of the first kernel" + (f", in {len(runs)} runs" if key != 'single tones' else '')
+                     + f"), periods {span([x[0] for x in xs], 'd')}, the coefficient at the leave over its start "
+                     f"{span([x[1] for x in xs], '.3f')}, the mean offset before {span([x[2] for x in xs], '+.3f')}, the largest distance "
+                     f"{span([x[3] for x in xs], '.2f')} ({sum(x[3] > JUMP_C for x in xs)} jumps"
+                     + (f", beyond {JUMP_C:g} {span([x[6] for x in xs if x[6] is not None], 'd')} periods after the leave"
+                        if any(x[6] is not None for x in xs) else '') + ")")
+    if parts:
+        out += ["Summed up — " + '; '.join(parts) + ".", ""]
+    band = [r for r in (B4 if B4 is not None else []) if r['freqs'] is None and 'even_w_all' in r]
+    if band:                                                           # the drift against (ii)'s even part at its saturation
+        a, b = BAND_B4
+        r = min(band, key=lambda r: r['s'])
+        ew = np.array(r['even_w_all'])[a - 1:b, 0]
+        rows = []
+        for key in sorted(k for k in grp if k != 'single tones'):
+            s_ = float(key.split('= ')[1])
+            rise = [x[1] - 1 for x in grp[key] if x[4] == 0]
+            w0 = next(np.array(q['W'])[0, 0] for q in C3 if q['s'] == s_)
+            rows.append(f"at s = {s_:g} s²⟨w₂⟩ {ew.min() * s_ ** 2:+.3f} … {ew.max() * s_ ** 2:+.3f} against the first kernel's rise at its "
+                        f"leaves {min(rise) * w0:+.3f} … {max(rise) * w0:+.3f}")
+        out += [f"The first kernel's drift against (ii)'s even part at its saturation (B4's 16 tones over the periods {a}–{b}, "
+                f"{ew.min():+.1f} … {ew.max():+.1f} per s²): " + '; '.join(rows) + ".", ""]
+    return out
+
+
+def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None, F=None, B5=None, A2=None, C3=None):
     L_ = ["# Proposition D‴.60: measurement noise and the formed kernels (`exp_noise_resonance.py`)", "",
           f"D‴.49's closed loop (k_e = {CT.KE:g}, ω = {CT.OM:g}, three bumps of width {CT.SIG:g}, 21 kernels at the masses ε = {EPS:g}, the "
           "regressor at x_m) from the fitted state — each feature's kernel at its centre with its amplitude, the others at α = 0 —; the "
@@ -602,6 +1117,7 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
         L_ += ["", f"The loop over its linearisation: centres [{lo:.4f}, {hi:.4f}], coefficients [{lw:.4f}, {hw:.4f}] (per metric: {per_m}); "
                    f"the quasi-static law over the linearisation, centres: [{q10[0]:.3f}, {q10[1]:.3f}] at ω ≥ 10, [{q19[0]:.3f}, "
                    f"{q19[1]:.3f}] at ω ≥ 19. The mobilities at the fit: {mob}.", ""]
+    L_ += a2_lines(A2)
     if B is not None:
         evn = {}
         for r3 in (B3 if B3 is not None else []):
@@ -638,19 +1154,9 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
                       f"{', '.join(f'{x:+.2e}' for x in r['dc_env'][-1])} |")
         L_.append("")
     L_ += b3_lines(B3, B)
-    if B4 is not None:
-        L_ += ["## B4. The long horizon and commensurability", "",
-               f"The paradigm's metric, the loop under s·n and −s·n for {NP_B4} periods: the even part of the coefficients' period means per s² "
-               f"and the odd part per s at the periods {', '.join(str(m) for m in MARKS_B4)} (kernel by kernel), at s = "
-               f"{', '.join(f'{q:g}' for q in S_B4)}; the reference's ω = {CT.OM:g} (21.4 = 107ω, 21.3 = 106.5ω, 13.1 = 65.5ω):", "",
-               "| noise | s | even part / s² (w), at the periods | odd part / s (w), at the periods | the centres' even part / s² at the "
-               "last period | the first kernel's centre, odd part / s, periods 1–12 |", "|---|---|---|---|---|---|"]
-        for r in sorted(B4, key=lambda r: (r['freqs'] is None, r['freqs'] or [0], r['s'])):
-            ev = '; '.join(', '.join(f"{x:+.3g}" for x in row) for row in r['even_w'])
-            od = '; '.join(', '.join(f"{x:+.3g}" for x in row) for row in r['odd_w'])
-            L_.append(f"| {noise_label(r['freqs'])} | {r['s']:g} | {ev} | {od} | {', '.join(f'{x:+.3g}' for x in r['even_c'][-1])} | "
-                      f"{', '.join(f'{x:+.3f}' for x in r['odd_c_per'])} |")
-        L_.append("")
+    L_ += b5_lines(B5)
+    L_ += b4_lines(B4)
+    L_ += f_lines(F, B4)
     if C is not None:
         xm = np.sin(np.linspace(0, 2 * np.pi, 2001))
         kk = []
@@ -666,37 +1172,33 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None):
                "that left there, and the least level from which every seed left at every level above ('—': none; '*': a seed left at a "
                "level and stayed at a higher one), against k_e and the law's m (the centres' mobility Gmw); √K's largest value along the "
                "orbit, and per kernel (μ_iφ_i² + v_iw_i(∂_cφ_i)²)^{1/2} at its largest: " + '; '.join(kk) + ":", "",
-               "| m | k_e | √K max | " + ' | '.join(f"A = {a:g}" for a in CT.ASTAR) + " | the median period of leaving (all levels) |",
-               "|---|---|---|---|---|---|---|"]
+               "| m | k_e | √K max | " + ' | '.join(f"A = {a:g}" for a in CT.ASTAR) + f" | leaves (jumps: the largest distance > {JUMP_C:g}) "
+               "| the leave periods: median [min, max] (all levels) |", "|---|---|---|---|---|---|---|---|"]
         for m in M_C:
             for ke in KE_C:
                 rs = [r for r in C if r['m'] == m and r['ke'] == ke]
                 if not rs:
                     continue
                 per_ = [r['left'][q] for r in rs for q in range(3) if r['left'][q] >= 0]
-                L_.append(f"| {m:g} | {ke:g} | {rs[0]['sqrtK']:.2f} | " + ' | '.join(c_cells(rs)) + f" | "
-                          + (f"{np.median(per_):.0f} ({len(per_)} leaves)" if per_ else '—') + " |")
+                jmp = sum(r['left'][q] >= 0 and r['maxdev'][q] > JUMP_C for r in rs if 'maxdev' in r for q in range(3))
+                L_.append(f"| {m:g} | {ke:g} | {rs[0]['sqrtK']:.2f} | " + ' | '.join(c_cells(rs)) + f" | {len(per_)} ({jmp}) | "
+                          + (f"{np.median(per_):.0f} [{min(per_)}, {max(per_)}]" if per_ else '—') + " |")
+        lv = []
+        for m, ke in ((12.0, 10.0), (3.0, 5.0)):
+            byl = leaves_by_level([r for r in C if r['m'] == m and r['ke'] == ke and 'maxdev' in r])
+            lv.append(f"m = {m:g}, k_e = {ke:g}: " + '; '.join(
+                f"s = {s_:g}: {d['leaves']} ({d['jumps']}) of {d['n']} runs, periods {min(d['periods'])}–{max(d['periods'])}"
+                for s_, d in sorted(byl.items()) if d['leaves']))
+        L_ += ["", "Per level the leaves over the seeds and kernels (the jumps among them) and their periods — against the slow modes' "
+               "time constants (F) —: " + ' | '.join(lv) + "."]
         L_.append("")
-    if C2 is not None:
-        L12 = law(12.0)
-        al_, c_, ix_ = DZ.fitted_state(L12, EPS, CT.CSTAR, CT.ASTAR)
-        o_ = orbit_terms(L12, EPS, al_[ix_], c_[ix_], 'paradigm', np.sin(np.linspace(0, 2 * np.pi, 2001)))
-        S_ = float((o_['w'] ** 2 * o_['d1'] ** 2).sum(1).max())
-        L_ += ["## C2. Controls (k_e and m as stated)", "",
-               f"The same loop and horizon: one tone; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12 (the design "
-               f"bound m ≲ ω_lo²/(G max_t Σ_iw_i²(∂_cφ_i)²) = {100.0 / (L12.G * S_):.2f} at ω_lo = 10, the band's lower edge: √K_max at "
-               "ω_lo); the Wasserstein–Fisher–Rao metric; tone pairs 18.9/22.5 (the difference 3.6 = 18ω) and 18.9/22.4 (17.5ω) under four "
-               "seeds' phases. Per run the period each kernel left (−1: never) and its largest period-averaged distance from the feature:", "",
-               "| control | m | k_e | noise | s | left at the period | largest distance |", "|---|---|---|---|---|---|---|"]
-        for r in C2:
-            o = r['opts']
-            nz = ('16 tones in ' + '–'.join(f"{x:g}" for x in o['band']) if 'band' in o else
-                  (noise_label(o['freqs']) if 'freqs' in o else "D‴.49's 16 tones")) + (f", seed {o['seed']}" if 'seed' in o else '')
-            L_.append(f"| {r['label']} ({o.get('metric', 'paradigm')}) | {r['m']:g} | {r['ke']:g} | {nz} | {r['s']:g} | "
-                      f"{', '.join(map(str, r['left']))} | {', '.join(f'{x:.3f}' for x in r['maxdev'])} |")
-        L_.append("")
+    L_ += c2_lines(C2)
+    L_ += c3_lines(C3, B4)
     L_.append("Numbers are produced by `experiments/exp_noise_resonance.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
+
+
+KEYS = ('A', 'A2', 'F', 'B', 'B2', 'B3', 'B5', 'B4', 'C', 'C2', 'C3')
 
 
 def main():
@@ -704,16 +1206,16 @@ def main():
     md = os.path.join(OUT, 'noise_resonance.md')
     old = E.load(raw)
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[old.get(k) for k in ('A', 'B', 'B2', 'C', 'B3', 'B4', 'C2')]))
+        open(md, 'w').write(report(**{k: old.get(k) for k in KEYS}))
         return
-    parts = (set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else
-             {'A', 'B', 'B2', 'B3', 'B4', 'C', 'C2'})
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(KEYS)
     res = {k: v for k, v in old.items() if k not in parts}
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('B2', part_B2), ('B3', part_B3), ('B4', part_B4), ('C', part_C), ('C2', part_C2)):
-        if k in parts:
-            res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(*[res.get(k_) for k_ in ('A', 'B', 'B2', 'C', 'B3', 'B4', 'C2')]))
+    fns = dict(A=part_A, A2=part_A2, B=part_B, B2=part_B2, B3=part_B3, B4=part_B4, B5=part_B5, C=part_C, C2=part_C2, C3=part_C3,
+               F=part_F)
+    for k in [k for k in KEYS if k in parts]:
+        res[k] = fns[k](old.get('B3')) if k == 'B3' else fns[k](); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
+        open(md, 'w').write(report(**{k_: res.get(k_) for k_ in KEYS}))
 
 
 if __name__ == '__main__':
