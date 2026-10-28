@@ -479,22 +479,26 @@ def report(A=None, B=None, B2=None, E_=None):
         pooled = np.concatenate([b['law'] for b in B])
         pq = np.percentile(pooled, [25, 50, 75])
         L_ += ['', '## C. The window', '',
-               "On the draws that keep the order: the first noise kernel's entry after the K-th, τ_{K+1} − τ_K, against the first-order W — "
+               "On the draws that keep the order with the order criterion below 1 (the first order's regime): the first noise kernel's entry "
+               "after the K-th, τ_{K+1} − τ_K, against the first-order W — "
                "the ratio's median, range and 5–95% quantiles, and their half-width over s (constant if the relative error is O(s)) —; the "
                "kernel as predicted, and on the draws where it is not, the relative gap between the two smallest predicted windows "
                "(W₍₂₎ − W₍₁₎)/W₍₁₎ (median; all draws' median in brackets); W·s (median, quartiles) against its limit law (`law_W`, "
                f"{N_LAW} samples per target; pooled over the targets: median {pq[1]:.3g}, quartiles [{pq[0]:.3g}, {pq[2]:.3g}]) — the "
-               "Kolmogorov–Smirnov p-value of the draws' probability integral transforms under their targets' laws —; the draws with the "
-               "support exact but the order swapped, and those of them with W_pred < 0 (the first-order dual already past its wall).", '',
+               "Kolmogorov–Smirnov p-value of the draws' probability integral transforms under their targets' laws —; outside the regime: "
+               "the draws that keep the order with the criterion ≥ 1, and those with the support exact but the order swapped (of each, "
+               "those with W_pred < 0: the first-order dual already past its wall).", '',
                '| s | draws | W_obs/W_pred: median [min, max] | 5–95% | half-width / s | next kernel as predicted | '
-               'missed: (W₍₂₎ − W₍₁₎)/W₍₁₎ [all] | W·s: median [quartiles] | KS p | swaps (W_pred < 0) |',
-               '|---|---|---|---|---|---|---|---|---|---|']
+               'missed: (W₍₂₎ − W₍₁₎)/W₍₁₎ [all] | W·s: median [quartiles] | KS p | order kept, criterion ≥ 1 (W_pred < 0) | '
+               'swaps (W_pred < 0) |', '|---|---|---|---|---|---|---|---|---|---|---|']
         for i, s in enumerate(LEVELS):
             al = [d for b in B for d in b['levels'][i]['draws']]
-            ds = [d for d in al if d['exact_order'] and np.isfinite(d['W_obs'])]
+            ds = [d for d in al if d['exact_order'] and d['crit_ord'] < 1 and np.isfinite(d['W_obs'])]
+            out = [d for d in al if d['exact_order'] and d['crit_ord'] >= 1]
             sw = [d for d in al if d['exact'] and not d['exact_order']]
+            oo = f"{len(out)} ({sum(d['W_pred'] < 0 for d in out)}) | {len(sw)} ({sum(d['W_pred'] < 0 for d in sw)})"
             if not ds:
-                L_.append(f"| {s:g} | 0 | — | — | — | — | — | — | — | {len(sw)} |")
+                L_.append(f"| {s:g} | 0 | — | — | — | — | — | — | — | {oo} |")
                 continue
             r = np.array([d['W_obs'] / d['W_pred'] for d in ds])
             q5, q95 = np.percentile(r, [5, 95])
@@ -505,7 +509,7 @@ def report(A=None, B=None, B2=None, E_=None):
             L_.append(f"| {s:g} | {len(ds)} | {np.median(r):.4f} [{r.min():.3f}, {r.max():.3f}] | [{q5:.4f}, {q95:.4f}] | "
                       f"{(q95 - q5) / 2 / s:.2f} | {sum(d['j_obs'] == d['j_pred'] for d in ds)}/{len(ds)} | {mg} "
                       f"[{np.median([d['W_gap'] for d in ds]):.3g}] | {np.median(ws):.3g} [{np.percentile(ws, 25):.3g}, "
-                      f"{np.percentile(ws, 75):.3g}] | {p_ks:.2g} | {len(sw)} ({sum(d['W_pred'] < 0 for d in sw)}) |")
+                      f"{np.percentile(ws, 75):.3g}] | {p_ks:.2g} | {oo} |")
         nK, nx = 3, 61
         p_late = float(chi2.sf((1 + DELTA) ** 2 * nx, nx - 2 * nK))
         L_ += ['', '## D. Stopping and the oracle', '',
