@@ -2582,3 +2582,46 @@ and a test now spies on the call.
 wall of the fit's sign —, so it is a one-sided test, as good as the sign-agnostic score for same-sign pairs and blind to opposite
 signs. A remedy is judged by the defect it was meant to cure (power at least α at small Δ), not by a different figure of merit
 (Δ₅₀); and comparisons are fair only like for like: one-sided against one-sided, sign known or not.
+
+## Round 61 (adversarial review of Proposition D‴.59 as revised after round 57, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bh: Proposition D‴.59 as revised after round 57, with its code and results at
+a1f5d85 (`review/REVIEW_round61_D3bh.md`). The referee:
+- regenerated the md byte for byte and reran A, D, H and E cells field by field;
+- dumped the raw in full precision (the ends' sub-sample and negative widths), followed C's pair targets block by block and H's
+  equal-amplitude path at the tolerances 10⁻⁹ and 10⁻¹³;
+- re-derived (i), (ii)(a) and (ii)(c), checked the width split's order on same-sign, cancelling and the loop's large-|w| pairs, and
+  re-fitted the optimal dipole;
+- scanned the one-sign separation at σ* = 0.06 and ran the real loop on G's six targets at ε = 10⁻⁵ … 10⁻¹⁰ (the dipole phase, the
+  landing, the ε-scaling, the collapse) and on H's targets to τ = 4.1·10⁵;
+- ran 49 single-point mutants and searched the literature.
+
+**Verdicts (D3bh).** (i), the dipole's runaway law and the width split hold. But three of the draft's words were thresholds: (ii)(b)'s
+"exact" was the path's stopping tolerance (with 10⁻¹³ the path keeps entering kernels and one feature is approximated by an eight-kernel
+cluster, with unreported sub-sample and negative widths), σ* = 0.04's "coinciding pair" a null triple beside an exact fit, and the
+loop's "migrates … lands" a midpoint and PAIR_TOL — the pair's centre of mass already sits on a feature; landed, it collapses
+algebraically; and the landed half-difference follows a law the draft never stated, v ∝ ε^{−1/6}, the block's runaway in the loop's
+fast time. The cancellation's condition "closer than σ₀" was contradicted by its own evidence (1.33σ₀) and the loop does not keep it.
+Minors: (ii)(a)'s check selective and its constant non-uniform; the pairs' mechanism; F's pair drifts; (iii)'s noise kernel; 17
+non-equivalent surviving mutants; raw provenance; (i)'s proof's order; σ unconstrained; literature and "New".
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bh-1 | major | (ii)(b)'s "the fit exact" is the path's tolerance; H's ends misdescribed | (ii)(b): the path reaches its tolerance with one feature fitted by one or two kernels and the other by a cluster of seven or eight with the feature's mass, and at a lower tolerance keeps entering kernels; H2: the six σ* = 0.06 paths to 10⁻¹³ (20–32 entries, the last at τ = 1.16·10¹² … 2.34·10⁶⁷, the residual creeping to 1.5·10⁻¹¹ … 2.0·10⁻¹⁰, the masses 0.9998–1.0002); H's columns for the sub-sample and negative widths over all active kernels (3–6 and 0–2); `outcome`: a pair counts only if its net coefficient and centre of mass fit a feature (any feature: D's two share a centre), else a null cluster, and 'exact, null cluster' (σ* = 0.04) |
+| D3bh-2 | major | (ii)(c)'s real-loop sentence | (ii)(c): the dipole as a phase — v³ = 3μ₀KΛ(ε)(τ − τ_d) until the next kernel forms, the landing (centre of mass and W at a feature, within 1%), the algebraic collapse —, v ∝ ε^{−1/6} derived from the law and Λ(ε) ∝ ε^{−1/2}; G at ε = 10⁻⁵ … 10⁻¹⁰ (`phases`, `g_phase_summary`): the slope over the law 0.997–1.112 at 10⁻¹⁰, the landed v 0.71–1.09 of the law's, the last decade's ratio 1.4078–1.5002 against 10^{1/6}, landed at τ = 6400 on 0, 3 and 6 of 6 at 10⁻⁵, 10⁻⁶ and ≤ 10⁻⁷, the collapse τ^{−0.235 … −0.173} (distance) and τ^{−0.906 … −0.689} (residual), 6 cells frozen; the centre of mass's offset and W − A in place of the midpoint, the pair column at report time |
+| D3bh-3 | major | The cancellation's condition contradicted; (b) the path's | (ii)(b): at 1.33σ₀ with the amplitudes within 10%; H3 (the separation scan): 0.83σ₀ stalls with 10 negative kernels, 1.67σ₀ and 2σ₀ exact with kernels of one sign, 2.5σ₀ and 3.33σ₀ a coinciding pair; HL (the loop on H's equal targets): σ* = 0.04 ends with two one-sign kernels at τ = 6400, σ* = 0.06 still has 6–12 negative kernels there |
+| D3bh-4 | minor | (ii)(a)'s check selective; the constant not uniform | (ii)(a) and the proof: the expansion in \|w_i − w_j\|Δc/(\|W\|σ) (the k-th moment about c̄ written out), valid while \|w_i − w_j\|Δc ≪ \|W\|σ; the check on the three pairs a little apart and, new, on the loop's 72 landed rows (0.9828–1.0458 of the prediction, the parameter ≤ 0.284); at coincidence (C's Δ ≥ 0.6 target 2, Δc 2.78·10⁻⁸) unresolved |
+| D3bh-5 | minor | The pairs' mechanism | (ii)(a): two early kernels approximating the widest feature collapse onto it together, or the last entrant, of the other sign, cancels an early kernel's excess |
+| D3bh-6 | minor | F's pair drifts apart; (iii)'s noise kernel | F to 1.3, 6, 30 and 150 times the last entry at 10⁻⁶ and 10⁻⁸: the pair drifts apart at 10⁻⁶ (7.0·10⁻³ → 1.6·10⁻², the residual at the idle kernels' floor 5.0–5.4·10⁻⁶), stays 2.6·10⁻³ apart at 10⁻⁸; (iii): the stop's fourth kernel fits noise, no pair forms |
+| D3bh-7 | minor | 17 non-equivalent surviving mutants; the job functions untested | tests (17): `outcome` at its thresholds (the stalled branch included), the pair rule with formed kernels and null clusters, a pair fitting any feature sharing its centre, `closest_pair` with unequal widths, `dipole_law` (the nearest opposite kernel, E_inf's ½), `h_stats`, the stalled block's summary, `phases`, `oracle_error` started at the truth |
+| D3bh-8 | minor | Raw provenance; C's table | A–D regenerated with the current code; `oc` is `outcome` on C's own end, the stalled block printed; the polished \|w\| marked solver-dependent; G's pair column computed in the report |
+| D3bh-9 | minor | (i)'s proof | E = J + ½‖φ‖²(w − w*)² and E ≤ ½‖f*‖² − η give (w − w*)² ≤ w*² − 2η/‖φ‖²: w keeps w*'s sign, away from 0 and below 2\|w*\|; "on the critical curve" |
+| D3bh-10 | minor | σ unconstrained | stated in the setting; H and H2 count the widths below the samples' spacing and of negative sign |
+| D3bh-11 | minor | Literature and "New" | Status: Gallon–Jentzen–Lindner 2022, Kranz–Gallon–Dereich–Jentzen 2025; the exponent from the mobility (v^{a+2−b} ∝ s; Chizat 2022); Pearson's moment algebra and Runnalls' merge for the width split; Schiebinger–Robeva–Recht 2018 for the cancellations; the sliding Frank–Wolfe algorithm; New narrowed to the loop's three phases and the ε^{−1/6} landing, the split and the cancellations as observed |
+| D3bh-12 | cosmetic | Misquotes | 2.5·10⁻⁴ on target 12; B's nine rows one computation (the grid scales with σ*); E's agreement 7·10⁻⁸ (printed) |
+
+**Lesson.** A name given to a configuration has to survive the configuration's invariants. "Exact" was a tolerance, "coinciding pair"
+a threshold on a null triple, "lands" a threshold on a distance still falling as τ^{−0.2}, "migrates" a midpoint that unequal
+coefficients displace. Measured instead — the centre of mass and net coefficient against the feature, a lower tolerance, a longer
+horizon, a scan of the separation —, the loop's dipole turned out to follow the block's own runaway law in the loop's time, which
+predicts the landed coefficient's ε^{−1/6}.

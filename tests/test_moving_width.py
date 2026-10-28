@@ -86,7 +86,7 @@ def test_outcome_classes_and_pairs():
     As = [0.77, 0.6, -0.8]
     base = dict(rms=1e-13, err=[1e-9, 1e-9, 1e-9], oob=False)
     assert M.outcome(dict(base, theta=th[1:], w=[0.77, 0.6, -0.8]), As) == 'exact'
-    assert M.outcome(dict(base, theta=th + [[0.9, 0.1]], w=[0.33, 0.44, 0.6, -0.8, 1e-6]), As) == 'coinciding pair'
+    assert M.outcome(dict(base, theta=th + [[0.9, 0.1]], w=[0.33, 0.44, 0.6, -0.8, 1e-6], err=[0.33, 1e-9, 1e-9]), As) == 'coinciding pair'
     assert M.outcome(dict(base, theta=th[1:], w=[0.77, 0.6, -0.8], oob=True), As) == 'stopped by the budget'
     assert M.outcome(dict(base, theta=th[1:], w=[0.77, 0.6, -0.8], rms=0.2), As) == 'not fitted'
 
@@ -102,9 +102,11 @@ def test_the_g_report():
     law = [dict(v=v, E=E, E_inf=0.02, rms_inf=0.2, p=[0.1, -0.35], mu0=0.1, dc=dc, ds=ds)
            for v, E, dc, ds in ((300.0, 0.02 + 1e-5, 2e-4, 6e-4), (425.0, 0.02 + 5e-6, 1.4e-4, 4.2e-4))]
     stalled = dict(n=4, wmax=3910.0, sep=1.9e-4, rms=0.2000001, polish=[dict(status=2, nfev=2900, accepted=True, wmax_ratio=4300.0)], nfev=10)
-    loops = [dict(eps=1e-8, tau=t, formed=4, pair=dict(d=d, w=(4.5, -3.96), off=o), pairs=[], wmax=5.33, rms=r)
-             for t, d, o, r in ((400.0, 4.6e-4, 0.008, 1.1e-11), (1600.0, 3e-4, 0.005, 5e-12))]
-    G = [dict(dmin=0.4, q=9, entries=2, stalled=stalled, flow=flow, law=law, status=0, loops=loops)]
+    cs, ss, As = [-0.3, 0.2, 0.5], [0.1, 0.15, 0.08], [0.9, 0.54, -0.6]
+    pair = lambda off, d: [[0.2 + off * 0.15 + 3.96 * d * 0.15 / 0.54, 0.15], [0.2 + off * 0.15 + 4.5 * d * 0.15 / 0.54, 0.15]]
+    loops = [dict(eps=1e-8, tau=t, Lam=100.0, theta=pair(o, d) + [[-0.3, 0.1], [0.5, 0.08]], w=[4.5, -3.96, 0.9, -0.6], wmax=4.5, rms=r)
+             for t, d, o, r in ((400.0, 4.6e-4, 0.008, 1.1e-11), (1600.0, 3e-4, 0.005, 5e-12), (6400.0, 2e-4, 0.002, 1e-12))]
+    G = [dict(dmin=0.4, q=9, cs=cs, ss=ss, As=As, entries=2, tau_d=17.0, stalled=stalled, flow=flow, law=law, status=0, loops=loops)]
     md = M.report(G=G)
     ls = np.log(M.S_G[-1] / M.S_G[-2])
     ex = M.dipole_exponents(flow)
@@ -115,7 +117,10 @@ def test_the_g_report():
     assert (f"| 0.4 | 9 | 2 | 4, 3910, 1.90e-04, 2.000001e-01 (2.000000e-01), 2/2900/a/4.3e+03 | 0.9, 4.6, 20, 92, 300, 425 | "
             f"5.90e+00, 2.90e-01, 6.20e-02, 1.30e-02, 4.20e-03, 2.90e-03 | {exs} | {K2[0]:.5e}, {K2[1]:.5e} | {vv} | "
             f"{0.35 / np.hypot(0.1, 0.35):.3f} |") in md
-    assert '| 0.4 | 9 | 1e-08 | 1600 | 4 | 3.00e-04, +4.500/-3.960, 0.005 | none | 5.33 | 5.0e-12 |' in md
+    lp = M.landing(loops[1]['theta'], loops[1]['w'], cs, ss, As)                         # the dipole pair at τ = 1600 (round 61)
+    assert abs(lp['off'] - 0.005) < 1e-12 and abs(lp['dW']) < 1e-12 and lp['w'] == (4.5, -3.96)
+    assert (f"| 0.4 | 9 | 1e-08 | 1600 | 4 | {lp['d']:.2e}, +4.500/-3.960, 5.0e-03, {lp['dW']:+.1e} L | +4.500/-3.960 | 5.00 | "
+            "5.0e-12 |") in md and abs(lp['d'] - 3e-4) < 1e-12
     ex = M.dipole_exponents([dict(s=1e9, wmax=1.0, sep=1.0), dict(s=1e11, wmax=100 ** (1 / 3), sep=100 ** (-1 / 3))])
     assert abs(ex[0] - 1 / 3) < 1e-12 and abs(ex[1] + 1 / 3) < 1e-12 and M.dipole_exponents(flow[:1] + [dict(flow[1], sep=None)]) is None
 
@@ -184,3 +189,138 @@ def test_the_dipole_law_finds_the_infimum():
     th = np.array([tb + p / (2 * v), tb - p / (2 * v), tb, [0.6, 0.1]])
     d = M.dipole_law(L, K, f, th, np.array([v, -v, 0.5, 0.4]))
     assert d['v'] == v and np.allclose(d['p'], p, rtol=1e-6) and d['E_inf'] < 1e-25 < d['E'] and d['mu0'] == 4 * L.G * L.c / L.A
+
+
+def test_the_outcomes_at_their_thresholds():
+    """Referee round 61: `outcome` with the features — exact with an idle null cluster (each feature's nearest kernel exact, the others
+    summing to nothing); a coinciding pair only where its net coefficient and centre of mass fit a feature (else a null cluster), among
+    formed kernels (|w| above 1% of the smallest amplitude) and only below the residual 1e-8; a budget stop a dipole run-off only for an
+    opposite-sign pair closer than 0.05 with |w| beyond 10 times the largest amplitude."""
+    import exp_moving_width as M
+    cs, ss, As = [-0.5, 0.0, 0.5], [0.1, 0.1, 0.1], [1.0, -0.8, 0.6]
+    th = [[c, s] for c, s in zip(cs, ss)]
+    m = lambda **kw: dict(dict(w=list(As), theta=th, rms=1e-10, err=[1e-8] * 3, oob=False), **kw)
+    oc = lambda mm: M.outcome(mm, As, cs, ss)
+    assert oc(m()) == 'exact'
+    nul = [[0.9, 0.05], [0.9, 0.05], [0.9, 0.05]]
+    assert oc(m(w=list(As) + [-0.05, 0.1, -0.05], theta=th + nul)) == 'exact, null cluster'
+    assert oc(m(w=list(As) + [-0.005, 0.005], theta=th + nul[:2])) == 'exact'                     # below 1%: idle
+    pr = dict(w=[1.0, -0.3, -0.5, 0.6], theta=[th[0], th[1], [0.0, 0.1 * (1 + 1e-3)], th[2]], err=[1e-8, 0.5, 1e-8])
+    assert oc(m(**pr)) == 'coinciding pair'
+    assert oc(m(**dict(pr, w=[1.0, -0.3, -0.6, 0.6]))) == 'null cluster'                          # the pair's W −0.9 against −0.8
+    assert oc(m(**dict(pr, theta=[th[0], [0.002, 0.1], [0.002, 0.1], th[2]]))) == 'null cluster'   # its centre 0.02σ* off
+    assert oc(m(**dict(pr, rms=2e-8))) == 'not fitted'
+    assert oc(m(**dict(pr, w=[1.0, -0.795, -0.005, 0.6]))) == 'not fitted'                       # the second kernel unformed
+    st = dict(theta=[[0.0, 0.1], [0.004, 0.1], [0.5, 0.1]], w=[50.0, -49.0, 0.6])                # 0.04 apart, 50 = 50·max|A|
+    assert oc(m(oob=True, stalled=st)) == 'dipole run-off'
+    assert oc(m(oob=True, stalled=dict(st, theta=[[0.0, 0.1], [0.006, 0.1], [0.5, 0.1]]))) == 'stopped by the budget'
+    assert oc(m(oob=True, stalled=dict(st, w=[9.9, -8.9, 0.6]))) == 'stopped by the budget'
+    st2 = dict(theta=[[0.0, 0.1], [0.001, 0.1], [0.3, 0.1]], w=[50.0, 49.0, -98.0])                # the close pair of one sign
+    assert oc(m(oob=True, stalled=st2)) == 'stopped by the budget'
+
+
+def test_the_closest_pair_counts_the_widths():
+    """`closest_pair`'s distance |Δc|/σ + |Δlog σ| (σ the mean width): two kernels at one centre are |log(σ_j/σ_i)| apart."""
+    import exp_moving_width as M
+    th, w = [[0.0, 0.1], [0.0, 0.2], [0.05, 0.1]], [1.0, -1.0, 1.0]
+    d, i, j = M.closest_pair(th, w)
+    assert (i, j) == (0, 2) and abs(d - 0.5) < 1e-12
+    d, i, j = M.closest_pair(th, w, opposite=True)
+    assert (i, j) == (0, 1) and abs(d - np.log(2)) < 1e-12
+
+
+def test_the_dipole_law_picks_the_nearest_opposite_kernel_and_halves_the_energy():
+    """Referee round 61: `dipole_law`'s pair is the largest |w| with the nearest kernel of the other sign (not a farther one); its E and
+    E_inf are ½⟨r²⟩ — with a target the dipole model cannot fit (a narrow bump far away), E_inf = ½⟨g²⟩ of that bump."""
+    import exp_moving_width as M
+    L = M.law()
+    K = M.MW.BumpsCW(M.XS, M.S0)
+    tb, p, v = np.array([0.1, 0.12]), np.array([0.002, -0.004]), 10.0
+    dip = K.synth(tb[None, :], np.array([0.5])) + K.dphi(tb[None, :])[:, 0, :] @ p
+    th = np.array([tb + p / (2 * v), tb - p / (2 * v), [-0.9, 0.1], tb])
+    d = M.dipole_law(L, K, dip + K.synth(np.array([[-0.9, 0.1]]), np.array([-0.3])), th, np.array([v, -v, -0.3, 0.5]))
+    assert abs(d['dc'] - abs(p[0]) / v) < 1e-15
+    g = K.synth(np.array([[1.3, 0.03]]), np.array([0.2]))
+    d = M.dipole_law(L, K, dip + g, th[[0, 1, 3]], np.array([v, -v, 0.5]))
+    assert abs(d['E_inf'] / (0.5 * np.mean(g ** 2)) - 1) < 1e-6 and abs(d['rms_inf'] ** 2 / 2 - d['E_inf']) < 1e-18
+    assert abs(d['E'] - 0.5 * np.mean((dip + g - K.synth(th[[0, 1, 3]], np.array([v, -v, 0.5]))) ** 2)) < 1e-18
+
+
+def test_h_statistics():
+    """Referee round 61: H's statistics — the most kernels below −1% of the smallest amplitude in a block (a coefficient −0.005 is not
+    one), the most negative coefficient, the end's formed kernels of the other sign, the smallest formed width (not an idle kernel's),
+    and over all the end's kernels those narrower than the samples' spacing and those of negative width."""
+    import exp_moving_width as M
+    As = (1.0, 0.9)
+    ws = [np.array([0.5, -0.005]), np.array([1.0, -0.02, -0.3, 0.9]), np.array([1.0, -0.4])]
+    m = dict(w=[1.0, -0.2, 0.9, 1e-4, -2e-4], theta=[[-0.08, 0.06], [0.0, 0.05], [0.08, 0.07], [0.3, 0.004], [0.4, -0.003]])
+    h = M.h_stats(ws, m, As)
+    assert h == dict(neg_path=2, wmin_path=-0.4, neg_end=1, smin=0.05, sub=2, negw=1, wmax=1.0)
+    cl = M.clusters(m, [-0.08, 0.08], [0.06, 0.06], As)
+    assert [n for n, x in cl] == [2, 1] and abs(cl[0][1] - (0.06 - 0.2 * 0.05) / 0.06) < 1e-12 and abs(cl[1][1] - 0.9 * 0.07 / (0.9 * 0.06)) < 1e-12
+
+
+def test_the_stalled_block_summary():
+    """Referee round 61: G's stalled block — its closest pair of opposite signs (not a closer one of one sign), its largest |w|."""
+    import exp_moving_width as M
+    K = M.MW.BumpsCW(M.XS, M.S0)
+    st = dict(c=[[0.0, 0.1], [0.001, 0.1], [0.3, 0.1]], w=np.array([50.0, 49.0, -98.0]))
+    Rc = dict(stalled=st, polish_log=[[dict(status=2, nfev=10, accepted=True)]], nfev=7)
+    f = np.zeros(M.XS.size)
+    s = M.stalled_summary(Rc, f, K)
+    assert s['wmax'] == 98.0 and abs(s['sep'] - 2.99) < 1e-12 and s['n'] == 3 and s['nfev'] == 7 and s['polish'][0]['nfev'] == 10
+    assert M.stalled_summary(dict(Rc, stalled=None), f, K) is None
+
+
+def test_the_loop_phases():
+    """Referee round 61: `phases` on a synthetic loop whose dipole pair grows exactly as v³ = 3μ₀KΛ(τ − τ_d) until a third kernel forms
+    at τ₃, then lands on the feature with v frozen: the slopes are 1, the landed v the law's (3μ₀KΛ(τ₃ − τ_d))^{1/3}; the collapse's
+    exponents from the pair's distance and the residual over 1600 → 6400."""
+    import exp_moving_width as M
+    assert all(t in M.TAUS_G for t in M.TAUS_G_MD) and 30.0 in M.TAUS_G
+    cs, ss, As = [0.0, 0.5], [0.1, 0.1], [0.6, -0.5]
+    law = [None, dict(v=100.0, E=0.01 + 1e-6, E_inf=0.01, mu0=0.1)]
+    K_, Lam, td, t3 = 1e4 * 1e-6, 50.0, 17.0, 30.0
+    rate = 3 * 0.1 * K_ * Lam
+    loops = []
+    for tau in M.TAUS_G:
+        v = (rate * (min(tau, t3) - td)) ** (1 / 3) if tau > td else 0.5
+        d = 1e-3 * (tau / 400.0) ** -0.2 if tau >= t3 else 0.01
+        W = 0.6 if tau >= t3 else 0.3
+        wa, wb = W / 2 + v, W / 2 - v
+        th = [[-wb * d * 0.1 / W, 0.1], [wa * d * 0.1 / W, 0.1]]
+        ex = [[0.5, 0.1]] if tau >= t3 else []
+        loops.append(dict(eps=1e-8, tau=tau, Lam=Lam, theta=th + ex, w=[wa, wb] + ([-0.5] if tau >= t3 else []), wmax=abs(wa),
+                          rms=1e-6 * (tau / 400.0) ** -0.8))
+    r = dict(cs=cs, ss=ss, As=As, entries=2, tau_d=td, law=law, loops=loops)
+    ph = M.phases(r, 1e-8)
+    assert ph['t3'] == 30.0 and len(ph['slopes']) >= 4 and max(abs(s - 1) for s in ph['slopes']) < 1e-9
+    assert abs(ph['v400'] / ph['vstar'] - 1) < 1e-12 and abs(ph['rate'] - rate) < 1e-12
+    assert all(ph['land'][t]['off'] < 1e-9 and abs(ph['land'][t]['dW']) < 1e-12 for t in M.TAUS_G_MD)
+    assert abs(ph['collapse'][0] + 0.2) < 1e-9 and abs(ph['collapse'][1] + 0.8) < 1e-9
+    md = '\n'.join(M.g_loop_lines([dict(r, dmin=0.4, q=9, loops=loops)]))
+    assert (f"| 0.4 | 9 | 1e-08 | 17 | 30 | 1.000 [1.000, 1.000] | {ph['v400']:.4g} | {ph['vstar']:.4g} | yes, yes, yes | -0.200, -0.800 |"
+            in md)
+
+
+def test_a_pair_fits_any_feature_sharing_its_centre():
+    """Referee round 61: a pair fits a feature if its net coefficient and centre of mass match any feature's — two features may share a
+    centre (D at d = 0: the narrow feature split in two halves on the pedestal), and the nearest by centre alone is then ambiguous."""
+    import exp_moving_width as M
+    th = [[0.0, 0.06], [2e-4, 0.06]]
+    assert M.pair_fits(th, [0.25, 0.25], 0, 1, [0.0, 0.0], [0.3, 0.06], [0.8, 0.5])
+    assert not M.pair_fits(th, [0.25, 0.20], 0, 1, [0.0, 0.0], [0.3, 0.06], [0.8, 0.5])
+    assert not M.pair_fits(th, [0.25, 0.25], 0, 1, [0.1, 0.1], [0.3, 0.06], [0.8, 0.5])
+
+
+def test_the_oracle_fit_starts_at_the_truth():
+    """Referee round 61 (E4): the oracle fit is the K-kernel least-squares fit of the data started at the truth — without noise it is
+    the truth itself (error 0), with noise its error is below the noise's rms."""
+    import exp_moving_width as M
+    cs, ss, As = [-0.4, 0.3], [0.08, 0.15], [0.7, -0.5]
+    K = MW.BumpsCW(M.XS, M.S0)
+    f = K.synth(np.c_[cs, ss], np.array(As))
+    assert M.oracle_error(f, np.zeros_like(f), cs, ss, As) < 1e-12
+    xi = 1e-3 * np.random.default_rng(1).standard_normal(f.size)
+    e = M.oracle_error(f, xi, cs, ss, As)
+    assert 1e-5 < e < 1e-3

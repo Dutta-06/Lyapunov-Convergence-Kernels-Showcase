@@ -16,13 +16,16 @@ C. Random three-feature targets (widths log-uniform in [0.05, 0.3], amplitudes �
 D. A narrow feature (σ = 0.06, A = 0.5) on a wide pedestal (σ = 0.3, A = 0.8) at the distances d: the kernels formed with moving widths.
 E. Under noise (C's targets at Δ = 0.6, s = 10⁻³, 10⁻²): the discrepancy rule's stop (the residual's rms within (1 + δ)s), moving widths
    against fixed: the kernels and the error against the truth, against the oracle's s(3K/N)^{1/2}.
-F. The real loop at small masses (ε = 10⁻⁶, the free law on its curves, `rich_transit_nd.loop_nd` with moving widths) on C's first
-   targets: its formed kernels against the path's, at TAUS_F times the path's last entry.
+F. The real loop at small masses (ε = 10⁻⁶, 10⁻⁸, the free law on its curves, `rich_transit_nd.loop_nd` with moving widths) on C's
+   first targets: its formed kernels against the path's, at TAUS_F times the path's last entry (to 150: referee round 61).
 G. C's paths stopped by their budget: the stalled block's state when the budget ran out (the path as C's), its flow from the entry on
    the critical curve to s = 1e11 with the dipole law's constant (K = v²(E − E_inf), E_inf the optimal dipole fit's), and the real loop
-   at EPS_G to the times TAUS_G (referee round 57).
-H. Two features of one sign closer than the kernels' starting width (±0.08), symmetric and perturbed: the kernels of the other sign
-   (referee round 57).
+   at the masses EPS_G on the grid TAUS_G (referee round 57): the dipole pair's half-difference v, centre of mass and net coefficient
+   against the features, its three phases — the dipole's growth v³ = 3μ₀KΛ(ε)(τ − τ_d) until the next kernel forms, the landing, the
+   collapse — and the landed v against (3μ₀KΛ(ε)(τ₃ − τ_d))^{1/3} ∝ ε^{−1/6} (referee round 61).
+H. Two features of one sign at ±0.08 (1.33σ₀ apart), symmetric and perturbed: the kernels of the other sign (referee round 57), the
+   end's kernels narrower than the samples' spacing or of negative width; H2: the σ* = 0.06 paths to the tolerance TOL_H2; H3: the
+   separation scan SEP_H at σ* = 0.06, equal amplitudes; HL: the real loop on H's two equal targets (referee round 61).
 """
 import os
 import sys
@@ -53,8 +56,15 @@ SEED_C, N_C, DELTAS_C, K_C, WID_C = 590, 40, (0.4, 0.6), 3, (0.05, 0.3)
 EXACT_TOL = 1e-6                                                        # exact: every feature's (c, σ, w) within it, the residual < 1e-8
 D_D = (0.0, 0.1, 0.2, 0.3, 0.45, 0.6)
 LEVELS_E, DELTA_E, N_E = (1e-3, 1e-2), 0.1, 20
-EPS_F, N_F, TAUS_F = 1e-6, 4, (1.3, 6.0)
-EPS_G, TAUS_G, S_G = (1e-6, 1e-8), (400.0, 1600.0, 6400.0), (1e3, 1e5, 1e7, 1e9, 3.2e10, 1e11)  # G: the flow to s = 1e11, the loop to τ
+EPS_F, N_F, TAUS_F = (1e-6, 1e-8), 4, (1.3, 6.0, 30.0, 150.0)            # F: the loop to 150 times the last entry (round 61)
+EPS_G = (1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10)                         # G: the loop at six masses (the landing law: round 61)
+TAUS_G = tuple(float(x) for x in np.unique(np.r_[np.linspace(10.0, 50.0, 21), np.geomspace(50.0, 6400.0, 36)].round(6)))  # 50·2^{k/5}
+TAUS_G_MD = (400.0, 1600.0, 6400.0)                                     # G: the loop's states the md tabulates
+S_G = (1e3, 1e5, 1e7, 1e9, 3.2e10, 1e11)                                # G: the block's flow to s = 1e11
+LAND_TOL = 0.01                                                         # G: landed — the pair's centre of mass within 1% of a feature's
+                                                                        # width of it and its net coefficient within 1% of its amplitude
+SEP_H, TOL_H2 = (0.05, 0.1, 0.12, 0.15, 0.2), 1e-13                     # H3: σ* = 0.06, equal, at ±SEP_H; H2: the paths to this tolerance
+EPS_HL, TAUS_HL = (1e-6, 1e-8), (1600.0, 6400.0)                        # HL: the loop on H's two equal targets
 H_TARGETS = (('σ* 0.04, equal', (-0.08, 0.08), (0.04, 0.04), (1.0, 1.0)), ('σ* 0.06, equal', (-0.08, 0.08), (0.06, 0.06), (1.0, 1.0)),
              ('σ* 0.06, A₂ 0.99', (-0.08, 0.08), (0.06, 0.06), (1.0, 0.99)), ('σ* 0.06, A₂ 0.95', (-0.08, 0.08), (0.06, 0.06), (1.0, 0.95)),
              ('σ* 0.06, A₂ 0.9', (-0.08, 0.08), (0.06, 0.06), (1.0, 0.9)), ('σ* 0.06, c₂ +0.01', (-0.08, 0.09), (0.06, 0.06), (1.0, 1.0)),
@@ -155,32 +165,63 @@ def n_formed(m, As):
     return int((np.abs(np.asarray(m['w'], float)) > 1e-2 * np.abs(np.asarray(As)).min()).sum())
 
 
-def outcome(m, As):
+def outcome(m, As, cs=None, ss=None):
     """A moving-width path's outcome: 'exact' (as many formed kernels — |w| above 1% of the smallest amplitude — as features, within
-    EXACT_TOL, the residual below 1e-8; idle entrants below 1% allowed), 'coinciding pair' (the residual below 1e-8 with two kernels at one
-    (c, σ), PAIR_TOL: a split or a cancelling pair), 'cancellation' (the residual below 1e-8 with a coefficient beyond 1.5 times the
-    largest amplitude or a width below the samples' spacing: several kernels cancelling), 'dipole run-off' (stopped by the budget with
-    an opposite-sign pair in the stalled block, |w| beyond 10 times the largest amplitude and 0.05 apart: G), 'stopped by the budget'
-    (another stall), or 'not fitted' (referee round 57)."""
+    EXACT_TOL, the residual below 1e-8; idle entrants below 1% allowed), 'exact, null cluster' (each feature's nearest kernel within
+    EXACT_TOL and the residual below 1e-8, with more formed kernels: the others sum to nothing on the samples — referee round 61),
+    'coinciding pair' (the residual below 1e-8 with two formed kernels at one (c, σ), PAIR_TOL, whose net coefficient and centre of mass
+    fit a feature within LAND_TOL — of its amplitude, of its width — when the features (cs, ss) are given: a split or a cancelling pair),
+    'null cluster' (such a pair fitting no feature), 'cancellation' (the residual below 1e-8 with a coefficient beyond 1.5 times the
+    largest amplitude or a width below the samples' spacing: several kernels cancelling), 'dipole run-off' (stopped by the budget with an
+    opposite-sign pair in the stalled block, |w| beyond 10 times the largest amplitude and 0.05 apart: G), 'stopped by the budget' (another
+    stall), or 'not fitted' (referee round 57)."""
     w = np.asarray(m['w'], float)
-    As = np.abs(np.asarray(As))
-    formed = np.abs(w) > 1e-2 * As.min()
+    As_ = np.asarray(As, float)
+    A_ = np.abs(As_)
+    formed = np.abs(w) > 1e-2 * A_.min()
     if m.get('oob'):
         st = m.get('stalled')
         if st is not None:
             ws = np.asarray(st['w'], float)
             cp = closest_pair(st['theta'], ws, opposite=True)
-            if cp is not None and np.abs(ws).max() > 10 * As.max() and cp[0] < 0.05:
+            if cp is not None and np.abs(ws).max() > 10 * A_.max() and cp[0] < 0.05:
                 return 'dipole run-off'
         return 'stopped by the budget'
     th = np.atleast_2d(m['theta'])
-    if m['rms'] < 1e-8 and formed.sum() == len(As) and max(m['err']) < EXACT_TOL:
-        return 'exact'
-    if m['rms'] < 1e-8 and pairs_of(th[formed], w[formed]):
-        return 'coinciding pair'
-    if m['rms'] < 1e-8 and formed.any() and (np.abs(w[formed]).max() > 1.5 * As.max() or np.abs(th[formed, 1]).min() < XS[1] - XS[0]):
+    if m['rms'] < 1e-8 and max(m['err']) < EXACT_TOL:
+        return 'exact' if formed.sum() == len(As) else 'exact, null cluster'
+    if m['rms'] < 1e-8:
+        thf, wf = th[formed], w[formed]
+        pr = [p for p in pair_index(thf, wf)]
+        if pr:
+            fit = cs is None or any(pair_fits(thf, wf, i, j, cs, ss, As_) for i, j in pr)
+            return 'coinciding pair' if fit else 'null cluster'
+    if m['rms'] < 1e-8 and formed.any() and (np.abs(w[formed]).max() > 1.5 * A_.max() or np.abs(th[formed, 1]).min() < XS[1] - XS[0]):
         return 'cancellation'
     return 'not fitted'
+
+
+def pair_index(theta, w):
+    """The coinciding pairs among the kernels (`pairs_of`'s rule) by their indices."""
+    th = np.atleast_2d(np.asarray(theta, float))
+    out = []
+    for i in range(len(w)):
+        for j in range(i + 1, len(w)):
+            sm = 0.5 * (abs(th[i, 1]) + abs(th[j, 1]))
+            if abs(th[i, 0] - th[j, 0]) / sm + abs(np.log(abs(th[i, 1]) / abs(th[j, 1]))) < PAIR_TOL:
+                out.append((i, j))
+    return out
+
+
+def pair_fits(theta, w, i, j, cs, ss, As):
+    """Whether the pair (i, j) fits a feature: its net coefficient W within LAND_TOL of some feature's amplitude and its centre of mass
+    within LAND_TOL of that feature's width from its centre (any feature: features may share a centre, as D's at d = 0)."""
+    th = np.atleast_2d(np.asarray(theta, float))
+    W = w[i] + w[j]
+    if W == 0:
+        return False
+    cm = (w[i] * th[i, 0] + w[j] * th[j, 0]) / W
+    return any(abs(cm - c_) <= LAND_TOL * s_ and abs(W - a_) <= LAND_TOL * abs(a_) for c_, s_, a_ in zip(cs, ss, As))
 
 
 def a_job(ratio):
@@ -323,19 +364,22 @@ def f_job(args):
     R = RN.sliding_iss_nd(L, K, f, theta0(), np.ones(C0.size), max_rhs=MAX_RHS_MOVING)
     t_last = R['events'][-1][0]
     taus = np.r_[0.0, np.array(TAUS_F) * t_last]
-    _, W, C, Lam, al = RN.loop_nd(L, K, f, theta0(), EPS_F, taus, rtol=1e-9, atol=1e-12)
     path = sorted(int(j) for j in np.flatnonzero(R['act']))
     pp = closest_pair(R['c'][path], R['w'][path])
     snaps = []
-    for t in range(1, taus.size):
-        big = np.abs(W[t]) > 1e-2 * np.abs(As).min()
-        fj = np.flatnonzero(big)
-        cp = closest_pair(C[t][fj], W[t][fj])
-        snaps.append(dict(times=float(TAUS_F[t - 1]), formed=sorted(int(j) for j in fj), dtheta=float(np.abs(C[t][path] - R['c'][path]).max()),
-                          dw=float(np.abs(W[t][path] - R['w'][path]).max()), rest=float(np.abs(np.delete(W[t], path)).max()),
-                          pair=None if cp is None else dict(d=cp[0], dc=float(abs(C[t][fj[cp[1]], 0] - C[t][fj[cp[2]], 0])),
-                                                            ds=float(abs(C[t][fj[cp[1]], 1] - C[t][fj[cp[2]], 1]))),
-                          rms=float(np.sqrt(np.mean((f - K.synth(C[t], W[t])) ** 2)))))
+    for eps in EPS_F:
+        _, W, C, Lam, al = RN.loop_nd(L, K, f, theta0(), eps, taus, rtol=1e-9, atol=1e-12)
+        for t in range(1, taus.size):
+            big = np.abs(W[t]) > 1e-2 * np.abs(As).min()
+            fj = np.flatnonzero(big)
+            cp = closest_pair(C[t][fj], W[t][fj])
+            snaps.append(dict(eps=eps, times=float(TAUS_F[t - 1]), formed=sorted(int(j) for j in fj),
+                              dtheta=float(np.abs(C[t][path] - R['c'][path]).max()), dw=float(np.abs(W[t][path] - R['w'][path]).max()),
+                              rest=float(np.abs(np.delete(W[t], path)).max()),
+                              pair=None if cp is None else dict(d=cp[0], dc=float(abs(C[t][fj[cp[1]], 0] - C[t][fj[cp[2]], 0])),
+                                                                ds=float(abs(C[t][fj[cp[1]], 1] - C[t][fj[cp[2]], 1])),
+                                                                w=(float(W[t][fj[cp[1]]]), float(W[t][fj[cp[2]]]))),
+                              rms=float(np.sqrt(np.mean((f - K.synth(C[t], W[t])) ** 2)))))
     return dict(q=q, path=path, path_pair=None if pp is None else pp[0], path_rms=float(R['hist'][-1][3]), snaps=snaps,
                 formed=snaps[0]['formed'], dtheta=snaps[0]['dtheta'], dw=snaps[0]['dw'], rest=snaps[0]['rest'], secs=time.time() - t0)
 
@@ -394,12 +438,7 @@ def g_job(args):
     K = MW.BumpsCW(XS, S0)
     f = feature_sum(cs, ss, As)
     Rc, _ = run_paths(f, fixed=False)
-    st, stalled = Rc['stalled'], None
-    if st is not None:
-        cp = closest_pair(st['c'], st['w'], opposite=True)
-        stalled = dict(wmax=float(np.abs(st['w']).max()), sep=None if cp is None else cp[0], n=int(np.size(st['w'])),
-                       rms=float(np.sqrt(np.mean((f - K.synth(np.atleast_2d(st['c']), st['w'])) ** 2))),
-                       polish=Rc['polish_log'][-1] if Rc['polish_log'] else [], nfev=int(Rc['nfev']))
+    stalled = stalled_summary(Rc, f, K)
     R = RN.sliding_iss_nd(L, K, f, theta0(), np.ones(C0.size), max_entries=n_ent, exit_kkt=True)
     idx = np.flatnonzero(R['act'])
     al = np.sign(R['w'][idx]) * RT._alpha_of(L, np.abs(R['w'][idx]), RT.coef_crit)
@@ -421,17 +460,23 @@ def g_job(args):
         _, W, C, Lam, _ = RN.loop_nd(L, K, f, theta0(), eps, np.r_[0.0, TAUS_G], rtol=1e-9, atol=1e-12)
         for t, tau in enumerate(TAUS_G, start=1):
             big = np.flatnonzero(np.abs(W[t]) > 1e-2 * np.abs(As).min())
-            cp = closest_pair(C[t][big], W[t][big])
-            pr = None
-            if cp is not None:
-                i, j = big[cp[1]], big[cp[2]]
-                mid = 0.5 * (C[t][i] + C[t][j])
-                k = int(np.argmin(np.abs(np.asarray(cs) - mid[0]) / np.asarray(ss)))
-                pr = dict(d=cp[0], w=(float(W[t][i]), float(W[t][j])), off=float(abs(mid[0] - cs[k]) / ss[k]))
-            loops.append(dict(eps=eps, tau=tau, formed=int(big.size), pair=pr, pairs=pairs_of(C[t][big], W[t][big]),
-                              wmax=float(np.abs(W[t]).max() / np.abs(As).max()), rms=float(np.sqrt(np.mean((f - K.synth(C[t], W[t])) ** 2)))))
-    return dict(dmin=dmin, q=q, entries=n_ent, stalled=stalled, flow=flow, law=law_, status=int(sol.status), loops=loops,
-                secs=time.time() - t0)
+            loops.append(dict(eps=eps, tau=float(tau), Lam=float(Lam), theta=C[t][big].tolist(), w=W[t][big].tolist(),
+                              wmax=float(np.abs(W[t]).max()), rms=float(np.sqrt(np.mean((f - K.synth(C[t], W[t])) ** 2)))))
+    return dict(dmin=dmin, q=q, cs=list(cs), ss=list(ss), As=list(As), entries=n_ent,
+                tau_d=float(R['events'][-1][0]) if R['events'] else float('nan'), stalled=stalled, flow=flow, law=law_,
+                status=int(sol.status), loops=loops, secs=time.time() - t0)
+
+
+def stalled_summary(Rc, f, K):
+    """G: a budget-stopped path's stalled block — its kernels, largest |w| (the accepted polish's: solver-dependent), the closest
+    opposite-sign pair's distance, the residual, the block's polishes — or None."""
+    st = Rc.get('stalled')
+    if st is None:
+        return None
+    cp = closest_pair(st['c'], st['w'], opposite=True)
+    return dict(wmax=float(np.abs(st['w']).max()), sep=None if cp is None else cp[0], n=int(np.size(st['w'])),
+                rms=float(np.sqrt(np.mean((f - K.synth(np.atleast_2d(st['c']), st['w'])) ** 2))),
+                polish=Rc['polish_log'][-1] if Rc['polish_log'] else [], nfev=int(Rc['nfev']))
 
 
 def dipole_exponents(flow):
@@ -445,6 +490,65 @@ def dipole_exponents(flow):
     return float(np.log(b['wmax'] / a['wmax']) / ls), float(np.log(b['sep'] / a['sep']) / ls)
 
 
+def dipole_pair(theta, w):
+    """The loop's dipole pair among formed kernels (`dipole_law`'s choice): the largest |w| and the closest kernel of the other sign —
+    (a, b, v = |w_a − w_b|/2, its distance |Δc|/σ + |Δlog σ|) or None."""
+    th, w = np.atleast_2d(np.asarray(theta, float)), np.asarray(w, float)
+    if w.size < 2:
+        return None
+    a = int(np.argmax(np.abs(w)))
+    opp = [j for j in range(w.size) if w[j] * w[a] < 0]
+    if not opp:
+        return None
+    dist = lambda j: (abs(th[a, 0] - th[j, 0]) / (0.5 * (abs(th[a, 1]) + abs(th[j, 1]))) + abs(np.log(abs(th[a, 1]) / abs(th[j, 1]))))
+    b = min(opp, key=dist)
+    return a, b, float(abs(w[a] - w[b]) / 2), float(dist(b))
+
+
+def landing(theta, w, cs, ss, As):
+    """The dipole pair against the features: its centre of mass's offset from the nearest feature (in that feature's width) and its net
+    coefficient's relative difference from the feature's amplitude, (v, distance, offset, (W − A)/A) — landed if both within LAND_TOL."""
+    dp = dipole_pair(theta, w)
+    if dp is None:
+        return None
+    a, b, v, d = dp
+    th, w = np.atleast_2d(np.asarray(theta, float)), np.asarray(w, float)
+    W = w[a] + w[b]
+    cm = (w[a] * th[a, 0] + w[b] * th[b, 0]) / W if W != 0 else 0.5 * (th[a, 0] + th[b, 0])
+    k = int(np.argmin(np.abs(np.asarray(cs) - cm) / np.asarray(ss)))
+    return dict(v=v, d=d, off=float(abs(cm - cs[k]) / ss[k]), dW=float((W - As[k]) / abs(As[k])), w=(float(w[a]), float(w[b])))
+
+
+def phases(r, eps):
+    """G: the loop at the mass eps on the dipole's target r, in three phases (referee round 61). The dipole: from the block's entry τ_d
+    (the path's) the pair's v grows as v³ = 3μ₀KΛ(ε)(τ − τ_d) (the block's law in its fast time Λ(ε)τ) until the next kernel forms, at
+    τ₃ (the first grid time with more formed kernels than the block's); the slopes of v³ over the grid times strictly between τ_d and
+    τ₃ against 3μ₀KΛ (median, range). The landing: v at τ = 400 against the law's (3μ₀KΛ(ε)(τ₃ − τ_d))^{1/3}, and whether the pair is
+    landed (`landing`) at 400, 1600, 6400. The collapse: over 1600 → 6400 the exponents of the pair's distance and of the residual in τ."""
+    xs = sorted([x for x in r['loops'] if x['eps'] == eps], key=lambda x: x['tau'])
+    lw = r.get('law') or []
+    if not xs or not lw or lw[-1] is None:
+        return None
+    K_ = lw[-1]['v'] ** 2 * (lw[-1]['E'] - lw[-1]['E_inf'])
+    rate = 3 * lw[-1]['mu0'] * K_ * xs[0]['Lam']
+    n0, td = r['entries'], r['tau_d']
+    t3 = next((x['tau'] for x in xs if x['tau'] > td and len(x['w']) > n0), None)
+    at = {x['tau']: x for x in xs}
+    win = [x for x in xs if td < x['tau'] < (t3 if t3 is not None else np.inf) and len(x['w']) == n0]
+    vs = [(x['tau'], dipole_pair(x['theta'], x['w'])) for x in win]
+    vs = [(tau, dp[2]) for tau, dp in vs if dp is not None]
+    sl = [(b[1] ** 3 - a[1] ** 3) / (b[0] - a[0]) / rate for a, b in zip(vs[:-1], vs[1:])]
+    land = {tau: landing(at[tau]['theta'], at[tau]['w'], r['cs'], r['ss'], r['As']) if tau in at else None for tau in TAUS_G_MD}
+    v400 = land[400.0]['v'] if land.get(400.0) else None
+    vstar = (rate * (t3 - td)) ** (1 / 3) if t3 is not None else None
+    col = None
+    a, b = land.get(1600.0), land.get(6400.0)
+    if a and b and a['d'] > 0 and b['d'] > 0:
+        lt = np.log(6400.0 / 1600.0)
+        col = (float(np.log(b['d'] / a['d']) / lt), float(np.log(at[6400.0]['rms'] / at[1600.0]['rms']) / lt))
+    return dict(rate=rate, K=K_, t3=t3, slopes=sl, v400=v400, vstar=vstar, land=land, collapse=col)
+
+
 def part_G(C):
     """G: C's targets whose moving-width path was stopped by its budget."""
     from multiprocessing import Pool
@@ -454,23 +558,51 @@ def part_G(C):
         return pool.map(g_job, jobs, chunksize=1)
 
 
+def h_stats(ws, m, As):
+    """H's statistics of a path — ws: each block's active coefficients — and of its end m (referee rounds 57 and 61): the most kernels
+    of the other sign (below −1% of the smallest amplitude) in a block and the most negative coefficient; the end's formed kernels of the
+    other sign and smallest formed width; over all the end's active kernels, those narrower than the samples' spacing and those of
+    negative width (the widths are unconstrained); the largest |w|."""
+    w, th = np.asarray(m['w'], float), np.atleast_2d(np.asarray(m['theta'], float))
+    amin = min(abs(a) for a in As)
+    formed = np.abs(w) > 1e-2 * amin
+    return dict(neg_path=int(max([int((x < -1e-2 * amin).sum()) for x in ws], default=0)),
+                wmin_path=float(min([x.min() for x in ws if x.size], default=0.0)), neg_end=int((formed & (w < 0)).sum()),
+                smin=float(np.abs(th[formed, 1]).min()) if formed.any() else float('nan'),
+                sub=int((np.abs(th[:, 1]) < XS[1] - XS[0]).sum()) if w.size else 0, negw=int((th[:, 1] < 0).sum()) if w.size else 0,
+                wmax=float(np.abs(w).max()) if w.size else 0.0)
+
+
+def clusters(m, cs, ss, As):
+    """H2: the end's formed kernels by the feature nearest each (in its width): per feature their count and their mass over the
+    feature's, Σw_i|σ_i|/(A_kσ_k) (one kernel fitting it exactly: 1)."""
+    w, th = np.asarray(m['w'], float), np.atleast_2d(np.asarray(m['theta'], float))
+    formed = np.flatnonzero(np.abs(w) > 1e-2 * min(abs(a) for a in As))
+    near = [int(np.argmin(np.abs(np.asarray(cs) - th[i, 0]) / np.asarray(ss))) for i in formed]
+    return [(sum(k == j for k in near), float(sum(w[i] * abs(th[i, 1]) for i, k in zip(formed, near) if k == j) / (As[j] * ss[j])))
+            for j in range(len(cs))]
+
+
 def h_job(args):
-    """H: two features of one sign closer than the kernels' starting width — the moving-width path's outcome, the most negative
-    coefficient and the most kernels of the other sign in any block along the path, the end's formed kernels of the other sign, the
-    smallest formed width, the largest |w| (referee round 57)."""
-    name, cs, ss, As = args
+    """H: two features of one sign — the moving-width path's outcome and `h_stats` (referee round 57); with a tolerance (H2, referee
+    round 61) the path run to it instead of 1e-9: the last entry's τ, the last blocks' residuals and the formed kernels per feature."""
+    name, cs, ss, As = args[:4]
+    tol = args[4] if len(args) > 4 else None
     t0 = time.time()
     f = feature_sum(cs, ss, As)
-    Rm, _ = run_paths(f, fixed=False)
+    if tol is None:
+        Rm, _ = run_paths(f, fixed=False)
+    else:
+        Rm = RN.sliding_iss_nd(law(), MW.BumpsCW(XS, S0), f, theta0(), np.ones(C0.size), max_events=40, exit_kkt=True,
+                               max_rhs=MAX_RHS_MOVING, tol=tol)
     m = match(Rm, cs, ss, As)
-    w, th = np.asarray(m['w'], float), np.atleast_2d(m['theta'])
-    formed = np.abs(w) > 1e-2 * min(abs(a) for a in As)
     ws = [h[2][h[2] != 0] for h in Rm['hist'][1:]]
-    return dict(name=name, cs=list(cs), ss=list(ss), As=list(As), moving=m, outcome=outcome(m, As),
-                neg_path=int(max([int((x < -1e-2 * min(As)).sum()) for x in ws], default=0)),
-                wmin_path=float(min([x.min() for x in ws if x.size], default=0.0)), neg_end=int((formed & (w < 0)).sum()),
-                smin=float(np.abs(th[formed, 1]).min()) if formed.any() else float('nan'), wmax=float(np.abs(w).max()) if w.size else 0.0,
-                secs=time.time() - t0)
+    out = dict(name=name, cs=list(cs), ss=list(ss), As=list(As), moving=m, outcome=outcome(m, As, cs, ss), tol=tol,
+               secs=time.time() - t0, **h_stats(ws, m, As))
+    if tol is not None:
+        out.update(last_tau=float(Rm['events'][-1][0]) if Rm['events'] else float('nan'),
+                   rms_blocks=[float(h[3]) for h in Rm['hist'][-6:]], clusters=clusters(m, cs, ss, As))
+    return out
 
 
 def part_H():
@@ -479,7 +611,48 @@ def part_H():
         return pool.map(h_job, list(H_TARGETS), chunksize=1)
 
 
-def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
+def part_H2():
+    """H2: the σ* = 0.06 targets' paths to TOL_H2 (referee round 61: below 1e-9 the 'exact' ends were the path's stopping tolerance)."""
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(h_job, [tuple(x) + (TOL_H2,) for x in H_TARGETS if x[0].startswith('σ* 0.06')], chunksize=1)
+
+
+def h3_targets():
+    return [(f"σ* 0.06, ±{s:g}", (-s, s), (0.06, 0.06), (1.0, 1.0)) for s in SEP_H]
+
+
+def part_H3():
+    """H3: the separation scan at σ* = 0.06, equal amplitudes (H's ±0.08 besides; referee round 61)."""
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(h_job, h3_targets(), chunksize=1)
+
+
+def hl_job(args):
+    """HL: the real loop on one of H's targets at the masses EPS_HL to the times TAUS_HL: the formed kernels (|w| above 1% of the
+    smallest amplitude), their states, the largest |w|, the residual (referee round 61)."""
+    name, cs, ss, As = args
+    t0 = time.time()
+    L, K = law(), MW.BumpsCW(XS, S0)
+    f = feature_sum(cs, ss, As)
+    out = []
+    for eps in EPS_HL:
+        _, W, C, Lam, _ = RN.loop_nd(L, K, f, theta0(), eps, np.r_[0.0, TAUS_HL], rtol=1e-9, atol=1e-12)
+        for t, tau in enumerate(TAUS_HL, start=1):
+            big = np.flatnonzero(np.abs(W[t]) > 1e-2 * min(abs(a) for a in As))
+            out.append(dict(eps=eps, tau=float(tau), theta=C[t][big].tolist(), w=W[t][big].tolist(), wmax=float(np.abs(W[t]).max()),
+                            rms=float(np.sqrt(np.mean((f - K.synth(C[t], W[t])) ** 2)))))
+    return dict(name=name, cs=list(cs), ss=list(ss), As=list(As), loops=out, secs=time.time() - t0)
+
+
+def part_HL():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(hl_job, [x for x in H_TARGETS if x[0] in ('σ* 0.04, equal', 'σ* 0.06, equal')], chunksize=1)
+
+
+def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None, H2=None, H3=None, HL=None):
     N = XS.size
     L_ = ['# Proposition D‴.59: the transit with moving widths (`exp_moving_width.py`)', '',
           f"The sliding path with moving widths (θ = (c, σ), `moving_width.BumpsCW`) and with the widths fixed at σ₀ = {S0:g} "
@@ -506,15 +679,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
             L_.append(f"| {r['ratio']:.4g} | " + ', '.join(f"({c:+.1e}, {s / ss:.3f})" for c, s in r['minima']) + f" | {r['J_min']:.1e} | "
                       f"{r['grad_err']:.1e} |")
         L_.append('')
-    gst = {(g['dmin'], g['q']): g.get('stalled') for g in (G if G is not None else [])}
-
     def oc(r):
-        o = outcome(r['moving'], r['As'])
-        st = gst.get((r['dmin'], r['q']))
-        if o == 'stopped by the budget' and st is not None and st['sep'] is not None and st['wmax'] > 10 * np.abs(r['As']).max() \
-                and st['sep'] < 0.05:
-            return 'dipole run-off'
-        return o
+        return outcome(r['moving'], r['As'], r['cs'], r['ss'])
 
     def split_text(m, As):
         w = np.asarray(m['w'], float)
@@ -542,18 +708,30 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
         cls = {}
         for r in C:
             cls.setdefault((r['dmin'], oc(r)), []).append(r)
-        L_ += ['', "The moving widths' outcomes (`outcome`: the formed kernels |w| > 1% of the smallest amplitude; a coinciding pair within "
-               f"{PAIR_TOL:g} in |Δc|/σ + |Δlog σ|; a budget stop a dipole run-off if G's stalled block has an opposite-sign pair under 0.05 "
+        L_ += ['', "The moving widths' outcomes (`outcome`: the formed kernels |w| > 1% of the smallest amplitude; exact with a null "
+               "cluster where each feature's nearest kernel is exact and the others sum to nothing; a coinciding pair within "
+               f"{PAIR_TOL:g} in |Δc|/σ + |Δlog σ| whose net coefficient and centre of mass fit a feature within {LAND_TOL:g}, a null "
+               "cluster where it fits none; a budget stop a dipole run-off if the stalled block has an opposite-sign pair under 0.05 "
                "with |w| beyond 10 times the largest amplitude): " + '; '.join(
-            f"Δ ≥ {d:g}: " + ', '.join(f"{len(cls.get((d, o), []))} {o}" for o in ('exact', 'coinciding pair', 'cancellation', 'dipole run-off', 'stopped by the budget', 'not fitted')) for d in DELTAS_C) + '.']
+            f"Δ ≥ {d:g}: " + ', '.join(f"{len(cls.get((d, o), []))} {o}" for o in ('exact', 'exact, null cluster', 'coinciding pair', 'null cluster', 'cancellation', 'dipole run-off', 'stopped by the budget', 'not fitted') if cls.get((d, o)) or o == 'exact')
+            for d in DELTAS_C) + '.']
         bad = [r for r in C if oc(r) != 'exact']
-        L_ += ['', "Not exact with moving widths (the state before a stalled block; G gives the block): " + ('; '.join(
+
+        def stall(m):
+            st = m.get('stalled')
+            if not m.get('oob') or st is None:
+                return ''
+            cp = closest_pair(st['theta'], st['w'], opposite=True)
+            return (f"; the stalled block: {len(st['w'])} kernels, max|w| {np.abs(st['w']).max():.4g} (the accepted polish's, "
+                    "solver-dependent)" + ('' if cp is None else f", its closest opposite pair {cp[0]:.2e} apart"))
+        L_ += ['', "Not exact with moving widths (the end's state; for a budget stop the state before the stalled block, and the "
+               "stalled block): " + ('; '.join(
             f"Δ ≥ {r['dmin']:g}, target {r['q']} (widths {', '.join(f'{v:.3f}' for v in r['ss'])}; centres "
             f"{', '.join(f'{v:+.2f}' for v in r['cs'])}; amplitudes {', '.join(f'{v:+.2f}' for v in r['As'])}): "
             f"{oc(r)}, {r['moving']['n']} kernels"
             + (f" (the pair: {split_text(r['moving'], r['As'])})" if split_text(r['moving'], r['As']) else '')
-            + f", residual {r['moving']['rms']:.1e}" for r in bad) or 'none') + '. The width split (σ_j − σ_i = (w_j − w_i)Δc²/(6Wσ), '
-            "the pair's third moment cancelled) against the observed.", '']
+            + f", residual {r['moving']['rms']:.1e}" + stall(r['moving']) for r in bad) or 'none') + '. The width split '
+            "(σ_j − σ_i = (w_j − w_i)Δc²/(6Wσ), the pair's third moment cancelled) against the observed.", '']
     if D is not None:
         L_ += ['## D. A narrow feature on a wide pedestal', '',
                "The pedestal 0.8φ(·; 0, 0.3) and the narrow feature 0.5φ(·; d, 0.06):", '',
@@ -562,7 +740,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
             m, f_ = r['moving'], r['fixed']
             As_ = [0.8, 0.5]
             sp = split_text(m, As_)
-            oc_ = outcome(m, As_) + (f" ({sp})" if sp else '')
+            oc_ = outcome(m, As_, [0.0, r['d']], [0.3, 0.06]) + (f" ({sp})" if sp else '')
             L_.append(f"| {r['d']:g} | {n_formed(m, As_)} | {oc_} | {', '.join(f'{v:.1e}' for v in m['err'])} | {m['rms']:.1e} | "
                       f"{f_['n']}{'†' if f_.get('oob') else ''} | {f_['rms']:.2e} |")
         L_.append('')
@@ -574,7 +752,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
                "the rms over the draws, against the oracle's s(3K/N)^{1/2} (three parameters per kernel, K = 3, the rms of the errors), and "
                "per draw against the oracle fit (the K-kernel least-squares fit of the data started at the truth):", '',
                '| s | stopped | kernels | error: median [range]; rms | the oracle | the stopped error over the oracle fit\'s: median [range] '
-               '(within 10⁻⁴ of it) '
+               '(within 10⁻⁴ of it: how many, the largest deviation among them) '
                '| not stopped: the last block\'s rms |', '|---|---|---|---|---|---|---|']
         for s in LEVELS_E:
             rs = [r for r in Ee if r['s'] == s]
@@ -585,27 +763,28 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
             L_.append(f"| {s:g} | {len(st)} of {len(rs)} | " + (f"{np.median(ks):g} [{min(ks)}, {max(ks)}] | {np.median(es):.2e} "
                       f"[{min(es):.2e}, {max(es):.2e}]; {np.sqrt(np.mean(np.square(es))):.3e}" if st else '— | —') + f" | "
                       f"{s * np.sqrt(3 * K_C / N):.3e} | " + (f"{np.median(qo):.4f} [{min(qo):.4f}, {max(qo):.4f}] "
-                                                              f"({sum(abs(q - 1) < 1e-4 for q in qo)} of {len(qo)})" if qo else '—') + ' | '
+                                                              f"({sum(abs(q - 1) < 1e-4 for q in qo)} of {len(qo)}" + (f", {max(abs(q - 1) for q in qo if abs(q - 1) < 1e-4):.0e})" if any(abs(q - 1) < 1e-4 for q in qo) else ')') if qo else '—') + ' | '
                       + (', '.join(f"{x.get('rms', np.nan):.2e}" + (' (budget)' if x.get('oob') else '') for x in ns) or '—') + ' |')
         L_.append('')
     if F is not None:
         L_ += ['## F. The real loop at a small mass', '',
-               f"The free law with moving centres and widths from α = 0, masses ε = {EPS_F:g} (`loop_nd` on `BumpsCW`, rtol 10⁻⁹), to "
+               f"The free law with moving centres and widths from α = 0, masses ε = {', '.join(f'{e:g}' for e in EPS_F)} (`loop_nd` on `BumpsCW`, rtol 10⁻⁹), to "
                f"{', '.join(f'{t:g}' for t in TAUS_F)} times the path's last entry, on C's first {N_F} targets at Δ ≥ {DELTAS_C[1]:g}: its formed "
                "kernels (|w| above 1% of the smallest amplitude) against the path's, the path's kernels' largest deviation, the others' largest "
                "|w|, the closest pair among the formed kernels (|Δc|/σ + |Δlog σ|; its |Δc|, |Δσ|) and the residual; the path's closest pair "
                "and residual:", '',
-               "| target | the path's kernels (closest pair; residual) | times | formed by the loop | max \\|Δθ\\| | max \\|Δw\\| | the others' "
-               "largest \\|w\\| | the loop's closest pair: distance (\\|Δc\\|, \\|Δσ\\|) | residual |", '|---|---|---|---|---|---|---|---|---|']
+               "| target | the path's kernels (closest pair; residual) | ε | times | formed by the loop | max \\|Δθ\\| | max \\|Δw\\| | the others' "
+               "largest \\|w\\| | the loop's closest pair: distance (\\|Δc\\|, \\|Δσ\\|; coefficients) | residual |", '|---|---|---|---|---|---|---|---|---|---|']
         for r in F:
             for x in r.get('snaps', [dict(times=None, formed=r['formed'], dtheta=r['dtheta'], dw=r['dw'], rest=r['rest'], pair=None,
                                           rms=np.nan)]):
                 pp = r.get('path_pair')
                 pa = x.get('pair')
                 L_.append(f"| {r['q']} | {r['path']} (" + ('—' if pp is None else f"{pp:.1e}") + f"; {r.get('path_rms', np.nan):.1e}) | "
-                          + ('—' if x['times'] is None else f"{x['times']:g}") + f" | {x['formed']} | {x['dtheta']:.1e} | {x['dw']:.1e} | "
-                          f"{x['rest']:.1e} | " + ('—' if pa is None else f"{pa['d']:.1e} ({pa['dc']:.1e}, {pa['ds']:.1e})")
-                          + f" | {x['rms']:.1e} |")
+                          + f"{x.get('eps', EPS_F[0]):g} | " + ('—' if x['times'] is None else f"{x['times']:g}") + f" | {x['formed']} | "
+                          f"{x['dtheta']:.1e} | {x['dw']:.1e} | {x['rest']:.1e} | "
+                          + ('—' if pa is None else f"{pa['d']:.1e} ({pa['dc']:.1e}, {pa['ds']:.1e}"
+                             + (f"; {pa['w'][0]:+.3f}/{pa['w'][1]:+.3f}" if 'w' in pa else '') + ")") + f" | {x['rms']:.1e} |")
         L_.append('')
     if G is not None:
         L_ += ['## G. The blocks that never settle: a dipole', '',
@@ -641,32 +820,159 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
                 ps = f"{abs(b_['p'][1]) / np.hypot(*b_['p']):.3f}"
             L_.append(f"| {r['dmin']:g} | {r['q']} | {r['entries']} | {stc} | {', '.join(format(x['wmax'], '.3g') for x in fl)} | "
                       + ', '.join('—' if x['sep'] is None else f"{x['sep']:.2e}" for x in fl) + f" | {exs} | {kk} | {vv} | {ps} |")
-        L_ += ['', f"The real loop at the masses ε from α = 0 at the times τ: its formed kernels, the closest pair among them (its distance, "
-               f"coefficients, and its midpoint's distance from the nearest feature in that feature's width), the coinciding pairs (within "
-               f"{PAIR_TOL:g}), the largest |w| over the largest amplitude, the residual:", '',
-               '| Δ ≥ | target | ε | τ | formed | the closest pair: distance, coefficients, offset (σ*) | coinciding pairs | max\\|w\\|/max\\|A\\| | '
-               'residual |', '|---|---|---|---|---|---|---|---|---|']
-        for r in G:
-            for x in r['loops']:
-                pa = x.get('pair')
-                L_.append(f"| {r['dmin']:g} | {r['q']} | {x['eps']:g} | {x.get('tau', 400.0):g} | {x['formed']} | "
-                          + ('—' if pa is None else f"{pa['d']:.2e}, {pa['w'][0]:+.3f}/{pa['w'][1]:+.3f}, {pa['off']:.3f}") + ' | '
-                          + (', '.join(f"{a:+.3f}/{b:+.3f}" for a, b in x['pairs']) or 'none') + f" | {x['wmax']:.2f} | {x['rms']:.1e} |")
-        L_.append('')
+        L_ += g_loop_lines(G)
     if H is not None:
         L_ += ['## H. Two features of one sign, close', '',
-               "Two features φ(·; c, σ*) of the given amplitudes (both positive) at the centres ±0.08 unless stated — closer than the kernels' "
-               f"starting width σ₀ = {S0:g} —, the moving-width path (as C's, its budget {MAX_RHS_MOVING:.0e}): the outcome, the most kernels of "
-               "the other sign in a block along the path and the most negative coefficient, the end's formed kernels of the other sign, the "
-               "smallest formed width, the largest |w|, the residual:", '',
-               '| target | outcome | negative kernels along the path (most negative w) | at the end | smallest width | max\\|w\\| | residual |',
-               '|---|---|---|---|---|---|---|']
-        for r in H:
-            L_.append(f"| {r['name']} | {r['outcome']} | {r['neg_path']} ({r['wmin_path']:+.3f}) | {r['neg_end']} | {r['smin']:.2e} | "
-                      f"{r['wmax']:.3g} | {r['moving']['rms']:.1e} |")
+               "Two features φ(·; c, σ*) of the given amplitudes (both positive) at the centres ±0.08 — 0.16 apart, 1.33 times the kernels' "
+               f"starting width σ₀ = {S0:g} — unless stated, the moving-width path (as C's: its tolerance 1e-09, its budget "
+               f"{MAX_RHS_MOVING:.0e}): the outcome (as C's), the most kernels of the other sign in a block along the path and the most "
+               "negative coefficient, the end's formed kernels of the other sign, the smallest formed width, over all the end's active kernels "
+               "those narrower than the samples' spacing and those of negative width (the widths are not constrained), the largest |w|, the "
+               "residual:", '']
+        L_ += h_table(H)
+    if H2 is not None:
+        L_ += ['### H2. The σ* = 0.06 paths to a tolerance of ' + f"{TOL_H2:g}", '',
+               "The same paths with the tolerance lowered (the 1e-09 ends were the tolerance's): the outcome, the entries and the last one's "
+               "τ, the residuals of the last blocks, the formed kernels by the feature nearest each (their count and mass over the feature's, "
+               "Σw_i|σ_i|/(Aσ*)), and "
+               "H's columns:", '',
+               '| target | outcome | entries (last τ) | the last blocks\' residuals | formed per feature (count: mass) | negative along the path '
+               '(most negative w) | at the end | smallest width | sub-sample, negative widths | max\\|w\\| |', '|---|---|---|---|---|---|---|---|---|---|']
+        for r in H2:
+            L_.append(f"| {r['name']} | {r['outcome']} | {r['moving']['entries']} ({r['last_tau']:.2e}) | "
+                      + ', '.join(f"{v:.2e}" for v in r['rms_blocks']) + ' | ' + ', '.join(f"{n}: {s_:.4f}" for n, s_ in r['clusters'])
+                      + f" | {r['neg_path']} ({r['wmin_path']:+.3f}) | {r['neg_end']} | {r['smin']:.2e} | {r['sub']}, {r['negw']} | "
+                      f"{r['wmax']:.3g} |")
+        L_.append('')
+    if H3 is not None:
+        L_ += ['### H3. The separation scan', '',
+               "σ* = 0.06, equal amplitudes 1, at ±c (2c in units of σ₀ in brackets; H's ±0.08 is 1.33σ₀), H's columns:", '']
+        L_ += h_table(sorted(list(H3) + [r for r in (H if H is not None else []) if r['name'] == 'σ* 0.06, equal'],
+                             key=lambda r: r['cs'][1]), sep=True)
+    if HL is not None:
+        L_ += ['### HL. The real loop on H\'s equal targets', '',
+               "The free law from α = 0 at the masses ε (`loop_nd`, rtol 10⁻⁹) at the times τ: the formed kernels (|w| above 1% of the "
+               "smallest amplitude), of the other sign, the smallest formed width, the formed kernels centred outside the samples' window, "
+               "the largest |w|, the residual:", '',
+               '| target | ε | τ | formed | of the other sign (most negative w) | smallest width | outside the window | max\\|w\\| | residual |',
+               '|---|---|---|---|---|---|---|---|---|']
+        for r in HL:
+            for x in r['loops']:
+                w, th = np.asarray(x['w'], float), np.atleast_2d(np.asarray(x['theta'], float)).reshape(-1, 2)
+                L_.append(f"| {r['name']} | {x['eps']:g} | {x['tau']:g} | {w.size} | {int((w < 0).sum())}"
+                          + (f" ({w.min():+.3f})" if (w < 0).any() else '') + f" | " + (f"{np.abs(th[:, 1]).min():.3f}" if w.size else '—')
+                          + f" | {int((np.abs(th[:, 0]) > XS[-1]).sum())} | {x['wmax']:.3g} | {x['rms']:.1e} |")
         L_.append('')
     L_ += ['Numbers are produced by `experiments/exp_moving_width.py`; nothing is edited by hand.']
     return '\n'.join(L_) + '\n'
+
+
+def h_table(H, sep=False):
+    """H's table (H and H3)."""
+    out = [('| separation | ' if sep else '| target | ') + 'outcome | negative kernels along the path (most negative w) | at the end | '
+           'smallest width | sub-sample, negative widths (all active) | max\\|w\\| | residual |', '|---|---|---|---|---|---|---|---|']
+    for r in H:
+        lab = f"±{r['cs'][1]:g} ({(r['cs'][1] - r['cs'][0]) / S0:.2f}σ₀)" if sep else r['name']
+        out.append(f"| {lab} | {r['outcome']} | {r['neg_path']} ({r['wmin_path']:+.3f}) | {r['neg_end']} | {r['smin']:.2e} | "
+                   f"{r.get('sub', '—')}, {r.get('negw', '—')} | {r['wmax']:.3g} | {r['moving']['rms']:.1e} |")
+    return out + ['']
+
+
+def g_loop_lines(G):
+    """G's loop tables (referee round 61): the states at TAUS_G_MD — the dipole pair (`dipole_pair`) with its distance, coefficients,
+    centre of mass's offset from the nearest feature (in its width) and net coefficient against the feature's amplitude, the coinciding
+    pairs, the largest |w| over the largest amplitude, the residual —; the three phases (`phases`); the landed v against ε."""
+    if any('theta' not in x for r in G for x in r['loops']):
+        return ['', "(G's loops of a run before referee round 61, without the loop's states: rerun G.)", '']
+    L_ = ['', "The real loop at the masses ε from α = 0 (`loop_nd`, rtol 10⁻⁹) at τ = " + ', '.join(f"{t:g}" for t in TAUS_G_MD) + ": the "
+          "formed kernels, the dipole pair (the largest |w| and the closest kernel of the other sign: its distance |Δc|/σ + |Δlog σ|, "
+          "coefficients, its centre of mass's offset from the nearest feature in that feature's width and its net coefficient W against the "
+          f"feature's amplitude, (W − A)/|A|; landed (L) if both within {LAND_TOL:g}), the coinciding pairs (within {PAIR_TOL:g}), the "
+          "largest |w| over the largest amplitude, the residual:", '',
+          '| Δ ≥ | target | ε | τ | formed | the dipole pair: distance, coefficients, offset (σ*), (W − A)/\\|A\\| | coinciding pairs | '
+          'max\\|w\\|/max\\|A\\| | residual |', '|---|---|---|---|---|---|---|---|---|']
+    for r in G:
+        for x in sorted(r['loops'], key=lambda x: (x['eps'], x['tau'])):
+            if x['tau'] not in TAUS_G_MD:
+                continue
+            lp = landing(x['theta'], x['w'], r['cs'], r['ss'], r['As'])
+            th = np.atleast_2d(np.asarray(x['theta'], float)).reshape(-1, 2)
+            L_.append(f"| {r['dmin']:g} | {r['q']} | {x['eps']:g} | {x['tau']:g} | {len(x['w'])} | "
+                      + ('—' if lp is None else f"{lp['d']:.2e}, {lp['w'][0]:+.3f}/{lp['w'][1]:+.3f}, {lp['off']:.1e}, {lp['dW']:+.1e}"
+                         + (' L' if lp['off'] <= LAND_TOL and abs(lp['dW']) <= LAND_TOL else '')) + ' | '
+                      + (', '.join(f"{a:+.3f}/{b:+.3f}" for a, b in pairs_of(th, x['w'])) or 'none')
+                      + f" | {x['wmax'] / np.abs(r['As']).max():.2f} | {x['rms']:.1e} |")
+    spl = []                                                           # (ii)(a)'s width split on the landed pairs (referee round 61)
+    for r in G:
+        for x in r['loops']:
+            lp = landing(x['theta'], x['w'], r['cs'], r['ss'], r['As']) if x['tau'] in TAUS_G_MD else None
+            if lp is None or lp['off'] > LAND_TOL or abs(lp['dW']) > LAND_TOL:
+                continue
+            th, w = np.atleast_2d(np.asarray(x['theta'], float)).reshape(-1, 2), np.asarray(x['w'], float)
+            a, b = dipole_pair(th, w)[:2]
+            dc, ds, pr = width_split(th, w, a, b)
+            spl.append((ds / pr, abs(w[a] - w[b]) * abs(dc) / (abs(w[a] + w[b]) * 0.5 * (abs(th[a, 1]) + abs(th[b, 1])))))
+    if spl:
+        rt, pm = np.array([s_[0] for s_ in spl]), np.array([s_[1] for s_ in spl])
+        L_ += ['', f"(ii)(a)'s width split on the landed pairs (L, {len(spl)} rows): the observed σ_b − σ_a over (w_b − w_a)Δc²/(6Wσ) "
+               f"{rt.min():.4f}–{rt.max():.4f} (median {np.median(rt):.4f}), at |w_a − w_b||Δc|/(|W|σ) = {pm.min():.2e}–{pm.max():.2e}; "
+               f"its largest deviation {np.abs(rt - 1).max():.1e} at the parameter {pm[np.argmax(np.abs(rt - 1))]:.2e}."]
+    L_ += ['', "The three phases (`phases`): the dipole block's entry τ_d (the path's) and the next kernel's formation τ₃ in the loop; over "
+           "the grid times between them the slopes of v³ (v the dipole pair's half-difference) against 3μ₀KΛ(ε) — the block's law in its "
+           "fast time Λ(ε)τ, K and μ₀ from the flow's last output — (median [range]); the landed v (at τ = 400) against the law's "
+           "(3μ₀KΛ(ε)(τ₃ − τ_d))^{1/3}; landed at τ = " + ', '.join(f"{t:g}" for t in TAUS_G_MD) + "; over 1600 → 6400 the exponents in τ of "
+           "the pair's distance and of the residual:", '',
+           '| Δ ≥ | target | ε | τ_d | τ₃ | d(v³)/dτ / 3μ₀KΛ | v at 400 | the law\'s v | landed | exponents: distance, residual |',
+           '|---|---|---|---|---|---|---|---|---|---|']
+    law_v, phs = {}, {}
+    for r in G:
+        for eps in EPS_G:
+            ph = phases(r, eps)
+            if ph is None:
+                continue
+            sl = ph['slopes']
+            law_v[(r['dmin'], r['q'], eps)] = ph['v400']
+            phs[(r['dmin'], r['q'], eps)] = ph
+            L_.append(f"| {r['dmin']:g} | {r['q']} | {eps:g} | {r['tau_d']:.4g} | " + ('—' if ph['t3'] is None else f"{ph['t3']:g}") + ' | '
+                      + (f"{np.median(sl):.3f} [{min(sl):.3f}, {max(sl):.3f}]" if sl else '—') + ' | '
+                      + ('—' if ph['v400'] is None else f"{ph['v400']:.4g}") + ' | ' + ('—' if ph['vstar'] is None else f"{ph['vstar']:.4g}")
+                      + ' | ' + ', '.join('—' if ph['land'][t] is None else ('yes' if ph['land'][t]['off'] <= LAND_TOL
+                                                                                and abs(ph['land'][t]['dW']) <= LAND_TOL else 'no')
+                                          for t in TAUS_G_MD) + ' | '
+                      + ('—' if ph['collapse'] is None else f"{ph['collapse'][0]:+.3f}, {ph['collapse'][1]:+.3f}") + ' |')
+    L_ += ['', "The landed v against the mass: v at τ = 400 and its ratio per decade of ε (10^{1/6} = " + f"{10 ** (1 / 6):.4f} if v ∝ "
+           "ε^{−1/6}):", '', '| Δ ≥ | target | v at ε = ' + ', '.join(f"{e:g}" for e in EPS_G) + ' | ratios per decade |', '|---|---|---|---|']
+    for r in G:
+        vs = [law_v.get((r['dmin'], r['q'], e)) for e in EPS_G]
+        rat = [f"{b / a:.4f}" if a and b else '—' for a, b in zip(vs[:-1], vs[1:])]
+        L_.append(f"| {r['dmin']:g} | {r['q']} | " + ', '.join('—' if v is None else f"{v:.4g}" for v in vs) + f" | {', '.join(rat)} |")
+    L_ += g_phase_summary(phs, law_v)
+    return L_ + ['']
+
+
+def g_phase_summary(phs, law_v):
+    """G's three phases summed up (referee round 61): per ε the cells landed at τ = 6400; at the smallest ε the dipole phase's slope over
+    the law (the cells' medians) and the landed v over the law's; the last decade's ratio of v; on the cells landed at both 1600 and 6400
+    the collapse's exponents (distance, residual) and the frozen ones (|exponent| below 10⁻³)."""
+    if not phs:
+        return []
+    ok = lambda lp: lp is not None and lp['off'] <= LAND_TOL and abs(lp['dW']) <= LAND_TOL
+    e0 = min(EPS_G)
+    n6 = {e: (sum(ok(ph['land'].get(6400.0)) for k, ph in phs.items() if k[2] == e), sum(k[2] == e for k in phs)) for e in EPS_G}
+    sl = [np.median(ph['slopes']) for k, ph in phs.items() if k[2] == e0 and ph['slopes']]
+    vr = [ph['v400'] / ph['vstar'] for k, ph in phs.items() if k[2] == e0 and ph['v400'] and ph['vstar']]
+    dec = [law_v[k[:2] + (e0,)] / law_v[k[:2] + (10 * e0,)] for k in phs if k[2] == e0 and law_v.get(k[:2] + (10 * e0,)) and law_v.get(k)]
+    both = [(k, ph['collapse']) for k, ph in phs.items() if ok(ph['land'].get(1600.0)) and ok(ph['land'].get(6400.0)) and ph['collapse']]
+    fr = [k for k, c in both if abs(c[0]) < 1e-3]
+    col = np.array([c for k, c in both if abs(c[0]) >= 1e-3])
+    span = lambda v, f_: f"{min(v):{f_}}–{max(v):{f_}}" if len(v) else '—'
+    return ['', "Over the six targets: landed at τ = 6400 in " + ', '.join(f"{a} of {b} at ε = {e:g}" for e, (a, b) in n6.items())
+            + f"; at ε = {e0:g} the dipole phase's slope over the law {span(sl, '.3f')} (the cells' medians, {len(sl)} cells with a "
+            f"phase), the landed v over the law's {span(vr, '.2f')}, v's ratio over the last decade {span(dec, '.4f')}; on the "
+            f"{len(both)} cells landed at both 1600 and 6400, {len(fr)} frozen (" + ', '.join(f"{k[1]} at {k[2]:g}" for k in fr)
+            + ")" + (f", the others collapsing with the exponents {col[:, 0].min():+.3f} … {col[:, 0].max():+.3f} (distance) and "
+                     f"{col[:, 1].min():+.3f} … {col[:, 1].max():+.3f} "
+                     "(residual)" if len(col) else '') + '.']
 
 
 def main():
@@ -674,7 +980,7 @@ def main():
     raw = os.path.join(OUT, 'moving_width_raw.npz')
     md = os.path.join(OUT, 'moving_width.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H')
+    keys = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'H2', 'H3', 'HL')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
@@ -682,7 +988,7 @@ def main():
     res = dict(old)
     t0 = time.time()
     for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D), ('E', part_E), ('F', part_F),
-                  ('G', lambda: part_G(res['C'])), ('H', part_H)):
+                  ('G', lambda: part_G(res['C'])), ('H', part_H), ('H2', part_H2), ('H3', part_H3), ('HL', part_HL)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
