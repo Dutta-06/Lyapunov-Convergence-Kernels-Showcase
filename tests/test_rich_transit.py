@@ -317,3 +317,31 @@ def test_the_nd_path_stops_at_its_rhs_budget():
     assert [e[:3] for e in Rb['events']] == [e[:3] for e in R['events']] and np.array_equal(Rb['w'], R['w'])
     Rs = RN.sliding_iss_nd(L, KN, f, c0[:, None], np.ones(21), polish=True, max_events=6, max_rhs=50)
     assert Rs['out_of_budget'] and Rs['relaxed'] == [False] and Rs['nfev'] == 51
+
+
+def test_a_failed_chunk_leaves_its_block_unrelaxed_without_exits(monkeypatch):
+    """Referee round 54: a chunk that fails (`relax_chunk`'s how = 3) at the first event's first chunk or at a later one ends that
+    block's relaxation unrelaxed, counts once, and no kernel exits on its correlations — with and without exit_kkt, in one dimension and
+    in ℝⁿ (before, the exit rule read undefined or the previous block's arrays); the path goes on from the unrelaxed block."""
+    from src.core import rich_transit_nd as RN
+    real = RT.relax_chunk
+    calls = [0]
+
+    def failing(at):
+        def rc(rhs, z, chunk, **kw):
+            calls[0] += 1
+            return (z, 3) if calls[0] == at else real(rhs, z, chunk, **kw)
+        return rc
+    KN = RN.BumpsND(K.xs[:, None], K.sig)
+    paths = (lambda kkt: RT.sliding_iss(L, K, FSTAR, C0, np.ones(D), exit_kkt=kkt, max_events=8),
+             lambda kkt: RN.sliding_iss_nd(L, KN, FSTAR, C0[:, None], np.ones(D), exit_kkt=kkt, max_events=8))
+    for path in paths:
+        for at in (1, 3):
+            for kkt in (False, True):
+                calls[0] = 0
+                monkeypatch.setattr(RT, 'relax_chunk', failing(at))
+                R = path(kkt)
+                assert R['solver_failed'] == 1 and False in R['relaxed'] and calls[0] > at
+                tf = R['hist'][R['relaxed'].index(False) + 1][0]                     # the failed block's τ (the path goes on)
+                assert not any(e[2] == 'exit' and e[0] == tf for e in R['events'])
+    monkeypatch.setattr(RT, 'relax_chunk', real)

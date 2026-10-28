@@ -218,7 +218,8 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
     is accepted only if every kernel whose coefficient is below polish_wfrac·max|w| lands within polish_step kernel widths of its start
     or of the end of its correlation's ascent (`rich_transit.ascent_target`), else tried again after each doubling (`sliding_iss`).
     max_entries: stop as soon as that many kernels have entered, before the block relaxes. exit_kkt and the counts 'solver_redone',
-    'solver_failed': as `rich_transit.sliding_iss` (referee round 48). max_rhs: a budget of right-hand-side evaluations for the whole
+    'solver_failed': as `rich_transit.sliding_iss` (referee round 48; a block whose chunk failed is left unrelaxed, without exits: round
+    54). max_rhs: a budget of right-hand-side evaluations for the whole
     path, as `rich_transit.sliding_iss` ('out_of_budget', 'nfev'): a stiff block — fixed widths on a narrow feature, which LSODA hands to
     Radau chunk after chunk — stops the path before the block that spent it is relaxed, instead of running for hours."""
     c0 = np.atleast_2d(np.asarray(c0, float))
@@ -265,7 +266,7 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
         idx = np.flatnonzero(act)
         k = idx.size
         z = np.r_[al[idx], c[idx].ravel()]
-        elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
+        elapsed, chunk, ok, polished, failed = 0.0, float(t_fast), False, not polish, False
         try:
             for _k in range(max_doublings + 1):
                 z, how = _RT.relax_chunk(rhs, z, chunk, jac=jac)
@@ -274,6 +275,7 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
                 elapsed += chunk
                 if how == 3:
                     n_fail += 1
+                    failed = True
                     break
                 if not polished:
                     w0 = critical_w(L, z[:k])
@@ -305,6 +307,8 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
             break
         relaxed.append(ok)
         al[idx] = z[:k]; c[idx] = z[k:].reshape(k, n)
+        if failed:                    # a chunk failed: the block is left unrelaxed and no kernel exits on it (referee round 54)
+            continue
         own = None
         if exit_kkt:
             Pc = K.phi(ci)

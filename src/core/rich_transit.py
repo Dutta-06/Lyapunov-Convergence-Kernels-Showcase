@@ -327,7 +327,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     kernel leaves only if its correlation stays inward with its own contribution w_i⟨φ_iφ_i⟩ removed — otherwise the removal turns it
     outward and the kernel re-enters at the same τ, a cycle of entries and exits (referee round 48); False keeps the paths of the results
     committed before. The chunks redone after a failed solve and those that failed even halved (`relax_chunk`) are counted as
-    'solver_redone' and 'solver_failed' (a failed chunk ends its relaxation unrelaxed)."""
+    'solver_redone' and 'solver_failed' (a failed chunk ends its relaxation unrelaxed, and no kernel exits on that block: referee round
+    54)."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
@@ -376,7 +377,7 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         idx = np.flatnonzero(act)
         n = idx.size
         z = np.r_[al[idx], c[idx]]
-        elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
+        elapsed, chunk, ok, polished, failed = 0.0, float(t_fast), False, not polish, False
         try:
             for _k in range(max_doublings + 1):
                 z, how = relax_chunk(rhs, z, chunk)
@@ -385,6 +386,7 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
                 elapsed += chunk
                 if how == 3:
                     n_fail += 1
+                    failed = True
                     break
                 if box is not None and np.any((z[n:] < box[0]) | (z[n:] > box[1])):
                     runaway = True
@@ -420,6 +422,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         al[idx] = z[:n]; c[idx] = z[n:]
         if runaway:
             break
+        if failed:                    # a chunk failed: the block is left unrelaxed and no kernel exits on it (referee round 54)
+            continue
         own = None
         if exit_kkt:
             Pz = K.phi(z[n:])
