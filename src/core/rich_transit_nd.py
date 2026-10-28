@@ -12,6 +12,8 @@ polish (`polish_block_nd`), the sliding inverse scale space (`sliding_iss_nd`), 
 one feature together (`inner_k`): the k-fold near tie, whose shares for coinciding kernels are the profile split w_i = 𝒲(ξ + x_i),
 Σ_iw_i = A — on the exponential branch the softmax e^{−κx_i}/Σ_je^{−κx_j} (`profile_split`).
 """
+import time
+
 import numpy as np
 from scipy.integrate import solve_ivp
 
@@ -347,14 +349,20 @@ def creep_constants_nd(L, K, P, j, c0j, taus, b=1.0):
     return C, D
 
 
-def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max_doublings=12, share_tol=None):
+class _OverBudget(Exception):
+    """inner_k's wall-clock budget ran out inside an integration."""
+
+
+def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max_doublings=12, share_tol=None, max_secs=None):
     """The ε-free inner problem of k kernels entering one feature together (D‴.51(ii) with k kernels; Lemma D‴.53a: a gradient flow of the
     fit): the kernels at the centres cs (k, n), the first (the entrant) from the inner coordinate xi0 behind its wall and the j-th x_j
     behind the entrant (x_0 = 0), in s = (τ − τ_e)/ε^{1/2}: the fast flow on the critical curve times Λ₀ (dα/ds = Λ₀·2Gc tanh²(α/a)⟨rφ⟩,
     dc/ds = Λ₀Gmw⟨r∇_cφ⟩), the residual the feature fstar (nothing else fitted). Integrated over xi0/(the entrant's correlation) + s_end,
     then doubling until every rate is below tol·max|f*| — and, with share_tol, until the shares moved by less than share_tol over the last
-    doubling (the absolute rates pass early while a tail kernel's tiny coefficient still slides: referee round 42). Returns dict(w, c,
-    shares |w_j|/Σ|w|, stationary, s, drift: the shares' largest change over the last doubling)."""
+    doubling (the absolute rates pass early while a tail kernel's tiny coefficient still slides: referee round 42). max_secs: a
+    wall-clock budget — checked inside the integration too, so one long chunk cannot overrun it; on running out the state is the last
+    completed chunk's and stationary is False. Returns dict(w, c, shares |w_j|/Σ|w|, stationary, s, drift: the shares' largest change
+    over the last doubling)."""
     lam0 = transit_scale(L, 1.0)
     cs = np.atleast_2d(np.asarray(cs, float))
     k, n = cs.shape
@@ -362,20 +370,32 @@ def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max
     al0 = sgn * _alpha_of(L, -lam0 * rho * (xi0 + np.asarray(x, float)), eta_crit)
     z = np.r_[al0, cs.ravel()]
     f0, j0 = critical_rhs_nd(L, K, fstar), critical_jac_nd(L, K, fstar)
-    rhs, jac = (lambda s, z: lam0 * f0(s, z)), (lambda s, z: lam0 * j0(s, z))
+    t_end = np.inf if max_secs is None else time.time() + max_secs
+
+    def rhs(s, z):
+        if time.time() > t_end:
+            raise _OverBudget
+        return lam0 * f0(s, z)
+
+    jac = lambda s, z: lam0 * j0(s, z)
     v_e = abs(float(K.corr(cs[:1], fstar)[0][0]))
     s_, chunk, ok = 0.0, xi0 * rho / v_e + float(s_end), False
     scale = tol * float(np.abs(fstar).max())
     sh_prev, drift = None, np.inf
     for _ in range(max_doublings + 1):
-        sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', jac=jac, rtol=1e-10, atol=1e-13)
+        try:
+            sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', jac=jac, rtol=1e-10, atol=1e-13)
+        except _OverBudget:
+            break
         z, s_ = sol.y[:, -1], s_ + chunk
         w_ = np.abs(critical_w(L, z[:k]))
         sh = w_ / w_.sum()
         drift = float(np.abs(sh - sh_prev).max()) if sh_prev is not None else np.inf
         sh_prev = sh
-        if np.all(np.abs(rhs(s_, z)) <= scale) and (share_tol is None or drift <= share_tol):
+        if np.all(np.abs(lam0 * f0(s_, z)) <= scale) and (share_tol is None or drift <= share_tol):
             ok = True
+            break
+        if time.time() > t_end:
             break
         chunk = s_
     w = critical_w(L, z[:k])

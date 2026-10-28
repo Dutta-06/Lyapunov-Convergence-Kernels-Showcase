@@ -18,12 +18,30 @@ B. The formation map at a vertex: the number of kernels formed (|w| > TH_REL·|A
 C. Several features in the plane: random three-feature targets on the lattice over [−1, 1]², the sliding path against the loop at ε =
    EPS_C: the kernels formed, the never-entering kernels' largest coefficient (∝ ε^{3/2}) and displacement (∝ ε), the block against the
    path's.
-T. The 2-kernel (edge) inner problem's runner-up share p(x) on a grid of gaps — the product rule: at a vertex the kernel e + h1_S has
-   the share Π_{i∈S}p(x_i)Π_{i∉S}(1 − p(x_i)), formed when it exceeds TH_REL —, used by B's map and D.
+T. The 2-kernel (edge) inner problem's runner-up share p(x; t) on a grid of gaps x and of the feature's offsets t along the face
+   (referee round 42: the split depends on where the feature sits on the face, not only on the gap) — x_θ(t) and its average over the
+   face; the product rule: at a vertex, where each edge's offset is t = H/2, the kernel e + h1_S has the share
+   Π_{i∈S}p(x_i; H/2)Π_{i∉S}(1 − p(x_i; H/2)), formed when it exceeds TH_REL —, used by A, B's map and D.
+B4. The 4-kernel inner problem on a finer grid of gaps (GRID_B4): the areas of the regions N ≥ 3 and N = 4 at a vertex, against the
+   product rule's.
 D. The probabilities: features placed uniformly in a Voronoi cell (N_D positions) at ε = EPS_D, the loop's count against the product
-   rule at the positions' gaps and against the asymptotic P(N ≥ 2) = 4w/h − 4w²/h², w = 2σ²x_θε^{1/2}/h the layer's width.
+   rule at each position's gaps and offsets and against the asymptotic P(N ≥ 2) = (4/h)·∫w(t)dt/h, w(t) = 2σ²x_θ(t)ε^{1/2}/h.
+H. A hexagonal lattice (spacing H; a Voronoi vertex meets three cells, so k ≤ n + 1 = 3): the 3-kernel inner problem at a vertex's exact
+   tie, its formation region N ≥ 3 in the two runner-ups' gaps and P(N ≥ 3) ∝ ε from it, the fourth kernel's gap there, and the loop at
+   the exact tie against the inner problem.
+T2. x_θ(t) at the offsets T_FAR beyond H/2 (by bisection): the faces of hℤⁿ for n ≥ 3 reach |t| = (n − 1)^{1/2}H/2, and in the
+   continuum the 2-kernel problem with the feature at the transverse offset t reduces to the plane of the axis and t — x_θ depends on
+   |t| only —, so the face averages x̄_θ⁽ⁿ⁾ over the (n − 1)-cube of offsets give E[N − 1] on hℤⁿ.
+W. Where the selection is the Voronoi cell (referee round 42): W1 the samples' window (Part C's grid: the faces between neighbours on
+   the axis x₂ = 0 and the margins' error against the continuum's toward the window's edge); W2 unequal masses (the kernel at (H, 0) of
+   mass βε: the entrant the kernel of the least entry time ρ_j/v_j — a power diagram —, the loop at EPS_W); W3 coarse samples along x₂
+   (spacing DS_W: the face's shift against the Poisson summation's harmonics); W4 two coinciding kernels with the feature off their
+   centre (the inner problem against the profile split); W5 the profile split against the softmax at the formation threshold.
+C2. Designed targets in the plane: a near tie (one feature near a face of the lattice, its runner-up's margin MU_C2 at the first entry:
+   the gap MU_C2/ε^{1/2} crosses x_θ between the masses EPS_C) and a feature at the window's edge (the samples' entrant is not the
+   nearest kernel) — the loop against the path and the near-tie rule.
 
-Usage: python experiments/exp_transit_nd.py [--only A,B,C,T,D] [--from-raw] → results/chaos/transit_nd.md (+ _raw.npz).
+Usage: python experiments/exp_transit_nd.py [--only A,B,B4,C,T,D,H,T2,W,C2] [--from-raw] → results/chaos/transit_nd.md (+ _raw.npz).
 """
 import os
 import sys
@@ -52,6 +70,19 @@ A_B, EPS_B, GRID_B = 0.8, (1e-6, 1e-8, 1e-10), np.arange(0.0, 10.5, 1.0)
 SEED_C, N_C, EPS_C = 54, 6, (1e-6, 1e-7, 1e-8, 1e-9, 1e-10)
 X_T = np.round(np.arange(0.0, 14.05, 0.1), 10)                         # the 2-kernel (edge) inner problem's share, tabulated
 SEED_D, N_D, EPS_D = 541, 600, (1e-5, 1e-6)
+T_OFFS = (0.0, H / 8, H / 4, 3 * H / 8, H / 2)                          # T: the feature's offsets along the edge's face
+XI0_A = (800.0, 1600.0)                                                # A: the inner problems' starts, extrapolated (the tail ∝ 1/xi0)
+GRID_B4 = np.arange(0.0, 10.01, 0.25)                                  # B4: the 4-kernel inner problem's finer grid
+GRID_H, EPS_H = np.arange(0.0, 12.01, 0.5), (1e-8, 1e-10)              # H: the hexagonal vertex's gaps; the loop's masses
+SHARE_TOL = 1e-7                                                       # the inner problems' shares settled over a doubling
+INNER_SECS = 300.0                                                     # an inner problem's wall-clock budget (then 'not stationary')
+T_FAR = (0.625 * H, 0.75 * H, 0.875 * H, H)                            # T2: the offsets beyond H/2 (n ≥ 3)
+EPS_W = 1e-8                                                           # W1/W2: the margins' scale ε^{1/2}x_θ and the loop's mass
+BETAS_W = (1.0, 1.001, 1.01, 1.5)                                      # W2: the mass ratio of the kernel at (H, 0)
+DS_W = (0.05, 0.1, 0.15, 0.2, 0.3)                                     # W3: the samples' spacing along x₂ (offset by 0.3 of a spacing)
+OFF_W, XR_W = (0.0, 0.07, 0.2, 0.4), (2.0, 4.0)                        # W4: the feature's offset (units of σ), the runner-up's gap
+AMPS_W = (0.3, 0.8, 1.0)                                               # W5
+MU_C2 = 3e-4                                                           # C2: the near tie's margin (the gap 3 at ε = 10⁻⁸)
 
 
 def law():
@@ -130,13 +161,30 @@ def a_job(args):
 
 
 def inner_job(args):
-    """The ε-free inner problem at the tie: (kind, A, gaps of the tie's kernels) → shares."""
-    kind, A, xs = args
+    """The ε-free inner problem at the tie: (kind, A, gaps of the tie's kernels[, the feature's offset t along the edge's face[, xi0]])
+    → shares (the edge's feature at (H/2, t): still on the face, so still a tie)."""
+    kind, A, xs = args[:3]
+    t = float(args[3]) if len(args) > 3 else 0.0
+    xi0 = float(args[4]) if len(args) > 4 else 400.0
     L = law(); K, c0 = local()
     pts, T = TIES[kind]
+    T = T + (np.array([0.0, t]) if kind == 'edge' else 0.0)
     f = A * K.phi(np.atleast_2d(T))[:, 0]
-    out = RN.inner_k(L, K, f, np.array(pts, float), np.asarray(xs, float))
-    return dict(kind=kind, A=A, xs=list(xs), shares=out['shares'], stationary=out['stationary'], s=out['s'], c=out['c'])
+    out = RN.inner_k(L, K, f, np.array(pts, float), np.asarray(xs, float), xi0=xi0, share_tol=SHARE_TOL, max_secs=INNER_SECS)
+    return dict(kind=kind, A=A, xs=list(xs), t=t, xi0=xi0, shares=out['shares'], stationary=out['stationary'], s=out['s'], c=out['c'],
+                drift=out['drift'])
+
+
+def inner_ext(args):
+    """The inner problem's shares extrapolated in its start xi0 (Richardson from XI0_A: the far field's tail ∝ 1/xi0; referee round 42)."""
+    kind, A, xs = args[:3]
+    t = args[3] if len(args) > 3 else 0.0
+    r = [inner_job((kind, A, xs, t, x0)) for x0 in XI0_A]
+    out = dict(r[-1])
+    out['shares'] = 2 * r[-1]['shares'] - r[-2]['shares']
+    out['spread'] = float(np.abs(r[-1]['shares'] - r[-2]['shares']).max())
+    out['stationary'] = all(x['stationary'] for x in r)
+    return out
 
 
 def part_A():
@@ -145,14 +193,15 @@ def part_A():
     loops += [('vertex', A, x, e) for A in AMPS_A for x in VERTEX_X for e in EPS_A]
     with Pool(N_WORKERS) as pool:
         rl = pool.map(a_job, loops, chunksize=1)
-        # the inner problem at the loop's gaps at the smallest ε (the limit's), and the edges' problems for the factorisation
+        # the inner problem at the loop's gaps at the smallest ε (the limit's), extrapolated in xi0, and for the factorisation the edges'
+        # problems in the vertex's geometry: the feature at the vertex sits H/2 off each edge's axis (referee round 42)
         jobs = []
         for r in rl:
             if r['eps'] == min(EPS_A):
-                jobs.append((r['kind'], r['A'], tuple(np.r_[0.0, r['x_act'][1:]])))
+                jobs.append((r['kind'], r['A'], tuple(np.r_[0.0, r['x_act'][1:]]), 0.0))
                 if r['kind'] == 'vertex':
-                    jobs += [('edge', r['A'], (0.0, r['x_act'][1])), ('edge', r['A'], (0.0, r['x_act'][2]))]
-        ri = pool.map(inner_job, jobs, chunksize=1)
+                    jobs += [('edge', r['A'], (0.0, r['x_act'][1]), H / 2), ('edge', r['A'], (0.0, r['x_act'][2]), H / 2)]
+        ri = pool.map(inner_ext, jobs, chunksize=1)
     return dict(loops=rl, inner=ri)
 
 
@@ -197,6 +246,88 @@ def part_B():
     return dict(loops=rl, inner=ri, x_theta=threshold_x(L, K, A_B))
 
 
+def b4_job(args):
+    """B4: the 4-kernel inner problem at a vertex at the gaps (x₁₀, x₀₁) (the diagonal's from the samples' margins)."""
+    x1, x2 = args
+    L = law(); K, c0 = local()
+    xd = margins_diag(K, c0, x1, x2)
+    r = inner_job(('vertex', A_B, (0.0, x1, x2, xd)))
+    return dict(x=(x1, x2), xd=xd, n=int((r['shares'] > TH_REL).sum()), shares=r['shares'], stationary=r['stationary'])
+
+
+def part_B4():
+    from multiprocessing import Pool
+    pts = [(a, b) for a in GRID_B4 for b in GRID_B4 if a <= b]
+    with Pool(N_WORKERS) as pool:
+        return dict(grid=GRID_B4, rows=pool.map(b4_job, pts, chunksize=4))
+
+
+def local_hex():
+    """H: the kernels on a hexagonal lattice of spacing H around the vertex V of the cells of (0, 0), (H, 0), (H/2, √3H/2) — the triangle's
+    circumcentre, H/√3 from each —, the samples' tensor grid of spacing DS centred at V (no threefold symmetry: the tie is exact in the
+    continuum, approximately on the samples)."""
+    V = np.array([H / 2, H / (2 * np.sqrt(3))])
+    xs1, xs2 = V[0] + DS * np.arange(-18, 19), V[1] + DS * np.arange(-18, 19)
+    K = RN.BumpsGrid2(xs1, xs2, SIG)
+    pts = np.array([[H * (i + j / 2), H * j * np.sqrt(3) / 2] for i in range(-5, 6) for j in range(-5, 6)])
+    c0 = pts[np.linalg.norm(pts - V, axis=1) <= 4 * H]
+    tri = [kidx(c0, p_) for p_ in ((0, 0), (H, 0), (H / 2, H * np.sqrt(3) / 2))]
+    return K, c0, V, tri
+
+
+def hex_tie(K, c0, V, tri):
+    """The point near V where the three kernels' correlations with the feature are equal on the samples (Newton on the two margins)."""
+    c = V.copy()
+    for _ in range(30):
+        def mu(p_):
+            v = np.abs(K.corr(c0[tri], K.phi(np.atleast_2d(p_))[:, 0])[0])
+            return np.array([v[1] / v[0] - 1, v[2] / v[0] - 1])
+        f0 = mu(c)
+        J = np.empty((2, 2))
+        for i in range(2):
+            e = np.zeros(2); e[i] = 1e-7
+            J[:, i] = (mu(c + e) - mu(c - e)) / 2e-7
+        step = np.linalg.solve(J, f0)
+        c = c - step
+        if np.abs(step).max() < 1e-14:
+            break
+    return c
+
+
+def h_inner(args):
+    """H: the 3-kernel inner problem at the hexagonal vertex (the samples' exact tie): the runner-ups x₁, x₂ behind the entrant."""
+    x1, x2 = args
+    L = law(); K, c0, V, tri = local_hex()
+    f = A_B * K.phi(np.atleast_2d(hex_tie(K, c0, V, tri)))[:, 0]
+    out = RN.inner_k(L, K, f, c0[tri], np.array([0.0, x1, x2]), share_tol=SHARE_TOL, max_secs=INNER_SECS)
+    return dict(x=(x1, x2), shares=out['shares'], n=int((out['shares'] > TH_REL).sum()), stationary=out['stationary'])
+
+
+def h_loop(eps):
+    """H: the loop with the feature at the hexagonal vertex (the exact tie in the continuum): the three kernels' shares, the others' largest
+    |w| and the margins of the tie's runner-ups and of the fourth-nearest kernel, in units of ε^{1/2}."""
+    L = law(); K, c0, V, tri = local_hex()
+    T0 = hex_tie(K, c0, V, tri)
+    f = A_B * K.phi(np.atleast_2d(T0))[:, 0]
+    v = np.abs(K.corr(c0, f)[0])
+    order = np.argsort(-v)
+    taus = np.linspace(0, TAU_A / v[order[0]], 23)
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus)
+    w = np.abs(W[-1][tri])
+    return dict(eps=eps, tie=T0.tolist(), V=V.tolist(), shares=w / w.sum(), rest=float(np.delete(np.abs(W[-1]), tri).max()),
+                n=int((np.abs(W[-1]) > TH_REL * A_B).sum()), gaps=((1 - v[order[1:4]] / v[order[0]]) / np.sqrt(eps)).tolist(),
+                top3=sorted(int(j) for j in order[:3]) == sorted(tri))
+
+
+def part_H():
+    from multiprocessing import Pool
+    pts = [(a, b) for a in GRID_H for b in GRID_H if a <= b]
+    with Pool(N_WORKERS) as pool:
+        ri = pool.map(h_inner, pts, chunksize=4)
+        rl = pool.map(h_loop, list(EPS_H), chunksize=1)
+    return dict(inner=ri, loops=rl, grid=GRID_H)
+
+
 def targets_C(seed, n):
     rng = np.random.default_rng(seed)
     out = []
@@ -226,14 +357,24 @@ def c_job(args):
     t_last = R['events'][-1][0]
     taus = np.linspace(0, 1.3 * t_last, 27)
     T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus)
-    big = np.abs(W[-1]) > TH_REL * np.abs(As).max()
+    near = np.argmin(np.linalg.norm(c0[:, None, :] - cs[None, :, :], axis=2), axis=1)
+    big = np.abs(W[-1]) > TH_REL * np.abs(As)[near]                    # formed: against its nearest feature's amplitude (round 42)
     never = np.array([j for j in range(len(c0)) if j not in path])
     rms = float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2)))
+    # the creep as a vector law (D‴.48(iii)(a) in ℝⁿ): the never-entering kernels' displacements against ε·C_j(τ_end), C_j integrated
+    # along the path (`creep_constants_nd`); kernels whose predicted displacement is above 10⁻³ of the largest
+    P = RN.path_duals_nd(K, f, R)
+    Cj = np.array([RN.creep_constants_nd(L, K, P, j, c0[j], [taus[-1]])[0][0] for j in never])
+    disp = C[-1][never] - c0[never]
+    nrm = np.linalg.norm(Cj, axis=1)
+    sel = nrm > 1e-3 * nrm.max()
+    rel = float((np.linalg.norm(disp[sel] - eps * Cj[sel], axis=1) / (eps * nrm[sel])).max())
+    cos = float(((disp[sel] * Cj[sel]).sum(1) / (np.linalg.norm(disp[sel], axis=1) * nrm[sel])).min())
     return dict(q=q, eps=eps, path=path, events=[(float(t), int(j), k) for t, j, k, c in R['events']], path_rms=R['hist'][-1][3],
                 formed=sorted(int(j) for j in np.flatnonzero(big)), w_never=float(np.abs(W[-1][never]).max()),
                 disp_never=float(np.linalg.norm(C[-1][never] - c0[never], axis=1).max()),
                 dw=float(np.abs(W[-1][path] - R['w'][path]).max()), dc=float(np.abs(C[-1][path] - R['c'][path]).max()), rms=rms,
-                secs=time.time() - t0)
+                creep_rel=rel, creep_cos=cos, secs=time.time() - t0)
 
 
 def part_C():
@@ -242,19 +383,35 @@ def part_C():
         return pool.map(c_job, [(q, e) for q in range(N_C) for e in EPS_C], chunksize=1)
 
 
-def t_job(x):
-    return float(inner_job(('edge', A_B, (0.0, float(x))))['shares'][1])
+def t_job(args):
+    x, t = args
+    return float(inner_job(('edge', A_B, (0.0, float(x)), float(t)))['shares'][1])
 
 
 def part_T():
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
-        return dict(x=X_T, p=np.array(pool.map(t_job, list(X_T), chunksize=4)))
+        p = np.array(pool.map(t_job, [(x, t) for t in T_OFFS for x in X_T], chunksize=4)).reshape(len(T_OFFS), len(X_T))
+    return dict(x=X_T, t=np.array(T_OFFS), pt=p, p=p[0])
 
 
-def product_count(T, x1, x2):
-    """The product rule's count at a vertex with the edge gaps x1, x2 (p interpolated in the table T)."""
-    p1, p2 = np.interp([x1, x2], T['x'], T['p'], right=0.0)
+def p_edge(T, x, t=H / 2):
+    """The edge's runner-up share p(x; t) from the table T (linear in x and in |t| ∈ [0, H/2]; the old table: t = 0 only)."""
+    if 'pt' not in T:
+        return np.interp(x, T['x'], T['p'], right=0.0)
+    ta = np.clip(np.abs(t), 0.0, H / 2)
+    rows = np.array([np.interp(x, T['x'], T['pt'][i], right=0.0) for i in range(len(T['t']))])
+    return np.interp(ta, T['t'], rows) if np.ndim(x) == 0 else np.array([np.interp(ta, T['t'], rows[:, i]) for i in range(len(x))])
+
+
+def x_theta_t(T):
+    """x_θ(t): the gap at which p(x; t) crosses TH_REL, per offset of the table."""
+    return np.array([float(np.interp(-TH_REL, -T['pt'][i], T['x'])) for i in range(len(T['t']))])
+
+
+def product_count(T, x1, x2, t1=H / 2, t2=H / 2):
+    """The product rule's count with the two faces' gaps x1, x2 and the feature's offsets t1, t2 along them (at a vertex both H/2)."""
+    p1, p2 = float(p_edge(T, x1, t1)), float(p_edge(T, x2, t2))
     shares = [(1 - p1) * (1 - p2), p1 * (1 - p2), (1 - p1) * p2, p1 * p2]
     return int(sum(s > TH_REL for s in shares))
 
@@ -282,68 +439,379 @@ def part_D():
         return pool.map(d_job, [(q, e) for e in EPS_D for q in range(N_D)], chunksize=4)
 
 
+def t2_job(t):
+    """T2: x_θ(t), the gap at which the edge's runner-up share (A_B) crosses TH_REL, by bisection, the feature at the offset t."""
+    lo, hi = 3.0, 9.0
+    for _ in range(16):
+        m_ = 0.5 * (lo + hi)
+        if inner_job(('edge', A_B, (0.0, m_), t))['shares'][1] > TH_REL:
+            lo = m_
+        else:
+            hi = m_
+    return 0.5 * (lo + hi)
+
+
+def part_T2():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return dict(t=np.array(T_FAR), x=np.array(pool.map(t2_job, list(T_FAR), chunksize=1)))
+
+
+def face_average(tt, xt, n, m=24):
+    """x̄_θ⁽ⁿ⁾: x_θ(|t|) (interpolated in |t| on the offsets tt) averaged over a face of hℤⁿ, the (n − 1)-cube [−H/2, H/2]^{n−1} of
+    transverse offsets (the midpoint rule, m points per side)."""
+    if n == 1:
+        return float(xt[0])
+    g = (np.arange(m) + 0.5) / m * H - H / 2
+    pts = np.stack(np.meshgrid(*([g] * (n - 1)), indexing='ij'), -1).reshape(-1, n - 1)
+    return float(np.interp(np.linalg.norm(pts, axis=1), tt, xt).mean())
+
+
+def w_edge():
+    """W1: the selection near the samples' window (Part C's grid, the samples on [−1, 1]²). On the axis x₂ = 0: the faces between lattice
+    neighbours (where their correlations with a feature are equal on the samples; in the continuum the midpoints), searched up to 2H
+    beyond the outer kernel; and for features on the axis the largest error of the margins of the nearest kernel's neighbours against the
+    continuum's, and whether the samples' entrant is the nearest kernel."""
+    K, c0 = full()
+    row = [kidx(c0, (x, 0.0)) for x in np.arange(0.0, 1.0 + 1e-9, H)]
+
+    def gap(x, a, b):
+        v = np.abs(K.corr(c0[[a, b]], K.phi(np.array([[x, 0.0]]))[:, 0])[0])
+        return v[0] - v[1]
+    faces = []
+    for a, b in zip(row[:-1], row[1:]):
+        g = np.linspace(c0[a][0], c0[b][0] + 2 * H, 241)
+        s = np.array([gap(x, a, b) for x in g])
+        k = np.flatnonzero((s[:-1] > 0) & (s[1:] <= 0))
+        face = np.nan
+        if k.size:
+            lo, hi = g[k[0]], g[k[0] + 1]
+            for _ in range(50):
+                m_ = 0.5 * (lo + hi)
+                lo, hi = (m_, hi) if gap(m_, a, b) > 0 else (lo, m_)
+            face = 0.5 * (lo + hi)
+        faces.append(dict(a=float(c0[a][0]), b=float(c0[b][0]), face=float(face)))
+    rows = []
+    for x in np.round(np.arange(0.0, 0.985, 0.01), 10):
+        cs = np.array([x, 0.0])
+        v = np.abs(K.corr(c0, K.phi(np.atleast_2d(cs))[:, 0])[0])
+        en = int(np.argmin(((c0 - cs) ** 2).sum(1)))
+        nb = [j for j in range(len(c0)) if j != en and np.linalg.norm(c0[j] - c0[en]) < 1.5 * H]
+        mu_s = 1 - v[nb] / v[en]
+        mu_c = 1 - np.exp(-(((cs - c0[nb]) ** 2).sum(1) - ((cs - c0[en]) ** 2).sum()) / (4 * SIG ** 2))
+        rows.append(dict(x=float(x), nearest=bool(int(np.argmax(v)) == en), err=float(np.abs(mu_s - mu_c).max())))
+    return dict(faces=faces, rows=rows)
+
+
+def power_face(beta):
+    """W2: the point on the axis x₂ = 0 where the kernels at (0, 0) and (H, 0) (the latter of mass βε) enter together (equal entry times
+    ρ_j/v_j on the local samples, ρ = b^{−1/2}); in the continuum H/2 − σ²ln β/H."""
+    K, c0 = local()
+    e, j = kidx(c0, (0, 0)), kidx(c0, (H, 0))
+
+    def d(x):
+        v = np.abs(K.corr(c0[[e, j]], K.phi(np.array([[x, 0.0]]))[:, 0])[0])
+        return v[1] / beta ** -0.5 - v[0]                              # > 0: the heavier kernel enters first
+    lo, hi = -2 * H, H
+    for _ in range(60):
+        m_ = 0.5 * (lo + hi)
+        lo, hi = (lo, m_) if d(m_) > 0 else (m_, hi)
+    return 0.5 * (lo + hi)
+
+
+def w_mass(args):
+    """W2: one loop (ε = EPS_W) on the local lattice, the kernel at (H, 0) of mass βε and the rest ε, the feature (A_B) on the axis at x₁:
+    the kernels formed, the shares of (0, 0) and (H, 0), the entrant by the least entry time ρ_j/v_j (the power diagram) and the nearest
+    kernel (Voronoi), and the runner-up's gap (1 − τ_e/τ_r)/ε^{1/2}."""
+    beta, x1 = args
+    L = law(); K, c0 = local()
+    e, j = kidx(c0, (0, 0)), kidx(c0, (H, 0))
+    b = np.ones(len(c0)); b[j] = beta
+    cs = np.array([x1, 0.0])
+    f = A_B * K.phi(np.atleast_2d(cs))[:, 0]
+    tau = b ** -0.5 / np.abs(K.corr(c0, f)[0])
+    o = np.argsort(tau)
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, EPS_W, np.linspace(0, TAU_A * tau[o[0]], 23), b=b)
+    w = np.abs(W[-1])
+    return dict(beta=beta, x1=x1, e=e, j=j, formed=[int(i) for i in np.flatnonzero(w > TH_REL * A_B)], shares=(w[[e, j]] / w.sum()).tolist(),
+                power=int(o[0]), runner=int(o[1]), voronoi=int(np.argmin(((c0 - cs) ** 2).sum(1))),
+                gap=float((1 - tau[o[0]] / tau[o[1]]) / np.sqrt(EPS_W)))
+
+
+def w_alias(ds):
+    """W3: the samples' spacing ds along x₂ (the grid offset by 0.3ds; along x₁ DS): the face between the kernels at (0, 0) and (0, H) for
+    features at (0, x₂) — its shift from H/2 against the Poisson summation (the x₂-sum of a product of Gaussians is (√πσ/ds)(1 +
+    2Σ_k q^{k²}cos(2πk(m − o)/ds)), q = e^{−π²σ²/ds²}, m the product's centre, o the grid's offset) — and the margin's slope there against
+    the continuum's H/(2σ²)."""
+    n2 = int(np.ceil(1.0 / ds))
+    o = 0.3 * ds
+    K = RN.BumpsGrid2(DS * np.arange(-18, 19), o + ds * np.arange(-n2, n2 + 1), SIG)
+    cc = np.array([[0.0, 0.0], [0.0, H]])
+    q = float(np.exp(-np.pi ** 2 * SIG ** 2 / ds ** 2))
+
+    def lr(x2):                                                        # log(v₀/v₁) on the samples
+        v = np.abs(K.corr(cc, K.phi(np.array([[0.0, x2]]))[:, 0])[0])
+        return float(np.log(v[0] / v[1]))
+
+    def lr_p(x2):                                                      # the same from the Poisson sum
+        S = lambda m: 1 + 2 * sum(q ** (k * k) * np.cos(2 * np.pi * k * (m - o) / ds) for k in (1, 2, 3))
+        return (H * H - 2 * H * x2) / (4 * SIG ** 2) + np.log(S(x2 / 2)) - np.log(S((x2 + H) / 2))
+
+    def root(fn):
+        lo, hi = -H, 2 * H
+        for _ in range(60):
+            m_ = 0.5 * (lo + hi)
+            lo, hi = (m_, hi) if fn(m_) > 0 else (lo, m_)
+        return 0.5 * (lo + hi)
+    face, face_p = root(lr), root(lr_p)
+    h_ = 1e-6
+    mu = lambda x2: 1 - np.exp(-lr(x2))                                # the runner-up (0, H)'s margin below the face
+    slope = abs(mu(face + h_) - mu(face - h_)) / (2 * h_) / (H / (2 * SIG ** 2))
+    return dict(ds=ds, q=q, shift=(face - H / 2) / H, shift_p=(face_p - H / 2) / H, slope=float(slope))
+
+
+def w_coinc(args):
+    """W4: two kernels coinciding at the local samples' centre of symmetry V, the runner-up x_r behind, the feature (A_B) at V + (δσ, 0):
+    the inner problem's runner-up share (extrapolated in xi0) against the profile split's (exact for the feature at their centre; off it
+    the kernels slide onto the feature at speeds ∝ their coefficients, apart on the way and together again at its centre)."""
+    dlt, xr = args
+    L = law(); K, c0 = local()
+    V = TIES['vertex'][1]
+    f = A_B * K.phi(np.atleast_2d(V + np.array([dlt * SIG, 0.0])))[:, 0]
+    r = [RN.inner_k(L, K, f, np.array([V, V]), np.array([0.0, xr]), xi0=x0, share_tol=SHARE_TOL) for x0 in XI0_A]
+    sh = 2 * r[-1]['shares'] - r[-2]['shares']
+    prof = RN.profile_split(L, A_B, np.array([0.0, xr]))
+    return dict(delta=dlt, xr=xr, share=float(sh[1]), profile=float(prof[1]), stationary=all(x['stationary'] for x in r),
+                end=float(np.linalg.norm(r[-1]['c'] - (V + np.array([dlt * SIG, 0.0])), axis=1).max()) / SIG)
+
+
+def w_profile():
+    """W5: the 2-fold profile split's runner-up share p(x) (coinciding kernels at the feature's centre) against the softmax's
+    1/(1 + e^{κx}): p's crossing of TH_REL against the softmax's ln(1/TH_REL − 1)/κ, the softmax's relative error at the crossing and at
+    x = 8, and e^{−2α/a} at the runner-up's coefficient TH_REL·|A| (the size of the exponential branch's correction, D‴.51(i))."""
+    L = law()
+    kap = np.pi * (2 * L.c) ** 0.5
+    soft = lambda x: 1 / (1 + np.exp(kap * x))
+    out = []
+    for A in AMPS_W:
+        p = lambda x: float(RN.profile_split(L, A, np.array([0.0, x]))[1])
+        lo, hi = 0.0, 14.0
+        for _ in range(50):
+            m_ = 0.5 * (lo + hi)
+            lo, hi = (m_, hi) if p(m_) > TH_REL else (lo, m_)
+        xc = 0.5 * (lo + hi)
+        al = float(RT._alpha_of(L, np.array([TH_REL * A]), RT.coef_crit)[0])
+        out.append(dict(A=A, x_cross=xc, x_soft=float(np.log(1 / TH_REL - 1) / kap), err_cross=soft(xc) / p(xc) - 1,
+                        err8=soft(8.0) / p(8.0) - 1, alpha_a=al / L.A, corr=float(np.exp(-2 * al / L.A))))
+    return out
+
+
+def part_W(T=None):
+    from multiprocessing import Pool
+    L = law()
+    xbar = x_theta_avg(T) if T is not None and 'pt' in T else threshold_x(L, None, A_B)
+    w_ = 2 * SIG ** 2 * xbar * np.sqrt(EPS_W) / H                      # the near-tie layer's width at EPS_W (positions only)
+    jobs = []
+    for beta in BETAS_W:
+        p = power_face(beta)
+        xs = [H / 2, p - 2 * w_, p + 2 * w_] + ([p] if beta != 1.0 else [])
+        jobs += [(beta, float(x)) for x in xs]
+    with Pool(N_WORKERS) as pool:
+        mass = pool.map(w_mass, jobs, chunksize=1)
+        coinc = pool.map(w_coinc, [(d, x) for x in XR_W for d in OFF_W], chunksize=1)
+        alias = pool.map(w_alias, list(DS_W), chunksize=1)
+    return dict(edge=w_edge(), mass=mass, faces={b: power_face(b) for b in BETAS_W}, coinc=coinc, alias=alias, profile=w_profile(),
+                layer=w_)
+
+
+def x_theta_avg(T):
+    """x̄_θ over a face of hℤ² from the T table (x_θ(t) at its offsets 0 … H/2, the trapezoid rule)."""
+    tt = np.asarray(T['t'])
+    return float(np.trapezoid(x_theta_t(T), tt) / tt[-1])
+
+
+def targets_C2():
+    """C2's designed targets on Part C's lattice: 'near tie' — feature 0 (A_B) near the face between (0, 2H) and (H, 2H), on their axis,
+    placed so that its runner-up's margin at the first entry (the target's correlations at the start: feature 0 enters first) is MU_C2;
+    'window edge' — feature 0 at (0.96, 0), nearest (1, 0), the samples' entrant (0.875, 0)."""
+    K, c0 = full()
+    oth = np.array([[-0.5, -0.5], [0.5, -0.55]]), np.array([-0.6, 0.7])
+    e, r = kidx(c0, (0, 2 * H)), kidx(c0, (H, 2 * H))
+
+    def mu(d):
+        cs = np.r_[[[H / 2 + d, 2 * H]], oth[0]]
+        v = np.abs(K.corr(c0[[e, r]], K.synth(cs, np.r_[A_B, oth[1]]))[0])
+        return 1 - v[1] / v[0]
+    d = MU_C2 * 2 * SIG ** 2 / H
+    for _ in range(30):
+        g = (mu(d + 1e-8) - mu(d - 1e-8)) / 2e-8
+        step = (mu(d) - MU_C2) / g
+        d -= step
+        if abs(step) < 1e-15:
+            break
+    return {'near tie': (np.r_[[[H / 2 + d, 2 * H]], oth[0]], np.r_[A_B, oth[1]]),
+            'window edge': (np.array([[0.96, 0.0], [-0.4, 0.5], [-0.3, -0.5]]), np.array([0.8, -0.7, 0.9]))}
+
+
+def c2_job(args):
+    """C2: one designed target at one ε: the path, the loop's kernels formed (against their nearest feature's amplitude), feature 0's
+    entrant and runner-up at the start (and its nearest kernel), the runner-up's margin there, its share in the loop and the number of
+    kernels formed for feature 0, the block against the path's."""
+    name, eps = args
+    t0 = time.time()
+    L = law(); K, c0 = full()
+    cs, As = targets_C2()[name]
+    f = K.synth(cs, As)
+    R = RN.sliding_iss_nd(L, K, f, c0, np.ones(len(c0)))
+    path = sorted(int(j) for j in np.flatnonzero(R['act']))
+    taus = np.linspace(0, 1.3 * R['events'][-1][0], 27)
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus)
+    near = np.argmin(np.linalg.norm(c0[:, None, :] - cs[None, :, :], axis=2), axis=1)
+    big = np.abs(W[-1]) > TH_REL * np.abs(As)[near]
+    v = np.abs(K.corr(c0, f)[0])
+    o = np.argsort(-np.where(near == 0, v, -1.0))
+    e0, r0 = int(o[0]), int(o[1])
+    w0 = np.abs(W[-1])[near == 0]
+    # the formed kernels' features by their final positions (a kernel can leave the feature it started at: a tail's capture), the
+    # runner-up's coefficient at the first output after feature 0's entry, and the unbinding level A′(d/σ)e^{−d²/(4σ²)} of the
+    # later features
+    fin = np.argmin(np.linalg.norm(C[-1][:, None, :] - cs[None, :, :], axis=2), axis=1)
+    i1 = int(np.argmax(taus > R['events'][0][0]))
+    dk = np.linalg.norm(cs[1:] - cs[0], axis=1)
+    return dict(name=name, eps=eps, path=path, events=[(float(t), int(j), k) for t, j, k, c in R['events']],
+                formed=sorted(int(j) for j in np.flatnonzero(big)), e0=e0, r0=r0, nearest0=int(np.argmin(np.linalg.norm(c0 - cs[0], axis=1))),
+                c_e0=c0[e0].tolist(), c_r0=c0[r0].tolist(), mu=float(1 - v[r0] / v[e0]), share_r=float(abs(W[-1][r0]) / w0.sum()),
+                n0=int(big[near == 0].sum()), n0_fin=int(big[fin == 0].sum()), t_off=float(cs[0][1] - c0[e0][1]),
+                captured=[(int(j), int(near[j]), int(fin[j])) for j in np.flatnonzero(big) if near[j] != fin[j]],
+                fin=[(int(j), float(C[-1][j][0]), float(C[-1][j][1]), float(W[-1][j])) for j in np.flatnonzero(big)],
+                w_tail=float(abs(W[i1][r0])), tau_tail=float(taus[i1]),
+                w_unbind=float(np.max(np.abs(As[1:]) * dk / SIG * np.exp(-dk ** 2 / (4 * SIG ** 2)))),
+                dw=float(np.abs(W[-1][path] - R['w'][path]).max()), rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))),
+                secs=time.time() - t0)
+
+
+def part_C2():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(c2_job, [(n, e) for n in ('near tie', 'window edge') for e in EPS_C], chunksize=1)
+
+
 def slope(x, y):
     return float(np.polyfit(np.log10(x), np.log10(y), 1)[0])
 
 
-def report(A=None, B=None, C=None, T=None, D=None):
+def areas(N, grid):
+    """The areas of {N ≥ 3} and {N = 4} in the gaps' quarter-plane from counts on a symmetric grid (trapezoid weights: half at 0)."""
+    g = np.asarray(grid, float)
+    d = g[1] - g[0]
+    w = np.where(g == 0, d / 2, d)
+    W2 = np.outer(w, w)
+    return float((W2 * (N >= 3)).sum()), float((W2 * (N == 4)).sum())
+
+
+def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
+    k2 = 2 * SIG ** 2 / H ** 2
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
           f"The free law with moving centres (m = {L.m:g}, G = {L.G:g}, γ = {L.gamma:g}, a_max = {L.A:g}, c = {L.c:g}), Gaussian kernels of width "
-          f"{SIG:g} in the plane on a square lattice of spacing {H:g}, the samples on a grid of spacing {DS:g}; masses ε; formed: |w| > "
-          f"{TH_REL:g}|A|; κ = πρ(2c)^{{1/2}} = {kap:.4f}.", ""]
+          f"{SIG:g} in the plane on a square lattice of spacing {H:g} (H: a hexagonal one), the samples on a grid of spacing {DS:g}; masses ε; "
+          f"formed: |w| > {TH_REL:g}|A|; κ = πρ(2c)^{{1/2}} = {kap:.4f}.", ""]
     if A is not None:
         L_ += ["## A. The k-fold near tie", "",
                f"One feature near an edge (the kernels at (0, 0), ({H:g}, 0)) or a vertex (and ({H:g}, 0), (0, {H:g}), ({H:g}, {H:g})) of the "
                f"lattice — 8 × 8 kernels around it, the samples symmetric about the vertex —, its margins ε^{{1/2}}x at the entry; the loop to "
                f"{TAU_A:g} τ_entry. The gaps x (the runner-ups', as placed; at the vertex the diagonal's as it follows), the shares of the "
-               "tie's kernels in the loop against the inner problem's at the gaps of the smallest ε (the feature at the tie), the softmax at "
-               "those gaps and, at the vertex, the product of the two edges' inner problems:", "",
+               "tie's kernels in the loop against the inner problem's at the gaps of the smallest ε (the feature at the tie; extrapolated in "
+               f"its start from xi0 = {', '.join(f'{v:g}' for v in XI0_A)}, the change between those in the last column), the softmax at those "
+               "gaps and, at the vertex, the product of the two edges' inner problems posed in the vertex's geometry (the feature H/2 off each "
+               "edge's axis):", "",
                "| tie | A | x | shares: loop (ε = " + ', '.join(f'{e:g}' for e in EPS_A) + ") | inner problem | softmax | the edges' product | "
-               "the others' largest \\|w\\| (ε = " + ', '.join(f'{e:g}' for e in EPS_A) + ") |", "|---|---|---|---|---|---|---|---|"]
-        inner = {(r['kind'], r['A'], tuple(np.round(r['xs'], 9))): r for r in A['inner']}
+               "the others' largest \\|w\\| (ε = " + ', '.join(f'{e:g}' for e in EPS_A) + ") | the loop's successive changes | xi0's change |",
+               "|---|---|---|---|---|---|---|---|---|---|"]
+        inner = {(r['kind'], r['A'], tuple(np.round(r['xs'], 9)), round(float(r.get('t', 0.0)), 9)): r for r in A['inner']}
         groups = {}
         for r in A['loops']:
             groups.setdefault((r['kind'], r['A'], tuple(r['x'])), []).append(r)
-        worst = {}
+        worst, succ, prod_a = {}, [], {}
         for key, rs in groups.items():
             rs = sorted(rs, key=lambda r: -r['eps'])
             kind, Aa, x = key
             xa = np.r_[0.0, rs[-1]['x_act'][1:]]
-            ri = inner.get((kind, Aa, tuple(np.round(xa, 9))))
+            ri = inner.get((kind, Aa, tuple(np.round(xa, 9)), 0.0))
             sm = softmax(xa, L)
             prod = '—'
             if kind == 'vertex':
-                e1 = inner.get(('edge', Aa, tuple(np.round([0.0, xa[1]], 9))))
-                e2 = inner.get(('edge', Aa, tuple(np.round([0.0, xa[2]], 9))))
+                e1 = inner.get(('edge', Aa, tuple(np.round([0.0, xa[1]], 9)), round(H / 2, 9)))
+                e2 = inner.get(('edge', Aa, tuple(np.round([0.0, xa[2]], 9)), round(H / 2, 9)))
                 if e1 is not None and e2 is not None:
                     p1, p2 = e1['shares'][1], e2['shares'][1]
                     pv = np.array([(1 - p1) * (1 - p2), p1 * (1 - p2), (1 - p1) * p2, p1 * p2])
                     prod = ', '.join(f'{v:.4g}' for v in pv)
                     if ri is not None:
                         worst.setdefault(('prod', kind), []).append(float(np.abs(pv - ri['shares']).max()))
+                        prod_a.setdefault(Aa, []).append((float(np.abs(pv - ri['shares']).max()), float(np.abs(pv - ri['shares'])[1:3].max())))
             if ri is not None:
                 worst.setdefault(('loop', kind), []).append(float(np.abs(rs[-1]['shares'] - ri['shares']).max()))
                 worst.setdefault(('soft', kind), []).append(float(np.abs(sm - ri['shares']).max()))
-            L_.append(f"| {kind} | {Aa:g} | {', '.join(f'{v:.3f}' for v in xa[1:])} | "
+            dif = [float(np.abs(a_['shares'] - b_['shares']).max()) for a_, b_ in zip(rs[:-1], rs[1:])]
+            succ.append(dif)
+            spread = f"{ri['spread']:.1e}" if ri is not None and 'spread' in ri else '—'
+            L_.append(f"| {kind} | {Aa:g} | {', '.join(f'{round(float(v), 3) + 0.0:.3f}' for v in xa[1:])} | "
                       + '; '.join(', '.join(f'{v:.4g}' for v in r['shares']) for r in rs) + " | "
                       + (', '.join(f'{v:.4g}' for v in ri['shares']) + ('' if ri['stationary'] else ' (not stationary)') if ri is not None else '—')
-                      + f" | {', '.join(f'{v:.4g}' for v in sm)} | {prod} | " + ', '.join(f"{r['rest']:.2e}" for r in rs) + " |")
+                      + f" | {', '.join(f'{v:.4g}' for v in sm)} | {prod} | " + ', '.join(f"{r['rest']:.2e}" for r in rs) + " | "
+                      + ', '.join(f'{v:.1e}' for v in dif) + f" | {spread} |")
+        rat = [a_ / b_ for d in succ for a_, b_ in zip(d[:-1], d[1:]) if b_ > 0]
         L_ += ["", "The largest difference of the shares from the inner problem's (at the smallest ε): " + '; '.join(
-            f"{k[1]} — {dict(loop='the loop', soft='the softmax', prod='the edges’ product')[k[0]]} {max(v):.2e}" for k, v in sorted(worst.items())) + ".", ""]
+            f"{k[1]} — {dict(loop='the loop', soft='the softmax', prod='the edges’ product')[k[0]]} {max(v):.2e}" for k, v in sorted(worst.items()))
+               + f". The loop's successive changes fall by {np.median(rat):.2f} per decade of ε (median; √10 = 3.16), their last {max(d[-1] for d in succ):.1e} "
+                 f"at most" + (f"; the inner problem's change between its starts at most {max(r['spread'] for r in A['inner']):.1e}"
+                               if all('spread' in r for r in A['inner']) else '') + "." +
+               ("" if not prod_a else " The edges' product against the 4-kernel problem, by amplitude (all shares; the edges' runner-ups only — the rest is the diagonal's "
+                "frozen tail, which does not factorise, and the entrant's balance): " +
+                '; '.join(f"A = {a:g}: {max(v[0] for v in prod_a[a]):.1e} ({max(v[1] for v in prod_a[a]):.1e})" for a in sorted(prod_a)) + "."), ""]
+    if T is not None and 'pt' in T:
+        xt = x_theta_t(T)
+        tt = np.asarray(T['t'])
+        xbar = float(np.trapezoid(xt, tt) / tt[-1])
+        L_ += ["## T. The edge's split along the face", "",
+               f"The 2-kernel inner problem (A = {A_B:g}) with the feature on the face at the offset t from the edge's axis: the runner-up's share "
+               f"p(x; t) at x = 2, 4, 6, 8 and the crossing x_θ(t) of {TH_REL:g}:", "",
+               "| t/H | p(2) | p(4) | p(6) | p(8) | x_θ(t) |", "|---|---|---|---|---|---|"]
+        for i, t_ in enumerate(tt):
+            L_.append(f"| {t_ / H:g} | " + ' | '.join(f"{np.interp(x, T['x'], T['pt'][i]):.5f}" for x in (2, 4, 6, 8)) + f" | {xt[i]:.3f} |")
+        L_ += ["", f"x_θ averaged over the face (t uniform in [−H/2, H/2]): {xbar:.3f} (at t = 0: {xt[0]:.3f}; at the vertex, t = H/2: {xt[-1]:.3f}). "
+                   f"For a feature uniform in a Voronoi cell the offsets from a face are (2σ²/H)ε^{{1/2}}x at leading order, so P(N ≥ 2) = "
+                   f"4·(2σ²/H²)·x̄_θ·ε^{{1/2}} = {4 * k2 * xbar:.1f}·ε^{{1/2}} (the four faces' layers, less O(ε) where they overlap).", ""]
+        if T2 is not None:
+            ta = np.r_[tt, T2['t']]
+            xa = np.r_[xt, T2['x']]
+            fa = {n: face_average(ta, xa, n) for n in (2, 3, 4, 5)}
+            L_ += [f"Beyond H/2 (T2, by bisection): x_θ = " + ', '.join(f"{x:.3f} (t = {t / H:g}H)" for t, x in zip(T2['t'], T2['x'])) +
+                   ". In the continuum x_θ depends on |t| only, so on hℤⁿ (σ/H as here) a face is the (n − 1)-cube of offsets and E[N − 1] = "
+                   "2n(2σ²/H²)x̄_θ⁽ⁿ⁾ε^{1/2}: " + '; '.join(f"n = {n}: x̄_θ = {fa[n]:.3f}, {2 * n * k2 * fa[n]:.1f}·ε^{{1/2}}" for n in fa) +
+                   " (the n = 2 average by the midpoint rule; the trapezoid rule above).", ""]
     if B is not None:
-        xt = B['x_theta']
+        xt, where = B['x_theta'], "the edge's inner problem on its axis"
+        if T is not None and 'pt' in T:                                # at a vertex the feature sits H/2 off each edge's axis (round 42)
+            xt, where = float(x_theta_t(T)[-1]), "the edge's inner problem at the vertex's offset t = H/2 (T)"
         L_ += ["## B. The formation map at a vertex", "",
-               f"A = {A_B:g}; the gaps (x₁₀, x₀₁) of the edge runner-ups on a grid (the diagonal's ≈ their sum), x₁₀ ≤ x₀₁; the number of kernels "
-               f"formed by the loop at ε = {', '.join(f'{e:g}' for e in EPS_B)}, by the 4-kernel inner problem, and by the independent rule "
-               f"#{{j: x_j < x_θ}} + 1 with x_θ = {xt:.3f} (the 2-fold inner problem's share crossing {TH_REL:g}; the Gibbs split's "
-               f"ln(1/{TH_REL:g} − 1)/κ = {np.log(1 / TH_REL - 1) / kap:.3f}):", "",
+               f"A = {A_B:g}; the gaps (x₁₀, x₀₁) of the edge runner-ups on a grid, x₁₀ ≤ x₀₁, the diagonal's x₁₁ = x₁₀ + x₀₁ − ε^{{1/2}}x₁₀x₀₁ "
+               "exactly (the tensor grid's correlations multiply); the number of kernels formed by the loop at ε = "
+               f"{', '.join(f'{e:g}' for e in EPS_B)}, by the 4-kernel inner problem, by the independent rule #{{j: x_j < x_θ}} + 1 with "
+               f"x_θ = {xt:.3f} ({where}), and by the product rule with the edges' factors at the vertex's offset "
+               "t = H/2 (T):", "",
                "| x₁₀ | x₀₁ | x₁₁ | loop | inner problem | the independent rule | the product rule (T) |", "|---|---|---|---|---|---|---|"]
         byx = {}
         for r in B['loops']:
             byx.setdefault(tuple(r['x']), {})[r['eps']] = r['n']
         inn = {tuple(r['x']): r for r in B['inner']}
+        if B4 is not None:                                             # the 4-kernel problem settled to SHARE_TOL (B4) at B's points
+            b4 = {(round(r['x'][0], 9), round(r['x'][1], 9)): r for r in B4['rows']}
+            if all((round(x[0], 9), round(x[1], 9)) in b4 for x in inn):
+                inn = {x: b4[(round(x[0], 9), round(x[1], 9))] for x in inn}
+                L_[-4] = L_[-4].replace("by the 4-kernel inner problem,", "by the 4-kernel inner problem (B4's, settled),")
         agree = {e: 0 for e in EPS_B}; agree_rule = 0; agree_prod = 0; tot = 0
         for x in sorted(byx):
             ri = inn[x]
@@ -357,59 +825,203 @@ def report(A=None, B=None, C=None, T=None, D=None):
                       f"{pr if pr is not None else '—'} |")
         L_ += ["", f"The loop's count equals the inner problem's at {', '.join(f'{agree[e]} of {tot} (ε = {e:g})' for e in EPS_B)}; the "
                f"independent rule at {agree_rule} of {tot}" + (f", the product rule at {agree_prod} of {tot}" if T is not None else '') + ".", ""]
-        if T is not None:
-            # the areas in the gaps' quarter-plane (x₁₀, x₀₁ ≥ 0) by the product rule on a fine grid; per vertex the offsets from it are
-            # (2σ²ε^{1/2}/H)·(x₁₀, x₀₁), and a cell has four vertices: P = 4(2σ²/H²)²·area·ε; the faces' layers: 4·(2σ²/H²)·x_θ·ε^{1/2}
-            g = np.arange(0.0, 14.0, 0.02) + 0.01
-            P1, P2 = np.meshgrid(np.interp(g, T['x'], T['p'], right=0.0), np.interp(g, T['x'], T['p'], right=0.0), indexing='ij')
-            third = np.minimum(P1 * (1 - P2), (1 - P1) * P2)
-            a3, a4 = float((third > TH_REL).sum() * 0.02 ** 2), float((P1 * P2 > TH_REL).sum() * 0.02 ** 2)
-            xt_T = float(np.interp(-TH_REL, -T['p'], T['x']))
-            k = 2 * SIG ** 2 / H ** 2
-            L_ += [f"The product rule's regions in the gaps' quarter-plane at a vertex: N ≥ 3 of area {a3:.1f}, N = 4 of {a4:.1f} (x_θ = "
-                   f"{xt_T:.3f} from the table; a square x_θ² = {xt_T ** 2:.1f} and a triangle x_θ²/2 = {xt_T ** 2 / 2:.1f} at the crudest). For a "
-                   f"feature uniform in a Voronoi cell the offsets from a vertex are (2σ²ε^{{1/2}}/H)·(x₁₀, x₀₁) at leading order, so P(N ≥ 2) = "
-                   f"4·(2σ²/H²)x_θε^{{1/2}} = {4 * k * xt_T:.1f}·ε^{{1/2}} (the layers along the four faces, less O(ε) where they overlap), "
-                   f"P(N ≥ 3) = 4(2σ²/H²)²·{a3:.1f}·ε = {4 * k * k * a3:.0f}·ε and P(N = 4) = {4 * k * k * a4:.0f}·ε.", ""]
+    if B4 is not None:
+        g = np.asarray(B4['grid'], float)
+        idx = {v: i for i, v in enumerate(np.round(g, 9))}
+        N = np.zeros((g.size, g.size), int)
+        for r in B4['rows']:
+            i, j = idx[round(r['x'][0], 9)], idx[round(r['x'][1], 9)]
+            N[i, j] = N[j, i] = r['n']
+        a3, a4 = areas(N, g)
+        line = (f"## B4. The areas at a vertex", "",
+                f"The 4-kernel inner problem on the grid of gaps 0 … {g[-1]:g} in steps of {g[1] - g[0]:g} ({len(B4['rows'])} problems, x₁₀ ≤ x₀₁): the "
+                f"region N ≥ 3 has the area {a3:.1f} and N = 4 {a4:.1f} in the gaps' quarter-plane (trapezoid weights; "
+                f"{sum(bool(r['stationary']) for r in B4['rows'])} of {len(B4['rows'])} problems settled to the shares' tolerance)")
+        L_ += list(line[:2])
+        if T is not None and 'pt' in T:
+            Np = np.array([[product_count(T, a, b_) for b_ in g] for a in g])
+            p3, p4 = areas(Np, g)
+            agree = int((Np == N).sum())
+            L_.append(line[2] + f"; the product rule with the factors at t = H/2 on the same grid: {p3:.1f} and {p4:.1f}, its count equal to the "
+                      f"inner problem's at {agree} of {N.size} grid points. Each vertex's sector in a cell maps to the gaps by (2σ²ε^{{1/2}}/H)·(x₁₀, "
+                      f"x₀₁) and a cell has four: P(N ≥ 3) = 4(2σ²/H²)²·{a3:.1f}·ε = {4 * k2 * k2 * a3:.0f}·ε and P(N = 4) = {4 * k2 * k2 * a4:.0f}·ε.")
+        else:
+            L_.append(line[2] + f": P(N ≥ 3) = {4 * k2 * k2 * a3:.0f}·ε and P(N = 4) = {4 * k2 * k2 * a4:.0f}·ε.")
+        L_.append("")
     if C is not None:
         L_ += ["## C. Several features in the plane", "",
                f"Random three-feature targets (seed {SEED_C}; centres in [−0.7, 0.7]² at least 3σ apart, amplitudes ±U(0.4, 1)) on the "
                f"lattice over [−1, 1]² ({int(round(2 / H)) + 1}² kernels; the samples' grid {int(round(2 / DS)) + 1}²); the sliding path against "
-               "the loop to 1.3 times the path's last entry:", "",
+               "the loop to 1.3 times the path's last entry; the never-entering kernels' displacement vectors against the creep's εC_j "
+               "integrated along the path (`creep_constants_nd`; where |εC_j| is above 10⁻³ of the largest: the largest relative error and the "
+               "smallest cosine):", "",
                "| target | the path (entries) | ε | formed = the path's | the never-entering kernels' largest \\|w\\|·ε^{−3/2} | their largest "
-               "displacement/ε | the block: max \\|w − w_path\\|, max \\|c − c_path\\| | rms residual |", "|---|---|---|---|---|---|---|---|"]
+               "displacement/ε | creep: relative error, smallest cosine | the block: max \\|w − w_path\\|, max \\|c − c_path\\| | rms residual |",
+               "|---|---|---|---|---|---|---|---|---|"]
         for q in sorted(set(r['q'] for r in C)):
             rs = sorted([r for r in C if r['q'] == q], key=lambda r: -r['eps'])
             for r in rs:
-                L_.append(f"| {q} | {r['path']} ({', '.join(f'{t:.2f}' for t, j, k in r['events'])}) | {r['eps']:g} | "
+                cr = f"{r['creep_rel']:.2e}, {r['creep_cos']:.6f}" if 'creep_rel' in r else '—'
+                L_.append(f"| {q} | {r['path']} ({', '.join(f'{t_:.2f}' for t_, j, k in r['events'])}) | {r['eps']:g} | "
                           f"{'yes' if r['formed'] == r['path'] else 'no: ' + str(r['formed'])} | {r['w_never'] / r['eps'] ** 1.5:.4g} | "
-                          f"{r['disp_never'] / r['eps']:.4g} | {r['dw']:.2e}, {r['dc']:.2e} | {r['rms']:.2e} |")
+                          f"{r['disp_never'] / r['eps']:.4g} | {cr} | {r['dw']:.2e}, {r['dc']:.2e} | {r['rms']:.2e} |")
             es = [r['eps'] for r in rs]
-            L_[-1] += ''
             L_.append(f"| {q} | slopes in log ε (10⁻⁸ … 10⁻¹⁰) | | | {slope(es[-3:], [r['w_never'] for r in rs][-3:]):.3f} | "
-                      f"{slope(es[-3:], [r['disp_never'] for r in rs][-3:]):.3f} | {slope(es[-3:], [r['dw'] for r in rs][-3:]):.3f}, "
+                      f"{slope(es[-3:], [r['disp_never'] for r in rs][-3:]):.3f} | | {slope(es[-3:], [r['dw'] for r in rs][-3:]):.3f}, "
                       f"{slope(es[-3:], [r['dc'] for r in rs][-3:]):.3f} | |")
         L_.append("")
     if D is not None and T is not None:
-        xt_T = float(np.interp(-TH_REL, -T['p'], T['x']))
-        k = 2 * SIG ** 2 / H ** 2
+        K, c0 = local()
+        tt = np.asarray(T.get('t', [0.0]))
+        xbar = float(np.trapezoid(x_theta_t(T), tt) / tt[-1]) if 'pt' in T else float(np.interp(-TH_REL, -T['p'], T['x']))
         L_ += ["## D. The probabilities over uniformly placed features", "",
-               f"A = {A_B:g} at {N_D} uniform positions in the Voronoi cell of the kernel at (0, 0) (seed {SEED_D}); the loop's count N against "
-               "the product rule at each position's gaps to its two nearest faces, and the fractions against the asymptotics (w = "
-               f"2σ²x_θε^{{1/2}}/H, P(N ≥ 2) = 4w/H − 4w²/H² from the faces' layers; P(N ≥ 3) from B's areas):", "",
-               "| ε | N = 1, 2, 3, 4 (loop) | the product rule agrees | P(N ≥ 2): loop (± s.e.) | asymptotic | P(N ≥ 3): loop | asymptotic |",
-               "|---|---|---|---|---|---|---|"]
-        g = np.arange(0.0, 14.0, 0.02) + 0.01
-        P1, P2 = np.meshgrid(np.interp(g, T['x'], T['p'], right=0.0), np.interp(g, T['x'], T['p'], right=0.0), indexing='ij')
-        a3 = float((np.minimum(P1 * (1 - P2), (1 - P1) * P2) > TH_REL).sum() * 0.02 ** 2)
+               f"A = {A_B:g} at {N_D} uniform positions in the Voronoi cell of the kernel at (0, 0) (seed {SEED_D}; the same positions at both "
+               "masses, so the two rows are not independent); the loop's count N against the product rule at each position's gaps to its two "
+               "nearest faces and its offsets along them (T), and the fractions against the rule's at the sampled positions and the asymptotics "
+               f"(P(N ≥ 2) = 4w/H − 4w²/H², w = 2σ²x̄_θε^{{1/2}}/H with the face average x̄_θ = {xbar:.3f}; P(N ≥ 3) from B4's area):", "",
+               "| ε | N = 1, 2, 3, 4 (loop) | the product rule agrees | P(N ≥ 2): loop (± s.e.) | the rule at the positions | asymptotic | "
+               "P(N ≥ 3): loop | the rule at the positions | asymptotic |", "|---|---|---|---|---|---|---|---|---|"]
+        a3 = None
+        if B4 is not None:
+            g = np.asarray(B4['grid'], float)
+            idx = {v: i for i, v in enumerate(np.round(g, 9))}
+            N4 = np.zeros((g.size, g.size), int)
+            for r in B4['rows']:
+                i, j = idx[round(r['x'][0], 9)], idx[round(r['x'][1], 9)]
+                N4[i, j] = N4[j, i] = r['n']
+            a3 = areas(N4, g)[0]
         for e in EPS_D:
             rs = [r for r in D if r['eps'] == e]
             n = np.array([r['n'] for r in rs])
-            pr = np.array([product_count(T, *r['gaps']) for r in rs])
-            w = k * xt_T * np.sqrt(e)
+            pr = np.array([product_count(T, r['gaps'][0], r['gaps'][1], r['cstar'][1] - c0[r['e']][1], r['cstar'][0] - c0[r['e']][0])
+                           for r in rs])
+            w = k2 * H * xbar * np.sqrt(e) / H
             p2, p3 = float(np.mean(n >= 2)), float(np.mean(n >= 3))
+            asy3 = f"{4 * k2 * k2 * a3 * e:.4f}" if a3 is not None else '—'
             L_.append(f"| {e:g} | {', '.join(str(int((n == j).sum())) for j in (1, 2, 3, 4))} | {int((n == pr).sum())} of {len(rs)} | "
-                      f"{p2:.4f} ± {np.sqrt(p2 * (1 - p2) / len(rs)):.4f} | {4 * w - 4 * w * w:.4f} | {p3:.4f} | {4 * k * k * a3 * e:.4f} |")
+                      f"{p2:.4f} ± {np.sqrt(p2 * (1 - p2) / len(rs)):.4f} | {np.mean(pr >= 2):.4f} | {4 * w - 4 * w * w:.4f} | {p3:.4f} | "
+                      f"{np.mean(pr >= 3):.4f} | {asy3} |")
+        if 'pt' in T:                                                  # the misses: the loop's count, the rule's, the gaps, x_θ at the offsets
+            xt_ = x_theta_t(T)
+            miss = []
+            for e in EPS_D:
+                for r in [r for r in D if r['eps'] == e]:
+                    t1, t2 = r['cstar'][1] - c0[r['e']][1], r['cstar'][0] - c0[r['e']][0]
+                    pr_ = product_count(T, r['gaps'][0], r['gaps'][1], t1, t2)
+                    if pr_ != r['n']:
+                        th = [float(np.interp(abs(t_), T['t'], xt_)) for t_ in (t1, t2)]
+                        miss.append(f"{e:g}: {r['n']}/{pr_} at ({r['gaps'][0]:.2f}, {r['gaps'][1]:.2f}) [{th[0]:.2f}, {th[1]:.2f}]")
+            L_ += ["", "The misses — ε: the loop's count/the rule's at the gaps (x₁₀, x₀₁) [x_θ at their offsets]: " + '; '.join(miss) + "."
+                   if miss else "", ""]
+        L_.append("")
+    if H_ is not None:
+        g = np.asarray(H_['grid'], float)
+        idx = {v: i for i, v in enumerate(np.round(g, 9))}
+        N = np.zeros((g.size, g.size), int)
+        ex = None
+        for r in H_['inner']:
+            i, j = idx[round(r['x'][0], 9)], idx[round(r['x'][1], 9)]
+            N[i, j] = N[j, i] = r['n']
+            if r['x'] == (0.0, 0.0) or tuple(r['x']) == (0.0, 0.0):
+                ex = r
+        a3 = areas(N, g)[0]
+        xth = [float(g[np.argmax(N[i] < 3)]) if (N[i] < 3).any() else np.nan for i in range(g.size)]
+        L_ += ["## H. A hexagonal lattice", "",
+               f"Kernels on a hexagonal lattice of spacing {H:g}, the feature (A = {A_B:g}) at a Voronoi vertex — three cells meet there, the "
+               "kernels (0, 0), (H, 0), (H/2, √3H/2) at H/√3 —, placed where the three correlate equally with it on the samples. The 3-kernel "
+               "inner problem at the exact tie: shares " + (', '.join(f'{v:.5f}' for v in ex['shares']) if ex is not None else '—') +
+               f"; on the gaps' grid 0 … {g[-1]:g} (step {g[1] - g[0]:g}) the region where all three form, N = 3, has the area {a3:.1f} (the "
+               f"square vertex's N ≥ 3: B4). A sector of a hexagonal vertex maps to the gaps with the Jacobian (2σ²ε^{{1/2}})²/((√3/2)H²) and a "
+               f"cell has six: P(N = 3) = 32σ⁴/H⁴·{a3:.1f}·ε = {32 * SIG ** 4 / H ** 4 * a3:.0f}·ε. The loop at the exact tie:", "",
+               "| ε | shares | formed | the others' largest \\|w\\| | the gaps of the runner-ups and of the fourth kernel (units of ε^{1/2}) |",
+               "|---|---|---|---|---|"]
+        for r in H_['loops']:
+            L_.append(f"| {r['eps']:g} | {', '.join(f'{v:.5f}' for v in r['shares'])} | {r['n']} | {r['rest']:.2e} | "
+                      f"{', '.join(f'{v:.4g}' for v in r['gaps'])} |")
+        L_ += ["", "The fourth kernel's margin at the vertex is ε-free, 1 − e^{−H²/(4σ²)} in the continuum, so its gap grows like ε^{−1/2}: "
+                   "a fourth kernel never forms at a simple vertex (k ≤ n + 1).", ""]
+    if C2 is not None:
+        Kf, cf = full()
+        pt = lambda i: f"({cf[i][0]:.3f}, {cf[i][1]:.3f})"
+        xth = (lambda t: float(np.interp(abs(t), T['t'], x_theta_t(T)))) if T is not None and 'pt' in T else None
+        L_ += ["## C2. Designed targets in the plane", "",
+               f"Part C's lattice; 'near tie': feature 0 (A = {A_B:g}) near the face between (0, {2 * H:g}) and ({H:g}, {2 * H:g}), on their "
+               f"axis, its runner-up's margin {MU_C2:g} when it enters (first), two features far from it (−0.6 at (−0.5, −0.5), 0.7 at (0.5, "
+               "−0.55)); 'window edge': feature 0 (0.8) at (0.96, 0) with −0.7 at (−0.4, 0.5) and 0.9 at (−0.3, −0.5). The loop to 1.3 "
+               "times the path's last entry; feature 0's entrant and runner-up (the target's correlations at the start) and its nearest "
+               "kernel; the runner-up's share in the loop (of the kernels started nearest feature 0) against the edge's 2-kernel inner "
+               "problem p(x; t) at its gap (T), and its coefficient at the first output after the entry against the later features' "
+               "unbinding level max A′(d/σ)e^{−d²/(4σ²)} (A′, d their amplitudes and distances from feature 0); the kernels formed for "
+               "feature 0 (|w| > 1% of its amplitude; by their final positions) against the rule 1 + [x < x_θ(t)], and the formed kernels "
+               "that ended at another feature than the one they started nearest (captured):", "",
+               "| target | ε | entrant, runner-up, nearest | margin μ, gap x = μ/ε^{1/2} | runner-up's share: loop, p(x; t) | the runner-up "
+               "after the entry: \\|w\\| (τ), unbinding level | formed for feature 0: loop, rule | captured (kernel: start's feature → "
+               "end's) | formed = the path's | max\\|w − w_path\\| | rms residual |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+        for r in sorted(C2, key=lambda r: (r['name'], -r['eps'])):
+            x = r['mu'] / np.sqrt(r['eps'])
+            pr = f"{float(p_edge(T, x, r['t_off'])):.4g}" if T is not None and x <= T['x'][-1] else '—'
+            rule = str(1 + int(x < xth(r['t_off']))) if xth is not None else '—'
+            tail = (f"{r['w_tail']:.3g} ({r['tau_tail']:.1f}), {r['w_unbind']:.2g}" if 'w_tail' in r else '—')
+            cap = (', '.join(f"{pt(j)}: {a} → {b}" for j, a, b in r['captured']) or 'none') if 'captured' in r else '—'
+            L_.append(f"| {r['name']} | {r['eps']:g} | {pt(r['e0'])}, {pt(r['r0'])}, {pt(r['nearest0'])} | {r['mu']:.3e}, {x:.3g} | "
+                      f"{r['share_r']:.4g}, {pr} | {tail} | {r.get('n0_fin', r['n0'])}, {rule} | {cap} | "
+                      f"{'yes' if r['formed'] == r['path'] else 'no: ' + str(r['formed'])} | {r['dw']:.2e} | {r['rms']:.2e} |")
+        L_.append("")
+    if W is not None:
+        Kl, cl = local()
+        lp = lambda i: f"({cl[i][0] / H:+.0f}, {cl[i][1] / H:+.0f})H"
+        xb = W['layer'] * H / (2 * SIG ** 2 * np.sqrt(EPS_W))
+        L_ += ["## W. Where the selection is the Voronoi cell", "",
+               "W1. The samples' window (Part C's grid: the samples on [−1, 1]², the lattice up to ±1). The faces between neighbours on the "
+               "axis x₂ = 0 (where their correlations with a feature are equal on the samples; the continuum's: the midpoints):", "",
+               "| pair | the midpoint | the samples' face |", "|---|---|---|"]
+        for fc in W['edge']['faces']:
+            L_.append(f"| {fc['a']:g} \\| {fc['b']:g} | {0.5 * (fc['a'] + fc['b']):.4f} | "
+                      + (f"{fc['face']:.4f}" if np.isfinite(fc['face']) else f"none up to {fc['b'] + 2 * H:g}") + " |")
+        rows = W['edge']['rows']
+        thr = {e: np.sqrt(e) * xb for e in (EPS_W, 1e-10)}
+        first = {e: next((r['x'] for r in rows if r['err'] > t), np.nan) for e, t in thr.items()}
+        wrong = [r['x'] for r in rows if not r['nearest']]
+        L_ += ["", "The largest error of the nearest kernel's neighbours' margins against the continuum's, features on the axis at x₁: "
+               + ', '.join(f"{r['x']:g}: {r['err']:.1e}" for r in rows if round(r['x'] * 100) in (0, 30, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95))
+               + f"; it first exceeds ε^{{1/2}}x̄_θ ({xb:.3f}) at x₁ = " + ', '.join(f"{first[e]:g} for ε = {e:g} ({(1 - first[e]) / SIG:.2f}σ "
+                                                                              "from the window's edge)" for e in thr)
+               + "; the samples' entrant is not the nearest kernel at " + (f"{len(wrong)} of {len(rows)} positions, from x₁ = {min(wrong):g}"
+                                                                          if wrong else "no position") + ".", "",
+               f"W2. Unequal masses: the kernel at (H, 0) of mass βε, the rest ε (the local lattice, ε = {EPS_W:g}); the entrant is the kernel "
+               "of the least entry time ρ_j/v_j (ρ = b^{−1/2}): a power diagram, the face between (0, 0) and (H, 0) at H/2 − σ²ln β/H in the "
+               "continuum. Features (A = 0.8) on the axis at the Voronoi face H/2, at the power face p (the samples') and 2 layer widths "
+               f"(w = 2σ²x̄_θε^{{1/2}}/H = {W['layer']:.2e}) to either side:", "",
+               "| β | p: samples, continuum | x₁ | entrant: power, Voronoi | runner-up, its gap | formed | shares of (0, 0), (H, 0) |",
+               "|---|---|---|---|---|---|---|"]
+        for r in sorted(W['mass'], key=lambda r: (r['beta'], r['x1'])):
+            p = W['faces'][r['beta']]
+            L_.append(f"| {r['beta']:g} | {p:.5f}, {H / 2 - SIG ** 2 * np.log(r['beta']) / H:.5f} | {r['x1']:.5f} | {lp(r['power'])}, "
+                      f"{lp(r['voronoi'])} | {lp(r['runner'])}, {r['gap']:.3g} | {', '.join(lp(i) for i in r['formed'])} | "
+                      f"{r['shares'][0]:.4f}, {r['shares'][1]:.4f} |")
+        L_ += ["", "W3. Coarse samples along x₂ (spacing ds, the grid offset by 0.3ds; along x₁ the spacing 0.05): the face between (0, 0) "
+               "and (0, H) for features at (0, x₂), its shift from H/2 on the samples and from the Poisson sum (harmonics k ≤ 3 of "
+               "q = e^{−π²σ²/ds²}), the margin's slope there against the continuum's H/(2σ²), and the shift in layer widths at ε = "
+               f"{EPS_W:g}:", "", "| ds | ds/σ | q | shift/H: samples, Poisson | slope ratio | shift/w |", "|---|---|---|---|---|---|"]
+        for r in W['alias']:
+            L_.append(f"| {r['ds']:g} | {r['ds'] / SIG:.3g} | {r['q']:.3e} | {r['shift']:+.3e}, {r['shift_p']:+.3e} | {r['slope']:.4f} | "
+                      f"{abs(r['shift']) * H / W['layer']:.3g} |")
+        L_ += ["", "W4. Two kernels coinciding at the samples' centre of symmetry, the runner-up x_r behind, the feature (A = 0.8) δ off "
+               "their centre: the inner problem's runner-up share (extrapolated in xi0) against the profile split's (iii)(b) — off the "
+               "centre the kernels slide onto the feature at speeds ∝ their coefficients, apart on the way —, and the kernels' largest "
+               "distance from the feature at the end:", "",
+               "| x_r | δ/σ | inner problem | profile split | difference | at the end (σ) |", "|---|---|---|---|---|---|"]
+        for r in sorted(W['coinc'], key=lambda r: (r['xr'], r['delta'])):
+            L_.append(f"| {r['xr']:g} | {r['delta']:g} | {r['share']:.6f}{'' if r['stationary'] else ' (not stationary)'} | "
+                      f"{r['profile']:.6f} | {r['share'] - r['profile']:+.2e} | {r['end']:.1e} |")
+        L_ += ["", "W5. The 2-fold profile split's runner-up share p(x) against the softmax 1/(1 + e^{κx}) at the formation threshold: "
+               f"p's crossing of {TH_REL:g} (x_θ of coinciding kernels at the feature's centre) and the softmax's, the softmax's relative "
+               "error at p's crossing and at x = 8, and e^{−2α/a} at the runner-up's coefficient (its mirror coordinate α; the exponential "
+               "branch's correction, D‴.51(i)):", "",
+               "| A | x_θ: profile split, softmax | the softmax's error: at the crossing, at x = 8 | α/a | e^{−2α/a} |", "|---|---|---|---|---|"]
+        for r in W['profile']:
+            L_.append(f"| {r['A']:g} | {r['x_cross']:.3f}, {r['x_soft']:.3f} | {r['err_cross']:+.3f}, {r['err8']:+.3f} | {r['alpha_a']:.3f} | "
+                      f"{r['corr']:.3f} |")
         L_.append("")
     L_.append("Numbers are produced by `experiments/exp_transit_nd.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
@@ -419,16 +1031,18 @@ def main():
     raw = os.path.join(OUT, 'transit_nd_raw.npz')
     md = os.path.join(OUT, 'transit_nd.md')
     old = E.load(raw)
+    keys = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2')
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[old.get(k) for k in 'ABCTD']))
+        open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCTD')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('T', part_T), ('D', part_D)):
+    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('T', part_T), ('D', part_D), ('B4', part_B4), ('H', part_H),
+                  ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(*[res.get(k) for k in 'ABCTD']))
+            open(md, 'w').write(report(*[res.get(k) for k in keys]))
 
 
 if __name__ == '__main__':

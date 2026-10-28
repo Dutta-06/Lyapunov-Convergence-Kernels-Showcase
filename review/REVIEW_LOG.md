@@ -1667,6 +1667,52 @@ believes about them: the targets with the largest margins also had fast entrants
 creep tail ∝ g′²/v³ makes the first-order correction 10²–10³ times larger. Print the constants of every target, converge the predictions
 past the effect being measured, and state the regime in which the expansion is informative.
 
+## Round 42 (adversarial review of Proposition D‴.54, the transit in ℝⁿ, 2026-10-27)
+
+**Design.** One referee, not modifying the repository. D3ao: the draft of Proposition D‴.54 and its code at 72c4fe5
+(`review/REVIEW_round42_D3ao.md`): the inner problem with the feature along the face; the edge factors in the vertex's geometry; the
+selection on the samples used, with unequal masses, coarse and generic sampling; the hexagonal lattice and the ℤⁿ law's genericity; the
+loop's references extrapolated in xi0; Part D's statistics; 30 mutants.
+
+**Verdicts (D3ao).** In n dimensions the one-dimensional threshold x_θ is a function on the face: the split depends on the feature's
+offset t along it (x_θ = 6.30 at t = 0, 6.03 at t = h/2), so the formation rule, E[N − 1] and P(N ≥ 2) were mis-specified; the edge
+factors were posed at t = 0 and used at a vertex (t = h/2), making the reported "1.6·10⁻² failure of factorisation", three phantom boundary
+points and P(N ≥ 3), P(N = 4) 8–9% high artefacts of the reference; the Voronoi selection fails at the samples' window, with unequal masses
+and on coarse or generic samples; the codimension law holds only within ranges, and the ℤⁿ law is non-generic; "the proofs carry over"
+overstated at a near tie (H1, H2 fail); the softmax's error bound false; Part A's reference biased by its finite start; the diagonal's gap
+identity misstated; `inner_k`'s stationarity test decorative; the n-D creep law in (i) correct (verified by the referee, not by the
+draft).
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ao-1 | major | the split depends on the offset along the face | statement (iii)/(iv): 𝒮(x; y), x_θ(t), E[N − 1] with the face integral; Part T: p(x; t) and x_θ(t) to t = H/2, T2 beyond it to H; the face averages x̄_θ⁽ⁿ⁾ = 6.208, 6.120, 6.033, 5.947 (n = 2 … 5), P(N ≥ 2) = 71.5ε^{1/2}; D's product rule at each position's offsets |
+| D3ao-2 | major | edge factors in the wrong geometry | the edges' product and the product rule at t = H/2 (A: within 9.1·10⁻⁴ of the 4-kernel problem, 2.0·10⁻⁴ for the edges' runner-ups; B: 66 of 66); B4: the areas from the 4-kernel inner problem itself (33.5, 15.5: P(N ≥ 3) = 1112ε, P(N = 4) = 513ε) |
+| D3ao-3 | major | the selection outside the continuum's interior | (ii)(a) equal masses in the continuum; (ii)(b) the power diagram (the face shifted by σ²ln(b_j/b_e)/\|c_j − c_e\|; W2: the loop forms the power rule's entrant at every position); (ii)(c) the samples — aliasing by the Poisson sum (W3: the shift to the digits shown), the window ½erfc(d/σ) (W1: the zone 2.4σ at 10⁻⁸, 2.9σ at 10⁻¹⁰; C2: a feature at (0.96, 0) formed by (0.875, 0)), separation as cross-talk ≪ x_θε^{1/2} |
+| D3ao-4 | major | the codimension law's ranges | c(k) = k − 1 for k ≤ n + 1 on lattices with simple Voronoi faces, zero beyond (H: the hexagonal vertex splits 1/3 each, P(N = 3) = 2426ε, the fourth kernel's gap ∝ ε^{−1/2}); ⌈log₂k⌉ on hℤⁿ with tensor samples for 2^{−c(k)} > θ (n ≥ 7: none formed as defined); the degenerate faces split on generic samples; the regions stated as the inner problem's, non-monotone |
+| D3ao-5 | major | "the proofs carry over" | (i) under (H1)–(H2); the near tie's reduction to the inner problem formal; Part C: the creep's vector law εC_j checked (to 3.6·10⁻³ … 1.2·10⁻² at 10⁻¹⁰, falling as ε^{1/2}, cosines ≥ 0.999998); C2: designed targets — a near tie, the window's edge |
+| D3ao-6 | minor | the softmax's error bound | (iii)(b): the error per share O(e^{−2α_j/a}), not small at the threshold (W5: −0.097, −0.026, −0.018 at A = 0.3, 0.8, 1 against e^{−2α/a} = 0.170, 0.090, 0.076) |
+| D3ao-7 | minor | coinciding kernels only at the centre | (iii)(b): the profile split exact for kernels coinciding at the feature's centre with samples symmetric about it; off the centre W4 (−2.7·10⁻⁴ … −8.9·10⁻³ at 0.07σ … 0.4σ); D‴.51's wording to follow in the documents |
+| D3ao-8 | minor | Part A's reference biased | `inner_k` extrapolated in its start (xi0 = 800, 1600; the change ≤ 1.3·10⁻⁵); the loop's successive changes reported (falling 3.15 per decade) |
+| D3ao-9 | minor | the diagonal's gap | x₁₁ = x₁₀ + x₀₁ − ε^{1/2}x₁₀x₀₁ exactly on tensor samples (proof (iii)(d); a test) |
+| D3ao-10 | minor | Łojasiewicz gaps; decorative stationarity test | status: the inner problem's convergence numerical, the argument's gaps for k ≥ 2 listed; `inner_k`: a test on the shares' drift (share_tol) and a wall-clock budget checked inside the integration (B4: 648 of 861 settled within 300 s, the counts of the rest at the budget) |
+| D3ao-11 | minor | (iii)(c)'s mechanism | rephrased: the runner-ups' gaps grow while the entrant grows; below the softmax near the tie, above it far behind at small amplitudes; the slide hardly matters |
+| D3ao-12 | minor | Part D's statistics | the rule evaluated at the sampled positions; the same positions at both masses stated; the misses listed with their gaps and thresholds |
+| D3ao-13 | minor | the mass for exact formation | (iv): labelled as the single-feature near ties' component only (not the creep, the cross-talk, the amplitudes' x_θ or the losers' later dynamics) |
+| D3ao-14 | minor | text and md mismatches | the numerics rewritten from the rerun |
+| D3ao-15 | minor | thin tests | `tests/test_transit_nd.py`: the diagonal's exact gap; the product rule and the areas on synthetic tables; the power-diagram and aliasing formulas; x_θ falling along the face and its n-D averages; test 5 at the vertex's offset |
+| D3ao-16 | minor | novelty | Classical: Voronoi tessellations, power diagrams, Duval–Peyré's thin-grid Lasso (the static edge split), multiplicative weights, independent Gibbs measures, tube volumes; New: the finite-mass dynamic law |
+| D3ao-17 | cosmetic | exact ties' offsets; C's threshold | `c_job`: formed against the nearest feature's amplitude |
+
+**Beyond the report.** C2's near tie at ε = 10⁻⁹ exposed a new mechanism, (v): a near tie's runner-up left at a small tail coefficient is
+an active kernel held at its feature only at O(w²) and pulled by an unfitted feature at O(w); below an unbinding level ≈ A′(d/σ)e^{−d²/(4σ²)}
+it leaves and fits that feature before the feature's own entrant enters (the loop's kernels then differ from the path's, the fit and the
+count per feature by position do not) — in a window of masses: bound above it, too slow below it (C2 at 10⁻⁸ and 10⁻¹⁰).
+
+**Lesson.** A one-dimensional constant becomes a function in n dimensions: the threshold x_θ depends on where the feature sits on the
+face, and a reference posed in the wrong geometry turns its own error into a "finding" (the 1.6% failure of factorisation). Pose every
+reference in the geometry where it is used, converge it in its own parameters, and let designed targets (a near tie, the window's edge)
+probe the claims — the designed near tie found a dynamic the random targets never showed.
+
 ## Round 43 (adversarial review of Theorem D‴.55, the transit's certificate, 2026-10-28)
 
 **Design.** One referee, not modifying the repository. D3ap: the draft of Theorem D‴.55 and its code at 6666e70
