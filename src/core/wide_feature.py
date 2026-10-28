@@ -49,6 +49,34 @@ def moment_matching(K, sig, sig_star, A=1.0):
     return params(sig, sig_star)['tau'] * z, A * (sig_star / sig) * w
 
 
+def scaled_rule(K, sig, sig_star, v, A=1.0):
+    """The Gauss–Hermite rule of N(0, v) for the mixing law reweighted to it: nodes y_k = √v z_k, amplitudes
+    A(σ*/σ)w_k(v/τ²)^{1/2}exp(y_k²(1/v − 1/τ²)/2). v = τ² is moment matching, τ²σ/σ* the half-squeeze rule; the natural Fock scaling
+    divides the half-squeeze variance by cosh r, the Mercer-zero scaling is τ²(1 + 2τ²/σ²)^{−1/2} (referee round 48's comparisons)."""
+    z, w = gh(K)
+    tau = params(sig, sig_star)['tau']
+    y = np.sqrt(v) * z
+    return y, A * (sig_star / sig) * w * np.sqrt(v / tau ** 2) * np.exp(y ** 2 * (1 / v - 1 / tau ** 2) / 2)
+
+
+def scalings(sig, sig_star):
+    """The variances of `scaled_rule`'s named scalings: moment matching, half-squeeze, Fock, Mercer-zero."""
+    P = params(sig, sig_star)
+    tau2 = P['tau'] ** 2
+    vhs = tau2 * sig / sig_star
+    return dict(mm=tau2, hs=vhs, fock=vhs / np.cosh(P['r']), mercer=tau2 / np.sqrt(1 + 2 * tau2 / sig ** 2))
+
+
+def best_scale(K, sig, sig_star, A=1.0):
+    """The variance v of least L² error for `scaled_rule` (bounded scalar search in log v around the half-squeeze variance) → (v, error):
+    an upper bound on the optimal K-kernel fit's error by one parameter."""
+    from scipy.optimize import minimize_scalar
+    vhs = scalings(sig, sig_star)['hs']
+    f = lambda lv: l2_error(*scaled_rule(K, sig, sig_star, vhs * np.exp(lv), A), sig, sig_star, A)
+    res = minimize_scalar(f, bounds=(-1.0, 1.0), method='bounded', options=dict(xatol=1e-10))
+    return float(vhs * np.exp(res.x)), float(res.fun)
+
+
 def grid(sig, sig_star, span=14.0, per_sig=10):
     """A trapezoid grid on [−span·σ*, span·σ*] with spacing σ/per_sig (the integrands are Gaussians of width ≥ σ/√2: the rule's error is
     of order exp(−π²(σ·per_sig)²/σ²) — far below double precision)."""

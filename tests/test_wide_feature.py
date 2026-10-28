@@ -120,3 +120,23 @@ def test_the_fast_defects_beyond_k_21():
         D = W.gh_defects(K, 2 * K + 12)
         for n in (2 * K, 2 * K + 2, 2 * K + 8, 2 * K + 12):
             assert D[n] == W.gh_defect(n, K)
+
+
+def test_scaled_rules_and_the_best_scale():
+    """`scaled_rule` at v_hs is the half-squeeze rule and at τ² moment matching; the Fock scaling's rate (2 − λ)/λ is (1 − t + t²)/t, slower
+    than 1/t; the best variance's error lies between the optimal fit's and the rule's, and at K = 1 it is the optimum."""
+    s_ = ss(1.0)
+    V = W.scalings(SIG, s_)
+    for K in (3, 6):
+        assert np.allclose(np.c_[W.scaled_rule(K, SIG, s_, V['hs'])], np.c_[W.half_squeeze(K, SIG, s_)], rtol=1e-13, atol=1e-16)
+        assert np.allclose(np.c_[W.scaled_rule(K, SIG, s_, V['mm'])], np.c_[W.moment_matching(K, SIG, s_)], rtol=1e-13, atol=1e-16)
+    P = W.params(SIG, s_)
+    t, lam = P['t'], P['lam']
+    assert abs((2 - lam) / lam - (1 - t + t * t) / t) < 1e-12 and (2 - lam) / lam < 1 / t
+    y, a = W.half_squeeze(4, SIG, s_)
+    e_hs = W.l2_error(y, a, SIG, s_)
+    vb, eb = W.best_scale(4, SIG, s_)
+    eo = W.optimal_fit(y, SIG, s_)[2]
+    assert eo <= eb * (1 + 1e-9) and eb < e_hs and 0.98 < vb / V['hs'] < 1.0
+    e1 = W.optimal_fit(*W.half_squeeze(1, SIG, s_)[:1], SIG, s_)[2]
+    assert abs(W.best_scale(1, SIG, s_)[1] / e1 - 1) < 1e-6

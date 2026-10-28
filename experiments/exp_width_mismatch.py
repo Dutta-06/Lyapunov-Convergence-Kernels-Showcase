@@ -9,7 +9,10 @@ A. The rules on ℝ: for τ/σ in TAUS_A and K ≤ K_A, the half-squeeze rule's 
    series and its first term; the Gauss–Hermite rule of the mixing law (moment matching); the half-squeeze nodes with least-squares
    amplitudes; the optimal K-kernel fit (variable projection from the half-squeeze rule) — the ratios per kernel against 1/t and 1/λ;
    the optimum's nodes against the half-squeeze nodes. A2: the series' tail — the ratios D_{2K+2j,K}/D_{2K,K} for K ≤ K_A2 (integers;
-   their j-th differences in K against j!·binom(1/2, j)(−2)^j) and the tail's share against ₂F₁(−½, −½; 1; t²) − 1.
+   their j-th differences in K against j!·binom(1/2, j)(−2)^j) and the tail's share against ₂F₁(−½, −½; 1; t²) − 1. A3: the scaled
+   Gauss–Hermite rules (`wide_feature.scaled_rule`) at the natural Fock and the Mercer-zero scalings against the half-squeeze one (their
+   ratios per kernel against (2 − λ)/λ and 1/q), and the variance of least error (`best_scale`): one parameter's share of the optimum's
+   gain over the rule (referee round 48).
 B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in three
    numerical variants (VARIANTS_B: the polish step and the starting grid's offset; referee round 48): after each entry the relaxed
    block's relative error against the optimal fit with as many kernels on the same samples (variable projection from the block and
@@ -70,8 +73,12 @@ def part_A():
             if np.sqrt(s2) < G_FLOOR:                                    # the trapezoid rule's double-precision floor
                 break
             ym, am = W.moment_matching(K, SIG, ss)
+            V = W.scalings(SIG, ss)
+            vb, eb = W.best_scale(K, SIG, ss)
             row = dict(r=r_, K=K, t=P['t'], lam=P['lam'], e_hs=e, e_series=float(np.sqrt(s2)), e_first=float(np.sqrt(f2)),
-                       e_mm=W.l2_error(ym, am, SIG, ss), e_ls=W.l2_error(y, W.ls_amplitudes(y, SIG, ss), SIG, ss), y_hs=y)
+                       e_mm=W.l2_error(ym, am, SIG, ss), e_ls=W.l2_error(y, W.ls_amplitudes(y, SIG, ss), SIG, ss), y_hs=y,
+                       e_fock=W.l2_error(*W.scaled_rule(K, SIG, ss, V['fock']), SIG, ss),
+                       e_mercer=W.l2_error(*W.scaled_rule(K, SIG, ss, V['mercer']), SIG, ss), e_best=eb, v_best=vb / V['hs'])
             if e > E_FLOOR:
                 yo, ao, eo = W.optimal_fit(y, SIG, ss)
                 row.update(e_opt=eo, y_opt=yo, a_opt=ao)
@@ -276,6 +283,25 @@ def report(A=None, B=None, C=None, D=None):
             lead = factorial(j) * comb(1, 1) * float(np.prod([0.5 - i for i in range(j)]) / factorial(j)) * (-2) ** j
             L_.append(f"| {j} | {', '.join(f'{int(x)}' for x in v[:5])}, …, {int(v[-1])} | "
                       f"{', '.join(sorted({f'{d:g}' for d in dif}))} | {lead:g} |")
+        if 'e_fock' in A['rows'][0]:
+            L_ += ['', '### A3. Scaled rules', '',
+                   "The Gauss–Hermite rule of N(0, v) for the reweighted mixing law (`scaled_rule`) at the half-squeeze variance v_hs = τ²σ/σ*, "
+                   "the natural Fock scaling v_hs/cosh r and the Mercer-zero scaling τ²(1 + 2τ²/σ²)^{−1/2}: their ratios per kernel at the last "
+                   "K against 1/t, (2 − λ)/λ = (1 − t + t²)/t and 1/q, q = (β² − 1)/(β² + 1), β² = (1 + 2τ²/σ²)^{1/2}; the variance of least "
+                   "error (`best_scale`): v/v_hs, its error and the optimal fit's over the rule's, at K = 1 and at the last K with an optimum:", '',
+                   '| τ/σ | half-squeeze (1/t) | Fock ((2 − λ)/λ) | Mercer-zero (1/q) | K = 1: v/v_hs, e_best/e_hs, e_opt/e_hs | the last K: K, '
+                   'v/v_hs, e_best/e_hs, e_opt/e_hs |', '|---|---|---|---|---|---|']
+            for r_ in TAUS_A:
+                rows = [x for x in A['rows'] if x['r'] == r_]
+                t, lam = rows[0]['t'], rows[0]['lam']
+                b2 = np.sqrt(1 + 2 * r_ ** 2)
+                q = (b2 - 1) / (b2 + 1)
+                a, b = rows[-2], rows[-1]
+                opt = [x for x in rows if 'e_opt' in x]
+                cell = lambda x: f"{x['v_best']:.5f}, {x['e_best'] / x['e_hs']:.5f}, " + (f"{x['e_opt'] / x['e_hs']:.5f}" if 'e_opt' in x else '—')
+                L_.append(f"| {r_:g} | {a['e_hs'] / b['e_hs']:.3f} ({1 / t:.3f}) | {a['e_fock'] / b['e_fock']:.3f} ({(2 - lam) / lam:.3f}) | "
+                          f"{a['e_mercer'] / b['e_mercer']:.3f} ({1 / q:.3f}) | {cell(rows[0])} | "
+                          + (f"{opt[-1]['K']}, {cell(opt[-1])}" if opt else '—') + ' |')
         from scipy.special import hyp2f1
         L_ += ['', "The tail's share Σ_{n>2K}/(first term) against ₂F₁(−½, −½; 1; t²) − 1 (the share's limit if the ratios' leading "
                "coefficients govern the tail):", '', '| τ/σ | t | K = 5 | 10 | 20 | 30 | ₂F₁(−½, −½; 1; t²) − 1 |', '|---|---|---|---|---|---|---|']
