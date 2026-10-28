@@ -2778,3 +2778,36 @@ the exact Jacobian about a merged base and injecting the result back into the fu
 a validation built in — and showed that the hold begins only when the climb ends, so a departure time inherits the pin one for one. A
 tolerance "below the masses" is not enough when an outcome is decided at 10⁻¹⁴σ: the absolute tolerance sets the step on every
 component, the dormant ones included.
+
+## Round 71 (adversarial review of Proposition D‴.52 as revised after round 67, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3br: Proposition D‴.52 as revised after round 67, with its code and results at
+42aa6a3 (`review/REVIEW_round71_D3br.md`). The referee:
+- regenerated the md byte for byte, compared the raw with round 67's and reran all 15 U jobs, all 95 S jobs and two F jobs bit-identically;
+- re-implemented the rejections, the crossing and the pairing independently and tried the knot's allocation per offset, per cell, from
+  the law-calibrated knot and at the realised per-wall rates, with paired bootstraps;
+- drew U's law from E's own samples and from ten further shared seeds;
+- checked (iv)'s cosine in the continuum and Smith's constants by finite differences;
+- ran 70 single-point mutants, round 67's survivors among them.
+
+**Verdicts (D3br).** Reproducibility, the like-for-like comparison (robust to every allocation tried), F's new lines, the uncensored margin,
+the minimum's loss off the tie, (iv) and Smith's constants hold. One major: the minimum's "small gain at the tie" was law-sampling noise — the
+full knot and the runner-up's own knot were calibrated by two independently sampled 20000-sample laws, whose α quantiles differ by up to 3%;
+drawn from the same samples they coincide at the tie (the pair sets the whole tail; the full knot is never later than the pair's own) and the
+part is exactly 0. Minors: the tests credited for Z02, D02 and the uncensored margin never ran the mutated code (Z02, D02, SM01, SM05
+survive and would change E′); the one-sided half compared a conservative knot at the nominal level (sizes 0.0446 against 0.0478; at equal
+size the gap is ≈3%); the Liu–Nehorai/Smith sentence; loose ends.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3br-1 | major | The minimum's gain at the tie a Monte Carlo artefact | `u_job` draws the own knot's law from E's law samples (rng [seed, 9]) and records the full knot's quantile from them (q_full, equal to E's q_law in all 15 cells) and the null's margin; U rerun: the part −0.1225 … −0.0250 at c̄ ≤ 0.032 and exactly 0 at c̄ ≥ 0.045 (6 of 6); E′'s summary prints the shared samples' check; (iii), New and the Numerics: "none at the tie" |
+| D3br-2 | minor | Tests not reaching the mutated code | Tests: `draw_stats`' t against z·s/(‖r‖/√(N − 2)) and z_σ's sign against sign(ŵ)·z for a pair of each sign (Z02, D02); `s_job`'s mu_u against 1 − wall·g_{j₂}/\|g_{j₁}\| and mu_u < 0 exactly on the swaps at the swapping tie cell (SM01, SM05); `u_job` against the raw and q_full = E's q_law in every cell; `f_alloc_lines` on synthetic rows (FA01–FA09); `smith_line` with a closed-form bound (SL01–SL05); `equal_size_line` on synthetic rows; the own-knot test on E's samples |
+| D3br-3 | minor | The one-sided half at unequal sizes | `equal_size_line`: the runner-up's wall (the fit's sign for a same-sign pair, the other for an opposite-sign one) at the level α′ whose pooled H0 size is nearest the one-sided z's — (0.8, 0.6): α′ = 0.055, size 0.0476 against 0.0478, paired 1.032 [0.973, 1.239], ahead in 4 of 24; (0.8, −0.4): α′ = 0.051, 1.652, ahead in 0 of 24; (iii) and New: ≈3% in Δ₅₀ (≈13% in samples) at equal size, 4–6% at the nominal level |
+| D3br-4 | cosmetic | Liu–Nehorai and Smith | Status: a limit ∝ √CRB, like Smith's criterion, has the detection order Δ² ∝ s only with equal or known amplitudes; with unknown unequal amplitudes both sit at s ∝ Δ³, estimation thresholds |
+| D3br-5 | cosmetic | Loose ends | sign(ŵ)z in the allocation's thresholds; the calibrated knot nominal at c̄ = 0 and 0.02, below nominal from 0.032; z's range over the draws' own fits (0.0021–0.0825); the two figures for the minimum's part labelled (the oracle/calibrated difference against the same-law part); E′'s margin column the null's (0.73 at the swapping tie cell); the proof's intermediate remainder O(ϑ²(Δ/σ)² + (Δ/σ)⁴); the Status's scope (the decomposition one pair over half a cell). Round 64's entry (D3bk-11) should read "equal to round 59's but for round-off: the rms by ≤ 6·10⁻¹⁶, the end coefficients by ≤ 6.5·10⁻¹² relative" |
+
+**Lesson.** A difference between two tests, each calibrated by its own Monte Carlo law, is only as accurate as the two calibrations agree:
+two independent 20000-sample laws that share their whole lower tail in distribution still differ in their sampled quantiles, and that
+difference produced the "gain" in 5 of 6 cells. Drawing both laws from the same samples is a one-seed change that makes the part exactly
+zero, as the inequality bounding it (the full knot never later than the pair's own) requires. And a test written to kill a mutant must
+execute the mutated function: checking a report on hand-made rows cannot see a broken score, width statistic or margin upstream.
