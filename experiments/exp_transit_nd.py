@@ -177,7 +177,7 @@ def inner_job(args):
     f = A * K.phi(np.atleast_2d(T))[:, 0]
     out = RN.inner_k(L, K, f, np.array(pts, float), np.asarray(xs, float), xi0=xi0, share_tol=SHARE_TOL, max_secs=INNER_SECS)
     return dict(kind=kind, A=A, xs=list(xs), t=t, xi0=xi0, shares=out['shares'], stationary=out['stationary'], s=out['s'], c=out['c'],
-                drift=out['drift'])
+                drift=out['drift'], stop=out['stop'], remaining=out['remaining'])
 
 
 def inner_ext(args):
@@ -806,6 +806,15 @@ def c3_job(args):
     return c2_job((name, eps, RTOL_C3))
 
 
+def c3_outcome(r):
+    """C3's outcome from a C2 row: a capture tie (feature 2 two kernels by their final positions), captured, bound (feature 0 two kernels),
+    stranded (one kernel per feature, the residual above 10⁻⁸ at the end: the tail still migrating) or one kernel (the fit exact). The
+    bound loops' residual at the end (4–7·10⁻⁸) is the finite mass's relaxation, not a stranded tail."""
+    nf = r['n_fin']
+    return ('capture tie' if nf[2] >= 2 else 'captured' if r['captured'] else 'bound' if nf[0] >= 2 else
+            'stranded' if r['rms'] > 1e-8 else 'one kernel')
+
+
 def part_C3():
     """C3: the capture scan — the near tie and its 5σ variant over EPS_C3 at the loop's tolerance RTOL_C3."""
     from multiprocessing import Pool
@@ -900,7 +909,8 @@ def w_unbind(cs, As):
 
 
 def b4u_note(B4, B4u):
-    """B4's caption: why the unsettled problems stopped (rerun, B4u) and whether their counts changed."""
+    """B4's caption: why the unsettled problems stopped (rerun, B4u), whether their counts changed, and the fewest doublings, at each
+    problem's last drift, before a share can reach the formation threshold (a count changes only when a share crosses TH_REL)."""
     old = {tuple(r['x']): r for r in B4['rows']}
     by = {}
     for r in B4u['rows']:
@@ -908,11 +918,27 @@ def b4u_note(B4, B4u):
     same = sum(int(r['n'] == old[tuple(r['x'])]['n']) for r in B4u['rows'])
     parts = []
     for k, rs in sorted(by.items()):
+        lab = dict(cap='at the doubling cap', clock='at the clock', converged='settled on rerun').get(k, 'with no reason recorded')
+        if k == 'converged':
+            parts.append(f"{len(rs)} {lab}")
+            continue
         d = [r['drift'] for r in rs]
-        parts.append(f"{len(rs)} {'at the doubling cap' if k == 'cap' else 'at the clock' if k == 'clock' else 'settled on rerun'}"
-                     + (f" (the last drift {min(d):.1e} … {max(d):.1e})" if k != 'converged' else ''))
+        rem = [r['remaining'] for r in rs if r.get('remaining') is not None]
+        fin = [x for x in rem if np.isfinite(x)]
+        parts.append(f"{len(rs)} {lab} (the last drift {min(d):.1e}" + (f" … {max(d):.1e}" if max(d) > min(d) else '')
+                     + (f"; the change still to come, from the drifts' fall, at most {max(fin):.1e} on {len(fin)}" if fin else '')
+                     + (f"; the drifts not yet falling on {len(rem) - len(fin)}" if len(rem) > len(fin) and len(rs) > 1 else
+                        "; the drifts not yet falling" if len(rem) > len(fin) else '') + ")")
+    open_ = [r for r in B4u['rows'] if r['stop'] != 'converged']
+    note = ''
+    if open_:
+        gap = [float(np.abs(np.asarray(r['shares']) - TH_REL).min()) for r in open_]
+        dbl = min(g / r['drift'] for g, r in zip(gap, open_))
+        note = (f"; the unsettled shares at least {min(gap):.1e} from the threshold, so at their last drifts no count changes for "
+                f"at least {dbl:.0f} more doublings")
+    chg = max(float(np.abs(np.asarray(r['shares']) - np.asarray(old[tuple(r['x'])]['shares'])).max()) for r in B4u['rows'])
     return (f"; the {len(B4u['rows'])} others rerun with the stop's reason recorded: " + ', '.join(parts) +
-            f", their counts unchanged at {same} of {len(B4u['rows'])}")
+            f", their counts unchanged at {same} of {len(B4u['rows'])}, their shares moved by at most {chg:.1e}" + note)
 
 
 def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None):
@@ -1043,7 +1069,10 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             Np = np.array([[product_count(T, a, b_) for b_ in g] for a in g])
             p3, p4 = areas(Np, g)
             agree = int((Np == N).sum())
-            L_.append(line[2] + f"; the product rule with the factors at t = H/2 on the same grid: {p3:.1f} and {p4:.1f}, its count equal to the "
+            gf = np.arange(0.0, float(g[-1]) + 1e-9, 0.05)
+            f3, f4 = areas(np.array([[product_count(T, a, b_) for b_ in gf] for a in gf]), gf)
+            L_.append(line[2] + f"; the product rule with the factors at t = H/2 on the same grid: {p3:.1f} and {p4:.1f} (on a grid of step 0.05: "
+                      f"{f3:.1f} and {f4:.1f}, the coarse grid's error), its count equal to the "
                       f"inner problem's at {agree} of {N.size} grid points. Each vertex's sector in a cell maps to the gaps by (2σ²ε^{{1/2}}/H)·(x₁₀, "
                       f"x₀₁) and a cell has four: P(N ≥ 3) = 4(2σ²/H²)²·{a3:.1f}·ε = {p_vertices(a3):.0f}·ε and P(N = 4) = {p_vertices(a4):.0f}·ε.")
         else:
@@ -1199,15 +1228,18 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
     if C3 is not None:
         Kf, cf = full()
         cs3 = targets_C2()
+        d_c3 = {k: float(np.linalg.norm(cs3[k][0][2] - cs3[k][0][0]) / SIG) for k in ('near tie', 'near tie 5σ')}
         L_ += ["## C3. The capture window", "",
-               f"C2's near tie (feature 2, 0.7, at 5.9σ from feature 0) and its variant with feature 2 at 5σ (−60°), at {len(EPS_C3)} masses, "
+               f"C2's near tie (feature 2, 0.7, at {d_c3['near tie']:.2f}σ from feature 0) and its variant with feature 2 at "
+               f"{d_c3['near tie 5σ']:.2f}σ (−60°), at {len(EPS_C3)} masses, "
                f"the loop at the tolerance {RTOL_C3:g} (captures sit on a saddle): the runner-up's gap x, its coefficient after the entry "
                "against the fold at feature 2's distance (V: c(d)ℓ(d), interpolated in d), the kernels formed per feature by their final "
-               "positions, the captured kernels, and the outcome — bound (the count the rule's), captured (feature 0 one kernel, feature 2 "
-               "fitted by the migrant), a capture tie (feature 2 two kernels), stranded (the fit not exact at the end):", "",
+               "positions, the captured kernels, and the outcome — bound (feature 0 two kernels, the runner-up formed there), captured "
+               "(feature 0 one kernel, feature 2 fitted by the migrant), a capture tie (feature 2 two kernels), stranded (one kernel per feature, "
+               "the fit not exact at the end: the tail still on its way), one kernel (the runner-up not formed, the fit exact):", "",
                "| target | ε | gap x | the runner-up after the entry | the fold c(d)ℓ(d) | kernels per feature (final) | captured | rms | outcome |",
                "|---|---|---|---|---|---|---|---|---|"]
-        vd = {r['d']: r for r in (V or []) if r['n'] == 1 and r['fold'] is not None}
+        vd = {r['d']: r for r in (V if V is not None else []) if r['n'] == 1 and r['fold'] is not None}
         for r in sorted(C3, key=lambda r: (r['name'], -r['eps'])):
             cs_, As_ = cs3[r['name']]
             d2 = float(np.linalg.norm(cs_[2] - cs_[0]) / SIG)
@@ -1219,7 +1251,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                 foldw = '—'
             x = r['mu'] / np.sqrt(r['eps'])
             nf = r['n_fin']
-            out = ('capture tie' if nf[2] >= 2 else 'captured' if r['captured'] else 'stranded' if r['rms'] > 1e-8 else 'bound')
+            out = c3_outcome(r)
             cap = ', '.join(f"({cf[j][0]:.3f}, {cf[j][1]:.3f}): {a} → {b}" for j, a, b in r['captured']) or 'none'
             L_.append(f"| {r['name']} | {r['eps']:.3g} | {x:.3g} | {r['w_tail']:.3g} | {foldw} | {', '.join(map(str, nf))} | {cap} | "
                       f"{r['rms']:.1e} | {out} |")

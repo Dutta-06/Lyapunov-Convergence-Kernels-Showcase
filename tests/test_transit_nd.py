@@ -246,3 +246,20 @@ def test_inner_k_says_why_it_stopped():
     dq = q['drifts']
     assert q['stop'] == 'cap' and len(dq) == 12 and dq[-1] < dq[-2]
     assert abs(q['remaining'] - dq[-1] ** 2 / (dq[-2] - dq[-1])) <= 1e-12 * q['remaining'] and q['remaining'] < 1e-5
+
+
+def test_c3_outcomes():
+    """C3's classification by the final counts: a capture tie before a capture, a capture before the count, two kernels at feature 0
+    bound whatever the residual at the end (the finite mass's relaxation), one kernel per feature stranded only with a residual."""
+    row = lambda nf, cap, rms: dict(n_fin=nf, captured=cap, rms=rms)
+    assert TN.c3_outcome(row([1, 1, 2], [(163, 0, 2)], 1e-11)) == 'capture tie'
+    assert TN.c3_outcome(row([1, 1, 1], [(163, 0, 2)], 1e-12)) == 'captured'
+    assert TN.c3_outcome(row([2, 1, 1], [], 4e-8)) == 'bound'
+    assert TN.c3_outcome(row([1, 1, 1], [], 3e-6)) == 'stranded'
+    assert TN.c3_outcome(row([1, 1, 1], [], 1e-12)) == 'one kernel'
+
+
+def test_inner_job_reports_the_stop():
+    """`inner_job` passes `inner_k`'s stop reason and the remaining-change estimate through (B4u records them: referee round 47)."""
+    r = TN.inner_job(('edge', TN.A_B, (0.0, 4.0), TN.H / 2))
+    assert r['stop'] == 'converged' and r['stationary'] and 'remaining' in r

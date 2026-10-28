@@ -55,7 +55,7 @@ Beyond H/2 (T2, by bisection): x_θ = 5.888 (t = 0.625H), 5.715 (t = 0.75H), 5.5
 
 ## B. The formation map at a vertex
 
-A = 0.8; the gaps (x₁₀, x₀₁) of the edge runner-ups on a grid, x₁₀ ≤ x₀₁, the diagonal's x₁₁ = x₁₀ + x₀₁ − ε^{1/2}x₁₀x₀₁ exactly (the tensor grid's correlations multiply); the number of kernels formed by the loop at ε = 1e-06, 1e-08, 1e-10, by the 4-kernel inner problem (B4's, settled), by the independent rule #{j: x_j < x_θ} + 1 with x_θ = 6.034 (the edge's inner problem at the vertex's offset t = H/2 (T)), and by the product rule with the edges' factors at the vertex's offset t = H/2 (T):
+A = 0.8; the gaps (x₁₀, x₀₁) of the edge runner-ups on a grid, x₁₀ ≤ x₀₁, the diagonal's x₁₁ = x₁₀ + x₀₁ − ε^{1/2}x₁₀x₀₁ exactly (the tensor grid's correlations multiply); the number of kernels formed by the loop at ε = 1e-06, 1e-08, 1e-10, by the 4-kernel inner problem (B4's), by the independent rule #{j: x_j < x_θ} + 1 with x_θ = 6.034 (the edge's inner problem at the vertex's offset t = H/2 (T)), and by the product rule with the edges' factors at the vertex's offset t = H/2 (T):
 
 | x₁₀ | x₀₁ | x₁₁ | loop | inner problem | the independent rule | the product rule (T) |
 |---|---|---|---|---|---|---|
@@ -130,7 +130,7 @@ The loop's count equals the inner problem's at 64 of 66 (ε = 1e-06), 66 of 66 (
 
 ## B4. The areas at a vertex
 
-The 4-kernel inner problem on the grid of gaps 0 … 10 in steps of 0.25 (861 problems, x₁₀ ≤ x₀₁): the region N ≥ 3 has the area 33.5 and N = 4 15.5 in the gaps' quarter-plane (trapezoid weights; 648 of 861 problems settled to the shares' tolerance); the product rule with the factors at t = H/2 on the same grid: 33.5 and 15.1, its count equal to the inner problem's at 1675 of 1681 grid points. Each vertex's sector in a cell maps to the gaps by (2σ²ε^{1/2}/H)·(x₁₀, x₀₁) and a cell has four: P(N ≥ 3) = 4(2σ²/H²)²·33.5·ε = 1112·ε and P(N = 4) = 513·ε.
+The 4-kernel inner problem on the grid of gaps 0 … 10 in steps of 0.25 (861 problems, x₁₀ ≤ x₀₁): the region N ≥ 3 has the area 33.5 and N = 4 15.5 in the gaps' quarter-plane (trapezoid weights; 648 of 861 problems settled to the shares' tolerance 1e-07; the 213 others rerun with the stop's reason recorded: 209 at the doubling cap (the last drift 1.0e-07 … 3.7e-07; the change still to come, from the drifts' fall, at most 1.6e-05 on 101; the drifts not yet falling on 108), 1 at the clock (the last drift 2.0e-07; the drifts not yet falling), 3 settled on rerun, their counts unchanged at 213 of 213, their shares moved by at most 1.1e-06; the unsettled shares at least 2.0e-04 from the threshold, so at their last drifts no count changes for at least 788 more doublings); the product rule with the factors at t = H/2 on the same grid: 33.5 and 15.1 (on a grid of step 0.05: 33.5 and 15.3, the coarse grid's error), its count equal to the inner problem's at 1675 of 1681 grid points. Each vertex's sector in a cell maps to the gaps by (2σ²ε^{1/2}/H)·(x₁₀, x₀₁) and a cell has four: P(N ≥ 3) = 4(2σ²/H²)²·33.5·ε = 1112·ε and P(N = 4) = 513·ε.
 
 ## C. Several features in the plane
 
@@ -186,6 +186,8 @@ A = 0.8 at 600 uniform positions in the Voronoi cell of the kernel at (0, 0) (se
 
 The misses — ε: the loop's count/the rule's at the gaps (x₁₀, x₀₁) [x_θ at their offsets]: 1e-05: 2/1 at (26.49, 6.28) [6.09, 6.23]; 1e-05: 2/1 at (6.52, 13.35) [6.15, 6.09]; 1e-05: 4/3 at (0.59, 4.85) [6.08, 6.04]; 1e-05: 2/1 at (6.36, 8.41) [6.11, 6.09]; 1e-05: 2/1 at (42.90, 6.49) [6.09, 6.29]; 1e-05: 3/2 at (6.12, 3.45) [6.06, 6.09]; 1e-05: 2/1 at (6.33, 7.32) [6.10, 6.09]; 1e-05: 2/1 at (6.30, 46.00) [6.29, 6.09]; 1e-06: 2/1 at (6.11, 8.25) [6.06, 6.05]; 1e-06: 3/2 at (3.92, 6.03) [6.05, 6.04]; 1e-06: 2/1 at (6.29, 76.61) [6.22, 6.05].
 
+The offset-blind rule (every factor at t = 0, x_θ(0)) agrees with the loop at 596 of 600 (ε = 1e-05), 600 of 600 (ε = 1e-06) — D does not resolve x_θ(t) (referee round 47): the positions near a face, where the offset matters, are too few.
+
 
 ## H. A hexagonal lattice
 
@@ -207,13 +209,78 @@ Part C's lattice; 'near tie': feature 0 (A = 0.8) near the face between (0, 0.25
 | near tie | 1e-06 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 0.3 | 0.4464, 0.4452 | 0.357 (79.3), 0.00041 | 2, 2 | none | no: [72, 146, 163, 208] | 3.57e-01 | 9.87e-08 |
 | near tie | 1e-07 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 0.949 | 0.3338, 0.3328 | 0.267 (79.3), 0.00041 | 2, 2 | none | no: [72, 146, 163, 208] | 2.67e-01 | 3.47e-08 |
 | near tie | 1e-08 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 3 | 0.1002, 0.09973 | 0.0802 (79.3), 0.00041 | 2, 2 | none | no: [72, 146, 163, 208] | 8.01e-02 | 4.02e-08 |
-| near tie | 1e-09 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 9.49 | 0.4667, 0.001322 | 0.00106 (79.3), 0.00041 | 1, 1 | (0.125, 0.250): 0 → 2 | no: [72, 146, 163] | 7.00e-01 | 1.95e-13 |
+| near tie | 1e-09 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 9.49 | — (captured), 0.001322 | 0.00106 (79.3), 0.00041 | 1, 1 | (0.125, 0.250): 0 → 2 | no: [72, 146, 163] | 7.00e-01 | 1.95e-13 |
 | near tie | 1e-10 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 30 | 8.205e-06, — | 6.48e-06 (79.3), 0.00041 | 1, 1 | none | yes | 6.33e-06 | 4.28e-08 |
 | window edge | 1e-06 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 159 | 3.295e-08, — | 1.89e-09 (71.3), 1.1e-08 | 1, 1 | none | yes | 4.15e-06 | 3.94e-08 |
 | window edge | 1e-07 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 504 | 9.693e-10, — | 5.98e-11 (71.3), 1.1e-08 | 1, 1 | none | yes | 8.72e-08 | 1.03e-09 |
 | window edge | 1e-08 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 1.59e+03 | 2.998e-11, — | 1.89e-12 (71.3), 1.1e-08 | 1, 1 | none | yes | 2.46e-09 | 2.95e-11 |
 | window edge | 1e-09 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 5.04e+03 | 9.416e-13, — | 5.97e-14 (71.3), 1.1e-08 | 1, 1 | none | yes | 7.53e-11 | 9.04e-13 |
 | window edge | 1e-10 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 1.59e+04 | 2.971e-14, — | 1.89e-15 (71.3), 1.1e-08 | 1, 1 | none | yes | 2.35e-12 | 2.83e-14 |
+
+## V. A runner-up held at its feature: the static law of (v)
+
+The feature (A = 0.8) at the origin and an unfitted one (A′ = 0.7) at the distance d (the continuum: a trapezoid of step σ/20 in one dimension, σ/8 in the plane along the diagonal); the entrant (w_e, c_e) and the runner-up's centre free, its coefficient w fixed: the local minimum's displacement Δ of the runner-up toward the unfitted feature (by continuation in w) against (v)'s law Δ² = σ²A′((d/σ)² − 2)e^{−d²/(4σ²)}·w_e/(w(w_e + w)); the fold — below it no minimum within 2σ — by bisection; the level ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)}, the fold over it c(d), and the law's Δ at the fold:
+
+| d/σ | Δ/σ (the law) at w = 0.3, 0.1, 0.03, 0.01, 0.003, 0.001 | the fold w_f | ℓ(d) | c(d) = w_f/ℓ | the law's Δ/σ at w_f |
+|---|---|---|---|---|---|
+| 5 | 0.3164 (0.2556), —, —, —, —, — | 0.1424 | 0.0338 | 4.21 | 0.424 |
+| 5.5 | 0.1641 (0.1465), 0.4503 (0.3120), —, —, —, — | 0.05956 | 0.011 | 5.41 | 0.400 |
+| 6 | 0.0837 (0.0783), 0.1983 (0.1667), 0.4823 (0.3122), —, —, — | 0.02066 | 0.00311 | 6.64 | 0.372 |
+| 6.5 | 0.0407 (0.0390), 0.0912 (0.0831), 0.1862 (0.1555), 0.3708 (0.2596), —, — | 0.006018 | 0.000765 | 7.87 | 0.347 |
+| 7 | 0.0186 (0.0181), 0.0407 (0.0386), 0.0791 (0.0723), 0.1397 (0.1206), 0.3325 (0.2363), — | 0.001495 | 0.000164 | 9.11 | 0.324 |
+
+The plane, d = 6σ along the diagonal: w = 0.3: along 0.0837, across 2.3e-08 (the law 0.0783); w = 0.079: along 0.2224, across 2.2e-07 (the law 0.1831); w = 0.0208: along 0.8015, across 7.2e-08 (the law 0.3709); the fold between w = 0.02066 and 0.02066.
+
+## C3. The capture window
+
+C2's near tie (feature 2, 0.7, at 6.08σ from feature 0) and its variant with feature 2 at 5.00σ (−60°), at 15 masses, the loop at the tolerance 1e-12 (captures sit on a saddle): the runner-up's gap x, its coefficient after the entry against the fold at feature 2's distance (V: c(d)ℓ(d), interpolated in d), the kernels formed per feature by their final positions, the captured kernels, and the outcome — bound (feature 0 two kernels, the runner-up formed there), captured (feature 0 one kernel, feature 2 fitted by the migrant), a capture tie (feature 2 two kernels), stranded (one kernel per feature, the fit not exact at the end: the tail still on its way), one kernel (the runner-up not formed, the fit exact):
+
+| target | ε | gap x | the runner-up after the entry | the fold c(d)ℓ(d) | kernels per feature (final) | captured | rms | outcome |
+|---|---|---|---|---|---|---|---|---|
+| near tie | 1e-08 | 3 | 0.0801 | 0.0172 (d = 6.08σ) | 2, 1, 1 | none | 4.0e-08 | bound |
+| near tie | 7.05e-09 | 3.57 | 0.0545 | 0.0172 (d = 6.08σ) | 2, 1, 1 | none | 5.1e-08 | bound |
+| near tie | 4.97e-09 | 4.26 | 0.034 | 0.0172 (d = 6.08σ) | 2, 1, 1 | none | 7.1e-08 | bound |
+| near tie | 3.5e-09 | 5.07 | 0.0191 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 5.1e-10 | captured |
+| near tie | 3e-09 | 5.48 | 0.0143 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 8.6e-13 | captured |
+| near tie | 2.47e-09 | 6.04 | 0.00966 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 7.3e-13 | captured |
+| near tie | 1.74e-09 | 7.19 | 0.00435 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 4.2e-13 | captured |
+| near tie | 1.22e-09 | 8.59 | 0.00178 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 2.5e-13 | captured |
+| near tie | 8.63e-10 | 10.2 | 0.000722 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.6e-13 | captured |
+| near tie | 6.08e-10 | 12.2 | 0.000296 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.3e-13 | captured |
+| near tie | 4.29e-10 | 14.5 | 0.000128 | 0.0172 (d = 6.08σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 2.4e-13 | captured |
+| near tie | 3.13e-10 | 17 | 6.26e-05 | 0.0172 (d = 6.08σ) | 1, 1, 2 | (0.125, 0.250): 0 → 2 | 1.4e-11 | capture tie |
+| near tie | 3.02e-10 | 17.3 | 5.79e-05 | 0.0172 (d = 6.08σ) | 1, 1, 1 | none | 2.9e-06 | stranded |
+| near tie | 2.13e-10 | 20.6 | 2.78e-05 | 0.0172 (d = 6.08σ) | 1, 1, 1 | none | 2.8e-07 | stranded |
+| near tie | 1.5e-10 | 24.5 | 1.39e-05 | 0.0172 (d = 6.08σ) | 1, 1, 1 | none | 9.8e-08 | stranded |
+| near tie 5σ | 1e-08 | 3 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 4.9e-12 | captured |
+| near tie 5σ | 7.05e-09 | 3.57 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 2.9e-12 | captured |
+| near tie 5σ | 4.97e-09 | 4.26 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.7e-12 | captured |
+| near tie 5σ | 3.5e-09 | 5.07 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.0e-12 | captured |
+| near tie 5σ | 3e-09 | 5.48 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 8.0e-13 | captured |
+| near tie 5σ | 2.47e-09 | 6.04 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 6.0e-13 | captured |
+| near tie 5σ | 1.74e-09 | 7.19 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 3.5e-13 | captured |
+| near tie 5σ | 1.22e-09 | 8.59 | 0.7 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 2.1e-13 | captured |
+| near tie 5σ | 8.63e-10 | 10.2 | 0.339 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.2e-13 | captured |
+| near tie 5σ | 6.08e-10 | 12.2 | 0.000303 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 7.3e-14 | captured |
+| near tie 5σ | 4.29e-10 | 14.5 | 0.00013 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 4.3e-14 | captured |
+| near tie 5σ | 3.13e-10 | 17 | 6.35e-05 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 2.7e-14 | captured |
+| near tie 5σ | 3.02e-10 | 17.3 | 5.87e-05 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 2.6e-14 | captured |
+| near tie 5σ | 2.13e-10 | 20.6 | 2.82e-05 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.5e-14 | captured |
+| near tie 5σ | 1.5e-10 | 24.5 | 1.41e-05 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 9.3e-15 | captured |
+
+## T3. The product rule at a vertex of hℤ³
+
+The 8 kernels at the corners of the cube {0, H}³ (samples on a tensor grid of spacing 0.05), the feature (A = 0.8) at the cube's centre — each edge's axis at the transverse offset H/√2 ((n − 1)^{1/2}H/2; H/2 only in the plane) —; the corner 1_S behind the entrant by Σ_{i∈S}x_i: the 8-kernel inner problem against the product of the edges' 2-kernel shares at the offset H/√2 (the planar edge problem: in the continuum it depends on |t| only) and at H/2 (the planar offset):
+
+| gaps (x₁, x₂, x₃) | 8-kernel: formed (stop) | the product at H/√2: formed, max \|Δ share\| | at H/2: formed, max \|Δ share\| |
+|---|---|---|---|
+| (1, 1, 1) | 8 (converged) | 8, 8.68e-05 | 8, 1.03e-02 |
+| (2, 2, 2) | 7 (converged) | 7, 3.58e-04 | 7, 1.95e-02 |
+| (1, 2, 3) | 6 (converged) | 6, 3.54e-04 | 7, 1.58e-02 |
+| (0.5, 3, 5) | 5 (converged) | 4, 5.56e-04 | 5, 9.59e-03 |
+| (3, 3, 3) | 4 (converged) | 4, 9.28e-04 | 4, 1.93e-02 |
+| (2, 4, 6) | 3 (cap) | 3, 8.79e-04 | 3, 1.42e-02 |
+| (4, 4, 4) | 4 (converged) | 4, 1.16e-03 | 4, 1.38e-02 |
 
 ## W. Where the selection is the Voronoi cell
 

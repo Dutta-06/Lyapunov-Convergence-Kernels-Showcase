@@ -11,6 +11,6 @@ round is applied and its numbers are final.
 | `D49.md` | D‴.49: the rich transit in the closed loop | round 44 (D3aq) received; its revision's full rerun queued |
 | `D50.md` | D‴.50: the rich transit under label noise | round 40 applied, numerics final; a referee round on the revision next |
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
-| `D54.md` | D‴.54: the transit in ℝⁿ | round 42 applied (with (v), a tail's capture), numerics final; a referee round next |
+| `D54.md` | D‴.54: the transit in ℝⁿ | round 47 (D3at) applied — (v) rebuilt as a fold law, C3 and V, the n-D product rule at the true offsets (T3) —, numerics final; a referee round on the revision next |
 | `D56.md` | D‴.56: the transit under measurement noise | numerics A–E final (Part E rerun with the Radau fallback); referee round 45 running |
 | `D58.md` | D‴.58: the transit under width mismatch — wider features as kernel quadratures | first full run (A–D) in the numerics; a first referee round next |
