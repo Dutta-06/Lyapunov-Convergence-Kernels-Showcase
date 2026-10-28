@@ -31,21 +31,23 @@ The loop over its linearisation: centres [0.9973, 1.0058], coefficients [0.9899,
 
 ## A2. Resonance against roll-off (quasi-static; referee round 63)
 
-A's oscillator law, the paradigm's metric: per law each kernel's √K_i and the frequency at which its centre jitter per unit amplitude peaks (on ω = 4 … 40); seed 7's 16 tones in the band, per unit rms: the centre jitter (rms over the orbit and the tones), the same with K = 0 (the roll-off alone), and their ratio, the resonance factor:
+A's oscillator law, the paradigm's metric: per law each kernel's √K_i and the frequency at which its centre jitter per unit amplitude peaks (on ω = 4 … 40; * a maximum at the grid's lower end, the peak below it); seed 7's 16 tones in the band, per unit rms: the centre jitter (rms over the orbit and the tones), the same with K = 0 (the roll-off alone), and their ratio, the resonance factor — per tone and orbit point the adaptation loop's sensitivity |S| = |iω(iω + k_e)|/|K − ω² + ik_eω| (the plant's slope cancels), here averaged over the band and the orbit:
 
 | m | band | √K_i | the peaks (/ √K_i) | jitter | jitter at K = 0 | resonance factor |
 |---|---|---|---|---|---|---|
-| 2 | 10–30 | 6.44, 4.29, 5.36 | 4.00 (0.622), 4.00 (0.932), 4.00 (0.746) | 0.1608, 0.0921, 0.1358 | 0.1478, 0.0887, 0.1283 | 1.088, 1.038, 1.059 |
-| 3 | 10–30 | 7.88, 5.25, 6.57 | 5.80 (0.736), 4.00 (0.761), 4.10 (0.624) | 0.2519, 0.1407, 0.2099 | 0.2217, 0.1331, 0.1924 | 1.136, 1.057, 1.091 |
-| 4 | 10–30 | 9.10, 6.07, 7.58 | 7.35 (0.808), 4.00 (0.659), 5.75 (0.758) | 0.3502, 0.1913, 0.2883 | 0.2955, 0.1775, 0.2565 | 1.185, 1.078, 1.124 |
+| 2 | 10–30 | 6.44, 4.29, 5.36 | 4.00* (0.622), 4.00* (0.932), 4.00* (0.746) | 0.1608, 0.0921, 0.1358 | 0.1478, 0.0887, 0.1283 | 1.088, 1.038, 1.059 |
+| 3 | 10–30 | 7.88, 5.25, 6.57 | 5.80 (0.736), 4.00* (0.761), 4.10 (0.624) | 0.2519, 0.1407, 0.2099 | 0.2217, 0.1331, 0.1924 | 1.136, 1.057, 1.091 |
+| 4 | 10–30 | 9.10, 6.07, 7.58 | 7.35 (0.808), 4.00* (0.659), 5.75 (0.758) | 0.3502, 0.1913, 0.2883 | 0.2955, 0.1775, 0.2565 | 1.185, 1.078, 1.124 |
 | 4.83 | 10–30 | 10.00, 6.67, 8.33 | 8.35 (0.835), 4.90 (0.735), 6.70 (0.804) | 0.4370, 0.2347, 0.3568 | 0.3569, 0.2143, 0.3097 | 1.225, 1.095, 1.152 |
 | 6 | 10–30 | 11.14, 7.43, 9.29 | 9.60 (0.861), 5.90 (0.794), 7.75 (0.834) | 0.5662, 0.2982, 0.4583 | 0.4433, 0.2662, 0.3848 | 1.277, 1.120, 1.191 |
 | 8 | 10–30 | 12.87, 8.58, 10.72 | 11.30 (0.878), 7.20 (0.839), 9.25 (0.863) | 0.8035, 0.4130, 0.6439 | 0.5911, 0.3550, 0.5130 | 1.359, 1.163, 1.255 |
 | 12 | 10–30 | 15.76, 10.51, 13.13 | 14.15 (0.898), 9.15 (0.871), 11.65 (0.887) | 1.3258, 0.6646, 1.0543 | 0.8866, 0.5324, 0.7695 | 1.495, 1.248, 1.370 |
-| 3 | 25–75 | 7.88, 5.25, 6.57 | 5.80 (0.736), 4.00 (0.761), 4.10 (0.624) | 0.1021, 0.0611, 0.0884 | 0.0991, 0.0603, 0.0866 | 1.030, 1.013, 1.020 |
+| 3 | 25–75 | 7.88, 5.25, 6.57 | 5.80 (0.736), 4.00* (0.761), 4.10 (0.624) | 0.1021, 0.0611, 0.0884 | 0.0991, 0.0603, 0.0866 | 1.030, 1.013, 1.020 |
 | 12 | 25–75 | 15.76, 10.51, 13.13 | 14.15 (0.898), 9.15 (0.871), 11.65 (0.887) | 0.4534, 0.2546, 0.3783 | 0.3965, 0.2410, 0.3465 | 1.144, 1.056, 1.092 |
 
 m = 3: the jitter falls by 2.47, 2.31, 2.37 from 10–30 to 25–75, of which the roll-off 2.24, 2.21, 2.22 and the resonance 1.10, 1.04, 1.07; m = 12: the jitter falls by 2.92, 2.61, 2.79 from 10–30 to 25–75, of which the roll-off 2.24, 2.21, 2.22 and the resonance 1.31, 1.18, 1.25.
+
+The sensitivity (k_e = 10, the first kernel's K): |S|² − 1 = K(2ω² − K)/|K − ω² + ik_eω|², so |S| > 1 at every ω > √(K/2) whatever k_e — the amplification above is the price of the attenuation below (∫₀^∞ ln|S(iω)|dω = 0, Bode's integral; by quadrature 3.0e-12 at most over the laws) —; |S(√K)| = (1 + K/k_e²)^{1/2} = 1.189, 1.273, 1.352, 1.414, 1.497, 1.630, 1.866 at m = 2, 3, 4, 4.83, 6, 8, 12; at m = 4.83 (√K₁ = 10.00) |S| = 1.41, 1.38, 1.24, 1.11 at ω = 10, 15, 20, 30.
 
 ## B. The second order: the averaged loop
 
@@ -103,13 +105,16 @@ The remainders at period 30 per doubling of s (s = 0.00125 → 0.0025 → 0.005)
 
 ## B5. The averaged loop against the second order's constant part (referee round 63)
 
-One tone, 30 periods: the exact second order's ⟨w₂⟩ (`second_order`) at the tone's phase φ and at φ + π/2 — their half-sum the response to the constant part of the forcing (φ-free), their half-difference the 2ω part's (∝ e^{2iφ}) —, and the averaged loop's Δw/s² (s = 0.005) over the exact second order and over its constant part, at the periods 3, 10, 30:
+One tone, 30 periods: the exact second order's ⟨w₂⟩ (`second_order`) at the tone's phase φ and at φ + π/2 — their half-sum the response to the constant part of the forcing (φ-free), their half-difference the 2ω part's (∝ e^{2iφ}) —, and the averaged loop's Δw/s² at s = 0.00125 (its own O(s⁴) negligible; referee round 69) and at 0.005 over the exact second order and over its constant part, at the periods 3, 10, 30:
 
-| metric | ω | 2ω/ω_ref | ⟨w₂⟩ (exact) | the constant part | the 2ω part | averaged / exact | averaged / the constant part |
-|---|---|---|---|---|---|---|---|
-| paradigm | 13.05 | 130.5 | +13.09, -2.991, +7.309; +51.3, -11.16, +25.59; +153, -32.51, +72.75 | +13.04, -2.972, +7.401; +52.4, -11.07, +25.69; +154, -32.43, +72.83 | +0.05602, -0.01892, -0.09267; -1.091, -0.08857, -0.09308; -1.02, -0.08264, -0.08009 | 0.955, 1.020, 1.084; 0.986, 1.020, 1.076; 0.984, 1.029, 1.083 | 0.959, 1.027, 1.071; 0.966, 1.028, 1.072; 0.978, 1.032, 1.081 |
-| paradigm | 13.1 | 131 | +18.87, -2.829, +7.573; +75.99, -10.54, +26.18; +223.4, -30.86, +74.15 | +13, -2.944, +7.322; +52.26, -10.97, +25.41; +153.6, -32.11, +72.05 | +5.871, +0.1143, +0.2503; +23.73, +0.4272, +0.7681; +69.84, +1.252, +2.1 | 0.663, 1.068, 1.037; 0.666, 1.070, 1.042; 0.674, 1.074, 1.052 | 0.962, 1.027, 1.072; 0.968, 1.028, 1.074; 0.981, 1.032, 1.083 |
-| paradigm | 13.15 | 131.5 | +12.48, -2.832, +7.589; +50.36, -10.84, +25.21; +151.5, -31.77, +71.32 | +12.96, -2.914, +7.246; +52.1, -10.85, +25.14; +153.1, -31.77, +71.27 | -0.4788, +0.08212, +0.343; -1.735, +0.00908, +0.07725; -1.584, +0.004024, +0.04842 | 1.001, 1.057, 1.026; 1.004, 1.029, 1.072; 0.994, 1.032, 1.084 | 0.964, 1.027, 1.074; 0.971, 1.028, 1.076; 0.983, 1.032, 1.085 |
+| metric | ω | 2ω/ω_ref | ⟨w₂⟩ (exact) | the constant part | the 2ω part | averaged / exact, s = 0.00125 | averaged / the constant part, s = 0.00125 | averaged / the constant part, s = 0.005 |
+|---|---|---|---|---|---|---|---|---|
+| paradigm | 13.05 | 130.5 | +13.09, -2.991, +7.309; +51.3, -11.16, +25.59; +153, -32.51, +72.75 | +13.04, -2.972, +7.401; +52.4, -11.07, +25.69; +154, -32.43, +72.83 | +0.05602, -0.01892, -0.09267; -1.091, -0.08857, -0.09308; -1.02, -0.08264, -0.08009 | 0.9937, 0.9954, 1.0174; 1.0197, 0.9938, 1.0084; 1.0062, 0.9995, 1.0064 | 0.9979, 1.0017, 1.0047; 0.9985, 1.0018, 1.0048; 0.9995, 1.0020, 1.0053 | 0.9593, 1.0266, 1.0707; 0.9657, 1.0278, 1.0723; 0.9779, 1.0315, 1.0814 |
+| paradigm | 13.1 | 131 | +18.87, -2.829, +7.573; +75.99, -10.54, +26.18; +223.4, -30.86, +74.15 | +13, -2.944, +7.322; +52.26, -10.97, +25.41; +153.6, -32.11, +72.05 | +5.871, +0.1143, +0.2503; +23.73, +0.4272, +0.7681; +69.84, +1.252, +2.1 | 0.6876, 1.0422, 0.9716; 0.6868, 1.0424, 0.9754; 0.6872, 1.0427, 0.9769 | 0.9981, 1.0017, 1.0048; 0.9987, 1.0018, 1.0048; 0.9997, 1.0020, 1.0054 | 0.9617, 1.0267, 1.0724; 0.9682, 1.0280, 1.0740; 0.9806, 1.0317, 1.0831 |
+| paradigm | 13.15 | 131.5 | +12.48, -2.832, +7.589; +50.36, -10.84, +25.21; +151.5, -31.77, +71.32 | +12.96, -2.914, +7.246; +52.1, -10.85, +25.14; +153.1, -31.77, +71.27 | -0.4788, +0.08212, +0.343; -1.735, +0.00908, +0.07725; -1.584, +0.004024, +0.04842 | 1.0366, 1.0308, 0.9594; 1.0333, 1.0026, 1.0018; 1.0104, 1.0021, 1.0048 | 0.9983, 1.0017, 1.0049; 0.9989, 1.0018, 1.0049; 0.9999, 1.0020, 1.0054 | 0.9642, 1.0269, 1.0742; 0.9708, 1.0282, 1.0758; 0.9833, 1.0319, 1.0848 |
+| paradigm | 29.3 | 293 | +1.057, -0.6428, +1.003; +4.236, -2.222, +3.495; +12.44, -6.383, +9.919 | +1.057, -0.6446, +1.003; +4.236, -2.223, +3.495; +12.44, -6.385, +9.919 | -2.389e-05, +0.001802, -2.614e-06; -8.884e-05, +0.001728, -2.564e-06; -0.0002565, +0.001532, -2.085e-06 | 1.0000, 1.0028, 1.0001; 1.0000, 1.0008, 1.0001; 1.0000, 1.0003, 1.0001 | 1.0000, 1.0000, 1.0001; 1.0000, 1.0000, 1.0001; 1.0000, 1.0001, 1.0001 | 0.9995, 1.0004, 1.0013; 0.9997, 1.0006, 1.0014; 1.0003, 1.0009, 1.0019 |
+
+At s = 0.00125 the averaged loop over the constant part: 13.05: 0.9979–1.0053 (over the exact second order 0.9937–1.0197); 13.1: 0.9981–1.0054 (over the exact second order 0.6868–1.0427); 13.15: 0.9983–1.0054 (over the exact second order 0.9594–1.0366); 29.3: 1.0000–1.0001 (over the exact second order 1.0000–1.0028).
 
 ## B4. The long horizon and commensurability
 
@@ -187,7 +192,7 @@ Per level the leaves over the seeds and kernels (the jumps among them) and their
 
 ## C2. Controls (k_e and m as stated)
 
-The same loop and horizon, each case under the seeds 7, 1, 2, 3 (the tones' phases; for a band also its frequencies) unless the draw's phases are given: one tone; tone pairs of total rms s — their difference a multiple of the reference's ω (18ω, 1ω), half of one (17.5ω) or between (17.75ω), and D‴.49's own pair 18.9015/22.5019 (18.0019ω) with the draw's phases —; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12 (the design bound m ≲ ω_lo²/(G max_t Σ_iw_i²(∂_cφ_i)²) = 4.83 at ω_lo = 10); the Wasserstein–Fisher–Rao metric to s = 0.32. Per group the kernels that left their feature (0.3 away, period-averaged) — 'jumped' if their largest distance exceeds 0.6 (out of the orbit's range) —, the leave periods and the largest distances over the runs:
+The same loop and horizon, each case under the seeds 7, 1, 2, 3 (the tones' phases; for a band also its frequencies) unless the draw's phases are given: one tone; tone pairs of total rms s — their difference a multiple of the reference's ω (18ω, 1ω), half of one (17.5ω) or between (17.75ω), and D‴.49's own pair 18.9015/22.5019 (18.0019ω) with the draw's phases —; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12 (the design bound m ≲ ω_lo²/(G max_t Σ_iw_i²(∂_cφ_i)²) = 4.83 at ω_lo = 10); the Wasserstein–Fisher–Rao metric to s = 0.32. Per group the kernels that left their feature (0.3 away, period-averaged) — 'jumped' if their largest distance exceeds 0.6 (out of its feature) —, the leave periods and the largest distances over the runs:
 
 | control | metric | m | k_e | noise | s | runs | left: per kernel (jumped) | leave periods | largest distances (per kernel, max over runs) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -287,6 +292,8 @@ The same loop and horizon, each case under the seeds 7, 1, 2, 3 (the tones' phas
 | WFR | wfr | 12 | 10 | D‴.49's 16 tones | 0.24 | 4 | 0 (0), 0 (0), 0 (0) | — | 0.126, 0.162, 0.111 |
 | WFR | wfr | 12 | 10 | D‴.49's 16 tones | 0.32 | 4 | 1 (0), 1 (0), 1 (1) | 270–285 | 0.338, 0.306, 0.813 |
 
+Single tones (the paradigm's metric), the runs whose first kernel did not jump: its coefficient's rise over the fit by the last period, per level — s = 0.04: +0.474 … +0.702 (24 runs); s = 0.06: +0.358 … +0.912 (24 runs); s = 0.08: +0.494 … +0.964 (24 runs).
+
 ## C3. The anatomy of a leave (referee round 63)
 
 C's loop (m = 12, k_e = 10 unless stated), the formed kernels' period means over 300 periods: per kernel that left, the leave period, the coefficient there against its start, the mean signed offset of the centre over the periods leave − 30 … leave − 6, its largest distance (> 0.6: a jump) and the centre at the end:
@@ -340,6 +347,148 @@ C's loop (m = 12, k_e = 10 unless stated), the formed kernels' period means over
 
 Summed up — the 16 tones at s = 0.02: 15 leaves (11 of the first kernel, in 11 runs), periods 114 … 274, the coefficient at the leave over its start 1.071 … 1.159, the mean offset before -0.016 … +0.020, the largest distance 0.77 … 1.92 (15 jumps, beyond 0.6 0 … 1 periods after the leave); the 16 tones at s = 0.03: 23 leaves (11 of the first kernel, in 11 runs), periods 118 … 270, the coefficient at the leave over its start 1.092 … 1.322, the mean offset before -0.028 … +0.028, the largest distance 0.41 … 1.93 (22 jumps, beyond 0.6 0 … 1 periods after the leave); single tones: 4 leaves (4 of the first kernel), periods 38 … 150, the coefficient at the leave over its start 1.181 … 1.491, the mean offset before -0.276 … -0.088, the largest distance 0.31 … 0.36 (0 jumps).
 
+Per kernel — the 16 tones at s = 0.02, kernel 1: 11 leaves, periods 114 … 274, the coefficient over its start 1.071 … 1.159, the mean offset before -0.016 … -0.011, the largest distance 0.90 … 1.92 (11 jumps, 11 of them ending beyond ±1); the 16 tones at s = 0.02, kernel 3: 4 leaves, periods 164 … 274, the coefficient over its start 1.074 … 1.114, the mean offset before +0.010 … +0.020, the largest distance 0.77 … 1.17 (4 jumps, 3 of them ending beyond ±1); the 16 tones at s = 0.03, kernel 1: 11 leaves, periods 118 … 202, the coefficient over its start 1.201 … 1.322, the mean offset before -0.028 … -0.016, the largest distance 0.91 … 1.93 (11 jumps, 11 of them ending beyond ±1); the 16 tones at s = 0.03, kernel 2: 1 leave, periods 144, the coefficient over its start 1.092, the mean offset before -0.001, the largest distance 0.41 (0 jumps); the 16 tones at s = 0.03, kernel 3: 11 leaves, periods 119 … 270, the coefficient over its start 1.122 … 1.209, the mean offset before +0.017 … +0.028, the largest distance 0.75 … 1.20 (11 jumps, 9 of them ending beyond ±1); single tones, kernel 1: 4 leaves, periods 38 … 150, the coefficient over its start 1.181 … 1.491, the mean offset before -0.276 … -0.088, the largest distance 0.31 … 0.36 (0 jumps).
+
 The first kernel's drift against (ii)'s even part at its saturation (B4's 16 tones over the periods 601–1200, +235.7 … +290.1 per s²): at s = 0.02 s²⟨w₂⟩ +0.094 … +0.116 against the first kernel's rise at its leaves +0.064 … +0.143; at s = 0.03 s²⟨w₂⟩ +0.212 … +0.261 against the first kernel's rise at its leaves +0.181 … +0.290.
+
+
+### C4. Like for like (referee round 69): the rise at the leave against the same draw's even part
+
+C3's band runs (m = 12, k_e = 10) that lost kernel 1: its leave period p, the rise W₊ − A of its period-mean coefficient at p, the −n twin's leave, the half-sum (W₊ + W₋)/2 − A at p (where the twin has not left by p) over the rise, the draw's own second order s²⟨w₂⟩ at p (W2: ±0.00125·n over 300 periods) and its share of the value at period 300, the rise over s²⟨w₂⟩(p):
+
+| s | draw | p | rise | the twin's leave | half-sum / rise | s²⟨w₂⟩(p) (share of period 300's) | rise / s²⟨w₂⟩(p) |
+|---|---|---|---|---|---|---|---|
+| 0.02 | 1 | 274 | +0.1431 | 174 | — | +0.0909 (1.01) | 1.575 |
+| 0.02 | 2 | 164 | +0.1108 | 148 | — | +0.0967 (0.80) | 1.146 |
+| 0.02 | 3 | 157 | +0.1119 | 166 | +0.1108 (0.990) | +0.0874 (0.76) | 1.280 |
+| 0.02 | 4 | 236 | +0.1062 | 185 | — | +0.0667 (0.93) | 1.593 |
+| 0.02 | 5 | 173 | +0.1018 | 229 | +0.1037 (1.019) | +0.0815 (0.78) | 1.250 |
+| 0.02 | 6 | 122 | +0.0782 | 217 | +0.0767 (0.981) | +0.0623 (0.65) | 1.254 |
+| 0.02 | 7 | 133 | +0.0837 | 228 | +0.0850 (1.015) | +0.0677 (0.75) | 1.236 |
+| 0.02 | 8 | 190 | +0.1385 | 190 | — | +0.1069 (0.92) | 1.296 |
+| 0.02 | 9 | 172 | +0.0885 | 225 | +0.0887 (1.002) | +0.0666 (0.84) | 1.329 |
+| 0.02 | 10 | 114 | +0.0642 | 232 | +0.0643 (1.002) | +0.0519 (0.64) | 1.239 |
+| 0.02 | 11 | 124 | +0.1025 | 196 | +0.1022 (0.997) | +0.1001 (0.72) | 1.024 |
+| 0.03 | 1 | 157 | +0.2014 | 151 | — | +0.1601 (0.79) | 1.259 |
+| 0.03 | 2 | 144 | +0.2091 | 90 | — | +0.2098 (0.77) | 0.997 |
+| 0.03 | 3 | 192 | +0.2707 | 196 | +0.2695 (0.996) | +0.2220 (0.86) | 1.219 |
+| 0.03 | 4 | 185 | +0.2012 | 163 | — | +0.1363 (0.85) | 1.476 |
+| 0.03 | 5 | 160 | +0.2093 | 217 | +0.2098 (1.002) | +0.1833 (0.78) | 1.142 |
+| 0.03 | 6 | 184 | +0.2228 | 160 | — | +0.1783 (0.83) | 1.250 |
+| 0.03 | 7 | 147 | +0.1877 | 173 | +0.1933 (1.030) | +0.1585 (0.78) | 1.185 |
+| 0.03 | 8 | 118 | +0.1813 | 133 | +0.1802 (0.994) | +0.2043 (0.78) | 0.888 |
+| 0.03 | 9 | 187 | +0.2077 | 183 | — | +0.1511 (0.84) | 1.375 |
+| 0.03 | 10 | 155 | +0.1887 | 169 | +0.1834 (0.972) | +0.1390 (0.76) | 1.358 |
+| 0.03 | 11 | 202 | +0.2904 | 168 | — | +0.2587 (0.83) | 1.123 |
+
+Over the draws: at s = 0.02 the half-sum over the rise 0.981–1.019 (7 draws whose twin had not left), the rise over s²⟨w₂⟩(p) 1.024–1.593 (median 1.254), s²⟨w₂⟩(p) over its period-300 value 0.64–1.01, the rise's correlation with s²⟨w₂⟩(p) across the 11 draws 0.82; at s = 0.03 the half-sum over the rise 0.972–1.030 (5 draws whose twin had not left), the rise over s²⟨w₂⟩(p) 0.888–1.476 (median 1.219), s²⟨w₂⟩(p) over its period-300 value 0.76–0.86, the rise's correlation with s²⟨w₂⟩(p) across the 11 draws 0.75.
+
+
+### EDGE. The fit's basin in the coefficient, and the drift's reach (referee round 69)
+
+The noise-free loop from the fitted state with one formed kernel's coefficient raised in magnitude by Δ (the plant unchanged), 100 periods: the smallest Δ of the grid 0.02, 0.04, 0.06, 0.08, 0.1, 0.13, 0.16, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1 that ejects the kernel (its period-averaged centre 0.3 from its feature) and 4 bisections — the edge's bracket (lo, hi] and the ejection's period at hi —; then per draw the level s* = (edge/⟨w₂⟩)^{1/2} at which the draw's even drift at period 300 (W2, per s²) reaches the edge (the bracket mapped) against the smallest level at which C's or C2's runs of that draw saw the kernel jump (— none up to the largest level run):
+
+| m | k_e | metric | kernel | noise | edge (lo, hi] | ejected at period (at hi: detached at t/T, x_m there; the centre after) | draw 7: s* (lo, hi], observed | draw 1: s* (lo, hi], observed | draw 2: s* (lo, hi], observed | draw 3: s* (lo, hi], observed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 12 | 5 | paradigm | 1 | D‴.49's band | (0.05875, 0.06] | 2 (0.594, -0.556; -1.352) | (0.0100, 0.0101], 0.01 | (0.0103, 0.0104], 0.01 | (0.0081, 0.0082], 0.0075 | (0.0087, 0.0087], 0.0075 |
+| 12 | 10 | paradigm | 1 | D‴.49's band | (0.0725, 0.07375] | 2 (0.594, -0.556; -1.334) | (0.0179, 0.0181], 0.02 | (0.0180, 0.0181], 0.02 | (0.0155, 0.0156], 0.015 | (0.0159, 0.0161], 0.015 |
+| 12 | 20 | paradigm | 1 | D‴.49's band | (0.1019, 0.1038] | 2 (0.594, -0.556; -1.317) | (0.0350, 0.0354], 0.08 | (0.0349, 0.0352], 0.08 | (0.0329, 0.0332], 0.06 | (0.0332, 0.0335], 0.06 |
+| 12 | 40 | paradigm | 1 | D‴.49's band | (0.1562, 0.1581] | 2 (0.594, -0.556; -1.300) | (0.0968, 0.0973], — | (0.0967, 0.0972], — | (0.0956, 0.0962], 0.08 | (0.0947, 0.0952], — |
+| 3 | 5 | paradigm | 1 | D‴.49's band | (0.1131, 0.115] | 2 (0.594, -0.556; -1.325) | (0.0495, 0.0499], 0.06 | (0.0491, 0.0495], 0.06 | (0.0472, 0.0476], 0.06 | (0.0474, 0.0478], 0.06 |
+| 3 | 10 | paradigm | 1 | D‴.49's band | (0.1562, 0.1581] | 2 (0.594, -0.556; -1.305) | (0.0726, 0.0730], — | (0.0720, 0.0724], — | (0.0712, 0.0716], 0.08 | (0.0709, 0.0713], — |
+| 3 | 20 | paradigm | 1 | D‴.49's band | (0.2344, 0.2375] | 2 (0.594, -0.556; -1.287) | (0.1812, 0.1824], — | (0.1777, 0.1789], — | (0.1944, 0.1957], — | (0.1850, 0.1862], — |
+| 3 | 40 | paradigm | 1 | D‴.49's band | (0.375, 0.3812] | 2 (0.594, -0.556; -1.272) | —, — | —, — | —, — | —, — |
+| 3.5 | 10 | paradigm | 1 | D‴.49's band | (0.1431, 0.145] | 2 (0.594, -0.556; -1.308) | (0.0643, 0.0648], — | (0.0638, 0.0642], 0.08 | (0.0624, 0.0628], 0.08 | (0.0622, 0.0626], — |
+| 4 | 10 | paradigm | 1 | D‴.49's band | (0.1338, 0.1356] | 2 (0.594, -0.556; -1.311) | (0.0578, 0.0582], — | (0.0572, 0.0576], 0.08 | (0.0553, 0.0557], 0.06 | (0.0553, 0.0557], 0.08 |
+| 4.5 | 10 | paradigm | 1 | D‴.49's band | (0.1244, 0.1263] | 2 (0.594, -0.556; -1.313) | (0.0520, 0.0524], — | (0.0514, 0.0518], 0.06 | (0.0491, 0.0495], 0.06 | (0.0491, 0.0495], 0.08 |
+| 4.83 | 10 | paradigm | 1 | D‴.49's band | (0.1206, 0.1225] | 2 (0.594, -0.556; -1.315) | (0.0490, 0.0493], 0.06 | (0.0483, 0.0487], — | (0.0459, 0.0462], 0.06 | (0.0459, 0.0462], 0.06 |
+| 5.5 | 10 | paradigm | 1 | D‴.49's band | (0.1113, 0.1131] | 2 (0.594, -0.556; -1.318) | (0.0432, 0.0435], 0.06 | (0.0425, 0.0428], 0.06 | (0.0397, 0.0400], 0.04 | (0.0397, 0.0400], 0.06 |
+| 6 | 10 | paradigm | 1 | D‴.49's band | (0.1056, 0.1075] | 2 (0.594, -0.556; -1.319) | (0.0396, 0.0399], 0.06 | (0.0389, 0.0392], 0.06 | (0.0359, 0.0362], 0.04 | (0.0359, 0.0362], 0.06 |
+| 8 | 10 | paradigm | 1 | D‴.49's band | (0.09125, 0.0925] | 2 (0.594, -0.556; -1.325) | (0.0295, 0.0297], 0.03 | (0.0289, 0.0291], 0.03 | (0.0256, 0.0258], 0.03 | (0.0257, 0.0258], 0.03 |
+| 12 | 5 | wfr | 1 | D‴.49's band | (0.2094, 0.2125] | 2 (0.594, -0.556; -1.304) | (0.0888, 0.0894], 0.12 | (0.0884, 0.0891], 0.12 | (0.0877, 0.0884], 0.12 | (0.0874, 0.0881], 0.16 |
+| 12 | 10 | wfr | 1 | D‴.49's band | (0.3187, 0.325] | 2 (0.594, -0.556; -1.280) | (0.1476, 0.1491], — | (0.1455, 0.1469], — | (0.1497, 0.1512], — | (0.1477, 0.1492], — |
+| 12 | 10 | paradigm | 3 | D‴.49's band | (0.07375, 0.075] | 1 (0.406, +0.556; -1.343) | (0.0244, 0.0246], 0.025 | (0.0247, 0.0249], 0.02 | (0.0218, 0.0220], 0.02 | (0.0220, 0.0222], 0.025 |
+| 12 | 10 | paradigm | 1 | 25–75 | (0.0725, 0.07375] | 2 (0.594, -0.556; -1.334) | (0.0416, 0.0420], 0.06 | (0.0422, 0.0426], — | (0.0412, 0.0415], 0.06 | (0.0412, 0.0415], 0.06 |
+| 3 | 10 | paradigm | 1 | 25–75 | (0.1562, 0.1581] | 2 (0.594, -0.556; -1.305) | (0.0739, 0.0743], — | (0.0755, 0.0759], — | (0.0755, 0.0759], — | (0.0745, 0.0750], — |
+
+The first jump against the drift's reach — (the level run just below it, the first jump] meeting s*'s bracket —: consistent in 33 of the 52 draw-configurations that jumped, later in 11 (m = 12, k_e = 20 (4; 1.80–2.28 times s*), m = 4, k_e = 10 (2; 1.39–1.44 times s*), m = 4.5, k_e = 10 (1; 1.62–1.62 times s*), m = 6, k_e = 10 (3; 1.51–1.66 times s*), m = 12, k_e = 5, wfr (1; 1.82–1.82 times s*)), earlier in 8 (m = 12, k_e = 5 (3; 0.86–0.96 times s*), m = 12, k_e = 10 (2; 0.94–0.96 times s*), m = 12, k_e = 40 (1; 0.83–0.83 times s*), m = 12, k_e = 10, kernel 3 (2; 0.81–0.91 times s*)); of those that never jumped, s* lay below the largest level run in 17 (m = 3, k_e = 10 (3), m = 3.5, k_e = 10 (2), m = 4, k_e = 10 (1), m = 4.5, k_e = 10 (1), m = 4.83, k_e = 10 (1), m = 12, k_e = 10, wfr (4), m = 12, k_e = 10, 25–75 (1), m = 3, k_e = 10, 25–75 (4)).
+
+The edge's scaling (kernel 1; the bracket's midpoint Δ_e): over the paradigm's 15 rows the least-squares power law Δ_e ≈ c·k_e^α·m^(−β) has α = 0.537, β = 0.555 (the largest deviation 15.2%); with v₁ the first kernel's centre mobility at the fit (Gmw₁ under the paradigm's metric — 10.8 at m = 12 —, G·a₁ under WFR's — 0.9977), Δ_e·(v₁/k_e)^{1/2} = 0.0756 … 0.1017 over all 17 rows (median 0.0809; the WFR rows 0.0942, 0.1017): the edge ∝ (k_e/v₁)^{1/2} within 26% across m, k_e and the metric; Δ_e·√m at k_e = 10 over m = 3, 3.5, 4, 4.5, 4.83, 5.5, 6, 8, 12: 0.2723, 0.2695, 0.2694, 0.2658, 0.2672, 0.2631, 0.2610, 0.2599, 0.2533.
+
+
+### C6. Started above the fit (referee round 69)
+
+C3's runs with kernel 1's coefficient raised by Δ at the start (below the noise-free edge for the band's draws, beyond it for single tones): kernel 1's leave and largest distance, and the un-raised run's leave:
+
+| noise | s | Δ | leave (largest distance) | un-raised: leave |
+|---|---|---|---|---|
+| 16 tones, draw 7 | 0.02 | 0.03 | 118 (0.909) | 133 |
+| 16 tones, draw 7 | 0.02 | 0.05 | 118 (0.910) | 133 |
+| 16 tones, draw 7 | 0.02 | 0.065 | 60 (1.944) | 133 |
+| 16 tones, draw 3 | 0.02 | 0.03 | 192 (1.922) | 157 |
+| 16 tones, draw 3 | 0.02 | 0.05 | 166 (1.925) | 157 |
+| 16 tones, draw 3 | 0.02 | 0.065 | 166 (1.926) | 157 |
+| 16 tones, draw 10 | 0.02 | 0.03 | 114 (0.909) | 114 |
+| 16 tones, draw 10 | 0.02 | 0.05 | 114 (0.910) | 114 |
+| 16 tones, draw 10 | 0.02 | 0.065 | 114 (0.910) | 114 |
+| one tone 13.1 | 0.02 | 0.1 | none (0.042) | — |
+| one tone 13.1 | 0.02 | 0.2 | none (0.042) | — |
+| one tone 13.1 | 0.02 | 0.3 | none (0.043) | — |
+| one tone 15 | 0.02 | 0.1 | none (0.025) | — |
+| one tone 15 | 0.02 | 0.2 | none (0.025) | — |
+| one tone 15 | 0.02 | 0.3 | none (0.025) | — |
+
+
+### C7. The edge under noise (referee round 69)
+
+As EDGE (kernel 1) over 10 periods under the noise of rms s — at m = 12, k_e = 10 single tones (the seed's phase) —: the edge's bracket (lo, hi] (6 bisections; the next two grid raises above the first ejecting one rechecked), its midpoint's rise over the noise-free edge (s = 0) per s², and the ejection's period at hi:
+
+| noise | s | edge (lo, hi] | rise per s² | ejected at period | the raises above: ejected |
+|---|---|---|---|---|---|
+| D‴.49's 16 tones | 0 | (0.073125, 0.073438] | — | 2 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 10 | 0.0025 | (0.079375, 0.079687] | +1000 | 2 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 10 | 0.005 | (0.075625, 0.075938] | +100 | 2 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 10 | 0.01 | (0.10844, 0.10891] | +353.9 | 2 | 0.13: yes, 0.16: yes, 0.2: yes |
+| one tone 10 | 0.02 | (0.24062, 0.24141] | +419.3 | 2 | 0.25: yes, 0.3: yes, 0.4: yes |
+| one tone 10 | 0.03 | (0.43125, 0.43281] | +398.6 | 2 | 0.5: yes, 0.7: yes, 1: yes |
+| one tone 13.1 | 0.0025 | (0.066875, 0.067188] | -1000 | 3 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 13.1 | 0.005 | (0.073125, 0.073438] | +0 | 3 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 13.1 | 0.01 | (0.1525, 0.15297] | +794.5 | 2 | 0.16: yes, 0.2: yes, 0.25: yes |
+| one tone 13.1 | 0.02 | (0.40625, 0.40781] | +834.4 | 2 | 0.5: yes, 0.7: yes, 1: yes |
+| one tone 13.1 | 0.03 | (0.79844, 0.80312] | +808.3 | 3 | 1: yes |
+| one tone 15 | 0.0025 | (0.06875, 0.069062] | -700 | 2 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 15 | 0.005 | (0.082812, 0.083125] | +387.5 | 2 | 0.1: yes, 0.13: yes, 0.16: yes |
+| one tone 15 | 0.01 | (0.22656, 0.22734] | +1537 | 2 | 0.25: yes, 0.3: yes, 0.4: yes |
+| one tone 15 | 0.02 | (0.53125, 0.53438] | +1149 | 2 | 0.7: yes, 1: yes |
+| one tone 15 | 0.03 | > 1 | — | — | — |
+| one tone 21.3 | 0.0025 | (0.072188, 0.0725] | -150 | 2 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 21.3 | 0.005 | (0.074063, 0.074375] | +37.5 | 2 | 0.08: yes, 0.1: yes, 0.13: yes |
+| one tone 21.3 | 0.01 | (0.094062, 0.094375] | +209.4 | 2 | 0.1: yes, 0.13: yes, 0.16: yes |
+| one tone 21.3 | 0.02 | (0.1975, 0.19812] | +311.3 | 2 | 0.2: yes, 0.25: no, 0.3: yes |
+| one tone 21.3 | 0.03 | > 1 | — | — | — |
+
+The rise per s² over the levels (an O(s²) shift is constant): one tone 10: +1000, +100, +353.9, +419.3, +398.6 at s = 0.0025, 0.005, 0.01, 0.02, 0.03; one tone 13.1: -1000, +0, +794.5, +834.4, +808.3 at s = 0.0025, 0.005, 0.01, 0.02, 0.03; one tone 15: -700, +387.5, +1537, +1149 at s = 0.0025, 0.005, 0.01, 0.02; one tone 21.3: -150, +37.5, +209.4, +311.3 at s = 0.0025, 0.005, 0.01, 0.02.
+
+D‴.49's 16 tones (draw 7) started at the periods 0, 25, 50, 75, 100, 125, 150, 175 of the draw (its windows), per configuration and level: the windows' edges (the brackets' midpoints, in that order; '>1': none up to the grid's end), their least and median and those over the noise-free edge per s², against the draw's drift at period 300, s²⟨w₂⟩ (W2), and whether C's or C2's run of the draw at that level saw kernel 1 jump (—: not run):
+
+| m | k_e | metric | s | the windows' edges | least, median | rise per s²: least, median | drift s²⟨w₂⟩ | jumped |
+|---|---|---|---|---|---|---|---|---|
+| 12 | 10 | paradigm | 0.0025 | 0.0664, 0.0711, 0.0698, 0.0723, 0.0764, 0.0723, 0.0673, 0.0720 | 0.06641, 0.07156 | -1100, -275 | 0.001409 | — |
+| 12 | 10 | paradigm | 0.005 | 0.0648, 0.0773, 0.0686, 0.0755, 0.0720, 0.0680, 0.0630, 0.0720 | 0.06297, 0.07031 | -412.5, -118.8 | 0.005635 | no |
+| 12 | 10 | paradigm | 0.01 | 0.0764, 0.1082, 0.0848, 0.0780, 0.0970, 0.0645, 0.0598, 0.0927 | 0.05984, 0.08141 | -134.4, +81.25 | 0.02254 | no |
+| 12 | 10 | paradigm | 0.02 | 0.1593, 0.1909, 0.0911, 0.3211, 0.1284, 0.0739, 0.0961, 0.1941 | 0.07391, 0.1438 | +1.562, +176.4 | 0.09016 | yes |
+| 12 | 10 | paradigm | 0.03 | 0.2277, 0.5828, 0.1223, 0.4867, 0.3148, 0.2059, 0.1991, 0.1997 | 0.1223, 0.2168 | +54.43, +159.5 | 0.2028 | yes |
+| 4 | 10 | paradigm | 0.04 | 0.1722, 0.1728, 0.2270, 0.1953, 0.1847, 0.1588, 0.1647, 0.1903 | 0.1588, 0.1787 | +15.23, +27.69 | 0.06409 | no |
+| 4 | 10 | paradigm | 0.06 | 0.2457, 0.2215, 0.2637, 0.3211, 0.2324, 0.2707, 0.1791, 0.3367 | 0.1791, 0.2547 | +12.39, +33.4 | 0.1442 | no |
+| 4 | 10 | paradigm | 0.08 | 0.4492, 0.2934, 0.3633, 0.5422, 0.5453, 0.3398, 0.3711, 0.4727 | 0.2934, 0.4102 | +24.83, +43.08 | 0.2564 | no |
+| 12 | 10 | wfr | 0.08 | 0.3977, 0.4336, 0.4242, 0.4336, 0.5422, 0.3820, 0.3930, 0.3930 | 0.382, 0.4109 | +9.521, +14.04 | 0.09363 | no |
+| 12 | 10 | wfr | 0.16 | 0.5391, 0.5984, 0.5859, 0.8008, 0.8852, 0.5203, 0.4836, 0.5016 | 0.4836, 0.5625 | +6.348, +9.43 | 0.3745 | no |
+| 12 | 10 | wfr | 0.24 | 0.7492, 0.8898, 0.8055, 0.9836, >1, 0.7539, 0.6547, 0.7305 | 0.6547, 0.7539 | +5.792, +7.514 | 0.8426 | no |
+| 12 | 20 | paradigm | 0.02 | 0.1335, 0.1490, 0.1204, 0.1373, 0.1541, 0.1105, 0.1063, 0.1166 | 0.1063, 0.127 | +7.031, +58.59 | 0.03319 | no |
+| 12 | 20 | paradigm | 0.04 | 0.2902, 0.3664, 0.1891, 0.3867, 0.3695, 0.2168, 0.1678, 0.3711 | 0.1678, 0.3283 | +40.19, +140.5 | 0.1327 | no |
+| 12 | 20 | paradigm | 0.06 | >1, 0.8008, 0.6141, 0.3789, 0.5172, 0.4508, 0.8664, 0.7023 | 0.3789, 0.6141 | +76.5, +141.8 | 0.2987 | no |
+| 12 | 20 | paradigm | 0.08 | 0.4820, 0.5609, 0.0002, 0.1588, 0.6047, 0.5984, 0.4211, 0.4367 | 0.0001563, 0.4594 | -16.15, +55.6 | 0.531 | yes |
+
+Where the draw jumped, its drift exceeded the windows' least edge in 3 of 3 (configuration, level) and their median in 1; where it did not, the drift stayed below the least in 10 of 11 and below the median in 10.
 
 Numbers are produced by `experiments/exp_noise_resonance.py`; nothing is edited by hand.

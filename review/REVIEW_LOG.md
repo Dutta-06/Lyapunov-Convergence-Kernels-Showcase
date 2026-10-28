@@ -2877,3 +2877,45 @@ offset as a pattern (c̄ = 0.08 is 0.02 from the next kernel, the mirror of 0.02
 nothing is a separate fact about the draws, and a script should count it rather than print it as a consequence. A Monte Carlo difference
 needs its standard error before its extremes are read, and on a grid with mirror symmetry an offset and its mirror are one data point
 seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets.
+
+## Round 69 (adversarial review of Proposition D‴.60 as revised after round 63, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bp: Proposition D‴.60 as revised after round 63, with its code and results at
+e65d6a0 (`review/REVIEW_round69_D3bp.md`). The referee:
+- regenerated the md byte for byte and reran cells of A2, F, B3, B5, C, C2 and C3 bit-identically;
+- re-derived (i) and (ii), linearised the C loop by central differences (the full monodromy) and split the period means into mode sums
+  and the period's own response;
+- ran each C3 draw's own second order and its −n twin, single tones to s = 0.16, the noise-free loop from a raised coefficient against m,
+  k_e and the metric, pre-raised band and tone runs, and the band without single pairs;
+- ran 65 single-point mutants, 12 of them replicas of round 63's survivors.
+
+**Verdicts (D3bp).** Reproducibility, (i)'s law and √K_i, F's monodromy (independently), (ii)'s Floquet algebra, the averaged loop as the
+constant part's response at O(s²), C3's chronology and the jump-level trends hold. Two majors: (iii)'s "by about (ii)'s even part at its
+saturation" compared ten other draws' leaves with one draw's saturated second order — like for like the rise is the loop's even part at
+the level, about a quarter above the draw's own second order and before saturation —; and (iii) had no criterion for the jump and could not
+explain single tones, which drift further and never jump: the missing piece is the fit's basin edge in the coefficient (ejection from about
++0.075 at m = 12, k_e = 10), which the noise moves. Minors: the Floquet statement described the mode coordinate (H missing) and the
+stability holds for the formed block; the "resonance factor" is the loop's sensitivity (> 1 above √(K/2) whatever k_e); the peak shift is
+the quasi-static law's at m = 12; B5 at s = 0.005 mixed in the averaged loop's O(s⁴); the increments are not monotone in ω; pooled quotes
+and an untested first-passage dichotomy; B3's exceptions; 18 behaviour-changing surviving mutants; sources; cosmetics.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bp-1 | major | Not like for like | C4: the −n twins of C3's band runs (the half-sum over the rise 0.981–1.019 at s = 0.02, 0.972–1.030 at 0.03); W2: each draw's own second order over 300 periods (±0.00125·n) per configuration — the rise 1.024–1.593 (median 1.254) times s²⟨w₂⟩ at the leave period, which is 0.64–1.01 of its period-300 value; (iii): the rise is the loop's even part at the level, above the second order, before saturation |
+| D3bp-2 | major | No criterion; single tones unexplained | EDGE: the noise-free edge against m, k_e and the metric (0.0731 at m = 12, k_e = 10; exponents 0.537 and 0.555; Δ_e(v₁/k_e)^{1/2} 0.0756–0.1017 over all rows, v₁ the centre mobility; WFR's edges 3.6–4.4 times larger), the ejection's anatomy (the orbit point repels an over-amplitude kernel and carries it out within one downward passage), s* = (Δ_e/⟨w₂⟩)^{1/2} against the first jumps with every case classified (33 of 52 consistent, 11 later, 8 earlier, 17 without a jump); C6: pre-raised band and tone runs; C7: the edge under noise — single tones raise it by E·s² (E ≈ 350–1540 by tone) while their drift saturates, the band moves it window by window and its least window edge decides the jump (3 of 3 where the draw jumped, 10 of 11 where it did not; the exception WFR at s = 0.24); the title, (iii), the Status and New |
+| D3bp-3 | minor | The Floquet statement | (ii) and the proof: ⟨z⟩_j = Σ_v(Pv)a_j + Re(e^{iΩjT}H) and the bound with \|H\|; the formed kernels' linearisation stable, the unformed kernels neutral at O(ε); the averaged loop's error "at most" the sum of moduli |
+| D3bp-4 | minor | The sensitivity | (i), the proof and A2: per tone at a frozen K the factor is \|S\| = \|iω(iω + k_e)\|/\|K − ω² + ik_eω\| (the plant's slope cancels), \|S\|² − 1 = K(2ω² − K)/\|K − ω² + ik_eω\|², \|S(√K)\| = (1 + K/k_e²)^{1/2}, Bode's integral (0 by quadrature to 3·10⁻¹²); at the bound \|S\| = 1.41, 1.38, 1.24, 1.11 at ω = 10, 15, 20, 30; the band's factor per kernel 1.495, 1.248, 1.370 at m = 12 and 1.225, 1.095, 1.152 at the bound |
+| D3bp-5 | minor | The peak shift | (i): the quasi-static response at m = 12, the sweep broadened by k_e; A2 marks maxima at the grid's lower end |
+| D3bp-6 | minor | B5 at s = 0.005 | B5's averaged loop also at s = 0.00125 (over the constant part 0.998–1.005 at 13.05, 13.1, 13.15) and 29.3 added (2ω = 293ω_ref, its increment small: 1.0000–1.0028 of the exact second order); "located" restricted to 13.1, the 16 tones' error not located |
+| D3bp-7 | minor | Increments and frequencies | (ii): "falling with ω on average, with interference fringes"; the products' frequencies modulo nω_ref, the first order's transient included |
+| D3bp-8 | minor | Pooled quotes; the first passage | C3 prints its summary per kernel (kernel 1's offset before −0.016 … −0.011, its jumps ending beyond ±1 in 11 of 11 at s = 0.02; kernel 3's ending in the vacated first feature in 3 cases); the dichotomy dropped, the leaves placed against the edge instead; C2's caption "out of its feature" |
+| D3bp-9 | minor | B3's exceptions | Numerics: 13.15's and 13.05's first kernel (not polynomial by s = 0.005 near √K₃ = 13.13), 21.37's third and WFR 29.3's first (noise level) |
+| D3bp-10 | minor | Surviving mutants | Tests (47): the Floquet means at a rotating tone (21.37), `f_job`'s sums and saturations, `b5_job`'s phases and both levels, `c3_job` with a fake loop and a raised start, `leave_stats`' window, `c_noise`'s negation and shift, `edge_run`, `edge_job`, `bracket_edge`, `c7_job` and `c7_lines` (other configurations too), `w2_job`, the C4, EDGE and C6 reports, the sensitivity and Bode's integral, the edge's scaling and `star_verdict`, C2's single-tone rises on the raw |
+| D3bp-11 | minor | Sources | Status: Bode and Freudenberg–Looze; Egardt, Ioannou–Kokotović; bursting (Anderson 1985) for the phenomenology, kept out of New; Kokotović–Riedle–Praly as slow adaptation's stability criterion; Hoppensteadt and Khalil for a uniform-in-time expansion on the formed block (not attempted) |
+| D3bp-12 | cosmetic | Wordings | the factors per kernel; C2's caption; round 63's entry credited tests to "c3_job's statistics" — they covered `leave_stats` and `c3_lines` only (`c3_job` is tested from this round) |
+
+**Lesson.** A mechanism written as a sequence — a drift, then a jump — is tested where the first step occurs without the second: single
+tones drift further than bands and never jump. The missing piece was a threshold, the fit's basin edge, and measured with and without
+noise it explains both: the noise moves the edge, a tone by E·s² while its own drift saturates, a band window by window, so that the band's
+least window decides when its drift suffices. A comparison of theory with events must also fix the draw, the time and the level: like for
+like, the rise at the leave is the even part at the level, a quarter above the second order, before saturation.

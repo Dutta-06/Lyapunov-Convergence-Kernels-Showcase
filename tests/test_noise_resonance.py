@@ -558,3 +558,321 @@ def test_a2_rows_split_the_roll_off_from_the_resonance(monkeypatch):
             assert np.all(np.abs(np.array(r['peak']) / np.array(r['sqrtK']) - 1) < 0.2)
     md = '\n'.join(NR.a2_lines(rows))
     assert 'of which the roll-off' in md
+
+
+def test_the_floquet_means_at_a_rotating_tone():
+    """Referee round 69 (MO3, MO4, FM1–FM3): at 21.37 rad/s, where e^{iωT} is not ±1, the Floquet recursion's period means over three
+    periods equal `second_order`'s first order (the rotation, Im G and Im H all enter) — to 2·10⁻³ of the largest: `second_order`'s
+    trapezoid (2000 outputs a period) is exact for tones commensurate with the period (10⁻⁸ at 21.4) and errs by ~10⁻⁴ for the others,
+    where a conjugated or dropped rotation errs by O(1)."""
+    L, al0, c0, idx = _fit()
+    nz = DZ.noise_of(1.0, dict(freqs=(21.37,)))
+    a, ph = float(nz['amp'][0]), float(nz['ph'][0])
+    M, P, G, H = NR.monodromy(L, NR.EPS, al0[idx], c0[idx], 'paradigm', CT.KE, 21.37, ph)
+    Z = NR.floquet_means(M, P, a * G, a * H, 21.37, 3)
+    W1, C1, _, _, _ = NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', nz, CT.KE, 3)
+    for X, Y in ((Z[:, 1:4], W1), (Z[:, 4:7], C1)):
+        assert np.abs(X - Y).max() < 2e-3 * np.abs(Y).max()
+    assert abs(np.exp(1j * 21.37 * 2 * np.pi / CT.OM).real) < 0.99
+
+
+def test_leave_stats_window_with_a_varying_offset():
+    """Referee round 69 (LS1): the mean offset before a leave is over the periods leave − 30 … leave − 6 exactly."""
+    n = 80
+    Wp = np.tile(CT.ASTAR, (n, 1))
+    Cp = np.tile(CT.CSTAR, (n, 1))
+    Cp[:, 0] += np.r_[-0.001 * np.arange(50), np.full(n - 50, -0.9)]
+    left = NR.left_periods(np.abs(Cp - CT.CSTAR), NR.LEFT_C)
+    _, pre = NR.leave_stats(Wp, Cp, left)
+    p = left[0]
+    assert p == 51 and np.isclose(pre[0], np.mean(-0.001 * np.arange(p - 1 - 30, p - 1 - 5)))
+
+
+def test_c_noise_negated_and_the_raised_start():
+    """Referee round 69: `c_noise`'s neg moves every phase by π (bands, seeds and tones alike); `raised` moves one formed kernel's
+    coefficient by Δ in magnitude on its curve and nothing else."""
+    for o in (dict(seed=3), dict(band=(25.0, 75.0), seed=2), dict(freqs=(13.1,), seed=7)):
+        a, b = NR.c_noise(0.02, o), NR.c_noise(0.02, dict(o, neg=True))
+        assert np.allclose(b['ph'], np.asarray(a['ph']) + np.pi) and np.allclose(a['w'], b['w']) and np.allclose(a['amp'], b['amp'])
+    L, al0, c0, idx = _fit()
+    for k in (0, 1, 2):
+        al = NR.raised(L, al0, idx, k, 0.05)
+        w0, w1 = NR.mobilities(L, NR.EPS, al0, 'paradigm')[0], NR.mobilities(L, NR.EPS, al, 'paradigm')[0]
+        assert np.isclose(abs(w1[idx[k]]) - abs(w0[idx[k]]), 0.05, rtol=0, atol=1e-12)
+        assert np.array_equal(np.delete(al, idx[k]), np.delete(al0, idx[k]))
+
+
+def test_the_basin_edge_brackets(monkeypatch):
+    """Referee round 69: without noise kernel 1 returns from a raise of 0.07 and is ejected from 0.075 (`edge_run`); `edge_job` brackets
+    the edge by the grid and bisections, every run on the bracket's side its outcome says."""
+    p0, x0 = NR.edge_run(12.0, 10.0, 'paradigm', 0, 0.07)
+    p1, x1 = NR.edge_run(12.0, 10.0, 'paradigm', 0, 0.075)
+    assert p0 == -1 and x0 < 0.01 and 1 <= p1 <= 5 and x1 > NR.JUMP_C
+    monkeypatch.setattr(NR, 'EDGE_GRID', (0.05, 0.1))
+    monkeypatch.setattr(NR, 'BISECT_EDGE', 2)
+    e = NR.edge_job((12.0, 10.0, 'paradigm', 0))
+    assert np.isclose(e['lo'], 0.0625) and np.isclose(e['hi'], 0.075)
+    for x in e['runs']:
+        assert (x['left'] >= 0) == (x['d'] >= e['hi'])
+
+
+def test_c3_job_with_a_fake_loop_and_a_raised_start(monkeypatch):
+    """Referee round 69 (C3's mutants): `c3_job` takes the period means of 8 outputs a period of the formed kernels, the leave, the
+    largest distance, the coefficient at the leave and the mean offset before it; opts rise starts the loop from `raised`."""
+    seen = {}
+    NPc, k = NR.NP_C, 8
+
+    def fake(L, al0, c0, astar, ts, noise, metric, ke=None, x_init=None):
+        seen.update(al0=np.array(al0), n=len(ts))
+        n = len(ts)
+        c = np.tile(c0, (n, 1)).astype(float)
+        w = np.zeros((n, c0.size))
+        _, _, idx = DZ.fitted_state(L, NR.EPS, CT.CSTAR, CT.ASTAR)
+        w[:, idx] = CT.ASTAR
+        per = np.minimum(np.arange(n) // k, NPc - 1)
+        c[:, idx[0]] += np.where(per >= 100, 0.5, 0.0)
+        w[:, idx[0]] += 0.001 * per
+        return dict(c=c, w=w, al=np.zeros((n, c0.size)), x=np.zeros(n))
+    monkeypatch.setattr(NR, 'simulate', fake)
+    r = NR.c3_job((12.0, 10.0, 0.02, dict(seed=7, rise=[0, 0.04])))
+    L, al0, c0, idx = _fit()
+    assert np.allclose(seen['al0'], NR.raised(NR.law(12.0), al0, idx, 0, 0.04)) and seen['n'] == NPc * k + 1
+    assert r['left'] == [101, -1, -1] and np.isclose(r['maxdev'][0], 0.5) and np.isclose(r['w_left'][0], CT.ASTAR[0] + 0.1)
+    assert np.isclose(r['pre'][0], 0.0) and np.allclose(np.asarray(r['W'])[:, 0], CT.ASTAR[0] + 0.001 * np.arange(NPc))
+
+
+def test_w2_job_is_the_even_part(monkeypatch):
+    """Referee round 69: `w2_job` is ((W₊ + W₋)/2 − A)/s² of the loop under ±S_W2·n, the −n run's phases moved by π."""
+    calls = []
+
+    def fake(L, metric, noise, ke, NP, chunk=10, k=2000):
+        calls.append((metric, ke, NP, np.asarray(noise['ph'], float).copy()))
+        sgn = 1.0 if len(calls) == 1 else -1.0
+        W = np.tile(CT.ASTAR, (NP, 1)) + sgn * 0.01 + 2e-6 * np.arange(1, NP + 1)[:, None]
+        return W, np.tile(CT.CSTAR, (NP, 1))
+    monkeypatch.setattr(NR, 'sim_means', fake)
+    monkeypatch.setattr(NR, 'NP_W2', 3)
+    r = NR.w2_job((3.0, 5.0, 'wfr', dict(seed=2)))
+    assert [c[:3] for c in calls] == [('wfr', 5.0, 3)] * 2 and np.allclose(calls[1][3], calls[0][3] + np.pi)
+    assert np.allclose(np.asarray(r['even_w_all']), 2e-6 * np.arange(1, 4)[:, None] / NR.S_W2 ** 2 * np.ones(3))
+
+
+def test_the_like_for_like_the_edge_and_the_raised_reports():
+    """Referee round 69: C4's row — the rise at the leave, the twin's half-sum and the draw's own s²⟨w₂⟩ —, EDGE's bracket mapped to the
+    level s* = (edge/⟨w₂⟩)^{1/2} against the observed first jump, and C6's rows, on synthetic results."""
+    n = 300
+    W = np.tile(CT.ASTAR, (n, 1)); W[:, 0] += np.linspace(0, 0.09, n)
+    Wm = np.tile(CT.ASTAR, (n, 1)); Wm[:, 0] += np.linspace(0, 0.07, n)
+    C3 = [dict(m=12.0, ke=10.0, s=0.02, opts=dict(seed=5), left=[150, -1, -1], maxdev=[0.9, 0, 0], W=W.tolist())]
+    C4 = [dict(m=12.0, ke=10.0, s=0.02, opts=dict(seed=5, neg=True), left=[-1, -1, -1], maxdev=[0.1, 0, 0], W=Wm.tolist())]
+    ew = np.zeros((n, 3)); ew[:, 0] = np.linspace(100.0, 200.0, n)
+    W2 = [dict(m=12.0, ke=10.0, metric='paradigm', opts=dict(seed=5), even_w_all=ew.tolist())]
+    md = '\n'.join(NR.c4_lines(C3, C4, W2))
+    rise, half, own = W[149, 0] - CT.ASTAR[0], (W[149, 0] + Wm[149, 0]) / 2 - CT.ASTAR[0], 0.02 ** 2 * ew[149, 0]
+    assert (f"| 0.02 | 5 | 150 | {rise:+.4f} | -1 | {half:+.4f} ({half / rise:.3f}) | {own:+.4f} ({own / (0.02 ** 2 * ew[-1, 0]):.2f}) | "
+            f"{rise / own:.3f} |") in md
+    E_ = [dict(m=12.0, ke=10.0, metric='paradigm', k=0, lo=0.07, hi=0.075, runs=[dict(d=0.075, left=2, maxdev=0.9)])]
+    W2b = [dict(m=12.0, ke=10.0, metric='paradigm', opts=dict(seed=sd), even_w_all=np.full((n, 3), 200.0).tolist()) for sd in NR.W2_SEEDS]
+    C = [dict(m=12.0, ke=10.0, s=s_, opts=dict(seed=sd), left=[5 if s_ >= 0.02 else -1, -1, -1], maxdev=[0.9 if s_ >= 0.02 else 0, 0, 0])
+         for sd in NR.W2_SEEDS for s_ in (0.015, 0.02)]
+    md = '\n'.join(NR.edge_lines(E_, W2b, C, None))
+    a, b = np.sqrt(0.07 / 200.0), np.sqrt(0.075 / 200.0)
+    assert f"| 12 | 10 | paradigm | 1 | D‴.49's band | (0.07, 0.075] | 2 | ({a:.4f}, {b:.4f}], 0.02 |" in md
+    assert "consistent in 4 of the 4 draw-configurations that jumped, later in 0, earlier in 0" in md
+    W2c = W2b + [dict(m=12.0, ke=10.0, metric='paradigm', opts=dict(band=(25.0, 75.0), seed=7), even_w_all=np.full((n, 3), 400.0).tolist())]
+    C2 = [dict(m=12.0, ke=10.0, s=s_, opts=dict(band=[25.0, 75.0], seed=7), left=[5 if s_ >= 0.06 else -1, -1, -1],
+               maxdev=[0.9 if s_ >= 0.06 else 0, 0, 0]) for s_ in (0.04, 0.06)]
+    md = '\n'.join(NR.edge_lines(E_, W2c, C, C2))
+    a2, b2 = np.sqrt(0.07 / 400.0), np.sqrt(0.075 / 400.0)
+    assert f"| 12 | 10 | paradigm | 1 | 25–75 | (0.07, 0.075] | 2 | ({a2:.4f}, {b2:.4f}], 0.06 | —, — |" in md
+    assert ("consistent in 4 of the 5 draw-configurations that jumped, later in 1 (m = 12, k_e = 10, 25–75 (1; "
+            f"{0.06 / (0.5 * (a2 + b2)):.2f}–{0.06 / (0.5 * (a2 + b2)):.2f} times s*)), earlier in 0") in md
+    C6 = [dict(m=12.0, ke=10.0, s=0.02, opts=dict(seed=5, rise=[0, 0.05]), left=[40, -1, -1], maxdev=[0.95, 0, 0])]
+    assert "| 16 tones, draw 5 | 0.02 | 0.05 | 40 (0.950) | 150 |" in '\n'.join(NR.c6_lines(C6, C3))
+
+
+def test_f_job_sums_and_saturations_at_a_rotating_tone(monkeypatch):
+    """Referee round 69 (FJ4–FJ6): `f_job`'s Floquet sums for a tone are `floquet_means` with the tone's phase and amplitude (rms 1) over
+    NP_B4 periods; at a commensurate tone its first three periods and the saturation P(I − M)⁻¹Re(aG) + Re(aH)."""
+    monkeypatch.setattr(NR, 'FREQS_B4', ((21.37,),))
+    monkeypatch.setattr(NR, 'NP_B4', 5)
+    monkeypatch.setattr(NR, 'OM_COMM_F', (21.4,))
+    r = NR.f_job(('paradigm', 12.0))
+    L, al0, c0, idx = _fit()
+    M, P = NR.monodromy(L, NR.EPS, al0[idx], c0[idx], 'paradigm', CT.KE)
+    for om, NP in ((21.37, 5), (21.4, 3)):
+        nz = DZ.noise_of(1.0, dict(freqs=(om,)))
+        a = float(nz['amp'][0])
+        _, _, G, H = NR.monodromy(L, NR.EPS, al0[idx], c0[idx], 'paradigm', CT.KE, om, float(nz['ph'][0]))
+        Z = NR.floquet_means(M, P, a * G, a * H, om, NP)
+        if om == 21.37:
+            assert np.allclose(r['sums']['21.37']['w'], Z[:, 1:4], rtol=1e-10, atol=0) and np.allclose(r['sums']['21.37']['c'], Z[:, 4:7])
+        else:
+            assert np.allclose(r['comm']['21.4']['first'], Z, rtol=1e-10, atol=0) and len(r['comm']['21.4']['first']) == 3
+            sat = P @ np.linalg.solve(np.eye(M.shape[0]) - M, np.real(a * G)) + np.real(a * H)
+            assert np.allclose(r['comm']['21.4']['sat'], sat, rtol=1e-10, atol=0)
+
+
+def test_b5_job_phases_and_the_averaged_loop_per_s2(monkeypatch):
+    """Referee round 69 (B5b–B5d): `b5_job` runs the second order at the tone's phase and at φ + π/2 and stores both runs' w and c, and the
+    averaged loop at s = S_B[−1] and at S_B5 per s²; the report prints the small level's ratios."""
+    calls, env = [], []
+    nP = len(NR.MARKS_B)
+
+    def fake_so(L, eps, al, c, metric, noise, ke, NP, k=2000):
+        calls.append(float(np.asarray(noise['ph'])[0]))
+        q = len(calls)
+        return None, None, np.full((NP, 3), float(q)), np.full((NP, 3), 10.0 * q), 0
+
+    def fake_env(L, eps, metric, noise, ke, NP, k=400, terms=NR.TERMS, quasi=False):
+        env.append(float(np.asarray(noise['amp'])[0]))
+        return np.tile(CT.ASTAR, (NP, 1)) + 0.5, np.tile(CT.CSTAR, (NP, 1)) - 0.25, 0
+    monkeypatch.setattr(NR, 'second_order', fake_so)
+    monkeypatch.setattr(NR, 'envelope_means', fake_env)
+    r = NR.b5_job(('paradigm', 13.1))
+    ph = float(DZ.noise_of(1.0, dict(freqs=(13.1,)))['ph'][0])
+    assert np.isclose(calls[0], ph) and np.isclose(calls[1], ph + np.pi / 2)
+    s = NR.S_B[-1]
+    assert np.isclose(env[0], s * np.sqrt(2.0))
+    assert np.allclose(r['w2'], 1.0) and np.allclose(r['w2_shift'], 2.0) and np.allclose(r['c2'], 10.0) and np.allclose(r['c2_shift'], 20.0)
+    assert np.allclose(r['w_env'], 0.5 / s ** 2) and np.allclose(r['c_env'], -0.25 / s ** 2) and len(r['w2']) == nP
+    assert len(env) == 2 and np.isclose(env[1], NR.S_B5 * np.sqrt(2.0))
+    assert np.allclose(r['w_env_small'], 0.5 / NR.S_B5 ** 2) and np.allclose(r['c_env_small'], -0.25 / NR.S_B5 ** 2)
+    md = '\n'.join(NR.b5_lines([r]))
+    q = 0.5 / NR.S_B5 ** 2 / 1.5
+    assert f"13.1: {q:.4f}–{q:.4f} (over the exact second order {0.5 / NR.S_B5 ** 2:.4f}–{0.5 / NR.S_B5 ** 2:.4f})" in md
+
+
+def test_the_sensitivity_and_bodes_integral():
+    """Referee round 69 (D3bp-4): A2's factor per tone and orbit point is the adaptation loop's sensitivity — the quasi-static transfer
+    with K over that at K = 0, the plant's slope cancelling —; |S|² − 1 = K(2ω² − K)/|K − ω² + ik_eω|², so |S| > 1 exactly above
+    √(K/2); |S(√K)| = (1 + K/k_e²)^{1/2}; Bode's integral ∫₀^∞ ln|S(iω)|dω = 0; the report prints them."""
+    K, ke = 100.0, 10.0
+    om = np.array([5.0, 7.0, 7.08, 10.0, 15.0, 30.0])
+    S = NR.sens(K, ke, om)
+    assert np.allclose(S ** 2 - 1, K * (2 * om ** 2 - K) / np.abs(K - om ** 2 + 1j * ke * om) ** 2, rtol=1e-12, atol=1e-14)
+    assert np.array_equal(S > 1, om > np.sqrt(K / 2))
+    assert np.isclose(NR.sens(K, ke, np.sqrt(K)), np.sqrt(1 + K / ke ** 2), rtol=1e-14)
+    assert np.allclose(NR.sens(K, ke, [10.0, 15.0, 20.0, 30.0]), [1.41421, 1.38493, 1.24035, 1.11035], atol=1e-5)
+    o = dict(f1=np.array([-3.0, 0.0, 2.5]), K=np.array([K, 40.0, 250.0]))
+    o0 = dict(f1=o['f1'], K=np.zeros(3))
+    for w_ in (4.0, 13.1, 37.0):
+        r = np.abs(NR.transfer(o, np.array([w_]), ke)[0][:, 0] / NR.transfer(o0, np.array([w_]), ke)[0][:, 0])
+        assert np.allclose(r, NR.sens(o['K'], ke, w_), rtol=1e-12)
+    for K_, ke_ in ((248.3, 10.0), (100.0, 5.0), (10.0, 40.0), (1.0, 1.0)):
+        assert abs(NR.bode_integral(K_, ke_)) < 1e-8
+    rows = [dict(m=m, band=[10.0, 30.0], sqrtK=[sk, 1.0, 1.0], peak=[pk, 4.0, 5.0], jit=[1.0, 1.0, 1.0], jit0=[1.0, 1.0, 1.0])
+            for m, sk, pk in ((4.83, 10.0, 8.35), (12.0, 15.76, 14.15))]
+    md = '\n'.join(NR.a2_lines(rows))
+    assert '|S(√K)| = (1 + K/k_e²)^{1/2} = 1.414, 1.866 at m = 4.83, 12' in md
+    assert 'at m = 4.83 (√K₁ = 10.00) |S| = 1.41, 1.38, 1.24, 1.11 at ω = 10, 15, 20, 30' in md
+    assert '4.00* (4.000)' in md and '8.35 (0.835)' in md and '5.00 (5.000)' in md and '5.00*' not in md
+
+
+def test_c_noise_shifted_is_the_draw_from_a_later_start():
+    """Referee round 69 (C7): opts shift starts the noise shift periods of the reference into the draw — each phase moved by ωt₀ —,
+    so the shifted noise at t is the draw's at t + t₀; with neg and freqs as before."""
+    T = 2 * np.pi / CT.OM
+    a, b = NR.c_noise(0.02, dict(seed=7)), NR.c_noise(0.02, dict(seed=7, shift=25))
+    n = lambda nz, t: float(np.sum(nz['amp'] * np.cos(nz['w'] * t + nz['ph'])))
+    for t in (0.0, 1.3, 17.0):
+        assert np.isclose(n(b, t), n(a, t + 25 * T), atol=1e-12)
+    assert np.allclose(b['w'], a['w']) and np.allclose(b['amp'], a['amp'])
+    t1 = NR.c_noise(0.02, dict(freqs=(13.1,), seed=7, shift=3))
+    t0 = NR.c_noise(0.02, dict(freqs=(13.1,), seed=7))
+    assert np.isclose(t1['ph'][0] - t0['ph'][0], 13.1 * 3 * T)
+    assert NR.c_noise(0.0, dict(seed=7, shift=50)) is None and NR.c_noise(0.02, dict(seed=7, shift=0))['ph'] is not None
+
+
+def test_bracket_edge_on_a_step_and_its_rechecks():
+    """Referee round 69: `bracket_edge` goes up the grid to the first ejecting raise, rechecks the next `above` raises, bisects nb times,
+    and keeps every run; a step at 0.0731 is bracketed to the grid step over 2^nb; nothing ejecting gives hi None."""
+    calls = []
+
+    def run(d):
+        calls.append(d)
+        return (2 if d > 0.0731 else -1), (0.9 if d > 0.0731 else 0.001)
+    lo, hi, runs = NR.bracket_edge(run, grid=(0.02, 0.04, 0.06, 0.08, 0.1, 0.13), nb=6, above=2)
+    assert lo < 0.0731 < hi and np.isclose(hi - lo, 0.02 / 64)
+    assert calls[:6] == [0.02, 0.04, 0.06, 0.08, 0.1, 0.13] and len(calls) == 12
+    assert [x[0] for x in runs] == sorted(calls)
+    lo, hi, runs = NR.bracket_edge(lambda d: (-1, 0.0), grid=(0.1, 0.2), nb=3)
+    assert hi is None and lo == 0.2 and len(runs) == 2
+    lo, hi, runs = NR.bracket_edge(lambda d: (1, 1.0), grid=(0.1, 0.2), nb=2, above=1)
+    assert lo == 0.0 and np.isclose(hi, 0.025) and [x[0] for x in runs] == [0.025, 0.05, 0.1, 0.2]
+
+
+def test_c7_job_and_lines_with_a_fake_run(monkeypatch):
+    """Referee round 69 (C7): `c7_job` brackets the edge of `edge_run` under the case's noise over NP_C7 periods (kernel 1, m = 12,
+    k_e = 10, the paradigm's metric); `c7_lines` prints the bracket, the rise of its midpoint over the s = 0 row per s², and the
+    rechecked raises."""
+    seen = []
+
+    def fake(m, ke, metric, k, delta, NP=NR.NP_EDGE, trace=False, noise=None):
+        seen.append((m, ke, metric, k, NP, noise is None))
+        s = 0.0 if noise is None else float(np.sqrt(np.sum(np.asarray(noise['amp']) ** 2) / 2))
+        e = 0.0731 + 1000.0 * s ** 2 if (noise is None or len(noise['w']) == 1) else 0.0731 + 100.0 * s ** 2
+        return (2 if delta > e else -1), 0.5
+    monkeypatch.setattr(NR, 'edge_run', fake)
+    rs = [NR.c7_job((dict(seed=7), 0.0)), NR.c7_job((dict(freqs=(13.1,), seed=7), 0.01)),
+          NR.c7_job((dict(freqs=(13.1,), seed=7), 0.02)), NR.c7_job((dict(seed=7, shift=50), 0.02))]
+    assert all(x == (12.0, 10.0, 'paradigm', 0, NR.NP_C7, x[5]) for x in seen)
+    assert rs[0]['lo'] < 0.0731 < rs[0]['hi'] and rs[1]['lo'] < 0.1731 < rs[1]['hi'] and rs[2]['lo'] < 0.4731 < rs[2]['hi']
+    assert rs[3]['lo'] < 0.1131 < rs[3]['hi'] and rs[3]['opts'] == dict(seed=7, shift=50)
+    md = '\n'.join(NR.c7_lines(rs))
+    mid = lambda r: 0.5 * (r['lo'] + r['hi'])
+    for r in rs[1:]:
+        assert f"{(mid(r) - mid(rs[0])) / r['s'] ** 2:+.4g}" in md
+    assert f"| 12 | 10 | paradigm | 0.02 | {mid(rs[3]):.4f} |" in md and '| one tone 13.1 | 0.01 |' in md
+    assert abs((mid(rs[1]) - mid(rs[0])) / 0.01 ** 2 - 1000) < 0.02 / 64 / 0.01 ** 2
+    assert '0.25: yes, 0.3: yes' in md or ': yes' in md
+    # another configuration: its own noise-free edge, the draw's drift (W2) and C's jump at the level
+    seen.clear()
+    r20 = [NR.c7_job((dict(seed=7), 0.0, (12.0, 20.0, 'paradigm'))), NR.c7_job((dict(seed=7, shift=25), 0.02, (12.0, 20.0, 'paradigm'))),
+           NR.c7_job((dict(seed=7, shift=50), 0.02, (12.0, 20.0, 'paradigm')))]
+    assert all(x[:5] == (12.0, 20.0, 'paradigm', 0, NR.NP_C7) for x in seen) and r20[1]['ke'] == 20.0
+    W2 = [dict(m=12.0, ke=20.0, metric='paradigm', opts=dict(seed=7), even_w_all=np.full((NR.NP_W2, 3), 300.0).tolist())]
+    C = [dict(m=12.0, ke=20.0, s=0.02, opts=dict(seed=7), left=[40, -1, -1], maxdev=[0.9, 0, 0])]
+    md = '\n'.join(NR.c7_lines(rs + r20, W2, C, None))
+    e = [mid(x) for x in r20]
+    assert (f"| 12 | 20 | paradigm | 0.02 | {e[1]:.4f}, {e[2]:.4f} | {min(e[1:]):.4g}, {np.median(e[1:]):.4g} | "
+            f"{(min(e[1:]) - e[0]) / 0.02 ** 2:+.4g}, {(np.median(e[1:]) - e[0]) / 0.02 ** 2:+.4g} | {0.02 ** 2 * 300.0:.4g} | yes |") in md
+    assert "Where the draw jumped, its drift exceeded the windows' least edge in 1 of 1" in md
+
+
+def test_the_edges_scaling_with_the_centre_mobility():
+    """Referee round 69 (EDGE): `v1_of` is the first kernel's centre mobility at the fit — Gmw₁ under the paradigm's metric (∝ m), G·a₁
+    under WFR's —; on edges following Δ_e = 0.08(k_e/v₁)^{1/2} exactly the report's power law has α = β = 1/2 and Δ_e(v₁/k_e)^{1/2} is
+    0.08 on every row; `star_verdict` sorts a first jump against s*'s bracket."""
+    v12, v3 = NR.v1_of(12.0, 'paradigm'), NR.v1_of(3.0, 'paradigm')
+    assert np.isclose(v12, 12.0 * CT.ASTAR[0], rtol=1e-6) and np.isclose(v12 / v3, 4.0, rtol=1e-9)
+    assert 0.9 < NR.v1_of(12.0, 'wfr') < 1.1
+    E_ = []
+    for m in (3.0, 12.0):
+        for ke in (5.0, 10.0, 20.0):
+            d = 0.08 * np.sqrt(ke / NR.v1_of(m, 'paradigm'))
+            E_.append(dict(m=m, ke=ke, metric='paradigm', k=0, lo=d - 1e-7, hi=d + 1e-7, runs=[dict(d=d + 1e-7, left=2, maxdev=0.9)]))
+    md = '\n'.join(NR.edge_lines(E_, None, None, None))
+    assert 'has α = 0.500, β = 0.500 (the largest deviation 0.0%)' in md
+    assert 'Δ_e·(v₁/k_e)^{1/2} = 0.0800 … 0.0800 over all 6 rows (median 0.0800' in md
+    assert NR.star_verdict(0.018, 0.019, 0.02, [0.015, 0.02]) == 'consistent'
+    assert NR.star_verdict(0.035, 0.036, 0.08, [0.04, 0.06, 0.08]) == 'later'
+    assert NR.star_verdict(0.008, 0.009, 0.0075, [0.005, 0.0075]) == 'earlier'
+    assert NR.star_verdict(0.07, 0.072, None, [0.04, 0.06, 0.08]) == 'none, predicted'
+    assert NR.star_verdict(0.09, 0.1, None, [0.04, 0.06, 0.08]) == 'untested'
+
+
+def test_c2_single_tones_rise_on_the_raw():
+    """Referee round 69: C2 prints, per level, the first coefficient's rise over the fit by the last period in the single-tone runs (the
+    paradigm's metric) whose first kernel did not jump — the drift that never reaches the tones' moving edge."""
+    raw = NR.E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'noise_resonance_raw.npz'))
+    md = '\n'.join(NR.c2_lines(raw['C2']))
+    rise = {}
+    for r in raw['C2']:
+        o = r['opts']
+        if 'freqs' in o and len(o['freqs']) == 1 and o.get('metric', 'paradigm') == 'paradigm' and r['m'] == 12.0 and r['ke'] == 10.0:
+            if not (r['left'][0] >= 0 and r['maxdev'][0] > NR.JUMP_C):
+                rise.setdefault(r['s'], []).append(float(r['w_end'][0] - CT.ASTAR[0]))
+    assert rise and all(len(v) == 24 for v in rise.values())
+    for s_, v in rise.items():
+        assert f"s = {s_:g}: {min(v):+.3f} … {max(v):+.3f} ({len(v)} runs)" in md

@@ -36,8 +36,14 @@ C. The leaving levels: the levels of D‴.49's noise at which a formed kernel le
    single tones, the band moved to 25–75 rad/s (above √K_max), m between 3 and 12, the Wasserstein–Fisher–Rao metric, tone pairs whose
    difference is commensurate with the reference or not (referee round 56) — under four seeds, the pairs at 0.02 … 0.08 and D‴.49's own
    pair with the draw's phases (referee round 63). C3: the anatomy of a leave — the formed kernels' period means through it.
+C4, W2, EDGE, C6, C7 (referee round 69). C4: C3's band runs under the negated noise (the −n twins: the even part at the leave). W2: each
+   draw's own second order over C's horizon (±S_W2·n), per configuration. EDGE: the noise-free loop's basin edge in a formed kernel's
+   coefficient against m, k_e and the metric, the ejection's anatomy, and the drift's reach s* = (edge/⟨w₂⟩)^{1/2} against the first
+   jumps. C6: C3's runs started with kernel 1's coefficient raised. C7: the edge under noise — single tones and the band's windows
+   against the level.
 
-Usage: python experiments/exp_noise_resonance.py [--only A,A2,B,B2,B3,B4,B5,C,C2,C3,F] [--from-raw] → results/chaos/noise_resonance.md (+ _raw.npz).
+Usage: python experiments/exp_noise_resonance.py [--only A,A2,B,B2,B3,B4,B5,C,C2,C3,F,C4,W2,EDGE,C6,C7] [--from-raw]
+       → results/chaos/noise_resonance.md (+ _raw.npz).
 """
 import os
 import sys
@@ -70,7 +76,7 @@ NP_B4, MARKS_B4, S_B4 = 1200, (1, 3, 10, 30, 100, 300, 600, 900, 1200), (0.00125
 FREQS_B4 = ((21.37,), None, (21.4,), (21.3,), (13.1,), (13.05,), (13.15,))
 BAND_B4 = (601, 1200)                                                  # B4: the 16 tones' bands over these periods
 M_F, OM_COMM_F = (3.0, 3.5, 4.0, 4.5, 4.83, 5.5, 6.0, 8.0, 12.0), (10.0, 15.0, 21.4, 25.0, 29.4)
-OM_B5 = (13.05, 13.1, 13.15)
+OM_B5, S_B5 = (13.05, 13.1, 13.15, 29.3), 0.00125                   # B5; the averaged loop also at S_B5 (referee round 69: its O(s⁴) out)
 M_A2, BANDS_A2, OM_A2 = (2.0, 3.0, 4.0, 4.83, 6.0, 8.0, 12.0), ((10.0, 30.0), (25.0, 75.0)), np.linspace(4.0, 40.0, 721)
 JUMP_C = 0.6                                                           # C, C2: a leave whose largest distance exceeds this is a jump
 C3_CASES = ([(12.0, 10.0, s_, dict(seed=sd)) for s_ in (0.02, 0.03) for sd in range(1, 12)]
@@ -406,14 +412,21 @@ def variant_label(r):
 
 def c_noise(s, opts):
     """C's noise of rms s: D‴.49's 16 tones in 10–30 rad/s (opts seed), in another band (opts band), or the tones opts freqs (equal
-    amplitudes, the seed's phases, or the phases opts ph)."""
+    amplitudes, the seed's phases, or the phases opts ph); with opts neg the noise negated (its phases moved by π: the −n twin, referee
+    round 69)."""
     from src.core import closed_loop as CL
     if 'band' in opts:
-        return CL.tones(s, *opts['band'], seed=opts.get('seed', 7))
-    if 'ph' in opts:
+        nz = CL.tones(s, *opts['band'], seed=opts.get('seed', 7))
+    elif 'ph' in opts:
         fr = np.asarray(opts['freqs'], float)
-        return dict(w=fr, ph=np.asarray(opts['ph'], float), amp=np.full(fr.size, s * np.sqrt(2.0 / fr.size)))
-    return DZ.noise_of(s, {k: v for k, v in opts.items() if k in ('freqs', 'seed')})
+        nz = dict(w=fr, ph=np.asarray(opts['ph'], float), amp=np.full(fr.size, s * np.sqrt(2.0 / fr.size)))
+    else:
+        nz = DZ.noise_of(s, {k: v for k, v in opts.items() if k in ('freqs', 'seed')})
+    if opts.get('neg') and nz is not None:
+        nz = dict(nz, ph=np.asarray(nz['ph'], float) + np.pi)
+    if opts.get('shift') and nz is not None:                            # referee round 69 (C7): the noise from shift periods of the
+        nz = dict(nz, ph=np.asarray(nz['ph'], float) + np.asarray(nz['w'], float) * opts['shift'] * 2 * np.pi / CT.OM)   # reference on
+    return nz
 
 
 def c_job(args):
@@ -556,8 +569,8 @@ def f_job(args):
 def b5_job(args):
     """B5 (referee round 63): at one tone the exact second order (`second_order`) under the tone's phase φ and φ + π/2: the second order
     is the response to the products of the first order's tones, ½Re(AB̄) (φ-free) + ½Re(ABe^{2iφ}), so the half-sum of the two runs is the
-    constant part's response and the half-difference the 2ω part's; against them the averaged loop (`envelope_means` at s = S_B[−1],
-    per s²), at MARKS_B."""
+    constant part's response and the half-difference the 2ω part's; against them the averaged loop (`envelope_means` at s = S_B[−1] and
+    at S_B5, per s²), at MARKS_B."""
     metric, om = args
     warnings.filterwarnings('ignore')
     t0 = time.time()
@@ -568,9 +581,11 @@ def b5_job(args):
     _, _, W2b, C2b, sb = second_order(L, EPS, al0[idx], c0[idx], metric, dict(nz, ph=np.asarray(nz['ph']) + np.pi / 2), CT.KE, NP_B)
     s = S_B[-1]
     We, Ce, se = envelope_means(L, EPS, metric, DZ.noise_of(s, dict(freqs=(om,))), CT.KE, NP_B)
+    Wf, Cf, sf = envelope_means(L, EPS, metric, DZ.noise_of(S_B5, dict(freqs=(om,))), CT.KE, NP_B)
     mk = [q - 1 for q in MARKS_B]
-    out = dict(metric=metric, om=om, status=[sa, sb, se], w2=W2a[mk].tolist(), w2_shift=W2b[mk].tolist(), c2=C2a[mk].tolist(),
+    out = dict(metric=metric, om=om, status=[sa, sb, se, sf], w2=W2a[mk].tolist(), w2_shift=W2b[mk].tolist(), c2=C2a[mk].tolist(),
                c2_shift=C2b[mk].tolist(), w_env=((We[mk] - CT.ASTAR) / s ** 2).tolist(), c_env=((Ce[mk] - CT.CSTAR) / s ** 2).tolist(),
+               w_env_small=((Wf[mk] - CT.ASTAR) / S_B5 ** 2).tolist(), c_env_small=((Cf[mk] - CT.CSTAR) / S_B5 ** 2).tolist(),
                secs=time.time() - t0)
     print(f"  B5 {metric} {om:g}: ⟨w₂⟩ at {MARKS_B[-1]} {', '.join(f'{x:+.4g}' for x in out['w2'][-1])}, shifted "
           f"{', '.join(f'{x:+.4g}' for x in out['w2_shift'][-1])} [{out['secs']:.0f}s]", flush=True)
@@ -617,6 +632,8 @@ def c_run(m, ke, s, opts):
     w and c."""
     L = law(m)
     al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+    if 'rise' in opts:                                                   # referee round 69: kernel k's coefficient raised by Δ at the start
+        al0 = raised(L, al0, idx, int(opts['rise'][0]), float(opts['rise'][1]))
     k = 8
     ts = np.linspace(0, NP_C * 2 * np.pi / CT.OM, NP_C * k + 1)
     r = simulate(L, al0, c0, CT.ASTAR, ts, c_noise(s, opts), opts.get('metric', 'paradigm'), ke)
@@ -908,33 +925,61 @@ def b5_lines(B5):
     out = ["## B5. The averaged loop against the second order's constant part (referee round 63)", "",
            f"One tone, {NP_B} periods: the exact second order's ⟨w₂⟩ (`second_order`) at the tone's phase φ and at φ + π/2 — their half-sum "
            "the response to the constant part of the forcing (φ-free), their half-difference the 2ω part's (∝ e^{2iφ}) —, and the averaged "
-           f"loop's Δw/s² (s = {S_B[-1]:g}) over the exact second order and over its constant part, at the periods "
-           f"{', '.join(str(m) for m in MARKS_B)}:", "",
-           "| metric | ω | 2ω/ω_ref | ⟨w₂⟩ (exact) | the constant part | the 2ω part | averaged / exact | averaged / the constant part |",
-           "|---|---|---|---|---|---|---|---|"]
+           f"loop's Δw/s² at s = {S_B5:g} (its own O(s⁴) negligible; referee round 69) and at {S_B[-1]:g} over the exact second order and "
+           f"over its constant part, at the periods {', '.join(str(m) for m in MARKS_B)}:", "",
+           f"| metric | ω | 2ω/ω_ref | ⟨w₂⟩ (exact) | the constant part | the 2ω part | averaged / exact, s = {S_B5:g} | averaged / the "
+           f"constant part, s = {S_B5:g} | averaged / the constant part, s = {S_B[-1]:g} |",
+           "|---|---|---|---|---|---|---|---|---|"]
+    lo_ = []
     for r in sorted(B5, key=lambda r: (r['metric'] != 'paradigm', r['om'])):
         a, b, e = np.array(r['w2']), np.array(r['w2_shift']), np.array(r['w_env'])
+        es = np.array(r['w_env_small']) if 'w_env_small' in r else None
         const, two = (a + b) / 2, (a - b) / 2
         f = lambda X: '; '.join(', '.join(f"{x:+.4g}" for x in row) for row in X)
-        g = lambda X: '; '.join(', '.join(f"{x:.3f}" for x in row) for row in X)
-        out.append(f"| {r['metric']} | {r['om']:g} | {2 * r['om'] / CT.OM:g} | {f(a)} | {f(const)} | {f(two)} | {g(e / a)} | {g(e / const)} |")
+        g = lambda X: '; '.join(', '.join(f"{x:.4f}" for x in row) for row in X)
+        out.append(f"| {r['metric']} | {r['om']:g} | {2 * r['om'] / CT.OM:g} | {f(a)} | {f(const)} | {f(two)} | "
+                   + ('—' if es is None else g(es / a)) + ' | ' + ('—' if es is None else g(es / const)) + f" | {g(e / const)} |")
+        if es is not None:
+            lo_.append((r['om'], float((es / const).min()), float((es / const).max()), float((es / a).min()), float((es / a).max())))
+    if lo_:
+        out += ["", f"At s = {S_B5:g} the averaged loop over the constant part: " + '; '.join(
+            f"{om:g}: {a:.4f}–{b:.4f} (over the exact second order {c:.4f}–{d:.4f})" for om, a, b, c, d in lo_) + "."]
     out.append("")
     return out
 
 
+def sens(K, ke, om):
+    """The adaptation loop's sensitivity |S(iω)| = |iω(iω + k_e)|/|K − ω² + ik_eω| — per tone, at a frozen K, A2's factor (the plant's
+    slope cancels in the ratio of the quasi-static centre jitter with K to that at K = 0)."""
+    om = np.asarray(om, float)
+    return np.abs(1j * om * (1j * om + ke)) / np.abs(K - om ** 2 + 1j * ke * om)
+
+
+def bode_integral(K, ke):
+    """∫₀^∞ ln|S(iω)| dω by quadrature (Bode's sensitivity integral: 0 for the open loop K/(s(s + k_e)), relative degree 2, no pole
+    in the open right half-plane)."""
+    from scipy.integrate import quad
+    f = lambda w: float(np.log(sens(K, ke, w)))
+    return quad(f, 0.0, 1.0, limit=200)[0] + quad(f, 1.0, np.inf, limit=400)[0]
+
+
 def a2_lines(A2):
-    """A2's report: the quasi-static peaks against √K_i; the 16 tones' jitter with and without K — the resonance factor — per law and
-    band, and the band's effect split into its roll-off and its resonance."""
+    """A2's report: the quasi-static peaks against √K_i (a maximum at the grid's lower end marked); the 16 tones' jitter with and without
+    K — their ratio the adaptation loop's sensitivity |S| over the band — per law and band, and the band's effect split into its roll-off
+    and its resonance; |S| at the bound and at √K."""
     if A2 is None:
         return []
     out = ["## A2. Resonance against roll-off (quasi-static; referee round 63)", "",
            "A's oscillator law, the paradigm's metric: per law each kernel's √K_i and the frequency at which its centre jitter per unit "
-           "amplitude peaks (on ω = 4 … 40); seed 7's 16 tones in the band, per unit rms: the centre jitter (rms over the orbit and the "
-           "tones), the same with K = 0 (the roll-off alone), and their ratio, the resonance factor:", "",
+           f"amplitude peaks (on ω = {OM_A2[0]:g} … {OM_A2[-1]:g}; * a maximum at the grid's lower end, the peak below it); seed 7's 16 tones "
+           "in the band, per unit rms: the centre jitter (rms over the orbit and the tones), the same with K = 0 (the roll-off alone), and their "
+           "ratio, the resonance factor — per tone and orbit point the adaptation loop's sensitivity |S| = |iω(iω + k_e)|/|K − ω² + ik_eω| "
+           "(the plant's slope cancels), here averaged over the band and the orbit:", "",
            "| m | band | √K_i | the peaks (/ √K_i) | jitter | jitter at K = 0 | resonance factor |", "|---|---|---|---|---|---|---|"]
     for r in sorted(A2, key=lambda r: (r['band'], r['m'])):
         out.append(f"| {r['m']:g} | {'–'.join(f'{x:g}' for x in r['band'])} | {', '.join(f'{x:.2f}' for x in r['sqrtK'])} | "
-                   + ', '.join(f"{p:.2f} ({p / k:.3f})" for p, k in zip(r['peak'], r['sqrtK'])) + f" | {', '.join(f'{x:.4f}' for x in r['jit'])} | "
+                   + ', '.join(f"{p:.2f}{'*' if p <= OM_A2[0] else ''} ({p / k:.3f})" for p, k in zip(r['peak'], r['sqrtK']))
+                   + f" | {', '.join(f'{x:.4f}' for x in r['jit'])} | "
                    f"{', '.join(f'{x:.4f}' for x in r['jit0'])} | {', '.join(f'{a / b:.3f}' for a, b in zip(r['jit'], r['jit0']))} |")
     lines = []
     for m in sorted({r['m'] for r in A2}):
@@ -949,6 +994,16 @@ def a2_lines(A2):
                      f"{', '.join(f'{a / b:.2f}' for a, b in zip(tot, roll))}")
     if lines:
         out += ["", '; '.join(lines) + "."]
+    k1 = sorted({(r['m'], r['sqrtK'][0]) for r in A2})
+    if k1:
+        bnd = min(k1, key=lambda x: abs(x[1] - 10.0))
+        oms = (10.0, 15.0, 20.0, 30.0)
+        out += ["", f"The sensitivity (k_e = {CT.KE:g}, the first kernel's K): |S|² − 1 = K(2ω² − K)/|K − ω² + ik_eω|², so |S| > 1 at every ω > "
+                    f"√(K/2) whatever k_e — the amplification above is the price of the attenuation below (∫₀^∞ ln|S(iω)|dω = 0, Bode's "
+                    f"integral; by quadrature {max(abs(bode_integral(k ** 2, CT.KE)) for _, k in k1):.1e} at most over the laws) —; |S(√K)| = "
+                    f"(1 + K/k_e²)^{{1/2}} = {', '.join(f'{float(sens(k ** 2, CT.KE, k)):.3f}' for _, k in k1)} at m = "
+                    f"{', '.join(f'{m:g}' for m, _ in k1)}; at m = {bnd[0]:g} (√K₁ = {bnd[1]:.2f}) |S| = "
+                    f"{', '.join(f'{x:.2f}' for x in sens(bnd[1] ** 2, CT.KE, oms))} at ω = {', '.join(f'{w:g}' for w in oms)}."]
     out.append("")
     return out
 
@@ -1006,7 +1061,7 @@ def c2_lines(C2):
            "draw's phases —; the 16 tones moved to 25–75 rad/s (above √K_max); m between 3 and 12 (the design bound m ≲ "
            f"ω_lo²/(G max_t Σ_iw_i²(∂_cφ_i)²) = {100.0 / (L12.G * S_):.2f} at ω_lo = 10); the Wasserstein–Fisher–Rao metric to s = 0.32. Per "
            f"group the kernels that left their feature ({LEFT_C:g} away, period-averaged) — 'jumped' if their largest distance exceeds "
-           f"{JUMP_C:g} (out of the orbit's range) —, the leave periods and the largest distances over the runs:", "",
+           f"{JUMP_C:g} (out of its feature) —, the leave periods and the largest distances over the runs:", "",
            "| control | metric | m | k_e | noise | s | runs | left: per kernel (jumped) | leave periods | largest distances (per kernel, max over runs) |",
            "|---|---|---|---|---|---|---|---|---|---|"]
     order = {'one tone': 0, 'tone pair': 1, "the draw's pair": 2, 'band 25–75': 3, 'm': 4, 'WFR': 5}
@@ -1021,6 +1076,16 @@ def c2_lines(C2):
                    + ('—' if not per else (f"{per[0]}" if len(per) == 1 else f"{per[0]}–{per[-1]}")) + " | "
                    + ', '.join(f"{max(r['maxdev'][q] for r in rs):.3f}" for q in range(nq)) + " |")
     out.append("")
+    rise = {}                                                          # referee round 69: how far single tones drift without jumping
+    for key, rs in c2_groups(C2).items():
+        if key[0] == 'one tone' and key[1] == 'paradigm':
+            for r in rs:
+                if 'w_end' in r and not (r['left'][0] >= 0 and r['maxdev'][0] > JUMP_C):
+                    rise.setdefault(key[5], []).append(float(r['w_end'][0] - CT.ASTAR[0]))
+    if rise:
+        out += ["Single tones (the paradigm's metric), the runs whose first kernel did not jump: its coefficient's rise over the fit by the "
+                f"last period, per level — " + '; '.join(f"s = {s_:g}: {min(v):+.3f} … {max(v):+.3f} ({len(v)} runs)"
+                                                          for s_, v in sorted(rise.items())) + '.', '']
     return out
 
 
@@ -1054,7 +1119,7 @@ def c3_lines(C3, B4=None):
                 key = 'single tones' if tone else f"the 16 tones at s = {r['s']:g}"
                 pj = int(np.argmax(dev[:, q] > JUMP_C)) + 1 if (dev[:, q] > JUMP_C).any() else None
                 grp.setdefault(key, []).append((p, r['w_left'][q] / W[0, q], r['pre'][q], r['maxdev'][q], q,
-                                                r['opts'].get('seed'), None if pj is None else pj - p))
+                                                r['opts'].get('seed'), None if pj is None else pj - p, float(np.array(r['C'])[-1, q])))
     span = lambda v, f_: f"{min(v):{f_}}" if min(v) == max(v) else f"{min(v):{f_}} … {max(v):{f_}}"
     parts = []
     for key in sorted(grp, key=lambda k: (k == 'single tones', k)):
@@ -1069,6 +1134,17 @@ def c3_lines(C3, B4=None):
                         if any(x[6] is not None for x in xs) else '') + ")")
     if parts:
         out += ["Summed up — " + '; '.join(parts) + ".", ""]
+    per = []                                                           # referee round 69: the same per kernel, and where the jumps end
+    for key in sorted(grp, key=lambda k: (k == 'single tones', k)):
+        for q in sorted({x[4] for x in grp[key]}):
+            xs = [x for x in grp[key] if x[4] == q]
+            jm = [x for x in xs if x[3] > JUMP_C]
+            per.append(f"{key}, kernel {q + 1}: {len(xs)} leave{'s' if len(xs) != 1 else ''}, periods {span([x[0] for x in xs], 'd')}, the coefficient over its start "
+                       f"{span([x[1] for x in xs], '.3f')}, the mean offset before {span([x[2] for x in xs], '+.3f')}, the largest distance "
+                       f"{span([x[3] for x in xs], '.2f')} ({len(jm)} jumps" + (f", {sum(abs(x[7]) > 1 for x in jm)} of them ending beyond ±1"
+                                                                               if jm else '') + ")")
+    if per:
+        out += ["Per kernel — " + '; '.join(per) + ".", ""]
     band = [r for r in (B4 if B4 is not None else []) if r['freqs'] is None and 'even_w_all' in r]
     if band:                                                           # the drift against (ii)'s even part at its saturation
         a, b = BAND_B4
@@ -1086,7 +1162,428 @@ def c3_lines(C3, B4=None):
     return out
 
 
-def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None, F=None, B5=None, A2=None, C3=None):
+S_W2, NP_W2, W2_SEEDS = 0.00125, 300, (7, 1, 2, 3)                  # W2 (referee round 69): each draw's own second order, C's horizon
+W2_CONFIGS = ([(12.0, ke, 'paradigm', None) for ke in KE_C] + [(3.0, ke, 'paradigm', None) for ke in KE_C]
+              + [(m, 10.0, 'paradigm', None) for m in M_SCAN_C2] + [(12.0, ke, 'wfr', None) for ke in (5.0, 10.0)]
+              + [(m, 10.0, 'paradigm', (25.0, 75.0)) for m in (12.0, 3.0)])
+EDGE_GRID, NP_EDGE, BISECT_EDGE = (0.02, 0.04, 0.06, 0.08, 0.1, 0.13, 0.16, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1.0), 100, 4
+EDGE_CASES = [(m, ke, mt, 0) for m, ke, mt, band in W2_CONFIGS if band is None] + [(12.0, 10.0, 'paradigm', 2)]
+C6_CASES = ([(12.0, 10.0, 0.02, dict(seed=sd, rise=[0, d])) for sd in (7, 3, 10) for d in (0.03, 0.05, 0.065)]
+            + [(12.0, 10.0, 0.02, dict(freqs=(f,), seed=7, rise=[0, d])) for f in (13.1, 15.0) for d in (0.1, 0.2, 0.3)])
+S_C7, NP_C7, BISECT_C7 = (0.0025, 0.005, 0.01, 0.02, 0.03), 10, 6         # C7 (referee round 69): the edge under noise
+SHIFT_C7, TONES_C7 = (0, 25, 50, 75, 100, 125, 150, 175), (10.0, 13.1, 15.0, 21.3)
+C7_CFG = (12.0, 10.0, 'paradigm')                                       # C7's configuration (m, k_e, metric); then those where the drift's
+C7_MORE = (((12.0, 20.0, 'paradigm'), (0.02, 0.04, 0.06, 0.08)),         # reach of the noise-free edge misses the first jump (EDGE)
+           ((4.0, 10.0, 'paradigm'), (0.04, 0.06, 0.08)), ((12.0, 10.0, 'wfr'), (0.08, 0.16, 0.24)))
+C7_CASES = ([(dict(seed=7), 0.0)] + [(dict(freqs=(f,), seed=7), s_) for f in TONES_C7 for s_ in S_C7]
+            + [(dict(seed=7, shift=sh), s_) for sh in SHIFT_C7 for s_ in S_C7]
+            + [(dict(seed=7), 0.0, cfg) for cfg, _ in C7_MORE] + [(dict(seed=7, shift=sh), s_, cfg) for cfg, lv in C7_MORE
+                                                               for sh in SHIFT_C7 for s_ in lv])
+
+
+def raised(L, al0, idx, k, delta):
+    """al0 with formed kernel k's coefficient raised by delta in magnitude on its curve from the masses EPS (referee round 69)."""
+    i = idx[k]
+    w0 = mobilities(L, EPS, al0, 'paradigm')[0][i]
+    al = np.array(al0, float)
+    al[i] = alpha_of(L, EPS, w0 + np.sign(w0) * delta, al0[i])
+    return al
+
+
+def edge_run(m, ke, metric, k, delta, NP=NP_EDGE, trace=False, noise=None):
+    """The noise-free loop (or under the noise `noise`, C7) from the fitted state with formed kernel k's coefficient raised by delta (the
+    plant unchanged; referee round 69: the fit's basin in the coefficient), NP periods (64 outputs a period): the period kernel k leaves
+    its feature (LEFT_C, the period means; −1: never) and its largest period-averaged distance; with trace also the first time (in
+    periods) its centre is 0.05 from its feature, the reference x_m = sin(ωt) then and the centre at the end of that period (the
+    ejection's anatomy)."""
+    L = law(m)
+    al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+    kk = 64
+    T = 2 * np.pi / CT.OM
+    ts = np.linspace(0, NP * T, NP * kk + 1)
+    r = simulate(L, raised(L, al0, idx, k, delta), c0, CT.ASTAR, ts, noise, metric, ke)
+    dev = np.abs(r['c'][:-1].reshape(NP, kk, c0.size).mean(1)[:, idx] - CT.CSTAR)
+    out = (left_periods(dev, LEFT_C)[k], float(dev[:, k].max()))
+    if not trace:
+        return out
+    d = np.abs(r['c'][:, idx[k]] - CT.CSTAR[k])
+    j = int(np.argmax(d > 0.05)) if (d > 0.05).any() else None
+    if j is None:
+        return out + (None, None, None)
+    p = int(ts[j] // T)
+    return out + (float(ts[j] / T), float(np.sin(CT.OM * ts[j])), float(r['c'][min((p + 1) * kk, len(ts) - 1), idx[k]]))
+
+
+def bracket_edge(run, grid=None, nb=None, above=0):
+    """The edge of run(Δ) — (the leave period, −1: none; the largest distance) — up the grid (default EDGE_GRID) to the first Δ that
+    ejects, then nb bisections (default BISECT_EDGE), and the next `above` grid raises beyond the first ejecting one rechecked: (lo, hi,
+    the runs sorted by Δ); hi None if no raise of the grid ejects."""
+    grid, nb = (EDGE_GRID if grid is None else grid), (BISECT_EDGE if nb is None else nb)
+    runs = []
+    for d in grid:
+        runs.append((d,) + tuple(run(d)))
+        if runs[-1][1] >= 0:
+            break
+    hi = next((d for d, p, _ in runs if p >= 0), None)
+    lo = max([d for d, p, _ in runs if p < 0 and (hi is None or d < hi)], default=0.0)
+    if hi is not None:
+        for d in [g for g in grid if g > hi][:above]:
+            runs.append((d,) + tuple(run(d)))
+        for _ in range(nb):
+            mid = 0.5 * (lo + hi)
+            runs.append((mid,) + tuple(run(mid)))
+            lo, hi = (lo, mid) if runs[-1][1] >= 0 else (mid, hi)
+    return lo, hi, sorted(runs)
+
+
+def edge_job(args):
+    """EDGE: the basin's edge in kernel k's coefficient for the law's m, the gain k_e and the metric — `edge_run` up EDGE_GRID to the first
+    raise that ejects the kernel, then BISECT_EDGE bisections (`bracket_edge`): the edge's bracket (lo, hi] and every run."""
+    m, ke, metric, k = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    lo, hi, runs = bracket_edge(lambda d: edge_run(m, ke, metric, k, d))
+    out = dict(m=m, ke=ke, metric=metric, k=k, lo=lo, hi=hi, runs=[dict(d=d, left=p, maxdev=x) for d, p, x in runs],
+               secs=time.time() - t0)
+    if hi is not None:                                                  # the ejection's anatomy at hi
+        _, _, td, xd, ce = edge_run(m, ke, metric, k, hi, NP=3, trace=True)
+        out.update(t_detach=td, x_detach=xd, c_after=ce)
+    print(f"  EDGE m {m:g} k_e {ke:g} {metric} kernel {k + 1}: ({lo:.4g}, {hi}] [{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def w2_job(args):
+    """W2 (referee round 69): one draw's second order at C's horizon — the loop under ±S_W2·n (the law's m, the gain k_e, the metric, the
+    noise `c_noise(S_W2, opts)`) for NP_W2 periods (`sim_means`): per period the even part of the formed kernels' period-mean
+    coefficients per s², ((W₊ + W₋)/2 − A)/s² (B4's construction)."""
+    m, ke, metric, opts = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    L = law(m)
+    nz = c_noise(S_W2, dict(opts))
+    Wp, _ = sim_means(L, metric, nz, ke, NP_W2)
+    Wm, _ = sim_means(L, metric, dict(nz, ph=np.asarray(nz['ph'], float) + np.pi), ke, NP_W2)
+    ew = ((Wp + Wm) / 2 - CT.ASTAR) / S_W2 ** 2
+    out = dict(m=m, ke=ke, metric=metric, opts={k_: (list(v) if isinstance(v, tuple) else v) for k_, v in dict(opts).items()},
+               even_w_all=ew.tolist(), secs=time.time() - t0)
+    print(f"  W2 m {m:g} k_e {ke:g} {metric} {out['opts']}: even/s² at {NP_W2} {', '.join(f'{x:+.4g}' for x in ew[-1])} "
+          f"[{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def w2_cases():
+    """W2's draws: C3's eleven band draws at m = 12, k_e = 10 and, for every other configuration of C and C2 with the band's tones,
+    the draws W2_SEEDS."""
+    cases = [(12.0, 10.0, 'paradigm', dict(seed=sd)) for sd in range(1, 12)]
+    for m, ke, mt, band in W2_CONFIGS:
+        if (m, ke, mt, band) == (12.0, 10.0, 'paradigm', None):
+            continue
+        cases += [(m, ke, mt, dict(seed=sd) if band is None else dict(band=band, seed=sd)) for sd in W2_SEEDS]
+    return cases
+
+
+def part_W2():
+    return _pool_map(w2_job, w2_cases())
+
+
+def part_EDGE():
+    return _pool_map(edge_job, EDGE_CASES)
+
+
+def part_C4():
+    """C4 (referee round 69): the −n twins of C3's band runs — the noise negated (its phases moved by π)."""
+    return _pool_map(c3_job, [(12.0, 10.0, s_, dict(seed=sd, neg=True)) for s_ in (0.02, 0.03) for sd in range(1, 12)])
+
+
+def part_C6():
+    """C6 (referee round 69): C3's runs started with kernel 1's coefficient raised (opts rise) — bands below the noise-free edge, single
+    tones beyond it."""
+    return _pool_map(c3_job, C6_CASES)
+
+
+def c7_job(args):
+    """C7 (referee round 69): the basin's edge in kernel 1's coefficient under the noise `c_noise(s, opts)` at the configuration (m, k_e,
+    metric) — args (opts, s) or (opts, s, (m, k_e, metric)), default C7_CFG — by `bracket_edge` over NP_C7 periods with BISECT_C7
+    bisections, the next two grid raises rechecked: (lo, hi], the runs."""
+    opts, s = args[:2]
+    m, ke, mt = args[2] if len(args) > 2 else C7_CFG
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    nz = c_noise(s, dict(opts))
+    lo, hi, runs = bracket_edge(lambda d: edge_run(m, ke, mt, 0, d, NP=NP_C7, noise=nz), nb=BISECT_C7, above=2)
+    out = dict(m=m, ke=ke, metric=mt, s=s, opts={k_: (list(v) if isinstance(v, tuple) else v) for k_, v in dict(opts).items()}, lo=lo,
+               hi=hi, runs=[dict(d=d, left=p, maxdev=x) for d, p, x in runs], secs=time.time() - t0)
+    print(f"  C7 m {m:g} k_e {ke:g} {mt} {out['opts']} s {s:g}: ({lo:.4g}, {hi}] [{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def part_C7():
+    """C7 (referee round 69): `c7_job` for C7_CASES."""
+    return _pool_map(c7_job, C7_CASES)
+
+
+def w2_of(W2, m, ke, metric, band, seed):
+    """W2's even part per s² (per period, per kernel) for a configuration and draw, or None."""
+    for r in (W2 if W2 is not None else []):
+        o = r['opts']
+        if (r['m'], r['ke'], r['metric'], tuple(o['band']) if 'band' in o else None, o.get('seed')) == (m, ke, metric, band, seed):
+            return np.asarray(r['even_w_all'], float)
+    return None
+
+
+def c4_lines(C3, C4, W2):
+    """C4 (referee round 69): like for like — each C3 band run's rise of kernel 1 at its leave against its own draw's even part at the same
+    period and level: from its −n twin, (W₊ + W₋)/2 − A (while the twin has not left), and from W2's second order, s²⟨w₂⟩."""
+    if C3 is None or C4 is None or len(C3) == 0 or len(C4) == 0:
+        return []
+    tw = {(r['s'], r['opts'].get('seed')): r for r in C4}
+    out = ['', "### C4. Like for like (referee round 69): the rise at the leave against the same draw's even part", '',
+           f"C3's band runs (m = 12, k_e = 10) that lost kernel 1: its leave period p, the rise W₊ − A of its period-mean coefficient at "
+           f"p, the −n twin's leave, the half-sum (W₊ + W₋)/2 − A at p (where the twin has not left by p) over the rise, the draw's own second "
+           f"order s²⟨w₂⟩ at p (W2: ±{S_W2:g}·n over {NP_W2} periods) and its share of the value at period {NP_W2}, the rise over s²⟨w₂⟩(p):", '',
+           f"| s | draw | p | rise | the twin's leave | half-sum / rise | s²⟨w₂⟩(p) (share of period {NP_W2}'s) | rise / s²⟨w₂⟩(p) |",
+           '|---|---|---|---|---|---|---|---|']
+    stats = {}
+    for r in sorted([r for r in C3 if 'seed' in r['opts'] and 'freqs' not in r['opts']], key=lambda r: (r['s'], r['opts']['seed'])):
+        p, sd, s_ = r['left'][0], r['opts']['seed'], r['s']
+        if p < 0:
+            continue
+        W = np.asarray(r['W'], float)
+        rise = float(W[p - 1, 0] - CT.ASTAR[0])
+        t = tw.get((s_, sd))
+        half = None
+        if t is not None and (t['left'][0] < 0 or t['left'][0] > p):
+            half = float((W[p - 1, 0] + np.asarray(t['W'], float)[p - 1, 0]) / 2 - CT.ASTAR[0])
+        ew = w2_of(W2, 12.0, 10.0, 'paradigm', None, sd)
+        own = None if ew is None else (s_ ** 2 * float(ew[p - 1, 0]), s_ ** 2 * float(ew[-1, 0]))
+        st = stats.setdefault(s_, dict(hr=[], ro=[], sh=[], pairs=[]))
+        if half is not None:
+            st['hr'].append(half / rise)
+        if own is not None:
+            st['ro'].append(rise / own[0]); st['sh'].append(own[0] / own[1]); st['pairs'].append((rise, own[0]))
+        out.append(f"| {s_:g} | {sd} | {p} | {rise:+.4f} | {t['left'][0] if t is not None else '—'} | "
+                   + ('—' if half is None else f"{half:+.4f} ({half / rise:.3f})") + ' | '
+                   + ('—' if own is None else f"{own[0]:+.4f} ({own[0] / own[1]:.2f})") + ' | '
+                   + ('—' if own is None else f"{rise / own[0]:.3f}") + ' |')
+    sm = []
+    for s_, st in sorted(stats.items()):
+        cc = f"{float(np.corrcoef(np.array(st['pairs']).T)[0, 1]):.2f}" if len(st['pairs']) > 2 else '—'
+        sm.append(f"at s = {s_:g} the half-sum over the rise {span_(st['hr'], '.3f')} ({len(st['hr'])} draws whose twin had not left), "
+                  f"the rise over s²⟨w₂⟩(p) {span_(st['ro'], '.3f')}" + (f" (median {np.median(st['ro']):.3f})" if st['ro'] else '')
+                  + f", s²⟨w₂⟩(p) over its period-300 value "
+                  f"{span_(st['sh'], '.2f')}, the rise's correlation with s²⟨w₂⟩(p) across the {len(st['pairs'])} draws {cc}")
+    return out + ['', "Over the draws: " + '; '.join(sm) + '.', '']
+
+
+def span_(v, f_):
+    return f"{min(v):{f_}}–{max(v):{f_}}" if len(v) else '—'
+
+
+def first_jump(rs, k):
+    """The smallest level among the runs rs at which kernel k jumped (left and its largest distance above JUMP_C), None if none."""
+    js = [r['s'] for r in rs if r['left'][k] >= 0 and r['maxdev'][k] > JUMP_C]
+    return min(js) if js else None
+
+
+_V1 = {}
+
+
+def v1_of(m, metric):
+    """The first formed kernel's centre mobility at the fit (`mobilities`: Gmw₁ under the paradigm's metric, G·a₁ under WFR's)."""
+    if (m, metric) not in _V1:
+        L = law(m)
+        al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+        _V1[(m, metric)] = float(mobilities(L, EPS, al0, metric)[2][idx[0]])
+    return _V1[(m, metric)]
+
+
+def star_verdict(a, b, obs, levs):
+    """The first jump obs (None: none at the levels levs run) against s*'s bracket (a, b]: 'consistent' where (the level run just below
+    obs, obs] meets it, 'later' where that lower level is already at least b, 'earlier' where obs ≤ a; without a jump 'none, predicted'
+    where a level above b was run, else 'untested'."""
+    if obs is not None:
+        lo = max([x for x in levs if x < obs], default=0.0)
+        return 'consistent' if (lo < b and obs > a) else ('later' if lo >= b else 'earlier')
+    return 'none, predicted' if (levs and max(levs) > b) else 'untested'
+
+
+def edge_lines(EDGE, W2, C, C2):
+    """EDGE (referee round 69): the basin's edge per configuration, and the drift's prediction of the first jump — the level s* at which
+    the draw's second-order drift at C's horizon reaches the edge, s*² s²-less: s* = (edge/⟨w₂⟩(300))^{1/2} — against the observed."""
+    if EDGE is None or len(EDGE) == 0:
+        return []
+    out = ['', "### EDGE. The fit's basin in the coefficient, and the drift's reach (referee round 69)", '',
+           f"The noise-free loop from the fitted state with one formed kernel's coefficient raised in magnitude by Δ (the plant unchanged), "
+           f"{NP_EDGE} periods: the smallest Δ of the grid {', '.join(f'{d:g}' for d in EDGE_GRID)} that ejects the kernel (its period-averaged "
+           f"centre {LEFT_C:g} from its feature) and {BISECT_EDGE} bisections — the edge's bracket (lo, hi] and the ejection's period at hi —; "
+           f"then per draw the level s* = (edge/⟨w₂⟩)^{{1/2}} at which the draw's even drift at period {NP_W2} (W2, per s²) reaches the edge "
+           "(the bracket mapped) against the smallest level at which C's or C2's runs of that draw saw the kernel jump (— none up to the "
+           "largest level run):", '',
+           '| m | k_e | metric | kernel | noise | edge (lo, hi] | ejected at period (at hi: detached at t/T, x_m there; the centre after) | '
+           + ' | '.join(f'draw {sd}: s* (lo, hi], observed' for sd in W2_SEEDS) + ' |', '|---|---|---|---|---|---|---|' + '---|' * len(W2_SEEDS)]
+    allruns = (list(C) if C is not None else []) + (list(C2) if C2 is not None else [])
+    bkey = lambda o: tuple(float(x) for x in o['band']) if 'band' in o else None
+    recs = []
+    rows_ = [(e, None) for e in EDGE] + [(e, b) for e in EDGE for (m_, ke_, mt_, b) in W2_CONFIGS
+                                          if b is not None and e['k'] == 0 and (m_, ke_, mt_) == (e['m'], e['ke'], e['metric'])]
+    for e, band in rows_:
+        m, ke, mt, k = e['m'], e['ke'], e['metric'], e['k']
+        p_hi = next((x['left'] for x in e['runs'] if x['d'] == e['hi']), None)
+        cells = []
+        for sd in W2_SEEDS:
+            ew = w2_of(W2, m, ke, mt, band, sd)
+            rs = [r for r in allruns if r['m'] == m and r['ke'] == ke and r['opts'].get('metric', 'paradigm') == mt
+                  and 'freqs' not in r['opts'] and bkey(r['opts']) == (None if band is None else tuple(map(float, band)))
+                  and r['opts'].get('seed', 7) == sd]
+            obs = first_jump(rs, k) if rs else None
+            if ew is None or e['hi'] is None or ew[-1, k] <= 0:
+                cells.append(f"—, {obs if obs is not None else '—'}")
+                continue
+            a, b = np.sqrt(e['lo'] / ew[-1, k]), np.sqrt(e['hi'] / ew[-1, k])
+            levs = sorted({r['s'] for r in rs})
+            if levs:
+                recs.append((m, ke, mt, k, band, star_verdict(a, b, obs, levs), None if obs is None else obs / (0.5 * (a + b))))
+            cells.append(f"({a:.4f}, {b:.4f}], {obs if obs is not None else '—'}")
+        an = (f" ({e['t_detach']:.3f}, {e['x_detach']:+.3f}; {e['c_after']:+.3f})" if e.get('t_detach') is not None else '')
+        lab = "D‴.49's band" if band is None else f"{band[0]:g}–{band[1]:g}"
+        out.append(f"| {m:g} | {ke:g} | {mt} | {k + 1} | {lab} | ({e['lo']:.4g}, {e['hi']:.4g}] | {p_hi}{an} | " + ' | '.join(cells) + ' |'
+                   if e['hi'] is not None else f"| {m:g} | {ke:g} | {mt} | {k + 1} | {lab} | > {EDGE_GRID[-1]:g} | — | "
+                   + ' | '.join(cells) + ' |')
+    cnt = lambda v: sum(1 for r in recs if r[5] == v)
+    nj = sum(1 for r in recs if r[6] is not None)
+
+    def where(v):
+        g = {}
+        for r in recs:
+            if r[5] == v:
+                g.setdefault(r[:5], []).append(r[6])
+        return ', '.join(f"m = {m:g}, k_e = {ke:g}{'' if mt == 'paradigm' else ', ' + mt}{'' if k == 0 else f', kernel {k + 1}'}"
+                         f"{'' if band is None else f', {band[0]:g}–{band[1]:g}'} ({len(v_)}"
+                         + (f"; {min(v_):.2f}–{max(v_):.2f} times s*" if v_[0] is not None else '') + ')'
+                         for (m, ke, mt, k, band), v_ in g.items())
+    out += ['', f"The first jump against the drift's reach — (the level run just below it, the first jump] meeting s*'s bracket —: "
+                f"consistent in {cnt('consistent')} of the {nj} draw-configurations that jumped, later in {cnt('later')}"
+                + (f" ({where('later')})" if cnt('later') else '') + f", earlier in {cnt('earlier')}"
+                + (f" ({where('earlier')})" if cnt('earlier') else '') + f"; of those that never jumped, s* lay below the largest level run in "
+                f"{cnt('none, predicted')}" + (f" ({where('none, predicted')})" if cnt('none, predicted') else '') + '.', '']
+    par = [e for e in EDGE if e['metric'] == 'paradigm' and e['k'] == 0 and e['hi'] is not None]
+    mid = lambda e: 0.5 * (e['lo'] + e['hi'])
+    at10 = sorted((e['m'], mid(e) * np.sqrt(e['m'])) for e in par if e['ke'] == 10.0)
+    if len(par) > 3 and len({e['ke'] for e in par}) > 1 and len({e['m'] for e in par}) > 1:
+        X = np.array([[1.0, np.log(e['ke']), np.log(e['m'])] for e in par])
+        y = np.array([np.log(mid(e)) for e in par])
+        cf = np.linalg.lstsq(X, y, rcond=None)[0]
+        dev = float(np.max(np.abs(np.exp(y - X @ cf) - 1)))
+        k1 = [e for e in EDGE if e['k'] == 0 and e['hi'] is not None]
+        cc = [mid(e) * np.sqrt(v1_of(e['m'], e['metric']) / e['ke']) for e in k1]
+        wfs = ', '.join(f"{mid(e) * np.sqrt(v1_of(e['m'], e['metric']) / e['ke']):.4f}" for e in k1 if e['metric'] == 'wfr')
+        out += [f"The edge's scaling (kernel 1; the bracket's midpoint Δ_e): over the paradigm's {len(par)} rows the least-squares power law "
+                f"Δ_e ≈ c·k_e^α·m^(−β) has α = {cf[1]:.3f}, β = {-cf[2]:.3f} (the largest deviation {dev:.1%}); with v₁ the first kernel's "
+                f"centre mobility at the fit (Gmw₁ under the paradigm's metric — {v1_of(12.0, 'paradigm'):.4g} at m = 12 —, G·a₁ under "
+                f"WFR's — {v1_of(12.0, 'wfr'):.4g}), Δ_e·(v₁/k_e)^{{1/2}} = {min(cc):.4f} … {max(cc):.4f} over all {len(cc)} rows (median "
+                f"{np.median(cc):.4f}; the WFR rows {wfs}): "
+                f"the edge ∝ (k_e/v₁)^{{1/2}} within {max(np.max(cc) / np.median(cc) - 1, 1 - np.min(cc) / np.median(cc)):.0%} across m, k_e and "
+                f"the metric; Δ_e·√m at k_e = 10 over m = {', '.join(f'{x[0]:g}' for x in at10)}: {', '.join(f'{x[1]:.4f}' for x in at10)}.", '']
+    return out
+
+
+def c6_lines(C6, C3):
+    """C6 (referee round 69): runs started with kernel 1's coefficient raised by Δ — its leave and largest distance against the un-raised
+    run's (C3) where there is one."""
+    if C6 is None or len(C6) == 0:
+        return []
+    base = {(r['s'], r['opts'].get('seed')): r for r in (C3 if C3 is not None else []) if 'freqs' not in r['opts']}
+    out = ['', "### C6. Started above the fit (referee round 69)", '',
+           "C3's runs with kernel 1's coefficient raised by Δ at the start (below the noise-free edge for the band's draws, beyond it for "
+           "single tones): kernel 1's leave and largest distance, and the un-raised run's leave:", '',
+           '| noise | s | Δ | leave (largest distance) | un-raised: leave |', '|---|---|---|---|---|']
+    for r in C6:
+        o = r['opts']
+        lab = noise_label(o.get('freqs')) if 'freqs' in o else f"16 tones, draw {o.get('seed')}"
+        b = base.get((r['s'], o.get('seed'))) if 'freqs' not in o else None
+        lv = r['left'][0]
+        out.append(f"| {lab} | {r['s']:g} | {o['rise'][1]:g} | {lv if lv >= 0 else 'none'} ({r['maxdev'][0]:.3f}) | "
+                   + ('—' if b is None else f"{b['left'][0]}") + ' |')
+    return out + ['']
+
+
+def c7_label(o):
+    if 'freqs' in o:
+        return noise_label(o['freqs'])
+    return "D‴.49's 16 tones" + (f", from period {o['shift']:g}" if o.get('shift') else '')
+
+
+def c7_lines(C7, W2=None, C=None, C2=None):
+    """C7 (referee round 69): the edge in kernel 1's coefficient under each noise and level against the noise-free edge (the s = 0 row
+    of the configuration): for single tones (C7_CFG) its bracket, its midpoint's shift per s² and whether the rechecked raises above it
+    eject; for the band's windows per configuration and level the windows' edges against the draw's drift at period NP_W2 (W2) and whether
+    C's or C2's run of the draw jumped there."""
+    if C7 is None or len(C7) == 0:
+        return []
+    mid = lambda r: 0.5 * (r['lo'] + r['hi']) if r['hi'] is not None else None
+    cfg = lambda r: (r.get('m', C7_CFG[0]), r.get('ke', C7_CFG[1]), r.get('metric', C7_CFG[2]))
+    e0s = {cfg(r): mid(r) for r in C7 if r['s'] == 0}
+    e0 = e0s.get(C7_CFG)
+    out = ['', "### C7. The edge under noise (referee round 69)", '',
+           f"As EDGE (kernel 1) over {NP_C7} periods under the noise of rms s — at m = {C7_CFG[0]:g}, k_e = {C7_CFG[1]:g} single tones (the "
+           f"seed's phase) —: the edge's bracket (lo, hi] ({BISECT_C7} bisections; the next two grid raises above the first ejecting one "
+           "rechecked), its midpoint's rise over the noise-free edge (s = 0) per s², and the ejection's period at hi:", '',
+           '| noise | s | edge (lo, hi] | rise per s² | ejected at period | the raises above: ejected |', '|---|---|---|---|---|---|']
+    rows = {}
+    for r in sorted([r for r in C7 if cfg(r) == C7_CFG and 'shift' not in r['opts'] and (r['s'] == 0 or 'freqs' in r['opts'])],
+                    key=lambda r: (c7_label(r['opts']), r['s'])):
+        e = mid(r)
+        rise = (e - e0) / r['s'] ** 2 if (e is not None and e0 is not None and r['s'] > 0) else None
+        if rise is not None:
+            rows.setdefault(c7_label(r['opts']), []).append((r['s'], rise))
+        p_hi = next((x['left'] for x in r['runs'] if x['d'] == r['hi']), None)
+        ab = [x for x in r['runs'] if r['hi'] is not None and x['d'] > r['hi'] + 1e-12 and x['d'] in EDGE_GRID]
+        out.append(f"| {c7_label(r['opts'])} | {r['s']:g} | " + (f"({r['lo']:.5g}, {r['hi']:.5g}]" if r['hi'] is not None
+                                                                   else f"> {EDGE_GRID[-1]:g}") + ' | '
+                   + ('—' if rise is None else f"{rise:+.4g}") + f" | {p_hi if p_hi is not None else '—'} | "
+                   + (', '.join(f"{x['d']:g}: {'yes' if x['left'] >= 0 else 'no'}" for x in ab) if ab else '—') + ' |')
+    if rows:
+        out += ['', "The rise per s² over the levels (an O(s²) shift is constant): " + '; '.join(
+            f"{k}: {', '.join(f'{v:+.4g}' for _, v in sorted(vs))} at s = {', '.join(f'{s_:g}' for s_, _ in sorted(vs))}"
+            for k, vs in rows.items()) + '.']
+    allruns = (list(C) if C is not None else []) + (list(C2) if C2 is not None else [])
+    band = [r for r in C7 if 'freqs' not in r['opts'] and r['s'] > 0]
+    out += ['', f"D‴.49's 16 tones (draw 7) started at the periods {', '.join(f'{x:g}' for x in SHIFT_C7)} of the draw (its windows), per "
+                "configuration and level: the windows' edges (the brackets' midpoints, in that order; '>1': none up to the grid's end), their "
+                "least and median and those over the noise-free edge per s², against the draw's drift at period "
+                f"{NP_W2}, s²⟨w₂⟩ (W2), and whether C's or C2's run of the draw at that level saw kernel 1 jump (—: not run):", '',
+                '| m | k_e | metric | s | the windows\' edges | least, median | rise per s²: least, median | drift s²⟨w₂⟩ | jumped |',
+                '|---|---|---|---|---|---|---|---|---|']
+    verdicts = []
+    for key in sorted({(cfg(r), r['s']) for r in band}, key=lambda q: (q[0] != C7_CFG, q[0], q[1])):
+        (m, ke, mt), s_ = key
+        ws = sorted([r for r in band if (cfg(r), r['s']) == key], key=lambda r: r['opts'].get('shift', 0))
+        es = [mid(r) for r in ws]
+        fin = sorted(x for x in es if x is not None)
+        lst, med = (fin[0], float(np.median(fin))) if fin else (None, None)
+        base = e0s.get((m, ke, mt))
+        ew = w2_of(W2, m, ke, mt, None, 7)
+        drift = None if ew is None else s_ ** 2 * float(ew[-1, 0])
+        rs = [r for r in allruns if r['m'] == m and r['ke'] == ke and r['opts'].get('metric', 'paradigm') == mt and r['s'] == s_
+              and 'freqs' not in r['opts'] and 'band' not in r['opts'] and r['opts'].get('seed', 7) == 7]
+        jumped = None if not rs else any(r['left'][0] >= 0 and r['maxdev'][0] > JUMP_C for r in rs)
+        if drift is not None and jumped is not None and lst is not None:
+            verdicts.append((key, jumped, drift > lst, drift > med))
+        f4 = lambda x: '—' if x is None else f"{x:.4g}"
+        out.append(f"| {m:g} | {ke:g} | {mt} | {s_:g} | {', '.join('>1' if x is None else f'{x:.4f}' for x in es)} | {f4(lst)}, {f4(med)} | "
+                   + ('—' if (base is None or lst is None) else f"{(lst - base) / s_ ** 2:+.4g}, {(med - base) / s_ ** 2:+.4g}") + ' | '
+                   + f"{f4(drift)} | {'—' if jumped is None else ('yes' if jumped else 'no')} |")
+    if verdicts:
+        j = [v for v in verdicts if v[1]]
+        n_ = [v for v in verdicts if not v[1]]
+        out += ['', f"Where the draw jumped, its drift exceeded the windows' least edge in {sum(v[2] for v in j)} of {len(j)} "
+                    f"(configuration, level) and their median in {sum(v[3] for v in j)}; where it did not, the drift stayed below the least "
+                    f"in {sum(not v[2] for v in n_)} of {len(n_)} and below the median in {sum(not v[3] for v in n_)}."]
+    return out + ['']
+
+
+def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None, F=None, B5=None, A2=None, C3=None, C4=None, W2=None, EDGE=None,
+           C6=None, C7=None):
     L_ = ["# Proposition D‴.60: measurement noise and the formed kernels (`exp_noise_resonance.py`)", "",
           f"D‴.49's closed loop (k_e = {CT.KE:g}, ω = {CT.OM:g}, three bumps of width {CT.SIG:g}, 21 kernels at the masses ε = {EPS:g}, the "
           "regressor at x_m) from the fitted state — each feature's kernel at its centre with its amplitude, the others at α = 0 —; the "
@@ -1194,11 +1691,15 @@ def report(A=None, B=None, B2=None, C=None, B3=None, B4=None, C2=None, F=None, B
         L_.append("")
     L_ += c2_lines(C2)
     L_ += c3_lines(C3, B4)
+    L_ += c4_lines(C3, C4, W2)
+    L_ += edge_lines(EDGE, W2, C, C2)
+    L_ += c6_lines(C6, C3)
+    L_ += c7_lines(C7, W2, C, C2)
     L_.append("Numbers are produced by `experiments/exp_noise_resonance.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
 
-KEYS = ('A', 'A2', 'F', 'B', 'B2', 'B3', 'B5', 'B4', 'C', 'C2', 'C3')
+KEYS = ('A', 'A2', 'F', 'B', 'B2', 'B3', 'B5', 'B4', 'C', 'C2', 'C3', 'C4', 'W2', 'EDGE', 'C6', 'C7')
 
 
 def main():
@@ -1212,7 +1713,7 @@ def main():
     res = {k: v for k, v in old.items() if k not in parts}
     t0 = time.time()
     fns = dict(A=part_A, A2=part_A2, B=part_B, B2=part_B2, B3=part_B3, B4=part_B4, B5=part_B5, C=part_C, C2=part_C2, C3=part_C3,
-               F=part_F)
+               F=part_F, C4=part_C4, W2=part_W2, EDGE=part_EDGE, C6=part_C6, C7=part_C7)
     for k in [k for k in KEYS if k in parts]:
         res[k] = fns[k](old.get('B3')) if k == 'B3' else fns[k](); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
         open(md, 'w').write(report(**{k_: res.get(k_) for k_ in KEYS}))
