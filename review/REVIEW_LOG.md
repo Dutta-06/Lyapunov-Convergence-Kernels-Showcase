@@ -2668,3 +2668,43 @@ monodromy's spectrum, which makes every coherent sum saturate with the slow mode
 effect was seen: rerunning the pair that had ejected showed that it still ejects, and the special tone's ordinary neighbours placed the
 averaging failure in its commensurate 2ω part. And a leave is an event with an anatomy: measured, it is the second-order offset built
 up on the slow modes, then a jump.
+
+## Round 65 (adversarial review of Proposition D‴.58 as revised after round 60, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bl: Proposition D‴.58 as revised after round 60, with its code and results at
+3eb9326 (`review/REVIEW_round65_D3bl.md`). The referee:
+- regenerated the md byte for byte, reran four full B paths, the sixth variant's paths to their first non-optimal blocks and all 14 B2
+  jobs bit-identically;
+- restarted the solve from the range ends with one setting changed at a time (budget, gradient test, step test, Jacobian scaling, start);
+- computed the analytic variable-projection Jacobian, the condition numbers in several units and the smallest singular values;
+- recomputed the Mercer frame's defects and the first tail ratio in every Mehler frame;
+- deduplicated the entries across the variants and measured the stationarity test's effective threshold;
+- ran 52 single-point mutants.
+
+**Verdicts (D3bl).** (i), (ii), (iv), (v) and every number in (iii) and the numerics but the ones below check out. But the sixth variant's
+two new range ends (τ/σ = 1/4, K = 6; 3/4, K = 11) lie below the arithmetic floor, where the joint solve stops on its step test 1.5% and
+0.4% above the optimum whatever the budget — not on the budget, radius or gradient test the draft named —, and 19 single-point mutants
+survived both the tests and `--from-raw`, among them `b_job` dropping the sixth variant's gradient setting (X01). Minors: B2's far misses
+are variable projection's stalls at coalescing nodes; the condition numbers depend on the unit and do not explain variable projection's
+success (the smallest singular values agree); the Mercer sentence names the wrong rule and the wrong measure; the entries were counted
+across the variants (316 entries are 107 events); the stationarity test is weak beyond the vacuous blocks; the status-1 wording (the
+"exception" block's polishes reach the optimum and the radius rejects them); a floor qualifier in the status.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bl-1 | major | The sixth variant's two range ends lie below the floor | B3 (new): each path's first non-optimal block restarted by the polish's own solve — with the path's budget and gradient test (and the path's seed rule on its end), and without the test at 5·10⁴ and 5·10⁵ evaluations; above 10⁻¹⁰ (20 ends) the solve reaches the optimum from all 20 with 5·10⁵ (1530–227797 evaluations, the step test; 16 with 5·10⁴), below it (2 ends) it stops on the step test 1.0147 and 1.0037 times above it; (iii): above the floor the budget, the radius or the gradient test binds, the two ends below it censored by the floor; status |
+| D3bl-2 | major | 19 surviving mutants (X01 the sixth variant's gtol; X02 dc; X04, X05, X07 the condition numbers; R01 the polish's default; X28–X30 the `--variants` CLI; boundary mutants) | Tests: `b_job` passes each variant's polish settings (monkeypatched `sliding_iss`); `polish_block`'s defaults pinned; `b2_job` takes dc from the better start; the analytic VP Jacobian against finite differences and the condition numbers on a 3-kernel case; `main --variants` merges the new paths (stub `b_job`); B2's line and the entries at their boundaries; B3's restarts and seed rule; `b3_lines` on synthetic data; the frames and the first tail ratio |
+| D3bl-3 | minor | B2's far misses are VP stalls | B2's line: the far misses' closest nodes (0.000–0.021σ apart), the largest residual–Jacobian cosine at their end (2.6·10⁻⁴–4.7·10⁻³) and their stops; (iii): "stalls with two nodes coalescing at an end that is not stationary" |
+| D3bl-4 | minor | Condition numbers: units, accuracy, not the mechanism | `vp_jacobian` (Golub–Pereyra, analytic); the centres in units of σ: joint 4.5·10⁶–2.3·10⁹, VP 5.4·10³–3.8·10⁵, the smallest singular values' ratio 1–31.7 (median 1.01); (iii): the two problems differ at the stiff end, not (at most blocks) in their slow modes, and the polish's own solve reaches the optimum given the evaluations (B3) — "far better conditioned" dropped |
+| D3bl-5 | minor | The Mercer sentence | A5 (new): the Mehler frames ρ = t, q, λ — the frame's own rule N(0, v_ρ), v_ρ = 2σ²τ²/(2σ² + (1 − ρ)τ²), v′ = 2, 1.029–1.5, 1; the first tail ratio −v′K(K + 2) + (v′ − 1)(K + 1)(2K + 1) exact in 60 of 60 (`gh_defect_v`), of degree 1 only at v′ = 2; the Mercer frame's rule N(0, 2τ²/(β² + 1)) at 63.49, 17.17, 5.321, 2.332 per kernel; status rewritten (the frames, the Mercer frame's rule, the Mercer-zero rule's measure); the √2 bound in the normalised space, (2σ*/σ)^{1/2} in relative L²; Kuo–Woźniakowski's condition unresolved |
+| D3bl-6 | minor | Entries counted across variants | `entry_lines`: one event per width, grid, iteration and kernel whose duals agree within 10⁻⁴ (their spread 6.8·10⁻⁶), events (entries) per row, the 6 events in two rows noted; (iii): 1 of 107 events of the largest rate, 105 of 107 beyond the outermost node (median 1.17σ) |
+| D3bl-7 | minor | The stationarity test weak | B's summary: the threshold over the Cauchy–Schwarz bound for the 63 non-vacuous blocks, 3.5·10⁻⁴–0.97 (median 7.7·10⁻³); (iii) |
+| D3bl-8 | minor | Status-1 wording | (iii) and numerics: the gradient test "below 10⁻¹⁵"; the once-variant at 1/4 and the third repeated polish at 1/2, 3/4; at τ/σ = 1, the grid shifted, K = 9, the polish stops on the test at the optimum and the radius rejects it (B3: 1.27σ); B's table prints the repeated polishes' ends over the optimum in brackets |
+| D3bl-9 | minor | Floor qualifier | Status: "the first non-optimal one whose optimum is at least 10⁻¹⁰" |
+| D3bl-10 | cosmetic | "Nodes up to 2.14–3.99σ" | Sentence replaced (D3bl-3) |
+
+**Lesson.** A range's end is a property of the solver only where the solver could have gone further: below the arithmetic floor the
+solve stops on its step test wherever its budget, gradient test or radius stand, so naming those as the binding settings there was a
+claim about the floor, not the solver. Restarting the solve from each end with one setting changed at a time — the cheapest experiment
+on the table — separates the two, and a mutation pass on the variant plumbing (here the gradient setting a refactor dropped silently)
+belongs with every new variant.

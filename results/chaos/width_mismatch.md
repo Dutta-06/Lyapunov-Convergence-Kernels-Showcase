@@ -94,6 +94,20 @@ The Gauss–Hermite rule of N(0, v) for the reweighted mixing law (`scaled_rule`
 | 0.5 | 3.0000 | 1: 4.595e-01 (2e-16), 2: 1.769e-01 (0e+00), 3: 6.469e-02 (7e-16), 4: 2.308e-02 (0e+00), 5: 8.115e-03 (2e-16), 6: 2.827e-03 (2e-15), 7: 9.786e-04 (2e-15), 8: 3.370e-04 (2e-15), 9: 1.156e-04 (1e-14), 10: 3.956e-05 (3e-14) | 2.9231 |
 | 0.8 | 9.0000 | 1: 1.567e-01 (0e+00), 2: 2.010e-02 (2e-16), 3: 2.447e-03 (1e-15), 4: 2.908e-04 (2e-15), 5: 3.406e-05 (9e-15), 6: 3.953e-06 (6e-13), 7: 4.558e-07 (6e-13), 8: 5.231e-08 (3e-11), 9: 5.981e-09 (7e-11), 10: 6.819e-10 (1e-10) | 8.7717 |
 
+### A5. The frames: which Gauss–Hermite rule a Mehler expansion singles out
+
+The Mehler frames of the kernel e^{−(y−y′)²/(4σ²)} (ratio ρ, Hermite scale ℓ² = 2σ²ρ/(1 − ρ²)): the Gauss–Hermite rule of the frame's own Gaussian N(0, v_ρ), v_ρ = 2σ²τ²/(2σ² + (1 − ρ)τ²), has no defect below 2K in the frame; v′ = v_ρ/ℓ² the measure's variance in the frame's units. At ρ = t (the half-squeeze rule), q (the Mercer expansion) and λ: v_ρ over the half-squeeze variance, and v′; the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero rule — and its ratio per kernel at the last K against 1/t and 1/q:
+
+| τ/σ | ρ = t: v/v_hs, v′ | ρ = q: v/v_hs, v′ | ρ = λ: v/v_hs, v′ | the Mercer frame's rule: ratio per kernel (1/t, 1/q) |
+|---|---|---|---|---|
+| 0.25 | 1.000000, 2.000000 | 1.000433, 1.029437 | 1.000459, 1.000000 | 63.49 at K = 7 (65.98, 33.97) |
+| 0.5 | 1.000000, 2.000000 | 1.005090, 1.101021 | 1.006231, 1.000000 | 17.17 at K = 10 (17.94, 9.899) |
+| 1 | 1.000000, 2.000000 | 1.035276, 1.267949 | 1.060660, 1.000000 | 5.321 at K = 10 (5.828, 3.732) |
+| 2 | 1.000000, 2.000000 | 1.118034, 1.500000 | 1.341641, 1.000000 | 2.332 at K = 10 (2.618, 2) |
+
+The first tail ratio D_{2K+2}/D_{2K} = −v′K(K + 2) + (v′ − 1)(K + 1)(2K + 1) (`gh_defect_v`, exact) at v′ = 1, 3/2, 7/4, 2, 3, K = 1 … 12: exact in all 60 — −(K − 1) at v′ = 2, growing like (v′ − 2)K² at any other v′.
+
+
 The tail's share Σ_{n>2K}/(first term) against ₂F₁(−½, −½; 1; t²) − 1 (the share's limit if the ratios' leading coefficients govern the tail):
 
 | τ/σ | t | K = 5 | 10 | 20 | 30 | ₂F₁(−½, −½; 1; t²) − 1 |
@@ -105,7 +119,7 @@ The tail's share Σ_{n>2K}/(first term) against ₂F₁(−½, −½; 1; t²) �
 
 ## B. The transit
 
-The sliding path (polished; a kernel leaves only if its correlation stays inward with its own contribution removed) on f* = 0.8φ_σ*(· − 0.03) sampled at 321 points of [-1.6, 1.6], 21 kernels started at the grid −1, −0.9, …, 1, to 13 entries, the fast flow's chunks up to 10⁵·2^24: after each entry the relaxed block's relative rms error against the optimal fit with as many kernels on the same samples (the better of variable projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within 0.001. The numerical variants: base (polish step 1σ, grid shifted by 0, the polish's budget 5000 evaluations, its gradient test 1e-15), polish 2σ (polish step 2σ, grid shifted by 0, the polish's budget 5000 evaluations, its gradient test 1e-15), grid +0.05 (polish step 1σ, grid shifted by 0.05, the polish's budget 5000 evaluations, its gradient test 1e-15), polish 2σ, 5·10⁴ evaluations (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, its gradient test 1e-15), polish 2σ, 5·10⁴, repeated (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, repeated up to 3 times, its gradient test 1e-15), polish 2σ, 5·10⁴, repeated, no gradient test (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, repeated up to 3 times, no gradient test). 'Relaxed': the block passed the stationarity test. The first non-optimal block's polishes as status/evaluations/accepted (status 0: the budget was spent first; 1: the gradient test). 'none': every block optimal, to the path's cap of 12 kernels (the range censored).
+The sliding path (polished; a kernel leaves only if its correlation stays inward with its own contribution removed) on f* = 0.8φ_σ*(· − 0.03) sampled at 321 points of [-1.6, 1.6], 21 kernels started at the grid −1, −0.9, …, 1, to 13 entries, the fast flow's chunks up to 10⁵·2^24: after each entry the relaxed block's relative rms error against the optimal fit with as many kernels on the same samples (the better of variable projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within 0.001. The numerical variants: base (polish step 1σ, grid shifted by 0, the polish's budget 5000 evaluations, its gradient test 1e-15), polish 2σ (polish step 2σ, grid shifted by 0, the polish's budget 5000 evaluations, its gradient test 1e-15), grid +0.05 (polish step 1σ, grid shifted by 0.05, the polish's budget 5000 evaluations, its gradient test 1e-15), polish 2σ, 5·10⁴ evaluations (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, its gradient test 1e-15), polish 2σ, 5·10⁴, repeated (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, repeated up to 3 times, its gradient test 1e-15), polish 2σ, 5·10⁴, repeated, no gradient test (polish step 2σ, grid shifted by 0, the polish's budget 50000 evaluations, repeated up to 3 times, no gradient test). 'Relaxed': the block passed the stationarity test. The first non-optimal block's polishes as status/evaluations/accepted (status 0: the budget was spent first; 1: the gradient test), a repeated polish's end over the optimum in brackets. 'none': every block optimal, to the path's cap of 12 kernels (the range censored).
 
 | τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum's error, block / optimum, relaxed | its polishes | relaxed blocks | chunks redone (stall, failure), failed | polish rejected | exits |
 |---|---|---|---|---|---|---|---|---|
@@ -113,20 +127,20 @@ The sliding path (polished; a kernel leaves only if its correlation stays inward
 | 0.25 | polish 2σ | 1, 2, 3, 4 | 5, 1.61e-09, 10.95, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 2 |
 | 0.25 | grid +0.05 | 1, 2, 3, 4 | 5, 1.61e-09, 10.96, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 2 |
 | 0.25 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4 | 5, 1.61e-09, 1.012, True | 1/30240/a | 12/12 | 0, 0, 0 | 2 | 1 |
-| 0.25 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4 | 5, 1.61e-09, 1.012, True | 1/30240/a 1/1/r | 12/12 | 0, 0, 0 | 2 | 0 |
-| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5 | 6, 2.55e-11, 4.951, True | 0/50000/a 0/50000/a 0/50000/a 0/50000/a | 12/12 | 0, 0, 0 | 0 | 0 |
+| 0.25 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4 | 5, 1.61e-09, 1.012, True | 1/30240/a 1/1/r (1.012) | 12/12 | 0, 0, 0 | 2 | 0 |
+| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5 | 6, 2.55e-11, 4.951, True | 0/50000/a 0/50000/a (8.7) 0/50000/a (6.609) 0/50000/a (4.951) | 12/12 | 0, 0, 0 | 0 | 0 |
 | 0.5 | base | 1, 2, 3, 4, 5 | 6, 6.30e-08, 14.34, True | 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r | 12/12 | 3, 5, 0 | 182 | 0 |
 | 0.5 | polish 2σ | 1, 2, 3, 4, 5 | 6, 6.30e-08, 1.46, True | 0/5000/a | 12/12 | 0, 0, 0 | 3 | 1 |
 | 0.5 | grid +0.05 | 1, 2, 3, 4, 5 | 6, 6.30e-08, 14.19, True | 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r | 12/12 | 2, 5, 0 | 143 | 0 |
 | 0.5 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 4.605, True | 0/50000/a | 12/12 | 0, 0, 0 | 0 | 0 |
-| 0.5 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 2.677, True | 0/50000/a 0/50000/a 1/1/r | 12/12 | 0, 0, 0 | 1 | 0 |
-| 0.5 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 1.233, True | 0/50000/a 0/50000/a 0/50000/a 0/50000/a | 12/12 | 1, 0, 0 | 0 | 0 |
+| 0.5 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 2.677, True | 0/50000/a 0/50000/a (2.677) 1/1/r (2.677) | 12/12 | 0, 0, 0 | 1 | 0 |
+| 0.5 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5, 6, 7 | 8, 2.10e-10, 1.233, True | 0/50000/a 0/50000/a (2.596) 0/50000/a (1.708) 0/50000/a (1.233) | 12/12 | 1, 0, 0 | 0 | 0 |
 | 0.75 | base | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, 7.53, True | 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r 0/5000/r | 12/12 | 1, 7, 0 | 138 | 0 |
 | 0.75 | polish 2σ | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, 1.642, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 0 |
 | 0.75 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7 | 8, 5.22e-08, 8.656, True | 0/5000/r | 12/12 | 1, 3, 0 | 88 | 0 |
 | 0.75 | polish 2σ, 5·10⁴ evaluations | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 6.81e-10, 2.305, True | 0/50000/a | 12/12 | 0, 0, 0 | 0 | 0 |
-| 0.75 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 6.81e-10, 1.121, True | 0/50000/a 0/50000/a 1/1/r | 12/12 | 0, 0, 0 | 0 | 0 |
-| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 | 11, 7.75e-11, 2.685, True | 0/50000/a 0/50000/a 0/50000/a 0/50000/a | 12/12 | 1, 0, 0 | 0 | 0 |
+| 0.75 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 6.81e-10, 1.121, True | 0/50000/a 0/50000/a (1.121) 1/1/r (1.121) | 12/12 | 0, 0, 0 | 0 | 0 |
+| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 | 11, 7.75e-11, 2.685, True | 0/50000/a 0/50000/a (3.932) 0/50000/a (3.203) 0/50000/a (2.685) | 12/12 | 1, 0, 0 | 0 | 0 |
 | 1 | base | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 5.22e-08, 1.771, True | 0/5000/a | 12/12 | 0, 0, 0 | 12 | 0 |
 | 1 | polish 2σ | 1, 2, 3, 4, 5, 6, 7, 8, 9 | 10, 5.22e-08, 1.771, True | 0/5000/a | 12/12 | 0, 0, 0 | 0 | 0 |
 | 1 | grid +0.05 | 1, 2, 3, 4, 5, 6, 7, 8, 10 | 9, 2.96e-07, 4.241, True | 1/3635/r 1/3620/r 1/3720/r 1/3725/r 1/3618/r 1/3600/r 1/3648/r 1/3682/r 1/3722/r 1/3604/r 1/3685/r 1/3689/r 1/3684/r 1/3608/r 1/3624/r 1/3594/r 1/3881/r 1/3658/r 1/4129/r 1/3699/r 1/3648/r 1/3718/r 1/3616/r 1/3553/r | 12/12 | 2, 3, 0 | 110 | 0 |
@@ -146,19 +160,53 @@ The sliding path (polished; a kernel leaves only if its correlation stays inward
 | 2 | polish 2σ, 5·10⁴, repeated | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
 | 2 | polish 2σ, 5·10⁴, repeated, no gradient test | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 | none | — | 12/12 | 0, 0, 0 | 0 | 0 |
 
-Over every width and variant: the optimal blocks' optimum errors down to 6.81e-10; the non-optimal blocks' from 2.96e-07 down (0 of 116 failed the stationarity test; 53 of those that passed it pass it at any state by Cauchy–Schwarz, the test being absolute — their errors up to 4.0e-10); non-optimal blocks with an optimum above 10⁻⁷: 1; the non-optimal blocks' errors 1.01e-12 … 1.26e-06.
+Over every width and variant: the optimal blocks' optimum errors down to 6.81e-10; the non-optimal blocks' from 2.96e-07 down (0 of 116 failed the stationarity test; 53 of those that passed it pass it at any state by Cauchy–Schwarz, the test being absolute — their errors up to 4.0e-10; for the other 63 its threshold over the Cauchy–Schwarz bound — the residual's cosine with the block's directions it allows — is 3.5e-04–0.97 (median 7.7e-03; above 0.1 in 24): a weak test); non-optimal blocks with an optimum above 10⁻⁷: 1; the non-optimal blocks' errors 1.01e-12 … 1.26e-06.
 
-Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 33 of the 38 blocks whose optimum is at least 1e-10; 1 ends within 1% of it (1.001 times: in its basin, unconverged); 4 end 16.36–24.74 times above it, the block's nodes up to 2.14–3.99σ from the optimum's. The 78 blocks with an optimum below 1e-10, where the solve stops short of the optimum (A), are not counted (0 reached). From the first non-optimal block of each path: 20 of 20; on 2 paths the first non-optimal block's optimum is below 1e-10. There the Jacobian's condition number is 1.3e+06–5e+08 for the joint fit in (w, c), 5.4e+03–3.6e+05 for variable projection's in c alone.
+Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 33 of the 38 blocks whose optimum is at least 1e-10; 1 ends within 1% of it (1.001 times: in its basin, unconverged); 4 end 16.36–24.74 times above it — the blocks' largest node distances from the optimum's 2.14–3.99σ — where variable projection stalls: its two closest nodes 0.000–0.021σ apart, its end not stationary (the largest cosine of its residual with a Jacobian column 2.6e-04–4.7e-03), its stop 3/2554, 0/20000, 3/2166, 3/18995 (status/evaluations: a miss says nothing of the block's basin). The 78 blocks with an optimum below 1e-10, where the solve stops short of the optimum (A), are not counted (0 reached). From the first non-optimal block of each path: 20 of 20; on 2 paths the first non-optimal block's optimum is below 1e-10. There the Jacobian's condition number (the centres in units of σ) is 4.5e+06–2.3e+09 for the joint fit in (w, c), 5.4e+03–3.8e+05 for variable projection's in c alone (analytic), and variable projection's smallest singular value over the joint fit's 1–31.7 (median 1.01): the slow modes are as slow in both, the gap at the stiff end.
 
 
-The entries over the variants that record them, by the block they join: the entrant had the largest current rate |⟨rφ_j⟩|; its rate over the largest; its dual |u_j| at the block's start; whether it starts beyond the block's outermost node (how far) or between its nodes (their duals). The entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (`sliding_iss`'s rule), its dual charged during the earlier blocks.
+### B3. The range ends: the polish restarted from each path's first non-optimal block
 
-| joining | entries | largest rate | rate / largest: median (range) | dual: median (least) | beyond: entrants, median (range) | between: entrants (duals) |
+From the block's final state, the polish's own solve (`polish_block`, TRF): with the path's budget and gradient test — its stop (status 0: the budget; 1: the gradient test; 2: the decrease test; 3: the step test)/evaluations, its error over the optimum's, and the path's seed rule on its end (the largest move of a kernel still near its seed, σ, from its start or its ascent target; accepted if within the path's polish step) —, and without the gradient test at 50000, 500000 evaluations; † the optimum below 1e-10:
+
+| τ/σ | variant | K | optimum | the path's polish: stop/evaluations, over the optimum; seed rule | no gradient test, 50000 | no gradient test, 500000 |
 |---|---|---|---|---|---|---|
-| none (the first entry) | 36 | 36 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |
-| an optimal block | 316 | 5 | 0.21 (0.001–1.00) | 0.959 (0.570) | 314, 1.22σ (0.11–2.75σ) | 2 (0.989–0.992) |
-| a non-optimal block | 116 | 39 | 0.71 (0.004–1.00) | 0.786 (0.020) | 97, 2.50σ (0.17–4.38σ) | 19 (0.237–0.999) |
-| all | 468 | 80 | 0.30 (0.001–1.00) | 0.947 (0.000) | 411, 1.42σ (0.11–4.38σ) | 21 (0.237–0.999) |
+| 0.25 | base | 5 | 1.61e-09 | 0/5000, 6.69552; 0.16σ, accepted | 3/26621, 1.00000 | 3/26621, 1.00000 |
+| 0.5 | base | 6 | 6.30e-08 | 0/5000, 1.31320; 1.93σ, rejected | 3/6442, 1.00000 | 3/6442, 1.00000 |
+| 0.75 | base | 8 | 5.22e-08 | 0/5000, 1.58555; 1.71σ, rejected | 3/11033, 1.00000 | 3/11033, 1.00000 |
+| 1 | base | 10 | 5.22e-08 | 0/5000, 1.02035; 0.21σ, accepted | 3/7338, 1.00000 | 3/7338, 1.00000 |
+| 0.25 | polish 2σ | 5 | 1.61e-09 | 0/5000, 6.74025; 0.17σ, accepted | 3/26827, 1.00000 | 3/26827, 1.00000 |
+| 0.5 | polish 2σ | 6 | 6.30e-08 | 1/1788, 1.00000; 0.06σ, accepted | 3/1804, 1.00000 | 3/1804, 1.00000 |
+| 0.75 | polish 2σ | 8 | 5.22e-08 | 0/5000, 1.00799; 0.08σ, accepted | 3/6314, 1.00000 | 3/6314, 1.00000 |
+| 1 | polish 2σ | 10 | 5.22e-08 | 0/5000, 1.02035; 0.21σ, accepted | 3/7338, 1.00000 | 3/7338, 1.00000 |
+| 0.25 | grid +0.05 | 5 | 1.61e-09 | 0/5000, 6.74593; 0.17σ, accepted | 3/26659, 1.00000 | 3/26659, 1.00000 |
+| 0.5 | grid +0.05 | 6 | 6.30e-08 | 0/5000, 1.43236; 1.83σ, rejected | 3/6616, 1.00000 | 3/6616, 1.00000 |
+| 0.75 | grid +0.05 | 8 | 5.22e-08 | 0/5000, 1.70316; 1.07σ, rejected | 3/11386, 1.00000 | 3/11386, 1.00000 |
+| 1 | grid +0.05 | 9 | 2.96e-07 | 1/3553, 1.00000; 1.27σ, rejected | 3/3569, 1.00000 | 3/3569, 1.00000 |
+| 0.25 | polish 2σ, 5·10⁴ evaluations | 5 | 1.61e-09 | 1/1, 1.01196; 0.00σ, accepted | 3/1530, 1.00000 | 3/1530, 1.00000 |
+| 0.5 | polish 2σ, 5·10⁴ evaluations | 8 | 2.10e-10 | 0/50000, 2.67693; 0.23σ, accepted | 0/50000, 2.67693 | 3/227797, 1.00027 |
+| 0.75 | polish 2σ, 5·10⁴ evaluations | 10 | 6.81e-10 | 0/50000, 1.12069; 0.21σ, accepted | 0/50000, 1.12069 | 3/94801, 1.00001 |
+| 1 | polish 2σ, 5·10⁴ evaluations | 12 | 1.61e-09 | 0/50000, 1.00005; 0.16σ, accepted | 0/50000, 1.00005 | 3/51507, 1.00000 |
+| 0.25 | polish 2σ, 5·10⁴, repeated | 5 | 1.61e-09 | 1/1, 1.01196; 0.00σ, accepted | 3/1530, 1.00000 | 3/1530, 1.00000 |
+| 0.5 | polish 2σ, 5·10⁴, repeated | 8 | 2.10e-10 | 1/1, 2.67693; 0.00σ, accepted | 0/50000, 1.75531 | 3/178024, 1.00028 |
+| 0.75 | polish 2σ, 5·10⁴, repeated | 10 | 6.81e-10 | 1/1, 1.12066; 0.00σ, accepted | 0/50000, 1.00008 | 3/52137, 0.99998 |
+| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 6 | 2.55e-11† | 0/50000, 3.76748; 0.03σ, accepted | 0/50000, 3.76748 | 3/256857, 1.01474 |
+| 0.5 | polish 2σ, 5·10⁴, repeated, no gradient test | 8 | 2.10e-10 | 0/50000, 1.01827; 0.03σ, accepted | 0/50000, 1.01827 | 3/74011, 1.00027 |
+| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 11 | 7.75e-11† | 0/50000, 2.28692; 0.05σ, accepted | 0/50000, 2.28692 | 3/384829, 1.00365 |
+
+Above 1e-10 (20 blocks): without the gradient test and with 500000 evaluations the solve reaches the optimum (within 0.001) from 20 (its error 0.99998–1.00028 times the optimum's, in 1530–227797 evaluations, status 3; with 50000 evaluations from 16); the path's own polish reaches it from 1 but its seed rule rejects the end (a kernel moving 1.27σ). Below 1e-10 (2 blocks) the solve stops at 1.0037–1.0147 times the optimum with 500000 evaluations (status 3, 3; with 50000: 3.7675, 2.2869).
+
+
+The entries over the variants that record them, by the block they join — one event per width, starting grid, iteration and kernel whose duals agree within 10⁻⁴ (the variants repeat a path's events until they part: the entries over the variants in brackets; the duals of one event agree to 6.8e-06; referee round 65): the entrant had the largest current rate |⟨rφ_j⟩|; its rate over the largest; its dual |u_j| at the block's start; whether it starts beyond the block's outermost node (how far) or between its nodes (their duals). The entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (`sliding_iss`'s rule), its dual charged during the earlier blocks.
+
+| joining | events (entries) | largest rate | rate / largest: median (range) | dual: median (least) | beyond: entrants, median (range) | between: entrants (duals) |
+|---|---|---|---|---|---|---|
+| none (the first entry) | 12 (36) | 12 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |
+| an optimal block | 107 (316) | 1 | 0.21 (0.001–1.00) | 0.963 (0.570) | 105, 1.17σ (0.11–2.75σ) | 2 (0.989–0.992) |
+| a non-optimal block | 102 (116) | 36 | 0.78 (0.004–1.00) | 0.731 (0.020) | 83, 2.56σ (0.17–4.38σ) | 19 (0.237–0.999) |
+| all | 215 (468) | 49 | 0.41 (0.001–1.00) | 0.914 (0.000) | 182, 1.61σ (0.11–4.38σ) | 21 (0.237–0.999) |
+
+6 events join an optimal block in some variants and a non-optimal one in others: counted in both rows, once in 'all'.
 
 ### τ/σ = 0.25, base (events: 10+, 11+, 8+, 12+, 13+, 7+, 16+, 14+, 4+, 5+, 4−, 17+, 3+, 9+)
 

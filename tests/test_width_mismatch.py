@@ -109,14 +109,16 @@ def test_the_report_on_synthetic_results():
               events=[(1.0, 10, 'enter', 0.0), (2.0, 11, 'enter', 0.0)], relaxed=[True, False], stiff=0, redone=0, failed=0, rejected=0)]
     md = WM.report(B=B)
     assert '| 0.25 | base | 1 | 2, 1.00e-03, 1.002, False | — | 1/2 | 0, 0, 0 | 0 | 0 |' in md
-    B[0]['blocks'][1]['polish'] = [dict(status=0, nfev=5000, accepted=True), dict(status=1, nfev=12, accepted=False, e0=1.0, e1=1.0)]
+    rfB = float(np.sqrt(np.mean((WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(0.25) ** 2))) ** 2)))
+    B[0]['blocks'][1]['polish'] = [dict(status=0, nfev=5000, accepted=True),
+                                   dict(status=1, nfev=12, accepted=False, e0=1.0, e1=1.002e-3 * rfB)]  # its end over the optimum (round 65)
     B[0]['entries'] = [dict(it=0, j=10, u0=0.0, rate=0.5, rate_max=0.5, t_wall=2.0, t_min=2.0),
                        dict(it=1, j=11, u0=0.9, rate=0.1, rate_max=0.4, t_wall=1.0, t_min=1.0)]
     md = WM.report(B=B)
-    assert '| 2, 1.00e-03, 1.002, False | 0/5000/a 1/12/r | 1/2 |' in md                 # the first non-optimal block's polishes (round 54)
-    assert '| none (the first entry) | 1 | 1 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |' in md       # the entries by regime (round 60)
-    assert '| an optimal block | 1 | 0 | 0.25 (0.250–0.25) | 0.900 (0.900) | 1, 0.58σ (0.58–0.58σ) | — |' in md
-    assert '| all | 2 | 1 | 0.62 (0.250–1.00) | 0.450 (0.000) | 1, 0.58σ (0.58–0.58σ) | — |' in md and '| a non-optimal block |' not in md
+    assert '| 2, 1.00e-03, 1.002, False | 0/5000/a 1/12/r (1.002) | 1/2 |' in md        # the first non-optimal block's polishes (round 54)
+    assert '| none (the first entry) | 1 (1) | 1 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |' in md   # the entries by regime (round 60)
+    assert '| an optimal block | 1 (1) | 0 | 0.25 (0.250–0.25) | 0.900 (0.900) | 1, 0.58σ (0.58–0.58σ) | — |' in md
+    assert '| all | 2 (2) | 1 | 0.62 (0.250–1.00) | 0.450 (0.000) | 1, 0.58σ (0.58–0.58σ) | — |' in md and '| a non-optimal block |' not in md
     x = dict(e_hs=1.0, e_best=0.5, e_opt=0.4)
     assert WM.gap_share(x) == '83.3%' and WM.gap_share(dict(x, e_opt=0.6)) == '100.0%, optimum unconverged'
     assert WM.gap_share(dict(x, e_opt=0.5 * (1 + 1e-12))) == '100.0%'                 # within UNCONV: not flagged
@@ -167,7 +169,8 @@ def test_the_quoted_cells_on_synthetic_results():
     def blk(k, tau, e, e_opt, rel, dc=0.0, dc_hs=0.0, e_hs=None, shift=0.0, **kw):
         return dict(k=k, tau=tau, c=WM.C_B + shift + 0.2 * WM.SIG * (np.arange(k) - (k - 1) / 2), w=np.full(k, WM.A_B / k), e=e,
                     e_opt=e_opt, c_opt=None, relaxed=rel, dc=dc, dc_hs=dc_hs, e_hs=e if e_hs is None else e_hs, **kw)
-    pol = [dict(status=0, nfev=5000, accepted=True), dict(status=1, nfev=12, accepted=False, e0=1.0, e1=1.0)]
+    rfB = float(np.sqrt(np.mean((WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(0.25) ** 2))) ** 2)))
+    pol = [dict(status=0, nfev=5000, accepted=True), dict(status=1, nfev=12, accepted=False, e0=1.0, e1=3.006e-8 * rfB)]
     path = lambda r_, var, es: dict(r=r_, var=var, blocks=[blk(k, 10.0 + k, e * (1 + 1e-4), e, True) for k, e in es],
                                     events=[(10.0 + k, 9 + k, 'enter', 0.0) for k, e in es], relaxed=[True] * len(es), stiff=0, redone=0,
                                     failed=0, rejected=0)
@@ -189,11 +192,14 @@ def test_the_quoted_cells_on_synthetic_results():
               runaway=False, rf=rf),
          dict(s=1e-2, k=[1, 2], rms=[0.05, 0.02], err=[0.2, 0.1], at=[1, 1], gaps=[0.5], runaway=False, rf=rf)]
     md = WM.report(B=B, C=C)
-    assert '| 0.25 | base | 1, 2 | 3, 3.00e-08, 1.002, False | 0/5000/a 1/12/r | 3/4 | 1, 2, 3 | 4 | 1 |' in md
+    assert '| 0.25 | base | 1, 2 | 3, 3.00e-08, 1.002, False | 0/5000/a 1/12/r (1.002) | 3/4 | 1, 2, 3 | 4 | 1 |' in md
     assert '| 0.25 | grid +0.05 | 1 | 2, 5.00e-07, 1.2, True | — | 2/2 | 0, 0, 0 | 0 | 0 |' in md
     assert '| 1 | base | 1, 2, 3 | none | — | 3/3 | 0, 0, 0 | 0 | 0 |' in md
+    mg = sorted(WM.cs_margin(b['r'], b['var'], o) for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= WM.OPT_TOL and o['relaxed'])
     assert ("Over every width and variant: the optimal blocks' optimum errors down to 2.00e-03; the non-optimal blocks' from 2.00e-03 down "
-            "(1 of 3 failed the stationarity test); non-optimal blocks with an optimum above 10⁻⁷: 2; the non-optimal blocks' errors "
+            f"(1 of 3 failed the stationarity test; for the other 2 its threshold over the Cauchy–Schwarz bound — the residual's cosine with "
+            f"the block's directions it allows — is {mg[0]:.1e}–{mg[1]:.2f} (median {np.median(mg):.1e}; above 0.1 in "
+            f"{sum(m > 0.1 for m in mg)}): a weak test); non-optimal blocks with an optimum above 10⁻⁷: 2; the non-optimal blocks' errors "
             "3.01e-08 … 2.10e-03.") in md
     assert '### τ/σ = 0.25, base (events: 10+, 11+, 12+, 11−)' in md
     for row in ('| 1 | 10.72 | 1.0005e-02 | 1.0000e-02 | 1.000500 | True | 1.0e-07 | 0.000 | 1.1000e-02 | — |',
@@ -270,15 +276,19 @@ def test_b2_variable_projection_from_the_blocks():
           dict(r=0.5, var='polish 2σ', k=8, e_block=4e-6 * (1 + 1e-4), e_rule=4e-6, dc=0.0)]
     assert WM.b2_line(B2)[0] == (
         "Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 2 of the 4 blocks whose "
-        "optimum is at least 1e-10; 1 ends within 1% of it (1.005 times: in its basin, unconverged); 1 ends 3 times above it, the "
-        "block's nodes up to 2.50σ from the optimum's. The 2 blocks with an optimum below 1e-10, where the solve stops short of the "
+        "optimum is at least 1e-10; 1 ends within 1% of it (1.005 times: in its basin, unconverged); 1 ends 3 times above it — the "
+        "blocks' largest node distances from the optimum's 2.50σ —. The 2 blocks with an optimum below 1e-10, where the solve stops short of the "
         "optimum (A), are not counted (1 reached). From the first non-optimal block of each path: 2 of 3 (the others 3 times above it); on "
         "1 path the first non-optimal block's optimum is below 1e-10.")
     assert WM.b2_line(None) == []
-    for q, (cj, cv) in zip(B2, ((1e7, 1e4), (2e7, 2e4), (4e8, 3e5), (9e9, 9e9), (9e9, 9e9), (5e7, 2e5))):
-        q.update(cond_joint=cj, cond_vp=cv)
-    assert WM.b2_line(B2)[0].endswith(" There the Jacobian's condition number is 1e+07–4e+08 for the joint fit in (w, c), 1e+04–3e+05 "
-                                      "for variable projection's in c alone.")          # the first blocks above the floor
+    for q, (cj, cv, sm) in zip(B2, ((1e7, 1e4, 1.5), (2e7, 2e4, 9.0), (4e8, 3e5, 2.0), (9e9, 9e9, 7.0), (9e9, 9e9, 7.0), (5e7, 2e5, 1.0))):
+        q.update(cond_joint=cj, cond_vp=cv, smin_ratio=sm, vp_status=3, vp_nfev=77, vp_gap=0.002, vp_cos=3e-4)
+    md = WM.b2_line(B2)[0]
+    assert md.endswith(" There the Jacobian's condition number (the centres in units of σ) is 1e+07–4e+08 for the joint fit in (w, c), "
+                       "1e+04–3e+05 for variable projection's in c alone (analytic), and variable projection's smallest singular value over "
+                       "the joint fit's 1–2 (median 1.5): the slow modes are as slow in both, the gap at the stiff end.")
+    assert ("where variable projection stalls: its two closest nodes 0.002σ apart, its end not stationary (the largest cosine of its "
+            "residual with a Jacobian column 3.0e-04), its stop 3/77") in md          # the far miss (grid +0.05)
 
 
 def test_the_entries_by_the_block_they_join():
@@ -295,10 +305,18 @@ def test_the_entries_by_the_block_they_join():
                        dict(it=2, j=12, u0=0.97, rate=0.1, rate_max=0.4), dict(it=3, j=13, u0=-0.1, rate=-0.2, rate_max=0.2),
                        dict(it=4, j=14, u0=0.9, rate=0.08, rate_max=0.4)])]
     md = '\n'.join(WM.entry_lines(B))
-    assert '| none (the first entry) | 1 | 1 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |' in md
-    assert '| an optimal block | 3 | 1 | 0.95 (0.200–1.00) | 0.700 (0.100) | 3, 1.00σ (0.30–2.50σ) | — |' in md
-    assert '| a non-optimal block | 1 | 0 | 0.25 (0.250–0.25) | 0.970 (0.970) | — | 1 (0.970–0.970) |' in md
-    assert '| all | 5 | 2 | 0.95 (0.200–1.00) | 0.700 (0.000) | 3, 1.00σ (0.30–2.50σ) | 1 (0.970–0.970) |' in md
+    assert '| none (the first entry) | 1 (1) | 1 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |' in md
+    assert '| an optimal block | 3 (3) | 1 | 0.95 (0.200–1.00) | 0.700 (0.100) | 3, 1.00σ (0.30–2.50σ) | — |' in md
+    assert '| a non-optimal block | 1 (1) | 0 | 0.25 (0.250–0.25) | 0.970 (0.970) | — | 1 (0.970–0.970) |' in md
+    assert '| all | 5 (5) | 2 | 0.95 (0.200–1.00) | 0.700 (0.000) | 3, 1.00σ (0.30–2.50σ) | 1 (0.970–0.970) |' in md
+    B2_ = B + [dict(B[0], var='polish 2σ', entries=[dict(e, u0=e['u0'] + 5e-6) for e in B[0]['entries']]),
+               dict(B[0], var='grid +0.05')]                       # a repeat (same events) and another grid (other events)
+    md2 = '\n'.join(WM.entry_lines(B2_))
+    assert '| an optimal block | 6 (9) |' in md2 and 'the duals of one event agree to 5.0e-06' in md2
+    B3_ = B + [dict(B[0], var='polish 2σ', blocks=[B[0]['blocks'][0], blk(2, True, [-0.1, 0.1])] + B[0]['blocks'][2:])]
+    md3 = '\n'.join(WM.entry_lines(B3_))                              # one event joins an optimal block in one variant only (round 65)
+    assert "1 events join an optimal block in some variants and a non-optimal one in others" in md3 and '| all | 5 (10) |' in md3
+    assert '| an optimal block | 4 (7) |' in md3 and 'events join an optimal block' not in md + md2
     assert WM.entry_lines([dict(B[0], entries=None)]) == []
 
 
@@ -351,8 +369,11 @@ def test_the_summary_counts_the_vacuous_stationarity_tests():
                                relaxed=True, dc=0.0, dc_hs=0.0, e_hs=e)
     B = [dict(r=1.0, var='base', blocks=[blk(1, 1e-2, 1.0001), blk(2, 1e-14, 1.5), blk(3, 1e-6, 1.5), blk(4, 1e-7, 1.5)], events=[],
               relaxed=[True] * 4, stiff=0, redone=0, failed=0, rejected=0)]
+    md = WM.report(B=B)
     assert ("(0 of 3 failed the stationarity test; 1 of those that passed it pass it at any state by Cauchy–Schwarz, the test being "
-            "absolute — their errors up to 1.5e-14)") in WM.report(B=B)
+            "absolute — their errors up to 1.5e-14; for the other 2 its threshold over the Cauchy–Schwarz bound") in md
+    mg = sorted(WM.cs_margin(1.0, 'base', o) for o in B[0]['blocks'][2:])
+    assert f"is {mg[0]:.1e}–{mg[1]:.2f} (median {np.median(mg):.1e}; above 0.1 in {sum(m > 0.1 for m in mg)}): a weak test" in md
 
 
 def test_merge_b_replaces_and_orders_the_paths():
@@ -388,3 +409,186 @@ def test_b_paths_reproduce_the_raw():
         assert max(abs(e['u0'] - f_['u0']) + abs(e['rate'] / f_['rate'] - 1) for e, f_ in zip(b['entries'], ref['entries'])) < 1e-9
     assert ref['rejected'] == 0 and any('e0' in p for o in ref['blocks'] for p in o['polish'])
     assert next(b for b in raw['B'] if b['r'] == 2.0 and b['var'] == 'base')['rejected'] == 13
+
+
+def test_b_job_passes_the_variants_polish_settings(monkeypatch):
+    """Referee round 65 (X01): `b_job` hands `sliding_iss` each variant's polish step, budget, repetitions and gradient test (None: the
+    sixth variant), and the starting grid's shift."""
+    from src.core import rich_transit as RT
+    seen = []
+
+    def stub(L, K, f, c0, rho, **kw):
+        seen.append((np.asarray(c0).copy(), kw))
+        return dict(hist=[(0.0, c0, np.zeros(len(c0)), 1.0)], relaxed=[], polish_log=[], events=[], stiff_redone=0, solver_redone=0,
+                    solver_failed=0, polish_rejected=0, entry_info=[])
+    monkeypatch.setattr(RT, 'sliding_iss', stub)
+    for name, step, shift, nfev, rep_, gt in WM.VARIANTS_B:
+        WM.b_job((0.25, name))
+        c0, kw = seen[-1]
+        assert (kw['polish_step'], kw['polish_nfev'], kw['repolish'], kw['polish_gtol']) == (step, nfev, rep_, gt)
+        assert abs(c0[0] - (-1.0 + shift)) < 1e-12
+    assert seen[-1][1]['polish_gtol'] is None
+
+
+def test_the_polish_defaults_are_pinned():
+    """Referee round 65 (R01): `polish_block`'s and `sliding_iss`'s gradient test default to 10⁻¹⁵ — other experiments call the polish
+    without it."""
+    import inspect
+    from src.core import rich_transit as RT
+    assert inspect.signature(RT.polish_block).parameters['gtol'].default == 1e-15
+    assert inspect.signature(RT.sliding_iss).parameters['polish_gtol'].default == 1e-15
+
+
+def test_b2_takes_dc_from_the_better_start(monkeypatch):
+    """Referee round 65 (X02): `b2_job`'s dc is the block's distance from the better of the two variable-projection ends."""
+    ends = iter([(np.array([0.0, 0.1]), np.array([1.0, 1.0]), 2e-6, 3, 50), (np.array([0.02, 0.13]), np.array([1.0, 1.0]), 1e-6, 2, 40)])
+    monkeypatch.setattr(WM, 'vp_fit', lambda Phi_of, f, y0, max_nfev=20000: next(ends))
+    q = WM.b2_job((1.0, 'base', 2, np.array([0.0, 0.1])))
+    assert abs(q['dc'] - 0.03) < 1e-12 and q['vp_status'] == 3 and q['vp_nfev'] == 50 and abs(q['vp_gap'] - 0.1 / WM.SIG) < 1e-12
+
+
+def test_the_vp_jacobian_and_the_condition_numbers():
+    """Referee round 65 (X04, X05, X07): `vp_jacobian` is variable projection's Jacobian (against central differences); `b2_job`'s
+    condition numbers are those of the joint Jacobian with the least-squares amplitudes and of the analytic one, the centres in units of
+    σ, and the ratio of their smallest singular values."""
+    from src.core import rich_transit as RT
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(1.0) ** 2))
+    c = np.array([-0.15, 0.03, 0.2])
+
+    def vp(cc):
+        P = K.phi(cc)
+        return f - P @ np.linalg.lstsq(P, f, rcond=None)[0]
+    h = 1e-6
+    Jd = np.stack([(vp(c + h * e) - vp(c - h * e)) / (2 * h) for e in np.eye(3)], axis=1)
+    J = WM.vp_jacobian(K, f, c)
+    assert np.linalg.norm(J - Jd) < 1e-6 * np.linalg.norm(J)
+    q = WM.b2_job((1.0, 'base', 3, c))
+    wl = np.linalg.lstsq(K.phi(c), f, rcond=None)[0]
+    sj = np.linalg.svd(np.c_[K.phi(c), K.dphi(c) * wl[None, :] * WM.SIG], compute_uv=False)
+    sp = np.linalg.svd(J * WM.SIG, compute_uv=False)
+    assert abs(q['cond_joint'] / (sj[0] / sj[-1]) - 1) < 1e-9 and abs(q['cond_vp'] / (sp[0] / sp[-1]) - 1) < 1e-9
+    assert abs(q['smin_ratio'] / (sp[-1] / sj[-1]) - 1) < 1e-9
+
+
+def test_main_variants_merges_the_new_paths(monkeypatch, tmp_path):
+    """Referee round 65 (X28–X30): `--variants i,j` runs B for those variants only (in VARIANTS_B's order) and merges them into the raw's B."""
+    import exp_cohesion_leak as E
+    v = [x[0] for x in WM.VARIANTS_B]
+    E.save(str(tmp_path / 'width_mismatch_raw.npz'), B=[dict(r=1.0, var=v[0], x=0), dict(r=1.0, var=v[5], x=0)])
+    calls, saved = [], []
+    monkeypatch.setattr(WM, 'OUT', str(tmp_path))
+    monkeypatch.setattr(WM, 'b_job', lambda a: (calls.append(a), dict(r=a[0], var=a[1], x=1))[1])
+    monkeypatch.setattr(WM, 'report', lambda *a, **k: '')
+    monkeypatch.setattr(E, 'save', lambda path, **kw: saved.append(kw))
+    import multiprocessing
+
+    class FakePool:
+        def __init__(self, n):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def map(self, fn, jobs, chunksize=1):
+            return [fn(j) for j in jobs]
+    monkeypatch.setattr(multiprocessing, 'Pool', FakePool)
+    monkeypatch.setattr(sys, 'argv', ['x', '--only', 'B', '--variants', '0,5'])
+    WM.main()
+    assert calls == [(r_, v[0]) for r_ in WM.TAUS_B] + [(r_, v[5]) for r_ in WM.TAUS_B]
+    B = saved[-1]['B']
+    assert len(B) == 2 * len(WM.TAUS_B) and all(b['x'] == 1 for b in B) and [b['var'] for b in B][:len(WM.TAUS_B)] == [v[0]] * len(WM.TAUS_B)
+
+
+def test_b2_line_at_its_boundaries():
+    """Referee round 65 (X09, X14): a miss exactly 1.01 times the optimum is far, not near."""
+    B2 = [dict(r=1.0, var='base', k=10, e_block=0.505, e_rule=0.5, dc=0.0)]
+    md = WM.b2_line(B2)[0]
+    assert '1 ends 1.01 times above it' in md and 'within 1% of it' not in md
+
+
+def test_the_entries_at_their_boundaries():
+    """Referee round 65 (X23, X24): an entrant at the block's outermost node is between its nodes (d = 0), and a rate within a relative
+    10⁻¹² of the largest counts as the largest."""
+    blk = lambda k, c: dict(k=k, tau=float(k), c=np.array(c), w=np.full(k, 0.1), e=1e-3, e_opt=1e-3, c_opt=None, relaxed=True, dc=0.0,
+                            dc_hs=0.0, e_hs=1e-3)
+    B = [dict(r=1.0, var='base', blocks=[blk(1, [0.0]), blk(2, [-0.1, 0.1])],
+              events=[(1.0, 10, 'enter', 0.0), (2.0, 11, 'enter', 0.0), (3.0, 12, 'enter', 0.1)],
+              entries=[dict(it=0, j=10, u0=0.0, rate=0.5, rate_max=0.5), dict(it=1, j=11, u0=0.9, rate=0.4 * (1 - 5e-13), rate_max=0.4),
+                       dict(it=2, j=12, u0=0.95, rate=0.1, rate_max=0.4)])]
+    md = '\n'.join(WM.entry_lines(B))
+    assert '| an optimal block | 2 (2) | 1 |' in md and '| — | 2 (0.900–0.950) |' in md
+
+
+def test_b3_restarts_the_polish_and_the_seed_rule(monkeypatch):
+    """Referee round 65: `b3_job` restarts `polish_block` from the block with the path's budget and gradient test, then without the
+    gradient test at B3_NFEV; `seed_rule` accepts a polish whose near-seed kernels stay within the step of their start (or ascent
+    target)."""
+    from src.core import rich_transit as RT
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(1.0) ** 2))
+    c, w = np.array([-0.1, 0.03, 0.4]), np.array([0.5, 0.4, 1e-4])
+    assert WM.seed_rule(K, f, w, c, np.sign(w), c + np.array([0.3, 0.3, 0.05 * WM.SIG]), 1.0)['accepted']
+    r = WM.seed_rule(K, f, w, c, np.sign(w), c + np.array([0.0, 0.0, 3.0 * WM.SIG]), 1.0)
+    asc = abs(c[2] + 3.0 * WM.SIG - RT.ascent_target(K, f - K.phi(c) @ w, c[2], 1.0)[0]) / WM.SIG
+    assert r['move'] == min(3.0, asc) and r['accepted'] == (min(3.0, asc) <= 1.0)
+    calls = []
+
+    def stub(K_, f_, w_, c_, s_, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
+        calls.append((max_nfev, gtol))
+        return w_, c_, dict(status=0, nfev=max_nfev)
+    monkeypatch.setattr(RT, 'polish_block', stub)
+    v6 = WM.VARIANTS_B[5]
+    q = WM.b3_job((1.0, v6[0], 3, c, w, 1e-3))
+    assert calls == [(v6[3], v6[5])] + [(n, None) for n in WM.B3_NFEV]
+    assert abs(q['path']['ratio'] - np.sqrt(np.mean((f - K.phi(c) @ w) ** 2)) / np.sqrt(np.mean(f ** 2)) / 1e-3) < 1e-9
+
+
+def test_the_frames_and_the_first_tail_ratio():
+    """Referee round 65: `gh_defect_v` at v = 2 is `gh_defect`, and the first tail ratio is −vK(K + 2) + (v − 1)(K + 1)(2K + 1) exactly;
+    the frame at ρ = t is the half-squeeze rule's (v_ρ = τ²σ/σ*, v′ = 2), at ρ = λ v′ = 1, at ρ = q the variance 2τ²/(β² + 1)."""
+    from fractions import Fraction
+    for K in range(1, 8):
+        for n in range(2 * K, 2 * K + 6, 2):
+            assert WM.gh_defect_v(n, K, 2) == W.gh_defect(n, K)
+        for v in (Fraction(1, 2), Fraction(5, 3)):
+            assert WM.gh_defect_v(2 * K + 2, K, v) / WM.gh_defect_v(2 * K, K, v) == -v * K * (K + 2) + (v - 1) * (K + 1) * (2 * K + 1)
+    for r_ in (0.25, 1.0, 2.0):
+        ss = WM.sigma_star(r_)
+        P = W.params(WM.SIG, ss)
+        tau2 = P['tau'] ** 2
+        v, vp = WM.frame(P['t'], WM.SIG, tau2)
+        assert abs(v / (tau2 * WM.SIG / ss) - 1) < 1e-12 and abs(vp - 2) < 1e-12
+        assert abs(WM.frame(P['lam'], WM.SIG, tau2)[1] - 1) < 1e-12
+        b2 = np.sqrt(1 + 2 * tau2 / WM.SIG ** 2)
+        assert abs(WM.frame((b2 - 1) / (b2 + 1), WM.SIG, tau2)[0] / (2 * tau2 / (b2 + 1)) - 1) < 1e-12
+
+
+def test_b3_lines_on_synthetic_results():
+    """Referee round 65: B3's summary — above E_FLOOR the hits at the largest budget (their errors, evaluations and stops, and the count
+    at the smaller one), the misses, a path polish at the optimum that the seed rule rejects; below E_FLOOR the stops; † marks the
+    optima below the floor."""
+    k0, k1 = (f"{n:g}" for n in WM.B3_NFEV)
+    P = lambda st, nf, ra, **kw: dict(status=st, nfev=nf, ratio=ra, **kw)
+    B3 = [dict(r=0.5, var='base', k=6, e_opt=6e-8, path=P(0, 5000, 1.3, move=0.2, accepted=True),
+               **{k0: P(3, 6442, 1.0), k1: P(3, 6442, 1.0)}),
+          dict(r=1.0, var='grid +0.05', k=9, e_opt=3e-7, path=P(1, 3553, 1.0, move=1.32, accepted=False),
+               **{k0: P(3, 3569, 1.0), k1: P(3, 3569, 1.0)}),
+          dict(r=0.5, var='x', k=8, e_opt=2e-10, path=P(0, 50000, 2.6, move=0.1, accepted=True),
+               **{k0: P(0, 50000, 1.7), k1: P(3, 227797, 1.00028)}),
+          dict(r=0.75, var='y', k=10, e_opt=7e-10, path=P(0, 50000, 1.1, move=0.1, accepted=True),
+               **{k0: P(0, 50000, 1.1), k1: P(0, 500000, 1.01)}),
+          dict(r=0.25, var='z', k=6, e_opt=2.55e-11, path=P(0, 50000, 3.7, move=0.0, accepted=True),
+               **{k0: P(0, 50000, 3.76748), k1: P(3, 256857, 1.01474)})]
+    s = '\n'.join(WM.b3_lines(B3))
+    assert WM.E_FLOOR == 1e-10 and "Above 1e-10 (4 blocks)" in s
+    assert ("reaches the optimum (within 0.001) from 3 (its error 1.00000–1.00028 times the optimum's, in 3569–227797 evaluations, "
+            "status 3; with 50000 evaluations from 2), the others 1.01 times above it") in s
+    assert "the path's own polish reaches it from 1 but its seed rule rejects the end (a kernel moving 1.32σ)" in s
+    assert "Below 1e-10 (1 blocks) the solve stops at 1.0147 times the optimum with 500000 evaluations (status 3; with 50000: 3.7675)" in s
+    assert "| 1 | grid +0.05 | 9 | 3.00e-07 | 1/3553, 1.00000; 1.32σ, rejected | 3/3569, 1.00000 | 3/3569, 1.00000 |" in s
+    assert "| 0.25 | z | 6 | 2.55e-11† |" in s and "| 0.5 | x | 8 | 2.00e-10 |" in s
+    assert WM.b3_lines([]) == [] and WM.b3_lines(None) == []
