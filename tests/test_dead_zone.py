@@ -210,3 +210,18 @@ def test_noise_of_the_default_and_the_beat_tests():
     t = np.linspace(0, 2000, 400001)
     x = sum(A * np.sin(w * t + p) for A, w, p in zip(nz['amp'], nz['w'], nz['ph']))
     assert abs(np.sqrt(np.mean(x ** 2)) / 0.02 - 1) < 0.02 and DZ.noise_of(0.0, dict(freqs=(20.0,))) is None
+
+
+def test_part_D_from_the_fitted_state():
+    """D: the fitted state is the noise-free closed loop's rest (each feature's kernel stays at its centre with its amplitude, the others
+    at zero); the report's thresholds — the smallest level at which a kernel left — and its coefficient-growth ratio."""
+    r = DZ.d_job(('paradigm', 1.0, 0.0))
+    assert r['left'] == [-1, -1, -1] and max(r['dev_max']) < 1e-8 and r['others'] < 1e-12
+    assert np.allclose(r['w_end'], [0.9, -0.6, 0.75], atol=1e-8)
+    D = [dict(metric='paradigm', lam=1.0, s=s, A=[0.9, -0.6, 0.75], left=[-1 if s < 0.02 else 120, -1, -1], dev_max=[0.01] * 3,
+              w_end=[a * (1 + 300 * (a * s) ** 2) for a in (0.9, -0.6, 0.75)], others=1e-10) for s in (0.01, 0.02)]
+    D.append(dict(metric='wfr', lam=1.0, s=0.04, A=[0.9, -0.6, 0.75], left=[-1] * 3, dev_max=[1e-3] * 3, w_end=[0.9, -0.6, 0.75], others=0.0))
+    md = DZ.report(D=D)
+    assert 'paradigm, |A| = 0.9: 0.02 (s·|A| = 0.0180); paradigm, |A| = 0.6: kept to s = 0.02' in md
+    assert 'wfr, |A| = 0.9: kept to s = 0.04' in md and 'median 300 [5–95% 300, 300] (5 kernels and levels)' in md
+    assert '| paradigm | 1 | 0.02 | 120, +0.097 |' in md

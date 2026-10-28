@@ -30,8 +30,10 @@ C. The closed loop of Proposition D‴.49 under its measurement noise (Part E th
    noise seed. C2, ungated at x_m: the noise's structure — one tone (no difference frequencies), two tones far apart (a fast beat), two
    close ones (a slow beat), the frequencies incommensurate with the reference's —, and the centres' metric: Wasserstein–Fisher–Rao
    (mobility G·a, bounded) against the paradigm's (G·β·a = Gm|w|, growing with the coefficient), noise-free and noisy.
+D. From the fitted state (each feature's kernel at its centre with its amplitude): the closed loop at x_m, ungated, under D‴.49's noise
+   for D_PERIODS periods — which formed kernels leave their feature, at which level, against the amplitudes (λA*) and the metric.
 
-Usage: python experiments/exp_dead_zone.py [--only A,A2,B,C,C2] [--from-raw] → results/chaos/dead_zone.md (+ _raw.npz).
+Usage: python experiments/exp_dead_zone.py [--only A,A2,B,C,C2,D] [--from-raw] → results/chaos/dead_zone.md (+ _raw.npz).
 """
 import os
 import sys
@@ -66,6 +68,9 @@ EXTRA_C = (('true error', 'none', dict(etrue=True)), ('box 1.2', 'none', dict(cb
 C2_RUNS = (('one tone, 21.37 rad/s', 0.02, dict(freqs=(21.37,))), ('one tone, 21.37 rad/s', 0.04, dict(freqs=(21.37,))),
            ('two tones, 13.1 and 27.9 rad/s', 0.02, dict(freqs=(13.1, 27.9))), ('two tones, 21.37 and 21.44 rad/s', 0.02, dict(freqs=(21.37, 21.44))),
            ('WFR metric', 0.0, dict(metric='wfr')), ('WFR metric', 0.02, dict(metric='wfr')), ('WFR metric', 0.03, dict(metric='wfr')))
+D_LAM, D_PERIODS, D_LEFT = (0.5, 0.75, 1.0, 1.5), 300, 0.3                # D: amplitude scales, periods of the reference, the distance left
+D_LEVELS = (0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02, 0.025, 0.03, 0.04)
+D_WFR_LEVELS = (0.02, 0.04, 0.06, 0.08, 0.12, 0.16)
 
 
 def stop_law(N, nK, delta=DELTA):
@@ -379,13 +384,62 @@ def part_C2():
         return pool.map(c_job, jobs, chunksize=1)
 
 
+def fitted_state(L, eps, cstar, astar):
+    """D's start: for each feature the kernel started nearest it, moved to the feature's centre with its coefficient equal to the
+    feature's amplitude (α by root-finding on its curve from the masses eps); the other kernels at α = 0 on their grid points."""
+    from scipy.optimize import brentq
+    import exp_closed_transit as CT
+    d = CT.C0.size
+    wfun = lambda al: (eps + 2 * L.c * np.sinh(al / L.A) ** 2) * L.A * np.tanh(al / L.A) / L.m
+    al0, c0, idx = np.zeros(d), CT.C0.copy(), []
+    for cs, As in zip(cstar, astar):
+        i = int(np.argmin(np.abs(CT.C0 - cs)))
+        al0[i] = np.sign(As) * brentq(lambda a: wfun(a) - abs(As), 1e-12, 50 * L.A)
+        c0[i] = cs
+        idx.append(i)
+    return al0, c0, idx
+
+
+def d_job(args):
+    """D: C's closed loop (x_m, ungated, D‴.49's 16 tones of rms s) from the fitted state with the amplitudes λA*, the centres' metric
+    given, for D_PERIODS periods of the reference: per formed kernel the first period whose period-averaged centre is D_LEFT from its
+    feature (−1: never), the largest such distance and the coefficient at the end; the other kernels' largest |w| at the end."""
+    metric, lam, s = args
+    import exp_closed_transit as CT
+    from src.core import closed_loop as CL
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    L = CT.law()
+    As_ = lam * CT.ASTAR
+    al0, c0, idx = fitted_state(L, EPS_C, CT.CSTAR, As_)
+    k = 8                                                              # output times per period
+    ts = np.linspace(0, D_PERIODS * 2 * np.pi / CT.OM, D_PERIODS * k + 1)
+    r = CL.simulate(L, EPS_C, c0, CT.SIG, (CT.CSTAR, As_, CT.SIG), CT.KE, (0.0, 1.0, CT.OM, 0.0, np.sqrt(2) * CT.OM), ts,
+                    noise=noise_of(s, {}), th=CT.th_abs(As_), regx=True, al0=al0, metric=metric)
+    dev = np.abs(r['c'][:-1].reshape(D_PERIODS, k, c0.size).mean(1)[:, idx] - CT.CSTAR)
+    left = [int(np.argmax(dev[:, q] > D_LEFT)) + 1 if (dev[:, q] > D_LEFT).any() else -1 for q in range(len(idx))]
+    others = [j for j in range(c0.size) if j not in idx]
+    out = dict(metric=metric, lam=lam, s=s, A=As_.tolist(), left=left, dev_max=dev.max(0).tolist(),
+               w_end=[float(r['w'][-1, i]) for i in idx], others=float(np.abs(r['w'][-1, others]).max()), secs=time.time() - t0)
+    print(f"  D {metric} lam {lam} s {s:g}: left {left}, w end {', '.join(f'{v:+.3f}' for v in out['w_end'])} [{out['secs']:.0f}s]",
+          flush=True)
+    return out
+
+
+def part_D():
+    from multiprocessing import Pool
+    jobs = [('paradigm', lam, s) for lam in D_LAM for s in D_LEVELS] + [('wfr', 1.0, s) for s in D_WFR_LEVELS]
+    with Pool(N_WORKERS) as pool:
+        return pool.map(d_job, jobs, chunksize=1)
+
+
 def _mq(v, fmt='.3f'):
     """median [5%, 95%] of v"""
     v = np.asarray(v, float)
     return f"{np.median(v):{fmt}} [{np.quantile(v, 0.05):{fmt}}, {np.quantile(v, 0.95):{fmt}}]"
 
 
-def report(A=None, B=None, C=None, A2=None, C2=None):
+def report(A=None, B=None, C=None, A2=None, C2=None, D=None):
     nK, N = 3, 61
     L_ = ["# Proposition D‴.57: the transit's dead zone (`exp_dead_zone.py`)", "",
           "D‴.56's setting — 21 Gaussian kernels of width 0.12 on a grid of spacing 0.1, 61 samples of [−1, 1]; three features at least "
@@ -515,7 +569,7 @@ def report(A=None, B=None, C=None, A2=None, C2=None):
         lab = dict(none='ungated', leak=f'the mirror leak λΛ = {LEAK_C:g}', energy='the energy dead zone', formation='the formation dead zone')
         modes = ['none', 'leak', 'energy', 'formation']
         base = sorted((r for r in C if r.get('name', 'base') == 'base'), key=lambda r: (r['regx'], r['s'], modes.index(r['mode'])))
-        extra = [r for r in C if r.get('name', 'base') != 'base'] + list(C2 or [])
+        extra = [r for r in C if r.get("name", "base") != "base"] + (list(C2) if C2 is not None else [])
         reg = lambda r: 'x_m' if r['regx'] else 'x̃'
 
         def crow(r):
@@ -582,6 +636,36 @@ def report(A=None, B=None, C=None, A2=None, C2=None):
             L_.append("The ungated loops at the end against the noise-free loop with the same regressor (the formed kernels in the order of "
                       "their centres): " + '; '.join(dev) + ".")
         L_.append("")
+    if D is not None:
+        L_ += ["## D. From the fitted state: the formed kernels under measurement noise", "",
+               f"C's closed loop (the regressor at x_m, ungated, the 16 tones of rms s) started with each feature fitted by one kernel — the "
+               "kernel started nearest it, at the feature's centre with the coefficient λA*_k —, for "
+               f"{D_PERIODS} periods of the reference: per kernel the first period at which its period-averaged centre is {D_LEFT:g} from "
+               "its feature (— if never) and the coefficient's growth w/(λA*) − 1 at the end; the paradigm's metric (the centres' "
+               "mobility Gβa = Gm|w|) at λ = " + ', '.join(f'{v:g}' for v in D_LAM) + ", the Wasserstein–Fisher–Rao metric (G·a, at most "
+               "G·a_max) at λ = 1:", "",
+               "| metric | λ | s | " + ' | '.join(f"feature {q + 1}: left at period, w/(λA*) − 1" for q in range(3)) + " | the others' max\\|w\\| |",
+               "|---|---|---|---|---|---|---|"]
+        Ds = sorted(D, key=lambda r: (r['metric'] != 'paradigm', r['lam'], r['s']))
+        for r in Ds:
+            cells = [f"{'—' if r['left'][q] < 0 else r['left'][q]}, {r['w_end'][q] / r['A'][q] - 1:+.3f}" for q in range(3)]
+            L_.append(f"| {r['metric']} | {r['lam']:g} | {r['s']:g} | " + ' | '.join(cells) + f" | {r['others']:.1e} |")
+        th = []
+        for metric in ('paradigm', 'wfr'):
+            for lam in sorted({r['lam'] for r in Ds if r['metric'] == metric}):
+                rs = [r for r in Ds if r['metric'] == metric and r['lam'] == lam]
+                for q in range(3):
+                    A = abs(rs[0]['A'][q])
+                    s_ = next((r['s'] for r in rs if r['left'][q] >= 0), None)
+                    th.append(f"{metric}, |A| = {A:.3g}: " + (f"{s_:g} (s·|A| = {s_ * A:.4f})" if s_ is not None
+                                                             else f"kept to s = {rs[-1]['s']:g}"))
+        bl = [(r['w_end'][q] / r['A'][q] - 1) / (r['A'][q] * r['s']) ** 2 for r in Ds if r['metric'] == 'paradigm' for q in range(3)
+              if r['left'][q] < 0]
+        L_ += ["", "The smallest level at which each kernel left its feature: " + '; '.join(th) + "."]
+        if bl:
+            L_ += ["", f"The kept kernels' coefficient growth over (|A|s)² under the paradigm's metric: median {np.median(bl):.0f} [5–95% "
+                       f"{np.quantile(bl, 0.05):.0f}, {np.quantile(bl, 0.95):.0f}] ({len(bl)} kernels and levels)."]
+        L_.append("")
     L_.append("Numbers are produced by `experiments/exp_dead_zone.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -591,15 +675,15 @@ def main():
     md = os.path.join(OUT, 'dead_zone.md')
     old = E.load(raw)
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('A2'), old.get('C2')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('A2'), old.get('C2'), old.get('D')))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'A2', 'B', 'C', 'C2'}
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'A2', 'B', 'C', 'C2', 'D'}
     res = {k: v for k, v in old.items() if k not in parts}             # a part being rerun is not reported from the old raw
     t0 = time.time()
-    for k, fn in (('A', part_A), ('A2', part_A2), ('B', part_B), ('C', part_C), ('C2', part_C2)):
+    for k, fn in (('A', part_A), ('A2', part_A2), ('B', part_B), ('C', part_C), ('C2', part_C2), ('D', part_D)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('A2'), res.get('C2')))
+            open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('C'), res.get('A2'), res.get('C2'), res.get('D')))
 
 
 if __name__ == '__main__':
