@@ -2494,3 +2494,48 @@ rows, so its failures are attributed per row to the noise kernels' or the featur
 margins the binding ones, and a draw that swaps two entries is outside the expansion however small its dual error looks. A path past
 its last justified event needs its own existence checked before its fits are scored — here the fit had no minimiser, and a "relaxed"
 flag computed on the solution's own scale certified a kernel at c = −1.86 with w = 2.65·10⁹.
+
+## Round 62 (adversarial review of Proposition D‴.54 as revised after round 58, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bi: Proposition D‴.54 as revised after round 58 — the far side's swap and the
+relative mode's pin law (`review/REVIEW_round62_D3bi.md`). The referee regenerated the md byte for byte, ran the 38 tests, and reran R
+(three gaps, the tolerance scan's cell, the mirror to 3·10⁸ and 3·10⁹), all 14 RP rows and a C4M loop bitwise; re-derived the relative
+mode's identity and the rest's shift with W (checked against a long-double Newton solve for the rest); moved the window's edges (a right
+edge, two near edges, two sample spacings) to test the pin law; continued the relative mode in log-scaled form below the floating-point
+floor on a window with every edge 11.7σ away; compared the law's rate with the full Jacobian's eigenvalues; rescaled s_d by the windows'
+sample counts; ran the far rule at both boundaries with two new loops; ran 36 mutants; searched the literature.
+
+**Verdicts (D3bi).** The pin law is right about the pin — the window's edge moves the block's rest with W, and the pins follow it at
+every edge and spacing tried —, but (v) drew three wrong conclusions from it. In the continuum the near tie does decide a formed
+runner-up's side (the tails' rule; the offset falls to 10^{−19} … 10^{−55}σ before it grows, so Part C's pin overrides it by 5 to 40
+decades); the law's rate was about twice the true one (the midpoint is not the block's rest: with the centroid slaved the rate is κ =
+W²/(2(w² + w_e²)) ≈ 0.51–0.53 times the coefficient), so RP's law failed at x = 6.04 and 7 for that reason, not the layer's; and the
+window comparisons offered for s_d were mostly a rescaling of time (⟨·⟩ a mean over N samples), with s_d of held runner-ups the hold's.
+Minors: the nearest edge decides formed runner-ups' outcomes; (iv)'s exception; collapsed against held; the pins' quantisation; numbers
+and text (2.36·10⁷, Λ₀, a garbled proof ending, s_θ's digits); C4M at 10⁻¹⁷ and the far rule's boundary; 21 of 36 mutants surviving;
+the literature (Chizat's WFR flow has no trailing); stale raw fields.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bi-1 | major | In the continuum the near tie decides a formed runner-up's side | (v): the continuum's forcing is only the centroid's relaxation, the mode keeps the layer's sign as a tail's — its offset falling to 10^{−19}σ (x = 5.48), 10^{−25}–10^{−28}σ (4.9), 10^{−45}–10^{−104}σ (3) —, so whatever moves the rest with W by more decides (on samples the nearest edge, without one the rounding); RP: a window with every edge 11.67σ away (`WIN_FAR`) and the law continued below the floor (forced by the rest, unforced, forced by the centroid's measured relaxation): unforced toward on C2's target and far on the mirror at every gap, 10^{−103.5} … 10^{−7.8}σ; at x = 6.04 and 7 the float64 runs resolve the offset and take the same sides; R: s_d at 5.48 the pin's |
+| D3bi-2 | major | The relative mode's rate mislabelled; RP's law integrated with it | (v) and its proof: the slaved-centroid law dD/ds = κ[Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ⟩D + (2(w − w_e)/W)(ρ′D + dc_b/ds)], κ = W²/(2(w² + w_e²)) — the rest the centroid's, F(c_b) = 0, not the midpoint's —, the pin unchanged (κ cancels); `relative_law` integrates it (`slaved`); RP: the Jacobian's eigenvalues against κλ_D·eig: −0.1351, −0.1346 against −0.1373, −0.1368 at x = 4.9, s = 449 (round 58's −0.260, −0.259), the late growth to the digits shown; the law at x = 6.04 and 7 now at 0.904–0.966 and 0.877–0.988 of the run (round 58's 0.004–0.865 and 0.000–0.053); test (`test_the_relative_mode_with_the_centroid_slaved`) |
+| D3bi-3 | major | s_d's attribution: a time rescaling and the hold | RP prints N and s_d × N₀/N (N₀ = 1681): at x = 3 the top edges' change is the rescaling alone, −1.3% and −9.0% beyond it at 4.9 and 6.04; (v): s_d is the hold's where there is one (x ≲ 5.07, pin-independent) and the climb's where there is none (x ≈ 5.5–6); the continuation's climb in Part C's time — at x = 5.48 1.7·10⁴ later from the continuum's offset than from Part C's pin |
+| D3bi-4 | minor | The nearest edge decides formed runner-ups' outcomes | RP's right-edge rows (far on C2's target, toward on the mirror); C4W: C4's loop at (4.9, 10⁻¹⁰) on that window ends bound on the far side (C2's target) and captured (mirror); (v), (iv) and the capture set say so |
+| D3bi-5 | minor | (iv)'s exception | the side's decider named; the formed far-side runner-up's −1 once s₂ > s_{d,e}; "closes" replaced by the interval ((τ₂ − τ_e)/s_{d,e})² < ε < ((τ₂ − τ_e)/s_θ)² — 4.9·10⁻¹⁷ < ε < 2.9·10⁻¹² at x = 7 (R prints it) |
+| D3bi-6 | minor | "Held wherever the layer collapses" | (v): collapsed for x ≲ 8.6, held — a rest above the fold — only for x ≲ 5.07 |
+| D3bi-7 | minor | The pins' resolution | RP prints the runner-up's c_y's last place (1.85·10⁻¹⁶σ): x = 3's pin 23 steps, the law within 2 |
+| D3bi-8 | minor | Numbers and text | R's s_d 2.346·10⁷; Λ₀ in the identity and its proof; the garbled proof ending removed; s_θ to two digits ("read on the output grid, within a factor 1.04") |
+| D3bi-9 | minor | C4M at 10⁻¹⁷; the far rule's lower boundary | C4M's outputs from s = −100; two loops at the lower boundary — [2, 1, 1] at 6.5·10⁻¹⁷ (s₂ = 0.87 s_{d,e}), [1, 1, 1] at 3.7·10⁻¹⁷ (1.15 s_{d,e}) —; and the cause of the 10⁻¹⁷ cell (beyond the report): the loops at ε ≤ 6.5·10⁻¹⁷ ran at the absolute tolerance 10⁻¹⁴, above the masses, and entered thousands of s early (the entrant fully formed by s = −2000); `c4_atol` sets 10⁻⁵ε below ε = 10⁻¹⁴ (the earlier rows unchanged), and the rerun's closest approach is R's 1.8·10⁻⁸σ at every mass, the outcomes unchanged |
+| D3bi-10 | minor | 21 of 36 mutants survive | golden job tests: `race_job` at the near tie's x = 4.9 and the mirror's long run at x = 7 reproduce the raw (s_d, the share, s_swap, s_{d,e}, the destination); `rp_job` at 4.9 and 6.04 (the law, the Jacobian's rates, κ); the continuum's sides (`test_in_the_continuum_the_near_tie_decides_the_side`); `centroid_velocity`'s extrapolation; `c4m_outcome` with the side 'toward'; the windows' edges; the continuation from above its climb; `c4_atol` |
+| D3bi-11 | minor | Literature | Chizat's conic particle gradient descent and Yan–Wang–Rigollet's WFR flow: positions' mobility not ∝ weight, so no trailing and no pin; Denoyelle–Duval–Peyré (clustered positive spikes) and Batenkov–Goldman–Yomdin (near-colliding sources) beside the hold's moments; New recast as a consequence of the paradigm's metric |
+| D3bi-12 | cosmetic | C4/C4b raw rows carried e_t2/w_t2 | stripped on load and save |
+
+**Beyond the report.** The continuation as first written stopped at its start wherever |D(400)| exceeded the climb's end — on the far
+window, whose layer runs at N₀/N of Part C's speed, at x = 5.48, 6.04 and 7 —; it now stops only after |D| has been below the end, and
+RP was rerun. The early entry at 10⁻¹⁷ (D3bi-9) was an integration artefact of the loop's absolute tolerance, found with a probe of
+the gap through the layer at 10⁻¹⁷ against 10⁻¹³ and confirmed at atol 10⁻²².
+
+**Lesson.** A law validated at a fixed point says nothing about its rate: the pin agreed to 1% while the coefficient was twice the true
+one, because forcing and rate scale alike there. A selection decided at 10⁻¹⁹σ is decided by whatever is larger — here a window edge
+— and the clean statement is the continuum's, which only a continuation below the arithmetic can make. And a solver's absolute tolerance
+is a scale: at masses below it the state is not integrated, whatever the relative tolerance says.

@@ -548,3 +548,93 @@ def test_the_pin_law_at_the_window_edge():
     assert abs(r['dcdW'][1] / 1.14e-12 - 1) < 0.01 and abs(r['dcdW'][0]) < 1e-14 and r['s_d'] is not None
     e = TN.rp_job(('near tie', 4.9, 1.5, 64))
     assert np.linalg.norm(e['D'][1]) < 1e-15 and np.linalg.norm(e['dcdW']) < 1e-15
+
+
+def test_the_windows():
+    """Referee round 62: `window`'s defaults are Part C's samples (41 × 41); WIN_FAR's 81 × 71 put every edge ≥ 11.67σ from feature 0."""
+    K, K0 = TN.window(1.0), TN.full()[0]
+    assert np.array_equal(K.x1, K0.x1) and np.array_equal(K.x2, K0.x2) and K.N == 1681
+    Kf = TN.window(TN.WIN_FAR[3], TN.WIN_FAR[0], TN.WIN_FAR[1], TN.WIN_FAR[2])
+    assert (Kf.x1.size, Kf.x2.size) == (81, 71)
+    cs = TN.targets_C2(TN.MU_R)['near tie'][0]
+    edge = min(cs[0][0] - Kf.x1[0], Kf.x1[-1] - cs[0][0], cs[0][1] - Kf.x2[0], Kf.x2[-1] - cs[0][1]) / TN.SIG
+    assert abs(edge - min(TN.edges(TN.WIN_FAR))) < 1e-9 and edge > 11.6 and abs(TN.edges(TN.WIN_RIGHT)[1] - 4.917) < 1e-3
+
+
+def test_the_relative_mode_with_the_centroid_slaved():
+    """Referee round 62: with the block's centroid slaved the relative mode's rate is κ = W²/(2(w² + w_e²)) times round 58's coefficient,
+    the pin unchanged — the full Jacobian's eigenvalues match κλ_D·eig⟨r, ∇²φ⟩ (not λ_D's) at s ≈ 450 and 5000 (x = 4.9 and 6.04), and
+    at x = 6.04 the law tracks the run (D_y within 10% at s = 1000, round 58's law off by more than 40% at s = 700)."""
+    for x in (4.9, 6.04):
+        r = TN.rp_job(('near tie', x, 1.0, 64))
+        for j in r['jac']:
+            assert max(abs(a / b - 1) for a, b in zip(j['jac'], j['law'])) < 0.03
+            assert min(abs(a / b) for a, b in zip(j['law0'], j['law'])) > 1.8 and 0.5 < j['kappa'] < 0.54
+        if x == 6.04:
+            assert abs(r['law'][2][1] / r['D'][2][1] - 1) < 0.1 and abs(r['law0'][1][1] / r['D'][1][1] - 1) > 0.4
+        else:                                                           # the pin: both laws within 3% of the run at s = 700
+            assert abs(r['law'][1][1] / r['D'][1][1] - 1) < 0.03 and abs(r['law0'][1][1] / r['D'][1][1] - 1) < 0.03
+
+
+def test_in_the_continuum_the_near_tie_decides_the_side():
+    """Referee round 62: on WIN_FAR the block's rest does not move with W (∂c̄*/∂W at rounding), and the unforced relative mode, continued
+    below the floating-point floor, keeps the near tie's offset: toward feature 2 on C2's target, away on the mirror, the least |D| far
+    below the window's pin; forced by the centroid's measured relaxation, the same sides."""
+    a = TN.rp_job(('near tie', 4.9, 1.0, 64, TN.WIN_FAR))
+    b = TN.rp_job(('near tie mirrored', 4.9, 1.0, 64, TN.WIN_FAR))
+    assert a['N'] == 5751 and np.linalg.norm(a['dcdW']) < 1e-14
+    for r, side in ((a, 'toward'), (b, 'far')):
+        for m in ('none', 'meas'):
+            c = r['cont'][m]
+            assert c['side'] == side and c['least'] < 1e-20 and c['s_climb'] is not None
+    assert a['cont']['none']['e_least'] > 0.5 > -0.5 > b['cont']['none']['e_least']
+
+
+def test_the_continuation_starting_above_the_climb_runs_on():
+    """Referee round 62 (the far window's slow layer): at x = 5.48 on WIN_FAR |D| at s = 400 is still above D_CLIMB·σ; the continuation
+    stops only after |D| has been below it, so it reaches the layer's least |D| (≈ 10⁻¹⁹σ) and climbs back, on the near tie's side."""
+    r = TN.rp_job(('near tie', 5.48, 1.0, 64, TN.WIN_FAR))
+    assert np.linalg.norm(r['D'][0]) * TN.SIG > 0.1 * TN.D_CLIMB * TN.SIG
+    for m in ('none', 'meas'):
+        c = r['cont'][m]
+        assert c['least'] < 1e-15 and c['side'] == 'toward' and c['s_climb'] is not None and c['s_climb'] > 1e5
+
+
+def test_c4_atol_below_the_masses():
+    """Referee round 62's C4M at 10⁻¹⁷: the loop's absolute tolerance stays 10⁻¹⁴ wherever ε ≥ 10⁻¹⁴ (the committed rows) and is 10⁻⁵ε
+    below, where the state before the entry is at the masses' scale."""
+    assert TN.c4_atol(1e-10) == 1e-14 and TN.c4_atol(1e-13) == 1e-14 and TN.c4_atol(1e-14) == 1e-14
+    assert np.isclose(TN.c4_atol(1e-17), 1e-22, rtol=1e-12) and np.isclose(TN.c4_atol(6.5e-17), 6.5e-22, rtol=1e-12)
+
+
+def test_the_centroid_velocity_extrapolation():
+    """Referee round 62: `centroid_velocity` on a centroid relaxing as e^{−ks} (k = 0.04): the measured velocity where it is resolved, then
+    extrapolated at the fitted rate along its direction."""
+    s = np.r_[np.linspace(-10.0, 0.0, 11), np.geomspace(1.0, 3e3, 2000)]
+    k, d = 0.04, np.array([0.6, 0.8])
+    cb = 0.3 + 1e-3 * np.exp(-k * s)[:, None] * d[None, :]
+    w = np.c_[np.full(s.size, 0.6), np.full(s.size, 0.4)]
+    C = np.stack([cb, cb], axis=1)                                      # both kernels at the centroid: c_b = cb
+    vb = TN.centroid_velocity(s, C, w, w.sum(1))
+    true = -k * 1e-3 * np.exp(-k * s)[:, None] * d[None, :]
+    late = s > 1500
+    assert np.all(np.abs(vb[late] / true[late] - 1) < 0.1)
+
+
+def test_the_long_mirror_race_and_the_race_job_reproduce_the_raw():
+    """Referee round 62 (golden jobs): `race_job` at the near tie's x = 4.9 — s_d and the closest approach's share along e — and the
+    mirror's long run at x = 7 — the swap, the entrant's departure, its destination — reproduce the committed raw."""
+    raw = E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'transit_nd_raw.npz'))
+    r = TN.race_job(('near tie', 4.9))
+    ref = next(q for q in raw['R']['main'] if q['x'] == 4.9)
+    assert abs(r['s_d'] / ref['s_d'] - 1) < 1e-6 and abs(r['e_closest'] - ref['e_closest']) < 0.01 and r['side'] == ref['side']
+    m = TN.race_job(('near tie mirrored', 7.0, TN.RTOL_R, 3e9))
+    mref = next(q for q in raw['R']['long'] if q['x'] == 7.0)
+    assert abs(m['s_swap'] / mref['s_swap'] - 1) < 1e-6 and abs(m['s_de'] / mref['s_de'] - 1) < 1e-6 and m['e_dest'] == mref['e_dest'] == 2
+
+
+def test_c4m_outcome_follows_the_side():
+    """`c4m_outcome` labels a held, unformed runner-up by its own side (toward or far)."""
+    base = dict(n_fin=[1, 1, 1], captured=[], rms=1e-6, d_held=0.3, w_end=0.005)
+    assert TN.c4m_outcome(dict(base, side='toward')) == 'held, unformed (toward)'
+    assert TN.c4m_outcome(dict(base, side='far')) == 'held, unformed (far)'

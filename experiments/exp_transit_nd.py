@@ -99,11 +99,15 @@ X_R_EXTRA = (2.5, 4.0, 4.5, 30.0)                                       # R: gap
 S_MARKS_R = (1e4, 1e5, 1e6, 1e7, 1e8, 3e8)                              # R: the runner-up's coefficient and distance at these s
 X_RM = (3.0, 4.9, 7.0, 10.0, 17.3)                                      # R: the mirrored target's gaps (the far side)
 X_RS, RTOLS_RS, S_END_RS = (2.5, 3.0, 3.5, 4.0, 4.5, 4.9, 5.5, 6.0), (1e-9, 1e-10, 1e-11, 1e-12, 1e-13), 3e6   # R: the side's tolerance scan
-C4M = ((7.0, 1e-13), (7.0, 1e-10), (7.0, 1e-17), (7.0, 2e-12), (7.0, 4.5e-12), (10.0, 2.5e-13), (10.0, 6e-13))  # C4M: the loop on the
+C4M = ((7.0, 1e-13), (7.0, 1e-10), (7.0, 1e-17), (7.0, 2e-12), (7.0, 4.5e-12), (10.0, 2.5e-13), (10.0, 6e-13), (7.0, 6.5e-17),
+       (7.0, 3.7e-17))  # C4M: the loop on the
 # mirrored target — the far rule's boundary s₂ ≈ s_θ and beyond s_{d,e} (the swap, referee round 58)
 R_LONG = ((7.0, 3e9), (10.0, 3e9))                                    # R: the mirror past its horizon — the swap and the entrant's race
 X_RP, TOPS_RP = (3.0, 4.9, 5.48, 6.04, 7.0), (0.95, 1.0, 1.5)           # RP: the gaps (formed runner-ups and a tail); the window's top edge
 S_END_RP, S0_RP, S_MARKS_RP = 5e7, 400.0, (500.0, 700.0, 1000.0)        # RP: the run's end; the law from s₀; D reported at these s
+WIN_FAR, WIN_RIGHT = (-2.0, 2.0, -1.5, 2.0), (-1.0, 0.8, -1.0, 1.5)      # RP (referee round 62): (x₋, x₊, y₋, y₊) — every edge ≥ 11.67σ
+                                                                        # from feature 0 (the continuum); the right edge 4.92σ from it
+D_CLIMB, S_JAC_RP = 1e-2, (450.0, 5e3)                                  # RP: the continuation to |D| = 1e-2σ; the Jacobian's checks at s
 W_FC = np.geomspace(0.06, 0.003, 120)                                   # FC: the configuration's own fold (continuation in w)
 D_V3, AP_V3 = (5.0, 6.0, 7.0), (0.35, 0.7, 1.4, 2.8)                     # V3: the fold against A′/A (A = A_B)
 MAX_DOUBLINGS_B4X = 24                                                   # B4x: B4's unsettled problems continued
@@ -951,6 +955,11 @@ def fold_level(d2, A2, V):
     return float(c_ * A2 * d2 ** 2 * np.exp(-d2 ** 2 / 4))
 
 
+def c4_atol(eps):
+    """C4's absolute tolerance: 1e-14, or 10⁻⁵ε below ε = 10⁻¹⁴ (the loop's state before the entry is at the masses' scale)."""
+    return 1e-14 if eps >= 1e-14 else 1e-5 * eps
+
+
 def c4_job(args):
     """C4: C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{1/2}) at the mass ε: the loop (rtol RTOL_C3) with
     N_OUT_C4 outputs log-spaced from feature 0's entry τ_e to feature 2's own entry τ₂ on the path; the runner-up's distance from feature 0
@@ -960,8 +969,12 @@ def c4_job(args):
     x, eps = args[:2]
     rtol = args[2] if len(args) > 2 else RTOL_C3
     name = args[3] if len(args) > 3 else 'near tie'
+    win = tuple(args[4]) if len(args) > 4 and args[4] is not None else None
+    early = bool(args[5]) if len(args) > 5 else False
     t0 = time.time()
     L = law(); K, c0 = full()
+    if win is not None:                                                # referee round 62: the samples' window (x₋, x₊, y₋, y₊)
+        K = window(win[3], win[0], win[1], win[2])
     cs, As = targets_C2(x * np.sqrt(eps))[name]
     f = K.synth(cs, As)
     R = RN.sliding_iss_nd(L, K, f, c0, np.ones(len(c0)))
@@ -973,8 +986,13 @@ def c4_job(args):
     o = np.argsort(-np.where(near == 0, v, -1.0))
     r0 = int(o[1])
     dense = t_e + (t2 - t_e) * np.geomspace(1e-7, 1.0, N_OUT_C4)
+    if early:                       # referee round 62: from s = −100 about the path's entry, then from s = 0.1 (the loop's own layer)
+        se = np.sqrt(eps)
+        dense = t_e + se * np.r_[np.linspace(-100.0, 0.0, 51)[:-1], np.geomspace(0.1, (t2 - t_e) / se, N_OUT_C4)]
     taus = np.unique(np.r_[np.linspace(0, 1.3 * R['events'][-1][0], 27), dense])
-    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus, rtol=rtol, atol=1e-14)
+    # the absolute tolerance below the masses (referee round 62's C4M at 10⁻¹⁷: at atol 1e-14 > ε the pre-entry state is unresolved
+    # and the loop enters before s = −2000; 1e-14 kept wherever ε ≥ 1e-14, so the earlier rows are unchanged)
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus, rtol=rtol, atol=c4_atol(eps))
     dist = np.linalg.norm(C[:, r0, :] - cs[0], axis=1) / SIG
     after = np.flatnonzero(taus > t_e)
     dep = next((int(i) for i in after if dist[i] > 2.0), None)
@@ -993,7 +1011,7 @@ def c4_job(args):
              w_max=float(np.abs(W[held, r0]).max()) if held.size else 0.0, d_held=float(dist[held].max()) if held.size else 0.0,
              d2=float(np.linalg.norm(cs[2] - cs[0]) / SIG), A2=float(As[2]), n_fin=bk['n_fin'], captured=bk['captured'],
              rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))), d_end=float(dist[-1]), w_end=float(abs(W[-1][r0])),
-             rtol=rtol, secs=time.time() - t0)
+             rtol=rtol, win=None if win is None else list(win), early=early, secs=time.time() - t0)
     print(f"  C4 {name} x {x} eps {eps:g} rtol {rtol:g}: {c3_outcome(r)}, side {side}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} "
           f"[{r['secs']:.0f}s]", flush=True)
     return r
@@ -1003,7 +1021,14 @@ def part_C4M():
     """C4M: the loop on the mirrored target (feature 2 across the face: the runner-up on its far side; referee round 53)."""
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
-        return pool.map(c4_job, [(x, e, RTOL_C3, 'near tie mirrored') for x, e in C4M], chunksize=1)
+        return pool.map(c4_job, [(x, e, RTOL_C3, 'near tie mirrored', None, True) for x, e in C4M], chunksize=1)
+
+
+def part_C4W():
+    """C4W (referee round 62): C4's loop at (4.9, 10⁻¹⁰) on the window with the right edge 4.92σ from the block, on both targets."""
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(c4_job, [(4.9, 1e-10, RTOL_C3, nm, WIN_RIGHT) for nm in ('near tie', 'near tie mirrored')], chunksize=1)
 
 
 def x_R():
@@ -1109,10 +1134,15 @@ def part_R():
     return dict(main=out[:n1], mirror=out[n1:n1 + n2], scan=out[n1 + n2:], long=long_)
 
 
-def window(top):
-    """Part C's samples with the window's top edge at `top` (`full`'s is 1)."""
-    xs = np.arange(-1, 1 + 1e-9, DS)
-    return RN.BumpsGrid2(xs, np.arange(-1, top + 1e-9, DS), SIG)
+def window(top, xl=-1.0, xr=1.0, yb=-1.0):
+    """Part C's samples with the window's top edge at `top` (`full`'s is 1) and its other edges at xl, xr, yb (referee round 62)."""
+    return RN.BumpsGrid2(np.arange(xl, xr + 1e-9, DS), np.arange(yb, top + 1e-9, DS), SIG)
+
+
+def edges(win):
+    """The distances (σ) from the near tie's feature 0 to a window's edges (x₋, x₊, y₋, y₊) = win, in that order."""
+    p = targets_C2(MU_R)['near tie'][0][0]
+    return [(p[0] - win[0]) / SIG, (win[1] - p[0]) / SIG, (p[1] - win[2]) / SIG, (win[3] - p[1]) / SIG]
 
 
 class PairSums:
@@ -1156,19 +1186,81 @@ class PairSums:
         return H.astype(float), np.linalg.solve((H - dt(W) * Q2).astype(float), pd.astype(float))
 
 
+def relative_law(P, s, C, w, W, i0, iend, D0, lam0, Gm, mode='rest', slaved=True, vb=None, stop=None):
+    """RP: the relative offset D = c_r − c_e (e the entrant, r the runner-up) integrated from the output i0 with D0 over the run's outputs
+    to iend, the coefficients frozen per output interval (exponential steps), stopped once |D| ≥ stop after it has been below stop (a
+    start above it — a slow window's layer not yet collapsed at i0 — does not stop it). With the block's centroid
+    c_b = (w_e c_e + w c_r)/W slaved — the midpoint c̄ = c_b + ρD, ρ = (w_e − w)/(2W) — the exact first order
+        dD/ds = (2(w − w_e)/W)dc̄/ds + Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D
+    becomes dD/ds = κ[Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(ρ′D + dc_b/ds)], κ = W²/(2(w² + w_e²)) (referee round 62: the rate is
+    κ times the coefficient; slaved=False: κ = 1, ρ′ = 0, round 58's law). dc_b/ds: 'rest' the block's rest moving with W,
+    (∂c̄*/∂W)dW/ds (`PairSums.block`); 'none' nothing (the continuum, where the rest does not move with W); 'meas' vb, the centroid's
+    velocity measured on the run. Returns (the outputs' indices, D at each (σ), ∂c̄*/∂W at each (σ per unit W))."""
+    dWds = np.gradient(W, s)
+    rho = (w[:, 0] - w[:, 1]) / (2 * W)
+    drho = np.gradient(rho, s)
+    Dl, idx, Ds, dc = np.asarray(D0, float).copy(), [i0], [np.asarray(D0, float) / SIG], [None]
+    armed = stop is not None and np.linalg.norm(Dl) < stop
+    for i in range(i0, iend):
+        Hb, dcdW = P.block(0.5 * (C[i, 0] + C[i, 1]), W[i])
+        A = lam0 * 2 * Gm * w[i, 0] * w[i, 1] / W[i] * Hb
+        k_ = 2 * (w[i, 1] - w[i, 0]) / W[i]
+        g = (k_ * dcdW * dWds[i] if mode == 'rest' else np.zeros(2) if mode == 'none' else k_ * np.asarray(vb[i], float))
+        if slaved:
+            kap = W[i] ** 2 / (2 * (w[i, 0] ** 2 + w[i, 1] ** 2))
+            A, g = kap * (A + k_ * drho[i] * np.eye(2)), kap * (g + 0.0)
+        lv, V = np.linalg.eig(A)
+        Vi = np.linalg.inv(V)
+        h_ = s[i + 1] - s[i]
+        E1 = (V @ np.diag(np.exp(lv * h_)) @ Vi).real
+        P1 = (V @ np.diag(np.where(np.abs(lv * h_) > 1e-12, np.expm1(lv * h_) / np.where(lv == 0, 1, lv), h_)) @ Vi).real
+        Dl = E1 @ Dl + P1 @ g
+        idx.append(i + 1); Ds.append(Dl / SIG); dc.append(dcdW / SIG)
+        if stop is not None:
+            if armed and np.linalg.norm(Dl) >= stop:
+                break
+            armed = armed or np.linalg.norm(Dl) < stop
+    return np.array(idx), np.array(Ds), dc
+
+
+def centroid_velocity(s, C, w, W):
+    """RP: the block's centroid c_b = (w_e c_e + w c_r)/W's velocity on the run, where resolved — above 10⁴ times its rounding (4 units
+    in the last place of the centres over the outputs' spacing) —, and beyond the last resolved output extrapolated along its direction
+    with the decay rate fitted over the last decade of the resolved |ċ_b| (referee round 62: the measured forcing of the continuation —
+    the centroid's relaxation onto its rest, which no window's shift dominates in the continuum)."""
+    cb = (w[:, :1] * C[:, 0] + w[:, 1:] * C[:, 1]) / W[:, None]
+    vb = np.gradient(cb, s, axis=0)
+    ds_ = np.gradient(s)
+    noise = 4 * np.finfo(float).eps * np.abs(cb).max() / np.maximum(ds_, 1e-300)
+    nv = np.linalg.norm(vb, axis=1)
+    ok = nv > 1e4 * noise
+    bad = np.flatnonzero(~ok & (s > 0))
+    i_f = int(bad[0]) - 1 if bad.size else len(s) - 1                 # the last output before the first unresolved one past the wall
+    if i_f >= len(s) - 1 or i_f < 1:
+        return vb
+    last = np.flatnonzero((np.arange(len(s)) <= i_f) & (nv >= 10 * nv[i_f]))
+    last = np.arange(last[-1] if last.size else max(i_f - 20, 0), i_f + 1)
+    k = -np.polyfit(s[last], np.log(nv[last]), 1)[0] if last.size > 2 else 0.0
+    out = vb.copy()
+    out[i_f + 1:] = vb[i_f] * np.exp(-max(k, 0.0) * (s[i_f + 1:] - s[i_f]))[:, None]
+    return out
+
+
 def rp_job(args):
-    """RP (referee round 58): R's race (C2's near tie at μ = MU_R, the runner-up x behind the entrant) on the window with the top edge at
-    `top`, the sums in float64 (prec 64) or the long double (80) (`PairSums`): the relative offset D = c_r − c_e at S_MARKS_RP against
-    the pin law integrated from D(S0_RP),
-        dD/ds = Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(∂c̄*/∂W)dW/ds
-    (the relative mode's exact first order, its forcing the block's rest moving with W: `PairSums.block`); the least |D| after the wall
-    before the departure and its share along e; the side (SIDE_R), the departure s_d (2σ, bisected on the dense output); the growth rate
-    of |D| on s ∈ [3·10³, 10⁴]."""
-    name, x, top, prec = args
+    """RP (referee rounds 58 and 62): R's race (C2's near tie at μ = MU_R, the runner-up x behind the entrant) on Part C's window with
+    the top edge at `top`, or on a window (x₋, x₊, y₋, y₊) (WIN_FAR: every edge ≥ 11.7σ from the block, the continuum; WIN_RIGHT: the
+    right edge 4.92σ from it), the sums in float64 (prec 64) or the long double (80) (`PairSums`): the relative offset D = c_r − c_e at
+    S_MARKS_RP against `relative_law` from D(S0_RP) — the slaved-centroid law, and round 58's for comparison —; the law continued below
+    the floating-point floor, from S0_RP until |D| reaches D_CLIMB·σ (forced by the rest, unforced, forced by the centroid's measured
+    velocity): its least |D|, its share along e there, the side and the s at D_CLIMB; the Jacobian's eigenvalues nearest the relative
+    mode's at S_JAC_RP against the law's rates; the least |D| after the wall before the departure and its share along e; the side
+    (SIDE_R), the departure s_d (2σ, bisected on the dense output); the growth rate of |D| on s ∈ [3·10³, 10⁴]; the samples' count N."""
+    name, x, top, prec = args[:4]
+    win = tuple(args[4]) if len(args) > 4 and args[4] is not None else None
     from scipy.integrate import solve_ivp
     t0 = time.time()
     L = law(); c0 = full()[1]
-    K = window(top)
+    K = window(top) if win is None else window(win[3], win[0], win[1], win[2])
     cs, As = targets_C2(MU_R)[name]
     P = PairSums(L, K, cs, As, np.longdouble if prec == 80 else np.float64)
     e, r = kidx(c0, (0, 2 * H)), kidx(c0, (H, 2 * H))
@@ -1186,7 +1278,7 @@ def rp_job(args):
     k = int(np.argmax(xi_e < 0))
     t_wall = float(np.interp(0.0, -xi_e[k - 1:k + 1], sol.t[k - 1:k + 1]))
     s = sol.t - t_wall
-    D, cb, W = C[:, 1] - C[:, 0], C.mean(1), w.sum(1)
+    D, W = C[:, 1] - C[:, 0], w.sum(1)
     ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
     dist = np.linalg.norm(C[:, 1] - cs[0], axis=1) / SIG
     post = np.flatnonzero(s > 0)
@@ -1206,46 +1298,61 @@ def rp_job(args):
         s_d = 0.5 * (a_ + b_) - t_wall
     held = post if dep is None else post[post < dep]
     i_min = int(held[np.argmin(np.linalg.norm(D[held], axis=1))])
-    # the pin law from s₀, the forcing through the rest's W-shift, exponential steps with the coefficients frozen per output interval
+    Gm = L.G * L.m
     i0 = int(np.argmin(np.abs(s - S0_RP)))
     i1 = int(np.argmin(np.abs(s - max(S_MARKS_RP)))) + 1
-    dWds = np.gradient(W, s)
-    Dl, law_at, dcdW_at = D[i0].copy(), {}, None
-    Gm = L.G * L.m
-    for i in range(i0, i1):
-        Hb, dcdW = P.block(cb[i], W[i])
-        A = lam0 * 2 * Gm * w[i, 0] * w[i, 1] / W[i] * Hb
-        lv, V = np.linalg.eig(A)
-        Vi = np.linalg.inv(V)
-        h_ = s[i + 1] - s[i]
-        E1 = (V @ np.diag(np.exp(lv * h_)) @ Vi).real
-        P1 = (V @ np.diag(np.where(np.abs(lv * h_) > 1e-12, np.expm1(lv * h_) / np.where(lv == 0, 1, lv), h_)) @ Vi).real
-        Dl = E1 @ Dl + P1 @ (2 * (w[i, 1] - w[i, 0]) / W[i] * dcdW * dWds[i])
-        for q in S_MARKS_RP:
-            if s[i] < q <= s[i + 1]:
-                law_at[q] = (Dl / SIG).tolist()
-                if q == S_MARKS_RP[1]:
-                    dcdW_at = (dcdW / SIG).tolist()
     at = lambda q: int(np.argmin(np.abs(s - q)))
+
+    def marks(slaved):
+        idx, Ds, dc = relative_law(P, s, C, w, W, i0, i1, D[i0], lam0, Gm, 'rest', slaved)
+        return [Ds[int(np.argmin(np.abs(s[idx] - q)))].tolist() for q in S_MARKS_RP], dc[int(np.argmin(np.abs(s[idx] - S_MARKS_RP[1])))]
+    law_, dcdW_at = marks(True)
+    law0 = marks(False)[0]
+    iend = (dep if dep is not None else len(s) - 1)
+    vb = centroid_velocity(s, C, w, W)
+    cont = {}
+    for mode in ('rest', 'none', 'meas'):
+        idx, Ds, _ = relative_law(P, s, C, w, W, i0, iend, D[i0], lam0, Gm, mode, True, vb=vb, stop=D_CLIMB * SIG)
+        nrm = np.linalg.norm(Ds, axis=1)
+        j = int(np.argmin(nrm))
+        cont[mode] = dict(least=float(nrm[j]), e_least=float(Ds[j] @ ev / nrm[j]) if nrm[j] > 0 else None, s_least=float(s[idx[j]]),
+                          side=('toward' if Ds[-1] @ ev > 0 else 'far') if nrm[-1] > 0 else None,
+                          s_climb=float(s[idx[-1]]) if nrm[-1] >= D_CLIMB * (1 - 1e-12) else None)
+    jac = []
+    for q in S_JAC_RP:
+        i = at(q)
+        if not (0 < s[i] and (dep is None or i < dep)):
+            continue
+        Hb, _ = P.block(0.5 * (C[i, 0] + C[i, 1]), W[i])
+        lamD = lam0 * 2 * Gm * w[i, 0] * w[i, 1] / W[i]
+        kap = W[i] ** 2 / (2 * (w[i, 0] ** 2 + w[i, 1] ** 2))
+        pr = np.sort(np.linalg.eigvals(lamD * Hb).real)
+        ej = np.linalg.eigvals(lam0 * j0(0.0, sol.y[:, i]))
+        near = sorted(float(ej[q].real) for q in np.argsort(np.min(np.abs(ej[:, None] - kap * pr[None, :]), axis=1))[:2])
+        jac.append(dict(s=float(s[i]), jac=near, law=(kap * pr).tolist(), law0=pr.tolist(), kappa=float(kap)))
     gi = [i for i in post if 3e3 <= s[i] <= 1e4 and np.linalg.norm(D[i]) > 0]
     grow = float(np.polyfit(s[gi], np.log(np.linalg.norm(D[gi], axis=1)), 1)[0]) if len(gi) > 2 else None
-    out = dict(name=name, x=float(x), top=float(top), prec=int(prec), status=int(sol.status), nfev=int(sol.nfev),
-               D=[(D[at(q)] / SIG).tolist() for q in S_MARKS_RP], law=[law_at.get(q) for q in S_MARKS_RP], dcdW=dcdW_at,
+    out = dict(name=name, x=float(x), top=float(top), win=None if win is None else list(win), N=int(K.N), prec=int(prec),
+               status=int(sol.status), nfev=int(sol.nfev), D=[(D[at(q)] / SIG).tolist() for q in S_MARKS_RP], law=law_, law0=law0,
+               dcdW=None if dcdW_at is None else np.asarray(dcdW_at).tolist(), cont=cont, jac=jac,
                least=float(np.linalg.norm(D[i_min]) / SIG), s_least=float(s[i_min]),
                e_least=float(D[i_min] @ ev / np.linalg.norm(D[i_min])) if np.linalg.norm(D[i_min]) > 0 else None, side=side, s_d=s_d,
-               grow=grow,
-               w_layer=float(abs(w[at(1e3), 1])), secs=time.time() - t0)
-    print(f"  RP {name} x {x:g} top {top:g} prec {prec}: D(700) {out['D'][1]}, law {out['law'][1]}, side {side}, s_d {s_d} "
+               grow=grow, w_layer=float(abs(w[at(1e3), 1])), ulp=float(np.spacing(abs(C[at(S_MARKS_RP[1]), 1, 1])) / SIG),
+               secs=time.time() - t0)
+    print(f"  RP {name} x {x:g} top {top:g} win {win} prec {prec}: D(700) {out['D'][1]}, law {out['law'][1]}, side {side}, s_d {s_d} "
           f"[{out['secs']:.0f}s]", flush=True)
     return out
 
 
 def part_RP():
     """RP: the relative mode's pin — the formed gaps and a tail on Part C's window in float64, x = 4.9 in the long double and on the
-    mirrored target, the formed gaps 3, 4.9, 6.04 with the window's top edge nearer (0.95) and farther (1.5, also in the long double)."""
+    mirrored target, the formed gaps 3, 4.9, 6.04 with the window's top edge nearer (0.95) and farther (1.5, also in the long double);
+    referee round 62: every gap on both targets on WIN_FAR (the continuum), 3 and 4.9 on WIN_RIGHT."""
     from multiprocessing import Pool
     jobs = ([('near tie', x, 1.0, 64) for x in X_RP] + [('near tie', 4.9, 1.0, 80), ('near tie mirrored', 4.9, 1.0, 64)]
-            + [('near tie', x, top, 64) for top in TOPS_RP if top != 1.0 for x in (3.0, 4.9, 6.04)] + [('near tie', 4.9, 1.5, 80)])
+            + [('near tie', x, top, 64) for top in TOPS_RP if top != 1.0 for x in (3.0, 4.9, 6.04)] + [('near tie', 4.9, 1.5, 80)]
+            + [(nm, x, 1.0, 64, WIN_FAR) for nm in ('near tie', 'near tie mirrored') for x in X_RP]
+            + [(nm, x, 1.0, 64, WIN_RIGHT) for nm in ('near tie', 'near tie mirrored') for x in (3.0, 4.9)])
     with Pool(N_WORKERS) as pool:
         return pool.map(rp_job, jobs, chunksize=1)
 
@@ -1511,17 +1618,39 @@ def side_of(r, sep=''):
 
 
 def c4m_lines(C4M):
-    """C4M's report: the loop on the mirrored target (referee round 53)."""
+    """C4M's report: the loop on the mirrored target (referee round 53); referee round 62: the outputs from s = −100 about the path's
+    entry (s = (τ − τ_e)/ε^{1/2}) — before, the grid began at s = 10⁻⁷(τ₂ − τ_e)/ε^{1/2}, past the inner layer at the smallest ε —
+    and the far rule's upper boundary (ε = 6.5·10⁻¹⁷, 3.7·10⁻¹⁷)."""
     if C4M is None:
         return []
     out = ["", "C4M. The loop on the mirrored target (features 1 and 2 reflected across the face: feature 2 on the entrant's side, the "
-           "runner-up displaced away from it), rtol as C4's:", "",
+           "runner-up displaced away from it), rtol as C4's, the absolute tolerance 10⁻¹⁴ or, below ε = 10⁻¹⁴, 10⁻⁵ε (`c4_atol`: at "
+           "10⁻¹⁴ the state before the entry, at the masses' scale, is unresolved there and the loop enters thousands of s early), the "
+           "outputs from s = −100 about the path's entry (s = (τ − τ_e)/ε^{1/2}; a row marked † has the grid of C4, from s = 10⁻⁷s₂, "
+           "which can begin past the inner layer):", "",
            "| x | ε | side | the pair's closest approach (σ) | max w held | departure s | s₂ | kernels per feature (final) | the runner-up "
            "at the end: w, distance from feature 0 (σ) | outcome |", "|---|---|---|---|---|---|---|---|---|---|"]
-    for r in C4M:
-        out.append(f"| {r['x']:g} | {r['eps']:g} | {r['side']} | {r['closest']:.1e} | {r['w_max']:.4g} | "
+    for r in sorted(C4M, key=lambda r: (r['x'], -r['eps'])):
+        out.append(f"| {r['x']:g} | {r['eps']:g}{'' if r.get('early') else '†'} | {r['side']} | {r['closest']:.1e} | {r['w_max']:.4g} | "
                    + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none') + f" | {r['s2']:.3g} | {', '.join(map(str, r['n_fin']))} | "
                    f"{r['w_end']:.4g}, {r['d_end']:.3f} | {c4m_outcome(r)} |")
+    return out
+
+
+def c4w_lines(C4W):
+    """C4W's report (referee round 62): C4's loop on the window with the right edge 4.92σ from the block."""
+    if C4W is None or not len(C4W):
+        return []
+    out = ["", f"C4W. C4's loop at (x, ε) = (4.9, 10⁻¹⁰) on the window x ∈ [{WIN_RIGHT[0]:g}, {WIN_RIGHT[1]:g}], y ∈ "
+           f"[{WIN_RIGHT[2]:g}, {WIN_RIGHT[3]:g}] (the right edge {edges(WIN_RIGHT)[1]:.2f}σ from feature 0, the top {edges(WIN_RIGHT)[3]:.2f}σ): "
+           "the side the formed runner-up "
+           "takes, its closest approach, largest held w, departure, the kernels per feature and the outcome, on both targets:", "",
+           "| target | x | ε | side | the pair's closest approach (σ) | max w held | departure s | s₂ | kernels per feature (final) | "
+           "outcome |", "|---|---|---|---|---|---|---|---|---|---|"]
+    for r in C4W:
+        out.append(f"| {r['name']} | {r['x']:g} | {r['eps']:g} | {r['side']} | {r['closest']:.2e} | {r['w_max']:.4g} | "
+                   + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none') + f" | {r['s2']:.3g} | {', '.join(map(str, r['n_fin']))} | "
+                   f"{c4m_outcome(r) if 'mirrored' in r['name'] else c3_outcome(r)} |")
     return out
 
 
@@ -1535,44 +1664,88 @@ def c4m_outcome(r):
 
 
 def rp_lines(RP):
-    """RP's report: the relative offset against the pin law, per window and arithmetic."""
+    """RP's report: the relative offset against the slaved-centroid law (and round 58's), per window and arithmetic; the law continued
+    below the floating-point floor; the Jacobian's rates against the law's; s_d in the samples' time (referee round 62)."""
     if RP is None or not len(RP):
         return []
+    N0 = window(1.0).N
     edge = lambda top: (top - 2 * H) / SIG
-    out = ["## RP. The relative mode: the pin (referee round 58)", "",
+    wname = lambda r: (f"top {r['top']:g} ({edge(r['top']):.2f}σ)" if r.get('win') is None else
+                       ('far edges' if list(r['win']) == list(WIN_FAR) else 'right edge' if list(r['win']) == list(WIN_RIGHT) else
+                        str(r['win'])))
+    out = ["## RP. The relative mode: the pin (referee rounds 58 and 62)", "",
            "R's race (the near tie at μ → 0, the runner-up x behind the entrant) with the sums over the samples in float64 or in the 80-bit "
-           "long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window and with its top edge moved (the block "
-           + ', '.join(f"{edge(t):.2f}σ" for t in TOPS_RP) + " below it): the relative offset D = c_r − c_e (σ) at s = "
-           + ', '.join(f"{q:g}" for q in S_MARKS_RP) + f" against the pin law integrated from s = {S0_RP:g} — dD/ds = Λ₀(2Gm ww_e/W)"
-           "⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(∂c̄*/∂W)dW/ds, the relative mode's first order forced by the block's rest moving with W, "
-           "∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩) —; ∂c̄*/∂W (σ per unit W) at s = 700; the least |D| after the wall "
-           "before the departure and its share along e; the side, the departure s_d and |D|'s growth rate on s ∈ [3·10³, 10⁴]:", "",
-           "| target | x | top edge (σ above the block) | sums | D at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP) + " (x, y) | the law "
-           "| ∂c̄*/∂W (x, y) | least \\|D\\| (its share along e) | side | s_d | growth rate |",
-           "|---|---|---|---|---|---|---|---|---|---|---|"]
+           "long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window with its top edge at 1 (the block "
+           f"{edge(1.0):.2f}σ below it), nearer or farther, on the window with every edge at least {min(edges(WIN_FAR)):.2f}σ from "
+           f"feature 0 (x ∈ "
+           f"[{WIN_FAR[0]:g}, {WIN_FAR[1]:g}], y ∈ [{WIN_FAR[2]:g}, {WIN_FAR[3]:g}]: the continuum, where the block's rest does not move "
+           f"with W) and with the right edge {edges(WIN_RIGHT)[1]:.2f}σ from it (x ∈ [{WIN_RIGHT[0]:g}, {WIN_RIGHT[1]:g}], y ∈ [{WIN_RIGHT[2]:g}, "
+           f"{WIN_RIGHT[3]:g}]); N the samples (⟨·⟩ averages over them, so a window of N samples runs at N₀/N the speed of Part C's, "
+           f"N₀ = {N0}). The relative offset D = c_r − c_e (σ) at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP)
+           + f" against the law integrated from s = {S0_RP:g} with the block's centroid c_b = (w_e c_e + w c_r)/W slaved to its rest — "
+           "dD/ds = κ[Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(ρ′D + (∂c̄*/∂W)dW/ds)], κ = W²/(2(w² + w_e²)), ρ = (w_e − w)/(2W) "
+           "(the midpoint c̄ = c_b + ρD), ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩, F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩ —; ∂c̄*/∂W (σ per unit W) at s = 700; "
+           "the least |D| after the wall before the departure and its share along e; the side, the departure s_d (in brackets times N₀/N: "
+           "in Part C's time) and |D|'s growth rate on s ∈ [3·10³, 10⁴]:", "",
+           "| target | x | window | N | sums | D at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP) + " (x, y) | the law | ∂c̄*/∂W (x, y) | "
+           "least \\|D\\| (its share along e) | side | s_d (×N₀/N) | growth rate |", "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     vec = lambda v: '—' if v is None else f"({v[0]:+.2e}, {v[1]:+.2e})"
-    for r in sorted(RP, key=lambda r: (r['name'], r['top'], r['prec'], r['x'])):
-        out.append(f"| {r['name']} | {r['x']:g} | {r['top']:g} ({edge(r['top']):.2f}) | {'long double' if r['prec'] == 80 else 'float64'} | "
+    key = lambda r: (r['name'], r.get('win') is not None, str(r.get('win')), r['top'], r['prec'], r['x'])
+    for r in sorted(RP, key=key):
+        sd = 'none' if r['s_d'] is None else f"{r['s_d']:.4g} ({r['s_d'] * N0 / r.get('N', N0):.4g})"
+        out.append(f"| {r['name']} | {r['x']:g} | {wname(r)} | {r.get('N', N0)} | {'long double' if r['prec'] == 80 else 'float64'} | "
                    + '; '.join(vec(v) for v in r['D']) + " | " + '; '.join(vec(v) for v in r['law']) + f" | {vec(r['dcdW'])} | "
-                   + f"{r['least']:.2e} (" + ('—' if r['e_least'] is None else f"{r['e_least']:+.2f}") + f") | {r['side']} | "
-                   + ('none' if r['s_d'] is None else f"{r['s_d']:.4g}") + " | " + ('—' if r['grow'] is None else f"{r['grow']:.3g}") + " |")
-    std = sorted([r for r in RP if r['top'] == 1.0 and r['prec'] == 64 and r['name'] == 'near tie' and r['x'] < 6.5], key=lambda r: r['x'])
+                   + f"{r['least']:.2e} (" + ('—' if r['e_least'] is None else f"{r['e_least']:+.2f}") + f") | {r['side']} | {sd} | "
+                   + ('—' if r['grow'] is None else f"{r['grow']:.3g}") + " |")
+    std = sorted([r for r in RP if r['top'] == 1.0 and r['prec'] == 64 and r['name'] == 'near tie' and r.get('win') is None],
+                 key=lambda r: r['x'])
+    rat = lambda r, k, i: (f"{r[k][i][1] / r['D'][i][1]:.3f}" if r.get(k) and r[k][i] is not None and r['D'][i][1] != 0 else '—')
     if std:
-        rat = lambda r, i: (f"{r['law'][i][1] / r['D'][i][1]:.3f}" if r['law'][i] is not None and r['D'][i][1] != 0 else '—')
-        out += ["", "On Part C's window, the formed runner-ups: the law's D_y over the run's at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP)
-                + ": " + '; '.join(f"x = {r['x']:g}: " + ', '.join(rat(r, i) for i in range(len(S_MARKS_RP))) for r in std) + "."]
-        for top in [t for t in TOPS_RP if t != 1.0]:
-            pairs = [(a, b) for a in std for b in RP if b['top'] == top and b['prec'] == 64 and b['name'] == 'near tie' and b['x'] == a['x']]
-            if pairs:
-                out.append(f"The top edge at {top:g} ({edge(top):.2f}σ): ∂c̄*/∂W along y {pairs[0][1]['dcdW'][1]:.3g}σ against {pairs[0][0]['dcdW'][1]:.3g}σ; "
-                           + '; '.join(f"x = {a['x']:g}: D_y at s = 700 {b['D'][1][1]:.3g} (the law {b['law'][1][1]:.3g}) against {a['D'][1][1]:.3g}, "
-                                       f"the side {b['side']}, s_d " + ('none' if b['s_d'] is None else f"{b['s_d']:.4g}") + " against "
-                                       + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") for a, b in pairs) + ".")
-        p80 = [(a, b) for a in RP for b in RP if a['top'] == b['top'] and a['x'] == b['x'] and a['name'] == b['name'] and a['prec'] == 64
-               and b['prec'] == 80]
-        out += [f"Long double against float64 (x = {a['x']:g}, top {a['top']:g}): D at s = 700 {vec(b['D'][1])} against {vec(a['D'][1])}, "
-                f"the side {b['side']} against {a['side']}, s_d " + ('none' if b['s_d'] is None else f"{b['s_d']:.4g}") + " against "
-                + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") + "." for a, b in p80]
+        out += ["", "On Part C's window, the law's D_y over the run's at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP) + " — the slaved "
+                "centroid's law (round 58's, κ = 1 and ρ′ = 0, in brackets): " + '; '.join(
+                    f"x = {r['x']:g}: " + ', '.join(f"{rat(r, 'law', i)} ({rat(r, 'law0', i)})" for i in range(len(S_MARKS_RP)))
+                    for r in std) + "."]
+        if all('ulp' in r for r in std):
+            out += ["The run's D is the difference of float64 centres, so D_y is quantised in steps of the runner-up's c_y's last place, "
+                    + ', '.join(f"{r['ulp']:.3g}σ" for r in std) + f" (x = {', '.join(f'{r[chr(120)]:g}' for r in std)}): the pin "
+                    "at x = 3 is " + ', '.join(f"{abs(r['D'][1][1]) / r['ulp']:.0f}" for r in std if r['x'] == 3.0) + " such steps."]
+    jr = [r for r in RP if r.get('jac')]
+    if jr:
+        out += ["", "The rate (referee round 62): the Jacobian's eigenvalues nearest the relative mode's (the full two-kernel system, "
+                "Λ₀ times `critical_jac_nd`) against the slaved law's κλ_D·eig⟨r, ∇²_cφ⟩ and round 58's λ_D·eig⟨r, ∇²_cφ⟩ "
+                "(λ_D = Λ₀·2Gm ww_e/W): " + '; '.join(
+                    f"{r['name']}, x = {r['x']:g}, {wname(r)}, s = {j['s']:.4g}: " + ', '.join(f"{a:+.4g}" for a in j['jac'])
+                    + " against " + ', '.join(f"{a:+.4g}" for a in j['law']) + " (κ = " + f"{j['kappa']:.3f}" + "; round 58: "
+                    + ', '.join(f"{a:+.4g}" for a in j['law0']) + ")" for r in sorted(jr, key=key) for j in r['jac']
+                    if r['prec'] == 64 and (r['x'] in (4.9, 7.0)) and (r.get('win') is None and r['top'] == 1.0)) + "."]
+    cr = [r for r in RP if r.get('cont')]
+    if cr:
+        out += ["", f"The law continued below the floating-point floor, from s = {S0_RP:g} until |D| reaches {D_CLIMB:g}σ (D its own "
+                "variable, so not quantised by the centres' last place): its least |D| (log₁₀ σ), the share along e there, the side "
+                "(toward feature 2 or away) and the s at which |D| reaches the end (in brackets times N₀/N: in Part C's time) — forced by "
+                "the block's rest moving with W, unforced, and forced by the centroid's measured velocity (where resolved; beyond, "
+                "extrapolated along its direction at its fitted decay):", "",
+                "| target | x | window | sums | forced by the rest | unforced | forced by the measured centroid |", "|---|---|---|---|---|---|---|"]
+        cc = lambda c, n_: (f"{np.log10(c['least']):.1f} ({'—' if c['e_least'] is None else format(c['e_least'], '+.2f')}), "
+                            f"{c['side']}, " + ('—' if c['s_climb'] is None else f"{c['s_climb']:.4g}"
+                                                + ('' if n_ == N0 else f" ({c['s_climb'] * N0 / n_:.3g})"))) if c['least'] > 0 else 'exact zero'
+        for r in sorted(cr, key=key):
+            out.append(f"| {r['name']} | {r['x']:g} | {wname(r)} | {'long double' if r['prec'] == 80 else 'float64'} | "
+                       + ' | '.join(cc(r['cont'][m], r.get('N', N0)) for m in ('rest', 'none', 'meas')) + " |")
+    for top in [t for t in TOPS_RP if t != 1.0]:
+        pairs = [(a, b) for a in std for b in RP if b['top'] == top and b['prec'] == 64 and b['name'] == 'near tie' and b['x'] == a['x']
+                 and b.get('win') is None]
+        if pairs:
+            out.append(f"The top edge at {top:g} ({edge(top):.2f}σ; N = {pairs[0][1].get('N', N0)}): ∂c̄*/∂W along y {pairs[0][1]['dcdW'][1]:.3g}σ against "
+                       f"{pairs[0][0]['dcdW'][1]:.3g}σ; " + '; '.join(
+                           f"x = {a['x']:g}: D_y at s = 700 {b['D'][1][1]:.3g} (the law {b['law'][1][1]:.3g}) against {a['D'][1][1]:.3g}, "
+                           f"the side {b['side']}, s_d×N₀/N " + ('none' if b['s_d'] is None else f"{b['s_d'] * N0 / b.get('N', N0):.4g}")
+                           + " against " + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") for a, b in pairs) + ".")
+    p80 = [(a, b) for a in RP for b in RP if a['top'] == b['top'] and a['x'] == b['x'] and a['name'] == b['name'] and a['prec'] == 64
+           and b['prec'] == 80 and a.get('win') is None and b.get('win') is None]
+    out += [f"Long double against float64 (x = {a['x']:g}, top {a['top']:g}): D at s = 700 {vec(b['D'][1])} against {vec(a['D'][1])}, "
+            f"the side {b['side']} against {a['side']}, s_d " + ('none' if b['s_d'] is None else f"{b['s_d']:.4g}") + " against "
+            + ('none' if a['s_d'] is None else f"{a['s_d']:.4g}") + "." for a, b in p80]
     out.append("")
     return out
 
@@ -1582,7 +1755,7 @@ def race_rule(sd, s2):
     return 'captured' if sd is not None and sd < s2 else 'not departed'
 
 
-def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
+def r_lines(R, C3=None, C4=None, C4b=None, FC=None, C4M=None):
     """R's report: the ε-free race on both sides, the rule against C3's and C4's outcomes, the side's tolerance scan, FC's folds."""
     if R is None:
         return []
@@ -1645,6 +1818,15 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
                        + (f"{r['s_swap']:.3g}" if r.get('s_swap') is not None else 'none') + ' | '
                        + (f"{r['s_de']:.3g}" if r.get('s_de') is not None else 'none') + f" | {r['e_dest']} ({r['e_dest_d']:.3f}) | "
                        f"{r['d_end']:.3f} |")
+        th = {r['x']: r.get('s_theta') for r in (R.get('mirror') if R.get('mirror') is not None else [])}
+        dts = [r['s2'] * np.sqrt(r['eps']) for r in (C4M if C4M is not None else [])]
+        win = [(r['x'], th.get(r['x']), r.get('s_de')) for r in sorted(R['long'], key=lambda r: r['x'])]
+        if dts and any(a is not None and b is not None for x, a, b in win):
+            dt = float(np.median(dts))
+            out += ["", f"The far rule's window in ε (referee round 62): s₂ = (τ₂ − τ_e)ε^{{−1/2}} with τ₂ − τ_e = {dt:.4g} (C4M's path, "
+                    f"{min(dts):.4g}–{max(dts):.4g}), so s_θ < s₂ < s_{{d,e}} holds for ((τ₂ − τ_e)/s_{{d,e}})² < ε < ((τ₂ − τ_e)/s_θ)²: "
+                    + '; '.join(f"x = {x:g}: {(dt / b) ** 2:.2g} < ε < {(dt / a) ** 2:.2g}" for x, a, b in win if a is not None and b is not None)
+                    + "."]
     if R.get('scan') is not None and len(R['scan']):
         rts = sorted({r['rtol'] for r in R['scan']}, reverse=True)
         out += ["", f"The side against the tolerance (to s = {S_END_RS:g}): per gap the closest approach at the tightest tolerance and the "
@@ -1672,7 +1854,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
 
 
 def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None,
-           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None):
+           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None, C4W=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
@@ -2087,8 +2269,9 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
         L_ += ["", "The fold divided by: " + ("the configuration's own (FC), " + f"{fc_own:.4g}" if fc_own is not None else
                                                 "V's one-dimensional c(d)ℓ(d) at feature 2's distance") + "."]
         L_ += c4m_lines(C4M)
+        L_ += c4w_lines(C4W)
         L_.append("")
-    L_ += r_lines(R, C3, C4, C4b, FC)
+    L_ += r_lines(R, C3, C4, C4b, FC, C4M)
     L_ += rp_lines(RP)
     if T3 is not None:
         L_ += ["## T3. The product rule at a vertex of hℤ³", "",
@@ -2190,7 +2373,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
 
 
 KEYS = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2', 'C4b', 'R', 'VF', 'FC', 'C4M',
-        'RP')                                                           # the raw's parts, in `report`'s order
+        'RP', 'C4W')                                                           # the raw's parts, in `report`'s order
 
 
 def main():
@@ -2205,12 +2388,15 @@ def main():
     res = dict(old)
     if res.get('C3') is not None:                                      # round 47's w_unbind, never reported (referee round 58)
         res['C3'] = [{k: v for k, v in r.items() if k != 'w_unbind'} for r in res['C3']]
+    for k_ in ('C4', 'C4b'):                                           # e_t2 and w_t2, dropped from the code in round 58 (round 62)
+        if res.get(k_) is not None:
+            res[k_] = [{k: v for k, v in r.items() if k not in ('e_t2', 'w_t2')} for r in res[k_]]
     t0 = time.time()
     for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('T', part_T), ('D', part_D), ('B4', part_B4), ('H', part_H),
                   ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2), ('V', part_V), ('C3', part_C3),
                   ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4'])), ('C4', part_C4), ('B4x', lambda: part_B4x(res['B4'])),
                   ('V3', part_V3), ('D2', part_D2), ('C4b', part_C4b), ('R', part_R), ('VF', part_VF), ('FC', part_FC),
-                  ('C4M', part_C4M), ('RP', part_RP)):
+                  ('C4M', part_C4M), ('RP', part_RP), ('C4W', part_C4W)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

@@ -347,17 +347,26 @@ The two tolerances give the same outcome at 29 of 30 points; they differ at x = 
 
 The fold divided by: the configuration's own (FC), 0.01668.
 
-C4M. The loop on the mirrored target (features 1 and 2 reflected across the face: feature 2 on the entrant's side, the runner-up displaced away from it), rtol as C4's:
+C4M. The loop on the mirrored target (features 1 and 2 reflected across the face: feature 2 on the entrant's side, the runner-up displaced away from it), rtol as C4's, the absolute tolerance 10⁻¹⁴ or, below ε = 10⁻¹⁴, 10⁻⁵ε (`c4_atol`: at 10⁻¹⁴ the state before the entry, at the masses' scale, is unresolved there and the loop enters thousands of s early), the outputs from s = −100 about the path's entry (s = (τ − τ_e)/ε^{1/2}; a row marked † has the grid of C4, from s = 10⁻⁷s₂, which can begin past the inner layer):
 
 | x | ε | side | the pair's closest approach (σ) | max w held | departure s | s₂ | kernels per feature (final) | the runner-up at the end: w, distance from feature 0 (σ) | outcome |
 |---|---|---|---|---|---|---|---|---|---|
-| 7 | 1e-13 | far | 1.8e-08 | 0.02235 | none | 3.07e+07 | 2, 1, 1 | 0.02234, 0.001 | bound |
 | 7 | 1e-10 | far | 1.8e-08 | 0.005422 | none | 9.7e+05 | 1, 1, 1 | 0.00541, 0.016 | held, unformed (far) |
-| 7 | 1e-17 | far | 1.1e-01 | 0.8 | none | 3.07e+09 | 1, 1, 1 | 0.8, 0.000 | captured |
-| 7 | 2e-12 | far | 1.8e-08 | 0.008708 | none | 6.86e+06 | 2, 1, 1 | 0.008697, 0.004 | bound |
 | 7 | 4.5e-12 | far | 1.8e-08 | 0.007412 | none | 4.57e+06 | 1, 1, 1 | 0.007401, 0.006 | held, unformed (far) |
-| 10 | 2.5e-13 | far | 2.0e-03 | 0.01046 | none | 1.94e+07 | 2, 1, 1 | 0.01045, 0.002 | bound |
+| 7 | 2e-12 | far | 1.8e-08 | 0.008708 | none | 6.86e+06 | 2, 1, 1 | 0.008697, 0.004 | bound |
+| 7 | 1e-13 | far | 1.8e-08 | 0.02235 | none | 3.07e+07 | 2, 1, 1 | 0.02234, 0.001 | bound |
+| 7 | 6.5e-17 | far | 1.8e-08 | 0.5817 | none | 1.2e+09 | 2, 1, 1 | 0.5812, 0.000 | bound |
+| 7 | 3.7e-17 | far | 1.8e-08 | 0.8 | none | 1.59e+09 | 1, 1, 1 | 0.8, 0.000 | captured |
+| 7 | 1e-17 | far | 1.8e-08 | 0.8 | none | 3.07e+09 | 1, 1, 1 | 0.8, 0.000 | captured |
 | 10 | 6e-13 | far | 3.9e-03 | 0.006553 | none | 1.25e+07 | 1, 1, 1 | 0.006542, 0.004 | held, unformed (far) |
+| 10 | 2.5e-13 | far | 2.0e-03 | 0.01046 | none | 1.94e+07 | 2, 1, 1 | 0.01045, 0.002 | bound |
+
+C4W. C4's loop at (x, ε) = (4.9, 10⁻¹⁰) on the window x ∈ [-1, 0.8], y ∈ [-1, 1.5] (the right edge 4.92σ from feature 0, the top 8.33σ): the side the formed runner-up takes, its closest approach, largest held w, departure, the kernels per feature and the outcome, on both targets:
+
+| target | x | ε | side | the pair's closest approach (σ) | max w held | departure s | s₂ | kernels per feature (final) | outcome |
+|---|---|---|---|---|---|---|---|---|---|
+| near tie | 4.9 | 1e-10 | far | 3.09e-14 | 0.02205 | none | 1.1e+06 | 2, 1, 1 | bound |
+| near tie mirrored | 4.9 | 1e-10 | toward | 2.45e-14 | 0.02154 | 3.95e+05 | 1.09e+06 | 1, 1, 1 | captured |
 
 ## R. The race without ε (referee round 53)
 
@@ -487,6 +496,8 @@ The mirror past R's horizon (referee round 58): the coefficients at the end, the
 | 7 | 3e+09 | 0.8, 0.7 | 8.63e+08 | 1.38e+09 | 2 (0.000) | 0.000 |
 | 10 | 3e+09 | 0.8, 0.7 | 8.73e+08 | 1.39e+09 | 2 (0.000) | 0.000 |
 
+The far rule's window in ε (referee round 62): s₂ = (τ₂ − τ_e)ε^{−1/2} with τ₂ − τ_e = 9.696 (C4M's path, 9.696–9.699), so s_θ < s₂ < s_{d,e} holds for ((τ₂ − τ_e)/s_{d,e})² < ε < ((τ₂ − τ_e)/s_θ)²: x = 7: 4.9e-17 < ε < 2.9e-12; x = 10: 4.8e-17 < ε < 3.8e-13.
+
 The side against the tolerance (to s = 3e+06): per gap the closest approach at the tightest tolerance and the side at rtol 1e-09, 1e-10, 1e-11, 1e-12, 1e-13 (None: the pair merged — the runner-up never 0.05σ from feature 0):
 
 | x | closest approach (σ) | sides |
@@ -504,30 +515,80 @@ Runs not toward, per tolerance: 1e-09: 6 of 8; 1e-10: 6 of 8; 1e-11: 3 of 8; 1e-
 
 FC. The static fold in C4's own geometry (Part C's samples; the entrant and the runner-up's centre free, its coefficient held): toward feature 2: the fold at w = 0.016679, the rest there 0.842σ from feature 0 (+0.840σ along e); away from it: no fold down to w = 0.003 (the rest 0.591σ, -0.578σ along e); toward, feature 1 removed: the fold at w = 0.017196, the rest there 0.853σ from feature 0 (+0.853σ along e).
 
-## RP. The relative mode: the pin (referee round 58)
+## RP. The relative mode: the pin (referee rounds 58 and 62)
 
-R's race (the near tie at μ → 0, the runner-up x behind the entrant) with the sums over the samples in float64 or in the 80-bit long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window and with its top edge moved (the block 4.67σ, 5.00σ, 8.33σ below it): the relative offset D = c_r − c_e (σ) at s = 500, 700, 1000 against the pin law integrated from s = 400 — dD/ds = Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(∂c̄*/∂W)dW/ds, the relative mode's first order forced by the block's rest moving with W, ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩) —; ∂c̄*/∂W (σ per unit W) at s = 700; the least |D| after the wall before the departure and its share along e; the side, the departure s_d and |D|'s growth rate on s ∈ [3·10³, 10⁴]:
+R's race (the near tie at μ → 0, the runner-up x behind the entrant) with the sums over the samples in float64 or in the 80-bit long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window with its top edge at 1 (the block 5.00σ below it), nearer or farther, on the window with every edge at least 11.67σ from feature 0 (x ∈ [-2, 2], y ∈ [-1.5, 2]: the continuum, where the block's rest does not move with W) and with the right edge 4.92σ from it (x ∈ [-1, 0.8], y ∈ [-1, 1.5]); N the samples (⟨·⟩ averages over them, so a window of N samples runs at N₀/N the speed of Part C's, N₀ = 1681). The relative offset D = c_r − c_e (σ) at s = 500, 700, 1000 against the law integrated from s = 400 with the block's centroid c_b = (w_e c_e + w c_r)/W slaved to its rest — dD/ds = κ[Λ₀(2Gm ww_e/W)⟨r, ∇²_cφ(c̄)⟩D + (2(w − w_e)/W)(ρ′D + (∂c̄*/∂W)dW/ds)], κ = W²/(2(w² + w_e²)), ρ = (w_e − w)/(2W) (the midpoint c̄ = c_b + ρD), ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩, F = ⟨f* − Wφ(c̄), ∇_cφ(c̄)⟩ —; ∂c̄*/∂W (σ per unit W) at s = 700; the least |D| after the wall before the departure and its share along e; the side, the departure s_d (in brackets times N₀/N: in Part C's time) and |D|'s growth rate on s ∈ [3·10³, 10⁴]:
 
-| target | x | top edge (σ above the block) | sums | D at s = 500, 700, 1000 (x, y) | the law | ∂c̄*/∂W (x, y) | least \|D\| (its share along e) | side | s_d | growth rate |
-|---|---|---|---|---|---|---|---|---|---|---|
-| near tie | 3 | 0.95 (4.67) | float64 | (+3.24e-16, -1.13e-13); (+1.39e-15, -1.14e-13); (+1.55e-14, -1.24e-13) | (+4.07e-16, -1.13e-13); (+1.39e-15, -1.14e-13); (+1.70e-14, -1.25e-13) | (-3.60e-14, +3.37e-11) | 1.10e-13 (+0.88) | toward | 2.289e+07 | 0.0033 |
-| near tie | 4.9 | 0.95 (4.67) | float64 | (+1.57e-15, -4.54e-13); (+4.76e-15, -4.60e-13); (+3.42e-14, -4.81e-13) | (+1.58e-15, -4.54e-13); (+5.08e-15, -4.60e-13); (+4.39e-14, -4.88e-13) | (-3.60e-14, +3.37e-11) | 4.52e-13 (+0.88) | toward | 3.073e+05 | 0.000842 |
-| near tie | 6.04 | 0.95 (4.67) | float64 | (+3.63e-09, -9.92e-11); (+5.09e-13, -1.08e-12); (+9.12e-14, -1.08e-12) | (+5.04e-12, -1.22e-12); (+1.06e-14, -1.04e-12); (+6.98e-14, -1.09e-12) | (-3.60e-14, +3.37e-11) | 1.07e-12 (+0.92) | toward | 7.489e+04 | 0.000369 |
-| near tie | 3 | 1 (5.00) | float64 | (+0.00e+00, -4.07e-15); (-4.63e-17, -4.26e-15); (+4.63e-16, -3.89e-15) | (+1.33e-17, -3.81e-15); (+3.94e-17, -3.84e-15); (+4.78e-16, -4.16e-15) | (-1.11e-15, +1.14e-12) | 3.15e-15 (+0.89) | toward | 2.346e+07 | 0.00326 |
-| near tie | 4.9 | 1 (5.00) | float64 | (+9.25e-17, -1.52e-14); (+2.31e-16, -1.57e-14); (+8.33e-16, -1.65e-14) | (+4.98e-17, -1.53e-14); (+1.44e-16, -1.55e-14); (+1.28e-15, -1.64e-14) | (-1.04e-15, +1.14e-12) | 1.50e-14 (+0.89) | toward | 3.191e+05 | 0.000829 |
-| near tie | 5.48 | 1 (5.00) | float64 | (+6.32e-12, -2.51e-13); (+1.85e-16, -2.35e-14); (+1.34e-15, -2.41e-14) | (+1.23e-15, -2.32e-14); (+2.12e-16, -2.36e-14); (+1.67e-15, -2.47e-14) | (-1.08e-15, +1.14e-12) | 2.23e-14 (+0.94) | toward | 6.101e+04 | 0.000542 |
-| near tie | 6.04 | 1 (5.00) | float64 | (+7.06e-09, -1.80e-10); (+7.28e-13, -8.23e-14); (+4.49e-14, -4.22e-14) | (+1.77e-11, -6.81e-13); (+3.09e-16, -3.52e-14); (+2.10e-15, -3.66e-14) | (-1.26e-15, +1.14e-12) | 5.93e-14 (+0.97) | toward | 8.439e+04 | 0.000362 |
-| near tie | 7 | 1 (5.00) | float64 | (+1.02e-05, -1.48e-07); (+8.46e-08, -2.94e-09); (+1.98e-08, -1.45e-09) | (+3.84e-07, -7.89e-09); (+2.61e-11, -1.65e-12); (+1.32e-12, -2.57e-13) | (-1.17e-15, +1.14e-12) | 1.81e-08 (+0.58) | toward | 9.566e+04 | 0.000161 |
-| near tie | 4.9 | 1 (5.00) | long double | (+9.25e-17, -1.54e-14); (+1.85e-16, -1.55e-14); (+5.55e-16, -1.65e-14) | (+5.04e-17, -1.53e-14); (+1.46e-16, -1.55e-14); (+1.28e-15, -1.64e-14) | (-1.22e-15, +1.14e-12) | 1.50e-14 (+0.88) | toward | 3.192e+05 | 0.000828 |
-| near tie | 3 | 1.5 (8.33) | float64 | (+4.63e-17, +3.70e-16); (-4.63e-17, +0.00e+00); (+2.31e-16, +0.00e+00) | (-1.24e-19, +9.18e-20); (+1.77e-19, +8.88e-20); (-4.46e-19, +1.13e-19) | (-5.48e-17, -2.74e-17) | 0.00e+00 (—) | toward | 2.919e+07 | 0.00263 |
-| near tie | 4.9 | 1.5 (8.33) | float64 | (+6.70e-11, -1.86e-12); (-4.63e-17, -1.85e-16); (+4.63e-17, -1.85e-16) | (+3.12e-14, -1.21e-15); (-8.98e-19, +2.44e-19); (-4.30e-19, +1.05e-19) | (+6.66e-17, -2.75e-17) | 0.00e+00 (—) | far | none | 0.000676 |
-| near tie | 6.04 | 1.5 (8.33) | float64 | (+2.91e-06, -4.12e-08); (+1.96e-10, -6.90e-12); (+1.18e-13, -1.09e-14) | (+6.76e-08, -1.31e-09); (+2.39e-16, -1.59e-17); (+8.55e-19, -9.79e-19) | (+3.61e-17, +2.74e-17) | 3.70e-14 (+0.64) | toward | 1.076e+05 | 0.00027 |
-| near tie | 4.9 | 1.5 (8.33) | long double | (+6.70e-11, -1.86e-12); (+9.25e-17, -3.70e-16); (+0.00e+00, +0.00e+00) | (+3.12e-14, -1.21e-15); (-7.25e-21, +2.19e-22); (-6.65e-21, +6.56e-22) | (+5.37e-19, -2.37e-20) | 0.00e+00 (—) | far | none | 0.00046 |
-| near tie mirrored | 4.9 | 1 (5.00) | float64 | (+0.00e+00, -1.50e-14); (-1.85e-16, -1.55e-14); (-9.25e-16, -1.61e-14) | (-4.96e-17, -1.53e-14); (-1.47e-16, -1.55e-14); (-1.28e-15, -1.64e-14) | (+1.32e-15, +1.14e-12) | 1.50e-14 (+0.88) | toward | 3.198e+05 | 0.000824 |
+| target | x | window | N | sums | D at s = 500, 700, 1000 (x, y) | the law | ∂c̄*/∂W (x, y) | least \|D\| (its share along e) | side | s_d (×N₀/N) | growth rate |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| near tie | 3 | top 0.95 (4.67σ) | 1640 | float64 | (+3.24e-16, -1.13e-13); (+1.39e-15, -1.14e-13); (+1.55e-14, -1.24e-13) | (+3.99e-16, -1.13e-13); (+1.31e-15, -1.14e-13); (+1.48e-14, -1.24e-13) | (-3.62e-14, +3.37e-11) | 1.10e-13 (+0.88) | toward | 2.289e+07 (2.346e+07) | 0.0033 |
+| near tie | 4.9 | top 0.95 (4.67σ) | 1640 | float64 | (+1.57e-15, -4.54e-13); (+4.76e-15, -4.60e-13); (+3.42e-14, -4.81e-13) | (+1.56e-15, -4.54e-13); (+4.59e-15, -4.60e-13); (+3.33e-14, -4.80e-13) | (-3.59e-14, +3.37e-11) | 4.52e-13 (+0.88) | toward | 3.073e+05 (3.15e+05) | 0.000842 |
+| near tie | 6.04 | top 0.95 (4.67σ) | 1640 | float64 | (+3.63e-09, -9.92e-11); (+5.09e-13, -1.08e-12); (+9.12e-14, -1.08e-12) | (+3.50e-09, -9.55e-11); (+4.22e-13, -1.07e-12); (+8.05e-14, -1.08e-12) | (-3.61e-14, +3.37e-11) | 1.07e-12 (+0.92) | toward | 7.489e+04 (7.676e+04) | 0.000369 |
+| near tie | 3 | top 1 (5.00σ) | 1681 | float64 | (+0.00e+00, -4.07e-15); (-4.63e-17, -4.26e-15); (+4.63e-16, -3.89e-15) | (+1.33e-17, -3.81e-15); (+3.91e-17, -3.84e-15); (+3.93e-16, -4.09e-15) | (-1.11e-15, +1.14e-12) | 3.15e-15 (+0.89) | toward | 2.346e+07 (2.346e+07) | 0.00326 |
+| near tie | 4.9 | top 1 (5.00σ) | 1681 | float64 | (+9.25e-17, -1.52e-14); (+2.31e-16, -1.57e-14); (+8.33e-16, -1.65e-14) | (+1.54e-16, -1.53e-14); (+1.38e-16, -1.55e-14); (+9.41e-16, -1.61e-14) | (-1.04e-15, +1.14e-12) | 1.50e-14 (+0.89) | toward | 3.191e+05 (3.191e+05) | 0.000829 |
+| near tie | 5.48 | top 1 (5.00σ) | 1681 | float64 | (+6.32e-12, -2.51e-13); (+1.85e-16, -2.35e-14); (+1.34e-15, -2.41e-14) | (+5.84e-12, -2.35e-13); (+2.05e-16, -2.36e-14); (+1.18e-15, -2.43e-14) | (-1.08e-15, +1.14e-12) | 2.23e-14 (+0.94) | toward | 6.101e+04 (6.101e+04) | 0.000542 |
+| near tie | 6.04 | top 1 (5.00σ) | 1681 | float64 | (+7.06e-09, -1.80e-10); (+7.28e-13, -8.23e-14); (+4.49e-14, -4.22e-14) | (+6.82e-09, -1.74e-10); (+6.07e-13, -7.45e-14); (+3.44e-14, -4.08e-14) | (-1.26e-15, +1.14e-12) | 5.93e-14 (+0.97) | toward | 8.439e+04 (8.439e+04) | 0.000362 |
+| near tie | 7 | top 1 (5.00σ) | 1681 | float64 | (+1.02e-05, -1.48e-07); (+8.46e-08, -2.94e-09); (+1.98e-08, -1.45e-09) | (+1.01e-05, -1.46e-07); (+7.81e-08, -2.71e-09); (+1.74e-08, -1.27e-09) | (-1.17e-15, +1.14e-12) | 1.81e-08 (+0.58) | toward | 9.566e+04 (9.566e+04) | 0.000161 |
+| near tie | 4.9 | top 1 (5.00σ) | 1681 | long double | (+9.25e-17, -1.54e-14); (+1.85e-16, -1.55e-14); (+5.55e-16, -1.65e-14) | (+1.55e-16, -1.53e-14); (+1.40e-16, -1.55e-14); (+9.42e-16, -1.61e-14) | (-1.22e-15, +1.14e-12) | 1.50e-14 (+0.88) | toward | 3.192e+05 (3.192e+05) | 0.000828 |
+| near tie | 3 | top 1.5 (8.33σ) | 2091 | float64 | (+4.63e-17, +3.70e-16); (-4.63e-17, +0.00e+00); (+2.31e-16, +0.00e+00) | (-1.36e-19, +9.18e-20); (-2.22e-19, -4.59e-20); (-3.37e-19, +1.08e-19) | (+6.65e-17, +1.95e-17) | 0.00e+00 (—) | toward | 2.919e+07 (2.347e+07) | 0.00263 |
+| near tie | 4.9 | top 1.5 (8.33σ) | 2091 | float64 | (+6.70e-11, -1.86e-12); (-4.63e-17, -1.85e-16); (+4.63e-17, -1.85e-16) | (+5.94e-11, -1.66e-12); (-8.60e-19, +4.08e-20); (-4.18e-19, +1.85e-19) | (+6.65e-17, +1.95e-17) | 0.00e+00 (—) | far | none | 0.000676 |
+| near tie | 6.04 | top 1.5 (8.33σ) | 2091 | float64 | (+2.91e-06, -4.12e-08); (+1.96e-10, -6.90e-12); (+1.18e-13, -1.09e-14) | (+2.86e-06, -4.05e-08); (+1.79e-10, -6.30e-12); (+9.16e-14, -8.34e-15) | (+1.78e-17, +1.17e-17) | 3.70e-14 (+0.64) | toward | 1.076e+05 (8.651e+04) | 0.00027 |
+| near tie | 4.9 | top 1.5 (8.33σ) | 2091 | long double | (+6.70e-11, -1.86e-12); (+9.25e-17, -3.70e-16); (+0.00e+00, +0.00e+00) | (+5.94e-11, -1.66e-12); (+2.15e-20, -2.04e-21); (-6.64e-21, +5.77e-22) | (+5.37e-19, +2.35e-20) | 0.00e+00 (—) | far | none | 0.00046 |
+| near tie | 3 | right edge | 1887 | float64 | (-9.07e-15, +1.85e-16); (-9.02e-15, +3.70e-16); (-9.16e-15, +5.55e-16) | (-9.08e-15, +2.67e-17); (-9.10e-15, +5.47e-17); (-9.14e-15, +4.31e-16) | (+2.72e-12, -2.91e-15) | 1.49e-15 (+0.58) | far | none | 0.0029 |
+| near tie | 4.9 | right edge | 1887 | float64 | (+2.11e-13, -9.07e-15); (-3.69e-14, +0.00e+00); (-3.71e-14, +9.25e-16) | (+1.77e-13, -7.90e-15); (-3.68e-14, +2.03e-16); (-3.70e-14, +1.23e-15) | (+2.72e-12, -2.91e-15) | 9.34e-15 (+0.66) | far | none | 0.000734 |
+| near tie | 3 | far edges | 5751 | float64 | (+9.46e-07, -1.29e-08); (+1.55e-09, -3.25e-11); (+9.25e-17, +0.00e+00) | (+7.58e-07, -1.05e-08); (+6.90e-10, -1.51e-11); (+6.48e-18, +9.49e-20) | (+3.29e-16, -6.89e-17) | 0.00e+00 (—) | far | none | 0.000743 |
+| near tie | 4.9 | far edges | 5751 | float64 | (+2.15e-03, -1.12e-05); (+3.10e-04, -2.29e-06); (+2.68e-06, -3.50e-08) | (+2.09e-03, -1.10e-05); (+2.84e-04, -2.13e-06); (+2.21e-06, -2.94e-08) | (+3.04e-16, -1.14e-16) | 0.00e+00 (—) | toward | 1.111e+06 (3.246e+05) | 0.00015 |
+| near tie | 5.48 | far edges | 5751 | float64 | (+6.39e-03, -2.57e-05); (+1.58e-03, -8.84e-06); (+5.66e-05, -5.41e-07) | (+6.29e-03, -2.54e-05); (+1.51e-03, -8.51e-06); (+5.14e-05, -4.97e-07) | (+4.63e-16, -2.12e-16) | 0.00e+00 (—) | far | none | -9.95e-06 |
+| near tie | 6.04 | far edges | 5751 | float64 | (+1.39e-02, -4.43e-05); (+4.92e-03, -2.14e-05); (+4.45e-04, -3.21e-06) | (+1.38e-02, -4.40e-05); (+4.79e-03, -2.10e-05); (+4.22e-04, -3.07e-06) | (+2.16e-16, -7.86e-17) | 3.67e-14 (+0.63) | toward | 2.959e+05 (8.65e+04) | -2.59e-06 |
+| near tie | 7 | far edges | 5751 | float64 | (+3.53e-02, -7.66e-05); (+1.84e-02, -5.34e-05); (+4.37e-03, -2.02e-05) | (+3.52e-02, -7.64e-05); (+1.82e-02, -5.30e-05); (+4.28e-03, -1.98e-05) | (+3.97e-16, -8.47e-17) | 1.81e-08 (+0.58) | toward | 3.273e+05 (9.566e+04) | -1.87e-06 |
+| near tie mirrored | 4.9 | top 1 (5.00σ) | 1681 | float64 | (+0.00e+00, -1.50e-14); (-1.85e-16, -1.55e-14); (-9.25e-16, -1.61e-14) | (+5.45e-17, -1.53e-14); (-1.41e-16, -1.55e-14); (-9.41e-16, -1.61e-14) | (+1.32e-15, +1.14e-12) | 1.50e-14 (+0.88) | toward | 3.198e+05 (3.198e+05) | 0.000824 |
+| near tie mirrored | 3 | right edge | 1887 | float64 | (-8.88e-15, +0.00e+00); (-9.34e-15, -1.85e-16); (-8.97e-15, -5.55e-16) | (-9.08e-15, -2.64e-17); (-9.10e-15, -5.45e-17); (-9.15e-15, -4.31e-16) | (+2.72e-12, +2.85e-15) | 1.22e-15 (-0.61) | toward | 2.636e+07 (2.348e+07) | 0.0029 |
+| near tie mirrored | 4.9 | right edge | 1887 | float64 | (+2.09e-13, +9.44e-15); (-3.69e-14, -3.70e-16); (-3.70e-14, -7.40e-16) | (+1.76e-13, +8.07e-15); (-3.68e-14, -2.04e-16); (-3.70e-14, -1.23e-15) | (+2.72e-12, +2.98e-15) | 9.13e-15 (-0.63) | toward | 3.583e+05 (3.191e+05) | 0.000734 |
+| near tie mirrored | 3 | far edges | 5751 | float64 | (+9.44e-07, +1.39e-08); (+1.55e-09, +3.40e-11); (+0.00e+00, -1.85e-16) | (+7.56e-07, +1.13e-08); (+6.87e-10, +1.58e-11); (+6.18e-18, +3.76e-19) | (+2.82e-16, -7.53e-18) | 0.00e+00 (—) | far | none | 0.000897 |
+| near tie mirrored | 4.9 | far edges | 5751 | float64 | (+2.15e-03, +1.35e-05); (+3.10e-04, +2.62e-06); (+2.67e-06, +3.78e-08) | (+2.09e-03, +1.32e-05); (+2.84e-04, +2.43e-06); (+2.21e-06, +3.17e-08) | (+4.28e-16, -1.33e-17) | 0.00e+00 (—) | far | none | 0.000121 |
+| near tie mirrored | 5.48 | far edges | 5751 | float64 | (+6.38e-03, +3.25e-05); (+1.58e-03, +1.05e-05); (+5.65e-05, +6.00e-07) | (+6.28e-03, +3.21e-05); (+1.50e-03, +1.01e-05); (+5.13e-05, +5.50e-07) | (+3.42e-16, -7.41e-17) | 0.00e+00 (—) | far | none | 0.000259 |
+| near tie mirrored | 6.04 | far edges | 5751 | float64 | (+1.39e-02, +5.91e-05); (+4.92e-03, +2.66e-05); (+4.44e-04, +3.67e-06) | (+1.38e-02, +5.86e-05); (+4.79e-03, +2.60e-05); (+4.22e-04, +3.51e-06) | (+3.00e-16, -3.49e-17) | 3.65e-14 (-0.64) | far | none | -2.41e-06 |
+| near tie mirrored | 7 | far edges | 5751 | float64 | (+3.53e-02, +1.14e-04); (+1.84e-02, +7.30e-05); (+4.37e-03, +2.48e-05) | (+3.51e-02, +1.14e-04); (+1.81e-02, +7.22e-05); (+4.28e-03, +2.43e-05) | (+4.87e-16, -9.74e-17) | 1.80e-08 (-0.58) | far | none | -1.78e-06 |
 
-On Part C's window, the formed runner-ups: the law's D_y over the run's at s = 500, 700, 1000: x = 3: 0.937, 0.902, 1.071; x = 4.9: 1.010, 0.988, 0.993; x = 5.48: 0.092, 1.005, 1.026; x = 6.04: 0.004, 0.427, 0.867.
-The top edge at 0.95 (4.67σ): ∂c̄*/∂W along y 3.37e-11σ against 1.14e-12σ; x = 3: D_y at s = 700 -1.14e-13 (the law -1.14e-13) against -4.26e-15, the side toward, s_d 2.289e+07 against 2.346e+07; x = 4.9: D_y at s = 700 -4.6e-13 (the law -4.6e-13) against -1.57e-14, the side toward, s_d 3.073e+05 against 3.191e+05; x = 6.04: D_y at s = 700 -1.08e-12 (the law -1.04e-12) against -8.23e-14, the side toward, s_d 7.489e+04 against 8.439e+04.
-The top edge at 1.5 (8.33σ): ∂c̄*/∂W along y -2.74e-17σ against 1.14e-12σ; x = 3: D_y at s = 700 0 (the law 8.88e-20) against -4.26e-15, the side toward, s_d 2.919e+07 against 2.346e+07; x = 4.9: D_y at s = 700 -1.85e-16 (the law 2.44e-19) against -1.57e-14, the side far, s_d none against 3.191e+05; x = 6.04: D_y at s = 700 -6.9e-12 (the law -1.59e-17) against -8.23e-14, the side toward, s_d 1.076e+05 against 8.439e+04.
+On Part C's window, the law's D_y over the run's at s = 500, 700, 1000 — the slaved centroid's law (round 58's, κ = 1 and ρ′ = 0, in brackets): x = 3: 0.937 (0.937), 0.902 (0.902), 1.053 (1.063); x = 4.9: 1.010 (1.010), 0.987 (0.988), 0.978 (0.990); x = 5.48: 0.933 (0.092), 1.004 (1.005), 1.011 (1.023); x = 6.04: 0.965 (0.004), 0.904 (0.427), 0.966 (0.865); x = 7: 0.988 (0.053), 0.920 (0.001), 0.877 (0.000).
+The run's D is the difference of float64 centres, so D_y is quantised in steps of the runner-up's c_y's last place, 1.85e-16σ, 1.85e-16σ, 1.85e-16σ, 1.85e-16σ, 1.85e-16σ (x = 3, 4.9, 5.48, 6.04, 7): the pin at x = 3 is 23 such steps.
+
+The rate (referee round 62): the Jacobian's eigenvalues nearest the relative mode's (the full two-kernel system, Λ₀ times `critical_jac_nd`) against the slaved law's κλ_D·eig⟨r, ∇²_cφ⟩ and round 58's λ_D·eig⟨r, ∇²_cφ⟩ (λ_D = Λ₀·2Gm ww_e/W): near tie, x = 4.9, top 1 (5.00σ), s = 448.9: -0.1351, -0.1346 against -0.1373, -0.1368 (κ = 0.528; round 58: -0.26, -0.259); near tie, x = 4.9, top 1 (5.00σ), s = 4994: -0.0004136, +0.0008212 against -0.0004136, +0.0008212 (κ = 0.528; round 58: -0.0007839, +0.001556); near tie, x = 7, top 1 (5.00σ), s = 448.9: -0.03317, -0.03304 against -0.0333, -0.03318 (κ = 0.507; round 58: -0.06571, -0.06546); near tie, x = 7, top 1 (5.00σ), s = 4995: -9.306e-05, +0.0001848 against -9.306e-05, +0.0001848 (κ = 0.506; round 58: -0.0001838, +0.000365); near tie mirrored, x = 4.9, top 1 (5.00σ), s = 448.8: -0.1352, -0.1347 against -0.1373, -0.1368 (κ = 0.528; round 58: -0.26, -0.2591); near tie mirrored, x = 4.9, top 1 (5.00σ), s = 4994: -0.0004137, +0.0008215 against -0.0004137, +0.0008215 (κ = 0.528; round 58: -0.0007842, +0.001557).
+
+The law continued below the floating-point floor, from s = 400 until |D| reaches 0.01σ (D its own variable, so not quantised by the centres' last place): its least |D| (log₁₀ σ), the share along e there, the side (toward feature 2 or away) and the s at which |D| reaches the end (in brackets times N₀/N: in Part C's time) — forced by the block's rest moving with W, unforced, and forced by the centroid's measured velocity (where resolved; beyond, extrapolated along its direction at its fitted decay):
+
+| target | x | window | sums | forced by the rest | unforced | forced by the measured centroid |
+|---|---|---|---|---|---|---|
+| near tie | 3 | top 0.95 (4.67σ) | float64 | -12.9 (+0.88), toward, 8746 (8.96e+03) | -79.1 (+0.99), toward, 1.788e+04 (1.83e+04) | -44.9 (+0.95), toward, 1.354e+04 (1.39e+04) |
+| near tie | 4.9 | top 0.95 (4.67σ) | float64 | -12.3 (+0.89), toward, 2.969e+04 (3.04e+04) | -28.0 (+0.82), toward, 3.536e+04 (3.62e+04) | -25.5 (+0.77), toward, 3.498e+04 (3.59e+04) |
+| near tie | 6.04 | top 0.95 (4.67σ) | float64 | -12.0 (+0.91), toward, 6.38e+04 (6.54e+04) | -13.6 (+0.66), toward, 7.117e+04 (7.29e+04) | -13.5 (+0.66), toward, 7.117e+04 (7.29e+04) |
+| near tie | 3 | top 1 (5.00σ) | float64 | -14.4 (+0.88), toward, 9988 | -83.1 (+0.99), toward, 1.962e+04 | -45.1 (+0.95), toward, 1.478e+04 |
+| near tie | 4.9 | top 1 (5.00σ) | float64 | -13.8 (+0.89), toward, 3.46e+04 | -28.0 (+0.81), toward, 4.032e+04 | -25.5 (+0.77), toward, 3.988e+04 |
+| near tie | 5.48 | top 1 (5.00σ) | float64 | -13.6 (+0.89), toward, 5.127e+04 | -19.2 (+0.73), toward, 5.782e+04 | -19.0 (+0.72), toward, 5.782e+04 |
+| near tie | 6.04 | top 1 (5.00σ) | float64 | -13.3 (+0.99), toward, 7.354e+04 | -13.6 (+0.66), toward, 7.6e+04 | -13.5 (+0.66), toward, 7.6e+04 |
+| near tie | 7 | top 1 (5.00σ) | float64 | -7.8 (+0.58), toward, 7.6e+04 | -7.8 (+0.58), toward, 7.6e+04 | -7.8 (+0.58), toward, 7.6e+04 |
+| near tie | 4.9 | top 1 (5.00σ) | long double | -13.8 (+0.89), toward, 3.46e+04 | -28.0 (+0.81), toward, 4.032e+04 | -25.5 (+0.77), toward, 3.988e+04 |
+| near tie | 3 | top 1.5 (8.33σ) | float64 | exact zero | exact zero | exact zero |
+| near tie | 4.9 | top 1.5 (8.33σ) | float64 | -19.1 (-0.99), far, 5.358e+04 (4.31e+04) | -28.0 (+0.81), toward, 5.784e+04 (4.65e+04) | -25.5 (+0.77), toward, 5.721e+04 (4.6e+04) |
+| near tie | 6.04 | top 1.5 (8.33σ) | float64 | -13.6 (+0.66), toward, 9.459e+04 (7.6e+04) | -13.6 (+0.66), toward, 9.459e+04 (7.6e+04) | -13.5 (+0.66), toward, 9.459e+04 (7.6e+04) |
+| near tie | 4.9 | top 1.5 (8.33σ) | long double | -21.1 (+1.00), far, 5.912e+04 (4.75e+04) | -28.0 (+0.81), toward, 6.244e+04 (5.02e+04) | -25.5 (+0.77), toward, 6.109e+04 (4.91e+04) |
+| near tie | 3 | right edge | float64 | -14.0 (-0.48), far, 1.102e+04 (9.82e+03) | -90.9 (-0.98), far, 2.968e+04 (2.64e+04) | -44.9 (+0.95), toward, 1.899e+04 (1.69e+04) |
+| near tie | 4.9 | right edge | float64 | -14.6 (+0.88), far, 3.818e+04 (3.4e+04) | -28.0 (+0.81), toward, 4.751e+04 (4.23e+04) | -25.5 (+0.77), toward, 4.648e+04 (4.14e+04) |
+| near tie | 3 | far edges | float64 | -18.3 (-0.97), far, 4.135e+04 (1.21e+04) | -103.5 (+0.98), toward, 1.022e+05 (2.99e+04) | -45.0 (+0.95), toward, 6.125e+04 (1.79e+04) |
+| near tie | 4.9 | far edges | float64 | -17.7 (-0.99), far, 1.483e+05 (4.33e+04) | -28.1 (+0.81), toward, 1.566e+05 (4.58e+04) | -25.4 (+0.77), toward, 1.549e+05 (4.53e+04) |
+| near tie | 5.48 | far edges | float64 | -17.3 (-0.76), far, 2.246e+05 (6.57e+04) | -19.3 (+0.73), toward, 2.346e+05 (6.86e+04) | -19.0 (+0.72), toward, 2.346e+05 (6.86e+04) |
+| near tie | 6.04 | far edges | float64 | -13.6 (+0.66), toward, 2.618e+05 (7.65e+04) | -13.6 (+0.66), toward, 2.618e+05 (7.65e+04) | -13.5 (+0.66), toward, 2.589e+05 (7.57e+04) |
+| near tie | 7 | far edges | float64 | -7.8 (+0.58), toward, 2.589e+05 (7.57e+04) | -7.8 (+0.58), toward, 2.589e+05 (7.57e+04) | -7.8 (+0.58), toward, 2.589e+05 (7.57e+04) |
+| near tie mirrored | 4.9 | top 1 (5.00σ) | float64 | -13.8 (+0.86), toward, 3.46e+04 | -28.0 (-0.81), far, 4.032e+04 | -25.5 (-0.77), far, 3.988e+04 |
+| near tie mirrored | 3 | right edge | float64 | -14.0 (+0.48), toward, 1.102e+04 (9.82e+03) | -90.9 (+0.98), toward, 2.302e+04 (2.05e+04) | -44.9 (-0.95), far, 1.637e+04 (1.46e+04) |
+| near tie mirrored | 4.9 | right edge | float64 | -14.6 (-0.92), toward, 3.777e+04 (3.36e+04) | -28.0 (-0.81), far, 4.449e+04 (3.96e+04) | -25.5 (-0.77), far, 4.401e+04 (3.92e+04) |
+| near tie mirrored | 3 | far edges | float64 | -18.4 (+0.42), toward, 4.094e+04 (1.2e+04) | -103.6 (-0.98), far, 1.022e+05 (2.99e+04) | -45.0 (-0.95), far, 6.056e+04 (1.77e+04) |
+| near tie mirrored | 4.9 | far edges | float64 | -18.1 (-0.78), toward, 1.532e+05 (4.48e+04) | -28.1 (-0.81), far, 1.728e+05 (5.05e+04) | -25.4 (-0.77), far, 1.69e+05 (4.94e+04) |
+| near tie mirrored | 5.48 | far edges | float64 | -18.2 (-0.88), toward, 2.271e+05 (6.64e+04) | -19.3 (-0.73), far, 2.346e+05 (6.86e+04) | -19.0 (-0.72), far, 2.346e+05 (6.86e+04) |
+| near tie mirrored | 6.04 | far edges | float64 | -13.6 (-0.66), far, 2.618e+05 (7.65e+04) | -13.6 (-0.66), far, 2.618e+05 (7.65e+04) | -13.5 (-0.66), far, 2.589e+05 (7.57e+04) |
+| near tie mirrored | 7 | far edges | float64 | -7.8 (-0.58), far, 2.618e+05 (7.65e+04) | -7.8 (-0.58), far, 2.618e+05 (7.65e+04) | -7.8 (-0.58), far, 2.589e+05 (7.57e+04) |
+The top edge at 0.95 (4.67σ; N = 1640): ∂c̄*/∂W along y 3.37e-11σ against 1.14e-12σ; x = 3: D_y at s = 700 -1.14e-13 (the law -1.14e-13) against -4.26e-15, the side toward, s_d×N₀/N 2.346e+07 against 2.346e+07; x = 4.9: D_y at s = 700 -4.6e-13 (the law -4.6e-13) against -1.57e-14, the side toward, s_d×N₀/N 3.15e+05 against 3.191e+05; x = 6.04: D_y at s = 700 -1.08e-12 (the law -1.07e-12) against -8.23e-14, the side toward, s_d×N₀/N 7.676e+04 against 8.439e+04.
+The top edge at 1.5 (8.33σ; N = 2091): ∂c̄*/∂W along y 1.95e-17σ against 1.14e-12σ; x = 3: D_y at s = 700 0 (the law -4.59e-20) against -4.26e-15, the side toward, s_d×N₀/N 2.347e+07 against 2.346e+07; x = 4.9: D_y at s = 700 -1.85e-16 (the law 4.08e-20) against -1.57e-14, the side far, s_d×N₀/N none against 3.191e+05; x = 6.04: D_y at s = 700 -6.9e-12 (the law -6.3e-12) against -8.23e-14, the side toward, s_d×N₀/N 8.651e+04 against 8.439e+04.
 Long double against float64 (x = 4.9, top 1): D at s = 700 (+1.85e-16, -1.55e-14) against (+2.31e-16, -1.57e-14), the side toward against toward, s_d 3.192e+05 against 3.191e+05.
 Long double against float64 (x = 4.9, top 1.5): D at s = 700 (+9.25e-17, -3.70e-16) against (-4.63e-17, -1.85e-16), the side far against far, s_d none against none.
 
