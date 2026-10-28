@@ -2539,3 +2539,46 @@ the gap through the layer at 10⁻¹⁷ against 10⁻¹³ and confirmed at atol 
 one, because forcing and rate scale alike there. A selection decided at 10⁻¹⁹σ is decided by whatever is larger — here a window edge
 — and the clean statement is the continuum's, which only a continuation below the arithmetic can make. And a solver's absolute tolerance
 is a scale: at masses below it the state is not integrated, whatever the relative tolerance says.
+
+## Round 64 (adversarial review of Proposition D‴.52 as revised after round 59, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bk: Proposition D‴.52 as revised after round 59, with its code and results
+at 8c826c6 (`review/REVIEW_round64_D3bk.md`). The referee:
+- regenerated the md byte for byte and reran all of S, 18 F jobs and two A and B rows bit-identically;
+- identified the ISS's knots with the LARS and lasso knots on 300 noisy targets, and computed the separation's Cramér–Rao bound with the
+  amplitudes unknown and known;
+- checked z's sign and H1 mean (1 − cos = ϑ²/12), both readings of (iv) by finite differences, and z's null against s/|ŵ|;
+- analysed F's raw per wall (the one-sided p_A, p_B), the α allocation, the walls' power at small Δ, the moving null and the sizes at
+  α = 0.01, and decomposed E's knot loss through the runner-up's own knot;
+- probed (0.8, −0.6) and (0.8, 0.2) with new seeds, ran 69 single-point mutants and searched the literature.
+
+**Verdicts (D3bk).** The deterministic core, the null law, the score at the bound and the placement at the Cramér–Rao bound hold, and
+(iii)'s loss mechanisms are right. But the knot is a de facto one-sided test: the grid's margins put 75–100% of its null rejections at
+the wall of the fit's sign, which explains both why it rivals the sign-agnostic |z| for same-sign pairs and why it is biased for
+opposite signs. The draft compared the two-sided walls test with the one-sided score, and its title claimed the bound without the sign
+condition. Testing both walls at α/2 does not remove the bias: their power stays below α at small Δ in all 24 opposite-sign cells.
+Minors: Smith's criterion with unknown unequal amplitudes sits at s ∝ Δ³; τ_k = 1/λ_k for k ≤ 2 only; z's mean has V's sign and the
+brackets clash; the non-monotone power is the null moving across the tie; the calibrated knot is conservative more broadly; the lower
+quantiles' wording and the unmeasured decomposition; 25 non-equivalent mutants surviving; (iv)(b) is the classical splitting criterion.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bk-1 | major | The knot is de facto one-sided; the comparisons with the score ignore it; the title's bound needs the sign | Title: "at the Neyman–Pearson bound with the pair's sign known, and at 1.04–1.18 times the bound's separation without it"; (iii): the α allocation and like-for-like comparisons — the fit's-sign wall one-sided 1.056 [0.987, 1.289] times the bound's Δ₅₀ against z one-sided 1.003, the full knot 1.064 against \|z\| 1.085, for (0.8, −0.4) the other wall one-sided 1.680 [1.621, 1.749]; F prints the per-wall share of the H0 rejections (390/430 and 328/364, 75–100% per offset) and the one-sided per-wall tests; New reworded |
+| D3bk-2 | major | Both walls at α/2 stay biased | (iii) and F: "reaches power ½ sooner but stays biased; only the score is unbiased for both signs" — least power 0.010–0.045, below α in 24 of 24 cells, pooled 0.036 [0.031, 0.042] and 0.039 [0.034, 0.045] at the two smallest separations, with the mechanism (the fit's-sign wall's one-sided power 0.012 and 0.005 there, the other wall's 0.057 and 0.080); F prints each test's least power and its pooled power with Clopper–Pearson intervals (`f_alloc_lines`) |
+| D3bk-3 | minor | Smith's criterion mis-derived | Status: with unknown unequal amplitudes the separation's bound ∝ s/Δ² (the split moves the separation by (Δ/2)(1/w₂ − 1/w₁) per unit of weight), the criterion at s ≈ 474Δ³ and 56Δ³, (v)'s order; with equal or known amplitudes ∝ s/Δ (49.4Δ², 51.7Δ², 109Δ²), (iii)'s; B prints `smith_line` (`crb_sep`) |
+| D3bk-4 | minor | τ_k = 1/λ_k for k ≤ 2 only | (iii) and the proof: the first two knots; later ones while the block's least-squares fit keeps the duals' signs and the lasso drops no atom (the identity carried from piece to piece) |
+| D3bk-5 | minor | z's sign; the brackets; D‴.54's time | (iv): the mean has V's sign, ŵz has sign(A₁A₂); proof: cos = (1 + ϑ²/6)^{−1/2} = 1 − ϑ²/12 + O(ϑ⁴) in the continuum; (·, ·) and ‖·‖ Euclidean, ⟨·⟩ the mean; D‴.54's time t; tests: z against an independent projection and the pair (−0.8, −0.6) |
+| D3bk-6 | minor | The non-monotone power is the null moving across the tie | (iii): the null's fit at ĉ − c̄ = −T₃/(4Aσ²) + … ∝ Δ³ crossing the tie; F prints per separation at c̄ = 0.032 the null's ĉ − c̄, the law's quantile × s and the H1 knot's median × s (s = 0.01: +0.0097, +0.0217 at Δ = 0.05, 0.07; 4.83 → 1.97; 4.08 → 2.05), and the nulls' offsets at the H0 separations |
+| D3bk-7 | minor | The calibrated knot conservative beyond the tie | (iii): "conservatively, the more so at α = 0.01 and near a tie"; F prints the sizes at α = 0.01 (the calibrated knot 0.0076 [0.0064, 0.0089]; z one-sided 0.0086 and 0.0103; \|z\| 0.0090) |
+| D3bk-8 | minor | The lower quantiles offset-dependent; the decomposition unmeasured | (iii) worded by offset; E prints the adjacent share among the earliest 5% (0.34–0.52 at c̄ ≤ 0.02, 0.76–0.80 at 0.032, 1.00 at 0.045–0.049); Part U: the runner-up's own knot against its own law (size 0.039–0.068; z₂'s power to −0.015 … +0.008 at c̄ ≤ 0.032, the dictionary's minimum 0.012–0.098 below it; at c̄ = 0.049 0.665, 0.247, 0.165 against z₂'s 0.705, 0.400, 0.530); E′ prints the margin over its sd (6.94, 2.12, 0.89 at c̄ = 0.049) |
+| D3bk-9 | minor | 25 non-equivalent mutants survive; report sections untested | tests (33): the walls for both signs, `s_job` on an E cell (labels, stored fits, z₂ toward either wall, swap, margin, cosine) and on a C null (the law's seed and noise), `part_S`/`part_U` seeds and fits, `f_job` under H0, z against an independent formula, z_σ ≈ sign(ŵ)z, `e_job` calibrated at the path's fit, `knot_of_kernel` and `u_job`, E′'s U column, the separation's bound, E's earliest-5% column and S and U passed on to E′ |
+| D3bk-10 | minor | (iv)(b) is the classical splitting criterion; Shahram–Milanfar's test; Neyman–Scott 1965 | (iv): Fukumizu–Amari 2000, Liu–Wu–Wang 2019's splitting matrix, Shahram–Milanfar's locally optimal test; (b) needs a merged block, which the transit of (i)–(iii) does not form; Status: Neyman–Scott 1965; New: "the classical splitting criterion in the paradigm's metric" |
+| D3bk-11 | cosmetic | Misquotes; A's round-off; z's range | "four times the bound's 0.01001"; the margin's noise from E′'s new column; Part A rerun with the current solvers (equal to round 59's but for the rms at 10⁻¹⁶); z's sizes in F's range printed |
+
+A plumbing fault found while applying: `report` did not hand U to E′, so the runner-up's-knot column printed "—" from the raw; fixed,
+and a test now spies on the call.
+
+**Lesson.** Where a test spends its α is part of what it is. The knot never chose its allocation — the grid's margins put it at the
+wall of the fit's sign —, so it is a one-sided test, as good as the sign-agnostic score for same-sign pairs and blind to opposite
+signs. A remedy is judged by the defect it was meant to cure (power at least α at small Δ), not by a different figure of merit
+(Δ₅₀); and comparisons are fair only like for like: one-sided against one-sided, sign known or not.

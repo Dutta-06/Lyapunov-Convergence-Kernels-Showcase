@@ -251,17 +251,19 @@ def test_the_report_on_synthetic_results():
     assert 'The largest coefficient of a placed block: Δ = 0.3, s = 0.001, w = (0.8, 0.6) (their sum 1.4)' in md
 
 
-def test_the_e_report_on_synthetic_draws():
+def test_the_e_report_on_synthetic_draws(monkeypatch):
     """E's rows and summary (rounds 55, 59): the draws' H0 quantile against the law's, the threshold fixed at c̄ = CBAR applied out of
     sample (below CBAR) and beyond, the calibrated test's size with its Clopper–Pearson interval and the powers, on hand-made draws (H0
-    delays uniform on [a, 2a], the bootstrap p-values i/100)."""
+    delays uniform on [a, 2a], the bootstrap p-values i/100); the second entrants adjacent over all draws and the earliest 5% (round 64:
+    the earliest draws' second entrant a neighbour); S and U passed on to E′."""
     rng = np.random.default_rng(3)
     D, s = CF.CELLS_E[0]
     E_ = []
     for cb, a in ((0.0, 1.0), (CF.CBAR, 1.0), (0.049, 0.1)):
         d0 = a * (1 + rng.random(100))
         d1 = a * (0.5 + rng.random(100))
-        E_.append(dict(D=D, s=s, cbar=cb, rows0=[dict(dt=float(x), p=i / 100, j=[5, 6]) for i, x in enumerate(d0)],
+        q0 = np.quantile(d0, CF.ALPHA_C)
+        E_.append(dict(D=D, s=s, cbar=cb, rows0=[dict(dt=float(x), p=i / 100, j=[5, 6] if x < q0 else [5, 9]) for i, x in enumerate(d0)],
                        rows1=[dict(dt=float(x), p=0.0, j=[5, 7]) for x in d1], q_law=1.05 * float(np.quantile(d0, CF.ALPHA_C)),
                        ratio=np.full(21, 0.1), c1=cb, np=0.9))
     md = CF.report(E_=E_)
@@ -275,6 +277,10 @@ def test_the_e_report_on_synthetic_draws():
     pw = [np.mean(np.array([q['dt'] for q in e['rows1']]) < np.quantile([q['dt'] for q in e['rows0']], CF.ALPHA_C)) for e in E_]
     assert f"power minus the oracle's {1 - max(pw):+.3f} … {1 - min(pw):+.3f}, within 0.05 in 0 of 3" in md
     assert '| 0.100; 0.100, 0.100 |' in md                                       # the fit's kernel j₁, then j₁ ∓ 1
+    assert md.count('| 0.05, 1.00 |') == 3                                       # adjacent: 5 of 100 draws, all of the earliest 5%
+    seen = []
+    monkeypatch.setattr(CF, 'e_prime_lines', lambda E2, S2, U2=None: (seen.append((E2, S2, U2)), ['E′ spy'])[1])
+    assert 'E′ spy' in CF.report(E_=E_, S=[], U=['u']) and seen == [(E_, [], ['u'])]
 
 
 def test_e_job_on_a_few_draws(monkeypatch):
@@ -455,15 +461,248 @@ def test_the_f_report_on_synthetic_jobs():
         sg = np.sign(A[0] * A[1])
         for D in Ds:
             k = Ds.index(D)
-            rows = [dict(dt=1.0 if i < 50 * k else 9.0, p=0.5, tA=9.0, tB=9.0, z=sg * (3.0 if i < 40 * k else 0.0),
+            rows = [dict(dt=1.0 if i < 50 * k else 9.0, p=0.5, pA=0.5, pB=0.5, tA=9.0, tB=9.0, z=sg * (3.0 if i < 40 * k else 0.0),
                          zs=sg * (3.0 if i < 40 * k else 0.0), w1=1.0) for i in range(200)]
-            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, rows=rows, q_law=2.0, qA=1.0, qB=1.0, np=min(1.0, 0.2 * (k + 1))))
-        rows0 = [dict(dt=1.0 if i < 20 else 9.0, p=0.01 if i < 10 else 0.5, tA=9.0, tB=9.0, z=0.0, zs=0.0, w1=1.0) for i in range(400)]
+            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, rows=rows, q_law=2.0, qA=1.0, qB=1.0, np=min(1.0, 0.2 * (k + 1)), c1=cb))
+        rows0 = [dict(dt=1.0 if i < 20 else 9.0, p=0.01 if i < 10 else 0.5, pA=0.5, pB=0.5, tA=9.0, tB=9.0, z=0.0, zs=0.0, w1=1.0)
+                 for i in range(400)]
         F.append(dict(A=A, cbar=cb, s=s, D=Ds[CF.H0_F], hyp=0, rows=rows0, q_law=2.0, qA=1.0, qB=1.0, np=0.0))
     md = '\n'.join(CF.f_lines(F))
     knot = CF.crossing(list(Ds), [min(1.0, 0.25 * j) for j in range(len(Ds))])
     z = CF.crossing(list(Ds), [min(1.0, 0.2 * j) for j in range(len(Ds))])
     npd = CF.crossing(list(Ds), [min(1.0, 0.2 * (j + 1)) for j in range(len(Ds))])
-    row = f"| {s:g} | {cb:g} | {knot:.4g}, > {Ds[-1]:g}, > {Ds[-1]:g}, {z:.4g}, {z:.4g}, {z:.4g}, {npd:.4g} | 0.050, 0.025, 0.000, 0.000, 0.000, 0.000 |"
+    row = (f"| {s:g} | {cb:g} | {knot:.4g}, > {Ds[-1]:g}, > {Ds[-1]:g}, > {Ds[-1]:g}, > {Ds[-1]:g}, {z:.4g}, {z:.4g}, {z:.4g}, {npd:.4g} | "
+           "0.050, 0.025, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 |")
     assert md.count(row) == 2
     assert '## F. Resolution across the grid cell, for both signs' in md
+
+
+def test_the_walls_take_the_pairs_sign():
+    """Referee round 64: at the path's own first fit the knot falls on the wall of the fit's sign for a same-sign pair (tA = Δτ₂ < tB) and
+    on the other wall for an opposite-sign pair (tB = Δτ₂ < tA)."""
+    L, K, c0 = CF.setup()
+    for A, own in (((0.8, 0.6), True), ((0.8, -0.4), False)):
+        f1 = X.bumps_target(K, CF.pair_centres(*A, 0.025), A)
+        y = f1 + 0.001 * np.random.default_rng(5).standard_normal(K.xs.size)
+        R = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), max_events=2, polish=True, max_entries=2)
+        ent = [t for t, j, kk, c in R['events'] if kk == 'enter']
+        h = R['hist'][1]
+        i = int(np.flatnonzero(h[2])[0])
+        tA, tB = CF.walls_at_fit(K, c0, y, float(h[1][i]), float(h[2][i]))
+        assert (tA < tB) == own and abs(min(tA, tB) / (ent[1] - ent[0]) - 1) < 1e-9
+
+
+def test_the_score_against_an_independent_formula_and_a_negative_pair():
+    """Referee round 64: z = ⟨r, ψ̂⟩/(s‖ψ̂‖) with ψ̂ the projection of ∂²_cφ off span(φ, ŵ∂_cφ), by least squares, to 10⁻¹⁰; for the pair
+    (−0.8, −0.6) z < 0 and ŵz > 0 (ŵz has the sign of A₁A₂), and the one-sided rejection uses ŵ's sign; z_σ ≈ sign(ŵ)z at small noise."""
+    L, K, c0 = CF.setup()
+    rng = np.random.default_rng(11)
+    for A in ((0.8, 0.6), (-0.8, -0.6), (0.8, -0.4)):
+        f1 = X.bumps_target(K, CF.pair_centres(*A, 0.03), A)
+        y = f1 + 0.002 * rng.standard_normal(K.xs.size)
+        c, w = CF.one_fit(K, y)
+        T = np.c_[K.phi(np.array([c]))[:, 0], w * K.dphi(np.array([c]))[:, 0]]
+        d2 = CF.d2phi(K, c)[:, 0]
+        psi = d2 - T @ np.linalg.lstsq(T, d2, rcond=None)[0]
+        r = y - w * K.phi(np.array([c]))[:, 0]
+        z = CF.score_stats(K, y, c, w, 0.002)[0]
+        assert abs(z - (r @ psi) / (0.002 * np.linalg.norm(psi))) < 1e-10 * max(1.0, abs(z))
+        if A[0] < 0:
+            assert w < 0 and z < 0 and w * z > 0
+            rows = [dict(z=z, zs=0.0, w1=w)]
+            assert CF.rejections(rows, 1.0)['z'][0] == (abs(z) > CF.Z95)
+    f0 = -1.4 * K.phi(np.array([0.032]))[:, 0]
+    zs, ws = [], []
+    for _ in range(200):
+        yy = f0 + 0.01 * rng.standard_normal(K.xs.size)
+        c, w = CF.one_fit(K, yy)
+        zs.append(CF.score_stats(K, yy, c, w, 0.01)[0])
+        ws.append(CF.width_z(K, yy, c, w, 0.01))
+    assert np.abs(np.array(ws) + np.array(zs)).max() < 0.05                        # ŵ < 0: z_σ ≈ −z
+
+
+def test_f_job_under_h0_draws_the_null_with_its_own_seed(monkeypatch):
+    """Referee round 64: `f_job` with hyp = 0 draws the labels from the pair's one-bump fit with the H0 seed: its first draw's path fit is
+    the one-bump fit of f₀ plus that seed's first noise vector."""
+    monkeypatch.setattr(CF, 'M_E', 16)
+    monkeypatch.setattr(CF, 'M_LAW', 64)
+    A, cb, s, D = (0.8, -0.4), 0.032, 0.01, 0.025
+    assert CF.f_seed(A, cb, s, D, 0) != CF.f_seed(A, cb, s, D, 1)
+    r = CF.f_job((A, cb, s, D, 0, 1))
+    L, K, c0 = CF.setup()
+    f1 = X.bumps_target(K, CF.pair_centres(*A, D, cb), A)
+    c1, w1 = CF.one_fit(K, f1)
+    y = w1 * K.phi(np.array([c1]))[:, 0] + s * np.random.default_rng(CF.f_seed(A, cb, s, D, 0)).standard_normal(K.xs.size)
+    c, w = CF.one_fit(K, y)
+    assert abs(r['rows'][0]['c1'] - c) < 1e-7 and abs(r['rows'][0]['w1'] - w) < 1e-7 and r['hyp'] == 0
+
+
+def test_part_s_and_part_u_take_e_and_cs_seeds_and_fits(monkeypatch):
+    """Referee round 64: `part_S` and `part_U` hand each cell its own job's seed (`c_jobs`, `e_jobs`) and E's fits in the draws' order (H0's
+    rows, then H1's)."""
+    import multiprocessing
+    seen = []
+
+    class FakePool:
+        def __init__(self, n):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def map(self, fn, jobs, chunksize=1):
+            seen.append((fn.__name__, list(jobs)))
+            return [None] * len(jobs)
+    monkeypatch.setattr(multiprocessing, 'Pool', FakePool)
+    Dc, sc, hc, sdc = CF.c_jobs()[5]
+    De, se, cbe, sde = CF.e_jobs()[7]
+    C = [dict(D=Dc, s=sc, hyp=hc, rows=[{}] * 3)]
+    E_ = [dict(D=De, s=se, cbar=cbe, rows0=[dict(c1=0.1, w1=1.0), dict(c1=0.2, w1=1.1)], rows1=[dict(c1=0.3, w1=1.2)])]
+    CF.part_S(C, E_)
+    CF.part_U(E_)
+    (n1, j1), (n2, j2) = seen
+    assert n1 == 's_job' and j1[0] == ('C', Dc, sc, CF.CBAR, hc, sdc, (3,), None)
+    assert j1[1] == ('E', De, se, cbe, 2, sde, (2, 1), [(0.1, 1.0), (0.2, 1.1), (0.3, 1.2)])
+    assert n2 == 'u_job' and j2[0] == (De, se, cbe, sde, (2, 1), [(0.1, 1.0), (0.2, 1.1), (0.3, 1.2)])
+
+
+def test_e_job_calibrates_at_the_paths_fit(monkeypatch):
+    """Referee round 64 (D3bf's M08): `e_job` bootstraps each draw's knot law at the path's own first fit, not at the truth."""
+    monkeypatch.setattr(CF, 'R0_E', 1)
+    monkeypatch.setattr(CF, 'R1_E', 1)
+    monkeypatch.setattr(CF, 'M_LAW', 32)
+    calls = []
+    real = CF.knot_law
+
+    def spy(K, c0, c, w, s, M, rng):
+        calls.append((c, w, M))
+        return real(K, c0, c, w, s, M, rng)
+    monkeypatch.setattr(CF, 'knot_law', spy)
+    D, s, cb, seed = CF.e_jobs()[0]
+    r = CF.e_job((D, s, cb, seed))
+    per_draw = [(c, w) for c, w, M in calls if M == CF.M_E]
+    assert per_draw == [(r['rows0'][0]['c1'], r['rows0'][0]['w1']), (r['rows1'][0]['c1'], r['rows1'][0]['w1'])]
+    assert [(c, w) for c, w, M in calls if M == 32] == [(r['c1'], r['w1'])]
+
+
+def test_the_runner_ups_own_knot(monkeypatch):
+    """Referee round 64: `knot_of_kernel` is the tie pair's column of `knot_of`'s duals (the runner-up's, or the noiseless first entrant's
+    where the runner-up enters first); `u_job` scores E's regenerated draws with it from the stored fits."""
+    L, K, c0 = CF.setup()
+    N = K.xs.size
+    Xi = 0.01 * np.random.default_rng(3).standard_normal((200, N))
+    c, w = 0.049, 1.4
+    Phi = K.phi(c0)
+    v0 = (w * K.phi(np.array([c]))[:, 0][None, :] + Xi) @ Phi / N
+    j1 = int(np.argmax(np.abs(w * K.phi(np.array([c]))[:, 0] @ Phi)))
+    j2 = j1 + 1 if abs(c0[j1 + 1] - c) < abs(c0[j1 - 1] - c) else j1 - 1
+    t = CF.knot_of_kernel(K, c0, c, w, Xi, j2, j1)
+    n = Xi @ (CF.tangent_projector(K, c, w) @ Phi) / N
+    for m in range(200):
+        k = j1 if int(np.argmax(np.abs(v0[m]))) == j2 else j2
+        u = v0[m, k] / np.abs(v0[m]).max()
+        assert np.isclose(t[m], (1 - np.sign(n[m, k]) * u) / abs(n[m, k]), rtol=1e-12)
+    assert np.all(t >= CF.knot_of(K, c0, c, w, Xi) - 1e-12)                      # the dictionary's minimum is at most the pair's
+    monkeypatch.setattr(CF, 'M_LAW', 64)
+    D, s, cb, seed = CF.e_jobs()[2]
+    f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, D, cb), CF.PAIR_C)
+    c1, w1 = CF.one_fit(K, f1)
+    f0 = w1 * K.phi(np.array([c1]))[:, 0]
+    rng = np.random.default_rng(seed)
+    ys = [f0 + s * rng.standard_normal(N), f1 + s * rng.standard_normal(N)]
+    fits = [CF.one_fit(K, y) for y in ys]
+    u = CF.u_job((D, s, cb, seed, (1, 1), fits))
+    jj2 = CF.predicted_delay(K, f1, c0, *CF.PAIR_C, D, cbar=cb)[1]
+    jj1 = int(np.argmax(np.abs(Phi.T @ f1)))
+    for h, (y, (cf, wf)) in enumerate(zip(ys, fits)):
+        g = Phi.T @ y / N
+        k = jj1 if int(np.argmax(np.abs(g))) == jj2 else jj2
+        v = Phi[:, k] @ (y - wf * K.phi(np.array([cf]))[:, 0]) / N
+        assert np.isclose(u[f't2_{h}'][0], (1 - np.sign(v) * g[k] / np.abs(g).max()) / abs(v), rtol=1e-12)
+    law = CF.knot_of_kernel(K, c0, c1, w1, s * np.random.default_rng([seed, 7]).standard_normal((64, N)), jj2, jj1)
+    assert u['q2'] == float(np.quantile(law, CF.ALPHA_C)) and u['j2'] == jj2
+
+
+def test_the_e_prime_report_with_the_runner_ups_knot():
+    """Referee round 64: E′'s column of the runner-up's own knot — its size and power against its law's quantile."""
+    D, s_ = CF.CELLS_E[0]
+    cb = CF.OFFSETS_E[0]
+    rows0 = [dict(dt=1.0, p=0.5, c1=0.0, w1=1.0) for _ in range(10)]
+    rows1 = [dict(dt=1.0, p=0.5, c1=0.0, w1=1.0) for _ in range(4)]
+    E_ = [dict(D=D, s=s_, cbar=cb, rows0=rows0, rows1=rows1, np=0.5)]
+    srow = dict(z=0.0, t=0.0, zs=0.0, z2=0.0, swap=False, mu=0.1, dfit=0.0, w1=1.0)
+    S = [dict(kind='E', D=D, s=s_, cbar=cb, rows0=[srow] * 10, rows1=[srow] * 4, mu_true=0.1, cos2=0.9)]
+    U = [dict(D=D, s=s_, cbar=cb, q2=2.0, t2_0=[1.0] + [3.0] * 9, t2_1=[1.0, 1.0, 1.0, 3.0])]
+    md = '\n'.join(CF.e_prime_lines(E_, S, U))
+    assert '| 0.100, 0.750 |' in md
+    assert '| — |' in '\n'.join(CF.e_prime_lines(E_, S))
+
+
+def test_the_separations_bound():
+    """Referee round 64: Smith's criterion — the separation's bound ∝ s/Δ² with the amplitudes unknown and unequal, ∝ s/Δ for equal or
+    known amplitudes."""
+    L, K, c0 = CF.setup()
+    sl = lambda A, known: np.log(CF.crb_sep(K, CF.pair_centres(*A, 0.00625), np.array(A), 1.0, known)
+                                 / CF.crb_sep(K, CF.pair_centres(*A, 0.0125), np.array(A), 1.0, known)) / np.log(2)
+    assert abs(sl((0.8, 0.6), False) - 2) < 0.05 and abs(sl((0.8, -0.4), False) - 2) < 0.05
+    assert abs(sl((0.8, 0.8), False) - 1) < 0.05 and abs(sl((0.8, 0.6), True) - 1) < 0.05
+    assert "Smith's criterion" in CF.smith_line(K)
+
+
+def test_s_job_on_an_e_cell_and_a_c_null(monkeypatch):
+    """Referee round 64 (D3bk-9: `s_job`'s E and H0 paths): on a 2 + 2-draw E cell the labels are the one-bump fit f₀ plus the seed's
+    first noise vectors, then the pair f₁ plus the next; the stored fits are used ('dfit' their distance from `one_fit`'s); z₂ is the
+    residual's projection on Rφ_{j₂} toward its wall (R by least squares), the swap and the margin 1 − wall·u_{j₂} from Φᵀy, the cosine of
+    Rφ_{j₂} with f₁ − f₀, for a pair of each sign (the wall ±1); on a C cell under H0 the law at the truth's fit at the noise s with the
+    seed [seed, 9]."""
+    monkeypatch.setattr(CF, 'M_LAW', 64)
+    L, K, c0 = CF.setup()
+    N = K.xs.size
+    Phi = K.phi(c0)
+    D, s, cb, seed = CF.e_jobs()[13]
+    for A in ((0.8, 0.6), (-0.8, -0.6)):                                      # the runner-up's wall +1, then −1
+        monkeypatch.setattr(CF, 'PAIR_C', A)
+        f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, D, cb), CF.PAIR_C)
+        c1, w1 = CF.one_fit(K, f1)
+        f0 = w1 * K.phi(np.array([c1]))[:, 0]
+        rng = np.random.default_rng(seed)
+        ys = [f + s * rng.standard_normal(N) for f in (f0, f0, f1, f1)]
+        fits = [CF.one_fit(K, y) for y in ys]
+        fits = [(c + 1e-3 * (k % 2), w) for k, (c, w) in enumerate(fits)]          # odd draws: a stored fit off `one_fit`'s
+        out = CF.s_job(('E', D, s, cb, 2, seed, (2, 2), fits))
+        pd = CF.predicted_delay(K, f1, c0, *CF.PAIR_C, D, cbar=cb)
+        j2, wall = pd[1], pd[2]
+        j1n = int(np.argmax(np.abs(Phi.T @ f1)))
+
+        def rphi(c, w):
+            T = np.c_[K.phi(np.array([c]))[:, 0], w * K.dphi(np.array([c]))[:, 0]]
+            return Phi[:, j2] - T @ np.linalg.lstsq(T, Phi[:, j2], rcond=None)[0]
+        for k, (y, (c, w)) in enumerate(zip(ys, fits)):
+            q = (out['rows0'] + out['rows1'])[k]
+            assert abs(q['dfit'] - 1e-3 * (k % 2)) < 1e-9
+            assert q['z'] == CF.draw_stats(K, c0, y, c, w, s)['z']
+            Rp = rphi(c, w)
+            r = y - w * K.phi(np.array([c]))[:, 0]
+            assert abs(q['z2'] - wall * (r @ Rp) / (s * np.linalg.norm(Rp))) < 1e-9
+            g = Phi.T @ y
+            assert q['swap'] == (int(np.argmax(np.abs(g))) != j1n) and abs(q['mu'] - (1 - wall * g[j2] / np.abs(g).max())) < 1e-12
+        Rp = rphi(c1, w1)
+        g = Phi.T @ f1
+        assert out['j2'] == j2 and abs(out['mu_true'] - (1 - wall * g[j2] / np.abs(g).max())) < 1e-12
+        assert abs(out['cos2'] - Rp @ (f1 - f0) / (np.linalg.norm(Rp) * np.linalg.norm(f1 - f0))) < 1e-9
+    monkeypatch.setattr(CF, 'PAIR_C', (0.8, 0.6))
+    Dc, sc, hc, sdc = next(j for j in CF.c_jobs() if j[2] == 0)
+    outc = CF.s_job(('C', Dc, sc, CF.CBAR, hc, sdc, (2,), None))
+    f1c = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, Dc, CF.CBAR), CF.PAIR_C)
+    c1c, w1c = CF.one_fit(K, f1c)
+    f0c = w1c * K.phi(np.array([c1c]))[:, 0]
+    rngc = np.random.default_rng(sdc)
+    for q in outc['rows0']:
+        y = f0c + sc * rngc.standard_normal(N)
+        assert q['z'] == CF.draw_stats(K, c0, y, *CF.one_fit(K, y), sc)['z'] and q['dfit'] == 0.0
+    la, lb = CF.knot_walls(K, c0, c1c, w1c, sc * np.random.default_rng([sdc, 9]).standard_normal((64, N)))
+    assert outc['q_law'] == float(np.quantile(np.minimum(la, lb), CF.ALPHA_C))
+    assert outc['qA'] == float(np.quantile(la, CF.ALPHA_C / 2)) and outc['qB'] == float(np.quantile(lb, CF.ALPHA_C / 2))

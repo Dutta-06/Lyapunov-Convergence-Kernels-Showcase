@@ -648,7 +648,34 @@ def crb(K, cs, w, s):
     return float(np.sqrt((Cov[2, 2] + Cov[3, 3]) / 2)), float(np.sqrt(g @ Cov @ g))
 
 
+def crb_sep(K, cs, w, s, known=False):
+    """The Cramér–Rao bound of the separation ĉ₂ − ĉ₁ (referee round 64): its standard deviation from s²(JᵀJ)⁻¹, the amplitudes
+    unknown (J in (w₁, w₂, c₁, c₂)) or known (J in (c₁, c₂))."""
+    J = K.dphi(cs) * w[None, :] if known else np.c_[K.phi(cs), K.dphi(cs) * w[None, :]]
+    Cov = s ** 2 * np.linalg.inv(J.T @ J)
+    g = np.array([-1.0, 1.0]) if known else np.array([0.0, 0.0, -1.0, 1.0])
+    return float(np.sqrt(g @ Cov @ g))
+
+
+SMITH_PAIRS, SMITH_D = ((0.8, 0.6), (0.8, -0.4), (0.8, 0.8)), (0.0125, 0.00625)
+
+
+def smith_line(K):
+    """Smith's criterion (referee round 64): the separation's bound sd(ĉ₂ − ĉ₁) = c·s/Δ^p (p the local slope between SMITH_D), the
+    amplitudes unknown or known, and the noise s = Δ^{p+1}/c at which sd = Δ."""
+    cells = []
+    for A in SMITH_PAIRS:
+        for known in (False, True):
+            sd = [crb_sep(K, pair_centres(*A, D), np.array(A), 1.0, known) for D in SMITH_D]
+            p = float(np.log(sd[1] / sd[0]) / np.log(SMITH_D[0] / SMITH_D[1]))
+            c = sd[0] * SMITH_D[0] ** p
+            cells.append(f"({A[0]:g}, {A[1]:g}), {'known' if known else 'unknown'}: {c:.3g}·s/Δ^{p:.2f}, sd = Δ at s ≈ {1 / c:.3g}Δ^{p + 1:.2f}")
+    return ("Smith's criterion (the separation's Cramér–Rao standard deviation equal to Δ; referee round 64), the amplitudes unknown or known: "
+            + '; '.join(cells) + '.')
+
+
 Z95, Z975 = 1.6448536269514722, 1.959963984540054   # the standard normal's 95% and 97.5% quantiles
+Z99, Z995 = 2.3263478740408408, 2.5758293035489004  # and 99%, 99.5% (referee round 64: the sizes at α = 0.01)
 
 
 def cp_int(k, n, a=0.05):
@@ -681,7 +708,9 @@ def d50_boot(Ds, rej, n=N_BOOT, seed=5600):
 def rejections(rows, sgn, q_law=None, qA=None, qB=None, dts=None):
     """Per draw (referee round 59), at the level ALPHA_C: the knot against the law at the truth (q_law), the calibrated knot (its bootstrap
     p, if recorded), both walls against their laws (qA, qB at α/2 each), the score z one-sided toward the pair's sign sgn = sign(A₁A₂)
-    (z times the fit's sign), |z| and the width's |z_σ| two-sided. dts: the knots, if not in the rows (C's draws, scored by S)."""
+    (z times the fit's sign), |z| and the width's |z_σ| two-sided; referee round 64: each wall's knot one-sided, calibrated at the fit
+    (p_A < α: the wall of the fit's sign, a same-sign pair's; p_B < α: the other, an opposite-sign pair's). dts: the knots, if not in the
+    rows (C's draws, scored by S)."""
     z = np.array([q['z'] for q in rows])
     zw = np.array([q['zs'] for q in rows])
     w = np.array([np.sign(q['w1']) if 'w1' in q else 1.0 for q in rows])
@@ -692,6 +721,9 @@ def rejections(rows, sgn, q_law=None, qA=None, qB=None, dts=None):
         out['walls'] = (np.array([q['tA'] for q in rows]) < qA) | (np.array([q['tB'] for q in rows]) < qB)
     if rows and 'p' in rows[0]:
         out['cal'] = np.array([q['p'] for q in rows]) < ALPHA_C
+    if rows and 'pA' in rows[0]:                                       # referee round 64: each wall one-sided, calibrated at the fit
+        out['own'] = np.array([q['pA'] for q in rows]) < ALPHA_C
+        out['other'] = np.array([q['pB'] for q in rows]) < ALPHA_C
     return out
 
 
@@ -741,7 +773,7 @@ def fmt_(x):
     return '—' if not np.isfinite(x) else f"{x:.4g}"
 
 
-def e_prime_lines(E_, S):
+def e_prime_lines(E_, S, U=None):
     """E′ (referee round 59): E's draws scored at the path's own first fit (S): the score z (one-sided), |z|, its t-version with
     ŝ² = ‖r‖²/(N − 2), the free-width z_σ, the runner-up's filter z₂, against the knot (oracle, calibrated) and the Neyman–Pearson bound;
     the knot's loss mechanisms: the first entrant swapped under H0, the runner-up's margin and its noise."""
@@ -752,9 +784,12 @@ def e_prime_lines(E_, S):
            "t-version (ŝ² = ‖r̂₁‖²/(N − 2)) and of the free-width fit's z_σ = (σ̂ − σ)/sd(σ̂) with its power; the runner-up's filter "
            "z₂ = ⟨r̂₁, R̂φ_{j₂}⟩/(s‖R̂φ_{j₂}‖) (j₂ the noiseless second entrant, toward its wall; one-sided) with the cosine of R̂φ_{j₂} with "
            "f₁ − f₀; the knot's powers (oracle, calibrated) and the Neyman–Pearson bound; under H0 the share of draws whose first entrant is "
-           "not the noiseless one, and the runner-up's margin μ = 1 − wall·u_{j₂} noiseless and its standard deviation over s:", '',
+           "not the noiseless one, and the runner-up's margin μ = 1 − wall·u_{j₂} noiseless, its standard deviation over s and the margin "
+           "over that standard deviation:", '',
            '| Δ, s | c̄ | z: size [CP], power | \\|z\\| power | t size | z_σ: size, power | z₂: power (cos) | knot: oracle, calibrated | '
-           'Neyman–Pearson | first entrant swapped (H0) | margin μ, sd(μ̂)/s |', '|---|---|---|---|---|---|---|---|---|---|---|']
+           "the runner-up's own knot: size, power | Neyman–Pearson | first entrant swapped (H0) | margin μ, sd(μ̂)/s, μ/sd(μ̂) |",
+           '|---|---|---|---|---|---|---|---|---|---|---|---|']
+    Ue = {(u['D'], u['s'], u['cbar']): u for u in (U if U is not None else [])}
     summ = []
     for D, s_ in CELLS_E:
         for e in sorted([e for e in E_ if e['D'] == D and e['s'] == s_], key=lambda e: e['cbar']):
@@ -772,8 +807,12 @@ def e_prime_lines(E_, S):
             out.append(f"| {D:g}, {s_:g} | {e['cbar']:g} | {np.mean(a0['z']):.3f} [{ci[0]:.3f}, {ci[1]:.3f}], {np.mean(a1['z']):.3f} | "
                        f"{np.mean(a1['z2']):.3f} | {np.mean(t0):.3f} | "
                        f"{np.mean(np.array([q['zs'] for q in r['rows0']]) > Z95):.3f}, {summ[-1]['zs1']:.3f} | {np.mean(z20):.3f} "
-                       f"({r['cos2']:.3f}) | {po:.3f}, {pc:.3f} | {e['np']:.3f} | {np.mean([q['swap'] for q in r['rows0']]):.3f} | "
-                       f"{r['mu_true']:.4f}, {np.std(mu) / s_:.3f} |")
+                       f"({r['cos2']:.3f}) | {po:.3f}, {pc:.3f} | {own_knot(Ue.get((D, s_, e['cbar'])))} | {e['np']:.3f} | "
+                       f"{np.mean([q['swap'] for q in r['rows0']]):.3f} | "
+                       f"{r['mu_true']:.4f}, {np.std(mu) / s_:.3f}, {r['mu_true'] / np.std(mu):.2f} |")
+            u = Ue.get((D, s_, e['cbar']))
+            if u is not None:
+                summ[-1].update(u0=float(np.mean(np.array(u['t2_0']) < u['q2'])), u1=float(np.mean(np.array(u['t2_1']) < u['q2'])), cb=e['cbar'])
     dz = np.array([q['z'] - q['np'] for q in summ]); dk = np.array([q['z'] - q['cal'] for q in summ])
     dn = np.array([q['np'] - q['knot'] for q in summ])
     k0, n0 = sum(q['k0'] for q in summ), sum(q['n0'] for q in summ)
@@ -786,7 +825,124 @@ def e_prime_lines(E_, S):
                 f"runner-up's filter's power {min(q['z2'] for q in summ):.3f} … {max(q['z2'] for q in summ):.3f}. The score's pooled "
                 f"false-alarm rate {k0 / n0:.4f} [{ci[0]:.4f}, {ci[1]:.4f}] over {n0} H0 draws, its t-version's {t0 / n0:.4f}, the width's "
                 f"{zs0 / n0:.4f}; the first fit by `one_fit` equals the path's to {fit_dev:.1e}.", '']
+    uu = [q for q in summ if 'u1' in q]
+    if uu:                                                              # referee round 64: the knot's losses decomposed
+        far = [q for q in uu if q['cb'] <= 0.032]
+        tie = [q for q in uu if q['cb'] == max(q2['cb'] for q2 in uu)]
+        out += [f"The runner-up's own knot (the tie pair's second knot against its own law at the truth): its size {min(q['u0'] for q in uu):.3f}"
+                f"–{max(q['u0'] for q in uu):.3f}; at c̄ ≤ 0.032 its power minus the runner-up's filter z₂'s "
+                f"{min(q['u1'] - q['z2'] for q in far):+.3f} … {max(q['u1'] - q['z2'] for q in far):+.3f}, and the larger of the knot's two "
+                f"powers below it by {min(q['u1'] - q['knot'] for q in far):.3f} … {max(q['u1'] - q['knot'] for q in far):.3f} (the "
+                f"dictionary's minimum); at c̄ = {tie[0]['cb']:g} its power {', '.join(f'{q['u1']:.3f}' for q in tie)} against z₂'s "
+                f"{', '.join(f'{q['z2']:.3f}' for q in tie)} (the margin's noise).", '']
     return out
+
+
+def own_knot(u):
+    """U's cell: the runner-up's own knot against its own law at the truth, its size and power ('—' without U)."""
+    if u is None:
+        return '—'
+    return f"{np.mean(np.array(u['t2_0']) < u['q2']):.3f}, {np.mean(np.array(u['t2_1']) < u['q2']):.3f}"
+
+
+def f_alloc_lines(F, least, small, names, keys):
+    """F's allocation (referee round 64): under H0 the share of the calibrated knot's rejections at the wall of the fit's sign (tA < tB)
+    per pair, pooled and per offset; each test's least power over Δ per cell (the cells below α) and its power pooled over the cells at
+    the two smallest separations (Clopper–Pearson); the sizes at α = 0.01 pooled over the H0 draws."""
+    out = []
+    for A in PAIRS_F:
+        h0 = [r for r in F if tuple(r['A']) == tuple(A) and r['hyp'] == 0]
+        rej = [(q['tA'] < q['tB'], r['cbar']) for r in h0 for q in r['rows'] if q['p'] < ALPHA_C]
+        per = {cb: [a for a, c in rej if c == cb] for cb in OFFSETS_F}
+        out.append(f"Pair {A} under H0: of the calibrated knot's {len(rej)} rejections {sum(a for a, _ in rej)} at the wall of the fit's "
+                   f"sign ({sum(a for a, _ in rej) / max(len(rej), 1):.3f}; per offset "
+                   + ', '.join(f"{cb:g}: {sum(v)}/{len(v)}" for cb, v in per.items() if v) + ").")
+    out.append('')
+    for A in PAIRS_F:
+        cells = []
+        for k in keys:
+            lw = least[(A, k)]
+            if not lw:
+                continue
+            k0, n0 = small[(A, k, 0)]; k1, n1 = small[(A, k, 1)]
+            c0, c1 = cp_int(k0, n0), cp_int(k1, n1)
+            cells.append(f"{names[k]}: least {min(lw):.3f}–{max(lw):.3f}, below α in {sum(x < ALPHA_C for x in lw)} of {len(lw)}; "
+                         f"pooled {k0 / max(n0, 1):.3f} [{c0[0]:.3f}, {c0[1]:.3f}], {k1 / max(n1, 1):.3f} [{c1[0]:.3f}, {c1[1]:.3f}]")
+        out.append(f"Pair {A}, each test's least power over Δ per cell and its power pooled over the cells at the two smallest separations: "
+                   + '; '.join(cells) + '.')
+    out.append('')
+    h0 = [q for r in F if r['hyp'] == 0 for q in r['rows']]
+    if h0:
+        z = np.array([q['z'] for q in h0]); w = np.sign([q['w1'] for q in h0]); p = np.array([q['p'] for q in h0])
+        n = len(h0)
+        sz = [('knot (calibrated)', int(np.sum(p < 0.01))), ('z, one-sided toward the same sign', int(np.sum(w * z > Z99))),
+              ('z, one-sided toward the opposite sign', int(np.sum(-w * z > Z99))), ('\\|z\\|', int(np.sum(np.abs(z) > Z995)))]
+        out.append(f"The sizes at α = 0.01 over the {n} H0 draws (Clopper–Pearson 95%): "
+                   + '; '.join(f"{nm} {k / n:.4f} [{cp_int(k, n)[0]:.4f}, {cp_int(k, n)[1]:.4f}]" for nm, k in sz) + '.')
+        out.append('')
+    return out
+
+
+def knot_of_kernel(K, c0, c, w, Xi, j, alt):
+    """The second knot of the tie pair {alt, j} (referee round 64: the runner-up's own knot), first order in the noise at the one-bump fit
+    (c, w): of j — the noiseless runner-up —, or of alt — the noiseless first entrant — where j enters first; its dual at the first entry
+    u_k and its rate n_k = ⟨Rξ, φ_k⟩, the time (1 − sign(n_k)u_k)/|n_k| to the wall it moves toward."""
+    N, M = K.xs.size, Xi.shape[0]
+    Phi = K.phi(c0)
+    v0 = (w * K.phi(np.array([c]))[:, 0][None, :] + Xi) @ Phi / N
+    k = np.where(np.argmax(np.abs(v0), axis=1) == j, alt, j)
+    u = v0[np.arange(M), k] / np.abs(v0).max(axis=1)
+    n = (Xi @ (tangent_projector(K, c, w) @ Phi))[np.arange(M), k] / N
+    with np.errstate(divide='ignore'):
+        return (1 - np.sign(n) * u) / np.abs(n)
+
+
+def u_job(args):
+    """U (referee round 64): E's draws regenerated from their seeds (as `s_job`), the path's own first fits from E's rows: per draw the
+    noiseless second entrant j₂'s own knot from the fit (exact in the sliding limit: its dual at the first entry, moving at ⟨r₁φ_{j₂}⟩; the
+    noiseless first entrant's where j₂ enters first), against its own law at the truth (`knot_of_kernel`, M_LAW samples: the α quantile),
+    and the share of the draws whose first entrant is j₂."""
+    D, s, cbar, seed, ns, fits = args
+    L, K, c0 = setup()
+    N = K.xs.size
+    f1 = X.bumps_target(K, pair_centres(*PAIR_C, D, cbar), PAIR_C)
+    c1, w1 = one_fit(K, f1)
+    f0 = w1 * K.phi(np.array([c1]))[:, 0]
+    rng = np.random.default_rng(seed)
+    xi = [rng.standard_normal(N) for _ in range(sum(ns))]
+    j2 = predicted_delay(K, f1, c0, *PAIR_C, D, cbar=cbar)[1]
+    Phi = K.phi(c0)
+    j1 = int(np.argmax(np.abs(Phi.T @ f1)))
+    law = knot_of_kernel(K, c0, c1, w1, s * np.random.default_rng([seed, 7]).standard_normal((M_LAW, N)), j2, j1)
+    q2 = float(np.quantile(law, ALPHA_C))
+    out = dict(D=D, s=s, cbar=cbar, j2=int(j2), q2=q2)
+    k = 0
+    for h, n in zip((0, 1), ns):
+        t2, first = [], []
+        for r in range(n):
+            y = (f1 if h == 1 else f0) + s * xi[k]
+            cf, wf = fits[k]
+            g = Phi.T @ y / N
+            jj = j1 if int(np.argmax(np.abs(g))) == j2 else j2
+            v = Phi[:, jj] @ (y - wf * K.phi(np.array([cf]))[:, 0]) / N
+            u = g[jj] / np.abs(g).max()
+            t2.append(float((1 - np.sign(v) * u) / abs(v)) if v != 0 else np.inf)
+            first.append(jj != j2)
+            k += 1
+        out[f't2_{h}'], out[f'first_{h}'] = t2, first
+    print(f"  U Δ {D:g} s {s:g} c̄ {cbar:g}: size {np.mean(np.array(out['t2_0']) < q2):.3f}, power {np.mean(np.array(out['t2_1']) < q2):.3f}",
+          flush=True)
+    return out
+
+
+def part_U(E_):
+    """U's jobs: E's cells (seeds as `part_E`'s; the path's first fits from E's rows)."""
+    from multiprocessing import Pool
+    eseed = {(D, s, cb): sd for D, s, cb, sd in e_jobs()}
+    jobs = [(e['D'], e['s'], e['cbar'], eseed[(e['D'], e['s'], e['cbar'])], (len(e['rows0']), len(e['rows1'])),
+             [(q['c1'], q['w1']) for q in e['rows0']] + [(q['c1'], q['w1']) for q in e['rows1']]) for e in E_]
+    with Pool(N_WORKERS) as pool:
+        return pool.map(u_job, jobs, chunksize=1)
 
 
 def f_lines(F):
@@ -802,10 +958,13 @@ def f_lines(F):
            "against their laws at α/2 each, the score z one-sided toward the pair's sign sign(A₁A₂), |z| and the width's |z_σ| two-sided; Δ₅₀ "
            "where the power crosses ½ (log-linear interpolation; '<' or '>' the grid's ends), and the false-alarm rates at the third "
            "separation:", '']
-    keys = ('knot', 'cal', 'walls', 'z', 'z2', 'zs')
-    names = dict(knot='knot (law)', cal='knot (calibrated)', walls='both walls', z='z, one-sided', z2='\\|z\\|', zs='\\|z_σ\\|')
+    keys = ('knot', 'cal', 'own', 'other', 'walls', 'z', 'z2', 'zs')
+    names = dict(knot='knot (law)', cal='knot (calibrated)', own="the fit's-sign wall (one-sided)", other='the other wall (one-sided)',
+                 walls='both walls', z='z, one-sided', z2='\\|z\\|', zs='\\|z_σ\\|')
     pool = {k: [0, 0] for k in keys}
     ratios = {(A, k): [] for A in PAIRS_F for k in keys}
+    least = {(A, k): [] for A in PAIRS_F for k in keys}
+    small = {(A, k, i): [0, 0] for A in PAIRS_F for k in keys for i in (0, 1)}
     for A in PAIRS_F:
         sgn = float(np.sign(A[0] * A[1]))
         out += [f"Pair {A}:", '', '| s | c̄ | Δ₅₀: ' + ', '.join(names[k] for k in keys) + ', Neyman–Pearson | false alarms: '
@@ -818,6 +977,10 @@ def f_lines(F):
                 if len(h1) < len(Ds):
                     continue
                 rej = {D: rejections(h1[D]['rows'], sgn, h1[D]['q_law'], h1[D]['qA'], h1[D]['qB']) for D in Ds}
+                for k in keys:
+                    least[(A, k)].append(min(float(np.mean(rej[D][k])) for D in Ds))
+                    for i, D in enumerate(Ds[:2]):
+                        small[(A, k, i)][0] += int(rej[D][k].sum()); small[(A, k, i)][1] += rej[D][k].size
                 pw = {k: [float(np.mean(rej[D][k])) for D in Ds] for k in keys}
                 npw = [h1[D]['np'] for D in Ds]
                 d50np = crossing(list(Ds), npw)
@@ -842,9 +1005,12 @@ def f_lines(F):
     out.append("False-alarm rates pooled over the H0 draws of both pairs (Clopper–Pearson 95%): "
                + '; '.join(f"{names[k]} {pool[k][0] / max(pool[k][1], 1):.4f} [{cp_int(*pool[k])[0]:.4f}, {cp_int(*pool[k])[1]:.4f}]"
                            for k in keys if pool[k][1]) + '.')
+    out += [''] + f_alloc_lines(F, least, small, names, keys)
     A = PAIRS_F[-1]
     sgn = float(np.sign(A[0] * A[1]))
-    out += ['', f"The pair {A} at c̄ = {CBAR:g}: the powers against Δ (knot (law), both walls, z one-sided, |z|; Neyman–Pearson):", '']
+    out += ['', f"The pair {A} at c̄ = {CBAR:g}: the powers against Δ (knot (law), both walls, z one-sided, |z|; Neyman–Pearson) — with "
+                "the null's centre (the pair's one-bump fit) against c̄, the law's α quantile and the knot's median under H1, each times s "
+                "(referee round 64: the null moves across the tie as Δ grows):", '']
     for s_ in SIGMAS_F:
         cells = []
         for D in DELTAS_F[s_]:
@@ -852,13 +1018,14 @@ def f_lines(F):
             if h:
                 rj = rejections(h[0]['rows'], sgn, h[0]['q_law'], h[0]['qA'], h[0]['qB'])
                 cells.append(f"Δ = {D:g}: {np.mean(rj['knot']):.3f}, {np.mean(rj['walls']):.3f}, {np.mean(rj['z']):.3f}, "
-                             f"{np.mean(rj['z2']):.3f}; {h[0]['np']:.3f}")
+                             f"{np.mean(rj['z2']):.3f}; {h[0]['np']:.3f} (the null's ĉ − c̄ {h[0]['c1'] - CBAR:+.4f}, q_law·s "
+                             f"{h[0]['q_law'] * s_:.2f}, the knot's median·s {np.median([q['dt'] for q in h[0]['rows']]) * s_:.2f})")
         out.append(f"- s = {s_:g}: " + '; '.join(cells))
     out.append('')
     return out
 
 
-def report(A=None, B=None, C=None, E_=None, S=None, F=None):
+def report(A=None, B=None, C=None, E_=None, S=None, F=None, U=None):
     fmt = E.fmt
     L_ = ['# Proposition D‴.52: close features (`exp_close_features.py`)', '',
           f"The sliding inverse scale space (polished) on two bumps of the kernels' width {X.SIG_C} a distance Δ apart, the centroid (the "
@@ -1056,7 +1223,7 @@ def report(A=None, B=None, C=None, E_=None, S=None, F=None):
                f"{min(g[1] for g in good):.2f}–{max(g[1] for g in good):.2f} (split) of the bounds. The largest coefficient of a placed "
                f"block: Δ = {big[0]:g}, s = {big[1]:g}, w = ({big[2]['w'][0]:.4g}, {big[2]['w'][1]:.4g}) (their sum "
                f"{sum(big[2]['w']):.4g}), the centres {abs(big[2]['c'][1] - big[2]['c'][0]):.2g} apart, the entrants {big[2]['j']}, its own "
-               f"split error {abs(big[2]['w'][0] / sum(big[2]['w']) - PAIR_C[0] / sum(PAIR_C)):.4g}.", '']
+               f"split error {abs(big[2]['w'][0] / sum(big[2]['w']) - PAIR_C[0] / sum(PAIR_C)):.4g}.", '', smith_line(Kc), '']
     if E_ is not None:
         L_ += ['## E. The null law and its calibration across the grid offset', '',
                f"At the centroids c̄ = {', '.join(f'{c:g}' for c in OFFSETS_E)} (the kernels on a grid of spacing 0.1: c̄ = 0.05 is a tie) and "
@@ -1064,11 +1231,12 @@ def report(A=None, B=None, C=None, E_=None, S=None, F=None):
                f"{R1_E} under H1. The H0 quantile of Δτ₂ at {ALPHA_C:g} times s from the draws and from the null law at the truth "
                f"(`knot_law`, {M_LAW} samples: min_j (1 − sign(n_j)u_j)/|n_j|, n ~ N(0, s²ΦᵀRΦ/N²), R the projection off the fit's "
                "tangent span) and that quantile's false-alarm rate on the draws (Clopper–Pearson 95%); the projected noise's std over the "
-               "unprojected one, (⟨(Rφ_j)²⟩/⟨φ_j²⟩)^{1/2}, for the kernel j₁ nearest the fit and its neighbours j₁ ∓ 1; the share of the H0 second entrants next to the first; the false-alarm rate of the threshold set at "
+               "unprojected one, (⟨(Rφ_j)²⟩/⟨φ_j²⟩)^{1/2}, for the kernel j₁ nearest the fit and its neighbours j₁ ∓ 1; the share of the H0 second entrants next to the first, over all draws and over "
+               f"the earliest {ALPHA_C:g} (the draws below the H0 quantile); the false-alarm rate of the threshold set at "
                f"c̄ = {CBAR:g} and of the test calibrated per draw by the law bootstrapped at its own first fit ({M_E} samples); the power of "
                "the oracle-calibrated test (the offset's own H0 quantile), of the calibrated test, and the Neyman–Pearson bound:", '',
                '| Δ, s | c̄ | noiseless Δτ₂Δ² (leading order; kernel) | H0 quantile × s: draws, law | the law\'s false alarms [CP] | '
-               f'std ratio: j₁; j₁ ∓ 1 | H0 second entrants adjacent | false alarms: c̄ = {CBAR:g} threshold, calibrated [CP] | power: '
+               f'std ratio: j₁; j₁ ∓ 1 | H0 second entrants adjacent: all, earliest | false alarms: c̄ = {CBAR:g} threshold, calibrated [CP] | power: '
                'oracle, calibrated, Neyman–Pearson |',
                '|---|---|---|---|---|---|---|---|---|']
         Le, Ke, c0e = setup()
@@ -1088,12 +1256,13 @@ def report(A=None, B=None, C=None, E_=None, S=None, F=None):
                 j1 = int(np.argmin(np.abs(cg - e['c1'])))
                 cl, cc = cp_int(summ[-1]['k_law'], d0.size), cp_int(summ[-1]['k_cal'], d0.size)
                 adj = np.mean([abs(q['j'][1] - q['j'][0]) <= 1 for q in e['rows0'] if len(q['j']) > 1])
+                adj5 = np.mean([abs(q['j'][1] - q['j'][0]) <= 1 for q in e['rows0'] if len(q['j']) > 1 and q['dt'] < q0])
                 pd = predicted_delay(Ke, X.bumps_target(Ke, pair_centres(*PAIR_C, D, e['cbar']), PAIR_C), c0e, *PAIR_C, D,
                                      cbar=e['cbar'])
                 L_.append(f"| {D:g}, {s_:g} | {e['cbar']:g} | {pd[0] * D ** 2:.3f} ({pd[1]}) | {q0 * s_:.3f}, {e['q_law'] * s_:.3f} | "
                           f"{np.mean(d0 < e['q_law']):.3f} [{cl[0]:.3f}, {cl[1]:.3f}] | {e['ratio'][j1]:.3f}; "
                           + ', '.join(f"{e['ratio'][k]:.3f}" for k in (j1 - 1, j1 + 1) if 0 <= k < len(e['ratio']))
-                          + f" | {adj:.2f} | {np.mean(d0 < qref):.3f}, {np.mean(p0 < ALPHA_C):.3f} [{cc[0]:.3f}, {cc[1]:.3f}] | "
+                          + f" | {adj:.2f}, {adj5:.2f} | {np.mean(d0 < qref):.3f}, {np.mean(p0 < ALPHA_C):.3f} [{cc[0]:.3f}, {cc[1]:.3f}] | "
                           f"{np.mean(d1 < q0):.3f}, {np.mean(p1 < ALPHA_C):.3f}, {e['np']:.3f} |")
         if summ:
             law = np.array([q['law'] for q in summ])
@@ -1114,7 +1283,7 @@ def report(A=None, B=None, C=None, E_=None, S=None, F=None):
                        f"{cp_int(kl, n_)[1]:.4f}], the calibrated test's {kc / n_:.4f} [{cp_int(kc, n_)[0]:.4f}, {cp_int(kc, n_)[1]:.4f}]."]
         L_.append('')
         if S is not None:
-            L_ += e_prime_lines(E_, S)
+            L_ += e_prime_lines(E_, S, U)
     if F is not None:
         L_ += f_lines(F)
     L_.append('Numbers are produced by `experiments/exp_close_features.py`; nothing is edited by hand.')
@@ -1125,15 +1294,16 @@ def main():
     raw = os.path.join(OUT, 'close_features_raw.npz')
     md = os.path.join(OUT, 'close_features.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'E', 'S', 'F')
+    keys = ('A', 'B', 'C', 'E', 'S', 'F', 'U')
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[get(k) for k in keys]))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'C', 'D', 'E', 'S', 'F'}
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'C', 'D', 'E', 'S', 'F', 'U'}
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('B', part_B), ('A', part_A), ('C', part_C), ('E', part_E), ('S', lambda: part_S(res['C'], res['E'])), ('F', part_F)):
+    for k, fn in (('B', part_B), ('A', part_A), ('C', part_C), ('E', part_E), ('S', lambda: part_S(res['C'], res['E'])), ('F', part_F),
+                  ('U', lambda: part_U(res['E']))):
         if k in parts or (k == 'C' and 'D' in parts):
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
