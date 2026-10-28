@@ -10,7 +10,7 @@ round is applied and its numbers are final.
 | `D44.md` | D‴.44: coloured label noise under the replicator mass law on a kernel dictionary | round 34 (D3ag) applied, numerics final; a referee round on the revision next |
 | `D49.md` | D‴.49: the rich transit in the closed loop | round 51 (D3ax) report in, to be applied |
 | `D50.md` | D‴.50: the rich transit under label noise | round 52 (D3ay) report in, to be applied |
-| `D52.md` | D‴.52: close features and the transit's resolution limit | round 59 (D3bf) applied — the score's Neyman–Pearson power, the knot's losses and the opposite-sign bias across a grid cell (S, F) —, numerics final; a referee round on the revision next |
+| `D52.md` | D‴.52: close features and the transit's resolution limit | round 64 (D3bk) report in, to be applied |
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 62 (D3bi) report in, to be applied |
 | `D56.md` | D‴.56: the transit under measurement noise | round 45 (D3ar) applied — the order criterion over the later entrants with its radius, (ii) two-sided, the solver's box and budget past the first noise kernel, the largest gap a selection with its condition (E's four families) —, numerics final; a referee round on the revision next |
 | `D57.md` | D‴.57: the transit's dead zone — the energy dead zone freezes the last block, the formation dead zone is the discrepancy principle; in the closed loop neither keeps the kernels in the window | round 50 (D3aw) applied, numerics final; a referee round on the revision next |
