@@ -104,6 +104,10 @@ def test_the_opposite_sign_pair_enters_at_the_other_wall():
     (t1, j1), (t2, j2) = r['entries'][:2]
     dt, j, wall = r['pred']
     assert (j, wall) == (13, -1) and j2 == 13 and 0.9 < (t2 - t1) / dt < 0.92
+    L, K, c0 = CF.setup()                                                # with the T₃ term: within 1.3%
+    f = X.bumps_target(K, CF.pair_centres(0.8, -0.4, 0.0125), (0.8, -0.4))
+    d3 = CF.predicted_delay(K, f, c0, 0.8, -0.4, 0.0125, order=3)
+    assert d3[1:] == (13, -1) and abs((t2 - t1) / d3[0] - 1) < 0.013
 
 
 def test_the_split_moves_the_centres_by_half_the_separation_per_weight():
@@ -111,6 +115,16 @@ def test_the_split_moves_the_centres_by_half_the_separation_per_weight():
     for A in ((0.8, 0.6), (0.8, -0.4)):
         r = CF.b_job(A + (0.0125,))
         assert r['split'][1] > 0.999 and np.allclose(r['split_c'], 1, atol=2e-3)
+
+
+def test_the_separation_has_two_regimes():
+    """Referee round 55: the separation's exact rate (−D·JᵀJ) is the frozen-amplitude formula's at Δ = 0.025 and tends to the
+    relaxed-amplitude rate Gm·λ_sep — 2/3 of the frozen one — at Δ = 0.0005."""
+    for A in ((0.8, 0.6), (0.8, -0.4)):
+        fr, rl, m = CF.sep_regimes(*A, 0.025)
+        assert abs(fr - 1) < 5e-3
+        fr, rl, m = CF.sep_regimes(*A, 0.0005)
+        assert abs(rl - 1) < 1e-2 and abs(fr - 2 / 3) < 1e-2
 
 
 def test_detection_on_a_synthetic_table():
@@ -207,7 +221,9 @@ def test_the_report_on_synthetic_results():
     A = [dict(A=(0.8, 0.6), D=0.025, entries=[(2.0, 10), (1002.0, 11)], pred=(800.0, 11, 1), n_act=2, cs=[0.0, 0.04],
               c_end=[0.0, 0.04], w_end=[0.8, 0.6], rms=1e-14)]
     md = CF.report(A=A)
-    assert '| 1000 | 800 (11, +1) | 1.2500 | 0.625 | 25 |' in md
+    L, K, c0 = CF.setup()
+    p3 = CF.predicted_delay(K, X.bumps_target(K, CF.pair_centres(0.8, 0.6, 0.025), (0.8, 0.6)), c0, 0.8, 0.6, 0.025, order=3)
+    assert f'| 1000 | 800 (11, +1) | 1.2500 | {1000 / p3[0]:.4f} | 0.625 | 25 |' in md and p3[1:] == (11, 1)
     B = [dict(A=(0.8, 0.6), D=D, hess=[1e-6 * (D / 0.05) ** 6, 1e-2 * (D / 0.05) ** 2, 1.0, 2.0], rates=[1.0, 2.0, 3.0, 4.0],
               pred=(1e-6, 1e-2), split=(3e-6 * (D / 0.05) ** 6, 0.9999), sep=(5.0 * (D / 0.05) ** 2, 0.999), pred_flow=(1.0, 1.0),
               split_c=[1.0012, 1.0011], mu=[0.1, 0.1]) for D in (0.05, 0.025)]
@@ -231,3 +247,5 @@ def test_the_report_on_synthetic_results():
         cp, cf_ = CF.crb(K, cs, np.array(CF.PAIR_C), 0.001)
         assert (f"| {D:g} | 0.001 | 200, 0 (200) | 1.000e-03 | {1e-3 * D ** 2 / 1e-3:.3g} | {1e-3 / cp:.3g} | 0.000e+00 | 0 | 0 | "
                 f"200 | 40 |") in md
+    assert "Under H0 the second entrant is the first's neighbour in 100.0% of the 8000 draws, in 100.0% of the earliest 5%" in md
+    assert 'The largest coefficient of a placed block: Δ = 0.3, s = 0.001, w = (0.8, 0.6) (their sum 1.4)' in md

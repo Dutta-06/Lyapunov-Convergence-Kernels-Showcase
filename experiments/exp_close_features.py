@@ -107,15 +107,22 @@ def hessian_prediction(K, A1, A2, D):
     return D ** 6 * perp_norm2(vs, 3) / 8, 4 * D ** 2 * perp_norm2(vs, 2) * A1 ** 2 * A2 ** 2 / (A1 ** 2 + A2 ** 2)
 
 
-def predicted_delay(K, f, c0, A1, A2, D):
+def predicted_delay(K, f, c0, A1, A2, D, order=2):
     """The leading-order second entry: the duals at the first entry u_j = ⟨fφ_j⟩/|⟨fφ_{j₁}⟩| moving at v_j = ½V⟨ψφ_j⟩ (ψ at the centroid)
-    to the wall ±1 they meet first; returns (Δτ₂, j₂, the wall's sign)."""
+    to the wall ±1 they meet first; returns (Δτ₂, j₂, the wall's sign). order = 3 (referee round 55): the residual
+    P⊥(½V∂²_cφ + ⅙T₃∂³_cφ), P⊥ off the first fit's tangent span(φ, ∂_cφ) at the centroid, T₃ = A₁A₂(A₁ − A₂)Δ³/A² — the O(ϑ) term."""
     nx = K.xs.size
     A = A1 + A2
     cb = (A1 * pair_centres(A1, A2, D)[0] + A2 * pair_centres(A1, A2, D)[1]) / A
     V = A1 * A2 * D ** 2 / A
     ph, p2 = K.phi(np.array([cb]))[:, 0], d2phi(K, cb)[:, 0]
-    psi = p2 - (p2 @ ph) / (ph @ ph) * ph
+    if order == 3:
+        e = taylor_basis(K, cb)                                       # e_n = ∂ⁿ_cφ/n!
+        T = np.c_[e[0], e[1]]
+        r = V * e[2] + A1 * A2 * (A1 - A2) * D ** 3 / A ** 2 * e[3]   # ½V∂²φ + ⅙T₃∂³φ
+        psi = (r - T @ np.linalg.lstsq(T, r, rcond=None)[0]) / (0.5 * V)
+    else:
+        psi = p2 - (p2 @ ph) / (ph @ ph) * ph
     g = K.phi(c0).T @ f / nx
     j1 = int(np.argmax(np.abs(g)))
     u = g / abs(g[j1])
@@ -204,6 +211,32 @@ def b_job(args):
     comp = [float(v[2] / (D / (2 * A1) * a)), float(v[3] / (D / (2 * A2) * a))]
     return dict(A=(A1, A2), D=D, hess=hess.tolist(), rates=rates.tolist(), pred=(l1, l2), mu=mu.tolist(),
                 split=split[:2], sep=sep[:2], pred_flow=(pred_split, pred_sep), split_c=comp)
+
+
+DELTAS_SEP = (0.025, 0.0125, 0.00625, 0.003, 0.0015, 0.0005)
+
+
+def sep_regimes(A1, A2, D):
+    """(ii)'s separation rate in its two regimes (referee round 55): the exact linearisation −D·JᵀJ at the fit (D = diag(μ₁, μ₂, Gm, Gm)
+    in (w, c), μ_k the amplitudes' mobility), its rate on the mode nearest the separation direction (0, 0, 1/w₁, −1/w₂), over the
+    frozen-amplitude rate Gm·4Δ²⟨(P_{⊥e₁}e₂)²⟩w₁²w₂²/(w₁² + w₂²) and over the relaxed-amplitude one Gm·λ_sep (P⊥ off e₀ and e₁)."""
+    L, K, c0 = setup()
+    cs = pair_centres(A1, A2, D)
+    w = np.array([A1, A2])
+    J = np.c_[K.phi(cs), K.dphi(cs) * w[None, :]] / np.sqrt(K.xs.size)
+    al = np.sign(w) * RT._alpha_of(L, np.abs(w), RT.coef_crit)
+    h_ = 1e-7
+    wp = np.array([(RT.coef_crit(L, abs(a) + h_) - RT.coef_crit(L, abs(a) - h_)) / (2 * h_) for a in al])
+    d = np.r_[wp * RT.curve_mobility(L, al), L.G * L.m, L.G * L.m]
+    lam, U = np.linalg.eigh(np.sqrt(d)[:, None] * (J.T @ J) * np.sqrt(d)[None, :])
+    V = np.sqrt(d)[:, None] * U                                       # the eigenvectors of D·JᵀJ
+    sv = np.r_[0.0, 0.0, 1 / A1, -1 / A2]
+    k = int(np.argmax(np.abs(V.T @ sv) / np.linalg.norm(V, axis=0)))
+    vs = taylor_basis(K, 0.5 * (cs[0] + cs[1]))
+    B1 = vs[1][:, None]
+    e2p = vs[2] - B1 @ np.linalg.lstsq(B1, vs[2], rcond=None)[0]
+    wf = 4 * D ** 2 * A1 ** 2 * A2 ** 2 / (A1 ** 2 + A2 ** 2) * L.G * L.m
+    return float(lam[k] / (wf * np.mean(e2p ** 2))), float(lam[k] / (wf * perp_norm2(vs, 2))), float(np.min(d[:2] * np.diag(J.T @ J)[:2]))
 
 
 def part_B():
@@ -409,21 +442,25 @@ def report(A=None, B=None, C=None, E_=None):
           f"midpoint for a dipole) at {CBAR}; 61 samples of [−1, 1], 21 kernels on a grid of spacing 0.1, equal masses.", '']
     if A is not None:
         L_ += ['## A. The second entry', '',
-               '| A₁, A₂ | Δ | entries (τ, kernel) | Δτ₂ | predicted (kernel, wall) | ratio | Δτ₂Δ² | Δτ₂Δ | the end: kernels, centres (truth), rms |',
-               '|---|---|---|---|---|---|---|---|---|']
+               '| A₁, A₂ | Δ | entries (τ, kernel) | Δτ₂ | predicted (kernel, wall) | ratio | with T₃ | Δτ₂Δ² | Δτ₂Δ | the end: kernels, centres '
+               '(truth), rms |', '|---|---|---|---|---|---|---|---|---|---|']
+        La, Ka, c0a = setup()
         for r in A:
             ent = r['entries']
             dt = ent[1][0] - ent[0][0] if len(ent) > 1 else np.nan
             p, sh = r.get('pred'), r.get('shape')
+            r3 = '—'
             if p:
                 pr, ratio = f"{p[0]:.4g} ({p[1]}, {p[2]:+d})", f"{dt / p[0]:.4f}"
+                p3 = predicted_delay(Ka, X.bumps_target(Ka, pair_centres(*r['A'], r['D']), r['A']), c0a, *r['A'], r['D'], order=3)
+                r3 = f"{dt / p3[0]:.4f}" + (f" ({p3[1]}, {p3[2]:+d})" if p3[1] != p[1] else '')
             elif sh:
                 pr = f"shape: τ₁ {sh['tau1']:.4g}, Δτ₂ {sh['dtau2']:.4g} ({sh['kernels']})"
                 ratio = f"{ent[0][0] / sh['tau1']:.4f}, {dt / sh['dtau2']:.4f}"
             else:
                 pr = ratio = '—'
             L_.append(f"| {r['A'][0]:g}, {r['A'][1]:g} | {r['D']:g} | {', '.join(f'({t:.4g}, {j})' for t, j in ent[:3])} | {dt:.4g} | {pr} | "
-                      f"{ratio} | {dt * r['D'] ** 2:.4g} | {dt * r['D']:.4g} | {r['n_act']}, {[round(v, 5) for v in r['c_end']]} "
+                      f"{ratio} | {r3} | {dt * r['D'] ** 2:.4g} | {dt * r['D']:.4g} | {r['n_act']}, {[round(v, 5) for v in r['c_end']]} "
                       f"({[round(v, 5) for v in r['cs']]}), {fmt(r['rms'])} |")
         L_.append('')
     if B is not None:
@@ -462,6 +499,14 @@ def report(A=None, B=None, C=None, E_=None):
                 fs = f"{q[0] / D6:.4g} | {q[1] / D2:.4g}"
             L_.append(f"| {key[0]:g}, {key[1]:g} | {r['D']:g} | {', '.join(f'{v:.3e}' for v in h)} | {h[1] / D2:.4g}, "
                       f"{h[0] / D6:.4g} | {pt} | {sl} | {', '.join(f'{v:.3e}' for v in q)} | {fs} | {sq} |")
+        L_ += ['', "The separation's rate in its two regimes (the exact linearisation −D·JᵀJ at the fit, the mode nearest the separation): "
+               "over the frozen-amplitude rate Gm·4Δ²⟨(P_{⊥e₁}e₂)²⟩w₁²w₂²/(w₁² + w₂²) and over the relaxed-amplitude rate Gm·λ_sep "
+               "(P⊥ off e₀ and e₁) — the first while the separation outpaces the amplitudes' mode μ_k⟨φ_k²⟩, the second once it is slower:", '',
+               '| A₁, A₂ | ' + ' | '.join(f'Δ = {D:g}' for D in DELTAS_SEP) + ' | the amplitudes\' mode min μ_k⟨φ_k²⟩ |',
+               '|---|' + '---|' * (len(DELTAS_SEP) + 1)]
+        for A1, A2 in [p_ for p_ in PAIRS_A if abs(p_[0] + p_[1]) > 1e-12]:
+            sr = [sep_regimes(A1, A2, D) for D in DELTAS_SEP]
+            L_.append(f"| {A1:g}, {A2:g} | " + ' | '.join(f"{a:.3f}, {b:.3f}" for a, b, m in sr) + f" | {sr[0][2]:.3g} |")
         L_.append('')
     if C is not None:
         det, d50 = detection(C)
@@ -499,6 +544,9 @@ def report(A=None, B=None, C=None, E_=None):
                     break
         qs = {s_: float(np.median([det[(D, s_)]['q0'] for D in DELTAS_C]) * s_) for s_ in SIGMAS_C}
         ci50, cisl = d50_bootstrap(C)
+        h0 = [(q['dt'], abs(q['j'][1] - q['j'][0]) <= 1) for r in C if r['hyp'] == 0 for q in r['rows'] if len(q['j']) > 1]
+        early = [a for r in C if r['hyp'] == 0 for q, a in [(q, abs(q['j'][1] - q['j'][0]) <= 1) for q in r['rows'] if len(q['j']) > 1]
+                 if q['dt'] <= np.quantile([q_['dt'] for q_ in r['rows']], ALPHA_C)]
         npd = {s_: crossing(sorted(DELTAS_C), [npw[(D, s_)] for D in sorted(DELTAS_C)]) for s_ in SIGMAS_C}
         L_ += ['', 'Δ₅₀ (the power ½): ' + ', '.join(f's = {s:g}: {fmt(d50[s])}' for s in SIGMAS_C) +
                f"; the slope of log Δ₅₀ in log s {sl:.3f} (½ predicted). Predicted from (i) and the H0 quantile, Δ₅₀ = (C₁/q_α)^{{1/2}} "
@@ -509,7 +557,9 @@ def report(A=None, B=None, C=None, E_=None):
                                                  + (f" ({ci50[s][2]} resamples without a crossing)" if ci50[s][2] else ''))
                            for s in SIGMAS_C)
                + f"; the slope [{cisl[0]:.3f}, {cisl[1]:.3f}]. The Neyman–Pearson bound's Δ₅₀: "
-               + ', '.join(f's = {s:g}: {fmt(npd[s])}' for s in SIGMAS_C) + '.', '']
+               + ', '.join(f's = {s:g}: {fmt(npd[s])}' for s in SIGMAS_C) + '. '
+               f"Under H0 the second entrant is the first's neighbour in {np.mean([a for t, a in h0]):.1%} of the {len(h0)} draws, in "
+               f"{np.mean(early):.1%} of the earliest {ALPHA_C:.0%} of each cell (which set the quantile).", '']
         L_ += ['## D. Placement under label noise (the two-kernel block after the second entry, H1)', '',
                f"The first {R_D} H1 draws of each (Δ, s) relaxed after the second entry within {RHS_D} right-hand-side evaluations (a "
                "block near coalescence relaxes at a rate ∝ Δ⁶, B): the placed blocks (two kernels, relaxed) and those out of budget; "
@@ -540,8 +590,26 @@ def report(A=None, B=None, C=None, E_=None):
         L_.append('')
         D0 = min(DELTAS_C)
         cp, cf_ = crb(Kc, pair_centres(*PAIR_C, D0), np.array(PAIR_C), 1.0)
+        good, big = [], None
+        for r in C:
+            ok = [q for q in r['rows'] if 'c' in q] if r['hyp'] == 1 else []
+            if not ok:
+                continue
+            cs_ = cs_truth[r['D']]
+            cp_, cf2 = crb(Kc, cs_, np.array(PAIR_C), r['s'])
+            if cf2 <= 0.2:
+                pe = np.sqrt(np.mean([np.mean((np.array(q['c']) - cs_) ** 2) for q in ok]))
+                fr = np.sqrt(np.mean([(q['w'][0] / (q['w'][0] + q['w'][1]) - PAIR_C[0] / sum(PAIR_C)) ** 2 for q in ok]))
+                good.append((pe / cp_, fr / cf2))
+            for q in ok:
+                if big is None or max(np.abs(q['w'])) > max(np.abs(big[2]['w'])):
+                    big = (r['D'], r['s'], q)
         L_ += [f"The Cramér–Rao constants at Δ = {D0:g}: the positions' rms × Δ²/s {cp * D0 ** 2:.4f}, the split's × Δ³/s "
-               f"{cf_ * D0 ** 3:.4f}.", '']
+               f"{cf_ * D0 ** 3:.4f} — its std reaches 0.1 at s ≈ {0.1 / (cf_ * D0 ** 3):.1f}Δ³. In the {len(good)} cells where the split's "
+               f"bound is at most 0.2 the measured errors are {min(g[0] for g in good):.2f}–{max(g[0] for g in good):.2f} (positions) and "
+               f"{min(g[1] for g in good):.2f}–{max(g[1] for g in good):.2f} (split) of the bounds. The largest coefficient of a placed "
+               f"block: Δ = {big[0]:g}, s = {big[1]:g}, w = ({big[2]['w'][0]:.4g}, {big[2]['w'][1]:.4g}) (their sum "
+               f"{sum(big[2]['w']):.4g}), the centres {abs(big[2]['c'][1] - big[2]['c'][0]):.2g} apart, the entrants {big[2]['j']}.", '']
     if E_ is not None:
         L_ += ['## E. The null law and its calibration across the grid offset', '',
                f"At the centroids c̄ = {', '.join(f'{c:g}' for c in OFFSETS_E)} (the kernels on a grid of spacing 0.1: c̄ = 0.05 is a tie) and "
