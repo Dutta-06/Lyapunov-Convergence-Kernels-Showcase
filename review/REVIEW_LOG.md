@@ -1887,3 +1887,50 @@ quartic also cancelled the pull it was weighed against, the level came out one t
 capture looked consistent with it. A threshold law is validated by scanning what moves the threshold (the mass, the distance) at a
 tolerance where the saddle-borne outcomes have converged, and by reading the earlier proposition that had already recorded the phenomenon
 — D‴.51's H(3) table held the counterexample to the count claim. Hand-written numbers in captions (5.9σ) drift from the computed ones.
+
+## Round 44 (adversarial review of Proposition D‴.49 as revised after round 38, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3aq: the round-38 revision of Proposition D‴.49 and its code at e7ed133
+(`review/REVIEW_round44_D3aq.md`). The referee:
+- checked every number of (ii)–(iv) and of the numerics against the md and the raw file;
+- traced the low-gain runs with dense output (k_e = 2 at ε = 10⁻⁴ … 10⁻⁷), the state's range per period and each expelled kernel's path;
+- ran the threshold with f × 2 and f × ½;
+- compared the real loop's period averages with `FrozenOrbit`'s drive;
+- computed the active block's Jacobian;
+- ran the frozen orbit below Lip f, the leading order's error from k_e = 5 to 160, the count at ε = 10⁻⁷ and 10⁻⁸;
+- ran Part C with every |w| listed, the in-range bump's sign flipped and the horizon at 2·10⁴;
+- ran fixed centres to τ = 3·10⁴ against the grid's least-squares fit, a feature of width 0.2;
+- ran noise with the desired regressor, the mirror leak at 5·10⁻³ and 10⁻², a filtered adaptation, a dead zone and a second seed;
+- ran 15 mutants and three web checks.
+
+**Verdicts (D3aq).** The revision computes the right averaged object and sweeps the knobs. Four sentences fall, to one cheap check each:
+- the low-gain mechanism: the state never leaves the range, while the kernels are ejected by the fast active block within a period;
+- the tie between the leak's hold and its bias: the repository's own desired regressor breaks it;
+- the near-range thresholds: a doubled horizon and a flipped sign change them;
+- "a smaller mass forms fewer kernels": false at low gain, where a smaller ε makes it worse.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3aq-1 | major | (iii)(a)'s mechanism false | (iii)(a): an averaging failure of the fast active block — the formed centres swing within a period by 0.42 (k_e = 2), 0.18 (3), 0.05 (10), and a kernel at an edge feature is carried out within one period while the state stays in [−1.0275, 1.0025]; Part B2(b) traces it (kernel 17: formed at 0.70, 0.60 → 1.24 in the period before it leaves, \|w\| = 0.82, the state in [−0.995, 0.995]); B(b): the state's range and the transit-time swing for every knob; the averaged loop expels nothing |
+| D3aq-2 | major | The averaging's small parameter is not ε | Proof sketch: the inactive kernels' averaging is classical; the active block needs the fast subsystem (e with the active block) to settle within a period — its rates below k_e, the rest condition, numerical. B(b): the active block's rates (the fastest 4.47k_e, 2.41k_e, 1.49k_e, 1.0k_e, 0.27k_e at k_e = 2, 3, 4, 5, 10); B2(a): 1, 3, 3, 6 kernels expelled at ε = 10⁻⁴ … 10⁻⁷ (k_e = 2), f × 2 expels at k_e = 4, f × ½ clean at 2; (iii)(a): "in this instance clean for k_e ≥ 4" |
+| D3aq-3 | major | "Tied" refuted by the desired regressor | (iii)(b): the desired regressor (D‴.31, D‴.33) keeps the three kernels at 1% (the fit's rms error 0.059, the true error's 0.007) — "tied" restricted to the mirror leak —; at 2% every remedy fails (E3: the desired regressor 12 kernels, 11 out; the mirror leak at 3·10⁻³, 5·10⁻³, 10⁻²: three at the wrong places, one, none; D‴.57's dead zones 7 and 12) |
+| D3aq-4 | major | (iii)(c)'s thresholds horizon- and sign-specific | (iii)(c): stated in terms of the drive along the orbit, the horizon and the neighbours' signs; Part C to τ = 2·10⁴ with the bump at 0.07 as given and flipped, the orbit's error at τ = 10³, 5·10³, 10⁴, 2·10⁴: at 1.6σ the feature forms late (5.3·10³) through a compensating cluster that settles (7.6·10⁻⁷), cleanly with the flip; beyond 3σ never by 2·10⁴ |
+| D3aq-5 | major | Surviving mutants | Tests (with the rerun's code): the C loop with noise, the desired regressor and a quasi-periodic reference against the Python loop; the error bookkeeping (e_first, e_last, the true error) and the entries' interpolation; frozen_orbit_rhs's WFR and fixed branches; the tones' rms |
+| D3aq-6 | minor | Part A at unequal τ; the coefficients at 10⁻⁴ | Part A: every loop to τ = 600; (ii) and the numerics: agreement claimed for the sums over coinciding kernels (−0.600, 0.750), the split a gauge the loops fix differently |
+| D3aq-7 | minor | The B table | B(a): both loops to the same τ, the averaged entries, centres, coefficients and the inactive displacements; the entries' agreement over the knobs within 2.5 (k_e = 20), stated; the numerics quote the md only |
+| D3aq-8 | minor | (ii) needs kernel-width features | The setting: f a sum of Gaussians of the kernels' width in (ii)–(iv) (a wider feature: D‴.58) |
+| D3aq-9 | minor | "A smaller mass forms fewer kernels" fails at k_e = 2 | (iv): above the gain where the active block is slow; below it a smaller mass expels more |
+| D3aq-10 | minor | "The grid's residual" a plateau | (iv), D: fixed centres to τ = 3·10⁴ form eleven kernels, the orbit's error 9.2·10⁻⁴ — the averaged drive's zero on those eleven (7.4·10⁻⁶ on the whole grid) |
+| D3aq-11 | minor | The averaged loop below Lip f | B: the knobs below (i)'s hypothesis marked (k_e ≤ 4.56); (ii) restricted to k_e > Lip f |
+| D3aq-12 | minor | Noise numbers misstated | E: the true error (max, rms) and the in-range fit's rms error beside the measured error; the numerics restated from them |
+| D3aq-13 | minor | Swing and rates not in the md | B(b): the transit-time swing (24 windows) and the end's, the active rates |
+| D3aq-14 | minor | Counts depend on the threshold | Every table: the largest sub-threshold coefficient (at most 0.0086 against the threshold 0.009) |
+| D3aq-15 | minor | Novelty | Status: the frozen-system averaging is classical (Anderson et al.); Sadegh–Horowitz's desired compensation and Peterson–Narendra's dead zone cited |
+| D3aq-16 | minor | Part C averaged only; no error history | C: the orbit's error at four horizons |
+| D3aq-17 | cosmetic | τ₁, 0.0032, "undefined", "alike" | τ_{e,1} for the first entry; 0.0032; the quasi-periodic reference has no frozen periodic orbit (the averaged loop not computed); "alike where both exist" |
+
+**Lesson.** A mechanism inferred from end states — "the state leaves the range, so the kernels follow" — is checked with a trace of the
+quantity it names; here the state never left, and the kernels were carried out by their own fast dynamics within a period. An averaging
+claim has to name its small parameter; when the failure worsens as ε shrinks, ε is not it, and the quantity to compare is the active
+block's rate against the error loop's. A remedy's "tied" trade-off is a claim about every remedy, and the repository's own desired
+regressor refuted it at the first try.
