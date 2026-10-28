@@ -111,6 +111,11 @@ def pairs_of(theta, w):
     return out
 
 
+def n_formed(m, As):
+    """The formed kernels of a path's end: |w| above 1% of the smallest amplitude (as F)."""
+    return int((np.abs(np.asarray(m['w'], float)) > 1e-2 * np.abs(np.asarray(As)).min()).sum())
+
+
 def outcome(m, As):
     """A moving-width path's outcome (referee-free classification of C's and D's rows): 'exact' (as many formed kernels — |w| above 1% of
     the smallest amplitude — as features, within EXACT_TOL, the residual below 1e-8; idle entrants below 1% allowed), 'coinciding pair'
@@ -355,13 +360,13 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None):
     if C is not None:
         L_ += ['## C. Random three-feature targets', '',
                f"{N_C} targets per minimal separation (seed {SEED_C}; widths log-uniform in [{WID_C[0]:g}, {WID_C[1]:g}], amplitudes ±U(0.4, 1)):", '',
-               '| Δ ≥ | moving widths: exact | kernels (median [range]) | residual (median [max]) | fixed widths: kernels (median [range]) | '
-               'residual (median [max]) |', '|---|---|---|---|---|---|']
+               '| Δ ≥ | moving widths: exact | formed kernels (median [range]) | residual (median [max]) | fixed widths: kernels (median '
+               '[range]) | residual (median [max]) |', '|---|---|---|---|---|---|']
         for d in DELTAS_C:
             rs = [r for r in C if r['dmin'] == d]
-            km, kf = [r['moving']['n'] for r in rs], [r['fixed']['n'] for r in rs]
+            km, kf = [n_formed(r['moving'], r['As']) for r in rs], [r['fixed']['n'] for r in rs]
             em, ef = [r['moving']['rms'] for r in rs], [r['fixed']['rms'] for r in rs]
-            L_.append(f"| {d:g} | {sum(r['moving']['exact'] for r in rs)} of {len(rs)} | {np.median(km):g} [{min(km)}, {max(km)}] | "
+            L_.append(f"| {d:g} | {sum(outcome(r['moving'], r['As']) == 'exact' for r in rs)} of {len(rs)} | {np.median(km):g} [{min(km)}, {max(km)}] | "
                       f"{np.median(em):.1e} [{max(em):.1e}] | {np.median(kf):g} [{min(kf)}, {max(kf)}] ({sum(r['fixed'].get('oob', False) for r in rs)}† "
                       f"stopped by the budget) | {np.median(ef):.1e} [{max(ef):.1e}] |")
         cls = {}
@@ -381,10 +386,13 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None):
     if D is not None:
         L_ += ['## D. A narrow feature on a wide pedestal', '',
                "The pedestal 0.8φ(·; 0, 0.3) and the narrow feature 0.5φ(·; d, 0.06):", '',
-               '| d | moving: kernels | exact | max error (c, σ, w) | residual | fixed: kernels | residual |', '|---|---|---|---|---|---|---|']
+               '| d | moving: formed kernels | outcome | max error (c, σ, w) | residual | fixed: kernels | residual |', '|---|---|---|---|---|---|---|']
         for r in D:
             m, f_ = r['moving'], r['fixed']
-            L_.append(f"| {r['d']:g} | {m['n']} | {'yes' if m['exact'] else 'no'} | {', '.join(f'{v:.1e}' for v in m['err'])} | {m['rms']:.1e} | "
+            As_ = [0.8, 0.5]
+            pr = pairs_of(m['theta'], m['w'])
+            oc = outcome(m, As_) + (f" ({', '.join(f'{a:+.3f}/{b:+.3f}' for a, b in pr)})" if pr else '')
+            L_.append(f"| {r['d']:g} | {n_formed(m, As_)} | {oc} | {', '.join(f'{v:.1e}' for v in m['err'])} | {m['rms']:.1e} | "
                       f"{f_['n']}{'†' if f_.get('oob') else ''} | {f_['rms']:.2e} |")
         L_.append('')
     if Ee is not None:
