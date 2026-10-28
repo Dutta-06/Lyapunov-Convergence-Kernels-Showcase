@@ -750,8 +750,7 @@ def c2_job(args):
     o = np.argsort(-np.where(near == 0, v, -1.0))
     e0, r0 = int(o[0]), int(o[1])
     w0 = np.abs(W[-1])[near == 0]
-    # the runner-up's coefficient at the first output after feature 0's entry, and the unbinding level A′(d/σ)e^{−d²/(4σ²)} of the
-    # later features (round 42's crude level; round 47's fold is V's)
+    # the runner-up's coefficient at the first output after feature 0's entry
     i1 = int(np.argmax(taus > R['events'][0][0]))
     dist = np.linalg.norm(C[:, r0, :] - cs[0], axis=1) / SIG                  # the runner-up's distance from feature 0 (referee round 53)
     return dict(name=name, eps=eps, path=path, d_max=float(dist[taus > t_e].max()), d_end=float(dist[-1]), events=[(float(t), int(j), k) for t, j, k, c in R['events']],
@@ -760,7 +759,6 @@ def c2_job(args):
                 n0=bk['n_start'][0], n0_fin=bk['n_fin'][0], t_off=float(cs[0][1] - c0[e0][1]), captured=bk['captured'],
                 fin=[(int(j), float(C[-1][j][0]), float(C[-1][j][1]), float(W[-1][j])) for j in np.flatnonzero(big)],
                 w_tail=float(abs(W[i1][r0])), tau_tail=float(taus[i1]),
-                w_unbind=w_unbind(cs, As),
                 dw=float(np.abs(W[-1][path] - R['w'][path]).max()), rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))),
                 n_fin=bk['n_fin'], rtol=rtol,
                 w_early=[float(abs(W[int(np.argmin(np.abs(taus - te)))][r0])) for te in early], secs=time.time() - t0)
@@ -967,11 +965,12 @@ def c4_job(args):
     dep = next((int(i) for i in after if dist[i] > 2.0), None)
     held = after if dep is None else after[after < dep]
     bk = formed_by_feature(c0, cs, As, W[-1], C[-1])
-    # the side (referee round 53): the runner-up's displacement along e (feature 0 → feature 2) where it first passes 0.2σ, and the
-    # pair's closest approach after the entry
+    # the side (referee round 53): the runner-up's displacement along e (feature 0 → feature 2) where it first passes SIDE_R·σ, its
+    # displacement along e at feature 2's entry, and the pair's closest approach after the entry
     ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
     e0 = int(o[0])
-    far = [int(i) for i in after if dist[i] > 0.2]
+    far = [int(i) for i in after if dist[i] > SIDE_R]
+    i2 = int(np.argmin(np.abs(taus - t2)))
     side = None if not far else ('toward' if (C[far[0], r0] - cs[0]) @ ev > 0 else 'far')
     gap = np.linalg.norm(C[after, r0] - C[after, e0], axis=1) / SIG if after.size else np.array([np.nan])
     r = dict(name=name, side=side, closest=float(np.nanmin(gap)), x=x, eps=eps, mu=float(x * np.sqrt(eps)), tau_e=float(t_e), tau2=float(t2), s2=float((t2 - t_e) / np.sqrt(eps)),
@@ -980,7 +979,7 @@ def c4_job(args):
              w_max=float(np.abs(W[held, r0]).max()) if held.size else 0.0, d_held=float(dist[held].max()) if held.size else 0.0,
              d2=float(np.linalg.norm(cs[2] - cs[0]) / SIG), A2=float(As[2]), n_fin=bk['n_fin'], captured=bk['captured'],
              rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))), d_end=float(dist[-1]), w_end=float(abs(W[-1][r0])),
-             rtol=rtol, secs=time.time() - t0)
+             e_t2=float((C[i2, r0] - cs[0]) @ ev / SIG), w_t2=float(abs(W[i2][r0])), rtol=rtol, secs=time.time() - t0)
     print(f"  C4 {name} x {x} eps {eps:g} rtol {rtol:g}: {c3_outcome(r)}, side {side}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} "
           f"[{r['secs']:.0f}s]", flush=True)
     return r
@@ -1256,12 +1255,6 @@ def p_vertices(a):
     return 4 * k2 * k2 * a
 
 
-def w_unbind(cs, As):
-    """C2: round 42's crude unbinding level max_j A′_j(d_j/σ)e^{−d_j²/(4σ²)} of the features after the first (round 47's fold: V)."""
-    dk = np.linalg.norm(cs[1:] - cs[0], axis=1)
-    return float(np.max(np.abs(As[1:]) * dk / SIG * np.exp(-dk ** 2 / (4 * SIG ** 2))))
-
-
 def b4u_note(B4, B4u, B4x=None):
     """B4's caption: why the unsettled problems stopped (rerun, B4u), whether their counts changed, and their continuation to
     MAX_DOUBLINGS_B4X doublings (B4x: the counts and the shares' change after the cap — a margin over the last drift bounds nothing while
@@ -1326,6 +1319,11 @@ def vf_lines(VF):
     return out
 
 
+def side_of(r, sep=''):
+    """A C4 row's recorded side (referee round 53; rows from before it carry none)."""
+    return f"{r['side']}{sep}" if 'side' in r else ''
+
+
 def c4m_lines(C4M):
     """C4M's report: the loop on the mirrored target (referee round 53)."""
     if C4M is None:
@@ -1353,7 +1351,8 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
     out = ["## R. The race without ε (referee round 53)", "",
            f"C2's near tie at μ → 0 ({MU_R:g}) with only feature 0's entrant and runner-up active and features 1 and 2 in the residual: the "
            f"inner problem (the entrant {XI0_R:g} behind its wall, the runner-up x behind it) in s = (τ − τ_e)/ε^{{1/2}} to {S_END_R:g} — C4 "
-           f"without its horizon s₂ —, rtol {RTOL_R:g}: the side the runner-up leaves feature 0 to (along e, toward feature 2, or away), "
+           f"without its horizon s₂ —, rtol {RTOL_R:g}: the side the runner-up leaves feature 0 to (its displacement along e where it first "
+           f"passes {SIDE_R:g}σ from feature 0: toward feature 2, or away), "
            "the pair's closest approach in the inner layer, its coefficient after the layer (s = 10³), its departure s_d (2σ from feature 0) "
            "and its coefficient there:", "",
            "| x | side | closest approach (σ) | w after the layer | s_d | w at s_d | at s = 10⁵: w, distance (σ) |", "|---|---|---|---|---|---|---|"]
@@ -1398,7 +1397,8 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None):
     if R.get('scan') is not None and len(R['scan']):
         rts = sorted({r['rtol'] for r in R['scan']}, reverse=True)
         out += ["", f"The side against the tolerance (to s = {S_END_RS:g}): per gap the closest approach at the tightest tolerance and the "
-                    "side at rtol " + ', '.join(f"{q:g}" for q in rts) + " (none: still at the saddle):", "",
+                    "side at rtol " + ', '.join(f"{q:g}" for q in rts) + f" (None: the pair merged — the runner-up never {SIDE_R:g}σ "
+                    "from feature 0):", "",
                 "| x | closest approach (σ) | sides |", "|---|---|---|"]
         for x in sorted({r['x'] for r in R['scan']}):
             rs = {r['rtol']: r for r in R['scan'] if r['x'] == x}
@@ -1798,25 +1798,27 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                "c(d)ℓ(d) at feature 2's distance; its departure (2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against feature 2's own entry "
                "s₂ = (τ₂ − τ_e)/ε^{1/2}, its coefficient at the departure; the final kernels per feature and the outcome; at the tolerance "
                f"{RTOL_C4B:g} (C4b) the outcome, the largest coefficient held and the departure:", "",
-               "| x | ε | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per feature (final) | outcome | "
-               f"rtol {RTOL_C4B:g}: outcome, max w held, departure s |",
-               "|---|---|---|---|---|---|---|---|---|"]
+               "| x | ε | side (closest approach, σ) | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per "
+               f"feature (final) | outcome | rtol {RTOL_C4B:g}: side, outcome, max w held, departure s |",
+               "|---|---|---|---|---|---|---|---|---|---|"]
         b_ = {(r["x"], r["eps"]): r for r in (C4b if C4b is not None else [])}
         agree, differ = 0, []
         fc_own = fc_fold(FC)
         for r in sorted(C4, key=lambda r: (r['x'], -r['eps'])):
             fl = fc_own if fc_own is not None else fold_level(r['d2'], r['A2'], V)
-            rel = lambda w: f"{w:.3g}" + (f" ({w / fl:.2f})" if fl else '')
+            rel = lambda w: f"{w:.3g}" + (f" ({w / fl:#.3g})" if fl else '')
             rb = b_.get((r['x'], r['eps']))
             if rb is not None:
                 same = c3_outcome(rb) == c3_outcome(r)
                 agree += same
                 if not same:
-                    differ.append(f"x = {r['x']:g}, ε = {r['eps']:g}: {c3_outcome(r)} at {RTOL_C3:g} (max w held {r['w_max']:.4g}, the runner-up "
-                                  f"{r['d_end']:.2g}σ from feature 0 at the end), {c3_outcome(rb)} at {RTOL_C4B:g} ({rb['w_max']:.4g})")
-            tb = ('—' if rb is None else f"{c3_outcome(rb)}, {rb['w_max']:.3g}, "
+                    differ.append(f"x = {r['x']:g}, ε = {r['eps']:g}: {c3_outcome(r)} at {RTOL_C3:g} (" + side_of(r, ', ') + f"max w held "
+                                  f"{r['w_max']:.4g}, the runner-up {r['d_end']:.2g}σ from feature 0 at the end), {c3_outcome(rb)} at "
+                                  f"{RTOL_C4B:g} (" + side_of(rb, ', ') + f"{rb['w_max']:.4g})")
+            tb = ('—' if rb is None else side_of(rb, ', ') + f"{c3_outcome(rb)}, {rb['w_max']:.3g}, "
                   + (f"{rb['s_dep']:.3g} (w {rb['w_dep']:.3g})" if rb['s_dep'] is not None else 'none'))
-            L_.append(f"| {r['x']:g} | {r['eps']:g} | {rel(r['w_max'])} | " + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none')
+            sd_ = f"{r['side']} ({r['closest']:.1e})" if 'side' in r else '—'
+            L_.append(f"| {r['x']:g} | {r['eps']:g} | {sd_} | {rel(r['w_max'])} | " + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none')
                       + f" | {r['s2']:.3g} | " + (rel(r['w_dep']) if r['w_dep'] is not None else '—') + f" | "
                       f"{', '.join(map(str, r['n_fin']))} | {c3_outcome(r)} | {tb} |")
         if b_:

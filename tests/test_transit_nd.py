@@ -197,15 +197,11 @@ def test_the_asymptotic_probabilities_and_the_vertex_areas():
     assert f"P(N ≥ 3) = {TN.p_vertices(2.25):.0f}·ε and P(N = 4) = {TN.p_vertices(0.25):.0f}·ε" in TN.report(B4=B4)
 
 
-def test_the_bisection_and_the_unbinding_level():
-    """`crossing` finds where a falling share crosses TH_REL (T2, x_θ); `margins_diag`'s default ε is B's and B4's 10⁻¹⁰; C2's crude
-    unbinding level A′(d/σ)e^{−d²/(4σ²)}, the largest over the later features."""
+def test_the_bisection_and_the_default_mass():
+    """`crossing` finds where a falling share crosses TH_REL (T2, x_θ); `margins_diag`'s default ε is B's and B4's 10⁻¹⁰."""
     assert abs(TN.crossing(lambda x: 0.5 * np.exp(-x), 0.0, 14.0, 50) - np.log(50)) < 1e-12
     K, c0 = TN.local()
     assert TN.margins_diag(K, c0, 1.0, 3.0) == TN.margins_diag(K, c0, 1.0, 3.0, 1e-10)
-    cs = np.array([[0.0, 0.0], [6 * TN.SIG, 0.0], [0.0, 5 * TN.SIG]])
-    lev = TN.w_unbind(cs, np.array([0.8, 0.7, -0.5]))
-    assert abs(lev - max(0.7 * 6 * np.exp(-9.0), 0.5 * 5 * np.exp(-25 / 4))) < 1e-15
 
 
 def test_formed_kernels_are_booked_by_their_final_feature():
@@ -417,6 +413,15 @@ def test_the_race_side_of_a_formed_runner_up():
     r = TN.race_job(('near tie', 2.5, 1e-9, 1e5))
     assert TN.SIDE_R < r['d_end'] < 0.2 and r['s_d'] is None and r['w_end'] > TN.TH_REL * TN.A_B
     assert r['side'] in ('toward', 'far') and (r['e_end'] > 0) == (r['side'] == 'toward') and abs(r['e_end']) > 0.95 * r['d_end']
+
+
+def test_the_loop_records_the_side():
+    """c4_job (round 53): at the gap 7 (a tail: the inner layer's collapse stops at ~5·10⁻⁹σ, above the rounding floor, so the side is
+    the geometry's) the runner-up goes toward feature 2 on C2's target and away on the mirrored one; at ε = 10⁻⁶ neither departs by s₂."""
+    for name, side in (('near tie', 'toward'), ('near tie mirrored', 'far')):
+        r = TN.c4_job((7.0, 1e-6, 1e-10, name))
+        assert r['side'] == side and r['closest'] > 1e-10 and TN.c3_outcome(r) == 'not departed' and r['s_dep'] is None
+        assert abs(r['s2'] * np.sqrt(r['eps']) - (r['tau2'] - r['tau_e'])) < 1e-12 and TN.SIDE_R < r['d_held'] < 2.0
 
 
 def test_race_rule_and_the_r_report():
