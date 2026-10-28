@@ -84,3 +84,39 @@ def test_the_fast_defects_and_the_tail_ratio():
                 return ps[0][1]
             return (dd(ps[1:]) - dd(ps[:-1])) / (ps[-1][0] - ps[0][0])
         assert dd(pts[:j + 1]) == Fraction(-catalan[j - 1], 2 ** (j - 1)) and dd(pts) == 0
+
+
+def test_the_optimal_fit_keeps_the_centre_node_at_odd_k_and_the_free_path_agrees():
+    """`optimal_fit` at K = 3 keeps a node at the centre (symmetric: ±y and 0) and improves on the rule; without the symmetry it reaches
+    the same error from the same start."""
+    s_ = ss(1.0)
+    y, a = W.half_squeeze(3, SIG, s_)
+    yo, ao, eo = W.optimal_fit(y, SIG, s_)
+    assert yo.size == 3 and abs(np.sort(yo)[1]) < 1e-15 and eo < W.l2_error(y, a, SIG, s_)
+    y2, a2 = W.half_squeeze(2, SIG, s_)
+    e_sym = W.optimal_fit(y2, SIG, s_)[2]
+    e_free = W.optimal_fit(y2, SIG, s_, symmetric=False)[2]
+    assert abs(e_free / e_sym - 1) < 1e-8
+
+
+def test_least_squares_amplitudes_are_the_gram_solve():
+    """`ls_amplitudes` is the L² projection: G a = b with G_ij = √π σ e^{−(y_i − y_j)²/(4σ²)}, b_i = A√(2π)σσ*/(σ² + σ*²)^{1/2}
+    e^{−y_i²/(2(σ² + σ*²))} — on six nodes 0.25σ apart, where the design's condition number is ~10⁴ and a cut-off at 10⁻³ of its
+    spectrum would change the amplitudes entirely."""
+    s_, A = ss(1.0), 0.8
+    y = SIG * 0.25 * (np.arange(6) - 2.5)
+    x, h = W.grid(SIG, s_)
+    sv = np.linalg.svd(np.exp(-(x[:, None] - y[None, :]) ** 2 / (2 * SIG ** 2)), compute_uv=False)
+    assert 1e4 < sv[0] / sv[-1] < 1e7
+    G = np.sqrt(np.pi) * SIG * np.exp(-(y[:, None] - y[None, :]) ** 2 / (4 * SIG ** 2))
+    b = A * np.sqrt(2 * np.pi) * SIG * s_ / np.sqrt(SIG ** 2 + s_ ** 2) * np.exp(-y ** 2 / (2 * (SIG ** 2 + s_ ** 2)))
+    a = W.ls_amplitudes(y, SIG, s_, A)
+    assert np.abs(a - np.linalg.solve(G, b)).max() < 1e-6 * np.abs(a).max()
+
+
+def test_the_fast_defects_beyond_k_21():
+    """`gh_defects` against the direct `gh_defect` at K = 25, 30, 40 (Part D's K ≥ 40 rests on them)."""
+    for K in (25, 30, 40):
+        D = W.gh_defects(K, 2 * K + 12)
+        for n in (2 * K, 2 * K + 2, 2 * K + 8, 2 * K + 12):
+            assert D[n] == W.gh_defect(n, K)
