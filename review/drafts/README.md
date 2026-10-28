@@ -7,7 +7,7 @@ round is applied and its numbers are final.
 
 | draft | proposition | status |
 |---|---|---|
-| `D44.md` | D‴.44: coloured label noise under the replicator mass law on a kernel dictionary | its run resumed; referee round 34 after it |
+| `D44.md` | D‴.44: coloured label noise under the replicator mass law on a kernel dictionary | numerics complete (D, E rerun with a 900-s limit per flow); referee round 34 (D3ag) next |
 | `D49.md` | D‴.49: the rich transit in the closed loop | round 44 (D3aq) received; its revision's full rerun queued |
 | `D50.md` | D‴.50: the rich transit under label noise | round 40 applied, numerics final; a referee round on the revision next |
 | `D52.md` | D‴.52: close features and the transit's resolution limit | Parts C and D queued |
