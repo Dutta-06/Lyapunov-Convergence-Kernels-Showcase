@@ -1,6 +1,6 @@
 """
-Proposition D‴.59 (planned): the transit with moving widths — a Gaussian feature of any width formed by one kernel
-=================================================================================================================
+Proposition D‴.59: the transit with moving widths — a Gaussian feature of any width formed by one kernel
+========================================================================================================
 
 The paradigm's kernel law moves the widths beside the centres (σ̇ = Gβa⟨r∂_σφ⟩, ċ = Gβa⟨r∂_cφ⟩: the same mobility, Proposition D‴.48(v)).
 On one-dimensional samples a kernel φ(x; c, σ) = exp(−(x − c)²/(2σ²)) is then a point θ = (c, σ) of the plane, and the sliding path,
@@ -9,8 +9,9 @@ the loop and the block's polish of `rich_transit_nd` run unchanged on `BumpsCW` 
 
 One feature, one kernel, in the continuum: with the coefficient at its least-squares value the fit is the reduced energy
 J(c, σ) = ½‖f*‖² − ½⟨f*, φ_{c,σ}⟩²/‖φ_{c,σ}‖² (`reduced_energy`), and ⟨f*, φ_{c,σ}⟩²/‖φ_{c,σ}‖² ∝ (σσ*²/(σ² + σ*²))e^{−d²/(σ² + σ*²)}
-(d = c − c*) has the single critical point (c*, σ*) — its maximum —, so the kernel's flow converges to the exact fit from every start,
-whatever the width mismatch (`one_kernel_grad` for checks).
+(d = c − c*) has the single critical point (c*, σ*) — its maximum —, so the kernel's flow converges to the exact fit from every start
+whose coefficient has the feature's sign (on the free law's curve the coefficient cannot change sign), whatever the width mismatch
+(`one_kernel_grad` for checks).
 """
 import numpy as np
 

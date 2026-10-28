@@ -2151,3 +2151,41 @@ kernel of the least time to the wall, never the largest current rate). The round
 range ended where the polish spent its budget or stopped on its gradient test, and a better-conditioned solver started from the very
 same block — variable projection, which eliminates the amplitudes — reached the optimum every time. Record the inner solver's status
 next to the result it produced, and restart a stall with a different method before naming its cause.
+
+## Round 57 (adversarial review of Proposition D‴.59's first draft, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bd: Proposition D‴.59's first draft with its code and results at d0ad068
+(`review/REVIEW_round57_D3bd.md`). The referee:
+- regenerated the md (byte for byte) and reran cells of A, D and G (bit-identical);
+- re-derived (i) and the dipole asymptotics, measured the moment, |Δc|, |Δσ|, the residual's excess and the coefficient's mobility on
+  all six stalled blocks, and closed the runaway law's prefactor;
+- instrumented C's paths at their budget stops and followed G's loops to τ = 1600 and at a second mass;
+- built one-sign close targets and perturbations of them;
+- refitted C's and D's pairs with equal and split widths;
+- ran 55 mutants and searched the literature (snippets).
+
+**Verdicts (D3bd).** (i) holds in the continuum; the dipole is the six budget stops, and its asymptotics are stronger than claimed
+(v³ = 3μ₀K·s to 4–5 digits). But "dipoles need opposite-sign kernels: a target of one sign cannot make them" is false (two close
+positive features give negative kernels); the loop's dipole does not freeze into an exact cancelling pair — it migrates, landing at an
+ε-dependent time and feature; (ii)(a)'s bookkeeping misses the width split that the data use; (iii) omits its exceptions; the law's
+prefactor was off by 2; (i)'s scope was overstated; C's stalls were reported at the wrong state; 25 of 55 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bd-1 | major | One-sign targets do make negative kernels; "separated" undefined | Part H: two positive features at ±0.08 (σ* 0.04, 0.06) and six perturbations — cancellations at σ* = 0.06 (6–7 negative kernels at the end, the fit exact to 4–10·10⁻¹⁰), a coinciding pair at 0.04, exact with the second amplitude 0.6; (ii) states the outcomes as observed on C's distribution (Δ ≥ 0.4 or 0.6, widths in [0.05, 0.3]) and adds the cancellation (b) |
+| D3bd-2 | major | The loop's dipole is transient, not a frozen exact pair; PAIR_TOL ten times too wide | G's loop at ε = 10⁻⁶, 10⁻⁸ to τ = 400, 1600, 6400 with the closest pair's distance, coefficients and offset from the nearest feature; PAIR_TOL = 0.01; (ii)(c): the dipole migrates, separation and residual falling, and lands on an ε-dependent feature (target 9 at both masses, 27 at 10⁻⁸; the others in transit at 6400) |
+| D3bd-3 | major | (ii)(a)'s bookkeeping | the width split σ_j − σ_i = (w_j − w_i)Δc²/(6Wσ) cancels the third moment (`width_split`; the proof via ∂³_cφ = σ⁻¹∂_c∂_σφ − σ⁻²∂_cφ); C and D print Δc and the split against the prediction (to 4–5 digits); a test of the order (O(Δc³) → O(Δc⁴)) |
+| D3bd-4 | major | (iii)'s exceptions | E: the per-draw oracle fit, the rms of the errors, the draws within 10⁻⁴ of the oracle fit (18 of 19), the unstopped dipole; F: the loop's closest pair and residual at 1.3 and 6 times the last entry — target 2's pair stays apart; (iii) restated |
+| D3bd-5 | minor | The law's prefactor and κ | `dipole_law`: E_inf by the optimal dipole fit, K = v²(E − E_inf); G prints K, Δv³/Δs against 3μ₀K, the exponents of |w|, the distance, |Δc|, |Δσ| and the residual's excess, and the moment's σ-share; proof (c): dv/ds = −¼(μ_a + μ_b)E′(v), K = −⟨r_dip, ∇³φ:p³⟩/24 |
+| D3bd-6 | minor | The pairs' mechanism; "a gauge" | (ii)(a): a kernel of an earlier block collapsing onto a fitted feature (C), the near tie only on the symmetric target (D, d = 0); "a gauge at coincidence" |
+| D3bd-7 | minor | (i)'s scope | title and (i): one Gaussian feature, in the continuum; on samples J_N's limits fall below ½⟨f*²⟩, the samples checked through the paths; B labelled the continuum's |
+| D3bd-8 | minor | Proof gaps and wording | (i): E ≥ J, the sublevel set, |w| bounded away from 0 and ∞; the paradigm's metric stated correctly (Gm against ∂_θE); "where the flow approaches that infimum it runs off"; the higher confluent terms (de Boor) |
+| D3bd-9 | minor | C's stalls at the wrong state; circular classification | `sliding_iss_nd` records the stalled block (`stalled`) and the polishes (`polish_log`); G reports the stalled block's |w|, distance, residual against the dipole infimum and its polishes; `outcome` classifies by the stalled block (dipole run-off, stopped by the budget, cancellation, not fitted) |
+| D3bd-10 | minor | 25 of 55 mutants survive | tests: `n_formed`, `outcome` at its thresholds, `pairs_of` at PAIR_TOL ± ε, `g_job`'s report, the width split's order, `dipole_law` on a synthetic dipole |
+| D3bd-11 | minor | Literature and novelty | de Boor, Kammler, Petersen–Raslan–Voigtlaender, Marr–Hildreth, HyperBF, CL-OMPR, ADCG, Chizat, the mixture degeneracies; Duval–Peyré re-cited for the pair; "New" narrowed to the runaway law, the width split, the cancellations and the ε-dependent landing |
+| D3bd-12 | cosmetic | Misquotes and docstrings | "(planned)" removed; the convergence from a start of the feature's sign; "formed kernels" in the md's header; the budget comment; 1.8–6.0, 0.035–0.072, "the 4 kernels of the entry cap" |
+
+**Lesson.** A runaway that the block's flow follows to the end of its budget is only half the story when the loop around it has a
+finite mass: there the pair keeps moving, and where it lands — and when — depends on ε. The same holds for a symmetry argument about
+signs: a one-sign target is not a one-sign fit once features sit closer than the kernels' starting width. Follow the configuration past
+the horizon chosen for the expected outcome, and test the sign rule on the targets built to break it.

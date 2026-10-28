@@ -48,7 +48,7 @@ A_A, C_A = 0.8, 0.03
 RATIOS_A = (0.25, 0.5, 0.75, float(np.sqrt(1 + 0.25 ** 2)), float(np.sqrt(1 + 0.5 ** 2)), float(np.sqrt(2.0)), float(np.sqrt(5.0)), 3.0, 4.0)
 MAX_ENT_FIXED = 4                                                       # fixed widths: the path to 4 entries (a narrow feature's slow blocks)
 MAX_RHS_FIXED, MAX_RHS_MOVING = 300_000, 1_000_000                      # the paths' budgets of right-hand-side evaluations (a moving-width
-                                                                        # path to its exact fit spends ~2·10³)
+                                                                        # path to its exact fit spends 10³–10⁴)
 SEED_C, N_C, DELTAS_C, K_C, WID_C = 590, 40, (0.4, 0.6), 3, (0.05, 0.3)
 EXACT_TOL = 1e-6                                                        # exact: every feature's (c, σ, w) within it, the residual < 1e-8
 D_D = (0.0, 0.1, 0.2, 0.3, 0.45, 0.6)
@@ -484,7 +484,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
     L_ = ['# Proposition D‴.59: the transit with moving widths (`exp_moving_width.py`)', '',
           f"The sliding path with moving widths (θ = (c, σ), `moving_width.BumpsCW`) and with the widths fixed at σ₀ = {S0:g} "
           f"(`rich_transit_nd.BumpsND`); {C0.size} kernels started at −1, −0.9, …, 1; {N} samples of [{XS[0]:g}, {XS[-1]:g}]; exact: as many "
-          f"kernels as features, each feature's centre, width and amplitude within {EXACT_TOL:g}, the residual's rms below 1e-08.", '']
+          f"formed kernels (|w| above 1% of the smallest amplitude) as features, each feature's centre, width and amplitude within "
+          f"{EXACT_TOL:g}, the residual's rms below 1e-08.", '']
     if A is not None:
         L_ += ['## A. One feature', '',
                f"A = {A_A:g} at c* = {C_A:g}, the width σ* = ratio·σ₀; moving widths: the kernels, the largest error of (c, σ, w), the "
@@ -573,6 +574,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
                "the rms over the draws, against the oracle's s(3K/N)^{1/2} (three parameters per kernel, K = 3, the rms of the errors), and "
                "per draw against the oracle fit (the K-kernel least-squares fit of the data started at the truth):", '',
                '| s | stopped | kernels | error: median [range]; rms | the oracle | the stopped error over the oracle fit\'s: median [range] '
+               '(within 10⁻⁴ of it) '
                '| not stopped: the last block\'s rms |', '|---|---|---|---|---|---|---|']
         for s in LEVELS_E:
             rs = [r for r in Ee if r['s'] == s]
@@ -582,7 +584,8 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None, H=None):
             ns = [r['moving'] for r in rs if not r['moving']['stopped']]
             L_.append(f"| {s:g} | {len(st)} of {len(rs)} | " + (f"{np.median(ks):g} [{min(ks)}, {max(ks)}] | {np.median(es):.2e} "
                       f"[{min(es):.2e}, {max(es):.2e}]; {np.sqrt(np.mean(np.square(es))):.3e}" if st else '— | —') + f" | "
-                      f"{s * np.sqrt(3 * K_C / N):.3e} | " + (f"{np.median(qo):.4f} [{min(qo):.4f}, {max(qo):.4f}]" if qo else '—') + ' | '
+                      f"{s * np.sqrt(3 * K_C / N):.3e} | " + (f"{np.median(qo):.4f} [{min(qo):.4f}, {max(qo):.4f}] "
+                                                              f"({sum(abs(q - 1) < 1e-4 for q in qo)} of {len(qo)})" if qo else '—') + ' | '
                       + (', '.join(f"{x.get('rms', np.nan):.2e}" + (' (budget)' if x.get('oob') else '') for x in ns) or '—') + ' |')
         L_.append('')
     if F is not None:

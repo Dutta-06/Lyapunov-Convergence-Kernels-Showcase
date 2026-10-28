@@ -1,4 +1,4 @@
-"""Proposition D‴.59 (planned): the transit with moving widths (`src/core/moving_width.py`)."""
+"""Proposition D‴.59: the transit with moving widths (`src/core/moving_width.py`)."""
 import os
 import sys
 
