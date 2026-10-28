@@ -262,3 +262,52 @@ def test_quasi_static_control_average_has_the_laws_phase():
         f2 = o['f2'][0]
         assert abs(o['f1'][0]) > 0.5                                                      # f̂′ ≠ 0 there: the sign is tested
         assert np.isclose(rq(t, y)[0] - r0(t, y)[0], 0.25 * f2 * abs(D - N) ** 2 - 0.25 * f2 * abs(D) ** 2, rtol=1e-9, atol=1e-18)
+
+
+def test_the_second_orders_first_order_is_the_linearised_loop():
+    """`second_order`'s first order is the linearised loop (`variational`, the measured error n at the start): their period means agree."""
+    L, al0, c0, idx = _fit()
+    nz = DZ.noise_of(1.0, dict(freqs=(19.0,)))
+    W1, C1, W2, C2, stt = NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', nz, CT.KE, 1, k=400)
+    per = 2 * np.pi / CT.OM
+    ts = per * np.arange(401) / 400
+    dw, dc = NR.variational(L, NR.EPS, al0[idx], c0[idx], 'paradigm', ts, 19.0, float(nz['amp'][0]), float(nz['ph'][0]), CT.KE)
+    mw, mc = np.trapezoid(dw, axis=0) / 400, np.trapezoid(dc, axis=0) / 400
+    assert stt == 0 and W1.shape == (1, 3)
+    assert np.abs(W1[0] - mw).max() < 1e-7 * np.abs(dw).max() and np.abs(C1[0] - mc).max() < 1e-7 * np.abs(dc).max()
+
+
+def test_the_loops_even_part_is_the_second_order():
+    """Under s·n and −s·n the loop's period means' half-sum less the fit is s²⟨w₂⟩ + O(s⁴) (`second_order`), its half-difference
+    s⟨w₁⟩ + O(s³): at s = 0.002, one tone at 21.37, two periods, the even part within 1%; the odd part's remainder grows by ≈ 2³ from s
+    to 2s (the first kernel's cubic remainder is 13% of s⟨w₁⟩ at s = 0.002)."""
+    L, al0, c0, idx = _fit()
+    W1, C1, W2, C2, _ = NR.second_order(L, NR.EPS, al0[idx], c0[idx], 'paradigm', DZ.noise_of(1.0, dict(freqs=(21.37,))), CT.KE, 2)
+    rem = []
+    for s in (0.002, 0.004):
+        nz = DZ.noise_of(s, dict(freqs=(21.37,)))
+        Wp, Cp = NR.sim_means(L, 'paradigm', nz, CT.KE, 2)
+        Wm, Cm = NR.sim_means(L, 'paradigm', dict(nz, ph=nz['ph'] + np.pi), CT.KE, 2)
+        if s == 0.002:
+            even_w, even_c = (Wp + Wm) / 2 - CT.ASTAR, (Cp + Cm) / 2 - CT.CSTAR
+            assert np.abs(even_w - s ** 2 * W2).max() < 0.01 * np.abs(s ** 2 * W2).max()
+            assert np.abs(even_c - s ** 2 * C2).max() < 0.01 * np.abs(s ** 2 * C2).max()
+        rem.append(np.abs((Wp - Wm) / 2 - s * W1).max())
+    assert 6.0 < rem[1] / rem[0] < 10.0
+
+
+def test_the_b3_report_on_synthetic_results():
+    """B3's table: the even part over s²⟨w₂⟩ per s, the averaged loop (B) over it, the odd part and the ranges' line."""
+    mk = len(NR.MARKS_B)
+    w2, c2, w1 = [2.0, -1.0, 4.0], [1.0, 1.0, -1.0], [1e-3, 0.0, 2e-3]
+    rows = [dict(s=s, even_w=[[s * s * 2.0 * 1.01, -s * s, s * s * 4.0]] * mk, odd_w=[[1e-6, 0.0, 2e-6]] * mk,
+                 even_c=[[s * s, s * s, -s * s]] * mk, odd_c=[[0.0, 0.0, 0.0]] * mk) for s in NR.S_B3]
+    B3 = [dict(metric='paradigm', freqs=[21.37], status=0, w1=[w1] * mk, c1=[[0.0] * 3] * mk, w2=[w2] * mk, c2=[c2] * mk, rows=rows)]
+    s = NR.S_B3[-1]
+    B = [dict(metric='paradigm', freqs=[21.37], s=s, terms=list(NR.TERMS), quasi=False, status=0, dw_sim=[[0.0] * 3] * mk,
+              dc_sim=[[0.0] * 3] * mk, dw_env=[[s * s * 2.0 * 1.05, -s * s, s * s * 4.0]] * mk, dc_env=[[0.0] * 3] * mk)]
+    md = '\n'.join(NR.b3_lines(B3, B))
+    assert '## B3. The exact second order' in md and '| paradigm | one tone 21.37 | +2, -1, +4 |' in md
+    assert '1.0100, 1.0000, 1.0000; 1.0100, 1.0000, 1.0000; 1.0100, 1.0000, 1.0000 | 1.050, 1.000, 1.000 |' in md
+    assert f"[1.0000, 1.0100] at s = {s:g}" in md and 'paradigm, one tone 21.37: [1.0000, 1.0500]' in md
+    assert NR.b3_lines(None) == [] and '## B3' in NR.report(B3=B3)

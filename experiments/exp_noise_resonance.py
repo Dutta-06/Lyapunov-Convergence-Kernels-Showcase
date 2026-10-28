@@ -17,11 +17,14 @@ B. The second order: one tone at OM_B or D‴.49's 16 tones, of rms s ∈ S_B, b
    first-order complex envelopes, exact along the orbit). B2: at one tone the averaged loop without each of its tone averages (the
    control's curvature, its slope moved by the jitter, the blur, the regressors' correlation with the drive) and with quasi-static
    envelopes.
+B3. The exact second order: the loop expanded about the fit to second order in the noise along the orbit, without averaging
+   (`second_order`), against the loop's even part in the noise (its period means under s·n and −s·n, half-summed: the drift) and its odd
+   part (half-differenced), at s ∈ S_B3 and B's tones, both metrics; the averaged loop (B) against it.
 C. The thresholds: the smallest level of D‴.49's noise at which a formed kernel leaves its feature within NP_C periods (D‴.57's Part D),
    the paradigm's metric, against the error gain k_e (KE_C) and the law's m (M_C: the centres' mobility Gmw) — with √K_max's place
    against the noise band 10–30 rad/s.
 
-Usage: python experiments/exp_noise_resonance.py [--only A,B,B2,C] [--from-raw] → results/chaos/noise_resonance.md (+ _raw.npz).
+Usage: python experiments/exp_noise_resonance.py [--only A,B,B2,B3,C] [--from-raw] → results/chaos/noise_resonance.md (+ _raw.npz).
 """
 import os
 import sys
@@ -49,6 +52,7 @@ KE_C, M_C, NP_C = (5.0, 10.0, 20.0, 40.0), (3.0, 12.0), 300
 LEV_C = (0.005, 0.0075, 0.01, 0.0125, 0.015, 0.02, 0.025, 0.03, 0.04, 0.06, 0.08)
 LEFT_C = 0.3
 TERMS = ('ctl', 'cross', 'blur', 'corr')
+S_B3 = (0.00125, 0.0025, 0.005)
 TERM_NAMES = dict(ctl="the control's curvature", cross="the control's slope moved by the jitter", blur='the blur',
                   corr="the regressors' correlation with the drive")
 
@@ -275,6 +279,73 @@ def sim_means(L, metric, noise, ke, NP, chunk=10, k=2000):
     return np.array(Wp), np.array(Cp)
 
 
+def second_order(L, eps, al, c, metric, noise, ke, NP, k=2000):
+    """The loop expanded about the exact fit along x_m(t) to second order in the noise (the formed kernels; no averaging): with
+    n = Σ_k amp_k cos(ω_kt + ph_k), d₁ = e₁ + n the measured error's first order, f′ = f̂′ and f″ = f̂″ at the fit,
+        e₁′ = −f′n − Σ_i(φ_iw₁_i + w_i∂_cφ_ic₁_i) − k_ed₁,   w₁_i′ = μ_iφ_id₁,   c₁_i′ = v_i∂_cφ_id₁,
+        e₂′ = −Σ_i(φ_iw₂_i + w_i∂_cφ_ic₂_i) − k_ee₂ − ½f″n(2e₁ + n) + Σ_i(∂_cφ_iw₁_i + w_i∂²_cφ_ic₁_i)d₁
+              − Σ_i(∂_cφ_iw₁_ic₁_i + ½w_i∂²_cφ_ic₁_i²),
+        w₂_i′ = μ_iφ_ie₂ + (μ′_iφ_iw₁_i + μ_i∂_cφ_ic₁_i)d₁,   c₂_i′ = v_i∂_cφ_ie₂ + (v′_i∂_cφ_iw₁_i + v_i∂²_cφ_ic₁_i)d₁,
+    from zero (the loop starts at x = x_m) — the terms of `envelope_rhs`'s tone averages ('ctl', 'cross', 'blur'; 'corr' in w₂′, c₂′)
+    before averaging. The loop's period means are then those of s·(w₁, c₁) + s²·(w₂, c₂) + O(s³) for the noise s·n. Returns the
+    period means (trapezoid on k points a period, as `sim_means`) of w₁, c₁, w₂, c₂ over NP periods of the reference."""
+    from scipy.integrate import solve_ivp
+    w, mu, dmu, v, dv = curve(L, eps, al, metric)
+    om, ph0, amp = (np.asarray(noise[q], float) for q in ('w', 'ph', 'amp'))
+    nk = c.size
+
+    def rhs(t, y):
+        xm = np.sin(CT.OM * t)
+        u = (xm - c) / CT.SIG
+        ph = np.exp(-u ** 2 / 2)
+        d1, d2 = ph * u / CT.SIG, ph * (u ** 2 - 1) / CT.SIG ** 2
+        f1, f2 = -(w * d1).sum(), (w * d2).sum()
+        n = (amp * np.cos(om * t + ph0)).sum()
+        e1, w1, c1 = y[0], y[1:1 + nk], y[1 + nk:1 + 2 * nk]
+        e2, w2, c2 = y[1 + 2 * nk], y[2 + 2 * nk:2 + 3 * nk], y[2 + 3 * nk:]
+        dm = e1 + n
+        q = -0.5 * f2 * n * (2 * e1 + n) + ((d1 * w1 + w * d2 * c1) * dm).sum() - (d1 * w1 * c1 + 0.5 * w * d2 * c1 ** 2).sum()
+        return np.r_[-f1 * n - (ph * w1 + w * d1 * c1).sum() - ke * dm, mu * ph * dm, v * d1 * dm,
+                     -(ph * w2 + w * d1 * c2).sum() - ke * e2 + q, mu * ph * e2 + (dmu * ph * w1 + mu * d1 * c1) * dm,
+                     v * d1 * e2 + (dv * d1 * w1 + v * d2 * c1) * dm]
+    per = 2 * np.pi / CT.OM
+    ts = per * np.arange(NP * k + 1) / k
+    sol = solve_ivp(rhs, (0.0, ts[-1]), np.zeros(2 + 4 * nk), method='DOP853', t_eval=ts, rtol=1e-10, atol=1e-14,
+                    max_step=0.2 / om.max())
+    Y = sol.y.T
+    pm = lambda cols: np.array([np.trapezoid(Y[j * k:(j + 1) * k + 1, cols], axis=0) / k for j in range(NP)])
+    return (pm(slice(1, 1 + nk)), pm(slice(1 + nk, 1 + 2 * nk)), pm(slice(2 + 2 * nk, 2 + 3 * nk)), pm(slice(2 + 3 * nk, 2 + 4 * nk)),
+            int(sol.status))
+
+
+def b3_job(args):
+    """B3: the exact second order against the loop — the loop's period means under the noise s·n and −s·n (the tones' phases moved by
+    π) at the marks MARKS_B: their half-difference (the odd orders: s·⟨w₁⟩ + O(s³)) and half-sum less the fit (the even orders:
+    s²⟨w₂⟩ + O(s⁴)), at s ∈ S_B3, against `second_order`'s period means for the unit noise (tones `freqs`, or D‴.49's 16 if None)."""
+    metric, freqs = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    L = law()
+    al0, c0, idx = DZ.fitted_state(L, EPS, CT.CSTAR, CT.ASTAR)
+    opts = {} if freqs is None else dict(freqs=freqs)
+    W1, C1, W2, C2, stt = second_order(L, EPS, al0[idx], c0[idx], metric, DZ.noise_of(1.0, opts), CT.KE, NP_B)
+    t1 = time.time()
+    mk = [m - 1 for m in MARKS_B]
+    rows = []
+    for s in S_B3:
+        nz = DZ.noise_of(s, opts)
+        Wp, Cp = sim_means(L, metric, nz, CT.KE, NP_B)
+        Wm, Cm = sim_means(L, metric, dict(nz, ph=np.asarray(nz['ph']) + np.pi), CT.KE, NP_B)
+        rows.append(dict(s=s, even_w=((Wp + Wm)[mk] / 2 - CT.ASTAR).tolist(), odd_w=((Wp - Wm)[mk] / 2).tolist(),
+                         even_c=((Cp + Cm)[mk] / 2 - CT.CSTAR).tolist(), odd_c=((Cp - Cm)[mk] / 2).tolist()))
+    out = dict(metric=metric, freqs=None if freqs is None else list(freqs), status=stt, w1=W1[mk].tolist(), c1=C1[mk].tolist(),
+               w2=W2[mk].tolist(), c2=C2[mk].tolist(), rows=rows, secs_theory=t1 - t0, secs=time.time() - t0)
+    print(f"  B3 {metric} {noise_label(out['freqs'])}: even/s²⟨w₂⟩ at {MARKS_B[-1]}: "
+          + '; '.join(f"s {r['s']:g}: " + ', '.join(f"{a / (r['s'] ** 2 * b):.4f}" for a, b in zip(r['even_w'][-1], out['w2'][-1]))
+                      for r in rows) + f" [{out['secs_theory']:.0f}s + {out['secs'] - out['secs_theory']:.0f}s]", flush=True)
+    return out
+
+
 def b_job(args):
     """B: the loop's period means against the averaged loop's (`envelope_means`; `terms`, `quasi` its variants) from the fitted state, at
     the marks MARKS_B, under tones `freqs` of total rms s (equal amplitudes; D‴.49's 16 tones if None)."""
@@ -342,6 +413,10 @@ def b_jobs():
                                                                                           for mt in METRICS]
 
 
+def b3_jobs():
+    return [(mt, (om,)) for mt in METRICS for om in OM_B] + [(mt, None) for mt in METRICS]
+
+
 def b2_jobs():
     mt, fr, s = B2_CASE
     return [(mt, fr, s, tuple(t for t in TERMS if t != drop), False) for drop in TERMS] + [(mt, fr, s, TERMS, True)]
@@ -365,6 +440,10 @@ def part_B2():
     return _pool_map(b_job, b2_jobs())
 
 
+def part_B3():
+    return _pool_map(b3_job, b3_jobs())
+
+
 def part_C():
     return _pool_map(c_job, [(m, ke, s) for m in M_C for ke in KE_C for s in LEV_C])
 
@@ -375,7 +454,47 @@ def ratio_range(rows, num, den, cond=lambda r: True):
     return (min(q), max(q)) if q else (np.nan, np.nan)
 
 
-def report(A=None, B=None, B2=None, C=None):
+def b3_lines(B3, B=None):
+    """B3's report: the loop's even and odd parts against the exact second order, and the averaged loop (B) against it."""
+    if B3 is None:
+        return []
+    out = ["## B3. The exact second order", "",
+           f"The loop expanded about the fit to second order in the noise along the orbit, without averaging (`second_order`: the first "
+           "order and the second driven by its products — the terms B averages), against the loop under the noise s·n and −s·n (the tones' "
+           "phases moved by π): its period means' half-sum less the fit (the even orders, s²⟨w₂⟩ + O(s⁴)) and half-difference (the odd "
+           f"orders, s⟨w₁⟩ + O(s³)), at period {MARKS_B[-1]}; the averaged loop's Δw (B, at the largest s) over s²⟨w₂⟩:", "",
+           "| metric | noise | ⟨w₂⟩ | even part / s²⟨w₂⟩ at s = " + ', '.join(f"{q:g}" for q in S_B3) + " | the averaged loop (B) / s²⟨w₂⟩ "
+           f"| odd part at s = {S_B3[-1]:g}: loop (s⟨w₁⟩) | ⟨c₂⟩ | even part / s²⟨c₂⟩ at s = {S_B3[-1]:g} |",
+           "|---|---|---|---|---|---|---|---|"]
+    key = lambda r: (r['metric'] != 'paradigm', r['freqs'] is None, r['freqs'] or [0])
+    q_even, q_avg = {q: [] for q in S_B3}, {}
+    for r in sorted(B3, key=key):
+        w2, c2 = r['w2'][-1], r['c2'][-1]
+        cells = []
+        for row in r['rows']:
+            qs = [a / (row['s'] ** 2 * b) for a, b in zip(row['even_w'][-1], w2)]
+            q_even[row['s']] += qs
+            cells.append(', '.join(f"{x:.4f}" for x in qs))
+        b = next((q for q in (B if B is not None else []) if q['metric'] == r['metric'] and q['freqs'] == r['freqs'] and q['s'] == S_B3[-1]
+                  and len(q['terms']) == len(TERMS) and not q['quasi']), None)
+        avg = '—'
+        if b is not None:
+            qa = [a / (S_B3[-1] ** 2 * c) for a, c in zip(b['dw_env'][-1], w2)]
+            q_avg[(r['metric'], noise_label(r['freqs']))] = qa
+            avg = ', '.join(f"{x:.3f}" for x in qa)
+        top = r['rows'][-1]
+        odd = ', '.join(f"{a:+.2e} ({S_B3[-1] * c:+.2e})" for a, c in zip(top['odd_w'][-1], r['w1'][-1]))
+        ec = ', '.join(f"{a / (S_B3[-1] ** 2 * c):.4f}" for a, c in zip(top['even_c'][-1], c2))
+        out.append(f"| {r['metric']} | {noise_label(r['freqs'])} | {', '.join(f'{x:+.4g}' for x in w2)} | {'; '.join(cells)} | {avg} | {odd} | "
+                   f"{', '.join(f'{x:+.4g}' for x in c2)} | {ec} |")
+    rng = lambda xs: f"[{min(xs):.4f}, {max(xs):.4f}]" if xs else '—'
+    out += ["", "The even part over the exact second order: " + '; '.join(f"{rng(q_even[q])} at s = {q:g}" for q in S_B3)
+            + " (the relative error falls as s²); the averaged loop over it at s = " + f"{S_B3[-1]:g}: "
+            + '; '.join(f"{k[0]}, {k[1]}: {rng(v)}" for k, v in q_avg.items()) + ".", ""]
+    return out
+
+
+def report(A=None, B=None, B2=None, C=None, B3=None):
     L_ = ["# Proposition D‴.60: measurement noise and the formed kernels (`exp_noise_resonance.py`)", "",
           f"D‴.49's closed loop (k_e = {CT.KE:g}, ω = {CT.OM:g}, three bumps of width {CT.SIG:g}, 21 kernels at the masses ε = {EPS:g}, the "
           "regressor at x_m) from the fitted state — each feature's kernel at its centre with its amplitude, the others at α = 0 —; the "
@@ -430,6 +549,7 @@ def report(A=None, B=None, B2=None, C=None):
             L_.append(f"| {variant_label(r)} | {', '.join(f'{x:+.2e}' for x in r['dw_env'][-1])} | {rel} | "
                       f"{', '.join(f'{x:+.2e}' for x in r['dc_env'][-1])} |")
         L_.append("")
+    L_ += b3_lines(B3, B)
     if C is not None:
         L_ += ["## C. The thresholds against the error gain and the centres' mobility", "",
                f"The paradigm's metric, D‴.49's noise of rms s, {NP_C} periods from the fitted state: the smallest level (of "
@@ -454,15 +574,15 @@ def main():
     md = os.path.join(OUT, 'noise_resonance.md')
     old = E.load(raw)
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('B2'), old.get('C')))
+        open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('B2'), old.get('C'), old.get('B3')))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'B2', 'C'}
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'B2', 'B3', 'C'}
     res = {k: v for k, v in old.items() if k not in parts}
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('B2', part_B2), ('C', part_C)):
+    for k, fn in (('A', part_A), ('B', part_B), ('B2', part_B2), ('B3', part_B3), ('C', part_C)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('B2'), res.get('C')))
+            open(md, 'w').write(report(res.get('A'), res.get('B'), res.get('B2'), res.get('C'), res.get('B3')))
 
 
 if __name__ == '__main__':
