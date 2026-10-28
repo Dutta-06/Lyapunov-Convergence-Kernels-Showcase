@@ -55,26 +55,47 @@ Per noise level s: 10 draws on each of the 40 targets (40 with the noiseless pat
 
 ## C. The window
 
-On the exact draws: the first noise kernel's entry after the K-th, τ_{K+1} − τ_K, against the first-order W (the ratio's median and range), the kernel as predicted, and W·s (median, quartiles).
+On the exact draws: the first noise kernel's entry after the K-th, τ_{K+1} − τ_K, against the first-order W — the ratio's median, range and 5–95% quantiles, and their half-width over s (constant if the relative error is O(s)) —; the kernel as predicted, and on the draws where it is not, the relative gap between the two smallest predicted windows (W₍₂₎ − W₍₁₎)/W₍₁₎ (median; all draws' median in brackets); W·s (median, quartiles).
 
-| s | exact draws | W_obs/W_pred: median [min, max] | next kernel as predicted | W·s: median [quartiles] |
-|---|---|---|---|---|
-| 0.003 | 400 | 1.0000 [0.975, 1.043] | 397/400 | 13.6 [10.1, 18.7] |
-| 0.01 | 400 | 1.0003 [0.918, 1.193] | 386/400 | 13.2 [9.5, 18.5] |
-| 0.03 | 396 | 1.0007 [0.888, 1.550] | 364/396 | 13.8 [10.1, 19.9] |
-| 0.1 | 374 | 1.0080 [-2.314, 2.815] | 313/374 | 12.3 [8.08, 17.8] |
-| 0.3 | 191 | 1.0004 [-16.305, 15.250] | 138/191 | 8.94 [5.35, 16.1] |
+| s | exact draws | W_obs/W_pred: median [min, max] | 5–95% | half-width / s | next kernel as predicted | missed: (W₍₂₎ − W₍₁₎)/W₍₁₎ [all] | W·s: median [quartiles] |
+|---|---|---|---|---|---|---|---|
+| 0.003 | 400 | 1.0000 [0.975, 1.043] | [0.9934, 1.0112] | 2.97 | 397/400 | 0.0115 [0.124] | 13.6 [10.1, 18.7] |
+| 0.01 | 400 | 1.0003 [0.918, 1.193] | [0.9799, 1.0337] | 2.69 | 386/400 | 0.0177 [0.126] | 13.2 [9.5, 18.5] |
+| 0.03 | 396 | 1.0007 [0.888, 1.550] | [0.9537, 1.1234] | 2.83 | 364/396 | 0.0187 [0.128] | 13.8 [10.1, 19.9] |
+| 0.1 | 374 | 1.0080 [-2.314, 2.815] | [0.8859, 1.4738] | 2.94 | 313/374 | 0.117 [0.181] | 12.3 [8.08, 17.8] |
+| 0.3 | 191 | 1.0004 [-16.305, 15.250] | [-0.3378, 3.1301] | 5.78 | 138/191 | 0.348 [0.306] | 8.94 [5.35, 16.1] |
 
 ## D. Stopping and the oracle
 
-On the exact draws: the discrepancy rule (the first entry after which the relaxed residual's rms ≤ 1.1s) stopping at the K-th; the largest relative gap (τ_{k+1} − τ_k)/τ_k over the K + 1 entries falling after the K-th; the fit stopped at the K-th entry: its rms error against the noise's projection on the tangent space, rms(P_Tξ), and against s(2K/N)^{1/2}.
+The discrepancy rule: the first entry after which the relaxed residual's rms is ≤ 1.1s, on the exact draws: at the K-th, not by the K-th (late), earlier; its first-order prediction — at the K-th iff rms(R_Kξ) ≤ 1.1s, late otherwise, R_Kξ the first-order residual (|R_Kξ|²/s² ~ χ²_(N−2K)) — and its agreement per draw; the first-order probability of a late stop, P(χ²_(N−2K) > 1.1²N) = 0.0461, times the draws (on all draws, exact or not, the count with rms(R_Kξ) > (1 + δ)s in brackets); the relaxed residual after the K-th entry against rms(R_Kξ).
 
-| s | exact draws | discrepancy rule at K | largest gap at K | error / rms(P_Tξ): median [range] | error / (s(2K/N)^{1/2}): median |
+| s | exact draws | at K | late | early | first order: at K | agree per draw | late: expected [all draws] | rms_K / rms(R_Kξ): median [5–95%] |
+|---|---|---|---|---|---|---|---|---|
+| 0.003 | 400 | 383 | 17 | 0 | 383 | 400 | 18.4 [17/400] | 1.0000 [0.9999, 1.0001] |
+| 0.01 | 400 | 389 | 11 | 0 | 389 | 400 | 18.4 [11/400] | 1.0000 [0.9996, 1.0004] |
+| 0.03 | 396 | 379 | 17 | 0 | 378 | 395 | 18.2 [18/400] | 1.0000 [0.9991, 1.0010] |
+| 0.1 | 374 | 367 | 7 | 0 | 367 | 374 | 17.2 [9/400] | 1.0000 [0.9970, 1.0030] |
+| 0.3 | 191 | 107 | 9 | 75 | 182 | 116 | 8.8 [18/400] | 1.0002 [0.9934, 1.0071] |
+
+The largest relative gap (τ_{k+1} − τ_k)/τ_k over the first K + 1 entries falling after the K-th; the fit stopped at the K-th entry: its rms error against the noise's projection on the tangent space, rms(P_Tξ), and against s(2K/N)^{1/2}.
+
+| s | exact draws | largest gap at K | error / rms(P_Tξ): median [range] | 5–95% | error / (s(2K/N)^{1/2}): median |
 |---|---|---|---|---|---|
-| 0.003 | 400 | 383/400 | 400/400 | 1.0000 [0.995, 1.005] | 0.973 |
-| 0.01 | 400 | 389/400 | 400/400 | 1.0001 [0.980, 1.016] | 0.925 |
-| 0.03 | 396 | 379/396 | 396/396 | 1.0003 [0.945, 1.044] | 0.952 |
-| 0.1 | 374 | 367/374 | 374/374 | 0.9986 [0.863, 1.188] | 0.928 |
-| 0.3 | 191 | 107/191 | 161/191 | 0.9957 [0.764, 1.754] | 0.831 |
+| 0.003 | 400 | 400/400 | 1.0000 [0.995, 1.005] | [0.9982, 1.0018] | 0.973 |
+| 0.01 | 400 | 400/400 | 1.0001 [0.980, 1.016] | [0.9937, 1.0066] | 0.925 |
+| 0.03 | 396 | 396/396 | 1.0003 [0.945, 1.044] | [0.9861, 1.0188] | 0.952 |
+| 0.1 | 374 | 374/374 | 0.9986 [0.863, 1.188] | [0.9443, 1.0562] | 0.928 |
+| 0.3 | 191 | 161/191 | 0.9957 [0.764, 1.754] | [0.8754, 1.2388] | 0.831 |
+
+## E. Past the first noise kernel
+
+The first 20 targets, 5 draws per level, the path to its (K + 4)-th entry (each path under 180 s): on the draws whose first K entries are E, the largest relative gap over the K + 4 entries falling after the K-th, the discrepancy rule over the relaxed fits after entries 1 … K + 3 (at the K-th, later, never), and the fits the two rules stop at against the oracle's (the K-th) error. Paths with a chunk of the fast flow redone by Radau (`relax_chunk`, LSODA's stall): 79 of 399 finished.
+
+| s | paths (over the limit) | exact | largest gap at K | discrepancy: at K, later, never | discrepancy-stopped error / oracle: median [max] | gap-stopped error / oracle: median [max] |
+|---|---|---|---|---|---|---|
+| 0.01 | 100 (0) | 100 | 100/100 | 94, 3, 3 | 1.000 [1.77] | 1.000 [1] |
+| 0.03 | 100 (0) | 100 | 100/100 | 99, 1, 0 | 1.000 [2.57] | 1.000 [1] |
+| 0.1 | 100 (0) | 90 | 87/90 | 88, 1, 1 | 1.000 [1.82] | 1.000 [1.39] |
+| 0.3 | 100 (1) | 52 | 34/52 | 29, 1, 2 | 1.000 [8.3] | 1.000 [3.13] |
 
 Numbers are produced by `experiments/exp_noisy_certificate.py`; nothing is edited by hand.
