@@ -130,7 +130,7 @@ The loop's count equals the inner problem's at 64 of 66 (ε = 1e-06), 66 of 66 (
 
 ## B4. The areas at a vertex
 
-The 4-kernel inner problem on the grid of gaps 0 … 10 in steps of 0.25 (861 problems, x₁₀ ≤ x₀₁): the region N ≥ 3 has the area 33.5 and N = 4 15.5 in the gaps' quarter-plane (trapezoid weights; 648 of 861 problems settled to the shares' tolerance 1e-07; the 213 others rerun with the stop's reason recorded: 209 at the doubling cap (the last drift 1.0e-07 … 3.7e-07; the change still to come, from the drifts' fall, at most 1.6e-05 on 101; the drifts not yet falling on 108), 1 at the clock (the last drift 2.0e-07; the drifts not yet falling), 3 settled on rerun, their counts unchanged at 213 of 213, their shares moved by at most 1.1e-06; the unsettled shares at least 2.0e-04 from the threshold, so at their last drifts no count changes for at least 788 more doublings); the product rule with the factors at t = H/2 on the same grid: 33.5 and 15.1 (on a grid of step 0.05: 33.5 and 15.3, the coarse grid's error), its count equal to the inner problem's at 1675 of 1681 grid points. Each vertex's sector in a cell maps to the gaps by (2σ²ε^{1/2}/H)·(x₁₀, x₀₁) and a cell has four: P(N ≥ 3) = 4(2σ²/H²)²·33.5·ε = 1112·ε and P(N = 4) = 513·ε.
+The 4-kernel inner problem on the grid of gaps 0 … 10 in steps of 0.25 (861 problems, x₁₀ ≤ x₀₁): the region N ≥ 3 has the area 33.5 and N = 4 15.5 in the gaps' quarter-plane (trapezoid weights; 648 of 861 problems settled to the shares' tolerance 1e-07; the 213 others rerun with the stop's reason recorded: 209 at the doubling cap (the last drift 1.0e-07 … 3.7e-07), 1 at the clock (the last drift 2.0e-07), 3 settled on rerun, their counts unchanged at 213 of 213, their shares moved by at most 1.1e-06; continued to 24 doublings (B4x): the counts unchanged at 213 of 213, the shares moved after the first cap by at most 1.6e-06, the drifts peaking at doublings 1–13, 211 settled, 0 at the new cap, 2 at the clock); the product rule with the factors at t = H/2 on the same grid: 33.5 and 15.1 (on a grid of step 0.05: 33.5 and 15.3, the coarse grid's error), its count equal to the inner problem's at 1675 of 1681 grid points. Each vertex's sector in a cell maps to the gaps by (2σ²ε^{1/2}/H)·(x₁₀, x₀₁) and a cell has four: P(N ≥ 3) = 4(2σ²/H²)²·33.5·ε = 1112·ε and P(N = 4) = 513·ε.
 
 ## C. Several features in the plane
 
@@ -186,7 +186,7 @@ A = 0.8 at 600 uniform positions in the Voronoi cell of the kernel at (0, 0) (se
 
 The misses — ε: the loop's count/the rule's at the gaps (x₁₀, x₀₁) [x_θ at their offsets]: 1e-05: 2/1 at (26.49, 6.28) [6.09, 6.23]; 1e-05: 2/1 at (6.52, 13.35) [6.15, 6.09]; 1e-05: 4/3 at (0.59, 4.85) [6.08, 6.04]; 1e-05: 2/1 at (6.36, 8.41) [6.11, 6.09]; 1e-05: 2/1 at (42.90, 6.49) [6.09, 6.29]; 1e-05: 3/2 at (6.12, 3.45) [6.06, 6.09]; 1e-05: 2/1 at (6.33, 7.32) [6.10, 6.09]; 1e-05: 2/1 at (6.30, 46.00) [6.29, 6.09]; 1e-06: 2/1 at (6.11, 8.25) [6.06, 6.05]; 1e-06: 3/2 at (3.92, 6.03) [6.05, 6.04]; 1e-06: 2/1 at (6.29, 76.61) [6.22, 6.05].
 
-The offset-blind rule (every factor at t = 0, x_θ(0)) agrees with the loop at 596 of 600 (ε = 1e-05), 600 of 600 (ε = 1e-06) — D does not resolve x_θ(t) (referee round 47): the positions near a face, where the offset matters, are too few.
+The offset-blind rule (every factor at t = 0, x_θ(0)) agrees with the loop at 596 of 600 (ε = 1e-05), 600 of 600 (ε = 1e-06): at these masses the loop's own threshold is shifted by more than x_θ varies along a face (D2), so D measures the shift, not x_θ(t) (referee round 49).
 
 
 ## H. A hexagonal lattice
@@ -202,38 +202,48 @@ The fourth kernel's margin at the vertex is ε-free, 1 − e^{−H²/(4σ²)} in
 
 ## C2. Designed targets in the plane
 
-Part C's lattice; 'near tie': feature 0 (A = 0.8) near the face between (0, 0.25) and (0.125, 0.25), on their axis, its runner-up's margin 0.0003 when it enters (first), two features far from it (−0.6 at (−0.5, −0.5), 0.7 at (0.5, −0.55)); 'window edge': feature 0 (0.8) at (0.96, 0) with −0.7 at (−0.4, 0.5) and 0.9 at (−0.3, −0.5). The loop to 1.3 times the path's last entry; feature 0's entrant and runner-up (the target's correlations at the start) and its nearest kernel; the runner-up's share in the loop (of the kernels started nearest feature 0) against the edge's 2-kernel inner problem p(x; t) at its gap (T), and its coefficient at the first output after the entry against the later features' unbinding level max A′(d/σ)e^{−d²/(4σ²)} (A′, d their amplitudes and distances from feature 0); the kernels formed for feature 0 (|w| > 1% of its amplitude; by their final positions) against the rule 1 + [x < x_θ(t)], and the formed kernels that ended at another feature than the one they started nearest (captured):
+Part C's lattice; 'near tie': feature 0 (A = 0.8) near the face between (0, 0.25) and (0.125, 0.25), on their axis, its runner-up's margin 0.0003 when it enters (first), two features far from it (−0.6 at (−0.5, −0.5), 0.7 at (0.5, −0.55)); 'window edge': feature 0 (0.8) at (0.96, 0) with −0.7 at (−0.4, 0.5) and 0.9 at (−0.3, −0.5). The loop to 1.3 times the path's last entry; feature 0's entrant and runner-up (the target's correlations at the start) and its nearest kernel; the runner-up's share in the loop (of the kernels started nearest feature 0) against the edge's 2-kernel inner problem p(x; t) at its gap (T), and its coefficient at the first output after the entry against the fold c(d)ℓ(d) of the same-sign features after it ((v); V's c(d) at A′/A = 0.875, interpolated in d and held at its last value beyond 7σ — there a lower estimate: c(d) grows with d), the largest; the kernels formed for feature 0 (|w| > 1% of its amplitude; by their final positions) against the rule 1 + [x < x_θ(t)], and the formed kernels that ended at another feature than the one they started nearest (captured):
 
-| target | ε | entrant, runner-up, nearest | margin μ, gap x = μ/ε^{1/2} | runner-up's share: loop, p(x; t) | the runner-up after the entry: \|w\| (τ), unbinding level | formed for feature 0: loop, rule | captured (kernel: start's feature → end's) | formed = the path's | max\|w − w_path\| | rms residual |
+| target | ε | entrant, runner-up, nearest | margin μ, gap x = μ/ε^{1/2} | runner-up's share: loop, p(x; t) | the runner-up after the entry: \|w\| (τ), the fold (d) | formed for feature 0: loop, rule | captured (kernel: start's feature → end's) | formed = the path's | max\|w − w_path\| | rms residual |
 |---|---|---|---|---|---|---|---|---|---|---|
-| near tie | 1e-06 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 0.3 | 0.4464, 0.4452 | 0.357 (79.3), 0.00041 | 2, 2 | none | no: [72, 146, 163, 208] | 3.57e-01 | 9.87e-08 |
-| near tie | 1e-07 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 0.949 | 0.3338, 0.3328 | 0.267 (79.3), 0.00041 | 2, 2 | none | no: [72, 146, 163, 208] | 2.67e-01 | 3.47e-08 |
-| near tie | 1e-08 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 3 | 0.1002, 0.09973 | 0.0802 (79.3), 0.00041 | 2, 2 | none | no: [72, 146, 163, 208] | 8.01e-02 | 4.02e-08 |
-| near tie | 1e-09 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 9.49 | — (captured), 0.001322 | 0.00106 (79.3), 0.00041 | 1, 1 | (0.125, 0.250): 0 → 2 | no: [72, 146, 163] | 7.00e-01 | 1.95e-13 |
-| near tie | 1e-10 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 30 | 8.205e-06, — | 6.48e-06 (79.3), 0.00041 | 1, 1 | none | yes | 6.33e-06 | 4.28e-08 |
-| window edge | 1e-06 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 159 | 3.295e-08, — | 1.89e-09 (71.3), 1.1e-08 | 1, 1 | none | yes | 4.15e-06 | 3.94e-08 |
-| window edge | 1e-07 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 504 | 9.693e-10, — | 5.98e-11 (71.3), 1.1e-08 | 1, 1 | none | yes | 8.72e-08 | 1.03e-09 |
-| window edge | 1e-08 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 1.59e+03 | 2.998e-11, — | 1.89e-12 (71.3), 1.1e-08 | 1, 1 | none | yes | 2.46e-09 | 2.95e-11 |
-| window edge | 1e-09 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 5.04e+03 | 9.416e-13, — | 5.97e-14 (71.3), 1.1e-08 | 1, 1 | none | yes | 7.53e-11 | 9.04e-13 |
-| window edge | 1e-10 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 1.59e+04 | 2.971e-14, — | 1.89e-15 (71.3), 1.1e-08 | 1, 1 | none | yes | 2.35e-12 | 2.83e-14 |
+| near tie | 1e-06 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 0.3 | 0.4464, 0.4452 | 0.357 (79.3), 0.017 (6.08σ) | 2, 2 | none | no: [72, 146, 163, 208] | 3.57e-01 | 9.87e-08 |
+| near tie | 1e-07 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 0.949 | 0.3338, 0.3328 | 0.267 (79.3), 0.017 (6.08σ) | 2, 2 | none | no: [72, 146, 163, 208] | 2.67e-01 | 3.47e-08 |
+| near tie | 1e-08 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 3 | 0.1002, 0.09973 | 0.0802 (79.3), 0.017 (6.08σ) | 2, 2 | none | no: [72, 146, 163, 208] | 8.01e-02 | 4.02e-08 |
+| near tie | 1e-09 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 9.49 | — (captured), 0.001322 | 0.00106 (79.3), 0.017 (6.08σ) | 1, 1 | (0.125, 0.250): 0 → 2 | no: [72, 146, 163] | 7.00e-01 | 1.95e-13 |
+| near tie | 1e-10 | (0.000, 0.250), (0.125, 0.250), (0.000, 0.250) | 3.000e-04, 30 | 8.205e-06, — | 6.48e-06 (79.3), 0.017 (6.08σ) | 1, 1 | none | yes | 6.33e-06 | 4.28e-08 |
+| window edge | 1e-06 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 159 | 3.295e-08, — | 1.89e-09 (71.3), 9.1e-07 (9.04σ) | 1, 1 | none | yes | 4.15e-06 | 3.94e-08 |
+| window edge | 1e-07 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 504 | 9.693e-10, — | 5.98e-11 (71.3), 9.1e-07 (9.04σ) | 1, 1 | none | yes | 8.72e-08 | 1.03e-09 |
+| window edge | 1e-08 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 1.59e+03 | 2.998e-11, — | 1.89e-12 (71.3), 9.1e-07 (9.04σ) | 1, 1 | none | yes | 2.46e-09 | 2.95e-11 |
+| window edge | 1e-09 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 5.04e+03 | 9.416e-13, — | 5.97e-14 (71.3), 9.1e-07 (9.04σ) | 1, 1 | none | yes | 7.53e-11 | 9.04e-13 |
+| window edge | 1e-10 | (0.875, 0.000), (0.875, -0.125), (1.000, 0.000) | 1.594e-01, 1.59e+04 | 2.971e-14, — | 1.89e-15 (71.3), 9.1e-07 (9.04σ) | 1, 1 | none | yes | 2.35e-12 | 2.83e-14 |
 
 ## V. A runner-up held at its feature: the static law of (v)
 
-The feature (A = 0.8) at the origin and an unfitted one (A′ = 0.7) at the distance d (the continuum: a trapezoid of step σ/20 in one dimension, σ/8 in the plane along the diagonal); the entrant (w_e, c_e) and the runner-up's centre free, its coefficient w fixed: the local minimum's displacement Δ of the runner-up toward the unfitted feature (by continuation in w) against (v)'s law Δ² = σ²A′((d/σ)² − 2)e^{−d²/(4σ²)}·w_e/(w(w_e + w)); the fold — below it no minimum within 2σ — by bisection; the level ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)}, the fold over it c(d), and the law's Δ at the fold:
+The feature (A = 0.8) at the origin and an unfitted one (A′ = 0.7) at the distance d (the continuum: a trapezoid of step σ/20 in one dimension, σ/8 in the plane along the diagonal); the entrant (w_e, c_e) and the runner-up's centre free, its coefficient w fixed: the local minimum's displacement Δ of the runner-up toward the unfitted feature (by continuation in w) against (v)'s law Δ² = σ²ℓ(d)·w_e/(w(w_e + w)), ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)} (the pull projected off the entrant's φ, as the binding is: referee round 49); the fold — below it no minimum within 2σ — by bisection, the fold over ℓ(d), c(d), the minimum's displacement at the fold, and the law's there:
 
-| d/σ | Δ/σ (the law) at w = 0.3, 0.1, 0.03, 0.01, 0.003, 0.001 | the fold w_f | ℓ(d) | c(d) = w_f/ℓ | the law's Δ/σ at w_f |
+| d/σ | Δ/σ (the law) at w = 0.3, 0.1, 0.03, 0.01, 0.003, 0.001 | the fold w_f | ℓ(d) | c(d) = w_f/ℓ | Δ/σ at w_f: the minimum's (the law's) |
 |---|---|---|---|---|---|
-| 5 | 0.3164 (0.2556), —, —, —, —, — | 0.1424 | 0.0338 | 4.21 | 0.424 |
-| 5.5 | 0.1641 (0.1465), 0.4503 (0.3120), —, —, —, — | 0.05956 | 0.011 | 5.41 | 0.400 |
-| 6 | 0.0837 (0.0783), 0.1983 (0.1667), 0.4823 (0.3122), —, —, — | 0.02066 | 0.00311 | 6.64 | 0.372 |
-| 6.5 | 0.0407 (0.0390), 0.0912 (0.0831), 0.1862 (0.1555), 0.3708 (0.2596), —, — | 0.006018 | 0.000765 | 7.87 | 0.347 |
-| 7 | 0.0186 (0.0181), 0.0407 (0.0386), 0.0791 (0.0723), 0.1397 (0.1206), 0.3325 (0.2363), — | 0.001495 | 0.000164 | 9.11 | 0.324 |
+| 5 | 0.3164 (0.2665), —, —, —, —, — | 0.1424 | 0.0338 | 4.21 | 0.938 (0.442) |
+| 5.5 | 0.1641 (0.1516), 0.4503 (0.3228), —, —, —, — | 0.05956 | 0.011 | 5.41 | 0.909 (0.413) |
+| 6 | 0.0837 (0.0805), 0.1983 (0.1716), 0.4823 (0.3213), —, —, — | 0.02066 | 0.00311 | 6.64 | 0.860 (0.383) |
+| 6.5 | 0.0407 (0.0399), 0.0912 (0.0851), 0.1862 (0.1593), 0.3708 (0.2659), —, — | 0.006018 | 0.000765 | 7.87 | 0.806 (0.355) |
+| 7 | 0.0186 (0.0185), 0.0407 (0.0394), 0.0791 (0.0738), 0.1397 (0.1232), 0.3325 (0.2412), — | 0.001495 | 0.000164 | 9.11 | 0.759 (0.331) |
 
-The plane, d = 6σ along the diagonal: w = 0.3: along 0.0837, across 2.3e-08 (the law 0.0783); w = 0.079: along 0.2224, across 2.2e-07 (the law 0.1831); w = 0.0208: along 0.8015, across 7.2e-08 (the law 0.3709); the fold between w = 0.02066 and 0.02066.
+Along V's and V3's one-dimensional branches the rests' energy E*(w) (the minimum over the other parameters) increases with w at every step (267 steps; the secant dE*/dw from 1.58e-11 to 3.80e-04): with w free the runner-up's coefficient decays toward the fold — the hold of (v) (referee round 49).
+
+V3. The fold's constant against the unfitted feature's amplitude: c = w_f/ℓ(d) (one dimension, A = 0.8) at A′/A = 0.437, 0.875, 1.75, 3.5 (where the tail is unbound at w = 0.3 the continuation starts at 0.99A; '>' the tail unbound from there on, the fold above it; '<' bound down to w = 0.0001; 'entrant to A′' where the entrant leaves its feature for A′ — off the branch):
+
+| d/σ | A′/A = 0.437 | A′/A = 0.875 | A′/A = 1.75 | A′/A = 3.5 |
+|---|---|---|---|---|
+| 5 | 4.502 | 4.215 | 3.761 | entrant to A′ |
+| 6 | 6.731 | 6.644 | 6.480 | 6.182 |
+| 7 | 9.116 | 9.106 | 9.086 | 9.047 |
+
+The plane, d = 6σ along the diagonal: w = 0.3: along 0.0837, across 2.3e-08 (the law 0.0805); w = 0.079: along 0.2224, across 2.2e-07 (the law 0.1884); w = 0.0208: along 0.8015, across 7.2e-08 (the law 0.3816); the fold between w = 0.02066 and 0.02066.
 
 ## C3. The capture window
 
-C2's near tie (feature 2, 0.7, at 6.08σ from feature 0) and its variant with feature 2 at 5.00σ (−60°), at 15 masses, the loop at the tolerance 1e-12 (captures sit on a saddle): the runner-up's gap x, its coefficient after the entry against the fold at feature 2's distance (V: c(d)ℓ(d), interpolated in d), the kernels formed per feature by their final positions, the captured kernels, and the outcome — bound (feature 0 two kernels, the runner-up formed there), captured (feature 0 one kernel, feature 2 fitted by the migrant), a capture tie (feature 2 two kernels), stranded (one kernel per feature, the fit not exact at the end: the tail still on its way), one kernel (the runner-up not formed, the fit exact):
+C2's near tie (feature 2, 0.7, at 6.08σ from feature 0) and its variant with feature 2 at 5.00σ (−60°), at 15 masses, the loop at the tolerance 1e-12 (captures sit on a saddle): the runner-up's gap x, its coefficient after the entry against the fold at feature 2's distance (V: c(d)ℓ(d), interpolated in d), the kernels formed per feature by their final positions, the captured kernels, and the outcome — bound (feature 0 two kernels, the runner-up formed there), captured (feature 0 one kernel, feature 2 fitted by the migrant), a capture tie (feature 2 two kernels), stranded at the horizon (one kernel per feature, the fit not exact at the end: the tail away from both features then — it can still be recalled to its own), one kernel (the runner-up not formed, the fit exact). The runner-up's coefficient is read at the first output after the entry (on the 5σ variant the runner-up has left by then: the coefficient is the captured kernel's). At a fixed μ the gap x and the mass vary together; C4 separates them:
 
 | target | ε | gap x | the runner-up after the entry | the fold c(d)ℓ(d) | kernels per feature (final) | captured | rms | outcome |
 |---|---|---|---|---|---|---|---|---|
@@ -268,9 +278,48 @@ C2's near tie (feature 2, 0.7, at 6.08σ from feature 0) and its variant with fe
 | near tie 5σ | 2.13e-10 | 20.6 | 2.82e-05 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 1.5e-14 | captured |
 | near tie 5σ | 1.5e-10 | 24.5 | 1.41e-05 | 0.142 (d = 5.00σ) | 1, 1, 1 | (0.125, 0.250): 0 → 2 | 9.3e-15 | captured |
 
+## C4. The race: the gap held, the mass varied
+
+C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{1/2}) at the masses 1e-08, 1e-09, 1e-10, 1e-11, 1e-12 (rtol 1e-12): the runner-up's largest coefficient while within 2σ of feature 0 (after its entry) against the fold c(d)ℓ(d) at feature 2's distance; its departure (2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against feature 2's own entry s₂ = (τ₂ − τ_e)/ε^{1/2}, its coefficient at the departure; the final kernels per feature and the outcome; at the tolerance 1e-13 (C4b) the outcome, the largest coefficient held and the departure:
+
+| x | ε | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per feature (final) | outcome | rtol 1e-13: outcome, max w held, departure s |
+|---|---|---|---|---|---|---|---|---|
+| 3 | 1e-08 | 0.0802 (4.67) | none | 9.71e+04 | — | 2, 1, 1 | bound | bound, 0.0802, none |
+| 3 | 1e-09 | 0.0799 (4.65) | none | 3.07e+05 | — | 2, 1, 1 | bound | bound, 0.0799, none |
+| 3 | 1e-10 | 0.0799 (4.65) | none | 9.7e+05 | — | 2, 1, 1 | bound | bound, 0.0799, none |
+| 3 | 1e-11 | 0.0798 (4.64) | none | 3.07e+06 | — | 2, 1, 1 | bound | bound, 0.0798, none |
+| 3 | 1e-12 | 0.0798 (4.64) | none | 9.7e+06 | — | 2, 1, 1 | bound | bound, 0.0798, none |
+| 4.9 | 1e-08 | 0.0217 (1.26) | none | 9.72e+04 | — | 2, 1, 1 | bound | bound, 0.0217, none |
+| 4.9 | 1e-09 | 0.0216 (1.26) | none | 3.07e+05 | — | 2, 1, 1 | bound | bound, 0.0216, none |
+| 4.9 | 1e-10 | 0.0215 (1.25) | 3.52e+05 | 9.7e+05 | 0.0162 (0.94) | 1, 1, 1 | captured | captured, 0.0215, 3.52e+05 |
+| 4.9 | 1e-11 | 0.0232 (1.35) | none | 3.07e+06 | — | 2, 1, 1 | bound | captured, 0.0215, 3.3e+05 |
+| 4.9 | 1e-12 | 0.0215 (1.25) | 3.42e+05 | 9.7e+06 | 0.0167 (0.97) | 1, 1, 1 | captured | captured, 0.0215, 3.42e+05 |
+| 7 | 1e-08 | 0.00498 (0.29) | 9.72e+04 | 9.72e+04 | 0.00498 (0.29) | 1, 1, 1 | captured | captured, 0.00498, 9.72e+04 |
+| 7 | 1e-09 | 0.00495 (0.29) | 1.01e+05 | 3.07e+05 | 0.00495 (0.29) | 1, 1, 1 | captured | captured, 0.00495, 1.01e+05 |
+| 7 | 1e-10 | 0.00496 (0.29) | 1.04e+05 | 9.7e+05 | 0.00496 (0.29) | 1, 1, 1 | captured | captured, 0.00496, 1.04e+05 |
+| 7 | 1e-11 | 0.00494 (0.29) | 9.77e+04 | 3.07e+06 | 0.00494 (0.29) | 1, 1, 1 | captured | captured, 0.00494, 9.77e+04 |
+| 7 | 1e-12 | 0.00494 (0.29) | 1.01e+05 | 9.7e+06 | 0.00494 (0.29) | 1, 1, 1 | captured | captured, 0.00494, 1.01e+05 |
+| 10 | 1e-08 | 0.000811 (0.05) | none | 9.73e+04 | — | 1, 1, 1 | stranded | stranded, 0.000811, none |
+| 10 | 1e-09 | 0.000858 (0.05) | 1.67e+05 | 3.07e+05 | 0.000858 (0.05) | 1, 1, 1 | captured | captured, 0.000858, 1.67e+05 |
+| 10 | 1e-10 | 0.000811 (0.05) | 1.56e+05 | 9.7e+05 | 0.000811 (0.05) | 1, 1, 1 | captured | captured, 0.000811, 1.56e+05 |
+| 10 | 1e-11 | 0.000819 (0.05) | 1.62e+05 | 3.07e+06 | 0.000819 (0.05) | 1, 1, 1 | captured | captured, 0.000819, 1.62e+05 |
+| 10 | 1e-12 | 0.000808 (0.05) | 1.52e+05 | 9.7e+06 | 0.000808 (0.05) | 1, 1, 1 | captured | captured, 0.000808, 1.52e+05 |
+| 17.3 | 1e-08 | 5.78e-05 (0.00) | none | 9.76e+04 | — | 1, 1, 1 | stranded | stranded, 5.78e-05, none |
+| 17.3 | 1e-09 | 5.83e-05 (0.00) | none | 3.07e+05 | — | 1, 1, 1 | stranded | stranded, 5.83e-05, none |
+| 17.3 | 1e-10 | 6.57e-05 (0.00) | 5.84e+05 | 9.7e+05 | 6.57e-05 (0.00) | 1, 1, 1 | captured | captured, 6.57e-05, 5.84e+05 |
+| 17.3 | 1e-11 | 6.9e-05 (0.00) | 6.06e+05 | 3.07e+06 | 6.9e-05 (0.00) | 1, 1, 1 | captured | captured, 6.9e-05, 6.06e+05 |
+| 17.3 | 1e-12 | 7.74e-05 (0.00) | 6.28e+05 | 9.7e+06 | 7.74e-05 (0.00) | 1, 1, 1 | captured | captured, 7.74e-05, 6.28e+05 |
+| 24.5 | 1e-08 | 1.39e-05 (0.00) | none | 9.79e+04 | — | 1, 1, 1 | stranded | stranded, 1.39e-05, none |
+| 24.5 | 1e-09 | 1.39e-05 (0.00) | none | 3.08e+05 | — | 1, 1, 1 | stranded | stranded, 1.39e-05, none |
+| 24.5 | 1e-10 | 1.46e-05 (0.00) | none | 9.71e+05 | — | 1, 1, 1 | stranded | stranded, 1.46e-05, none |
+| 24.5 | 1e-11 | 2.5e-05 (0.00) | 1.85e+06 | 3.07e+06 | 2.5e-05 (0.00) | 1, 1, 1 | captured | captured, 2.5e-05, 1.85e+06 |
+| 24.5 | 1e-12 | 2.48e-05 (0.00) | 1.73e+06 | 9.7e+06 | 2.48e-05 (0.00) | 1, 1, 1 | captured | captured, 2.48e-05, 1.73e+06 |
+
+The two tolerances give the same outcome at 29 of 30 points; they differ at x = 4.9, ε = 1e-11: bound at 1e-12 (max w held 0.02322, the runner-up 0.0021σ from feature 0 at the end), captured at 1e-13 (0.02153).
+
 ## T3. The product rule at a vertex of hℤ³
 
-The 8 kernels at the corners of the cube {0, H}³ (samples on a tensor grid of spacing 0.05), the feature (A = 0.8) at the cube's centre — each edge's axis at the transverse offset H/√2 ((n − 1)^{1/2}H/2; H/2 only in the plane) —; the corner 1_S behind the entrant by Σ_{i∈S}x_i: the 8-kernel inner problem against the product of the edges' 2-kernel shares at the offset H/√2 (the planar edge problem: in the continuum it depends on |t| only) and at H/2 (the planar offset):
+The 8 kernels at the corners of the cube {0, H}³ (samples on a tensor grid of spacing 0.05), the feature (A = 0.8) at the cube's centre — each edge's axis at the transverse offset H/√2 ((n − 1)^{1/2}H/2; H/2 only in the plane) —; the corner 1_S behind the entrant by Σ_{i∈S}x_i: the 8-kernel inner problem against the product of the edges' 2-kernel shares at the offset H/√2 (the planar edge problem: in the continuum it depends on |t| only) and at H/2 (the planar offset); the last triples put a corner between x_θ(H/√2) and x_θ(H/2), where only the true offset's product gets the count:
 
 | gaps (x₁, x₂, x₃) | 8-kernel: formed (stop) | the product at H/√2: formed, max \|Δ share\| | at H/2: formed, max \|Δ share\| |
 |---|---|---|---|
@@ -281,6 +330,22 @@ The 8 kernels at the corners of the cube {0, H}³ (samples on a tensor grid of s
 | (3, 3, 3) | 4 (converged) | 4, 9.28e-04 | 4, 1.93e-02 |
 | (2, 4, 6) | 3 (cap) | 3, 8.79e-04 | 3, 1.42e-02 |
 | (4, 4, 4) | 4 (converged) | 4, 1.16e-03 | 4, 1.38e-02 |
+| (5.9, 9, 9) | 1 (cap) | 1, 2.20e-04 | 2, 2.24e-03 |
+| (5.95, 9, 9) | 1 (clock) | 1, 2.24e-04 | 2, 2.19e-03 |
+| (6, 9, 9) | 1 (cap) | 1, 2.15e-04 | 2, 2.13e-03 |
+
+## D2. The loop's threshold at a finite mass
+
+The edge loop (Part A's, A = 0.8) with the feature at the offset t along the face: the gap at which its runner-up's share crosses 0.01 (bisection in [4.5, 8]) against the inner problem's x_θ(t) (T); the shift is the finite mass's:
+
+| ε | t/H | the loop's crossing | x_θ(t) | shift |
+|---|---|---|---|---|
+| 1e-05 | 0.000 | 6.708 | 6.300 | +0.407 |
+| 1e-05 | 0.375 | 6.552 | 6.149 | +0.403 |
+| 1e-06 | 0.000 | 6.430 | 6.300 | +0.130 |
+| 1e-06 | 0.375 | 6.277 | 6.149 | +0.127 |
+| 1e-08 | 0.000 | 6.313 | 6.300 | +0.013 |
+| 1e-08 | 0.375 | 6.161 | 6.149 | +0.011 |
 
 ## W. Where the selection is the Voronoi cell
 
@@ -342,7 +407,7 @@ W4. Two kernels coinciding at the samples' centre of symmetry, the runner-up x_r
 | 4 | 0.2 | 0.055370 | 0.056862 | -1.49e-03 | 3.3e-12 |
 | 4 | 0.4 | 0.051028 | 0.056862 | -5.83e-03 | 1.6e-12 |
 
-W5. The 2-fold profile split's runner-up share p(x) against the softmax 1/(1 + e^{κx}) at the formation threshold: p's crossing of 0.01 (x_θ of coinciding kernels at the feature's centre) and the softmax's, the softmax's relative error at p's crossing and at x = 8, and e^{−2α/a} at the runner-up's coefficient (its mirror coordinate α; the exponential branch's correction, D‴.51(i)):
+W5. The 2-fold profile split's runner-up share p(x) against the softmax 1/(1 + e^{κx}) at the formation threshold: p's crossing of 0.01 (x_θ of coinciding kernels at the feature's centre) and the softmax's, the softmax's relative error at p's crossing and at x = 8, and e^{−2α/a} at the runner-up's coefficient (its amplitude coordinate α; the exponential branch's correction, D‴.51(i)):
 
 | A | x_θ: profile split, softmax | the softmax's error: at the crossing, at x = 8 | α/a | e^{−2α/a} |
 |---|---|---|---|---|

@@ -1373,7 +1373,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             else:
                 fold = f"none above {W_V[-1]:g} | {lev:.3g} | — | —"
             L_.append(f"| {r['d']:g} | {', '.join(cells)} | {fold} |")
-        gr = [(b['E'] - a['E']) / (b['w'] - a['w']) for r in list(V) + list(V3 or []) if r['n'] == 1
+        gr = [(b['E'] - a['E']) / (b['w'] - a['w']) for r in list(V) + (list(V3) if V3 is not None else []) if r['n'] == 1
               for a, b in zip(r['rows'][:-1], r['rows'][1:]) if 'E' in a]
         if gr:
             L_ += ["", f"Along V's and V3's one-dimensional branches the rests' energy E*(w) (the minimum over the other parameters) "
@@ -1449,7 +1449,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                "| x | ε | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per feature (final) | outcome | "
                f"rtol {RTOL_C4B:g}: outcome, max w held, departure s |",
                "|---|---|---|---|---|---|---|---|---|"]
-        b_ = {(r['x'], r['eps']): r for r in (C4b or [])}
+        b_ = {(r["x"], r["eps"]): r for r in (C4b if C4b is not None else [])}
         agree, differ = 0, []
         for r in sorted(C4, key=lambda r: (r['x'], -r['eps'])):
             fl = fold_level(r['d2'], r['A2'], V)

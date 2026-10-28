@@ -321,3 +321,24 @@ def test_the_fold_constant_and_its_level_in_the_report():
     md = TN.report(V=V, V3=V3)
     row = next(l for l in md.splitlines() if l.startswith('| 6 |') and 'A′' not in l and l.count('|') == len(TN.AP_V3) + 2)
     assert f"{0.0403 / lev(1.4, 6.0):.3f}" in row
+
+
+def test_v_job_off_its_branch_and_the_rests_energy():
+    """`v_job` (round 49): at A′/A = 3.5 and 5σ the tail is unbound at the grid's top; continued from 0.99A the entrant itself leaves for
+    A′ — no rows, flagged, the V3 cell 'entrant to A′'; on a branch the rests' energy E*(w) increases with w at every step (the hold), as
+    the report states; C4's report counts the two tolerances' agreement and names the disagreement."""
+    off = TN.v_job((1, 5.0, 2.8))
+    assert off['entrant_left'] and not off['rows'] and off['fold'] is None and abs(off['top'] - 0.99 * TN.A_B) < 1e-12
+    on = TN.v_job((1, 6.0, TN.AP_V))
+    assert not on['entrant_left'] and on['top'] == TN.W_V[0] and on['fold'] is not None
+    E, w = [q['E'] for q in on['rows']], [q['w'] for q in on['rows']]
+    assert all((E[i + 1] - E[i]) / (w[i + 1] - w[i]) > 0 for i in range(len(E) - 1))
+    md = TN.report(V=[on], V3=[off])
+    assert 'entrant to A′' in md and 'increases with w at every step' in md
+    base = dict(x=4.9, eps=1e-11, d2=6.08, A2=0.7, s_dep=None, s2=3.07e6, w_dep=None, w_max=0.0232, n_fin=[2, 1, 1], rms=5e-9, d_end=0.002,
+                captured=[], w_end=0.0232)
+    other = dict(base, s_dep=3.3e5, w_dep=0.0165, w_max=0.0215, n_fin=[1, 1, 1], rms=1e-16, d_end=6.08, captured=[(5, 0, 2)], w_end=0.7)
+    md = TN.report(C4=[base], C4b=[other])
+    assert 'the same outcome at 0 of 1 points; they differ at x = 4.9, ε = 1e-11: bound at 1e-12' in md
+    md = TN.report(C4=[other], C4b=[other])
+    assert 'the same outcome at 1 of 1 points.' in md

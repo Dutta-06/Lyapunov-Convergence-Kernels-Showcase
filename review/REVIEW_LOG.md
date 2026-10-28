@@ -1934,3 +1934,46 @@ quantity it names; here the state never left, and the kernels were carried out b
 claim has to name its small parameter; when the failure worsens as ε shrinks, ε is not it, and the quantity to compare is the active
 block's rate against the error loop's. A remedy's "tied" trade-off is a claim about every remedy, and the repository's own desired
 regressor refuted it at the first try.
+
+## Round 49 (adversarial review of Proposition D‴.54 as revised after round 47, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3av: the round-47 revision of Proposition D‴.54 and its code and results at
+abd9f36 (`review/REVIEW_round49_D3av.md`). The referee:
+- freed the held runner-up's coefficient at V's rests and ran C3's near tie at fixed gaps across the masses;
+- re-derived (v)'s second-moment law and took its A′ → 0 limit;
+- scanned the fold's constant against A′/A;
+- re-ran B4's unsettled problems to 24 doublings;
+- compared Part D's loop with the offset-blind rule;
+- ran 26 single-replacement mutants and checked the citations.
+
+**Verdicts (D3av).** The second-moment mechanism is right, but the fold is not the capture threshold. With w free the held runner-up's
+coefficient decays to the fold on an ε-free inner time, so capture is a race against the unfitted feature's own entry, whose clock runs
+ε^{−1/2} faster in τ. C3's window in x is an artefact of the fixed margin: at fixed x the outcome changes with ε. The leading-order law
+missed the pull's projection off φ (2–4% in |δ|, exact in the A′ → 0 limit once projected). The fold's rest is 0.94–0.76σ from the
+feature, not 0.3–0.4σ, and c depends on A′/A. "Stranded" is an end state at a horizon. C2 printed round 42's refuted level. B4's
+788-doubling bound was invalid while the drifts grew. Part D measured the finite-ε shift, not x_θ(t). T3's count did not discriminate the
+offsets. (i) cited the wrong parts of D‴.53 and omitted (H3). 18 of 26 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3av-1 | major | The fold is not the capture threshold: the held coefficient decays (the hold), and capture is a race | (v) rewritten as a race: with w held the rest |δ|² = σ²ℓ(d)w_e/(w(w_e + w)) disappears at the fold w_f = c(d, A′/A)ℓ(d); with w free the rests' energy rises with w (V: the secant dE*/dw > 0 along every branch), so the coefficient decays on the inner time s = (τ − τ_e)/ε^{1/2} to the fold and the runner-up departs at an ε-free s_d; captured iff it arrives before the unfitted feature's own entry s₂ = (τ₂ − τ_e)ε^{−1/2}; bound, capture tie, stranded at the horizon otherwise; w_f is the threshold only in the zero-hold limit. (iv): restricted to features with no same-sign feature unfitted at their entry within the race's reach, which grows as ε → 0. New Part C4: the gap held at x = 3, 4.9, 7, 10, 17.3, 24.5, ε = 10⁻⁸ … 10⁻¹²; C4b: the same at rtol 10⁻¹³ (29 of 30 outcomes agree; x = 4.9, ε = 10⁻¹¹ at rtol 10⁻¹² sits on the saddle δ = 0 and stays, at 10⁻¹¹ and 10⁻¹³ it departs at s = 3.3·10⁵ and is captured). C3 relabelled as the window at a fixed margin; "captures from 1.1 times the fold" dropped |
+| D3av-2 | major | The leading-order law lacked the pull's projection off φ | (v) and its proof: P = A′π^{n/2}σ^{n−2}(d/σ)²e^{−d²/(4σ²)}/4 (the projected pull), |δ|² = σ²ℓ(d)w_e/(w(w_e + w)), no transverse pull; `v_law` and V's caption; test `test_v_law_is_the_static_rest_as_the_unfitted_feature_vanishes` (the A′ → 0 limit); V: the law low by 0.5–16% at w = 0.3 |
+| D3av-3 | minor | The fold's displacement misstated | (v), V: the rest at the fold 0.94σ … 0.76σ from the feature (the leading order's 0.44σ … 0.33σ), the binding softening |
+| D3av-4 | minor | c depends on A′/A | V3: c(d, A′/A) at A′/A = 0.44, 0.88, 1.75, 3.5 (4.50 → 3.76 at 5σ, 6.73 → 6.18 at 6σ, 9.12 → 9.05 at 7σ; at 3.5 and 5σ the entrant leaves for A′, off the branch); `v_job` continues from 0.99A when the tail is unbound at the grid's top and stops when the entrant leaves (V3 had crashed there) |
+| D3av-5 | minor | "Stranded on the way" | (v), C3's caption, `c3_outcome`: stranded at the horizon (one kernel per feature, the fit not exact, the tail away from both features then — it can still be recalled to its own) |
+| D3av-6 | minor | Wrong md columns | C3's caption: on the 5σ variant the coefficient read is the captured kernel's; C2: the fold c(d)ℓ(d) of the same-sign later features (0.017 at 6.08σ for the near tie) instead of round 42's unbinding level |
+| D3av-7 | minor | The 788-doubling argument | B4x: the 213 unsettled problems continued to 24 doublings — 211 settled, 2 stopped by the clock, the counts unchanged, the shares moved by at most 1.6·10⁻⁶ after the first cap, the drifts peaking at doublings 1–13; `b4u_note` cites the continuation, `remaining` an estimate |
+| D3av-8 | minor | Part D's reason | D2: the edge loop's threshold at a finite mass, shifted by ≈ 130ε^{1/2} (+0.407, +0.130, +0.013 at 10⁻⁵, 10⁻⁶, 10⁻⁸, the same at two offsets): D measures the shift, more than x_θ varies along a face; at 10⁻⁸ the loop resolves x_θ(t) |
+| D3av-9 | minor | T3: the count does not discriminate; the far corners' miss is systematic | T3: three triples with a corner between x_θ(H/√2) and x_θ(H/2) (the product at H/√2 9 of 10, at H/2 6 of 10); (iii)(d): the product exact to 0.2% for the near corners, below the far ones — the frozen tails — by 0.3–7% (20–28% at shares ≈ 10⁻³) |
+| D3av-10 | minor | (i)'s citations | (i): Theorem D‴.53 (a)–(b) the limit, (c)–(d) the inner layers and the rate; (H1)–(H4), (H3) proved only for small overlaps and checked numerically here |
+| D3av-11 | minor | Log and draft disagree on (ii)(c) | (ii)(c): the selection of the entrant; the count needs more than separation at the entries ((iv), (v)) |
+| D3av-12 | minor | Tests miss the new code | tests: `b4u_note` on a synthetic B4u with the continuation; `c3_outcome` at its residual cut; `v_law` against the A′ → 0 limit; the C3 and V report formulas on synthetic raws; `inner_k` with a clock and a zero drift; `formed_by_feature` with a kernel changing feature (round-49 commit 928e4ae) |
+| D3av-13 | minor | "Its scale D‴.51(iii)'s" asserted | dropped; the status names the mechanism D‴.51(ii)(c)'s migrating loser, observed there, and claims the hold and the race |
+| D3av-14 | cosmetic | Notation and wording | the codimension written q(k); "depends on δ only through M₂" along e; "its own feature keeps one kernel fewer" for formed runner-ups; the aliasing bound doubled for oblique neighbours; W5's caption |
+
+**Lesson.** A static fold computed with one variable held is a threshold only if that variable is slaved. Here the coefficient's own
+gradient is positive at every held rest, so the "rest" drifts to the fold on an inner time that does not depend on ε, and the outcome is a
+race whose clock runs ε^{−1/2} faster in τ. A scan along one line of the parameter plane (a fixed margin) cannot tell a threshold in x
+from such a race; holding x fixed and varying ε can, and an outcome decided near a saddle has to be checked at two tolerances. For the
+second round running, two balanced terms had been expanded under different constraints. The cheapest test was the limit in which the
+leading order must be exact (A′ → 0).
