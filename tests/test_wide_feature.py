@@ -153,3 +153,24 @@ def test_the_frame_continues_to_narrower_features():
             assert abs(e / np.sqrt(W.mehler_series(K, t)[0]) - 1) < 1e-10
     eta, b = W.narrow_rule(4, SIG, 0.5 * SIG)
     assert np.allclose(eta, -eta[::-1]) and np.allclose(b, b[::-1])
+
+
+def test_the_scalings_closed_forms_and_the_best_variance():
+    """Referee round 54: the Fock scaling's variance v_hs/cosh r is 2τ²σ²/(σ² + σ*²); the Mercer-zero scaling's nodes are the zeros of
+    the K-th Mercer eigenfunction of the rule's kernel exp(−(y − y′)²/(4σ²)) (⟨φ_σ(· − y), φ_σ(· − y′)⟩ ∝ it) under the mixing law
+    N(0, τ²): Fasshauer–McCourt's H_K(αβy), α² = 1/(2τ²), β = (1 + (2ε/α)²)^{1/4}, ε² = 1/(4σ²). `best_scale`'s variance is the least
+    error's: no point of a grid of spacing 10⁻⁴ in log v within 10⁻² of it is lower."""
+    from numpy.polynomial.hermite import hermgauss
+    for r_ in (0.5, 1.0, 2.0):
+        s_ = ss(r_)
+        tau2 = s_ ** 2 - SIG ** 2
+        V = W.scalings(SIG, s_)
+        assert abs(V['fock'] / (2 * tau2 * SIG ** 2 / (SIG ** 2 + s_ ** 2)) - 1) < 1e-14
+        al, eps = 1 / np.sqrt(2 * tau2), 1 / (2 * SIG)
+        beta = (1 + (2 * eps / al) ** 2) ** 0.25
+        for K in (3, 6):
+            assert np.allclose(W.scaled_rule(K, SIG, s_, V['mercer'])[0], hermgauss(K)[0] / (al * beta), rtol=1e-13, atol=1e-16)
+        for K in (2, 4):
+            vb, eb = W.best_scale(K, SIG, s_)
+            es = [W.l2_error(*W.scaled_rule(K, SIG, s_, vb * np.exp(h)), SIG, s_) for h in np.linspace(-1e-2, 1e-2, 201)]
+            assert eb <= min(es) * (1 + 1e-12)

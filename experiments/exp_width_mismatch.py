@@ -14,15 +14,18 @@ A. The rules on ℝ: for τ/σ in TAUS_A and K ≤ K_A, the half-squeeze rule's 
    ratios per kernel against (2 − λ)/λ and 1/q), and the variance of least error (`best_scale`): one parameter's share of the optimum's
    gain over the rule (referee round 48). A4: (v), the frame continued to features narrower than the kernels (σ*/σ in NARROW_A): the
    Gauss–Hermite cosine sum's error (`narrow_rule`) against the series at |t|.
-B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in three
-   numerical variants (VARIANTS_B: the polish step and the starting grid's offset; referee round 48): after each entry the relaxed
-   block's relative error against the optimal fit with as many kernels on the same samples (variable projection from the block and
-   from the half-squeeze rule, the better), whether the relaxation became stationary, the block's nodes against the optimum's, the
-   continuous half-squeeze error; the entries, the chunks redone after a stall or a failed solve, the polish's rejections.
-C. Under noise: y = f* + ξ (i.i.d. N(0, s²) on X_B), the path to K_C entries (its centres in the window ± BOX_C·σ, the thresholds on
-   max|y|, the KKT exit rule): the discrepancy rule's stop (the first relaxed block
-   with rms ≤ (1 + DELTA)s) against its prediction from (i) — the first K with e_K²‖f*‖²_rms ≤ s²((1 + δ)² − 1 + 2K/N) —, the stopped
-   fit's error against (e_K²‖f*‖²_rms + 2Ks²/N)^{1/2}; the kernels at the feature and elsewhere; the largest relative gap's K.
+B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in five
+   numerical variants (VARIANTS_B: the polish step, the starting grid's offset, the polish's budget of evaluations and its repetition
+   after the stationarity test; referee rounds 48 and 54): after each entry the relaxed block's relative error against the optimal fit
+   with as many kernels on the same samples (variable projection from the block and from the half-squeeze rule, the better), whether
+   the relaxation passed the stationarity test, the first non-optimal block's polishes (status, evaluations, accepted), the block's
+   nodes against the optimum's, the continuous half-squeeze error; the entries (the entrant's rate against the largest, its dual), the
+   chunks redone after a stall or a failed solve, the polish's rejections.
+C. Under noise: y = f* + ξ (i.i.d. N(0, s²) on X_B), the path to K_C + 1 entries (its centres in the window ± BOX_C·σ, the thresholds
+   on max|y|, the KKT exit rule): the discrepancy rule's stop (the first block with rms ≤ (1 + DELTA)s) against its prediction from (i)
+   — the first K with e_K²‖f*‖²_rms ≤ s²((1 + δ)² − 1 + 2K/N), e_K the half-squeeze rule's L² error — and the probability of each stop
+   from the rms's expectation and scatter (`stop_law`), the stopped fit's error against (e_K²‖f*‖²_rms + 2Ks²/N)^{1/2} (e_K B's optima
+   on the samples); the kernels at the feature and elsewhere; the largest relative gap's K.
 
 Usage: python experiments/exp_width_mismatch.py [--only A,B,C] [--from-raw] → results/chaos/width_mismatch.md (+ _raw.npz).
 WM_WORKERS (default 2).
@@ -47,7 +50,7 @@ N_WORKERS = int(os.environ.get('WM_WORKERS', '2'))
 SIG = 0.12
 TAUS_A, K_A, K_A2 = (0.25, 0.5, 1.0, 2.0), 10, 30
 NARROW_A = (0.5, 0.8)                                                 # A4: σ*/σ < 1
-E_FLOOR, G_FLOOR = 1e-10, 1e-13                                      # below them double precision cannot place the optimum, the grid's error
+E_FLOOR, G_FLOOR = 1e-10, 1e-13                                      # A: the optimum not computed below (its solve stops short), the grid's floor
 TAUS_B, A_B, C_B, K_B = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0), 0.8, 0.03, 12
 X_B = np.linspace(-1.6, 1.6, 321)
 LEVELS_C, N_DRAW_C, TAU_C, K_C, DELTA = (1e-4, 1e-3, 1e-2), 10, 1.0, 10, 0.1
@@ -196,17 +199,34 @@ def polish_cell(o):
 
 def entry_lines(B):
     """B's entries (`sliding_iss`'s entry_info): the entrant's rate against the largest inactive rate, its dual before the entry, and
-    whether the entrant had the largest rate — it is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (referee round 54)."""
-    es = [e for b in B for e in (b.get('entries') if b.get('entries') is not None else [])]
+    whether the entrant had the largest rate — it is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (referee round 54);
+    where the entrant starts against the block it joins (block it − 1, the entries in the order of the events): beyond its outermost
+    node (how far) or between its nodes (its dual)."""
+    es, pos = [], []
+    for b in B:
+        info = b.get('entries') if b.get('entries') is not None else []
+        for e, ev in zip(info, [ev for ev in b['events'] if ev[2] == 'enter']):
+            es.append(e)
+            if 1 <= e['it'] <= len(b['blocks']):
+                nodes = np.asarray(b['blocks'][e['it'] - 1]['c'])
+                pos.append((max(nodes.min() - ev[3], ev[3] - nodes.max()) / SIG, abs(e['u0'])))
     if not es:
         return []
     rel = np.array([abs(e['rate']) / e['rate_max'] for e in es])
     u0 = np.array([abs(e['u0']) for e in es])
     top = int(sum(abs(abs(e['rate']) - e['rate_max']) <= 1e-12 * e['rate_max'] for e in es))
-    return ['', f"The entries ({len(es)} over the variants that record them): the entrant had the largest current rate |⟨rφ_j⟩| in "
-                f"{top}; its rate over the largest a median {np.median(rel):.2f} (range {rel.min():.3f}–{rel.max():.2f}), its dual |u_j| at the "
-                f"block's start a median {np.median(u0):.3f} (least {u0.min():.3f}): the entrant is the kernel of the least time to the wall, "
-                "(1 − |u_j|)/|⟨rφ_j⟩|, its dual charged during the earlier blocks.", '']
+    out = (f"The entries ({len(es)} over the variants that record them): the entrant had the largest current rate |⟨rφ_j⟩| in "
+           f"{top}; its rate over the largest a median {np.median(rel):.2f} (range {rel.min():.3f}–{rel.max():.2f}), its dual |u_j| at the "
+           f"block's start a median {np.median(u0):.3f} (least {u0.min():.3f}): the entrant is the kernel of the least time to the wall, "
+           "(1 − |u_j|)/|⟨rφ_j⟩|, its dual charged during the earlier blocks.")
+    out_ = [d for d, u in pos if d > 0]
+    ins = [u for d, u in pos if d <= 0]
+    if pos:
+        out += (f" Of the {len(pos)} entrants joining a block, {len(out_)} start beyond its outermost node"
+                + (f" (a median {np.median(out_):.2f}σ, range {min(out_):.2f}–{max(out_):.2f}σ, beyond it)" if out_ else '')
+                + f" and {len(ins)} between its nodes" + (f" (their duals at the block's start {', '.join(f'{u:.3f}' for u in ins)})" if ins
+                                                          else '') + '.')
+    return ['', out, '']
 
 
 def c_job(args):
@@ -292,6 +312,28 @@ def predict_stop(s, rf, N):
         if (e * rf) ** 2 <= s ** 2 * ((1 + DELTA) ** 2 - 1 + 2 * K / N):
             return K, float(np.sqrt(e ** 2 + 2 * K * s ** 2 / (N * rf ** 2)))
     return -1, np.nan
+
+
+def stop_law(s, rf, N, k_max=12):
+    """(iv)'s stop as a margin (referee round 54). The rms of the K-kernel fit to y = f* + ξ has the expectation
+    m_K = s(b_K² + 1 − 2K/N)^{1/2}, b_K = e_K‖f*‖_N/s (2K parameters), and the scatter sd(rms²)/s² = (2(N − 2K)/N² + 4b_K²/N)^{1/2} (the
+    noise's chi-square and its cross term with the bias); the rms falls along the path, so the rule stops at K with probability
+    P(rms_K ≤ (1 + δ)s) − P(rms_{K−1} ≤ (1 + δ)s), in the normal approximation; e_K the half-squeeze rule's L² error, as in
+    `predict_stop`. Also the first-term formula's K(s): the root of K = log((1 − t²)^{1/4}(πK)^{1/4}‖f*‖_N/(s(2δ + δ²)^{1/2}))/log(1/t)
+    → (K(s), {K: P(stop at K)})."""
+    from scipy.stats import norm
+    ss = sigma_star(TAU_C)
+    t = W.params(SIG, ss)['t']
+    Kr = 1.0
+    for _ in range(100):
+        Kr = np.log((1 - t * t) ** 0.25 * (np.pi * Kr) ** 0.25 * rf / (s * np.sqrt(2 * DELTA + DELTA ** 2))) / np.log(1 / t)
+    cdf = [0.0]
+    for K in range(1, k_max + 1):
+        b2 = (W.l2_error(*W.half_squeeze(K, SIG, ss), SIG, ss) * rf / s) ** 2
+        m2 = b2 + 1 - 2 * K / N
+        sd2 = np.sqrt(2 * (N - 2 * K) / N ** 2 + 4 * b2 / N)
+        cdf.append(float(norm.cdf(((1 + DELTA) ** 2 - m2) / sd2)))
+    return float(Kr), {K: cdf[K] - cdf[K - 1] for K in range(1, k_max + 1)}
 
 
 def report(A=None, B=None, C=None, D=None):
@@ -430,18 +472,24 @@ def report(A=None, B=None, C=None, D=None):
         L_ += ['## C. Under noise', '',
                f"τ/σ = {TAU_C:g}, {N_DRAW_C} draws per level, the path to {K_C + 1} entries: the discrepancy rule's stop (kernels), its "
                "prediction from (i) and the predicted error there, the stopped fit's relative error (median [range]), the kernels within "
-               "4σ* of the feature at the stop, the largest relative gap's kernel count.", '',
+               "4σ* of the feature at the stop, the largest relative gap's kernel count (in how many draws it is the stop's).", '',
                '| s | stop: kernels (median [range]) | predicted | error at the stop: median [range] | predicted | kernels at the feature '
                '| largest gap at |', '|---|---|---|---|---|---|---|']
         L2 = ['', "At the stop (K kernels): the error over the oracle's s(2K/N)^{1/2} (the variance alone, the right support), over the "
               "bias–variance prediction (e_K²‖f*‖²_N + 2Ks²/N)^{1/2} — e_K the noiseless optimum's error with K kernels (B's base path "
               f"at τ/σ = {TAU_C:g}) — and over the discrepancy rule's bound s((1 + δ)² − 1 + 4K/N)^{{1/2}}; paths with a runaway kernel "
               "before the stop:", '', '| s | error / oracle: median [range] | / bias–variance | / bound: max | runaway |', '|---|---|---|---|---|']
+        L3 = ['', "The stop as a margin (`stop_law`): the first-term formula's K(s) (the root of K = log((1 − t²)^{1/4}(πK)^{1/4}‖f*‖_N/"
+              "(s(2δ + δ²)^{1/2}))/log(1/t), whose ceiling is the predicted stop), and the probability of the stop at each K — the rms's "
+              "expectation s(b_K² + 1 − 2K/N)^{1/2} and its scatter from the noise's chi-square and its cross term with the bias, "
+              "b_K = e_K‖f*‖_N/s, e_K the half-squeeze rule's error, in the normal approximation (the rms falls along the path) —; the "
+              "expected number of the draws stopping at the predicted K against the observed:", '',
+              '| s | K(s) | P(stop at K) | at the predicted K | expected | observed |', '|---|---|---|---|---|---|']
         for s in LEVELS_C:
             ds = [d for d in C if d['s'] == s]
             if not ds:
                 continue
-            ks, es, at, kg = [], [], [], []
+            ks, es, at, kg, same = [], [], [], [], 0
             for d in ds:
                 i = next((i for i, r_ in enumerate(d['rms']) if r_ <= (1 + DELTA) * s), None)
                 if i is None:
@@ -449,10 +497,14 @@ def report(A=None, B=None, C=None, D=None):
                 ks.append(d['k'][i]); es.append(d['err'][i]); at.append(d['at'][i])
                 if d['gaps']:
                     kg.append(int(np.argmax(d['gaps'])) + 1)
+                    same += kg[-1] == d['k'][i]
             Kp, ep = predict_stop(s, ds[0]['rf'], N)
             fmt = lambda v, f_: f"{np.median(v):{f_}} [{np.min(v):{f_}}, {np.max(v):{f_}}]" if len(v) else '—'
             L_.append(f"| {s:g} | {fmt(ks, 'g')} ({len(ks)}/{len(ds)} stopped) | {Kp} | {fmt(es, '.3e')} | {ep:.3e} | {fmt(at, 'g')} | "
-                      f"{fmt(kg, 'g')} |")
+                      f"{fmt(kg, 'g')}" + (f" (the stop in {same})" if kg else '') + " |")
+            Kr, P = stop_law(s, ds[0]['rf'], N)
+            L3.append(f"| {s:g} | {Kr:.2f} | " + ', '.join(f"{K}: {p:.3f}" for K, p in P.items() if p >= 5e-4) + f" | {P.get(Kp, 0.0):.3f} | "
+                      f"{len(ds) * P.get(Kp, 0.0):.1f} of {len(ds)} | {sum(k == Kp for k in ks)} |")
             rf = ds[0]['rf']
             eopt = ({o['k']: o['e_opt'] for b in B for o in b['blocks'] if b['r'] == TAU_C and b['var'] == VARIANTS_B[0][0]}
                     if B is not None else {})
@@ -461,7 +513,7 @@ def report(A=None, B=None, C=None, D=None):
             r3 = [e / (s * np.sqrt((1 + DELTA) ** 2 - 1 + 4 * k / N) / rf) for k, e in zip(ks, es)]
             L2.append(f"| {s:g} | {fmt(r1, '.2f')} | {fmt(r2, '.3f')} | {max(r3):.3f} | {sum(d.get('runaway', False) for d in ds)} |"
                       if ks else f"| {s:g} | — | — | — | — |")
-        L_ += L2
+        L_ += L2 + L3
     if D is not None:
         from scipy.special import hyp2f1
         ts = sorted({r['t'] for r in D['rows']})

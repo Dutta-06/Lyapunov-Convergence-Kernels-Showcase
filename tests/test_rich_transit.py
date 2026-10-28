@@ -345,3 +345,78 @@ def test_a_failed_chunk_leaves_its_block_unrelaxed_without_exits(monkeypatch):
                 tf = R['hist'][R['relaxed'].index(False) + 1][0]                     # the failed block's τ (the path goes on)
                 assert not any(e[2] == 'exit' and e[0] == tf for e in R['events'])
     monkeypatch.setattr(RT, 'relax_chunk', real)
+
+
+def test_relax_chunk_halves_what_radau_cannot_solve(monkeypatch):
+    """Referee round 54: `relax_chunk` against a fake solver — LSODA always failing, Radau solving ż = −z exactly on the spans and starts
+    it accepts and otherwise failing with its start as its last state. Accepted whole, the chunk is redone (how = 2); accepted only in
+    quarters, it is halved twice, each half from the state the first reached, and ends at the exact state; never accepted, it is halved
+    along its first half alone to the depth RELAX_SPLITS and fails at its start (how = 3); a first half failing partway — its first quarter
+    solved, its second never — fails the chunk at the state the first quarter reached, though the second half would be accepted from
+    there (the time between not integrated)."""
+    from types import SimpleNamespace
+    calls = []
+
+    def fake(ok):
+        def solve_ivp(fun, span, y0, method, **kw):
+            T = span[1] - span[0]
+            good = method == 'Radau' and ok(T, y0[0])
+            calls.append((method, T))
+            return SimpleNamespace(success=good, y=np.c_[y0, y0 * np.exp(-T) if good else y0])
+        return solve_ivp
+    rhs = lambda s, z: -z
+    z0, C = np.array([1.0]), 8.0
+    monkeypatch.setattr(RT, 'solve_ivp', fake(lambda T, y: True))
+    assert RT.relax_chunk(rhs, z0, C) == (np.exp(-C), 2)
+    monkeypatch.setattr(RT, 'solve_ivp', fake(lambda T, y: T <= C / 4))
+    z, how = RT.relax_chunk(rhs, z0, C)
+    assert how == 2 and abs(z[0] / np.exp(-C) - 1) < 1e-14
+    calls.clear()
+    monkeypatch.setattr(RT, 'solve_ivp', fake(lambda T, y: False))
+    z, how = RT.relax_chunk(rhs, z0, C)
+    assert how == 3 and z[0] == 1.0
+    assert [T for m, T in calls if m == 'Radau'] == [C / 2 ** d for d in range(RT.RELAX_SPLITS + 1)] and RT.RELAX_SPLITS == 6
+    za = np.exp(-C / 4)
+    at_za = lambda y: abs(y - za) < 1e-12
+    monkeypatch.setattr(RT, 'solve_ivp', fake(lambda T, y: (T <= C / 4 and not at_za(y)) or (T == C / 2 and at_za(y))))
+    z, how = RT.relax_chunk(rhs, z0, C)
+    assert how == 3 and z[0] == za
+
+
+def test_the_path_counts_its_redone_and_failed_chunks(monkeypatch):
+    """Referee round 54: the path counts the chunks `relax_chunk` redid after a stall (how = 1) as 'stiff_redone' and after a failed solve
+    (how = 2) as 'solver_redone', separately; the flags alone change nothing else on the path."""
+    real = RT.relax_chunk
+    calls = [0]
+    ref = RT.sliding_iss(L, K, FSTAR, C0, np.ones(D))
+
+    def rc(rhs, z, chunk, **kw):
+        calls[0] += 1
+        z, how = real(rhs, z, chunk, **kw)
+        return z, {1: 1, 2: 1, 3: 2}.get(calls[0], how)
+    monkeypatch.setattr(RT, 'relax_chunk', rc)
+    R = RT.sliding_iss(L, K, FSTAR, C0, np.ones(D))
+    assert calls[0] >= 3 and (R['stiff_redone'], R['solver_redone'], R['solver_failed']) == (2, 1, 0)
+    assert (ref['stiff_redone'], ref['solver_redone'], ref['solver_failed']) == (0, 0, 0)
+    assert R['events'] == ref['events'] and all(R['relaxed']) and np.array_equal(R['w'], ref['w'])
+
+
+def test_the_path_applies_the_exit_rule_to_its_relaxed_block(monkeypatch):
+    """Referee round 54: the exits the path takes from a given relaxed block. On 0.8φ(· + 0.5) − 0.6φ(· − 0.5) the kernel at −0.5 enters
+    (sign +); a fake relaxation moves it near the target's correlation's zero with a coefficient 5·10⁻⁷, below the exit tolerance. Where
+    the target's correlation there is outward (2·10⁻⁸) and the residual's inward only through the kernel's own contribution w⟨φφ⟩, the
+    plain rule lets it leave — and it would re-enter at once — while exit_kkt keeps it; where the target's correlation is inward
+    (−10⁻⁵), both let it leave."""
+    from scipy.optimize import brentq
+    f = K.phi(np.array([-0.5, 0.5])) @ np.array([0.8, -0.6])
+    nx = K.xs.size
+    g0 = lambda c: float(K.phi(np.array([c]))[:, 0] @ f) / nx
+    al = RT._alpha_of(L, np.array([5e-7]), RT.coef_crit)[0]
+    for target, kept in ((2e-8, True), (-1e-5, False)):
+        cx = brentq(lambda c: g0(c) - target, -0.5, 0.5, xtol=1e-14)
+        monkeypatch.setattr(RT, 'relax_chunk', lambda rhs, z, chunk, **kw: (np.array([al, cx]), 0))
+        for kkt in (False, True):
+            R = RT.sliding_iss(L, K, f, C0, np.ones(D), exit_kkt=kkt, max_events=1, w_scale=1.0)
+            assert R['events'][0][1:3] == (5, 'enter') and R['relaxed'] == [True]
+            ex = [e for e in R['events'] if e[2] == 'exit']
+            assert ex == ([] if kkt and kept else [(R['events'][0][0], 5, 'exit', cx)])
