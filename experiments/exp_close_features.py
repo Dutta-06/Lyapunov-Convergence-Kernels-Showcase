@@ -107,13 +107,13 @@ def hessian_prediction(K, A1, A2, D):
     return D ** 6 * perp_norm2(vs, 3) / 8, 4 * D ** 2 * perp_norm2(vs, 2) * A1 ** 2 * A2 ** 2 / (A1 ** 2 + A2 ** 2)
 
 
-def predicted_delay(K, f, c0, A1, A2, D, order=2):
+def predicted_delay(K, f, c0, A1, A2, D, order=2, cbar=None):
     """The leading-order second entry: the duals at the first entry u_j = ⟨fφ_j⟩/|⟨fφ_{j₁}⟩| moving at v_j = ½V⟨ψφ_j⟩ (ψ at the centroid)
     to the wall ±1 they meet first; returns (Δτ₂, j₂, the wall's sign). order = 3 (referee round 55): the residual
     P⊥(½V∂²_cφ + ⅙T₃∂³_cφ), P⊥ off the first fit's tangent span(φ, ∂_cφ) at the centroid, T₃ = A₁A₂(A₁ − A₂)Δ³/A² — the O(ϑ) term."""
     nx = K.xs.size
     A = A1 + A2
-    cb = (A1 * pair_centres(A1, A2, D)[0] + A2 * pair_centres(A1, A2, D)[1]) / A
+    cb = (A1 * pair_centres(A1, A2, D, cbar)[0] + A2 * pair_centres(A1, A2, D, cbar)[1]) / A
     V = A1 * A2 * D ** 2 / A
     ph, p2 = K.phi(np.array([cb]))[:, 0], d2phi(K, cb)[:, 0]
     if order == 3:
@@ -620,8 +620,10 @@ def report(A=None, B=None, C=None, E_=None):
                "the fit; the share of the H0 second entrants next to the first; the false-alarm rate of the threshold set at "
                f"c̄ = {CBAR:g} and of the test calibrated per draw by the law bootstrapped at its own first fit ({M_E} samples); the power of "
                "the oracle-calibrated test (the offset's own H0 quantile), of the calibrated test, and the Neyman–Pearson bound:", '',
-               '| Δ, s | c̄ | H0 quantile × s: draws, law | std ratio next to the fit | H0 second entrants adjacent | false alarms: '
-               f'c̄ = {CBAR:g} threshold, calibrated | power: oracle, calibrated, Neyman–Pearson |', '|---|---|---|---|---|---|---|']
+               '| Δ, s | c̄ | noiseless Δτ₂Δ² (leading order; kernel) | H0 quantile × s: draws, law | std ratio next to the fit | H0 second '
+               f'entrants adjacent | false alarms: c̄ = {CBAR:g} threshold, calibrated | power: oracle, calibrated, Neyman–Pearson |',
+               '|---|---|---|---|---|---|---|---|']
+        Le, Ke, c0e = setup()
         for D, s_ in CELLS_E:
             es = sorted([e for e in E_ if e['D'] == D and e['s'] == s_], key=lambda e: e['cbar'])
             ref = next((e for e in es if abs(e['cbar'] - CBAR) < 1e-12), None)
@@ -633,7 +635,9 @@ def report(A=None, B=None, C=None, E_=None):
                 cg = np.linspace(-1, 1, len(e['ratio']))
                 nb = np.argsort(np.abs(cg - e['c1']))[:2]
                 adj = np.mean([abs(q['j'][1] - q['j'][0]) <= 1 for q in e['rows0'] if len(q['j']) > 1])
-                L_.append(f"| {D:g}, {s_:g} | {e['cbar']:g} | {q0 * s_:.3f}, {e['q_law'] * s_:.3f} | "
+                pd = predicted_delay(Ke, X.bumps_target(Ke, pair_centres(*PAIR_C, D, e['cbar']), PAIR_C), c0e, *PAIR_C, D,
+                                     cbar=e['cbar'])
+                L_.append(f"| {D:g}, {s_:g} | {e['cbar']:g} | {pd[0] * D ** 2:.3f} ({pd[1]}) | {q0 * s_:.3f}, {e['q_law'] * s_:.3f} | "
                           + ', '.join(f"{e['ratio'][k]:.3f}" for k in sorted(nb)) + f" | {adj:.2f} | {np.mean(d0 < qref):.3f}, "
                           f"{np.mean(p0 < ALPHA_C):.3f} | {np.mean(d1 < q0):.3f}, {np.mean(p1 < ALPHA_C):.3f}, {e['np']:.3f} |")
         L_.append('')
