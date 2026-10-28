@@ -1,11 +1,14 @@
 """
-Theorem D‴.55: the transit's certificate — exact recovery of separated features by their nearest starting kernels iff
-η(c_j) = Σ_k sign(A_k)⟨φ(c*_k)φ(c_j)⟩/⟨φ(c*_k)φ(c_{e_k})⟩ stays below one in modulus on the other starting points
+Theorem D‴.55: the transit's certificate — exact recovery of separated features by their starting kernels of largest correlation
+(the nearest in the continuum), the path's skeleton and the fitted skeleton as predictors of the outcome at a finite separation
 ====================================================================================================================================
 
-The sliding inverse scale space (`rich_transit.sliding_iss`, `rich_transit_nd.sliding_iss_nd`: the limit of the free law with moving
-centres from small masses) on random targets of K separated Gaussian features, against the certificate on the starting set (the
-samples' inner product; e_k the starting point nearest to the k-th feature):
+The sliding inverse scale space (`rich_transit_nd.sliding_iss_nd`, in one dimension on a 1-D `BumpsND` — the same equations as
+`rich_transit.sliding_iss` with the exact Jacobian, which keeps a block of a large kernel and a seed from stalling the integrator
+(referee round 46): the limit of the free law with moving centres from small masses) on random targets of K separated Gaussian
+features, against the certificate on the starting set (the samples' inner product; e_k the starting point of largest correlation with
+the k-th feature, the nearest in the continuum) and the path's skeletons; the unpolished flow (polish off) as the audit of the
+least-squares polish on A and D(b):
 
 A. One dimension (D‴.48's dictionary: 21 kernels of width 0.12 on a grid of spacing 0.1, 61 samples of [−1, 1]): three features at
    least DMIN_A apart, amplitudes ±U(0.4, 1): the certificate's margin m = 1 − max_{j∉E}|η(c_j)| against the path's outcome — exact with
@@ -17,10 +20,12 @@ C. The plane (D‴.54's lattice: 17 × 17 kernels of width 0.15, spacing 0.125, 
 D. Designed families (referee round 43): pairs on starting points with amplitude ratios, pairs at s·σ over a grid cell, every order of
    the amplitudes.
 E. The two-feature map: the first feature on a starting point, the second at the distance D with the amplitude ±10^ℓ, over a grid of
-   (D, ℓ): the fitted skeleton's outcome everywhere (no flow), the threshold separation D*(ℓ), the other margins against it, and the path
-   at sampled points against it.
+   (D, ℓ): the fitted skeleton's outcome everywhere (no flow), the threshold separation D*(ℓ), the other margins against it, the linear
+   skeleton's error against the fitted one's in the ratio (its order), and the path at sampled points against it.
+F. A wide range: three features at 5σ and 3σ, the amplitudes 1, 10⁻³, 10⁻⁶ in all six orders, same and alternating signs (exits only
+   below 10⁻¹² of the largest coefficient).
 
-Usage: python experiments/exp_transit_certificate.py [--only A,B,C,D,E] [--from-raw] → results/chaos/transit_certificate.md (+ _raw.npz).
+Usage: python experiments/exp_transit_certificate.py [--only A,B,C,D,E,F] [--from-raw] → results/chaos/transit_certificate.md (+ _raw.npz).
 """
 import os
 import sys
@@ -53,18 +58,27 @@ N_ORD_D, RANGE_D = 30, 10.0                                            # D(c): A
 D_E, L_E = np.round(np.arange(0.12, 0.6001, 0.01), 10), np.round(np.arange(-3.0, 3.0001, 0.125), 10)  # E: the map (D, log₁₀ ratio)
 SEED_E, N_EV, LMAX_EV, T_EV = 555, 120, 2.5, 300                      # E: paths per sign checking the map (|log₁₀ ratio| ≤ LMAX_EV)
 M0_E = 0.05                                                            # E: the second feature's own near ties (m₀ ≤ M0_E) set apart
+F_SEPS, F_MAGS, F_OFF = (0.6, 0.36), (1.0, 1e-3, 1e-6), 0.013          # F: 5σ and 3σ, the range 10⁶, the features off the grid
+
+
+def entrants(K, c0, cs):
+    """E: for each feature the starting point of largest correlation with it on the samples (the nearest in the continuum; on samples
+    they differ near the window's edge — referee round 46), and the correlations ⟨φ(c_j)φ(c*_k)⟩."""
+    c0 = np.asarray(c0, float).reshape(len(c0), -1)
+    cs = np.asarray(cs, float).reshape(len(cs), -1)
+    P0 = K.phi(c0 if c0.shape[1] > 1 else c0[:, 0])
+    Pf = K.phi(cs if cs.shape[1] > 1 else cs[:, 0])
+    gram = P0.T @ Pf / P0.shape[0]
+    return [int(np.argmax(gram[:, k])) for k in range(len(cs))], gram
 
 
 def certificate(K, c0, cs, As):
-    """η at every starting point (the samples' inner product), the nearest points E, the margin m off E, and the cross-talk q (continuum,
+    """η at every starting point (the samples' inner product), E (`entrants`), the margin m off E, and the cross-talk q (continuum,
     q = max_k Σ_{l≠k} G((Δ_kl − 2R)₊)/G(R), G(d) = e^{−d²/(4σ²)})."""
     c0 = np.asarray(c0, float).reshape(len(c0), -1)
     cs = np.asarray(cs, float).reshape(len(cs), -1)
     d0 = np.linalg.norm(c0[:, None, :] - cs[None, :, :], axis=2)
-    e = [int(np.argmin(d0[:, k])) for k in range(len(cs))]
-    P0 = K.phi(c0 if c0.shape[1] > 1 else c0[:, 0])
-    Pf = K.phi(cs if cs.shape[1] > 1 else cs[:, 0])
-    gram = P0.T @ Pf / P0.shape[0]
+    e, gram = entrants(K, c0, cs)
     own = np.array([gram[e[k], k] for k in range(len(cs))])
     eta = (np.sign(As)[None, :] * gram / own[None, :]).sum(1)
     off = np.array([j for j in range(len(c0)) if j not in e])
@@ -81,14 +95,16 @@ def certificate(K, c0, cs, As):
                 unique=len(set(e)) == len(e), m_rel=m_rel, m_vor=m_vor)
 
 
-def skeleton(K, c0, cs, As, fit=False):
+def skeleton(K, c0, cs, As, fit=False, atoms=False):
     """The sliding path's skeleton (referee round 43's screening): each block replaced by its exact fit — the fitted features' kernels at
     their centres, the residual between entries the target's projection off their tangent space span{φ(c*_m), ∇_cφ(c*_m)} — the duals
     piecewise linear in τ at ⟨rφ(c_j)⟩ from the starting points. It runs the entries in order (each the first dual to reach ±1) until all K
     features are fitted or a kernel off E enters. Returns the entrants, whether they are E (ok), and the margin: 1 − max |u_j| over the
     entries and the kernels off E, or, if a kernel off E enters, minus the rightful entrants' least distance from their walls then.
     fit: the fitted skeleton — each block at its own sign-constrained least-squares fit started at its features (`polish_block`: the
-    block's stationary point near them, the projection's nonlinear completion) — the skeleton without its linearisation."""
+    block's stationary point near them, the projection's nonlinear completion) — the skeleton without its linearisation. atoms: the
+    baseline without the tangent directions — the fitted features' atoms A_mφ(c*_m) subtracted (referee round 46). 'phase': the number
+    of features fitted when the outcome is decided (the intruder's entry, or the phase of the least margin)."""
     c0 = np.asarray(c0, float).reshape(len(c0), -1)
     cs = np.asarray(cs, float).reshape(len(cs), -1)
     sq = lambda c: c if c.shape[1] > 1 else c[:, 0]
@@ -96,11 +112,13 @@ def skeleton(K, c0, cs, As, fit=False):
     Pf = K.phi(sq(cs))
     f = Pf @ np.asarray(As, float)
     P0 = K.phi(sq(c0))
-    e = [int(np.argmin(np.linalg.norm(c0 - cs[k], axis=1))) for k in range(len(cs))]
+    e = entrants(K, c0, cs)[0]
     off = [j for j in range(len(c0)) if j not in e]
-    u, act, fitted, ent, worst = np.zeros(len(c0)), np.zeros(len(c0), bool), [], [], 0.0
+    u, act, fitted, ent, worst, wphase = np.zeros(len(c0)), np.zeros(len(c0), bool), [], [], 0.0, 0
     while len(fitted) < len(cs):
-        if fitted and fit:
+        if fitted and atoms:
+            r = f - Pf[:, fitted] @ np.asarray(As, float)[fitted]
+        elif fitted and fit:
             a_, s_ = np.asarray(As, float)[fitted], np.sign(np.asarray(As, float)[fitted])
             if cs.shape[1] > 1:
                 w_, c_ = RN.polish_block_nd(K, f, a_, cs[fitted], s_)
@@ -128,10 +146,12 @@ def skeleton(K, c0, cs, As, fit=False):
         if j not in e or e.index(j) in fitted:
             # an intruder: the margin is minus the rightful entrants' distance from their walls at its entry (a near tie when small)
             gap = min(1 - abs(u[e[m]]) for m in range(len(cs)) if m not in fitted)
-            return dict(entrants=ent, ok=False, margin=float(-gap))
-        worst = max(worst, float(np.abs(u[[i for i in off if not act[i]]]).max()) if any(not act[i] for i in off) else 0.0)
+            return dict(entrants=ent, ok=False, margin=float(-gap), phase=len(fitted))
+        cur = float(np.abs(u[[i for i in off if not act[i]]]).max()) if any(not act[i] for i in off) else 0.0
+        if cur > worst:
+            worst, wphase = cur, len(fitted)
         fitted.append(e.index(j))
-    return dict(entrants=ent, ok=True, margin=float(1 - worst))
+    return dict(entrants=ent, ok=True, margin=float(1 - worst), phase=wphase)
 
 
 def outcome(R, e, K):
@@ -154,17 +174,33 @@ def targets(rng, n, dmin, lo=-0.7, hi=0.7, dim=1):
     return out
 
 
+def path_1d(L, K, f, c0, polish=True, exit_tol=1e-6):
+    """The sliding path in one dimension by `sliding_iss_nd` on the 1-D samples (the exact Jacobian)."""
+    return RN.sliding_iss_nd(L, RN.BumpsND(K.xs[:, None], K.sig), f, np.asarray(c0, float)[:, None], np.ones(len(c0)), polish=polish,
+                             exit_tol=exit_tol)
+
+
 def job_1d(args):
-    cs, As = args
+    """One target: the certificate and the path (polished); with flow=True also the unpolished flow's outcome (the polish's audit)."""
+    cs, As = args[:2]
+    flow = len(args) > 2 and args[2]
+    exit_tol = args[3] if len(args) > 3 else 1e-6
     warnings.filterwarnings('ignore')
     L, K, c0 = TM.setup()
     cert = certificate(K, c0, cs, As)
     if not cert['unique']:
         return dict(cs=cs, As=As, skip=True)
-    R = RT.sliding_iss(L, K, X.bumps_target(K, cs, As), c0, np.ones(c0.size), polish=True)
-    return dict(cs=cs, As=As, skip=False, m=cert['m'], q=cert['q'], argm=cert['argm'], e=cert['e'], out=outcome(R, cert['e'], len(cs)),
-                order=[int(j) for t, j, k, c in R['events']], rms=R['hist'][-1][3], m_rel=cert['m_rel'], m_vor=cert['m_vor'],
-                rej=int(R['polish_rejected']))
+    f = X.bumps_target(K, cs, As)
+    R = path_1d(L, K, f, c0, exit_tol=exit_tol)
+    out = dict(cs=cs, As=As, skip=False, m=cert['m'], q=cert['q'], argm=cert['argm'], e=cert['e'], out=outcome(R, cert['e'], len(cs)),
+               order=[int(j) for t, j, k, c in R['events']], rms=R['hist'][-1][3], m_rel=cert['m_rel'], m_vor=cert['m_vor'],
+               rej=int(R['polish_rejected']))
+    if flow:
+        t0 = time.time()
+        Rf = path_1d(L, K, f, c0, polish=False, exit_tol=exit_tol)
+        out.update(out_flow=outcome(Rf, cert['e'], len(cs)), order_flow=[int(j) for t, j, k, c in Rf['events']],
+                   flow_relaxed=bool(all(Rf['relaxed'])), flow_secs=time.time() - t0)
+    return out
 
 
 def job_d(args):
@@ -172,6 +208,8 @@ def job_d(args):
     import signal
     tag, cs, As = args[:3]
     tmax = int(args[3]) if len(args) > 3 else T_MAX
+    flow = len(args) > 4 and args[4]
+    exit_tol = args[5] if len(args) > 5 else 1e-6
 
     def alarm(signum, frame):
         raise TimeoutError
@@ -179,7 +217,7 @@ def job_d(args):
     signal.alarm(tmax)
     t0 = time.time()
     try:
-        r = job_1d((cs, As))
+        r = job_1d((cs, As, flow, exit_tol))
     except TimeoutError:
         L, K, c0 = TM.setup()
         cert = certificate(K, c0, cs, As)
@@ -207,7 +245,7 @@ def part_D(A):
         for sg in (1.0, -1.0):
             for i in range(N_OFF_D):
                 mid = rng.uniform(-0.05, 0.05)
-                jobs.append((('b', s_, sg, i), np.array([mid - s_ * 0.06, mid + s_ * 0.06]), np.array([1.0, sg])))
+                jobs.append((('b', s_, sg, i), np.array([mid - s_ * 0.06, mid + s_ * 0.06]), np.array([1.0, sg]), T_MAX, True))
     out_ = [r for r in A if not r['skip'] and abs(r['m']) > 0.8 * r['q']]
     pick = sorted(rng.choice(len(out_), size=min(N_ORD_D, len(out_)), replace=False))
     mags = RANGE_D ** -np.array([0.0, 0.5, 1.0])
@@ -231,7 +269,7 @@ def e_point(args):
         return dict(D=D, l=l, sg=sg, skip=True)
     sk, fs = skeleton(K, c0, cs, As), skeleton(K, c0, cs, As, fit=True)
     return dict(D=D, l=l, sg=sg, skip=False, m=cert['m'], q=cert['q'], m_rel=cert['m_rel'], m_vor=cert['m_vor'], m_skel=sk['margin'],
-                m_fit=fs['margin'], fit_ok=bool(fs['ok']))
+                m_fit=fs['margin'], fit_ok=bool(fs['ok']), m_atoms=skeleton(K, c0, cs, As, atoms=True)['margin'], phase=fs['phase'])
 
 
 def part_E():
@@ -260,7 +298,7 @@ def job_2d(args):
         return dict(cs=cs, As=As, skip=True)
     R = RN.sliding_iss_nd(L, K, K.synth(cs, As), c0, np.ones(len(c0)))
     return dict(cs=cs, As=As, skip=False, m=cert['m'], q=cert['q'], argm=cert['argm'], e=cert['e'], out=outcome(R, cert['e'], len(cs)),
-                order=[int(j) for t, j, k, c in R['events']], rms=R['hist'][-1][3])
+                order=[int(j) for t, j, k, c in R['events']], rms=R['hist'][-1][3], rej=int(R['polish_rejected']))
 
 
 def part_A():
@@ -269,10 +307,25 @@ def part_A():
     jobs, tags = [], []
     for dmin in DMIN_A:
         for cs, s, a, u in targets(rng, N_A, dmin):
-            jobs.append((cs, s * a)); tags.append(dmin)
+            jobs.append((cs, s * a, True)); tags.append(dmin)
     with Pool(N_WORKERS) as pool:
         rs = pool.map(job_1d, jobs, chunksize=4)
     return [dict(dmin=t, **r) for t, r in zip(tags, rs)]
+
+
+def part_F():
+    """Three features at 5σ and 3σ (off the grid by F_OFF), the amplitudes F_MAGS in all six orders, signs + + + and + − +; exits only
+    below 10⁻¹² of the largest coefficient."""
+    from itertools import permutations
+    from multiprocessing import Pool
+    jobs = []
+    for s_ in F_SEPS:
+        for sg in ((1.0, 1.0, 1.0), (1.0, -1.0, 1.0)):
+            for perm in permutations(range(3)):
+                jobs.append((('f', s_, sg, perm), np.array([-s_, 0.0, s_]) + F_OFF, np.array(sg) * np.array(F_MAGS)[list(perm)], T_MAX,
+                             False, 1e-12))
+    with Pool(N_WORKERS) as pool:
+        return pool.map(job_d, jobs, chunksize=1)
 
 
 def part_B():
@@ -308,34 +361,48 @@ def confusion(rows):
 
 
 def fill_margins(rows, dim=1):
-    """The relative and single-feature margins for rows recorded before they were (computed from the targets)."""
-    if all('m_rel' in r and 'm_skel' in r and 'm_fit' in r for r in rows if not r['skip']):
-        return rows
+    """The skeletons' margins recomputed from the targets at report time (a stored margin would hide a change of `skeleton`: referee
+    round 46) — the linear skeleton, the fitted one (and the phase at which it decides) and the atoms-only baseline —, and the relative and
+    single-feature margins where a row lacks them."""
     if dim == 1:
         L, K, c0 = TM.setup()
     else:
         K, c0 = TN.full()
     for r in rows:
-        if not r['skip'] and 'm_rel' not in r:
-            c = certificate(K, c0, np.asarray(r['cs']), np.asarray(r['As']))
+        if r['skip']:
+            continue
+        cs, As = np.asarray(r['cs']), np.asarray(r['As'])
+        if 'm_rel' not in r:
+            c = certificate(K, c0, cs, As)
             r['m_rel'], r['m_vor'] = c['m_rel'], c['m_vor']
-        if not r['skip'] and 'm_skel' not in r:
-            r['m_skel'] = skeleton(K, c0, np.asarray(r['cs']), np.asarray(r['As']))['margin']
-        if not r['skip'] and 'm_fit' not in r:
-            r['m_fit'] = skeleton(K, c0, np.asarray(r['cs']), np.asarray(r['As']), fit=True)['margin']
+        r['m_skel'] = skeleton(K, c0, cs, As)['margin']
+        fs = skeleton(K, c0, cs, As, fit=True)
+        r['m_fit'], r['phase'] = fs['margin'], fs['phase']
+        r['m_atoms'] = skeleton(K, c0, cs, As, atoms=True)['margin']
     return rows
 
 
 PREDICTORS = (('m', 'the certificate, 1 − max off E'), ('m_rel', 'the relative margin'), ('m_vor', 'the single feature (no signs or sums)'),
-              ('m_skel', "the path's skeleton"), ('m_fit', 'the fitted skeleton'))
+              ('m_atoms', 'the atoms subtracted (no tangent directions)'), ('m_skel', "the path's skeleton"), ('m_fit', 'the fitted skeleton'))
 
 
 def predictors(rows):
-    """How often each predictor's sign (and 'always the nearest kernels') matches exactness with E."""
+    """How often each predictor's sign (and the baselines 'always E' and 'E iff the path's first entrant is in E') matches exactness with
+    E; where computed, how often the unpolished flow's outcome is the polished path's."""
     rs = [r for r in rows if not r['skip'] and r['out'] != 'timeout']
     ok = [r['out'] == 'nearest' for r in rs]
-    parts = [f"{lab} {sum((r[k] > 0) == o for r, o in zip(rs, ok))}" for k, lab in PREDICTORS]
-    return (f"of {len(rs)}: " + ', '.join(parts) + f", always the nearest kernels {sum(ok)}")
+    parts = [f"{lab} {sum((r[k] > 0) == o for r, o in zip(rs, ok))}" for k, lab in PREDICTORS if all(k in r for r in rs)]
+    first = [bool(r['order']) and r['order'][0] in r['e'] for r in rs]
+    txt = (f"of {len(rs)}: " + ', '.join(parts) + f", always E {sum(ok)}, E iff the first entrant is in E {sum(f == o for f, o in zip(first, ok))} "
+           f"(the first entrant off E — the outcome decided at the first entry — on {sum(not f for f in first)}")
+    if all('phase' in r for r in rs):
+        txt += f"; the fitted skeleton decided at its first phase on {sum(r['phase'] == 0 for r in rs)}"
+    txt += ")"
+    fl = [r for r in rs if 'out_flow' in r]
+    if fl:
+        txt += (f"; the unpolished flow's outcome the polished path's on {sum(r['out_flow'] == r['out'] for r in fl)} of {len(fl)} (its "
+                f"blocks relaxed on {sum(r['flow_relaxed'] for r in fl)})")
+    return txt
 
 
 def band(rs):
@@ -348,13 +415,18 @@ def band(rs):
             f"{K_F} kernels on {sum(r['out'] != 'not' for r in rs)} of {len(rs)} targets.")
 
 
-def report(A=None, B=None, C=None, D=None, E_=None):
+def report(A=None, B=None, C=None, D=None, E_=None, F=None):
     L_ = ["# Theorem D‴.55: the transit's certificate (`exp_transit_certificate.py`)", "",
           "The sliding inverse scale space (the free law's limit from small masses, moving centres) on random targets of three Gaussian "
           "features of the kernels' width; the certificate η(c_j) = Σ_k sign(A_k)⟨φ(c*_k)φ(c_j)⟩/⟨φ(c*_k)φ(c_{e_k})⟩ on the starting points "
-          "(the samples' inner product, e_k the nearest starting point to feature k, E their set), its margin m = 1 − max_{j∉E}|η(c_j)| and "
+          "(the samples' inner product, e_k the starting point of largest correlation with feature k — the nearest in the continuum —, E "
+          "their set), its margin m = 1 − max_{j∉E}|η(c_j)| and "
           "the cross-talk q = max_k Σ_{l≠k}G((Δ_kl − 2R)₊)/G(R). The path's outcome: exact with E (its active set E, the residual below "
-          f"{RMS_TOL:g}, no exits), exact with other kernels (three kernels, the residual below {RMS_TOL:g}), or not exact.", ""]
+          f"{RMS_TOL:g}, no exits), exact with other kernels (three kernels, the residual below {RMS_TOL:g}), or not exact. The paths by "
+          "`sliding_iss_nd` (in one dimension on the 1-D samples, with the exact Jacobian), the block polished by its least-squares fit "
+          "unless a kernel below 10⁻² of the block's largest coefficient would land beyond one kernel width of both its start and its "
+          "correlation's ascent's end (a rejected polish; the bound does not check single-kernel blocks or the block's largest kernel); the "
+          "skeletons recomputed from the targets.", ""]
 
     def table(rows, key, label):
         out = [f"| {label} | targets | m > 0: exact with E, with others, not | m ≤ 0: exact with E, with others, not | the median q | "
@@ -448,8 +520,11 @@ def report(A=None, B=None, C=None, D=None, E_=None):
                                  + ''.join(code[r['out']] for r in sorted([r for r in dc if r['tag'][1] == t], key=lambda r: r['tag'][2]))
                                  for t in vary) if vary else '') + ".", "",
                "Over D, exactness with E predicted by the margins' signs: (a) " + predictors(da) + "; (b) " + predictors(db) + "; (c) " +
-               predictors(dc) + f". Paths over {T_MAX} s: {sum(r['out'] == 'timeout' for r in D)}; polishes rejected (a step over one "
-               f"kernel width): {sum(max(r.get('rej', 0), 0) for r in D)} on {sum(r.get('rej', 0) > 0 for r in D)} paths.", ""]
+               predictors(dc) + f". Paths over {T_MAX} s: {sum(r['out'] == 'timeout' for r in D)}; polishes rejected: "
+               f"{sum(max(r.get('rej', 0), 0) for r in D)} on {sum(r.get('rej', 0) > 0 for r in D)} paths.", ""]
+        bad_b = [r for r in db if not r['skip'] and r['out'] != 'nearest' and r['m_vor'] > M0_E]
+        L_ += [f"D(b)'s failures that are not the second feature's own near ties (m₀ > {M0_E:g}): " + (', '.join(
+            f"{r['tag'][1]:g}σ {'+ +' if r['tag'][2] > 0 else '+ −'} (m₀ = {r['m_vor']:.3f}, {r['out']})" for r in bad_b) or 'none') + ".", ""]
         dd = [r for r in D if not r['skip'] and r['out'] != 'timeout']
         sent = []
         for C_ in BANDS:                                               # the band of A and C, tested on the designed families
@@ -488,7 +563,8 @@ def report(A=None, B=None, C=None, D=None, E_=None):
         show = [-3.0, -2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0, 3.0]
         far = max(r['D'] for r in g if not r['fit_ok'] and r['m_vor'] > M0_E)  # the farthest failure that is not a near tie of its own
         tie_D = sorted(set(round(r['D'], 3) for r in g if not r['fit_ok'] and r['D'] > far))
-        L_ += ["The threshold D*(ℓ) — every D of the grid at or beyond it exact with E —, in units of σ: " + '; '.join(
+        L_ += ["The fitted skeleton's threshold D*(ℓ) on this grid (the first feature on a starting point, |ℓ| ≤ 3: not (iii)'s Δ₀) — every "
+               "D of the grid at or beyond it exact with E —, in units of σ: " + '; '.join(
             f"{'same' if sg > 0 else 'opposite'} signs " + ', '.join(f"ℓ = {l:g}: {thr[(sg, l)] / sig:.2f}" for l in show) for sg in (1.0, -1.0))
                + f"; over all ℓ at most {max(thr.values()) / sig:.2f}σ. Beyond {far / sig:.2f}σ every failure is the second feature's own near "
                f"tie (its single-feature margin m₀ ≤ {M0_E:g}, near a midpoint of the grid: D = {', '.join(f'{d:g}' for d in tie_D)}); without "
@@ -507,15 +583,54 @@ def report(A=None, B=None, C=None, D=None, E_=None):
             ends.append(f"{'same' if sg > 0 else 'opposite'} signs: constant for ℓ ≤ −2 at {same_lo} and for ℓ ≥ 2 at {same_hi} of {len(D_E)} "
                         f"separations, the two ends' outcomes different at {differ}")
         L_ += ["", "The two ends of the ratio ((v)): " + '; '.join(ends) + "."]
-        agree = {k: sum((r[k] > 0) == r['fit_ok'] for r in g) for k, _ in PREDICTORS if k != 'm_fit'}
+        agree = {k: sum((r[k] > 0) == r['fit_ok'] for r in g) for k, _ in PREDICTORS if k != 'm_fit' and all(k in r for r in g)}
         L_ += ["", f"The margins' signs against the fitted skeleton on the map's {len(g)} points: " + ', '.join(
-            f"{lab} {agree[k]}" for k, lab in PREDICTORS if k != 'm_fit') + f"; exact with E on {sum(r['fit_ok'] for r in g)}."]
+            f"{lab} {agree[k]}" for k, lab in PREDICTORS if k != 'm_fit' and all(k in r for r in g)) +
+               f"; exact with E on {sum(r['fit_ok'] for r in g)}; the linear skeleton's |m_sk| > 0.01 where its sign differs from the fitted "
+               f"skeleton's at {sum((r['m_skel'] > 0) != r['fit_ok'] and abs(r['m_skel']) > 0.01 for r in g)} points (|m_sk| up to "
+               f"{max([abs(r['m_skel']) for r in g if (r['m_skel'] > 0) != r['fit_ok']], default=0):.3f})."]
+        # (ii)'s order: the linear skeleton's margin against the fitted one's along the ratio, the tail being the smaller feature
+        slopes = []
+        for sg in (1.0, -1.0):
+            for D in D_E:
+                if not any(abs(D / sig - x) < 1e-6 for x in (2.5, 3.0, 3.5, 4.0)):
+                    continue
+                for side in (-1, 1):
+                    col = [r for r in g if r['sg'] == sg and abs(r['D'] - D) < 1e-9 and 1 - 1e-9 <= side * r['l'] <= 3 + 1e-9
+                           and r['fit_ok'] and r['m_skel'] > 0 and abs(r['m_skel'] - r['m_fit']) > 1e-13]
+                    if len(col) >= 6:
+                        x = np.array([abs(r['l']) for r in col]) * np.log(10)
+                        y = np.log([abs(r['m_skel'] - r['m_fit']) for r in col])
+                        slopes.append((D / sig, sg, side, float(-np.polyfit(x, y, 1)[0])))
+        if slopes:
+            L_ += ["", "(ii)'s order: |m_sk − m_fit| against the ratio of the smaller feature's amplitude to the larger's, its log–log "
+                   "slope over 10⁻³ … 10⁻¹ (1: first order in the tail, 2: second): " + ', '.join(
+                       f"{d:.2f}σ {'+ +' if sg > 0 else '+ −'} {'second small' if side < 0 else 'first small'} {sl:.2f}"
+                       for d, sg, side, sl in slopes) + "."]
         P = [r for r in E_['paths'] if not r['skip']]
         done = [r for r in P if r['out'] != 'timeout']
         key = lambda r: (round(r['tag'][1], 9), round(r['tag'][2], 9), r['tag'][3])
         ok = sum((r['out'] == 'nearest') == at[key(r)]['fit_ok'] for r in done if key(r) in at)
         L_ += ["", f"The path at {len(P)} sampled points (|ℓ| ≤ {LMAX_EV:g}; under {T_EV} s each): it agrees with the fitted skeleton at {ok} of "
-               f"{len(done)} ({len(P) - len(done)} over the limit); exact with E at {sum(r['out'] == 'nearest' for r in done)}.", ""]
+               f"{len(done)} ({len(P) - len(done)} over the limit); exact with E at {sum(r['out'] == 'nearest' for r in done)}; polishes "
+               f"rejected {sum(max(r.get('rej', 0), 0) for r in done)} on {sum(r.get('rej', 0) > 0 for r in done)} paths.", ""]
+    if F is not None:
+        code = {'nearest': 'E', 'other': 'O', 'not': '×', 'timeout': 't'}
+        L_ += ["## F. A wide range", "", f"Three features at −s, 0, s (+{F_OFF:g}; s = {', '.join(f'{x:g}' for x in F_SEPS)}: "
+               f"{', '.join(f'{x / 0.12:g}σ' for x in F_SEPS)}), the amplitudes {', '.join(f'{x:g}' for x in F_MAGS)} in all six orders, "
+               "the signs + + + and + − +; exits only below 10⁻¹² of the largest coefficient: the outcome per order (E exact with E, O with "
+               "others, × not, t over the limit), the polishes rejected, the skeletons' signs:", "",
+               "| s | signs | outcomes (orders 012, 021, 102, 120, 201, 210) | polishes rejected | the skeleton right | the fitted skeleton right |",
+               "|---|---|---|---|---|---|"]
+        F = fill_margins(list(F))
+        for s_ in F_SEPS:
+            for sg in ((1.0, 1.0, 1.0), (1.0, -1.0, 1.0)):
+                rs = sorted([r for r in F if r['tag'][1] == s_ and tuple(r['tag'][2]) == sg], key=lambda r: tuple(r['tag'][3]))
+                rr = [r for r in rs if not r['skip'] and r['out'] != 'timeout']
+                L_.append(f"| {s_ / 0.12:g}σ | {' '.join('+' if v > 0 else '−' for v in sg)} | " + ''.join(code[r['out']] for r in rs) +
+                          f" | {sum(max(r.get('rej', 0), 0) for r in rs)} | {sum((r['m_skel'] > 0) == (r['out'] == 'nearest') for r in rr)} of "
+                          f"{len(rr)} | {sum((r['m_fit'] > 0) == (r['out'] == 'nearest') for r in rr)} of {len(rr)} |")
+        L_.append("")
     L_.append("Numbers are produced by `experiments/exp_transit_certificate.py`; nothing is edited by hand.")
     return '\n'.join(L_) + '\n'
 
@@ -525,15 +640,15 @@ def main():
     md = os.path.join(OUT, 'transit_certificate.md')
     old = E.load(raw)
     if '--from-raw' in sys.argv:
-        open(md, 'w').write(report(*[old.get(k) for k in 'ABCDE']))
+        open(md, 'w').write(report(*[old.get(k) for k in 'ABCDEF']))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDE')
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set('ABCDEF')
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', lambda: part_D(res['A'])), ('E', part_E)):
+    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', lambda: part_D(res['A'])), ('E', part_E), ('F', part_F)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
-            open(md, 'w').write(report(*[res.get(k) for k in 'ABCDE']))
+            open(md, 'w').write(report(*[res.get(k) for k in 'ABCDEF']))
 
 
 if __name__ == '__main__':

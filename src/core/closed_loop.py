@@ -52,13 +52,17 @@ def tones(rms, w_lo, w_hi, k=16, seed=0):
 
 
 def simulate(L, b0, c0, sig, bumps, ke, ref, tout, x_init=None, metric='paradigm', regx=False, noise=None, lam=0.0, th=None,
-             per=None, rtol=1e-9, atol=1e-12, hmax=0.0, max_steps=10 ** 9):
+             per=None, rtol=1e-9, atol=1e-12, hmax=0.0, max_steps=10 ** 9, gate=None):
     """Integrate the closed loop. L: the free law (m, G, γ, a_max); b0: the masses; c0: the kernels' starting centres; sig: their width;
     bumps = (centres, amplitudes, widths) of f; ref = (x₀, a, ω) or (x₀, a, ω, a₂, ω₂); tout: increasing output times (tout[0] the
     start); x_init: x(0) (default x_m(0)); regx: evaluate the adaptation's regressor at x_m instead of x̃; noise: `tones(...)` or None;
     lam: the leak; th: the formation threshold on |w| (entry times recorded; default no entries); per: the window for max|e| at the start
-    and the end (default the reference's period). Returns dict(t, x, al, c, w, entries (time of the first |w_i| > th, NaN if never),
-    e_first, e_last, steps)."""
+    and the end (default the reference's period); gate: Proposition D‴.57's dead zone, dict(mode='energy' or 'formation', Tf, lo, hi,
+    theta, z0) — the error's energy filtered over Tf, the drive gated smoothly between the thresholds lo and hi on its rms, every kernel
+    ('energy') or those with |w| below about theta ('formation'), z0 the filter's start (default (2·hi)²: open). Returns dict(t, x, al, c,
+    w, entries (time of the first |w_i| > th, NaN if never), e_first, e_last (max|x̃ − x_m| over the first and the last window per),
+    e_true_last, e_true_rms_last (the true error x − x_m's max and rms over the last window), x_range (the state's least and largest value
+    at the accepted steps), steps[, z the filtered energy])."""
     lib = _lib()
     b0, c0 = np.broadcast_to(np.asarray(b0, float), np.shape(c0)).copy(), np.asarray(c0, float)
     d = c0.size
@@ -70,20 +74,27 @@ def simulate(L, b0, c0, sig, bumps, ke, ref, tout, x_init=None, metric='paradigm
     if per is None:
         per = 2 * np.pi / om
     nz = noise or dict(w=np.zeros(0), ph=np.zeros(0), amp=np.zeros(0))
-    n = 1 + 2 * d
+    gm = {None: 0, 'energy': 1, 'formation': 2}[None if gate is None else gate['mode']]
+    n = 1 + 2 * d + (gm > 0)
     y0 = np.r_[x0 if x_init is None else float(x_init), np.zeros(d), c0]          # x_m(0) = x₀
-    ip = np.array([d, bc.size, METRICS[metric], int(bool(regx)), len(nz['w']), tout.size], dtype=np.int32)
+    if gm:
+        y0 = np.r_[y0, gate.get('z0', (2 * gate['hi']) ** 2)]
+    ip = np.array([d, bc.size, METRICS[metric], int(bool(regx)), len(nz['w']), tout.size, gm], dtype=np.int32)
     dp = np.array([L.m, L.G, L.c, L.A, sig, ke, lam, x0, a, om, a2, om2, rtol, atol, hmax, np.inf if th is None else th, per,
-                   float(max_steps)])
+                   float(max_steps)] + ([gate['Tf'], gate['lo'] ** 2, gate['hi'] ** 2, gate.get('theta', 0.0)] if gm else [1.0, 0.0, 1.0, 0.0]))
     yout = np.zeros((tout.size, n))
     ent = np.zeros(d)
-    emax = np.zeros(2)
+    emax = np.zeros(6)
     work = np.zeros(10 * n)
     keep = [_arr(v) for v in (bc, ba, bs, b0, nz['w'], nz['ph'], nz['amp'], y0, tout)]
     steps = lib.simulate(ip.ctypes.data_as(_I), dp.ctypes.data_as(_P), *[k[1] for k in keep],
                          yout.ctypes.data_as(_P), ent.ctypes.data_as(_P), emax.ctypes.data_as(_P), work.ctypes.data_as(_P))
     if steps < 0:
         raise RuntimeError('closed_loop.simulate: ' + ('max_steps exceeded' if steps == -1 else 'step size underflow'))
-    al, c = yout[:, 1:1 + d], yout[:, 1 + d:]
+    al, c = yout[:, 1:1 + d], yout[:, 1 + d:1 + 2 * d]
     w = (b0 + 2 * L.c * np.sinh(al / L.A) ** 2) * L.A * np.tanh(al / L.A) / L.m
-    return dict(t=tout, x=yout[:, 0], al=al, c=c, w=w, entries=ent, e_first=float(emax[0]), e_last=float(emax[1]), steps=int(steps))
+    out = dict(t=tout, x=yout[:, 0], al=al, c=c, w=w, entries=ent, e_first=float(emax[0]), e_last=float(emax[1]), steps=int(steps),
+               e_true_last=float(emax[2]), e_true_rms_last=float(np.sqrt(emax[3] / per)), x_range=(float(emax[4]), float(emax[5])))
+    if gm:
+        out['z'] = yout[:, 1 + 2 * d]
+    return out

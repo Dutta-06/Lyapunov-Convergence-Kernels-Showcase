@@ -129,3 +129,56 @@ def test_band_counts_the_targets_outside_it():
             dict(m=0.2, q=0.1, out='other')]
     txt = TC.band(rows)
     assert 'C = 0.5: 2 of 3' in txt and 'C = 1: 2 of 3' in txt
+
+
+
+
+def test_fitted_skeleton_fits_negative_features():
+    """D(a)'s opposite-sign pair 0.3 apart at the ratio 1 (exact with E): the fitted skeleton's boxes follow the features' signs — with every
+    box positive (referee round 46's mutant K7) the negative feature could not be fitted."""
+    L, K, c0 = TM.setup()
+    cs, As = np.array([-0.1, 0.2]) + TC.LAT_OFF, np.array([1.0, -1.0])
+    fit = TC.skeleton(K, c0, cs, As, fit=True)
+    assert fit['ok'] and fit['margin'] > 0 and sorted(fit['entrants']) == sorted(TC.entrants(K, c0, cs)[0])
+    assert TC.job_1d((cs, As))['out'] == 'nearest'
+
+
+def test_atoms_baseline_drops_the_tangent_directions():
+    """The atoms-only baseline subtracts the fitted features' atoms and nothing else: for one feature its residual after the entry is zero,
+    and on D(a)'s lattice pair at the ratio 0.02 its margin differs from the linear skeleton's (which also removes the tangent directions)."""
+    L, K, c0 = TM.setup()
+    a = TC.skeleton(K, c0, np.array([0.137]), np.array([-0.7]), atoms=True)
+    assert a['ok'] and a['margin'] > 0
+    cs, As = np.array([-0.1, 0.2]) + TC.LAT_OFF, np.array([1.0, 0.02])
+    assert abs(TC.skeleton(K, c0, cs, As, atoms=True)['margin'] - TC.skeleton(K, c0, cs, As)['margin']) > 1e-4
+
+
+def test_entrants_are_the_largest_correlations_near_the_window_edge():
+    """Near the window's edge the samples' largest correlation is not the nearest kernel (referee round 46): a feature at 0.97 is entered by
+    the kernel at 0.9 (index 19), which E must name for the path to count as exact with E."""
+    L, K, c0 = TM.setup()
+    cs, As = np.array([0.97]), np.array([0.8])
+    e = TC.entrants(K, c0, cs)[0]
+    assert e == [19] and int(np.argmin(np.abs(c0 - 0.97))) == 20
+    assert TC.job_1d((cs, As))['out'] == 'nearest'
+
+
+def test_ascent_target_ends_at_the_feature():
+    """`ascent_target`: a seed of the feature's sign started 0.08 away climbs its correlation with the feature to the feature's centre
+    (within the step σ/40); of the opposite sign it climbs away."""
+    L, K, c0 = TM.setup()
+    r = TC.X.bumps_target(K, np.array([0.137]), np.array([0.7]))
+    c = TC.RT.ascent_target(K, r, np.array([0.137 + 0.08]), 1.0)
+    assert abs(float(c[0]) - 0.137) < K.sig / 40 + 1e-12
+    assert abs(float(TC.RT.ascent_target(K, r, np.array([0.137 + 0.08]), -1.0)[0]) - 0.137) > 0.08
+
+
+def test_outcome_tolerances():
+    """`outcome`: exact with E needs the residual below RMS_TOL, the active set E, no exits and exactly K events."""
+    act = np.zeros(21, bool); act[[3, 9]] = True
+    ev = [(0.0, 3, 'enter', 0.0), (1.0, 9, 'enter', 0.0)]
+    R = lambda rms, events=ev: dict(events=events, act=act, hist=[(0.0, None, None, 1.0), (1.0, None, None, rms)])
+    assert TC.outcome(R(0.5 * TC.RMS_TOL), [3, 9], 2) == 'nearest'
+    assert TC.outcome(R(2 * TC.RMS_TOL), [3, 9], 2) == 'not'
+    assert TC.outcome(R(0.5 * TC.RMS_TOL, ev + [(2.0, 5, 'enter', 0.0)]), [3, 9], 2) == 'other'
+    assert TC.outcome(R(0.5 * TC.RMS_TOL), [3, 8], 2) == 'other'

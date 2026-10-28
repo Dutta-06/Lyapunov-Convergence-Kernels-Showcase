@@ -340,8 +340,26 @@ def report(A=None, B=None, C=None):
         ss = np.array([s for s in SIGMAS_C if np.isfinite(d50[s])])
         dd = np.array([d50[s] for s in ss])
         sl = np.polyfit(np.log(ss), np.log(dd), 1)[0] if ss.size >= 2 else np.nan
+        # the prediction: under H1 the second entry comes after ≈ C₁/Δ² (C₁ the leading order's Δτ₂Δ² at the smallest Δ, (i)), so the
+        # power is ½ where C₁/Δ² meets the H0 quantile q_α (∝ √N/s): Δ₅₀ = (C₁/q_α)^{1/2}, q_α interpolated in log Δ at the crossing
+        Lc, Kc, c0c = setup()
+        Dm = min(DELTAS_C)
+        C1 = predicted_delay(Kc, X.bumps_target(Kc, pair_centres(*PAIR_C, Dm), PAIR_C), c0c, *PAIR_C, Dm)[0] * Dm ** 2
+        pred50 = {}
+        for s_ in SIGMAS_C:
+            Ds = np.array(sorted(DELTAS_C))
+            gap = np.log(C1 / Ds ** 2) - np.log([det[(D, s_)]['q0'] for D in Ds])
+            pred50[s_] = np.nan
+            for k in range(len(Ds) - 1):
+                if gap[k] > 0 >= gap[k + 1] or gap[k] <= 0 < gap[k + 1]:
+                    t = gap[k] / (gap[k] - gap[k + 1])
+                    pred50[s_] = float(np.exp(np.log(Ds[k]) + t * (np.log(Ds[k + 1]) - np.log(Ds[k]))))
+                    break
+        qs = {s_: float(np.median([det[(D, s_)]['q0'] for D in DELTAS_C]) * s_) for s_ in SIGMAS_C}
         L_ += ['', 'Δ₅₀ (the power ½): ' + ', '.join(f's = {s:g}: {fmt(d50[s])}' for s in SIGMAS_C) +
-               f"; the slope of log Δ₅₀ in log s {sl:.3f} (½ predicted).", '']
+               f"; the slope of log Δ₅₀ in log s {sl:.3f} (½ predicted). Predicted from (i) and the H0 quantile, Δ₅₀ = (C₁/q_α)^{{1/2}} "
+               f"(C₁ = {C1:.4f}, the leading order's Δτ₂Δ² at Δ = {Dm:g}): " + ', '.join(f's = {s:g}: {fmt(pred50[s])}' for s in SIGMAS_C) +
+               "; the H0 quantile times s (its median over Δ; constant if q_α ∝ 1/s): " + ', '.join(f'{qs[s]:.4g}' for s in SIGMAS_C) + '.', '']
         L_ += ['## D. Placement under label noise (the two-kernel block after the second entry, H1)', '',
                '| Δ | s | runs | rms position error | × Δ²/s | rms error of w₁/(w₁ + w₂) | × Δ³/s |', '|---|---|---|---|---|---|---|']
         cs_truth = {D: pair_centres(*PAIR_C, D) for D in DELTAS_C}
