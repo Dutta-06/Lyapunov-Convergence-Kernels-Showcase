@@ -568,7 +568,7 @@ def main():
         open(md, 'w').write(report(old.get('A'), old.get('B'), old.get('C'), old.get('A2')))
         return
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'A2', 'B', 'C'}
-    res = dict(old)
+    res = {k: v for k, v in old.items() if k not in parts}             # a part being rerun is not reported from the old raw
     t0 = time.time()
     for k, fn in (('A', part_A), ('A2', part_A2), ('B', part_B), ('C', part_C)):
         if k in parts:

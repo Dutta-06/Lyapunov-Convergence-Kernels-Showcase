@@ -770,7 +770,9 @@ def v_job(args):
     off (beyond 2σ) the fold, located by bisection in log w between the last bound and the first unbound coefficient (from the last
     bound state). If the tail is unbound at the grid's top (V3's large A′), the continuation starts nearer A (12 coefficients from 0.99A
     down to the grid); `top` the first coefficient, and no rows if the tail is unbound even there (the fold above it). The continuation
-    stops if the entrant leaves its feature (|c_e| > 2σ: off V's branch, for A′ > A the entrant goes to A′)."""
+    stops if the entrant leaves its feature (|c_e| > 2σ: off V's branch, for A′ > A the entrant goes to A′). Each rest records its energy
+    E*(w) (the minimum over the other parameters, insensitive to their error at second order): E* increasing in w along the branch means
+    that with w free the coefficient decays (the hold of (v), referee round 49)."""
     n, dd = args[:2]
     Ap = args[2] if len(args) > 2 else AP_V
     from scipy.optimize import least_squares
@@ -804,7 +806,8 @@ def v_job(args):
             along_fold = float(pl[1 + n:] @ e) / SIG
             break
         ct = q[1 + n:]
-        rows.append(dict(w=float(w), we=float(q[0]), along=float(ct @ e) / SIG, across=float(np.linalg.norm(ct - (ct @ e) * e)) / SIG))
+        rows.append(dict(w=float(w), we=float(q[0]), along=float(ct @ e) / SIG, across=float(np.linalg.norm(ct - (ct @ e) * e)) / SIG,
+                         E=float(0.5 * np.sum(res(q, w) ** 2))))
         p = q
     return dict(n=n, d=dd, Ap=Ap, rows=rows, fold=fold, along_fold=along_fold, top=float(ws[0]), entrant_left=left)
 
@@ -1370,6 +1373,13 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             else:
                 fold = f"none above {W_V[-1]:g} | {lev:.3g} | — | —"
             L_.append(f"| {r['d']:g} | {', '.join(cells)} | {fold} |")
+        gr = [(b['E'] - a['E']) / (b['w'] - a['w']) for r in list(V) + list(V3 or []) if r['n'] == 1
+              for a, b in zip(r['rows'][:-1], r['rows'][1:]) if 'E' in a]
+        if gr:
+            L_ += ["", f"Along V's and V3's one-dimensional branches the rests' energy E*(w) (the minimum over the other parameters) "
+                       f"{'increases with w at every step' if min(gr) > 0 else 'does NOT increase with w at every step'} ({len(gr)} steps; "
+                       f"the secant dE*/dw from {min(gr):.2e} to {max(gr):.2e}): with w free the runner-up's coefficient decays toward the "
+                       "fold — the hold of (v) (referee round 49)."]
         if V3 is not None:
             L_ += ["", "V3. The fold's constant against the unfitted feature's amplitude: c = w_f/ℓ(d) (one dimension, A = "
                    f"{A_B:g}) at A′/A = " + ', '.join(f"{a / A_B:.3g}" for a in AP_V3) + " (where the tail is unbound at w = "
