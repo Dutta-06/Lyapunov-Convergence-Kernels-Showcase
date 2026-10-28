@@ -82,3 +82,21 @@ if __name__ == '__main__':
     for name, fn in list(globals().items()):
         if name.startswith('test_'):
             fn(); print(name, 'ok')
+
+
+def test_c_job_stops_at_the_second_entry_and_places_within_a_budget(monkeypatch):
+    """C's draws stop at the second entry (the delay only); the first R_D under H1 are relaxed again after it within RHS_D right-hand-side
+    evaluations — placed (two kernels, their centres sorted) or out of budget, never unbounded (round 50's runs: a near-coalescent
+    block's relaxation exhausted the memory)."""
+    monkeypatch.setattr(CF, 'R_C', 3)
+    monkeypatch.setattr(CF, 'R_D', 2)
+    r = CF.c_job((0.3, 0.003, 1, 7))
+    rows = r['rows']
+    assert all(np.isfinite(q['dt']) for q in rows) and [('oob' in q) for q in rows] == [True, True, False]
+    assert all('c' in q and q['c'][0] < q['c'][1] and not q['oob'] for q in rows[:2])
+    assert all(abs(c_ - t) < 0.01 for q in rows[:2] for c_, t in zip(q['c'], CF.pair_centres(*CF.PAIR_C, 0.3)))
+    monkeypatch.setattr(CF, 'RHS_D', 50)
+    rows = CF.c_job((0.3, 0.003, 1, 7))['rows']
+    assert all(q['oob'] and 'c' not in q for q in rows[:2]) and all(np.isfinite(q['dt']) for q in rows)
+    h0 = CF.c_job((0.3, 0.003, 0, 7))['rows']
+    assert not any('oob' in q for q in h0)

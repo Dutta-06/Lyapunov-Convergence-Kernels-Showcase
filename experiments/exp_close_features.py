@@ -47,6 +47,7 @@ PAIRS_A = ((0.8, 0.6), (0.8, 0.8), (0.8, -0.4), (0.8, -0.8))
 DELTAS_A = (0.2, 0.1, 0.05, 0.025, 0.0125, 0.00625)
 DELTAS_B = (0.2, 0.1, 0.05, 0.025, 0.0125)
 PAIR_C, SIGMAS_C, R_C, ALPHA_C = (0.8, 0.6), (0.001, 0.003, 0.01, 0.03), 200, 0.05
+R_D, RHS_D = 40, 400_000          # D: the placement draws per (Δ, s) under H1 and their budget of right-hand-side evaluations each
 DELTAS_C = (0.3, 0.2, 0.14, 0.1, 0.07, 0.05, 0.035, 0.025, 0.0175, 0.0125)
 
 
@@ -214,7 +215,12 @@ def one_fit(K, f):
 
 
 def c_job(args):
+    """C and D: R_C draws of y = f + ξ under H0 (the one-bump fit of the pair) or H1 (the pair): the path to its second entry, not
+    relaxed after it (`max_entries` = 2: the delay Δτ₂ only); under H1 the first R_D draws once more to the two-kernel block's relaxation
+    within RHS_D right-hand-side evaluations — its centres and coefficients if it relaxed, 'oob' if the budget ran out first (a block
+    near coalescence relaxes at a rate ∝ Δ⁶, Part B; unbounded, such relaxations exhausted the memory)."""
     D, s, hyp, seed = args
+    t0 = time.time()
     L, K, c0 = setup()
     cs = pair_centres(*PAIR_C, D)
     f1 = X.bumps_target(K, cs, PAIR_C)
@@ -227,16 +233,20 @@ def c_job(args):
     out = []
     for r in range(R_C):
         y = f + s * rng.standard_normal(K.xs.size)
-        R = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), max_events=2, polish=True)
+        R = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), max_events=2, polish=True, max_entries=2)
         ent = [(t, j) for t, j, k, c in R['events'] if k == 'enter']
         dt = ent[1][0] - ent[0][0] if len(ent) > 1 else np.inf
         row = dict(dt=float(dt), j=[j for t, j in ent])
-        if hyp == 1 and len(ent) > 1:
-            act = np.flatnonzero(R['act'])                          # the block after the second entry's relaxation
-            if act.size == 2:
-                o = np.argsort(R['c'][act])
-                row.update(c=R['c'][act][o].tolist(), w=R['w'][act][o].tolist())
+        if hyp == 1 and r < R_D and len(ent) > 1:
+            R2 = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), max_events=2, polish=True, max_rhs=RHS_D)
+            act = np.flatnonzero(R2['act'])                          # the block after the second entry's relaxation
+            row['oob'] = bool(R2['out_of_budget'])
+            if not R2['out_of_budget'] and len(R2['relaxed']) > 1 and R2['relaxed'][1] and act.size == 2:
+                o = np.argsort(R2['c'][act])
+                row.update(c=R2['c'][act][o].tolist(), w=R2['w'][act][o].tolist())
         out.append(row)
+    print(f"  C Δ {D:g} s {s:g} H{hyp}: second entries {sum(np.isfinite(q['dt']) for q in out)}/{len(out)}, placed "
+          f"{sum('c' in q for q in out)}, out of budget {sum(q.get('oob', False) for q in out)} [{time.time() - t0:.0f}s]", flush=True)
     return dict(D=D, s=s, hyp=hyp, rows=out)
 
 
@@ -245,7 +255,7 @@ def part_C():
     jobs = [(D, s, h, 1000 * k + 10 * h + i) for i, (D, s) in enumerate([(D, s) for D in DELTAS_C for s in SIGMAS_C])
             for h, k in ((0, 1), (1, 2))]
     with Pool(N_WORKERS) as pool:
-        return pool.map(c_job, jobs)
+        return pool.map(c_job, jobs, chunksize=1)
 
 
 def detection(C):
@@ -361,17 +371,25 @@ def report(A=None, B=None, C=None):
                f"(C₁ = {C1:.4f}, the leading order's Δτ₂Δ² at Δ = {Dm:g}): " + ', '.join(f's = {s:g}: {fmt(pred50[s])}' for s in SIGMAS_C) +
                "; the H0 quantile times s (its median over Δ; constant if q_α ∝ 1/s): " + ', '.join(f'{qs[s]:.4g}' for s in SIGMAS_C) + '.', '']
         L_ += ['## D. Placement under label noise (the two-kernel block after the second entry, H1)', '',
-               '| Δ | s | runs | rms position error | × Δ²/s | rms error of w₁/(w₁ + w₂) | × Δ³/s |', '|---|---|---|---|---|---|---|']
+               f"The first {R_D} H1 draws of each (Δ, s) relaxed after the second entry within {RHS_D} right-hand-side evaluations (a "
+               "block near coalescence relaxes at a rate ∝ Δ⁶, B): the placed blocks (two kernels, relaxed) and those out of budget; "
+               "the rms errors over the placed ones:", '',
+               '| Δ | s | placed, out of budget (of the draws) | rms position error | × Δ²/s | rms error of w₁/(w₁ + w₂) | × Δ³/s |',
+               '|---|---|---|---|---|---|---|']
         cs_truth = {D: pair_centres(*PAIR_C, D) for D in DELTAS_C}
         for r in C:
             if r['hyp'] != 1:
                 continue
             ok = [q for q in r['rows'] if 'c' in q]
+            tried = [q for q in r['rows'] if 'oob' in q]
             if not ok:
+                if tried:
+                    L_.append(f"| {r['D']:g} | {r['s']:g} | 0, {sum(q['oob'] for q in tried)} ({len(tried)}) | — | — | — | — |")
                 continue
             pe = np.sqrt(np.mean([np.mean((np.array(q['c']) - cs_truth[r['D']]) ** 2) for q in ok]))
             fr = np.sqrt(np.mean([(q['w'][0] / (q['w'][0] + q['w'][1]) - PAIR_C[0] / sum(PAIR_C)) ** 2 for q in ok]))
-            L_.append(f"| {r['D']:g} | {r['s']:g} | {len(ok)} | {pe:.3e} | {pe * r['D'] ** 2 / r['s']:.3g} | {fr:.3e} | "
+            L_.append(f"| {r['D']:g} | {r['s']:g} | {len(ok)}, {sum(q['oob'] for q in tried)} ({len(tried)}) | {pe:.3e} | "
+                      f"{pe * r['D'] ** 2 / r['s']:.3g} | {fr:.3e} | "
                       f"{fr * r['D'] ** 3 / r['s']:.3g} |")
         L_.append('')
     L_.append('Numbers are produced by `experiments/exp_close_features.py`; nothing is edited by hand.')
