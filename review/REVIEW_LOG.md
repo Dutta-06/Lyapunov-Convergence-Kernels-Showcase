@@ -2846,3 +2846,34 @@ later); 13 non-equivalent surviving mutants and untested job code; (i)'s "from a
 false: the loop on the asymmetric pairs and the path without its polish, the landing timed on a grid finer than the event, the collapse
 followed past the window that made it look frozen. Each control here overturned the conclusion it tested and strengthened the result
 around it: the dipole phase obeys the block's law, τ₃ follows from the path alone, and the collapse has a law.
+
+## Round 73 (adversarial review of Proposition D‴.52 as revised after round 71, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bt: Proposition D‴.52 as revised after round 71, with its code and results at
+1f51d48 (`review/REVIEW_round73_D3bt.md`). The referee:
+- regenerated the md byte for byte, compared the raw with round 71's and reran two U jobs, one E S job and two F jobs bit-identically;
+- re-implemented the equal-size comparison and tried four other ways of matching the size, with a paired bootstrap that re-selects α′;
+- computed the minimum's part in the population (400 000 law samples and 40 000 fresh H1 draws per cell) and its Monte Carlo errors;
+- checked the inequality between the full knot and the pair's own draw by draw, the null's margin against the swap rates, and (iv)'s
+  remainder in the continuum;
+- ran 69 single-point mutants, round 71's among them.
+
+**Verdicts (D3bt).** No major issue. Reproducibility, the zero at the tie (also in the population), the inequality (proved; the paths agree
+to round-off), the equal-size comparison (robust to every matching tried), the null's margin, (iv)'s remainder and the loss's first two
+parts hold. Minors: the zero was argued from an inequality that only bounds the part from below — the minimum cannot lose; that it gains
+nothing is the empirical absence of H1 draws between the two knots, which no script counted —; the part off the tie quoted to four decimals
+without its Monte Carlo error; tests that run the mutated code on data where the mutant changes nothing; the size wording reading one noisy
+offset as a pattern (c̄ = 0.08 is 0.02 from the next kernel, the mirror of 0.02); loose ends.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bt-1 | minor | The tie's zero argued from a one-sided bound | E′ prints the full knot against the own knot draw by draw (the path's exceeds it in 3293 of 21000 draws, by at most 6.5·10⁻¹² relative: round-off) and the H1 draws between the two knots at the tie's common threshold (0 of 2400); (iii) and the Numerics: the minimum cannot lose at a common threshold (its part is the share of draws between the knots) and gains nothing because none falls between them |
+| D3bt-2 | minor | The part off the tie without its error | E′ prints each cell's standard error over the paired H1 draws (0.013–0.021; the laws' own Monte Carlo error not included); (iii): "other kernels' knots", the loss 0.025–0.12 with those errors |
+| D3bt-3 | minor | Tests on data the mutants do not reach | Tests: `s_job`'s uncensored margin for a pair of each sign; `u_job`'s null margin for a negative pair and the null's own first entrant equal to f₁'s on every E cell; E′ on the raw (each cell's part and standard error, the inequality's excess, the draws between the knots, the margin '—' without U); `f_alloc_lines` pooling mirrored offsets; `equal_size_line` with α′ below α, a cell that never crosses ½ and a cell with a separation missing |
+| D3bt-4 | minor | The size wording at a mirrored offset | F prints the calibrated knot's size by the distance to the nearest kernel, an offset and its mirror pooled: 0.0512, 0.0456, 0.0398, 0.0379, 0.0329 at 0, 0.02, 0.032, 0.045, 0.049; (iii) and the Numerics restated by distance |
+| D3bt-5 | cosmetic | Loose ends | the Status's repeated "α allocation"; round 67's −0.0075 … +0.0175 replaced by what the script prints; `u_job`'s null margin over the null's own first entrant argmax\|Φᵀf₀\| (the same kernel in all 15 cells, so U is unchanged — asserted by a test); E′'s margin '—' without U; the score as the limit of the score process of the one-against-two likelihood ratio test (Dacunha-Castelle–Gassiat 1999; Azaïs–Gassiat–Mercadier 2006), Amar–Weiss 2008, El Korso et al. Round 71's entry (D3br-1 and its Lesson) should read: the full knot never later than the pair's own bounds the part from below; the zero is the absence of draws between the two knots |
+
+**Lesson.** An inequality settles one side. "Never later" with equal quantiles shows the minimum cannot lose at the tie; that it gains
+nothing is a separate fact about the draws, and a script should count it rather than print it as a consequence. A Monte Carlo difference
+needs its standard error before its extremes are read, and on a grid with mirror symmetry an offset and its mirror are one data point
+seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets.

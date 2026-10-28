@@ -646,13 +646,16 @@ def test_the_e_prime_report_with_the_runner_ups_knot():
     row = lambda t=0.0, zs=0.0, mu_u=0.1: dict(z=0.0, t=t, zs=zs, z2=0.0, swap=False, mu=0.1, mu_u=mu_u, dfit=0.0, w1=1.0)
     S = [dict(kind='E', D=D, s=s_, cbar=cb, rows0=[row(t=2.0 if i < 3 else 0.0, mu_u=0.1 + 0.01 * (i % 2)) for i in range(10)],
               rows1=[row(zs=2.0 if i < 2 else -2.0) for i in range(4)], mu_true=0.1, cos2=0.9)]
-    U = [dict(D=D, s=s_, cbar=cb, q2=2.0, t2_0=[1.0] + [3.0] * 9, t2_1=[1.0, 1.0, 1.0, 3.0], first_0=[False] * 10, first_1=[False] * 4)]
+    U = [dict(D=D, s=s_, cbar=cb, q2=2.0, t2_0=[1.0] + [3.0] * 9, t2_1=[1.0, 1.0, 1.0, 3.0], first_0=[False] * 10, first_1=[False] * 4,
+              mu0=0.1)]
     md = '\n'.join(CF.e_prime_lines(E_, S, U))
     assert '| 0.100, 0.750 |' in md and '; 0.200, 1.000 |' in md            # the own knot; the knot against its law at the truth
     assert '| 0.300 |' in md and ', 0.500 |' in md                          # the t size (3 of 10), z_σ's power (2 of 4)
     assert f"0.1000, {0.005 / s_:.3f}, {0.1 / 0.005:.2f} |" in md               # sd(μ̂) of the uncensored margins 0.10/0.11
     assert f"({cb:g}, {D:g}, {s_:g}) +0.2500" in md and '0.0000 at most apart' in md
     assert '| — |' in '\n'.join(CF.e_prime_lines(E_, S))
+    U[0].pop('mu0')                                                        # referee round 73: no null margin without U's mu0
+    assert f"| —, {0.005 / s_:.3f}, — |" in '\n'.join(CF.e_prime_lines(E_, S, U))
 
 
 def test_the_walls_per_draw_and_per_law_against_an_independent_definition():
@@ -800,6 +803,7 @@ def test_s_job_on_an_e_cell_and_a_c_null(monkeypatch):
             assert abs(q['z2'] - wall * (r @ Rp) / (s * np.linalg.norm(Rp))) < 1e-9
             g = Phi.T @ y
             assert q['swap'] == (int(np.argmax(np.abs(g))) != j1n) and abs(q['mu'] - (1 - wall * g[j2] / np.abs(g).max())) < 1e-12
+            assert abs(q['mu_u'] - (1 - wall * g[j2] / abs(g[j1n]))) < 1e-12        # referee round 73: the uncensored margin
         Rp = rphi(c1, w1)
         g = Phi.T @ f1
         assert out['j2'] == j2 and abs(out['mu_true'] - (1 - wall * g[j2] / np.abs(g).max())) < 1e-12
@@ -940,3 +944,92 @@ def test_equal_size_line_on_synthetic_rows():
         assert f"{wall} at p < α′ = 0.0605, its H0 size 0.0500 against the one-sided z's 0.0500" in line
         assert f"Δ₅₀ over the Neyman–Pearson bound's {x:.3f} [{x:.3f}, {x:.3f}]" in line
         assert f"smaller in {int(x < 1)} of 1" in line
+
+
+def test_u_job_null_margin_with_a_negative_pair(monkeypatch):
+    """Referee round 73 (U71-04 … -06; D3bt-5): `u_job`'s null margin mu0 = 1 − wall·u_{j₂} at f₀ with u over the null's own first
+    entrant argmax|Φᵀf₀| — for a pair of negative sign (the wall −1) too —; on every E cell that entrant is f₁'s (so the round-73 change
+    leaves the stored U unchanged)."""
+    monkeypatch.setattr(CF, 'M_LAW', 64)
+    L, K, c0 = CF.setup()
+    N, Phi = K.xs.size, K.phi(c0)
+    for D, s, cb, seed in CF.e_jobs():
+        f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, D, cb), CF.PAIR_C)
+        c1, w1 = CF.one_fit(K, f1)
+        assert int(np.argmax(np.abs(Phi.T @ (w1 * K.phi(np.array([c1]))[:, 0])))) == int(np.argmax(np.abs(Phi.T @ f1)))
+    D, s, cb, seed = CF.e_jobs()[13]
+    for A in ((0.8, 0.6), (-0.8, -0.6)):
+        monkeypatch.setattr(CF, 'PAIR_C', A)
+        f1 = X.bumps_target(K, CF.pair_centres(*A, D, cb), A)
+        c1, w1 = CF.one_fit(K, f1)
+        f0 = w1 * K.phi(np.array([c1]))[:, 0]
+        rng = np.random.default_rng(seed)
+        ys = [f0 + s * rng.standard_normal(N) for _ in range(2)]
+        u = CF.u_job((D, s, cb, seed, (2, 0), [CF.one_fit(K, y) for y in ys]))
+        pd = CF.predicted_delay(K, f1, c0, *A, D, cbar=cb)
+        g0 = Phi.T @ f0
+        assert pd[2] == (1.0 if A[0] > 0 else -1.0)
+        assert np.isclose(u['mu0'], 1 - pd[2] * g0[pd[1]] / abs(g0[int(np.argmax(np.abs(g0)))]), rtol=1e-12, atol=0)
+
+
+def test_e_prime_lines_the_tie_and_the_parts_errors_on_the_raw():
+    """Referee round 73 (D3bt-1, -2, -5): on the raw, E′ prints the minimum's part per cell with its paired standard error, the full knot
+    against the own knot draw by draw (never later, up to round-off) and the H1 draws between the two knots at the tie's common threshold
+    (none); without U the null's margin is '—'."""
+    raw = CF.E.load(RAW_CF)
+    md = '\n'.join(CF.e_prime_lines(raw['E'], raw['S'], raw['U']))
+    Ue = {(u['D'], u['s'], u['cbar']): u for u in raw['U']}
+    betw = n1 = exc_n = exc_all = 0
+    exc_max = 0.0
+    for e in raw['E']:
+        u = Ue[(e['D'], e['s'], e['cbar'])]
+        d0 = np.array([q['dt'] for q in e['rows0']]); d1 = np.array([q['dt'] for q in e['rows1']])
+        own = np.array(u['t2_1']) < u['q2']
+        dd = (d1 < e['q_law']).astype(float) - own.astype(float)
+        part = float(np.mean(d1 < e['q_law']) - np.mean(own))
+        assert f"({e['cbar']:g}, {e['D']:g}, {e['s']:g}) {part:+.4f} ({np.std(dd, ddof=1) / np.sqrt(dd.size):.3f})" in md
+        r = np.r_[d0, d1] / np.r_[u['t2_0'], u['t2_1']] - 1
+        exc_n += int(np.sum(r > 0)); exc_all += r.size; exc_max = max(exc_max, float(r.max()))
+        if u['q2'] == u['q_full']:
+            betw += int(np.sum((d1 < u['q2']) & ~own)); n1 += own.size
+    assert exc_max < 1e-10 and n1 == 2400
+    assert (f"exceeds it in {exc_n} of {exc_all} draws, by at most {exc_max:.1e} relative" in md
+            and f"no H1 draw falls between them ({betw} of {n1} in those cells" in md and betw == 0)
+    no_u = '\n'.join(CF.e_prime_lines(raw['E'], raw['S'], None))
+    assert no_u.count('| —, ') == len(raw['E']) and 'The minimum' not in no_u
+
+
+def test_the_size_by_distance_to_the_nearest_kernel():
+    """Referee round 73 (D3bt-4): `f_alloc_lines` pools an offset with its mirror about the tie (c̄ and 0.1 − c̄: the same distance to
+    the nearest kernel) for the calibrated knot's size."""
+    s, D = CF.SIGMAS_F[0], CF.DELTAS_F[CF.SIGMAS_F[0]][CF.H0_F]
+    row = lambda p: dict(p=p, tA=1.0, tB=2.0, z=0.0, w1=1.0)
+    F = [dict(A=CF.PAIRS_F[0], cbar=0.02, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.01), row(0.5), row(0.5), row(0.5)]),
+         dict(A=CF.PAIRS_F[0], cbar=0.08, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.005), row(0.03), row(0.5), row(0.5)]),
+         dict(A=CF.PAIRS_F[0], cbar=0.049, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.5)] * 4)]
+    keys = ('knot',)
+    out = '\n'.join(CF.f_alloc_lines(F, {(A, k): [] for A in CF.PAIRS_F for k in keys},
+                                     {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys))
+    lo, hi = CF.cp_int(3, 8)
+    assert f"0.02 (c̄ = 0.02, 0.08): 0.3750 [{lo:.4f}, {hi:.4f}], 0.1250" in out
+    assert "0.049 (c̄ = 0.049): 0.0000 [" in out
+
+
+def test_equal_size_line_below_alpha_and_cells_that_do_not_count():
+    """Referee round 73 (ES05, ES12, ES13): `equal_size_line` takes a level α′ below α where the size matches there, and skips a cell
+    whose power never crosses ½ and a cell with a separation missing."""
+    s = CF.SIGMAS_F[0]
+    Ds = CF.DELTAS_F[s]
+    A = CF.PAIRS_F[0]
+    h0 = [{'pA': 0.04 if k < 10 else 0.5, 'z': 3.0 if k < 10 else 0.0, 'w1': 1.0} for k in range(200)]
+    F = [dict(A=A, cbar=CF.OFFSETS_F[0], s=s, D=Ds[CF.H0_F], hyp=0, rows=h0)]
+    npw = (0.2, 0.4, 0.7, 0.9, 0.95, 1.0)
+    for cb, pw in ((CF.OFFSETS_F[0], (0.1, 0.3, 0.6, 0.8, 0.9, 1.0)), (CF.OFFSETS_F[1], (0.1, 0.1, 0.2, 0.2, 0.3, 0.4))):
+        for D, p, q in zip(Ds, pw, npw):
+            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, np=q, rows=[{'pA': 0.0 if k < round(100 * p) else 0.9} for k in range(100)]))
+    for D, p, q in list(zip(Ds, (0.1, 0.3, 0.6, 0.8, 0.9, 1.0), npw))[:-1]:
+        F.append(dict(A=A, cbar=CF.OFFSETS_F[2], s=s, D=D, hyp=1, np=q, rows=[{'pA': 0.0 if k < round(100 * p) else 0.9} for k in range(100)]))
+    x = CF.crossing(list(Ds), [0.1, 0.3, 0.6, 0.8, 0.9, 1.0]) / CF.crossing(list(Ds), list(npw))
+    line = CF.equal_size_line(F, A, {(s, CF.OFFSETS_F[0]): 1.0, (s, CF.OFFSETS_F[1]): 1.0, (s, CF.OFFSETS_F[2]): 1.0})
+    assert "at p < α′ = 0.0405, its H0 size 0.0500 against the one-sided z's 0.0500" in line
+    assert f"{x:.3f} [{x:.3f}, {x:.3f}]" in line and "smaller in" in line and "of 1" in line
