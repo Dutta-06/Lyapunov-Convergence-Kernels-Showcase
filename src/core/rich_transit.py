@@ -199,14 +199,16 @@ def critical_rhs(L, K, fstar, metric='paradigm', b0=0.0):
     return f
 
 
-def polish_block(K, fstar, w, c, s, cbox=None, max_nfev=5000, info=False):
+def polish_block(K, fstar, w, c, s, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
     """The active block's fit from (w, c) by a sign-constrained least-squares solve (trust-region reflective): min ½⟨(f* − Φ(c)w)²⟩ over
     (w, c) with s_iw_i ≥ 0. On a dictionary (K.filt the identity) the fast flow is a gradient flow of this fit, so its end is a stationary
     point of it; the solve reaches the point where the flow crawls along the block's slow modes (two kernels Δ apart: the fit's Hessian has
     eigenvalues ∝ 1, 1, Δ², Δ⁶ — Proposition D‴.52). cbox: (lo, hi), the centres kept in [lo, hi] (on noisy data the fit can have no
     minimiser: a kernel leaving the samples' window fits the noise at the edge with a coefficient growing without bound — referee round
-    45). max_nfev: the solve's budget of evaluations (its end where the budget binds is not stationary: referee round 54). Returns (w, c),
-    and with info=True also dict(status, nfev) of the solve (status 0: the budget spent)."""
+    45). max_nfev: the solve's budget of evaluations (its end where the budget binds is not stationary: referee round 54). gtol: the
+    solve's absolute gradient test (TRF's ‖g·v‖∞ < gtol, g·v the gradient scaled to the bounds); None disables it — at a fit error of
+    10⁻⁹–10⁻¹⁰ the gradient along the block's slow modes is 10⁻¹⁶–10⁻¹⁷, and 10⁻¹⁵ stops the solve above the optimum (referee round 60).
+    Returns (w, c), and with info=True also dict(status, nfev) of the solve (status 0: the budget spent; 1: the gradient test)."""
     from scipy.optimize import least_squares
     n, nx = w.size, K.xs.size
     clo, chi = (-np.inf, np.inf) if cbox is None else cbox
@@ -215,7 +217,7 @@ def polish_block(K, fstar, w, c, s, cbox=None, max_nfev=5000, info=False):
     z0 = np.r_[np.where(s > 0, np.maximum(w, 1e-300), np.minimum(w, -1e-300)), c]
     sol = least_squares(lambda z: (fstar - K.phi(z[n:]) @ z[:n]) / np.sqrt(nx), z0,
                         jac=lambda z: -np.c_[K.phi(z[n:]), K.dphi(z[n:]) * z[:n][None, :]] / np.sqrt(nx),
-                        bounds=(lo, hi), method='trf', xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=max_nfev)
+                        bounds=(lo, hi), method='trf', xtol=1e-15, ftol=1e-15, gtol=gtol, max_nfev=max_nfev)
     if info:
         return sol.x[:n], sol.x[n:], dict(status=int(sol.status), nfev=int(sol.nfev))
     return sol.x[:n], sol.x[n:]
@@ -301,7 +303,7 @@ def leaves(si, g, wi, big, own=None):
 
 def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
                 max_doublings=14, polish=False, max_entries=None, polish_step=1.0, polish_wfrac=1e-2, box=None, w_scale=None,
-                max_rhs=None, exit_kkt=False, polish_nfev=5000, repolish=0):
+                max_rhs=None, exit_kkt=False, polish_nfev=5000, repolish=0, polish_gtol=1e-15):
     """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
     left the block), their u_j growing at ⟨rφ(c_j)⟩ (r the active block's residual); the entrants — every kernel whose |u_j| reaches ρ_j
     within the relative tie_tol of the first, so that exact ties enter together — join the active block with the coefficient `seed` (the
@@ -331,7 +333,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     outward and the kernel re-enters at the same τ, a cycle of entries and exits (referee round 48); False keeps the paths of the results
     committed before. The chunks redone after a failed solve and those that failed even halved (`relax_chunk`) are counted as
     'solver_redone' and 'solver_failed' (a failed chunk ends its relaxation unrelaxed, and no kernel exits on that block: referee round
-    54). polish_nfev: the polish's budget of evaluations; repolish: how many more polishes a block may take once it passes the
+    54). polish_nfev: the polish's budget of evaluations, polish_gtol its gradient test (`polish_block`'s gtol; None: none, referee
+    round 60); repolish: how many more polishes a block may take once it passes the
     stationarity test — each accepted if it lowers the fit's error by more than a relative 1e-9 and passes the seed rule, the flow then
     resuming from it (the flow alone crawls along a block's slow modes, and a single polish can spend its budget before the optimum:
     referee round 54). 'polish_log' lists per iteration its polishes (status, nfev, accepted; e0, e1 the rms before and after for the
@@ -407,7 +410,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
                     break
                 if not polished:
                     w0 = critical_w(L, z[:n])
-                    wp, cp, pinfo = polish_block(K, fstar, w0, z[n:], np.sign(u[idx]), cbox=box, max_nfev=polish_nfev, info=True)
+                    wp, cp, pinfo = polish_block(K, fstar, w0, z[n:], np.sign(u[idx]), cbox=box, max_nfev=polish_nfev, info=True,
+                                                  gtol=polish_gtol)
                     seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * (np.abs(w0).max() if w_scale is None else w_scale))
                     r0 = K.filt(fstar - K.phi(z[n:]) @ w0)
                     good = all(abs(cp[i] - z[n + i]) <= polish_step * K.sig or
@@ -429,7 +433,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
                     if polish and n_rep < repolish:                    # the test passed: polish again (referee round 54)
                         n_rep += 1
                         e0 = float(np.sqrt(np.mean(ri ** 2)))
-                        wp, cp, pinfo = polish_block(K, fstar, wi, z[n:], si, cbox=box, max_nfev=polish_nfev, info=True)
+                        wp, cp, pinfo = polish_block(K, fstar, wi, z[n:], si, cbox=box, max_nfev=polish_nfev, info=True,
+                                                      gtol=polish_gtol)
                         e1 = float(np.sqrt(np.mean(K.filt(fstar - K.phi(cp) @ wp) ** 2)))
                         seedy = np.flatnonzero(np.abs(wi) <= polish_wfrac * (np.abs(wi).max() if w_scale is None else w_scale))
                         good = e1 < e0 * (1 - 1e-9) and all(

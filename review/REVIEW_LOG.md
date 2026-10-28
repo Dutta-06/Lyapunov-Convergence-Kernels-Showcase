@@ -2412,3 +2412,39 @@ looked near-optimal at the offset where it was tuned; the score test, computed f
 the Neyman–Pearson bound everywhere, and its two readings — the moving width's drive and the split mode's rate — are statistics the
 paradigm computes anyway. A test with a sign-dependent drift must be run for both signs before "counts two features" is written: for
 an opposite-sign pair the drift empties exactly the channel through which the knot comes early.
+
+## Round 60 (adversarial review of Proposition D‴.58 as revised after round 54, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bg: Proposition D‴.58 as revised after round 54, with its code and results at
+fef9c70 (`review/REVIEW_round60_D3bg.md`). The referee:
+- regenerated the md byte for byte, ran the 45 tests, and reran three B paths, seven B2 jobs and four A rows bit-identically;
+- re-derived (i), (ii) and (v), including the three proof gaps round 54 asked to close, and spot-checked untested ratios;
+- reran the first non-optimal blocks of 9 paths with TRF as polished, TRF without its gradient test, LM and VP-LM, recording the
+  scaled gradient, its rounding and the Jacobians' condition numbers, and reran B's repeated variant with the gradient test disabled;
+- categorised B2's later misses by their reference optimum against the experiment's floor E_FLOOR;
+- split the entry statistics by regime and checked C(c) ≥ 0 after all 258 optimal blocks;
+- ran 36 single-point mutants and searched the literature.
+
+**Verdicts (D3bg).** (i), (ii), (iv) and (v) hold; the numbers match. But the new explanation of where the optimal ranges end was
+refuted: the repeated polish's stops were `polish_block`'s absolute gradient tolerance 10⁻¹⁵ — met along a slow mode at a fit error of
+10⁻⁹–10⁻¹⁰ — not a loss of descent of the joint least squares; without it the same solver goes on (ranges 5 and 10 instead of 4 and 9
+at τ/σ = 1/4, 3/4), and what separates variable projection is the conditioning. The later blocks' "basin" count used optima below the
+experiment's own floor. 21 of 36 mutants of the new code survived, including every one in `sliding_iss`'s repolish, budget and entry
+log. Minors: an unfixed range (95.7%), "not the stop", pooled entry statistics, a vacuous stationarity test, wording, literature.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bg-1 | major | The ranges' end: an absolute gradient tolerance, not the joint least squares | `polish_block(gtol=…)` (None: no gradient test) and `sliding_iss(polish_gtol=…)`, defaults unchanged; B's sixth variant, the repeated polish without the test: optimal to K ≤ 5, 7, 10, 12 at τ/σ ≤ 1 (one kernel further at 1/4 and 3/4; at 1/2, K = 8 1.233 times above the optimum, four polishes on the budget); (iii): the ranges are the solver's — its budget, acceptance radius or gradient test —; B2 prints the condition numbers at the first non-optimal blocks: 5.4·10³–3.6·10⁵ for variable projection's centres, 1.3·10⁶–5·10⁸ for the joint (w, c) |
+| D3bg-2 | major | Later blocks judged against sub-floor optima | `b2_line` counts only optima ≥ E_FLOOR: 33 of 38 reached (the 20 first non-optimal blocks among them), 1 at 1.001 times (in the basin, unconverged), 4 at 16.36–24.74 times with nodes 2.14–3.99σ from the optimum's (`b2_job`'s dc); the 78 below the floor not counted |
+| D3bg-3 | major | 21 of 36 mutants survive | tests: the polish's budget and gradient test passed to every polish, a repeated polish accepted only if it improves, at most `repolish` times, the chunks resetting to the elapsed time, a non-improving repeat changing nothing, the log's rejections the path's count, `entry_info` against the duals rebuilt from the path (three paths: a wide feature, three bumps with a negative dual, a loosely relaxed block), `polish_block`'s gtol, a failed chunk counted as neither stall nor redo; `b2_line` on asymmetric data, `entry_lines` by regime, `stop_law` against its closed form with a Monte Carlo check of the moments, `cs_vacuous` at its threshold, `merge_B`, `b_job` reproducing the raw on two paths; 14 of 15 targeted mutants of `sliding_iss`/`polish_block` killed, the survivor equivalent outside exact ties |
+| D3bg-4 | minor | "95.7–100%" | 93.0–100% (A3) |
+| D3bg-5 | minor | Pooled entry statistics | B's table by regime; (iii) quotes the optimal blocks': the largest rate in 5 of 316, its share a median 0.21, the dual a median 0.959, 314 beyond the outermost node (a median 1.22σ), 2 between (0.989–0.992) |
+| D3bg-6 | minor | The stationarity test vacuous | `cs_vacuous`: 53 of the 116 non-optimal blocks pass it at any state by Cauchy–Schwarz (errors up to 4.0·10⁻¹⁰); (iii) says so |
+| D3bg-7 | minor | Numerics wording | the gradient test's stop (status 1) at τ/σ = 1/4; within 10⁻⁶σ and C ≥ 0 to 10⁻⁶ for the base variant; the largest gap at the stop in 0, 4, 1 draws; 12 the path's cap (censored) |
+| D3bg-8 | minor | Literature | Gnewuch–Hefter–Hinrichs–Ritter 2022, Irrgeher–Kritzer–Leobacher–Pillichshammer 2015, Gnewuch–Ritter–Rüßmann; the Mercer expansion's ratio ε²/(α² + δ² + ε²) = (β² − 1)/(β² + 1) = q; the classical rule's error below √2 (Kuo–Woźniakowski's divergence concerns a reweighted fixed-weight rule); Derevianko–Plonka's weighted problem stated, article 6 of volume 24; New narrowed |
+| D3bg-9 | cosmetic | K(s) twice; "to within 1 − δ_t(K)"; formats | the root K*(s), the predicted stop ⌈K*(s)⌉ (md caption and table too); "its error the rule's times 1 − δ_t(K)"; `b2_line` at four digits |
+
+**Lesson.** A stopping test is calibrated for a scale. An absolute gradient tolerance certifies nothing along a slow mode of a fit whose
+residual is 10⁻¹⁰; the check that settles it — rerun the same solver from the same state with only the suspect setting changed — took
+a variant of B, and moved two of the three ranges. A miss measured against an optimum below the experiment's own floor is evidence about
+the solver, not about basins; and a statistic pooled over regimes is not to be quoted for one of them.

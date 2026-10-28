@@ -14,21 +14,21 @@ A. The rules on ℝ: for τ/σ in TAUS_A and K ≤ K_A, the half-squeeze rule's 
    ratios per kernel against (2 − λ)/λ and 1/q), and the variance of least error (`best_scale`): one parameter's share of the optimum's
    gain over the rule (referee round 48). A4: (v), the frame continued to features narrower than the kernels (σ*/σ in NARROW_A): the
    Gauss–Hermite cosine sum's error (`narrow_rule`) against the series at |t|.
-B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in five
-   numerical variants (VARIANTS_B: the polish step, the starting grid's offset, the polish's budget of evaluations and its repetition
-   after the stationarity test; referee rounds 48 and 54): after each entry the relaxed block's relative error against the optimal fit
+B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in six
+   numerical variants (VARIANTS_B: the polish step, the starting grid's offset, the polish's budget of evaluations, its repetition
+   after the stationarity test and its gradient test; referee rounds 48, 54 and 60): after each entry the relaxed block's relative error against the optimal fit
    with as many kernels on the same samples (variable projection from the block and from the half-squeeze rule, the better), whether
    the relaxation passed the stationarity test, the first non-optimal block's polishes (status, evaluations, accepted), the block's
    nodes against the optimum's, the continuous half-squeeze error; the entries (the entrant's rate against the largest, its dual), the
-   chunks redone after a stall or a failed solve, the polish's rejections.
+   chunks redone after a stall or a failed solve, the polish's rejections. B2: variable projection from every non-optimal block.
 C. Under noise: y = f* + ξ (i.i.d. N(0, s²) on X_B), the path to K_C + 1 entries (its centres in the window ± BOX_C·σ, the thresholds
    on max|y|, the KKT exit rule): the discrepancy rule's stop (the first block with rms ≤ (1 + DELTA)s) against its prediction from (i)
    — the first K with e_K²‖f*‖²_rms ≤ s²((1 + δ)² − 1 + 2K/N), e_K the half-squeeze rule's L² error — and the probability of each stop
    from the rms's expectation and scatter (`stop_law`), the stopped fit's error against (e_K²‖f*‖²_rms + 2Ks²/N)^{1/2} (e_K B's optima
    on the samples); the kernels at the feature and elsewhere; the largest relative gap's K.
 
-Usage: python experiments/exp_width_mismatch.py [--only A,B,C] [--from-raw] → results/chaos/width_mismatch.md (+ _raw.npz).
-WM_WORKERS (default 2).
+Usage: python experiments/exp_width_mismatch.py [--only A,B,C,D,B2] [--variants i,j] [--from-raw] → results/chaos/width_mismatch.md
+(+ _raw.npz). --variants: B for those variants only (indices into VARIANTS_B), merged into the raw's B. WM_WORKERS (default 2).
 """
 import os
 import sys
@@ -57,10 +57,11 @@ LEVELS_C, N_DRAW_C, TAU_C, K_C, DELTA = (1e-4, 1e-3, 1e-2), 10, 1.0, 10, 0.1
 KS_D, J_MAX_D = (10, 20, 40, 80, 160, 320), 7                        # D: the tail ratio's K and the ratios' degree checked
 MAX_DOUBLINGS = 24                                                    # chunks to 10⁵·2²⁴ ≈ 1.7·10¹² (beyond ~10¹¹ LSODA fails from relaxed
                                                                       # states and `relax_chunk` redoes the chunk by Radau: round 48)
-VARIANTS_B = (('base', 1.0, 0.0, 5000, 0), ('polish 2σ', 2.0, 0.0, 5000, 0), ('grid +0.05', 1.0, 0.05, 5000, 0),
-              ('polish 2σ, 5·10⁴ evaluations', 2.0, 0.0, 50_000, 0), ('polish 2σ, 5·10⁴, repeated', 2.0, 0.0, 50_000, 3))
-# B: (name, the polish step, the starting grid's shift, the polish's budget of evaluations, its repetitions after the stationarity test —
-# the last two variants: referee round 54)
+VARIANTS_B = (('base', 1.0, 0.0, 5000, 0, 1e-15), ('polish 2σ', 2.0, 0.0, 5000, 0, 1e-15), ('grid +0.05', 1.0, 0.05, 5000, 0, 1e-15),
+              ('polish 2σ, 5·10⁴ evaluations', 2.0, 0.0, 50_000, 0, 1e-15), ('polish 2σ, 5·10⁴, repeated', 2.0, 0.0, 50_000, 3, 1e-15),
+              ('polish 2σ, 5·10⁴, repeated, no gradient test', 2.0, 0.0, 50_000, 3, None))
+# B: (name, the polish step, the starting grid's shift, the polish's budget of evaluations, its repetitions after the stationarity test,
+# its absolute gradient test — None: none; the fourth and fifth variants: referee round 54, the sixth: round 60)
 OPT_TOL = 1e-3                                                        # B: a block is the optimal fit if its error is within 0.1% of it
 UNCONV = 1e-9                                                         # A3: an optimum the one-parameter rule beats by more is unconverged
 BOX_C = 2.0                                                           # C: the noisy path's centres in the samples' window ± BOX_C·σ
@@ -139,7 +140,7 @@ def sample_fit(Phi_of, f, y0):
 
 def b_job(args):
     r_, var = args
-    name, step, shift, nfev, rep_ = next(v for v in VARIANTS_B if v[0] == var)
+    name, step, shift, nfev, rep_, gt = next(v for v in VARIANTS_B if v[0] == var)
     warnings.filterwarnings('ignore')
     t0 = time.time()
     L, _, c0 = TM.setup()
@@ -148,7 +149,8 @@ def b_job(args):
     ss = sigma_star(r_)
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
     R = RT.sliding_iss(L, K, f, c0, np.ones(c0.size), polish=True, max_events=3 * K_B, tol=0.0, max_entries=K_B + 1,
-                       max_doublings=MAX_DOUBLINGS, polish_step=step, exit_kkt=True, polish_nfev=nfev, repolish=rep_)
+                       max_doublings=MAX_DOUBLINGS, polish_step=step, exit_kkt=True, polish_nfev=nfev, repolish=rep_,
+                       polish_gtol=gt)
     rf = float(np.sqrt(np.mean(f ** 2)))
     out = []
     for i, b in enumerate(blocks(R)):
@@ -169,16 +171,28 @@ def b_job(args):
                 rejected=R['polish_rejected'], entries=R['entry_info'], secs=time.time() - t0)
 
 
-def part_B():
+def part_B(idx=None):
+    """B's paths for the variants of VARIANTS_B with indices idx (all if None), in the order of VARIANTS_B, then TAUS_B."""
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
-        return pool.map(b_job, [(r_, v[0]) for v in VARIANTS_B for r_ in TAUS_B], chunksize=1)
+        return pool.map(b_job, [(r_, v[0]) for i, v in enumerate(VARIANTS_B) if idx is None or i in idx for r_ in TAUS_B], chunksize=1)
+
+
+def merge_B(old, new):
+    """B's paths: the new ones replace the old of the same width and variant; in the order of VARIANTS_B, then TAUS_B."""
+    names = [v[0] for v in VARIANTS_B]
+    key = lambda b: (b['r'], b['var'])
+    got = {key(b): b for b in (old if old is not None else [])}
+    got.update({key(b): b for b in new})
+    return sorted(got.values(), key=lambda b: (names.index(b['var']), TAUS_B.index(b['r'])))
 
 
 def b2_job(args):
     """B2 (referee round 54): from one of B's non-optimal blocks, variable projection (Levenberg–Marquardt on the centres) started at the
     block's own centres and at the half-squeeze nodes — whether the block lies in the basin of the best optimum found (its relaxation
-    unfinished) or at another stationary point."""
+    unfinished) or at another stationary point; dc, the block's largest distance from the better optimum's nodes; and at the block's
+    centres (least-squares amplitudes) the condition numbers of the two problems' Jacobians — the joint fit in (w, c), as the polish
+    solves it, and variable projection's in c alone (central differences of its residual; referee round 60)."""
     r_, var, k, c = args
     warnings.filterwarnings('ignore')
     K = RT.Bumps(X_B, SIG)
@@ -186,7 +200,20 @@ def b2_job(args):
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
     rf = float(np.sqrt(np.mean(f ** 2)))
     yh, _ = W.half_squeeze(k, SIG, ss)
-    return dict(r=r_, var=var, k=k, e_block=sample_fit(K.phi, f, c)[2] / rf, e_rule=sample_fit(K.phi, f, C_B + yh)[2] / rf)
+    cb, _, eb = sample_fit(K.phi, f, c)
+    cr, _, er = sample_fit(K.phi, f, C_B + yh)
+    c = np.sort(np.asarray(c, float))
+    P = K.phi(c)
+    wl = np.linalg.lstsq(P, f, rcond=None)[0]
+
+    def vp(cc):
+        Pc = K.phi(cc)
+        return f - Pc @ np.linalg.lstsq(Pc, f, rcond=None)[0]
+    h = 1e-6 * SIG
+    cond = lambda J: (lambda sv: float(sv[0] / sv[-1]))(np.linalg.svd(J, compute_uv=False))
+    return dict(r=r_, var=var, k=k, e_block=eb / rf, e_rule=er / rf, dc=float(np.abs(c - (cb if eb <= er else cr)).max()),
+                cond_joint=cond(np.c_[P, K.dphi(c) * wl[None, :]]),
+                cond_vp=cond(np.stack([(vp(c + h * e) - vp(c - h * e)) / (2 * h) for e in np.eye(c.size)], axis=1)))
 
 
 def part_B2(B):
@@ -198,22 +225,53 @@ def part_B2(B):
 
 
 def b2_line(B2):
-    """B2's summary: the non-optimal blocks from which variable projection reaches the best optimum found (within OPT_TOL)."""
+    """B2's summary: the non-optimal blocks from which variable projection reaches the best optimum found (within OPT_TOL), counted where
+    that optimum is at least E_FLOOR — below it the solve stops short of the optimum (A), and a miss says nothing of the block's basin
+    (referee round 60); of the misses, those within 1% of the optimum (in its basin, unconverged) and the others with the block's largest
+    distance from the optimum's nodes (σ); the same for each path's first non-optimal block."""
     if B2 is None or not len(B2):
         return []
     best = [min(q['e_block'], q['e_rule']) for q in B2]
     hit = [abs(q['e_block'] / b - 1) < OPT_TOL for q, b in zip(B2, best)]
-    worse = [q['e_block'] / b for q, b, h in zip(B2, best, hit) if not h]
+    up = [b >= E_FLOOR for b in best]
+    miss = [(q['e_block'] / b, q.get('dc', np.nan) / SIG) for q, b, h, u in zip(B2, best, hit, up) if u and not h]
+    near = sorted(v for v, d in miss if v < 1.01)
+    far = [(v, d) for v, d in miss if v >= 1.01]
     seen, first = set(), []                                            # each path's first non-optimal block (B2 keeps the paths' order)
     for i, q in enumerate(B2):
         if (q['r'], q['var']) not in seen:
             seen.add((q['r'], q['var']))
             first.append(i)
-    fw = [B2[i]['e_block'] / best[i] for i in first if not hit[i]]
-    return [f"Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in {sum(hit)} of {len(B2)}"
-            + (f"; in the others it ends {min(worse):.3g}–{max(worse):.3g} times above it" if worse else '')
-            + f". From the first non-optimal block of each path: {sum(hit[i] for i in first)} of {len(first)}"
-            + (f" (the others {', '.join(f'{v:.3g}' for v in sorted(fw))} times above it)" if fw else '') + ".", '']
+    fu = [i for i in first if up[i]]
+    fw = [B2[i]['e_block'] / best[i] for i in fu if not hit[i]]
+    ends = lambda n: f"{n} {'ends' if n == 1 else 'end'}"
+    span = lambda v, f_: f"{min(v):{f_}}" if min(v) == max(v) else f"{min(v):{f_}}–{max(v):{f_}}"
+    nb = len(first) - len(fu)
+    return [f"Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in "
+            f"{sum(h for h, u in zip(hit, up) if u)} of the {sum(up)} blocks whose optimum is at least {E_FLOOR:g}"
+            + (f"; {ends(len(near))} within 1% of it ({', '.join(f'{v:.4g}' for v in near)} times: in its basin, unconverged)" if near else '')
+            + (f"; {ends(len(far))} {span([v for v, d in far], '.4g')} times above it, the block's nodes up to "
+               f"{span([d for v, d in far], '.2f')}σ from the optimum's" if far else '')
+            + f". The {len(B2) - sum(up)} blocks with an optimum below {E_FLOOR:g}, where the solve stops short of the optimum (A), are not "
+            f"counted ({sum(h for h, u in zip(hit, up) if not u)} reached). From the first non-optimal block of each path: "
+            f"{sum(hit[i] for i in fu)} of {len(fu)}" + (f" (the others {', '.join(f'{v:.4g}' for v in sorted(fw))} times above it)" if fw else '')
+            + (f"; on {nb} {'path' if nb == 1 else 'paths'} the first non-optimal block's optimum is below {E_FLOOR:g}" if nb else '') + "."
+            + (f" There the Jacobian's condition number is {span([B2[i]['cond_joint'] for i in fu], '.2g')} for the joint fit in (w, c), "
+               f"{span([B2[i]['cond_vp'] for i in fu], '.2g')} for variable projection's in c alone." if fu and 'cond_joint' in B2[fu[0]] else ''),
+            '']
+
+
+def cs_vacuous(r_, var, o, gtol=1e-9):
+    """Whether a block passes `sliding_iss`'s stationarity test whatever its state (referee round 60): the test is absolute — |⟨rφ_i⟩|
+    and |w_i⟨r∂_cφ_i⟩| at most gtol·max_j|⟨f*φ_j⟩| (the starting grid's correlations, gtol the path's default) — and by Cauchy–Schwarz
+    |⟨rφ_i⟩| ≤ rms(r)·rms(φ_i), |⟨r∂_cφ_i⟩| ≤ rms(r)·rms(∂_cφ_i), so below some fit error it holds at any state."""
+    shift = next(v for v in VARIANTS_B if v[0] == var)[2]
+    K = RT.Bumps(X_B, SIG)
+    f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * sigma_star(r_) ** 2))
+    scale = float(np.abs(K.phi(TM.setup()[2] + shift).T @ f).max()) / X_B.size
+    c, w = np.asarray(o['c'], float), np.asarray(o['w'], float)
+    lim = np.maximum(np.sqrt(np.mean(K.phi(c) ** 2, axis=0)), np.abs(w) * np.sqrt(np.mean(K.dphi(c) ** 2, axis=0)))
+    return bool(o['e'] * float(np.sqrt(np.mean(f ** 2))) * lim.max() <= gtol * scale)
 
 
 def gap_share(x):
@@ -239,35 +297,43 @@ def polish_cell(o):
 
 
 def entry_lines(B):
-    """B's entries (`sliding_iss`'s entry_info): the entrant's rate against the largest inactive rate, its dual before the entry, and
-    whether the entrant had the largest rate — it is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (referee round 54);
-    where the entrant starts against the block it joins (block it − 1, the entries in the order of the events): beyond its outermost
-    node (how far) or between its nodes (its dual)."""
-    es, pos = [], []
+    """B's entries (`sliding_iss`'s entry_info) by the block they join (referee round 60: the regimes apart) — none (a path's first entry:
+    every dual zero, so the least time to the wall is the largest rate), an optimal block, a non-optimal one (block it − 1, the entries in
+    the order of the events) — and over all: whether the entrant had the largest current rate, its rate over the largest, its dual before
+    the entry (the entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩|: referee round 54), and where it starts
+    against the block it joins: beyond its outermost node (how far) or between its nodes (their duals)."""
+    rows = {'none (the first entry)': [], 'an optimal block': [], 'a non-optimal block': []}
     for b in B:
         info = b.get('entries') if b.get('entries') is not None else []
         for e, ev in zip(info, [ev for ev in b['events'] if ev[2] == 'enter']):
-            es.append(e)
-            if 1 <= e['it'] <= len(b['blocks']):
-                nodes = np.asarray(b['blocks'][e['it'] - 1]['c'])
-                pos.append((max(nodes.min() - ev[3], ev[3] - nodes.max()) / SIG, abs(e['u0'])))
-    if not es:
+            if e['it'] == 0:
+                rows['none (the first entry)'].append((e, None))
+            elif e['it'] <= len(b['blocks']):
+                o = b['blocks'][e['it'] - 1]
+                nodes = np.asarray(o['c'])
+                rows['an optimal block' if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL else 'a non-optimal block'].append(
+                    (e, max(nodes.min() - ev[3], ev[3] - nodes.max()) / SIG))
+    rows['all'] = [x for v in list(rows.values()) for x in v]
+    if not rows['all']:
         return []
-    rel = np.array([abs(e['rate']) / e['rate_max'] for e in es])
-    u0 = np.array([abs(e['u0']) for e in es])
-    top = int(sum(abs(abs(e['rate']) - e['rate_max']) <= 1e-12 * e['rate_max'] for e in es))
-    out = (f"The entries ({len(es)} over the variants that record them): the entrant had the largest current rate |⟨rφ_j⟩| in "
-           f"{top}; its rate over the largest a median {np.median(rel):.2f} (range {rel.min():.3f}–{rel.max():.2f}), its dual |u_j| at the "
-           f"block's start a median {np.median(u0):.3f} (least {u0.min():.3f}): the entrant is the kernel of the least time to the wall, "
-           "(1 − |u_j|)/|⟨rφ_j⟩|, its dual charged during the earlier blocks.")
-    out_ = [d for d, u in pos if d > 0]
-    ins = [u for d, u in pos if d <= 0]
-    if pos:
-        out += (f" Of the {len(pos)} entrants joining a block, {len(out_)} start beyond its outermost node"
-                + (f" (a median {np.median(out_):.2f}σ, range {min(out_):.2f}–{max(out_):.2f}σ, beyond it)" if out_ else '')
-                + f" and {len(ins)} between its nodes" + (f" (their duals at the block's start {', '.join(f'{u:.3f}' for u in ins)})" if ins
-                                                          else '') + '.')
-    return ['', out, '']
+    out = ['', "The entries over the variants that record them, by the block they join: the entrant had the largest current rate "
+           "|⟨rφ_j⟩|; its rate over the largest; its dual |u_j| at the block's start; whether it starts beyond the block's outermost node "
+           "(how far) or between its nodes (their duals). The entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| "
+           "(`sliding_iss`'s rule), its dual charged during the earlier blocks.", '',
+           '| joining | entries | largest rate | rate / largest: median (range) | dual: median (least) | beyond: entrants, median '
+           '(range) | between: entrants (duals) |', '|---|---|---|---|---|---|---|']
+    for name, xs in rows.items():
+        if not xs:
+            continue
+        rel = np.array([abs(e['rate']) / e['rate_max'] for e, d in xs])
+        u0 = np.array([abs(e['u0']) for e, d in xs])
+        top = int(sum(abs(abs(e['rate']) - e['rate_max']) <= 1e-12 * e['rate_max'] for e, d in xs))
+        out_ = [d for e, d in xs if d is not None and d > 0]
+        ins = [abs(e['u0']) for e, d in xs if d is not None and d <= 0]
+        out.append(f"| {name} | {len(xs)} | {top} | {np.median(rel):.2f} ({rel.min():.3f}–{rel.max():.2f}) | {np.median(u0):.3f} "
+                   f"({u0.min():.3f}) | " + (f"{len(out_)}, {np.median(out_):.2f}σ ({min(out_):.2f}–{max(out_):.2f}σ)" if out_ else '—')
+                   + ' | ' + (f"{len(ins)} ({min(ins):.3f}–{max(ins):.3f})" if ins else '—') + ' |')
+    return out + ['']
 
 
 def c_job(args):
@@ -468,9 +534,11 @@ def report(A=None, B=None, C=None, D=None, B2=None):
                f"projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within "
                f"{OPT_TOL:g}. The numerical variants: " + ', '.join(f"{n} (polish step {st:g}σ, grid shifted by {sh:g}, the polish's budget "
                                                                      f"{nf:g} evaluations" + (f", repeated up to {rp} times" if rp else '')
-                                                                     + ')' for n, st, sh, nf, rp in VARIANTS_B)
+                                                                     + (f", its gradient test {gt:g}" if gt is not None else ', no gradient test')
+                                                                     + ')' for n, st, sh, nf, rp, gt in VARIANTS_B)
                + ". 'Relaxed': the block passed the stationarity test. The first non-optimal block's polishes as status/evaluations/accepted "
-               "(status 0: the budget was spent first).", '',
+               f"(status 0: the budget was spent first; 1: the gradient test). 'none': every block optimal, to the path's cap of {K_B} kernels "
+               "(the range censored).", '',
                '| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum\'s error, block / optimum, relaxed | its '
                'polishes | '
                'relaxed blocks | chunks redone (stall, failure), failed | polish rejected | exits |', '|---|---|---|---|---|---|---|---|---|']
@@ -488,9 +556,12 @@ def report(A=None, B=None, C=None, D=None, B2=None):
                           f"{b['rejected']} | {sum(e[2] == 'exit' for e in b['events'])} |")
         ok = [o['e_opt'] for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL]
         no = [o for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL]
+        vac = [o['e'] for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL and o['relaxed']
+               and cs_vacuous(b['r'], b['var'], o)]
         L_ += ['', f"Over every width and variant: the optimal blocks' optimum errors down to {min(ok):.2e}; the non-optimal blocks' "
                + (f"from {max(o['e_opt'] for o in no):.2e} down ({sum(not o['relaxed'] for o in no)} of {len(no)} failed the stationarity "
-                  "test); "
+                  "test" + (f"; {len(vac)} of those that passed it pass it at any state by Cauchy–Schwarz, the test being absolute — their "
+                            f"errors up to {max(vac):.1e}" if vac else '') + "); "
                   f"non-optimal blocks with an optimum above 10⁻⁷: {sum(o['e_opt'] > 1e-7 for o in no)}; the non-optimal blocks' errors "
                   f"{min(o['e'] for o in no):.2e} … {max(o['e'] for o in no):.2e}." if no else "none."), '']
         L_ += b2_line(B2)
@@ -522,12 +593,12 @@ def report(A=None, B=None, C=None, D=None, B2=None):
               "bias–variance prediction (e_K²‖f*‖²_N + 2Ks²/N)^{1/2} — e_K the noiseless optimum's error with K kernels (B's base path "
               f"at τ/σ = {TAU_C:g}) — and over the discrepancy rule's bound s((1 + δ)² − 1 + 4K/N)^{{1/2}}; paths with a runaway kernel "
               "before the stop:", '', '| s | error / oracle: median [range] | / bias–variance | / bound: max | runaway |', '|---|---|---|---|---|']
-        L3 = ['', "The stop as a margin (`stop_law`): the first-term formula's K(s) (the root of K = log((1 − t²)^{1/4}(πK)^{1/4}‖f*‖_N/"
-              "(s(2δ + δ²)^{1/2}))/log(1/t), whose ceiling is the predicted stop), and the probability of the stop at each K — the rms's "
+        L3 = ['', "The stop as a margin (`stop_law`): the first-term formula's root K*(s) of K = log((1 − t²)^{1/4}(πK)^{1/4}‖f*‖_N/"
+              "(s(2δ + δ²)^{1/2}))/log(1/t), whose ceiling is the predicted stop, and the probability of the stop at each K — the rms's "
               "expectation s(b_K² + 1 − 2K/N)^{1/2} and its scatter from the noise's chi-square and its cross term with the bias, "
               "b_K = e_K‖f*‖_N/s, e_K the half-squeeze rule's error, in the normal approximation (the rms falls along the path) —; the "
               "expected number of the draws stopping at the predicted K against the observed:", '',
-              '| s | K(s) | P(stop at K) | at the predicted K | expected | observed |', '|---|---|---|---|---|---|']
+              '| s | K*(s) | P(stop at K) | at the predicted K | expected | observed |', '|---|---|---|---|---|---|']
         for s in LEVELS_C:
             ds = [d for d in C if d['s'] == s]
             if not ds:
@@ -591,9 +662,11 @@ def main():
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
     parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else set(keys)
+    idx = ({int(i) for i in sys.argv[sys.argv.index('--variants') + 1].split(',')} if '--variants' in sys.argv else None)
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('D', part_D), ('B2', lambda: part_B2(res['B']))):
+    run_B = (lambda: part_B()) if idx is None else (lambda: merge_B(res.get('B'), part_B(idx)))
+    for k, fn in (('A', part_A), ('B', run_B), ('C', part_C), ('D', part_D), ('B2', lambda: part_B2(res['B']))):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

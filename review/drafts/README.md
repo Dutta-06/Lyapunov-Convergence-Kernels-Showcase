@@ -14,6 +14,6 @@ round is applied and its numbers are final.
 | `D54.md` | D‴.54: the transit in ℝⁿ | round 62 (D3bi) report in, to be applied |
 | `D56.md` | D‴.56: the transit under measurement noise | round 45 (D3ar) being applied; Part E rerunning |
 | `D57.md` | D‴.57: the transit's dead zone — the energy dead zone freezes the last block, the formation dead zone is the discrepancy principle; in the closed loop neither keeps the kernels in the window | round 50 (D3aw) applied, numerics final; a referee round on the revision next |
-| `D58.md` | D‴.58: the transit under width mismatch — wider features as kernel quadratures | round 60 (D3bg) being applied; B's sixth variant (no gradient test) and B2 rerunning |
+| `D58.md` | D‴.58: the transit under width mismatch — wider features as kernel quadratures | round 60 (D3bg) applied — the optimal ranges the polish's solver's (a sixth variant without its gradient test), B2 above the floor, the entries by regime —, numerics final; a referee round on the revision next |
 | `D59.md` | D‴.59: the transit with moving widths | round 61 (D3bh) being applied; A–D, F, G, H and the new H2, H3, HL queued |
 | `D60.md` | D‴.60: the formed kernels' adaptation resonance under measurement noise | round 63 (D3bj) report in, to be applied |

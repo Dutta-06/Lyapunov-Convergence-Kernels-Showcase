@@ -114,10 +114,9 @@ def test_the_report_on_synthetic_results():
                        dict(it=1, j=11, u0=0.9, rate=0.1, rate_max=0.4, t_wall=1.0, t_min=1.0)]
     md = WM.report(B=B)
     assert '| 2, 1.00e-03, 1.002, False | 0/5000/a 1/12/r | 1/2 |' in md                 # the first non-optimal block's polishes (round 54)
-    assert ('the entrant had the largest current rate |⟨rφ_j⟩| in 1; its rate over the largest a median 0.62 (range 0.250–1.00), its '
-            'dual |u_j| at the block\'s start a median 0.450 (least 0.000)') in md
-    assert ('Of the 1 entrants joining a block, 1 start beyond its outermost node (a median 0.58σ, range 0.58–0.58σ, beyond it) and 0 '
-            'between its nodes.') in md
+    assert '| none (the first entry) | 1 | 1 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |' in md       # the entries by regime (round 60)
+    assert '| an optimal block | 1 | 0 | 0.25 (0.250–0.25) | 0.900 (0.900) | 1, 0.58σ (0.58–0.58σ) | — |' in md
+    assert '| all | 2 | 1 | 0.62 (0.250–1.00) | 0.450 (0.000) | 1, 0.58σ (0.58–0.58σ) | — |' in md and '| a non-optimal block |' not in md
     x = dict(e_hs=1.0, e_best=0.5, e_opt=0.4)
     assert WM.gap_share(x) == '83.3%' and WM.gap_share(dict(x, e_opt=0.6)) == '100.0%, optimum unconverged'
     assert WM.gap_share(dict(x, e_opt=0.5 * (1 + 1e-12))) == '100.0%'                 # within UNCONV: not flagged
@@ -251,14 +250,141 @@ def test_the_stop_law():
 
 
 def test_b2_variable_projection_from_the_blocks():
-    """B2 (round 54): from the half-squeeze nodes themselves both starts reach one optimum; the summary counts the blocks in the optimum's
-    basin overall and each path's first non-optimal block (B2 in the paths' order)."""
+    """B2 (rounds 54 and 60): from the half-squeeze nodes themselves both starts reach one optimum, at the block's own nodes; the summary
+    counts the blocks in the optimum's basin only where the optimum is at least E_FLOOR (below it the solve stops short), the misses
+    within 1% (in its basin, unconverged) apart from the far ones with their nodes' distance, and each path's first non-optimal block —
+    a path being a width and a variant (B2 in the paths' order)."""
+    from src.core import rich_transit as RT
     yh, _ = WM.W.half_squeeze(2, WM.SIG, WM.sigma_star(1.0))
-    q = WM.b2_job((1.0, 'base', 2, WM.C_B + np.sort(yh)))
+    c = WM.C_B + np.sort(yh)
+    q = WM.b2_job((1.0, 'base', 2, c))
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(1.0) ** 2))
     assert abs(q['e_block'] / q['e_rule'] - 1) < 1e-9 and 0 < q['e_rule'] < 0.1
-    B2 = [dict(r=1.0, var='base', k=10, e_block=1.0, e_rule=1.0), dict(r=1.0, var='base', k=11, e_block=5.0, e_rule=1.0),
-          dict(r=0.5, var='base', k=6, e_block=3.0, e_rule=1.0)]
-    line = WM.b2_line(B2)[0]
-    assert line == ("Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 1 of 3; in the others it "
-                    "ends 3–5 times above it. From the first non-optimal block of each path: 1 of 2 (the others 3 times above it).")
+    assert q['dc'] == float(np.abs(c - WM.sample_fit(RT.Bumps(WM.X_B, WM.SIG).phi, f, c)[0]).max()) and 0 < q['dc'] < 0.01 * WM.SIG
+    assert 1 < q['cond_vp'] < q['cond_joint'] < 1e12
+    B2 = [dict(r=1.0, var='base', k=10, e_block=1e-6, e_rule=1.5e-6, dc=0.0),
+          dict(r=1.0, var='base', k=11, e_block=1.005e-6, e_rule=1e-6, dc=0.001),
+          dict(r=1.0, var='grid +0.05', k=10, e_block=3e-6, e_rule=1e-6, dc=0.3),
+          dict(r=0.5, var='base', k=8, e_block=5e-12, e_rule=1e-12, dc=0.2),
+          dict(r=0.5, var='base', k=9, e_block=2e-11, e_rule=2e-11, dc=0.0),
+          dict(r=0.5, var='polish 2σ', k=8, e_block=4e-6 * (1 + 1e-4), e_rule=4e-6, dc=0.0)]
+    assert WM.b2_line(B2)[0] == (
+        "Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 2 of the 4 blocks whose "
+        "optimum is at least 1e-10; 1 ends within 1% of it (1.005 times: in its basin, unconverged); 1 ends 3 times above it, the "
+        "block's nodes up to 2.50σ from the optimum's. The 2 blocks with an optimum below 1e-10, where the solve stops short of the "
+        "optimum (A), are not counted (1 reached). From the first non-optimal block of each path: 2 of 3 (the others 3 times above it); on "
+        "1 path the first non-optimal block's optimum is below 1e-10.")
     assert WM.b2_line(None) == []
+    for q, (cj, cv) in zip(B2, ((1e7, 1e4), (2e7, 2e4), (4e8, 3e5), (9e9, 9e9), (9e9, 9e9), (5e7, 2e5))):
+        q.update(cond_joint=cj, cond_vp=cv)
+    assert WM.b2_line(B2)[0].endswith(" There the Jacobian's condition number is 1e+07–4e+08 for the joint fit in (w, c), 1e+04–3e+05 "
+                                      "for variable projection's in c alone.")          # the first blocks above the floor
+
+
+def test_the_entries_by_the_block_they_join():
+    """Referee round 60: `entry_lines` apart by regime — the first entry, entries joining an optimal block and a non-optimal one — on
+    asymmetric data: the largest rate exactly (a rate 0.95 of it is not), medians (not means), beyond the outermost node at any distance
+    (0.3σ is beyond) and between the nodes with the duals."""
+    blk = lambda k, opt, c: dict(k=k, tau=float(k), c=np.array(c), w=np.full(k, 0.1), e=1e-3 * (1 + (5e-4 if opt else 5e-3)), e_opt=1e-3,
+                                 c_opt=None, relaxed=True, dc=0.0, dc_hs=0.0, e_hs=1e-3)
+    B = [dict(r=1.0, var='base', blocks=[blk(1, True, [0.0]), blk(2, False, [-0.1, 0.1]), blk(3, True, [-0.2, 0.0, 0.2]),
+                                         blk(4, True, [-0.3, -0.1, 0.1, 0.3])],
+              events=[(1.0, 10, 'enter', 0.0), (2.0, 11, 'enter', 0.036), (3.0, 12, 'enter', 0.05), (4.0, 13, 'enter', 0.5),
+                      (5.0, 14, 'enter', 0.42)],
+              entries=[dict(it=0, j=10, u0=0.0, rate=0.5, rate_max=0.5), dict(it=1, j=11, u0=0.7, rate=0.38, rate_max=0.4),
+                       dict(it=2, j=12, u0=0.97, rate=0.1, rate_max=0.4), dict(it=3, j=13, u0=-0.1, rate=-0.2, rate_max=0.2),
+                       dict(it=4, j=14, u0=0.9, rate=0.08, rate_max=0.4)])]
+    md = '\n'.join(WM.entry_lines(B))
+    assert '| none (the first entry) | 1 | 1 | 1.00 (1.000–1.00) | 0.000 (0.000) | — | — |' in md
+    assert '| an optimal block | 3 | 1 | 0.95 (0.200–1.00) | 0.700 (0.100) | 3, 1.00σ (0.30–2.50σ) | — |' in md
+    assert '| a non-optimal block | 1 | 0 | 0.25 (0.250–0.25) | 0.970 (0.970) | — | 1 (0.970–0.970) |' in md
+    assert '| all | 5 | 2 | 0.95 (0.200–1.00) | 0.700 (0.000) | 3, 1.00σ (0.30–2.50σ) | 1 (0.970–0.970) |' in md
+    assert WM.entry_lines([dict(B[0], entries=None)]) == []
+
+
+def test_the_stop_laws_moments_are_the_projections():
+    """Referee round 60: `stop_law`'s probabilities are the normal law of rms²/s² with the mean b_K² + 1 − 2K/N and the sd
+    (2(N − 2K)/N² + 4b_K²/N)^{1/2}, b_K = e_K‖f*‖_N/s (recomputed here from the half-squeeze errors); and these are the exact first two
+    moments of |R(f + ξ)|²/(Ns²), R the projection off a 2K-dimensional subspace and Rf of rms b_Ks (Monte Carlo, 4·10⁴ draws)."""
+    from scipy.stats import norm
+    ss = WM.sigma_star(WM.TAU_C)
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * ss ** 2))
+    rf, N = float(np.sqrt(np.mean(f ** 2))), WM.X_B.size
+    for s in WM.LEVELS_C:
+        cdf = [0.0]
+        for K in range(1, 13):
+            b2 = (W.l2_error(*W.half_squeeze(K, WM.SIG, ss), WM.SIG, ss) * rf / s) ** 2
+            cdf.append(norm.cdf(((1 + WM.DELTA) ** 2 - b2 - 1 + 2 * K / N) / np.sqrt(2 * (N - 2 * K) / N ** 2 + 4 * b2 / N)))
+        P = WM.stop_law(s, rf, N)[1]
+        assert max(abs(P[K] - (cdf[K] - cdf[K - 1])) for K in range(1, 13)) < 1e-12
+    rng = np.random.default_rng(0)
+    K, b, s = 4, 0.7, 1.0
+    Q = np.linalg.qr(rng.standard_normal((N, 2 * K)))[0]
+    bias = rng.standard_normal(N)
+    bias -= Q @ (Q.T @ bias)
+    bias *= b * s * np.sqrt(N) / np.linalg.norm(bias)
+    xi = rng.standard_normal((40000, N)) * s
+    res = bias[None, :] + xi - (xi @ Q) @ Q.T
+    m = np.sum(res ** 2, axis=1) / (N * s ** 2)
+    assert abs(m.mean() - (b * b + 1 - 2 * K / N)) < 4 * m.std() / np.sqrt(m.size)
+    assert abs(m.std() / np.sqrt(2 * (N - 2 * K) / N ** 2 + 4 * b * b / N) - 1) < 0.02
+
+
+def test_the_stationarity_test_holds_by_cauchy_schwarz_below_an_error():
+    """Referee round 60: `cs_vacuous` — a block passes the path's absolute stationarity test at any state once its rms error times the
+    largest of rms(φ_i) and |w_i|·rms(∂_cφ_i) is at most 10⁻⁹·max_j|⟨f*φ_j⟩| over the starting grid (shifted in 'grid +0.05')."""
+    from src.core import rich_transit as RT
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    o = dict(c=np.array([WM.C_B - 0.05, WM.C_B + 0.05]), w=np.array([0.5, 0.4]))
+    lim = max(np.sqrt(np.mean(K.phi(o['c']) ** 2, axis=0)).max(), (o['w'] * np.sqrt(np.mean(K.dphi(o['c']) ** 2, axis=0))).max())
+    for r_ in (0.5, 2.0):
+        f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(r_) ** 2))
+        rf = float(np.sqrt(np.mean(f ** 2)))
+        for var, sh in (('base', 0.0), ('grid +0.05', 0.05)):
+            e_ = 1e-9 * float(np.abs(K.phi(np.linspace(-1, 1, 21) + sh).T @ f).max()) / WM.X_B.size / (rf * lim)
+            assert WM.cs_vacuous(r_, var, dict(o, e=0.999 * e_)) and not WM.cs_vacuous(r_, var, dict(o, e=1.001 * e_))
+
+
+def test_the_summary_counts_the_vacuous_stationarity_tests():
+    """Referee round 60: B's summary counts the relaxed non-optimal blocks whose stationarity test holds at any state."""
+    blk = lambda k, e, q: dict(k=k, tau=float(k), c=WM.C_B + 0.1 * np.arange(k), w=np.full(k, 0.8 / k), e=e * q, e_opt=e, c_opt=None,
+                               relaxed=True, dc=0.0, dc_hs=0.0, e_hs=e)
+    B = [dict(r=1.0, var='base', blocks=[blk(1, 1e-2, 1.0001), blk(2, 1e-14, 1.5), blk(3, 1e-6, 1.5), blk(4, 1e-7, 1.5)], events=[],
+              relaxed=[True] * 4, stiff=0, redone=0, failed=0, rejected=0)]
+    assert ("(0 of 3 failed the stationarity test; 1 of those that passed it pass it at any state by Cauchy–Schwarz, the test being "
+            "absolute — their errors up to 1.5e-14)") in WM.report(B=B)
+
+
+def test_merge_b_replaces_and_orders_the_paths():
+    """Round 60's `--variants`: the new paths replace the raw's of the same width and variant, the others are kept, in the order of
+    VARIANTS_B, then TAUS_B."""
+    v5 = WM.VARIANTS_B[5][0]
+    old = np.array([dict(r=1.0, var=v5, x=0), dict(r=0.5, var='base', x=0), dict(r=0.25, var=v5, x=0)], dtype=object)
+    m = WM.merge_B(old, [dict(r=2.0, var=v5, x=1), dict(r=1.0, var=v5, x=1)])
+    assert [(b['r'], b['var'], b['x']) for b in m] == [(0.5, 'base', 0), (0.25, v5, 0), (1.0, v5, 1), (2.0, v5, 1)]
+    assert [(b['r'], b['x']) for b in WM.merge_B(None, [dict(r=2.0, var=v5, x=1)])] == [(2.0, 1)]
+    assert v5 == 'polish 2σ, 5·10⁴, repeated, no gradient test' and WM.VARIANTS_B[5][5] is None
+    assert all(v[5] == 1e-15 for v in WM.VARIANTS_B[:5])
+
+
+def test_b_paths_reproduce_the_raw():
+    """Referee round 60: `b_job` reproduces the committed raw on B's two fastest paths at τ/σ = 2 — the base variant (rejected first
+    polishes) and the repeated one (rejected repeats): the events, the blocks' kernels, errors and optima, the polish logs, the counts
+    and the entries."""
+    import exp_cohesion_leak as E
+    raw = E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'width_mismatch_raw.npz'))
+    for var in ('base', 'polish 2σ, 5·10⁴, repeated'):
+        ref = next(b for b in raw['B'] if b['r'] == 2.0 and b['var'] == var)
+        b = WM.b_job((2.0, var))
+        assert [(j, k) for t, j, k, c in b['events']] == [(j, k) for t, j, k, c in ref['events']]
+        assert np.allclose([e[0] for e in b['events']], [e[0] for e in ref['events']], rtol=1e-9, atol=0)
+        assert [o['k'] for o in b['blocks']] == [o['k'] for o in ref['blocks']]
+        for key in ('e', 'e_opt'):
+            assert np.allclose([o[key] for o in b['blocks']], [o[key] for o in ref['blocks']], rtol=1e-9, atol=0)
+        log = lambda x: [[(p['status'], p['nfev'], p['accepted']) for p in o['polish']] for o in x['blocks']]
+        assert log(b) == log(ref) and any(p for o in b['blocks'] for p in o['polish'])
+        assert [b[k] for k in ('rejected', 'stiff', 'redone', 'failed')] == [ref[k] for k in ('rejected', 'stiff', 'redone', 'failed')]
+        assert [e['j'] for e in b['entries']] == [e['j'] for e in ref['entries']]
+        assert max(abs(e['u0'] - f_['u0']) + abs(e['rate'] / f_['rate'] - 1) for e, f_ in zip(b['entries'], ref['entries'])) < 1e-9
+    assert ref['rejected'] == 0 and any('e0' in p for o in ref['blocks'] for p in o['polish'])
+    assert next(b for b in raw['B'] if b['r'] == 2.0 and b['var'] == 'base')['rejected'] == 13

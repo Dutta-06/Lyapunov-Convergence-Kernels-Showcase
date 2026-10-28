@@ -342,6 +342,7 @@ def test_a_failed_chunk_leaves_its_block_unrelaxed_without_exits(monkeypatch):
                 monkeypatch.setattr(RT, 'relax_chunk', failing(at))
                 R = path(kkt)
                 assert R['solver_failed'] == 1 and False in R['relaxed'] and calls[0] > at
+                assert (R['stiff_redone'], R['solver_redone']) == (0, 0)             # a failure is not a redo (round 60)
                 tf = R['hist'][R['relaxed'].index(False) + 1][0]                     # the failed block's τ (the path goes on)
                 assert not any(e[2] == 'exit' and e[0] == tf for e in R['events'])
     monkeypatch.setattr(RT, 'relax_chunk', real)
@@ -420,3 +421,115 @@ def test_the_path_applies_the_exit_rule_to_its_relaxed_block(monkeypatch):
             assert R['events'][0][1:3] == (5, 'enter') and R['relaxed'] == [True]
             ex = [e for e in R['events'] if e[2] == 'exit']
             assert ex == ([] if kkt and kept else [(R['events'][0][0], 5, 'exit', cx)])
+
+
+def _wide_path(r_, **kw):
+    """D‴.58's wide feature 0.8φ_σ*(· − 0.03), σ* = σ(1 + (τ/σ)²)^{1/2}, on its 321 samples, from D‴.48's grid (polished, KKT exits)."""
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'experiments'))
+    import exp_transit_mass as T
+    L_, _, c0 = T.setup()
+    xs = np.linspace(-1.6, 1.6, 321)
+    Kw = RT.Bumps(xs, 0.12)
+    f = 0.8 * np.exp(-(xs - 0.03) ** 2 / (2 * 0.0144 * (1 + r_ ** 2)))
+    return RT.sliding_iss(L_, Kw, f, c0, np.ones(c0.size), polish=True, max_events=20, tol=0.0, max_doublings=24, exit_kkt=True, **kw)
+
+
+def test_the_polish_budget_gradient_test_and_repolish(monkeypatch):
+    """Referees' rounds 54 and 60, on D‴.58's wide feature (τ/σ = ½), with a loose stationarity test so that blocks pass it unpolished:
+    the path hands its polish_nfev and polish_gtol (None: no gradient test) to every polish, the first and the repeated, and no solve
+    spends more; a repeated polish is accepted only if it lowers the fit's rms by more than a relative 10⁻⁹, at most `repolish` times a
+    block, and after one the flow resumes for as long as the block has run — every chunk the block's elapsed time; repolish = 0 repeats
+    none."""
+    real_p, real_c = RT.polish_block, RT.relax_chunk
+    kws, chunks = [], []
+
+    def pb(*a, **kw):
+        kws.append((kw['max_nfev'], kw['gtol']))
+        return real_p(*a, **kw)
+
+    def rc(rhs, z, chunk, **kw):
+        chunks.append((z.size, chunk))
+        return real_c(rhs, z, chunk, **kw)
+    monkeypatch.setattr(RT, 'polish_block', pb)
+    monkeypatch.setattr(RT, 'relax_chunk', rc)
+    R = _wide_path(0.5, max_entries=3, polish_step=2.0, polish_nfev=3, repolish=3, gtol=1e-2, polish_gtol=None)
+    assert kws and set(kws) == {(3, None)} and all(p['nfev'] <= 3 for pl in R['polish_log'] for p in pl)
+    assert [e[2] for e in R['events']] == ['enter'] * 3                              # no exits: the blocks' sizes tell them apart
+    rep = [[p for p in pl if 'e0' in p] for pl in R['polish_log']]
+    assert all(len(x) <= 3 for x in rep) and sum(p['accepted'] for x in rep for p in x) >= 2
+    assert all(p['e1'] < p['e0'] * (1 - 1e-9) for x in rep for p in x if p['accepted'])
+    blocks = [[c for n, c in chunks if n == m] for m in sorted({n for n, c in chunks})]
+    assert max(len(b) for b in blocks) >= 4
+    for b in blocks:                                                                  # t_fast, then the elapsed time each chunk
+        assert b[0] == 1e5 and all(b[k] == sum(b[:k]) for k in range(1, len(b)))
+    kws.clear()
+    R0 = _wide_path(0.5, max_entries=3, polish_step=2.0, polish_nfev=3, repolish=0, gtol=1e-2)
+    assert set(kws) == {(3, 1e-15)} and not any('e0' in p for pl in R0['polish_log'] for p in pl)
+
+
+def test_a_non_improving_repolish_changes_nothing(monkeypatch):
+    """Referee round 60: with a polish that returns its start, every block that passes the stationarity test is polished once more,
+    the repeat is rejected (its rms exactly its start's) and the block ends there — the path equals the one without repeats."""
+    monkeypatch.setattr(RT, 'polish_block', lambda K_, f_, w, c, s, **kw: (w.copy(), c.copy(), dict(status=1, nfev=1)))
+    R3 = RT.sliding_iss(L, K, FSTAR, C0, np.ones(D), polish=True, repolish=3)
+    R0 = RT.sliding_iss(L, K, FSTAR, C0, np.ones(D), polish=True, repolish=0)
+    for pl, ok in zip(R3['polish_log'], R3['relaxed']):
+        rep = [p for p in pl if 'e0' in p]
+        assert len(rep) == ok and all(not p['accepted'] and p['e1'] == p['e0'] for p in rep)
+    assert R3['events'] == R0['events'] and np.array_equal(R3['w'], R0['w']) and np.array_equal(R3['c'], R0['c'])
+    assert not any('e0' in p for pl in R0['polish_log'] for p in pl)
+
+
+def test_the_polish_log_and_the_rejection_count():
+    """Referee round 60: the log's first polishes (status, evaluations, accepted) — their rejections are the path's 'polish_rejected',
+    each followed by another try, the block's last first polish accepted where the block was polished."""
+    R = _wide_path(1.0, max_entries=4, polish_step=0.1)
+    first = [[p for p in pl if 'e0' not in p] for pl in R['polish_log']]
+    assert R['polish_rejected'] == sum(not p['accepted'] for x in first for p in x) >= 3
+    assert all(x[-1]['accepted'] and all(not p['accepted'] for p in x[:-1]) for x in first if x)
+    assert all(p['status'] in (0, 1, 2, 3, 4) and 1 <= p['nfev'] <= 5000 for x in first for p in x)
+
+
+def test_polish_block_gradient_test():
+    """Referee round 60: `polish_block`'s gtol is TRF's absolute gradient test — a loose one (10³) stops the solve at its start (status 1,
+    one evaluation); None disables it, and the solve ends on its step or decrease tests (status 2–4) at the exact fit."""
+    w0, c0_, s = np.array([0.5, -0.4, 0.6]), np.array([-0.5, 0.1, 0.6]), np.array([1, -1, 1])
+    w, c, info = RT.polish_block(K, FSTAR, w0, c0_, s, info=True, gtol=1e3)
+    assert info == dict(status=1, nfev=1) and np.array_equal(c, c0_)
+    w, c, info = RT.polish_block(K, FSTAR, w0, c0_, s, info=True, gtol=None)
+    assert info['status'] in (2, 3, 4) and np.abs(c - CSTAR).max() < 1e-12 and np.abs(w - ASTAR).max() < 1e-12
+
+
+def test_entry_info_is_the_duals_rebuilt_from_the_path():
+    """Referee round 60: `sliding_iss`'s entry_info against the duals rebuilt from the path's states — u_j the sum over the earlier
+    iterations i of (τ_{i+1} − τ_i)⟨r_iφ_j⟩ (r_i the residual of hist[i]; every entrant inactive until its entry), its rate ⟨rφ_j⟩, the
+    largest rate over the inactive kernels alone, its time to the wall (1 − sign(v_j)u_j)/|v_j|, the least — on D‴.58's wide feature
+    (polished), on the three bumps (a negative dual) and on them with a loose stationarity test (blocks whose own correlations exceed
+    every inactive rate)."""
+    xs = np.linspace(-1.6, 1.6, 321)
+    Kw = RT.Bumps(xs, 0.12)
+    fw = 0.8 * np.exp(-(xs - 0.03) ** 2 / (2 * 0.0144 * 1.25))
+    paths = ((_wide_path(0.5, max_entries=5, polish_step=2.0), Kw, fw, 5),
+             (RT.sliding_iss(L, K, FSTAR, C0, np.ones(D)), K, FSTAR, 3),
+             (RT.sliding_iss(L, K, FSTAR, C0, np.ones(D), gtol=0.3, t_fast=100.0, max_events=6), K, FSTAR, 6))
+    over = 0
+    for R, Kp, f, n in paths:
+        assert [e[2] for e in R['events']] == ['enter'] * n and len(R['entry_info']) == n
+        vs = []
+        for tau, c, w, rms in R['hist']:
+            v = Kp.phi(c).T @ (f - Kp.phi(c) @ w) / Kp.xs.size
+            vs.append((v, w == 0))
+            over += bool((w != 0).any()) and np.abs(v[w != 0]).max() > np.abs(v[w == 0]).max()
+        taus = [h[0] for h in R['hist']]
+        for e in R['entry_info']:
+            i, j = e['it'], e['j']
+            u = sum((taus[k + 1] - taus[k]) * vs[k][0][j] for k in range(i))
+            v, ina = vs[i]
+            sc = np.abs(v).max()
+            assert ina[j] and abs(e['u0'] - u) <= 1e-9 * max(1.0, abs(u)) and abs(e['rate'] - v[j]) <= 1e-12 * sc
+            assert abs(e['rate_max'] - np.abs(v[ina]).max()) <= 1e-12 * sc
+            assert abs(e['t_wall'] - (1 - np.sign(v[j]) * e['u0']) / abs(v[j])) <= 1e-9 * e['t_wall'] <= 1e-9 * e['t_min'] * (1 + 1e-9)
+        assert sum(abs(e['u0']) > 0.1 for e in R['entry_info']) >= 2                  # later entrants' duals charged before they enter
+    assert min(e['u0'] for R, Kp, f, n in paths[1:2] for e in R['entry_info']) < -0.5 and over >= 2
