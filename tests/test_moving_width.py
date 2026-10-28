@@ -66,3 +66,37 @@ def test_a_narrow_feature_is_formed_by_one_kernel_with_moving_widths():
     Rf = RN.sliding_iss_nd(L, RN.BumpsND(M.XS[:, None], M.S0), f, M.C0[:, None], np.ones(M.C0.size), max_events=40,
                            max_entries=M.MAX_ENT_FIXED, exit_kkt=True, max_rhs=50_000)
     assert Rf['out_of_budget'] and not M.match(Rf, [M.C_A], [ss], [M.A_A])['exact']
+
+
+def test_part_b_gradient_check_is_well_conditioned():
+    """Part B checks the closed-form gradient against differences of the overlap term alone: in the far tail (c = 6.25σ*, where the
+    gradient is ~10⁻¹⁵ and differences of J are swamped by its constant) the relative error stays at the differences' own level."""
+    import exp_moving_width as M
+    B = M.part_B()
+    assert max(r['grad_err'] for r in B) < 1e-5
+    assert all(len(r['minima']) == 1 and abs(r['minima'][0][0]) < 1e-12 for r in B)
+
+
+def test_outcome_classes_and_pairs():
+    """`pairs_of` finds kernels at one (c, σ) within PAIR_TOL of their width; `outcome` sorts a path's end into exact (idle entrants
+    allowed), a coinciding pair, stopped by the budget, or not fitted."""
+    import exp_moving_width as M
+    th = [[0.35001, 0.2731707], [0.35097, 0.2731707], [-0.6, 0.08], [0.2, 0.1]]
+    assert M.pairs_of(th, [0.33, 0.44, 0.6, -0.8]) == [(0.33, 0.44)] and M.pairs_of(th[2:], [0.6, -0.8]) == []
+    As = [0.77, 0.6, -0.8]
+    base = dict(rms=1e-13, err=[1e-9, 1e-9, 1e-9], oob=False)
+    assert M.outcome(dict(base, theta=th[1:], w=[0.77, 0.6, -0.8]), As) == 'exact'
+    assert M.outcome(dict(base, theta=th + [[0.9, 0.1]], w=[0.33, 0.44, 0.6, -0.8, 1e-6]), As) == 'coinciding pair'
+    assert M.outcome(dict(base, theta=th[1:], w=[0.77, 0.6, -0.8], oob=True), As) == 'stopped by the budget'
+    assert M.outcome(dict(base, theta=th[1:], w=[0.77, 0.6, -0.8], rms=0.2), As) == 'not fitted'
+
+
+def test_the_g_report():
+    """G's table: the stalled block's largest |w| and the opposite-sign pair's distance per s, the loop's formed kernels and pairs."""
+    import exp_moving_width as M
+    flow = [dict(s=s, wmax=w, sep=d, rms=0.123) for s, w, d in zip(M.S_G, (0.9, 4.6, 20.0, 92.0, 425.0), (5.9, 0.29, 0.062, 0.013, 0.0029))]
+    G = [dict(dmin=0.4, q=9, entries=2, flow=flow, status=0,
+              loops=[dict(eps=1e-6, formed=4, pairs=[(4.5, -3.96)], wmax=5.33, rms=2e-10)])]
+    md = M.report(G=G)
+    assert '| 0.4 | 9 | 2 | 0.9, 4.6, 20, 92, 425 | 5.90e+00, 2.90e-01, 6.20e-02, 1.30e-02, 2.90e-03 | 1.23e-01 |' in md
+    assert 'ε = 1e-06: 4, +4.500/-3.960, 5.33, 2.0e-10 |' in md
