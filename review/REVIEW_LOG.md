@@ -2325,3 +2325,50 @@ the event it is used to explain. The controls that separate the two cost one run
 band moved above the resonance, intermediate m. They turned a design rule into a condition that removes the resonance but not the
 ejection. And a period mean over a periodic orbit is a Floquet sum: each tone's contribution rotates by ω_kT, so commensurability, not the
 slowness of a beat, decides whether it averages out.
+
+## Round 50 (adversarial review of Proposition D‴.57, the transit's dead zone, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3aw: Proposition D‴.57 with its code and results at 502c522
+(`review/REVIEW_round50_D3aw.md`). The referee:
+- regenerated the md (byte for byte) and checked every χ² number with mpmath (P(late) = 0.046085, m_c = 53.82663, the ratio 2.08100);
+- reran all 1200 draws of Part A with the entry order and the vectors u, f̂_K, f̂_c recorded, decomposed u on the fit's tangent basis and
+  linearised the fast flow at each noiseless block;
+- reran B's two worst draws at rtol 10⁻⁹ and 10⁻¹¹, comparing the fits themselves;
+- reran C with a dense record (the filtered energy, the entry times, the trajectories), at another seed, other thresholds, with the
+  control's f̂ at the true state and the adaptation driven by the true error, and at s = 0.01 to τ = 800;
+- ran three mutants and searched the literature (memory where pages would not load).
+
+**Verdicts (D3aw).** (i) holds in the sliding limit on fixed data, close to tautologically, and Part A does not simulate gate (b);
+(ii)'s identity is exact at first order and its law right for a fixed entry order, but the cross term's mean is not zero when the order
+swaps (correlation −0.32 to −0.41 on those draws), the slowest-mode step is not the mechanism (u is the last entrant's amplitude
+deficit, δw ≈ 1.76s), and "about twice the oracle" is a coincidence of N/K ≈ 20 and δ = 0.1 — the ratio grows like (Nδ/K)^{1/2}; (iii)
+holds for sharp gates on fixed data; (iv)'s failure is real but misdescribed — the gates chatter, the twelve "formed kernels" are an
+eject-and-replace cycle on two features, nothing supports "fits the noise at the edge", and the negative result was overgeneralised
+from one level, one regressor and one gate setting; C's numbers were single snapshots; three mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3aw-1 | major | "u's direction is one per target, falling with s" | Part A compares u only within one last entrant (the reference left out): \|cos\| ≥ 0.9996, 0.9954, 0.9388 (medians 1.0000, 0.9998, 0.9973); the falling median was order swaps |
+| D3aw-2 | major | The cross term assumes the order fixed | (ii) and Status: given the noiseless entry order; Part A splits kept and swapped orders (`classify`): kept 1.016, 0.978, 0.957 of the prediction, swapped 1.53, 1.05, 1.24 with correlations −0.32, −0.03, −0.17; the o(s²) not uniform in the order's margins |
+| D3aw-3 | major | "About twice the oracle" | title and (ii): the ratio (2 + N(2δ + δ²)/(2K))^{1/2}; A3 on N = 61, 181, 541, 1621: 2.08, 2.85, 4.76, 7.71 against 2.08, 2.91, 4.58, 7.66; the energy dead zone inconsistent in N, the shortfall δw = 1.80–1.43s not shrinking |
+| D3aw-4 | major | C's "gate closed at τ" a coarse sample | dense C: the gate's shut and fully open shares, first closing and last reopening (x_m, s = 0.02: formation gate shut 0.11, fully open 0.72; energy gate 0.54, 0.30) |
+| D3aw-5 | major | The mechanism misdescribed | (iv): an eject-and-replace cycle on the features at −0.52 and 0.61 (C's timelines); the variants: the true error in the adaptation 8 formed, 6 ejected; the centres boxed: every kernel inside at the end; Part D from the fitted state: kernels leave only at λ ≥ 1 within 300 periods, none under WFR to s = 0.16; the ejection is D‴.60's first passage |
+| D3aw-6 | major | The negative result overgeneralised | title and (iv) restricted: 16 tones of rms 0.02 at x_m, 0.01 and 0.02 at x̃, the paradigm's metric, the gates at 1.2s/1.5s; at x_m, s = 0.01 every adaptation keeps 3 kernels; the energy gate at 2.0s/2.5s forms 1 kernel; C2: one tone, two tones and the WFR metric eject none |
+| D3aw-7 | minor | C's snapshots | the fit's median [5–95%] over the last half (x_m, s = 0.01: 0.0254 ungated, 0.0613 energy gate) |
+| D3aw-8 | minor | The slowest-mode step | the proof: u = δw·P⊥φ_last from the relaxed block and the overlap; u depends on ξ through the crossing |
+| D3aw-9 | minor | The gates as implemented | "As implemented": A stops the flow at the crossing and does not simulate (b), B a one-time mask, C smooth gates with a partial drive for \|w\| ∈ (θ/2, θ) |
+| D3aw-10 | minor | Three mutants survive | tests: the formation gate drives a formed kernel while the others rest (M1); the stop law against quadrature (M3); `gate_stats` and `kernel_events` on hand-made series and the report on synthetic raws (M8) — 16 of 16 single-replacement mutants killed |
+| D3aw-11 | minor | Literature | Egardt, Peterson–Narendra, Samson, Ioannou–Sun §8.5; Blanchard–Hoffmann–Reiß, Celisse–Wahl, Blanchard–Mathé; Burger–Gilboa–Osher–Xu, Burger–Möller–Benning–Osher; New narrowed to the frozen discrepancy principle's O(s) amplitude shortfall with its first-order law given the stop |
+| D3aw-12 | minor | Part A's exactness checks the entry set | `classify` and `fit_after` (one entry per iteration no longer assumed) |
+| D3aw-13 | minor | B reuses the noise across levels | `b_noise`: fresh noise per level |
+| D3aw-14 | minor | The x̃ rows confounded | (iv): at x̃ the noise also enters the regressor and the noise-free loop already forms 5 kernels |
+| D3aw-15 | cosmetic | Hand-computed medians against an rms | A prints the rms of \|u\|/(s√N) (0.567, 0.568, 0.566 order kept) against the conditional prediction 0.572 |
+| D3aw-16 | cosmetic | "To 10⁻⁴"; "to 2.2·10⁻⁹" | the identity to 7.5·10⁻⁴ at worst (5–95% [0.9999, 1.0002] at s = 0.1); B compares the fits: 2–4·10⁻¹⁰ (formation), 3–10·10⁻¹⁰ (energy) |
+| D3aw-17 | cosmetic | Slips | the proof of (i); the monotone decrease from the flow; the noise floor at the desired regressor (0.881s) |
+
+**Lesson.** A dead zone tuned and tested on fixed data says little about a loop whose data move. Here the dead zone's sliding limit had
+an exact law, while the closed loop's failure — kernels pushed off their features by the noise — happened behind the gate, through
+the centres' mobility. A gate on the error's energy cannot see that. The negative result needed its controls: a lower level, other
+thresholds, the true error in the adaptation, bounded centres, another metric. Run before writing the claim, they show its scope:
+one level, one regressor, one metric. And when a law holds "given the order", the draws where the order changes must be reported
+apart; a pooled mean hides them.
