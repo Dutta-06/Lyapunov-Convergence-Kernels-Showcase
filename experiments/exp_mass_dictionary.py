@@ -46,6 +46,7 @@ N_I, D_I, M_I, G_I, GAM_I, AMAX = 5, 12, 12.0, 1.0, 0.1, 1.0
 MODES = ('conserved', 'free', 'null kernel')
 TAUS = (0.0, 1e3, 1e4)
 S_END = 1e8
+FLOW_SECS = 900.0                                                      # a flow's wall-clock limit (one rbf instance's piece ran for hours)
 KS_C, N_INST_C = (2, 3), 16
 KS_D, N_INST_D, N_D, D_D, WIDTH_D = (2, 3), 8, 8, 16, 0.08
 AMAXES_E, N_INST_E = (0.5, 1.0, 2.0, 4.0), 12
@@ -219,14 +220,21 @@ def c_job(args):
         th0 = start(X, al0)
         out[(mode, 'start')] = summary(X, th0, ws, wbp, d0)
         for tau in TAUS:
-            th = X.flow(th0, S_END, filt_of(tau), ito=True, chunks=60)[1][-1]
-            out[(mode, tau)] = summary(X, th, ws, wbp, d0)
+            try:
+                th = X.flow(th0, S_END, filt_of(tau), ito=True, chunks=60, max_secs=FLOW_SECS)[1][-1]
+                out[(mode, tau)] = summary(X, th, ws, wbp, d0)
+            except MD.FlowTimeout:
+                out[(mode, tau)] = dict(timeout=True)
         if mode in ('conserved', 'free'):
-            th = X.flow(th0, S_END, filt_of(0.0), ito=False, chunks=60)[1][-1]
-            out[(mode, 'flat')] = summary(X, th, ws, wbp, d0)
+            try:
+                th = X.flow(th0, S_END, filt_of(0.0), ito=False, chunks=60, max_secs=FLOW_SECS)[1][-1]
+                out[(mode, 'flat')] = summary(X, th, ws, wbp, d0)
+            except MD.FlowTimeout:
+                out[(mode, 'flat')] = dict(timeout=True)
+                th = None
             if mode == 'free':
                 wd = dstar_minimiser(X, d0)
-                out['dstar_vs_flat'] = float(np.abs(X.w(th)[:d0] - wd).max())
+                out['dstar_vs_flat'] = float(np.abs(X.w(th)[:d0] - wd).max()) if th is not None else np.nan
                 out['dstar_vs_bp'] = float(np.abs(wd - wbp).max())
     print(f"[{time.time() - t0:.0f}s] C {kind} k {k} instance {i}", flush=True)
     return out
@@ -244,7 +252,10 @@ def e_job(args):
         return dict(i=i, am=am, skip=True)
     X, _ = law(Phi, ws, 'conserved', a_max=am)
     th0 = start(X, al0 * am)
-    th = X.flow(th0, S_END, filt_of(0.0), ito=True, chunks=60)[1][-1]
+    try:
+        th = X.flow(th0, S_END, filt_of(0.0), ito=True, chunks=60, max_secs=FLOW_SECS)[1][-1]
+    except MD.FlowTimeout:
+        return dict(i=i, am=am, skip=True, timeout=True)
     return dict(i=i, am=am, skip=False, l1_bp=float(np.abs(wbp).sum()), start=summary(X, th0, ws, wbp, Phi.shape[1]),
                 end=summary(X, th, ws, wbp, Phi.shape[1]))
 
@@ -290,6 +301,7 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
     for name, R, ks in (('C', C, KS_C), ('D', D, KS_D)):
         if R is None:
             continue
+        timeouts = []
         hdr = (f"## C. The selection's ends on Gaussian designs ({N_I} × {D_I}, {N_INST_C} instances per k)" if name == 'C' else
                f"## D. The selection's ends on Gaussian kernel dictionaries ({D_D} centres, {N_D} samples on [0, 1], width {WIDTH_D:g}, "
                f"{N_INST_D} instances per k)")
@@ -304,15 +316,20 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
             L_.append(f"| {k} | — | basis pursuit | | | | | {np.mean([r['bp_ok'] for r in rs]):.2f} | | |")
             for mode in MODES:
                 for key in ['start'] + list(TAUS) + (['flat'] if mode != 'null kernel' else []):
-                    q = [r[(mode, key)] for r in rs]
+                    q = [r[(mode, key)] for r in rs if not r[(mode, key)].get('timeout')]
+                    n_to = sum(bool(r[(mode, key)].get('timeout')) for r in rs)
+                    if n_to:
+                        timeouts.append(f"k = {k}, {mode}, {key}: {n_to}")
                     lab = {'start': 'the start', 'flat': 'white, the flat update', 0.0: 'white'}.get(key, None) or f"slow, τ_c = {key:.0e}"
                     L_.append(f"| {k} | {mode} | {lab} | {np.mean([x['l1'] for x in q]):.3f} ({np.mean([r['l1_truth'] for r in rs]):.3f}) | "
                               f"{np.nanmean([x['exc'] for x in q]) if mode != 'free' else float('nan'):.3f} | {np.mean([x['used'] for x in q]):.1f} | "
                               f"{np.mean([x['alive'] for x in q]):.1f} | {np.mean([x['ok'] for x in q]):.2f} | {np.median([x['d_bp'] for x in q]):.3f} | "
                               + (f"{np.mean([x['b0'] for x in q]):.2f} |" if mode == 'null kernel' else "— |"))
             L_.append(f"| {k} | free | white: the flat update's end against the minimiser of Σ|φ_i|²D*(|w_i|) (median distance) | "
-                      f"{np.median([r['dstar_vs_flat'] for r in rs]):.1e} | | | | | that minimiser against basis pursuit's: "
+                      f"{np.nanmedian([r['dstar_vs_flat'] for r in rs]):.1e} | | | | | that minimiser against basis pursuit's: "
                       f"{np.median([r['dstar_vs_bp'] for r in rs]):.1e} | |")
+        if timeouts:
+            L_ += ["", f"Flows over the {FLOW_SECS:g}-s limit, left out of the means (the instances' other flows kept): " + '; '.join(timeouts) + "."]
         L_.append("")
     if Ee is not None:
         L_ += [f"## E. The conserved law's white end against the representability boundary ({N_I} × {D_I}, 2-sparse truths, {N_INST_E} instances; "
@@ -321,6 +338,9 @@ def report(A=None, B=None, C=None, D=None, Ee=None):
                "|---|---|---|---|---|---|---|"]
         for am in AMAXES_E:
             rs = [r for r in Ee if r['am'] == am and not r['skip']]
+            n_to = sum(bool(r.get('timeout')) for r in Ee if r['am'] == am)
+            if n_to:
+                L_.append(f"| {am:g} | ({n_to} over the {FLOW_SECS:g}-s limit, left out) | | | | | |")
             if not rs:
                 L_.append(f"| {am:g} | 0 | | | | | |"); continue
             L_.append(f"| {am:g} | {len(rs)} | {np.mean([r['start']['l1'] for r in rs]):.3f} | {np.mean([r['end']['l1'] for r in rs]):.3f} "

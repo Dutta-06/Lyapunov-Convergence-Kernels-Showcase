@@ -40,9 +40,10 @@ N_WORKERS = int(os.environ.get('WM_WORKERS', '2'))
 SIG = 0.12
 TAUS_A, K_A, K_A2 = (0.25, 0.5, 1.0, 2.0), 10, 30
 E_FLOOR, G_FLOOR = 1e-10, 1e-13                                      # below them double precision cannot place the optimum, the grid's error
-TAUS_B, A_B, C_B, K_B = (0.5, 1.0, 2.0), 0.8, 0.03, 8
+TAUS_B, A_B, C_B, K_B = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0), 0.8, 0.03, 12
 X_B = np.linspace(-1.6, 1.6, 321)
 LEVELS_C, N_DRAW_C, TAU_C, K_C, DELTA = (1e-4, 1e-3, 1e-2), 10, 1.0, 10, 0.1
+MAX_DOUBLINGS = 24                                                    # the fast flow to 10⁵·2²⁴ ≈ 1.7·10¹²: a block's slowest relaxations
 
 
 def sigma_star(r_):
@@ -109,7 +110,8 @@ def b_job(r_):
     K = RT.Bumps(X_B, SIG)
     ss = sigma_star(r_)
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
-    R = RT.sliding_iss(L, K, f, c0, np.ones(c0.size), polish=True, max_events=3 * K_B, tol=0.0, max_entries=K_B + 1)
+    R = RT.sliding_iss(L, K, f, c0, np.ones(c0.size), polish=True, max_events=3 * K_B, tol=0.0, max_entries=K_B + 1,
+                       max_doublings=MAX_DOUBLINGS)
     rf = float(np.sqrt(np.mean(f ** 2)))
     out = []
     for b in blocks(R):
@@ -143,7 +145,8 @@ def c_job(args):
     ss = sigma_star(TAU_C)
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
     xi = s * np.random.default_rng(5800 + 100 * LEVELS_C.index(s) + q).standard_normal(X_B.size)
-    R = RT.sliding_iss(L, K, f + xi, c0, np.ones(c0.size), polish=True, max_events=3 * K_C, tol=0.0, max_entries=K_C + 1)
+    R = RT.sliding_iss(L, K, f + xi, c0, np.ones(c0.size), polish=True, max_events=3 * K_C, tol=0.0, max_entries=K_C + 1,
+                       max_doublings=MAX_DOUBLINGS)
     rf = float(np.sqrt(np.mean(f ** 2)))
     bl = [b for b in blocks(R) if b['k'] > 0]
     ent = [e for e in R['events'] if e[2] == 'enter']

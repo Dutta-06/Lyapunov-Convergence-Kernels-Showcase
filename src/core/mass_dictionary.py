@@ -26,10 +26,16 @@ This module: the relevance, K, the weights and the potential, the selection's dr
 integration with a retraction onto M, the paradigm's noisy scheme (paths in parallel), the gauge-minimal relevance, the excess mass and
 its bound, and the general Katzenberger drift of the scheme for checks (`gauge_drift.limit_drift` on a chart of M).
 """
+import time
+
 import numpy as np
 
 from . import gauge_drift as GDR
 from . import label_noise as LN
+
+
+class FlowTimeout(Exception):
+    """`MassDictionary.flow` over its wall-clock limit (max_secs)."""
 
 
 class MassDictionary:
@@ -145,19 +151,28 @@ class MassDictionary:
             q = q + self.project(th, self.ito_term(th, filt=filt) * (4.0 / self.m))
         return q
 
-    def flow(self, th, S, filt, ito=False, t_eval=None, chunks=40, rtol=1e-8, atol=1e-10, method='LSODA'):
+    def flow(self, th, S, filt, ito=False, t_eval=None, chunks=40, rtol=1e-8, atol=1e-10, method='LSODA', max_secs=None):
         """The selection flow over s ∈ [0, S] from θ on M → (s, Θ (len(s), 2d)), integrated in z = (α, log β) (an atom's mass decays
-        exponentially once the selection drops it: linear in log β), piecewise, retracted onto M at the pieces' ends."""
+        exponentially once the selection drops it: linear in log β), piecewise, retracted onto M at the pieces' ends. max_secs: a
+        wall-clock limit, checked at every evaluation (FlowTimeout): on one rbf instance of D‴.44's Part D a piece ran for hours, LSODA's
+        steps collapsing."""
         from scipy.integrate import solve_ivp
         d, lfloor = self.d, -1400.0                                              # a dead atom's mass read as ≥ e^{−1400}: its log-mass
         to_z = lambda x: np.r_[x[:d], 2 * np.log(x[d:])]                         # keeps decaying linearly, without underflow
         to_th = lambda z: np.r_[z[:d], np.exp(0.5 * np.maximum(z[d:], lfloor))]
 
+        t_end = np.inf if max_secs is None else time.time() + max_secs
+
         def rhs(s, z):
+            if time.time() > t_end:
+                raise FlowTimeout(f'flow over {max_secs} s at s = {s:g}')
             x = to_th(z)
             if not np.all(np.isfinite(x)):
                 return np.full_like(z, np.nan)                                  # an overshooting trial stage: rejected
-            q = self.drift(x, filt, ito)
+            try:
+                q = self.drift(x, filt, ito)
+            except np.linalg.LinAlgError:                                       # a trial stage far off M: rejected
+                return np.full_like(z, np.nan)
             return np.r_[q[:d], 2 * q[d:] / x[d:]]
         edges = np.linspace(0.0, S, chunks + 1)
         t_eval = edges if t_eval is None else np.asarray(t_eval, float)

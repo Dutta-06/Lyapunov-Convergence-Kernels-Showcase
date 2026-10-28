@@ -364,7 +364,10 @@ def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max
     doubling (the absolute rates pass early while a tail kernel's tiny coefficient still slides: referee round 42). max_secs: a
     wall-clock budget — checked inside the integration too, so one long chunk cannot overrun it; on running out the state is the last
     completed chunk's and stationary is False. Returns dict(w, c, shares |w_j|/Σ|w|, stationary, s, drift: the shares' largest change
-    over the last doubling)."""
+    over the last doubling, drifts: those changes per doubling, stop: why it stopped — 'converged' (the rates and the drift within their
+    tolerances), 'cap' (max_doublings spent) or 'clock' (max_secs) —, remaining: the shares' change still to come if the drifts fall
+    geometrically, drift²/(drift_prev − drift) (inf if they do not fall); a drift within share_tol over one doubling does not by itself
+    bound the remaining change: referee round 47)."""
     lam0 = transit_scale(L, 1.0)
     cs = np.atleast_2d(np.asarray(cs, float))
     k, n = cs.shape
@@ -383,25 +386,32 @@ def inner_k(L, K, fstar, cs, x, rho=1.0, xi0=400.0, s_end=2000.0, tol=1e-10, max
     v_e = abs(float(K.corr(cs[:1], fstar)[0][0]))
     s_, chunk, ok = 0.0, xi0 * rho / v_e + float(s_end), False
     scale = tol * float(np.abs(fstar).max())
-    sh_prev, drift = None, np.inf
+    sh_prev, drift, drifts, stop = None, np.inf, [], 'cap'
     for _ in range(max_doublings + 1):
         try:
             sol = solve_ivp(rhs, (s_, s_ + chunk), z, method='LSODA', jac=jac, rtol=1e-10, atol=1e-13)
         except _OverBudget:
+            stop = 'clock'
             break
         z, s_ = sol.y[:, -1], s_ + chunk
         w_ = np.abs(critical_w(L, z[:k]))
         sh = w_ / w_.sum()
         drift = float(np.abs(sh - sh_prev).max()) if sh_prev is not None else np.inf
+        if sh_prev is not None:
+            drifts.append(drift)
         sh_prev = sh
         if np.all(np.abs(lam0 * f0(s_, z)) <= scale) and (share_tol is None or drift <= share_tol):
-            ok = True
+            ok, stop = True, 'converged'
             break
         if time.time() > t_end:
+            stop = 'clock'
             break
         chunk = s_
     w = critical_w(L, z[:k])
-    return dict(w=w, c=z[k:].reshape(k, n), shares=np.abs(w) / np.abs(w).sum(), stationary=ok, s=s_, drift=drift)
+    rem = (drifts[-1] ** 2 / (drifts[-2] - drifts[-1]) if len(drifts) > 1 and drifts[-2] > drifts[-1] else
+           (0.0 if drifts and drifts[-1] == 0 else np.inf))
+    return dict(w=w, c=z[k:].reshape(k, n), shares=np.abs(w) / np.abs(w).sum(), stationary=ok, s=s_, drift=drift, drifts=drifts,
+                stop=stop, remaining=float(rem))
 
 
 def profile_split(L, A, x, rho=1.0):

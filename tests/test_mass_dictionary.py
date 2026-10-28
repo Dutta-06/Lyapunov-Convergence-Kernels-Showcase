@@ -137,3 +137,13 @@ def test_projection_is_accurate_with_nearly_dead_atoms_and_the_flow_finishes():
     assert time.time() - t0 < 120
     w = X.w(th_end)
     assert set(np.flatnonzero(np.abs(w) > 1e-6)) == set(np.flatnonzero(ws))
+
+
+def test_the_flow_stops_at_its_wall_clock_limit():
+    """`flow(max_secs=…)` raises FlowTimeout once over its limit (checked at every evaluation, so one long piece cannot overrun it);
+    within the limit the flow is the unlimited one, bit for bit."""
+    import pytest
+    X, th, _ = _instance()
+    with pytest.raises(MD.FlowTimeout):
+        X.flow(th, 10.0, ONE, max_secs=0.0)
+    assert np.array_equal(X.flow(th, 10.0, ONE, max_secs=60.0)[1], X.flow(th, 10.0, ONE)[1])
