@@ -10,10 +10,13 @@ A. The rules on ℝ: for τ/σ in TAUS_A and K ≤ K_A, the half-squeeze rule's 
    amplitudes; the optimal K-kernel fit (variable projection from the half-squeeze rule) — the ratios per kernel against 1/t and 1/λ;
    the optimum's nodes against the half-squeeze nodes. A2: the series' tail — the ratios D_{2K+2j,K}/D_{2K,K} for K ≤ K_A2 (integers;
    their j-th differences in K against j!·binom(1/2, j)(−2)^j) and the tail's share against ₂F₁(−½, −½; 1; t²) − 1.
-B. The transit: the sliding path (polished) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B: after each entry the relaxed
+B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = C_B off the kernels' grid) sampled on X_B, in three
+   numerical variants (VARIANTS_B: the polish step and the starting grid's offset; referee round 48): after each entry the relaxed
    block's relative error against the optimal fit with as many kernels on the same samples (variable projection from the block and
-   from the half-squeeze rule, the better), the block's nodes against the optimum's, the continuous half-squeeze error; the entries.
-C. Under noise: y = f* + ξ (i.i.d. N(0, s²) on X_B), the path to K_C entries: the discrepancy rule's stop (the first relaxed block
+   from the half-squeeze rule, the better), whether the relaxation became stationary, the block's nodes against the optimum's, the
+   continuous half-squeeze error; the entries, the chunks redone after a stall or a failed solve, the polish's rejections.
+C. Under noise: y = f* + ξ (i.i.d. N(0, s²) on X_B), the path to K_C entries (its centres in the window ± BOX_C·σ, the thresholds on
+   max|y|, the KKT exit rule): the discrepancy rule's stop (the first relaxed block
    with rms ≤ (1 + DELTA)s) against its prediction from (i) — the first K with e_K²‖f*‖²_rms ≤ s²((1 + δ)² − 1 + 2K/N) —, the stopped
    fit's error against (e_K²‖f*‖²_rms + 2Ks²/N)^{1/2}; the kernels at the feature and elsewhere; the largest relative gap's K.
 
@@ -44,7 +47,11 @@ TAUS_B, A_B, C_B, K_B = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0), 0.8, 0.03, 12
 X_B = np.linspace(-1.6, 1.6, 321)
 LEVELS_C, N_DRAW_C, TAU_C, K_C, DELTA = (1e-4, 1e-3, 1e-2), 10, 1.0, 10, 0.1
 KS_D, J_MAX_D = (10, 20, 40, 80, 160, 320), 7                        # D: the tail ratio's K and the ratios' degree checked
-MAX_DOUBLINGS = 24                                                    # the fast flow to 10⁵·2²⁴ ≈ 1.7·10¹²: a block's slowest relaxations
+MAX_DOUBLINGS = 24                                                    # chunks to 10⁵·2²⁴ ≈ 1.7·10¹² (beyond ~10¹¹ LSODA fails from relaxed
+                                                                      # states and `relax_chunk` redoes the chunk by Radau: round 48)
+VARIANTS_B = (('base', 1.0, 0.0), ('polish 2σ', 2.0, 0.0), ('grid +0.05', 1.0, 0.05))   # B: (name, polish_step, the starting grid's shift)
+OPT_TOL = 1e-3                                                        # B: a block is the optimal fit if its error is within 0.1% of it
+BOX_C = 2.0                                                           # C: the noisy path's centres in the samples' window ± BOX_C·σ
 
 
 def sigma_star(r_):
@@ -81,12 +88,14 @@ def part_A():
 
 
 def blocks(R):
-    """The relaxed blocks along a path: (k kernels, τ, centres, coefficients, rms) after each event."""
+    """The relaxed blocks along a path: (k kernels, τ, centres, coefficients, rms, whether the relaxation became stationary) after each
+    event (hist[i + 1] is iteration i's block, relaxed[i] its flag)."""
     out = []
-    for h in R['hist'][1:]:
+    for i, h in enumerate(R['hist'][1:]):
         act = np.flatnonzero(h[2] != 0)
         o = np.argsort(h[1][act])
-        out.append(dict(k=int(act.size), tau=float(h[0]), c=h[1][act][o], w=h[2][act][o], rms=float(h[3])))
+        out.append(dict(k=int(act.size), tau=float(h[0]), c=h[1][act][o], w=h[2][act][o], rms=float(h[3]),
+                        relaxed=bool(R['relaxed'][i]) if i < len(R['relaxed']) else False))
     return out
 
 
@@ -104,15 +113,18 @@ def sample_fit(Phi_of, f, y0):
     return c, a, float(np.sqrt(np.mean((f - P @ a) ** 2)))
 
 
-def b_job(r_):
+def b_job(args):
+    r_, var = args
+    name, step, shift = next(v for v in VARIANTS_B if v[0] == var)
     warnings.filterwarnings('ignore')
     t0 = time.time()
     L, _, c0 = TM.setup()
+    c0 = c0 + shift
     K = RT.Bumps(X_B, SIG)
     ss = sigma_star(r_)
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
     R = RT.sliding_iss(L, K, f, c0, np.ones(c0.size), polish=True, max_events=3 * K_B, tol=0.0, max_entries=K_B + 1,
-                       max_doublings=MAX_DOUBLINGS)
+                       max_doublings=MAX_DOUBLINGS, polish_step=step, exit_kkt=True)
     rf = float(np.sqrt(np.mean(f ** 2)))
     out = []
     for b in blocks(R):
@@ -121,20 +133,21 @@ def b_job(r_):
         yh, _ = W.half_squeeze(b['k'], SIG, ss)
         cands = [sample_fit(K.phi, f, b['c']), sample_fit(K.phi, f, C_B + yh)]
         c_o, a_o, rms_o = min(cands, key=lambda z: z[2])
-        out.append(dict(k=b['k'], tau=b['tau'], c=b['c'], w=b['w'], e=b['rms'] / rf, e_opt=rms_o / rf, c_opt=c_o,
+        out.append(dict(k=b['k'], tau=b['tau'], c=b['c'], w=b['w'], e=b['rms'] / rf, e_opt=rms_o / rf, c_opt=c_o, relaxed=b['relaxed'],
                         dc=float(np.abs(b['c'] - c_o).max()) if c_o.size == b['c'].size else np.nan,
                         dc_hs=float(np.abs(b['c'] - (C_B + np.sort(yh))).max()),
                         e_hs=W.l2_error(*W.half_squeeze(b['k'], SIG, ss), SIG, ss)))
-    print(f"  B tau/sigma {r_}: {len(out)} blocks, errors " + ', '.join(f"{o['e']:.2e}" for o in out) + f" [{time.time() - t0:.0f}s]",
-          flush=True)
-    return dict(r=r_, blocks=out, events=[(float(e[0]), int(e[1]), e[2], float(e[3])) for e in R['events']], relaxed=R['relaxed'],
-                stiff=R['stiff_redone'], secs=time.time() - t0)
+    print(f"  B tau/sigma {r_} ({var}): {len(out)} blocks, errors " + ', '.join(f"{o['e']:.2e}" for o in out) +
+          f" [{time.time() - t0:.0f}s]", flush=True)
+    return dict(r=r_, var=var, blocks=out, events=[(float(e[0]), int(e[1]), e[2], float(e[3])) for e in R['events']],
+                relaxed=R['relaxed'], stiff=R['stiff_redone'], redone=R['solver_redone'], failed=R['solver_failed'],
+                rejected=R['polish_rejected'], secs=time.time() - t0)
 
 
 def part_B():
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
-        return pool.map(b_job, TAUS_B, chunksize=1)
+        return pool.map(b_job, [(r_, v[0]) for v in VARIANTS_B for r_ in TAUS_B], chunksize=1)
 
 
 def c_job(args):
@@ -146,8 +159,10 @@ def c_job(args):
     ss = sigma_star(TAU_C)
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * ss ** 2))
     xi = s * np.random.default_rng(5800 + 100 * LEVELS_C.index(s) + q).standard_normal(X_B.size)
-    R = RT.sliding_iss(L, K, f + xi, c0, np.ones(c0.size), polish=True, max_events=3 * K_C, tol=0.0, max_entries=K_C + 1,
-                       max_doublings=MAX_DOUBLINGS)
+    y = f + xi
+    R = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), polish=True, max_events=3 * K_C, tol=0.0, max_entries=K_C + 1,
+                       max_doublings=MAX_DOUBLINGS, box=(X_B[0] - BOX_C * SIG, X_B[-1] + BOX_C * SIG),
+                       w_scale=float(np.abs(y).max()), exit_kkt=True)
     rf = float(np.sqrt(np.mean(f ** 2)))
     bl = [b for b in blocks(R) if b['k'] > 0]
     ent = [e for e in R['events'] if e[2] == 'enter']
@@ -156,7 +171,7 @@ def c_job(args):
                err=[float(np.sqrt(np.mean((K.phi(b['c']) @ b['w'] - f) ** 2)) / rf) for b in bl],
                at=[int(np.sum(np.abs(b['c'] - C_B) < 4 * ss)) for b in bl],
                gaps=[float((taus[i + 1] - taus[i]) / taus[i]) for i in range(len(taus) - 1)], exits=sum(e[2] == 'exit' for e in R['events']),
-               stiff=R['stiff_redone'], rf=rf, secs=time.time() - t0)
+               stiff=R['stiff_redone'], runaway=R['runaway'], relaxed=[b['relaxed'] for b in bl], rf=rf, secs=time.time() - t0)
     return out
 
 
@@ -270,24 +285,46 @@ def report(A=None, B=None, C=None, D=None):
             L_.append(f"| {r_:g} | {t:.5f} | " + ' | '.join(f"{v:.5f}" for v in sh) + f" | {hyp2f1(-0.5, -0.5, 1, t ** 2) - 1:.5f} |")
     if B is not None:
         L_ += ['', '## B. The transit', '',
-               f"The sliding path (polished) on f* = {A_B}φ_σ*(· − {C_B}) sampled at {X_B.size} points of [{X_B[0]:g}, {X_B[-1]:g}], 21 "
-               "kernels started at the grid −1, −0.9, …, 1: after each entry the relaxed block's relative rms error, the optimal fit with "
-               "as many kernels on the same samples, their ratio and the largest distance between their centres (in σ), the distance to "
-               "the half-squeeze nodes (in σ), the continuous half-squeeze error; the block's entry time.", '']
-        for b in B:
-            L_ += [f"### τ/σ = {b['r']:g} (events: " + ', '.join(f"{j}{'+' if k == 'enter' else '−'}" for t_, j, k, c in b['events'])
-                   + f"; relaxed {sum(b['relaxed'])}/{len(b['relaxed'])}; chunks redone by Radau {b['stiff']})", '',
-                   '| kernels | τ | block | optimal fit | block / optimal | centres: block − optimal (σ) | block − half-squeeze (σ) | '
-                   'half-squeeze on ℝ | ratio per kernel |', '|---|---|---|---|---|---|---|---|---|']
+               f"The sliding path (polished; a kernel leaves only if its correlation stays inward with its own contribution removed) on "
+               f"f* = {A_B}φ_σ*(· − {C_B}) sampled at {X_B.size} points of [{X_B[0]:g}, {X_B[-1]:g}], 21 kernels started at the grid "
+               "−1, −0.9, …, 1, to " + f"{K_B + 1} entries, the fast flow's chunks up to 10⁵·2^{MAX_DOUBLINGS}: after each entry the relaxed "
+               "block's relative rms error against the optimal fit with as many kernels on the same samples (the better of variable "
+               f"projection from the block and from the half-squeeze nodes: the best local optimum found); a block is optimal within "
+               f"{OPT_TOL:g}. Three numerical variants: " + ', '.join(f"{n} (polish step {st:g}σ, grid shifted by {sh:g})"
+                                                                   for n, st, sh in VARIANTS_B) + '.', '',
+               '| τ/σ | variant | optimal blocks (kernels) | the first non-optimal: kernels, its optimum\'s error, relaxed | relaxed blocks | '
+               'chunks redone (stall, failure), failed | polish rejected | exits |', '|---|---|---|---|---|---|---|---|']
+        for r_ in TAUS_B:
+            for v in VARIANTS_B:
+                b = next((x for x in B if x['r'] == r_ and x['var'] == v[0]), None)
+                if b is None:
+                    continue
+                opt = [o['k'] for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL]
+                bad = next((o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL), None)
+                L_.append(f"| {r_:g} | {v[0]} | {', '.join(map(str, opt)) or '—'} | "
+                          + (f"{bad['k']}, {bad['e_opt']:.2e}, {bad['relaxed']}" if bad else 'none') + f" | "
+                          f"{sum(o['relaxed'] for o in b['blocks'])}/{len(b['blocks'])} | {b['stiff']}, {b['redone']}, {b['failed']} | "
+                          f"{b['rejected']} | {sum(e[2] == 'exit' for e in b['events'])} |")
+        ok = [o['e_opt'] for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL]
+        no = [o for b in B for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL]
+        L_ += ['', f"Over every width and variant: the optimal blocks' optimum errors down to {min(ok):.2e}; the non-optimal blocks' "
+               + (f"from {max(o['e_opt'] for o in no):.2e} down ({sum(not o['relaxed'] for o in no)} of {len(no)} unrelaxed); "
+                  f"non-optimal blocks with an optimum above 10⁻⁷: {sum(o['e_opt'] > 1e-7 for o in no)}." if no else "none."), '']
+        for b in [x for x in B if x['var'] == VARIANTS_B[0][0]]:
+            L_ += [f"### τ/σ = {b['r']:g}, {b['var']} (events: " + ', '.join(f"{j}{'+' if k == 'enter' else '−'}" for t_, j, k, c in b['events'])
+                   + ")", '',
+                   '| kernels | τ | block | optimal fit | block / optimal | relaxed | centres: block − optimal (σ) | block − half-squeeze (σ) | '
+                   'half-squeeze on ℝ | ratio per kernel |', '|---|---|---|---|---|---|---|---|---|---|']
             for i, o in enumerate(b['blocks']):
                 rat = f"{b['blocks'][i - 1]['e'] / o['e']:.3f}" if i and b['blocks'][i - 1]['k'] == o['k'] - 1 else '—'
-                L_.append(f"| {o['k']} | {o['tau']:.4g} | {o['e']:.4e} | {o['e_opt']:.4e} | {o['e'] / o['e_opt']:.6f} | "
+                L_.append(f"| {o['k']} | {o['tau']:.4g} | {o['e']:.4e} | {o['e_opt']:.4e} | {o['e'] / o['e_opt']:.6f} | {o['relaxed']} | "
                           f"{o['dc'] / SIG:.1e} | {o['dc_hs'] / SIG:.3f} | {o['e_hs']:.4e} | {rat} |")
-            opt = [o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < 1e-3]
+            opt = [o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) < OPT_TOL]
             fl = [flank(b['r'], o['c'], o['w']) for o in opt]
-            L_ += ['', "The residual's correlation C(c) = ⟨r, φ_σ(· − c)⟩ after the optimal blocks (K = "
-                   + ', '.join(str(o['k']) for o in opt) + f"): min C/max C within ±{max(abs(x[0]) for x in fl):.0e}, its peaks beyond "
-                   "the outermost nodes at (left, right) " + ', '.join(f"({x[1]:.2f}, {x[2]:.2f})σ" for x in fl) + '.', '']
+            if fl:
+                L_ += ['', "The residual's correlation C(c) = ⟨r, φ_σ(· − c)⟩ after the optimal blocks (K = "
+                       + ', '.join(str(o['k']) for o in opt) + f"): min C/max C within ±{max(abs(x[0]) for x in fl):.0e}, its peaks beyond "
+                       "the outermost nodes at (left, right) " + ', '.join(f"({x[1]:.2f}, {x[2]:.2f})σ" for x in fl) + '.', '']
     if C is not None:
         N = X_B.size
         L_ += ['## C. Under noise', '',
@@ -296,8 +333,14 @@ def report(A=None, B=None, C=None, D=None):
                "4σ* of the feature at the stop, the largest relative gap's kernel count.", '',
                '| s | stop: kernels (median [range]) | predicted | error at the stop: median [range] | predicted | kernels at the feature '
                '| largest gap at |', '|---|---|---|---|---|---|---|']
+        L2 = ['', "At the stop (K kernels): the error over the oracle's s(2K/N)^{1/2} (the variance alone, the right support), over the "
+              "bias–variance prediction (e_K²‖f*‖²_N + 2Ks²/N)^{1/2} — e_K the noiseless optimum's error with K kernels (B's base path "
+              f"at τ/σ = {TAU_C:g}) — and over the discrepancy rule's bound s((1 + δ)² − 1 + 4K/N)^{{1/2}}; paths with a runaway kernel "
+              "before the stop:", '', '| s | error / oracle: median [range] | / bias–variance | / bound: max | runaway |', '|---|---|---|---|---|']
         for s in LEVELS_C:
             ds = [d for d in C if d['s'] == s]
+            if not ds:
+                continue
             ks, es, at, kg = [], [], [], []
             for d in ds:
                 i = next((i for i, r_ in enumerate(d['rms']) if r_ <= (1 + DELTA) * s), None)
@@ -310,6 +353,15 @@ def report(A=None, B=None, C=None, D=None):
             fmt = lambda v, f_: f"{np.median(v):{f_}} [{np.min(v):{f_}}, {np.max(v):{f_}}]" if len(v) else '—'
             L_.append(f"| {s:g} | {fmt(ks, 'g')} ({len(ks)}/{len(ds)} stopped) | {Kp} | {fmt(es, '.3e')} | {ep:.3e} | {fmt(at, 'g')} | "
                       f"{fmt(kg, 'g')} |")
+            rf = ds[0]['rf']
+            eopt = ({o['k']: o['e_opt'] for b in B for o in b['blocks'] if b['r'] == TAU_C and b['var'] == VARIANTS_B[0][0]}
+                    if B is not None else {})
+            r1 = [e / (s * np.sqrt(2 * k / N) / rf) for k, e in zip(ks, es)]
+            r2 = [e / np.sqrt(eopt[k] ** 2 + 2 * k * s ** 2 / (N * rf ** 2)) for k, e in zip(ks, es) if k in eopt]
+            r3 = [e / (s * np.sqrt((1 + DELTA) ** 2 - 1 + 4 * k / N) / rf) for k, e in zip(ks, es)]
+            L2.append(f"| {s:g} | {fmt(r1, '.2f')} | {fmt(r2, '.3f')} | {max(r3):.3f} | {sum(d.get('runaway', False) for d in ds)} |"
+                      if ks else f"| {s:g} | — | — | — | — |")
+        L_ += L2
     if D is not None:
         from scipy.special import hyp2f1
         ts = sorted({r['t'] for r in D['rows']})
