@@ -2919,3 +2919,40 @@ tones drift further than bands and never jump. The missing piece was a threshold
 noise it explains both: the noise moves the edge, a tone by E·s² while its own drift saturates, a band window by window, so that the band's
 least window decides when its drift suffices. A comparison of theory with events must also fix the draw, the time and the level: like for
 like, the rise at the leave is the even part at the level, a quarter above the second order, before saturation.
+
+## Round 70 (adversarial review of Proposition D‴.58 as revised after round 65, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bq: Proposition D‴.58 as revised after round 65, with its code and results at
+409ec98 (`review/REVIEW_round70_D3bq.md`). The referee:
+- regenerated the md byte for byte, ran the 66 tests, and reran cells of B3, A5, B2 and three paths to their first non-optimal block
+  bit-identically;
+- re-derived the Mehler-frame paragraph (ℓ², v_ρ, the first tail ratio, the Mercer frame);
+- reran paths with every polish start recorded and restarted the polish from those starts;
+- solved the two below-floor blocks by Levenberg–Marquardt with the residual in double and in long double;
+- compared the slow modes in three unit conventions and recounted the entries;
+- ran 91 single-point mutants plus a control.
+
+**Verdicts (D3bq).** Reproduction, every printed number, (i), (ii), (iv), (v), the proof, the Mehler-frame algebra, the seed rule's
+agreement with `sliding_iss` and the entries hold, and the floor is the arithmetic's (long double passes it). Two majors: the round's new
+code was weakly tested (45 of 91 mutants survived, 25 of them changing what a rerun publishes); and B3 restarted from the block's final
+state, not from the polish's start, with two settings changed together and the ends unjudged — at two ends its own "path" column showed the
+path's settings succeeding. Minors: nothing in the repository showed the floor, the ¾ reference was 0.16% high and the floor soft; the
+slow-mode comparison depended on the units; events merged entries after the paths parted; the Mercer frame's rule is slower, not "nearly as
+fast"; cosmetics (the repolish's improvement test; numbers no script prints).
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bq-1 | major | Weak tests of the new code | Tests (35): `b3_job` with a variant that has a gradient test (the four restarts' budgets and tests in order), `path_polishes` (records, stops at a call, restores), `first_nonoptimal` and `b3_jobs`, `b3_binds` and `b3_lines`, `seed_rule` with two seed kernels (one decided by its ascent target; its 10⁻² pinned to `sliding_iss`'s), `part_A5` on its own numbers (the Mercer frame's rule, not the Mercer-zero one), `b2_job` where variable projection leaves the block and `vp_fit`'s order, `run_B` with variants merging, `lm_fit` in double and long double, `b4_jobs`, `b4_job` and `b4_lines` |
+| D3bq-2 | major | B3 not what the path did | B3 rebuilt: the path rerun with every polish start recorded (stopped at its first non-optimal block's first polish, located from B's stored polish counts), that polish restarted from its start one setting at a time (the path's; 5·10⁵ evaluations; no gradient test; both), each end judged by the path's acceptance (`seed_rule`); above 10⁻¹⁰ the budget binds at 7 ends, the budget and the radius at 5, the budget and the gradient test at 5, the test at 2, the radius at 1; with both changed the solve reaches the optimum from all 20 (0.99998–1.00022 times it); (iii) and the Numerics end by end |
+| D3bq-3 | minor | The floor | B4: Levenberg–Marquardt (`lm_fit`) with the parameters and the residual in double and in long double from the blocks below 2·10⁻⁹, from the path's block and from the stored optimum: in long double both starts end together (within 8.2·10⁻⁹), in double from the blocks 1.9·10⁻⁸ … 2.3·10⁻³ above that end (0.2% below 10⁻¹⁰) — the floor the arithmetic's and soft, crossing 0.1% near 10⁻¹⁰; the stored optimum 1.6·10⁻³ above the long-double end at ¾, K = 11; B3 prints the restarts' excess by optimum; "whatever the budget" dropped (a single solve; at ¾, K = 11 the 5·10⁵ budget is spent) |
+| D3bq-4 | minor | The slow modes' units | B2 prints the condition numbers in the polish's own units (1.3·10⁶–5·10⁸) and the ratio of the smallest singular values in three conventions (median 1.01 with the centres in units of σ, 1.54 in the polish's, 570 with unit columns — 49–2790); (iii) states the dependence and drops "not in their slow modes" |
+| D3bq-5 | minor | Events after the paths part | (iii) and the md's caption: an event is the same entrant at the same iteration, whether or not the variants' paths have parted |
+| D3bq-6 | minor | The Mercer frame's rule | A5 prints its ratio per kernel at the last three K — level at 5.32 (τ/σ = 1) and 2.33 (τ/σ = 2), below 1/t = 5.83, 2.62 —; the Status: it falls more slowly (its first term at qv′/2 in its own frame, the tail setting the rate), and "a frame's orthogonality measure is its own Gaussian only at ρ = λ" |
+| D3bq-7 | cosmetic | The repolish's improvement test | B3 restarts the first polish only, which has no improvement test; the "path" column is the path's settings from the recorded start |
+| D3bq-8 | cosmetic | Numbers no script prints | Status: the j ≤ 10, K ≤ 40 check, the K = 640, 1280 gaps and the 80-digit check marked as referee rounds' computations that the repository's scripts do not reproduce |
+
+**Lesson.** A restart tests the run it restarts only from that run's own state: from the block's final state the "path" column was a second
+polish, and changing two settings at once could not say which binds; recorded starts, one setting at a time, and the path's own acceptance
+answer it end by end. A floor claimed for the arithmetic is shown by changing the arithmetic: the same solve with its residual in long
+double passes it from the block and from the optimum alike, and the gap by optimum shows the floor soft rather than a threshold. A
+comparison of conditioning is a statement about units unless it is scale-free.

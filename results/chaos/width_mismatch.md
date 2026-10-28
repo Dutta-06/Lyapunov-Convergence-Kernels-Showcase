@@ -96,14 +96,14 @@ The Gauss–Hermite rule of N(0, v) for the reweighted mixing law (`scaled_rule`
 
 ### A5. The frames: which Gauss–Hermite rule a Mehler expansion singles out
 
-The Mehler frames of the kernel e^{−(y−y′)²/(4σ²)} (ratio ρ, Hermite scale ℓ² = 2σ²ρ/(1 − ρ²)): the Gauss–Hermite rule of the frame's own Gaussian N(0, v_ρ), v_ρ = 2σ²τ²/(2σ² + (1 − ρ)τ²), has no defect below 2K in the frame; v′ = v_ρ/ℓ² the measure's variance in the frame's units. At ρ = t (the half-squeeze rule), q (the Mercer expansion) and λ: v_ρ over the half-squeeze variance, and v′; the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero rule — and its ratio per kernel at the last K against 1/t and 1/q:
+The Mehler frames of the kernel e^{−(y−y′)²/(4σ²)} (ratio ρ, Hermite scale ℓ² = 2σ²ρ/(1 − ρ²)): the Gauss–Hermite rule of the frame's own Gaussian N(0, v_ρ), v_ρ = 2σ²τ²/(2σ² + (1 − ρ)τ²), has no defect below 2K in the frame; v′ = v_ρ/ℓ² the measure's variance in the frame's units. At ρ = t (the half-squeeze rule), q (the Mercer expansion) and λ: v_ρ over the half-squeeze variance, and v′; the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero rule — and its ratio per kernel at the last three K against 1/t and 1/q:
 
 | τ/σ | ρ = t: v/v_hs, v′ | ρ = q: v/v_hs, v′ | ρ = λ: v/v_hs, v′ | the Mercer frame's rule: ratio per kernel (1/t, 1/q) |
 |---|---|---|---|---|
-| 0.25 | 1.000000, 2.000000 | 1.000433, 1.029437 | 1.000459, 1.000000 | 63.49 at K = 7 (65.98, 33.97) |
-| 0.5 | 1.000000, 2.000000 | 1.005090, 1.101021 | 1.006231, 1.000000 | 17.17 at K = 10 (17.94, 9.899) |
-| 1 | 1.000000, 2.000000 | 1.035276, 1.267949 | 1.060660, 1.000000 | 5.321 at K = 10 (5.828, 3.732) |
-| 2 | 1.000000, 2.000000 | 1.118034, 1.500000 | 1.341641, 1.000000 | 2.332 at K = 10 (2.618, 2) |
+| 0.25 | 1.000000, 2.000000 | 1.000433, 1.029437 | 1.000459, 1.000000 | 62.54, 63.1, 63.49 at K = 5–7 (65.98, 33.97) |
+| 0.5 | 1.000000, 2.000000 | 1.005090, 1.101021 | 1.006231, 1.000000 | 17.11, 17.15, 17.17 at K = 8–10 (17.94, 9.899) |
+| 1 | 1.000000, 2.000000 | 1.035276, 1.267949 | 1.060660, 1.000000 | 5.322, 5.322, 5.321 at K = 8–10 (5.828, 3.732) |
+| 2 | 1.000000, 2.000000 | 1.118034, 1.500000 | 1.341641, 1.000000 | 2.33, 2.331, 2.332 at K = 8–10 (2.618, 2) |
 
 The first tail ratio D_{2K+2}/D_{2K} = −v′K(K + 2) + (v′ − 1)(K + 1)(2K + 1) (`gh_defect_v`, exact) at v′ = 1, 3/2, 7/4, 2, 3, K = 1 … 12: exact in all 60 — −(K − 1) at v′ = 2, growing like (v′ − 2)K² at any other v′.
 
@@ -162,42 +162,74 @@ The sliding path (polished; a kernel leaves only if its correlation stays inward
 
 Over every width and variant: the optimal blocks' optimum errors down to 6.81e-10; the non-optimal blocks' from 2.96e-07 down (0 of 116 failed the stationarity test; 53 of those that passed it pass it at any state by Cauchy–Schwarz, the test being absolute — their errors up to 4.0e-10; for the other 63 its threshold over the Cauchy–Schwarz bound — the residual's cosine with the block's directions it allows — is 3.5e-04–0.97 (median 7.7e-03; above 0.1 in 24): a weak test); non-optimal blocks with an optimum above 10⁻⁷: 1; the non-optimal blocks' errors 1.01e-12 … 1.26e-06.
 
-Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 33 of the 38 blocks whose optimum is at least 1e-10; 1 ends within 1% of it (1.001 times: in its basin, unconverged); 4 end 16.36–24.74 times above it — the blocks' largest node distances from the optimum's 2.14–3.99σ — where variable projection stalls: its two closest nodes 0.000–0.021σ apart, its end not stationary (the largest cosine of its residual with a Jacobian column 2.6e-04–4.7e-03), its stop 3/2554, 0/20000, 3/2166, 3/18995 (status/evaluations: a miss says nothing of the block's basin). The 78 blocks with an optimum below 1e-10, where the solve stops short of the optimum (A), are not counted (0 reached). From the first non-optimal block of each path: 20 of 20; on 2 paths the first non-optimal block's optimum is below 1e-10. There the Jacobian's condition number (the centres in units of σ) is 4.5e+06–2.3e+09 for the joint fit in (w, c), 5.4e+03–3.8e+05 for variable projection's in c alone (analytic), and variable projection's smallest singular value over the joint fit's 1–31.7 (median 1.01): the slow modes are as slow in both, the gap at the stiff end.
+Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in 33 of the 38 blocks whose optimum is at least 1e-10; 1 ends within 1% of it (1.001 times: in its basin, unconverged); 4 end 16.36–24.74 times above it — the blocks' largest node distances from the optimum's 2.14–3.99σ — where variable projection stalls: its two closest nodes 0.000–0.021σ apart, its end not stationary (the largest cosine of its residual with a Jacobian column 2.6e-04–4.7e-03), its stop 3/2554, 0/20000, 3/2166, 3/18995 (status/evaluations: a miss says nothing of the block's basin). The 78 blocks with an optimum below 1e-10, where the solve stops short of the optimum (A), are not counted (0 reached). From the first non-optimal block of each path: 20 of 20; on 2 paths the first non-optimal block's optimum is below 1e-10. There the Jacobian's condition number is 1.3e+06–5e+08 for the joint fit in (w, c) in the polish's own units (4.5e+06–2.3e+09 with the centres in units of σ) and 5.4e+03–3.8e+05 (5.4e+03–3.8e+05) for variable projection's in c alone (analytic); the ratio of their smallest singular values, variable projection's over the joint fit's, depends on the units: 1–31.7 (median 1.01) with the centres in units of σ, 1–31.7 (median 1.54) in the polish's, 49.2–2.79e+03 (median 570) with every column scaled to unit norm.
 
 
-### B3. The range ends: the polish restarted from each path's first non-optimal block
+### B3. The range ends: the polish restarted from its recorded start, one setting at a time (referee rounds 65, 70)
 
-From the block's final state, the polish's own solve (`polish_block`, TRF): with the path's budget and gradient test — its stop (status 0: the budget; 1: the gradient test; 2: the decrease test; 3: the step test)/evaluations, its error over the optimum's, and the path's seed rule on its end (the largest move of a kernel still near its seed, σ, from its start or its ascent target; accepted if within the path's polish step) —, and without the gradient test at 50000, 500000 evaluations; † the optimum below 1e-10:
+Each path's first non-optimal block (its error at least 1.001 times the optimum's): the path rerun with every polish's start recorded, and from the block's first polish's start — its error over the optimum's — the polish's own solve (`polish_block`, TRF) with the path's budget and gradient test, with 500000 evaluations and the test, with the path's budget without the test, and with both changed: each its stop (status 0: the budget; 1: the gradient test; 2: the decrease test; 3: the step test)/evaluations, its error over the optimum's and the path's seed rule on its end (the largest move of a kernel near its seed, σ; a: accepted within the path's polish step, r: rejected); the block the path ended with; † the optimum below 1e-10:
 
-| τ/σ | variant | K | optimum | the path's polish: stop/evaluations, over the optimum; seed rule | no gradient test, 50000 | no gradient test, 500000 |
-|---|---|---|---|---|---|---|
-| 0.25 | base | 5 | 1.61e-09 | 0/5000, 6.69552; 0.16σ, accepted | 3/26621, 1.00000 | 3/26621, 1.00000 |
-| 0.5 | base | 6 | 6.30e-08 | 0/5000, 1.31320; 1.93σ, rejected | 3/6442, 1.00000 | 3/6442, 1.00000 |
-| 0.75 | base | 8 | 5.22e-08 | 0/5000, 1.58555; 1.71σ, rejected | 3/11033, 1.00000 | 3/11033, 1.00000 |
-| 1 | base | 10 | 5.22e-08 | 0/5000, 1.02035; 0.21σ, accepted | 3/7338, 1.00000 | 3/7338, 1.00000 |
-| 0.25 | polish 2σ | 5 | 1.61e-09 | 0/5000, 6.74025; 0.17σ, accepted | 3/26827, 1.00000 | 3/26827, 1.00000 |
-| 0.5 | polish 2σ | 6 | 6.30e-08 | 1/1788, 1.00000; 0.06σ, accepted | 3/1804, 1.00000 | 3/1804, 1.00000 |
-| 0.75 | polish 2σ | 8 | 5.22e-08 | 0/5000, 1.00799; 0.08σ, accepted | 3/6314, 1.00000 | 3/6314, 1.00000 |
-| 1 | polish 2σ | 10 | 5.22e-08 | 0/5000, 1.02035; 0.21σ, accepted | 3/7338, 1.00000 | 3/7338, 1.00000 |
-| 0.25 | grid +0.05 | 5 | 1.61e-09 | 0/5000, 6.74593; 0.17σ, accepted | 3/26659, 1.00000 | 3/26659, 1.00000 |
-| 0.5 | grid +0.05 | 6 | 6.30e-08 | 0/5000, 1.43236; 1.83σ, rejected | 3/6616, 1.00000 | 3/6616, 1.00000 |
-| 0.75 | grid +0.05 | 8 | 5.22e-08 | 0/5000, 1.70316; 1.07σ, rejected | 3/11386, 1.00000 | 3/11386, 1.00000 |
-| 1 | grid +0.05 | 9 | 2.96e-07 | 1/3553, 1.00000; 1.27σ, rejected | 3/3569, 1.00000 | 3/3569, 1.00000 |
-| 0.25 | polish 2σ, 5·10⁴ evaluations | 5 | 1.61e-09 | 1/1, 1.01196; 0.00σ, accepted | 3/1530, 1.00000 | 3/1530, 1.00000 |
-| 0.5 | polish 2σ, 5·10⁴ evaluations | 8 | 2.10e-10 | 0/50000, 2.67693; 0.23σ, accepted | 0/50000, 2.67693 | 3/227797, 1.00027 |
-| 0.75 | polish 2σ, 5·10⁴ evaluations | 10 | 6.81e-10 | 0/50000, 1.12069; 0.21σ, accepted | 0/50000, 1.12069 | 3/94801, 1.00001 |
-| 1 | polish 2σ, 5·10⁴ evaluations | 12 | 1.61e-09 | 0/50000, 1.00005; 0.16σ, accepted | 0/50000, 1.00005 | 3/51507, 1.00000 |
-| 0.25 | polish 2σ, 5·10⁴, repeated | 5 | 1.61e-09 | 1/1, 1.01196; 0.00σ, accepted | 3/1530, 1.00000 | 3/1530, 1.00000 |
-| 0.5 | polish 2σ, 5·10⁴, repeated | 8 | 2.10e-10 | 1/1, 2.67693; 0.00σ, accepted | 0/50000, 1.75531 | 3/178024, 1.00028 |
-| 0.75 | polish 2σ, 5·10⁴, repeated | 10 | 6.81e-10 | 1/1, 1.12066; 0.00σ, accepted | 0/50000, 1.00008 | 3/52137, 0.99998 |
-| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 6 | 2.55e-11† | 0/50000, 3.76748; 0.03σ, accepted | 0/50000, 3.76748 | 3/256857, 1.01474 |
-| 0.5 | polish 2σ, 5·10⁴, repeated, no gradient test | 8 | 2.10e-10 | 0/50000, 1.01827; 0.03σ, accepted | 0/50000, 1.01827 | 3/74011, 1.00027 |
-| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 11 | 7.75e-11† | 0/50000, 2.28692; 0.05σ, accepted | 0/50000, 2.28692 | 3/384829, 1.00365 |
+| τ/σ | variant | K | optimum | start | the path's block | path | budget | no test | budget, no test | bounded by |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.25 | base | 5 | 1.61e-09 | 62.98 | 10.85 | 0/5000, 10.84750, 0.44σ a | 1/31071, 1.00169, 0.13σ a | 0/5000, 10.84750, 0.44σ a | 3/31740, 1.00000, 0.13σ a | the budget and the gradient test |
+| 0.5 | base | 6 | 6.30e-08 | 17.05 | 14.34 | 0/5000, 1.32109, 1.47σ r | 1/6444, 1.00000, 1.51σ r | 0/5000, 1.32109, 1.47σ r | 3/6463, 1.00000, 1.51σ r | the budget (and the radius) |
+| 0.75 | base | 8 | 5.22e-08 | 8.567 | 7.53 | 0/5000, 1.59270, 1.50σ r | 1/11030, 1.00000, 1.64σ r | 0/5000, 1.59270, 1.50σ r | 3/11046, 1.00000, 1.64σ r | the budget (and the radius) |
+| 1 | base | 10 | 5.22e-08 | 5.767 | 1.771 | 0/5000, 1.77117, 0.90σ a | 1/11923, 1.00000, 1.17σ r | 0/5000, 1.77117, 0.90σ a | 3/11938, 1.00000, 1.17σ r | the budget (and the radius) |
+| 0.25 | polish 2σ | 5 | 1.61e-09 | 62.98 | 10.95 | 0/5000, 10.94555, 0.45σ a | 1/30240, 1.01196, 0.13σ a | 0/5000, 10.94555, 0.45σ a | 3/31769, 1.00000, 0.13σ a | the budget and the gradient test |
+| 0.5 | polish 2σ | 6 | 6.30e-08 | 17.05 | 1.46 | 0/5000, 1.46063, 1.45σ a | 1/6635, 1.00000, 1.51σ a | 0/5000, 1.46063, 1.45σ a | 3/6654, 1.00000, 1.51σ a | the budget |
+| 0.75 | polish 2σ | 8 | 5.22e-08 | 8.567 | 1.642 | 0/5000, 1.64194, 1.49σ a | 1/11196, 1.00000, 1.64σ a | 0/5000, 1.64194, 1.49σ a | 3/11213, 1.00000, 1.64σ a | the budget |
+| 1 | polish 2σ | 10 | 5.22e-08 | 5.767 | 1.771 | 0/5000, 1.77117, 0.90σ a | 1/11923, 1.00000, 1.17σ a | 0/5000, 1.77117, 0.90σ a | 3/11938, 1.00000, 1.17σ a | the budget |
+| 0.25 | grid +0.05 | 5 | 1.61e-09 | 62.46 | 10.96 | 0/5000, 10.95913, 0.44σ a | 1/30286, 1.01251, 0.12σ a | 0/5000, 10.95913, 0.44σ a | 3/31833, 1.00000, 0.12σ a | the budget and the gradient test |
+| 0.5 | grid +0.05 | 6 | 6.30e-08 | 17.14 | 14.19 | 0/5000, 1.41071, 1.04σ r | 1/6567, 1.00000, 1.10σ r | 0/5000, 1.41071, 1.04σ r | 3/6585, 1.00000, 1.10σ r | the budget (and the radius) |
+| 0.75 | grid +0.05 | 8 | 5.22e-08 | 8.656 | 8.656 | 0/5000, 1.70316, 1.07σ r | 3/11386, 1.00000, 1.22σ r | 0/5000, 1.70316, 1.07σ r | 3/11386, 1.00000, 1.22σ r | the budget (and the radius) |
+| 1 | grid +0.05 | 9 | 2.96e-07 | 5.592 | 4.241 | 1/3635, 1.00000, 1.88σ r | 1/3635, 1.00000, 1.88σ r | 3/3643, 1.00000, 1.88σ r | 3/3643, 1.00000, 1.88σ r | the radius |
+| 0.25 | polish 2σ, 5·10⁴ evaluations | 5 | 1.61e-09 | 62.98 | 1.012 | 1/30240, 1.01196, 0.13σ a | 1/30240, 1.01196, 0.13σ a | 3/31769, 1.00000, 0.13σ a | 3/31769, 1.00000, 0.13σ a | the gradient test |
+| 0.5 | polish 2σ, 5·10⁴ evaluations | 8 | 2.10e-10 | 445 | 4.605 | 0/50000, 4.60526, 1.20σ a | 1/252146, 1.01569, 0.83σ a | 0/50000, 4.60526, 1.20σ a | 3/275355, 1.00022, 0.82σ a | the budget and the gradient test |
+| 0.75 | polish 2σ, 5·10⁴ evaluations | 10 | 6.81e-10 | 150.1 | 2.305 | 0/50000, 2.30523, 1.33σ a | 1/143369, 1.00003, 1.08σ a | 0/50000, 2.30523, 1.33σ a | 3/144109, 1.00000, 1.08σ a | the budget |
+| 1 | polish 2σ, 5·10⁴ evaluations | 12 | 1.61e-09 | 57.9 | 1.465 | 0/50000, 1.46508, 1.30σ a | 1/102753, 1.00000, 1.46σ a | 0/50000, 1.46508, 1.30σ a | 3/102930, 1.00000, 1.46σ a | the budget |
+| 0.25 | polish 2σ, 5·10⁴, repeated | 5 | 1.61e-09 | 62.98 | 1.012 | 1/30240, 1.01196, 0.13σ a | 1/30240, 1.01196, 0.13σ a | 3/31769, 1.00000, 0.13σ a | 3/31769, 1.00000, 0.13σ a | the gradient test |
+| 0.5 | polish 2σ, 5·10⁴, repeated | 8 | 2.10e-10 | 445 | 2.677 | 0/50000, 4.60526, 1.20σ a | 1/252146, 1.01569, 0.83σ a | 0/50000, 4.60526, 1.20σ a | 3/275355, 1.00022, 0.82σ a | the budget and the gradient test |
+| 0.75 | polish 2σ, 5·10⁴, repeated | 10 | 6.81e-10 | 150.1 | 1.121 | 0/50000, 2.30517, 1.33σ a | 1/143369, 1.00000, 1.08σ a | 0/50000, 2.30517, 1.33σ a | 3/144109, 0.99998, 1.08σ a | the budget |
+| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 6 | 2.55e-11† | 2420 | 4.951 | 0/50000, 13.52667, 0.89σ a | 3/450230, 1.02346, 0.45σ a | 0/50000, 13.52667, 0.89σ a | 3/450230, 1.02346, 0.45σ a | neither |
+| 0.5 | polish 2σ, 5·10⁴, repeated, no gradient test | 8 | 2.10e-10 | 445 | 1.233 | 0/50000, 4.57583, 1.19σ a | 3/278779, 1.00016, 0.82σ a | 0/50000, 4.57583, 1.19σ a | 3/278779, 1.00016, 0.82σ a | the budget |
+| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 11 | 7.75e-11† | 1351 | 2.685 | 0/50000, 5.11693, 0.86σ a | 0/500000, 1.04673, 1.72σ a | 0/50000, 5.11693, 0.86σ a | 0/500000, 1.04673, 1.72σ a | neither |
 
-Above 1e-10 (20 blocks): without the gradient test and with 500000 evaluations the solve reaches the optimum (within 0.001) from 20 (its error 0.99998–1.00028 times the optimum's, in 1530–227797 evaluations, status 3; with 50000 evaluations from 16); the path's own polish reaches it from 1 but its seed rule rejects the end (a kernel moving 1.27σ). Below 1e-10 (2 blocks) the solve stops at 1.0037–1.0147 times the optimum with 500000 evaluations (status 3, 3; with 50000: 3.7675, 2.2869).
+Above 1e-10 (20 blocks: τ/σ (variant)) the end is bounded by
+
+- the budget: 7 — 0.5 (polish 2σ); 0.75 (polish 2σ); 1 (polish 2σ); 0.75 (polish 2σ, 5·10⁴ evaluations); 1 (polish 2σ, 5·10⁴ evaluations); 0.75 (polish 2σ, 5·10⁴, repeated); 0.5 (polish 2σ, 5·10⁴, repeated, no gradient test);
+- the budget (and the radius): 5 — 0.5 (base); 0.75 (base); 1 (base); 0.5 (grid +0.05); 0.75 (grid +0.05);
+- the budget and the gradient test: 5 — 0.25 (base); 0.25 (polish 2σ); 0.25 (grid +0.05); 0.5 (polish 2σ, 5·10⁴ evaluations); 0.5 (polish 2σ, 5·10⁴, repeated);
+- the gradient test: 2 — 0.25 (polish 2σ, 5·10⁴ evaluations); 0.25 (polish 2σ, 5·10⁴, repeated);
+- the radius: 1 — 1 (grid +0.05).
+
+Below it (2 blocks) the restart with both changed stops at 1.0235 (3/450230), 1.0467 (0/500000) times the optimum.
+
+The restart with both changed: its end over the optimum, minus 1, by the optimum (the floor is soft; a negative value — the end below the best optimum found, which is converged only to that): 2.96e-07: -5.3e-10; 6.3e-08: -9.6e-11 … -5.4e-11; 5.22e-08: -6.3e-09 … -5.3e-10; 1.61e-09: -2.3e-06 … +6.5e-07; 6.81e-10: -2.1e-05 … +3.4e-06; 2.1e-10: +1.6e-04 … +2.2e-04; 7.75e-11: +4.7e-02; 2.55e-11: +2.3e-02.
 
 
-The entries over the variants that record them, by the block they join — one event per width, starting grid, iteration and kernel whose duals agree within 10⁻⁴ (the variants repeat a path's events until they part: the entries over the variants in brackets; the duals of one event agree to 6.8e-06; referee round 65): the entrant had the largest current rate |⟨rφ_j⟩|; its rate over the largest; its dual |u_j| at the block's start; whether it starts beyond the block's outermost node (how far) or between its nodes (their duals). The entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (`sliding_iss`'s rule), its dual charged during the earlier blocks.
+### B4. The floor: the same solve with the residual in double and in long double (referee round 70)
+
+B3's blocks whose optimum is below 2e-09, from the path's block and from the stored optimum (its centres with least-squares amplitudes): Levenberg–Marquardt on the joint fit in (w, c) (`lm_fit`: the Jacobian and the step in double; the parameters and the residual in double or in long double (its ε 1.08e-19), a step accepted when the objective so computed decreases) — the start's error and each end's over the optimum's (the rms in long double), its iterations/accepted steps and its stop (stall: no step the arithmetic resolves decreases the objective; cap: 400000 iterations); † the optimum below 1e-10:
+
+| τ/σ | variant | K | optimum | start | its error | double | long double |
+|---|---|---|---|---|---|---|---|
+| 0.25 | base | 5 | 1.61e-09 | block | 10.8475 | 1.000000, 7996/7957, stall | 1.000000, 8011/7970, stall |
+| 0.25 | base | 5 | 1.61e-09 | optimum | 1 | 1.000000, 28/0, stall | 1.000000, 46/11, stall |
+| 0.5 | polish 2σ, 5·10⁴ evaluations | 8 | 2.10e-10 | block | 4.60526 | 1.000046, 57489/57409, stall | 0.999989, 58772/58709, stall |
+| 0.5 | polish 2σ, 5·10⁴ evaluations | 8 | 2.10e-10 | optimum | 1 | 1.000000, 28/0, stall | 0.999989, 758/720, stall |
+| 0.75 | polish 2σ, 5·10⁴ evaluations | 10 | 6.81e-10 | block | 2.30523 | 0.999987, 34530/34451, stall | 0.999976, 35202/35152, stall |
+| 0.75 | polish 2σ, 5·10⁴ evaluations | 10 | 6.81e-10 | optimum | 1 | 0.999980, 146/95, stall | 0.999976, 633/593, stall |
+| 1 | polish 2σ, 5·10⁴ evaluations | 12 | 1.61e-09 | block | 1.46508 | 0.999997, 19773/19726, stall | 0.999996, 20089/20037, stall |
+| 1 | polish 2σ, 5·10⁴ evaluations | 12 | 1.61e-09 | optimum | 1 | 0.999998, 130/87, stall | 0.999996, 456/405, stall |
+| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 6 | 2.55e-11† | block | 4.951 | 1.001912, 64132/64022, stall | 0.999969, 67882/67837, stall |
+| 0.25 | polish 2σ, 5·10⁴, repeated, no gradient test | 6 | 2.55e-11† | optimum | 1 | 0.999970, 91/37, stall | 0.999969, 95/51, stall |
+| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 11 | 7.75e-11† | block | 2.6853 | 1.000700, 135961/135766, stall | 0.998374, 151823/151738, stall |
+| 0.75 | polish 2σ, 5·10⁴, repeated, no gradient test | 11 | 7.75e-11† | optimum | 1 | 0.998397, 961/894, stall | 0.998374, 1429/1356, stall |
+
+From the path's blocks, the end in double over the end in long double, minus 1, by the optimum: 1.61e-09 (τ/σ = 0.25, K = 5): +1.9e-08; 1.61e-09 (τ/σ = 1, K = 12): +1.2e-06; 6.81e-10 (τ/σ = 0.75, K = 10): +1.1e-05; 2.1e-10 (τ/σ = 0.5, K = 8): +5.6e-05; 7.75e-11 (τ/σ = 0.75, K = 11): +2.3e-03; 2.55e-11 (τ/σ = 0.25, K = 6): +1.9e-03. In long double the ends from the block and from the stored optimum agree within 8.2e-09; the stored optimum over that end, minus 1: 1.61e-09 (τ/σ = 0.25, K = 5): +1.4e-08; 1.61e-09 (τ/σ = 1, K = 12): +4.0e-06; 6.81e-10 (τ/σ = 0.75, K = 10): +2.4e-05; 2.1e-10 (τ/σ = 0.5, K = 8): +1.1e-05; 7.75e-11 (τ/σ = 0.75, K = 11): +1.6e-03; 2.55e-11 (τ/σ = 0.25, K = 6): +3.1e-05.
+
+
+The entries over the variants that record them, by the block they join — one event per width, starting grid, iteration and kernel whose duals agree within 10⁻⁴ — the same entrant at the same iteration, whether or not the variants' paths have parted (the entries over the variants in brackets; the duals of one event agree to 6.8e-06; referee rounds 65, 70) —: the entrant had the largest current rate |⟨rφ_j⟩|; its rate over the largest; its dual |u_j| at the block's start; whether it starts beyond the block's outermost node (how far) or between its nodes (their duals). The entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (`sliding_iss`'s rule), its dual charged during the earlier blocks.
 
 | joining | events (entries) | largest rate | rate / largest: median (range) | dual: median (least) | beyond: entrants, median (range) | between: entrants (duals) |
 |---|---|---|---|---|---|---|

@@ -284,9 +284,16 @@ def test_b2_variable_projection_from_the_blocks():
     for q, (cj, cv, sm) in zip(B2, ((1e7, 1e4, 1.5), (2e7, 2e4, 9.0), (4e8, 3e5, 2.0), (9e9, 9e9, 7.0), (9e9, 9e9, 7.0), (5e7, 2e5, 1.0))):
         q.update(cond_joint=cj, cond_vp=cv, smin_ratio=sm, vp_status=3, vp_nfev=77, vp_gap=0.002, vp_cos=3e-4)
     md = WM.b2_line(B2)[0]
-    assert md.endswith(" There the Jacobian's condition number (the centres in units of σ) is 1e+07–4e+08 for the joint fit in (w, c), "
-                       "1e+04–3e+05 for variable projection's in c alone (analytic), and variable projection's smallest singular value over "
-                       "the joint fit's 1–2 (median 1.5): the slow modes are as slow in both, the gap at the stiff end.")
+    assert md.endswith("on 1 path the first non-optimal block's optimum is below 1e-10.")
+    for q, (cx, vx, rx, re) in zip(B2, ((1e6, 2e3, 2.5, 80.0), (2e6, 3e3, 9.0, 9.0), (5e8, 4e4, 1.2, 2000.0), (9e9, 9e9, 7.0, 7.0),
+                                        (9e9, 9e9, 7.0, 7.0), (3e6, 1e4, 1.6, 49.0))):
+        q.update(cond_joint_x=cx, cond_vp_x=vx, smin_ratio_x=rx, smin_ratio_eq=re)
+    md = WM.b2_line(B2)[0]
+    assert md.endswith(" There the Jacobian's condition number is 1e+06–5e+08 for the joint fit in (w, c) in the polish's own units "
+                       "(1e+07–4e+08 with the centres in units of σ) and 2e+03–4e+04 (1e+04–3e+05) for variable projection's in c alone "
+                       "(analytic); the ratio of their smallest singular values, variable projection's over the joint fit's, depends on the "
+                       "units: 1–2 (median 1.5) with the centres in units of σ, 1.2–2.5 (median 1.6) in the polish's, 49–2e+03 (median 80) "
+                       "with every column scaled to unit norm.")
     assert ("where variable projection stalls: its two closest nodes 0.002σ apart, its end not stationary (the largest cosine of its "
             "residual with a Jacobian column 3.0e-04), its stop 3/77") in md          # the far miss (grid +0.05)
 
@@ -469,6 +476,13 @@ def test_the_vp_jacobian_and_the_condition_numbers():
     sp = np.linalg.svd(J * WM.SIG, compute_uv=False)
     assert abs(q['cond_joint'] / (sj[0] / sj[-1]) - 1) < 1e-9 and abs(q['cond_vp'] / (sp[0] / sp[-1]) - 1) < 1e-9
     assert abs(q['smin_ratio'] / (sp[-1] / sj[-1]) - 1) < 1e-9
+    Jj = np.c_[K.phi(c), K.dphi(c) * wl[None, :]]
+    sx, px = np.linalg.svd(Jj, compute_uv=False), np.linalg.svd(J, compute_uv=False)
+    assert abs(q['cond_joint_x'] / (sx[0] / sx[-1]) - 1) < 1e-9 and abs(q['cond_vp_x'] / (px[0] / px[-1]) - 1) < 1e-9
+    assert abs(q['smin_ratio_x'] / (px[-1] / sx[-1]) - 1) < 1e-9 and q['cond_joint_x'] != q['cond_joint']
+    e1 = np.linalg.svd(Jj / np.linalg.norm(Jj, axis=0), compute_uv=False)
+    e2 = np.linalg.svd(J / np.linalg.norm(J, axis=0), compute_uv=False)
+    assert abs(q['smin_ratio_eq'] / (e2[-1] / e1[-1]) - 1) < 1e-9
 
 
 def test_main_variants_merges_the_new_paths(monkeypatch, tmp_path):
@@ -523,30 +537,6 @@ def test_the_entries_at_their_boundaries():
     assert '| an optimal block | 2 (2) | 1 |' in md and '| — | 2 (0.900–0.950) |' in md
 
 
-def test_b3_restarts_the_polish_and_the_seed_rule(monkeypatch):
-    """Referee round 65: `b3_job` restarts `polish_block` from the block with the path's budget and gradient test, then without the
-    gradient test at B3_NFEV; `seed_rule` accepts a polish whose near-seed kernels stay within the step of their start (or ascent
-    target)."""
-    from src.core import rich_transit as RT
-    K = RT.Bumps(WM.X_B, WM.SIG)
-    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(1.0) ** 2))
-    c, w = np.array([-0.1, 0.03, 0.4]), np.array([0.5, 0.4, 1e-4])
-    assert WM.seed_rule(K, f, w, c, np.sign(w), c + np.array([0.3, 0.3, 0.05 * WM.SIG]), 1.0)['accepted']
-    r = WM.seed_rule(K, f, w, c, np.sign(w), c + np.array([0.0, 0.0, 3.0 * WM.SIG]), 1.0)
-    asc = abs(c[2] + 3.0 * WM.SIG - RT.ascent_target(K, f - K.phi(c) @ w, c[2], 1.0)[0]) / WM.SIG
-    assert r['move'] == min(3.0, asc) and r['accepted'] == (min(3.0, asc) <= 1.0)
-    calls = []
-
-    def stub(K_, f_, w_, c_, s_, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
-        calls.append((max_nfev, gtol))
-        return w_, c_, dict(status=0, nfev=max_nfev)
-    monkeypatch.setattr(RT, 'polish_block', stub)
-    v6 = WM.VARIANTS_B[5]
-    q = WM.b3_job((1.0, v6[0], 3, c, w, 1e-3))
-    assert calls == [(v6[3], v6[5])] + [(n, None) for n in WM.B3_NFEV]
-    assert abs(q['path']['ratio'] - np.sqrt(np.mean((f - K.phi(c) @ w) ** 2)) / np.sqrt(np.mean(f ** 2)) / 1e-3) < 1e-9
-
-
 def test_the_frames_and_the_first_tail_ratio():
     """Referee round 65: `gh_defect_v` at v = 2 is `gh_defect`, and the first tail ratio is −vK(K + 2) + (v − 1)(K + 1)(2K + 1) exactly;
     the frame at ρ = t is the half-squeeze rule's (v_ρ = τ²σ/σ*, v′ = 2), at ρ = λ v′ = 1, at ρ = q the variance 2τ²/(β² + 1)."""
@@ -567,28 +557,301 @@ def test_the_frames_and_the_first_tail_ratio():
         assert abs(WM.frame((b2 - 1) / (b2 + 1), WM.SIG, tau2)[0] / (2 * tau2 / (b2 + 1)) - 1) < 1e-12
 
 
-def test_b3_lines_on_synthetic_results():
-    """Referee round 65: B3's summary — above E_FLOOR the hits at the largest budget (their errors, evaluations and stops, and the count
-    at the smaller one), the misses, a path polish at the optimum that the seed rule rejects; below E_FLOOR the stops; † marks the
-    optima below the floor."""
-    k0, k1 = (f"{n:g}" for n in WM.B3_NFEV)
-    P = lambda st, nf, ra, **kw: dict(status=st, nfev=nf, ratio=ra, **kw)
-    B3 = [dict(r=0.5, var='base', k=6, e_opt=6e-8, path=P(0, 5000, 1.3, move=0.2, accepted=True),
-               **{k0: P(3, 6442, 1.0), k1: P(3, 6442, 1.0)}),
-          dict(r=1.0, var='grid +0.05', k=9, e_opt=3e-7, path=P(1, 3553, 1.0, move=1.32, accepted=False),
-               **{k0: P(3, 3569, 1.0), k1: P(3, 3569, 1.0)}),
-          dict(r=0.5, var='x', k=8, e_opt=2e-10, path=P(0, 50000, 2.6, move=0.1, accepted=True),
-               **{k0: P(0, 50000, 1.7), k1: P(3, 227797, 1.00028)}),
-          dict(r=0.75, var='y', k=10, e_opt=7e-10, path=P(0, 50000, 1.1, move=0.1, accepted=True),
-               **{k0: P(0, 50000, 1.1), k1: P(0, 500000, 1.01)}),
-          dict(r=0.25, var='z', k=6, e_opt=2.55e-11, path=P(0, 50000, 3.7, move=0.0, accepted=True),
-               **{k0: P(0, 50000, 3.76748), k1: P(3, 256857, 1.01474)})]
-    s = '\n'.join(WM.b3_lines(B3))
-    assert WM.E_FLOOR == 1e-10 and "Above 1e-10 (4 blocks)" in s
-    assert ("reaches the optimum (within 0.001) from 3 (its error 1.00000–1.00028 times the optimum's, in 3569–227797 evaluations, "
-            "status 3; with 50000 evaluations from 2), the others 1.01 times above it") in s
-    assert "the path's own polish reaches it from 1 but its seed rule rejects the end (a kernel moving 1.32σ)" in s
-    assert "Below 1e-10 (1 blocks) the solve stops at 1.0147 times the optimum with 500000 evaluations (status 3; with 50000: 3.7675)" in s
-    assert "| 1 | grid +0.05 | 9 | 3.00e-07 | 1/3553, 1.00000; 1.32σ, rejected | 3/3569, 1.00000 | 3/3569, 1.00000 |" in s
-    assert "| 0.25 | z | 6 | 2.55e-11† |" in s and "| 0.5 | x | 8 | 2.00e-10 |" in s
+def test_b3_restarts_the_polish_from_its_recorded_start(monkeypatch):
+    """Referee rounds 65, 70: `b3_job` finds the path's first non-optimal block and restarts its first polish from that polish's recorded
+    start, one setting at a time — (the path's budget, its gradient test), (B3_BIG, the test), (the path's budget, none), (B3_BIG, none) —,
+    with a variant that has a gradient test; `seed_rule` judges each end from the start; `path_polishes` records the calls in the path's
+    order and restores `polish_block`."""
+    from src.core import rich_transit as RT
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(1.0) ** 2))
+    rf = np.sqrt(np.mean(f ** 2))
+    n = 4
+    cs = np.linspace(-0.3, 0.3, n)
+    hist = [(0.0, cs.copy(), np.zeros(n), 1.0)]
+    c1 = cs.copy(); c1[1] = 0.03; w1 = np.zeros(n); w1[1] = 0.8
+    r1 = np.sqrt(np.mean((f - K.phi(np.array([0.03])) @ np.array([0.8])) ** 2))
+    hist.append((1.0, c1, w1, r1))                                     # block 0: one kernel, not the optimum
+    R = dict(hist=hist, relaxed=[True], polish_log=[[dict(status=0, nfev=1, accepted=True)]])
+    start = dict(w=np.array([0.7]), c=np.array([0.0]), s=np.array([1.0]), max_nfev=5000, gtol=1e-15)
+    monkeypatch.setattr(WM, 'path_polishes', lambda r_, var: (R, K, f, [start]))
+    calls = []
+
+    def stub(K_, f_, w_, c_, s_, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
+        calls.append((max_nfev, gtol, tuple(w_), tuple(c_)))
+        return w_ * 1.1, c_ + 0.01, dict(status=0, nfev=max_nfev)
+    monkeypatch.setattr(RT, 'polish_block', stub)
+    v = WM.VARIANTS_B[3]
+    q = WM.b3_job((1.0, v[0]))
+    assert [x[:2] for x in calls] == [(v[3], v[5]), (WM.B3_BIG, v[5]), (v[3], None), (WM.B3_BIG, None)]
+    assert all(x[2:] == ((0.7,), (0.0,)) for x in calls)
+    e_opt = min(WM.sample_fit(K.phi, f, c1[[1]])[2], WM.sample_fit(K.phi, f, WM.C_B + W.half_squeeze(1, WM.SIG, WM.sigma_star(1.0))[0])[2]) / rf
+    assert np.isclose(q['e_opt'], e_opt) and np.isclose(q['e_block'], r1 / rf / e_opt)
+    assert np.isclose(q['e_start'], np.sqrt(np.mean((f - K.phi(np.array([0.0])) @ np.array([0.7])) ** 2)) / rf / e_opt)
+    sr = WM.seed_rule(K, f, np.array([0.7]), np.array([0.0]), np.array([1.0]), np.array([0.01]), v[1])
+    assert q['path']['move'] == sr['move'] and q['path']['accepted'] == sr['accepted']
+
+
+def test_path_polishes_records_and_restores(monkeypatch):
+    """Referee round 70: `path_polishes` runs the variant's path with `polish_block` wrapped — every call's start and settings recorded
+    in order, the real solve's result passed through — and restores `polish_block` even when the path fails."""
+    from src.core import rich_transit as RT
+    real, seen = RT.polish_block, {}
+
+    def fake_path(L, K, f, c0, rho, **kw):
+        seen.update(kw)
+        out = [RT.polish_block(K, f, np.array([0.5]), np.array([0.01 * i]), np.array([1.0]), max_nfev=7 + i, info=True, gtol=None)
+               for i in range(2)]
+        return dict(out=out)
+    monkeypatch.setattr(RT, 'sliding_iss', fake_path)
+    v = WM.VARIANTS_B[4]
+    R, K, f, calls = WM.path_polishes(1.0, v[0])
+    assert RT.polish_block is real and len(calls) == 2
+    assert [(c['max_nfev'], c['gtol'], float(c['c'][0])) for c in calls] == [(7, None, 0.0), (8, None, 0.01)]
+    assert seen['polish_step'] == v[1] and seen['polish_nfev'] == v[3] and seen['repolish'] == v[4] and seen['polish_gtol'] == v[5]
+    assert len(R['out'][0]) == 3 and R['out'][0][2]['nfev'] <= 7
+
+    def boom(*a, **k):
+        raise RuntimeError('path failed')
+    monkeypatch.setattr(RT, 'sliding_iss', boom)
+    try:
+        WM.path_polishes(1.0, v[0])
+    except RuntimeError:
+        pass
+    assert RT.polish_block is real
+
+
+def test_b3_binds_and_lines_on_synthetic_results():
+    """Referee round 70: `b3_binds` — the budget, the gradient test, both, neither, the radius, none — and B3's table and summary."""
+    P = lambda ra, acc=True, st=0, nf=5000, mv=0.5: dict(status=st, nfev=nf, ratio=ra, move=mv, accepted=acc)
+    mk = lambda r_, var, e_opt, a, b, c, d: dict(r=r_, var=var, k=6, e_opt=e_opt, e_start=17.0, e_block=1.46, n_polish=1,
+                                                 **dict(zip(WM.B3_KEYS, (a, b, c, d))))
+    B3 = [mk(0.5, 'polish 2σ', 6e-8, P(1.46), P(1.0, st=1, nf=6635), P(1.46), P(1.0, st=3, nf=6654)),
+          mk(0.25, 'base', 6e-8, P(1.002, st=1), P(1.0017, st=1), P(1.0000007, st=3), P(1.0, st=3)),
+          mk(1.0, 'grid +0.05', 3e-7, P(1.0, acc=False, mv=1.98), P(1.0, acc=False, mv=1.98), P(1.0, acc=False), P(1.0, acc=False)),
+          mk(0.75, 'x', 2e-9, P(1.3), P(1.2), P(1.2), P(1.1)),
+          mk(1.5, 'y', 4e-9, P(1.0), P(1.0), P(1.0), P(1.0)),
+          mk(0.25, 'z', 2.5e-11, P(3.7), P(3.7), P(3.7), P(1.0147))]
+    labs = [WM.b3_binds(q) for q in B3]
+    assert labs == ['the budget', 'the gradient test', 'the radius', 'neither', 'nothing', 'neither']
+    q = dict(B3[0]); q['budget'] = P(1.0, acc=False)
+    assert WM.b3_binds(q) == 'the budget (and the radius)'
+    s = '\n'.join(WM.b3_lines(B3 + [dict(r=2.0, var='base', k=None)]))
+    assert ("| 0.5 | polish 2σ | 6 | 6.00e-08 | 17 | 1.46 | 0/5000, 1.46000, 0.50σ a | 1/6635, 1.00000, 0.50σ a | 0/5000, 1.46000, 0.50σ a | "
+            "3/6654, 1.00000, 0.50σ a | the budget |") in s
+    assert "| 0.25 | z | 6 | 2.50e-11† |" in s
+    assert "\n\nBelow it (1 blocks) the restart with both changed stops at 1.0147 (0/5000) times the optimum." in s
+    assert "Above 1e-10 (5 blocks: τ/σ (variant)) the end is bounded by" in s
+    assert ("- neither: 1 — 0.75 (x);\n- nothing: 1 — 1.5 (y);\n- the budget: 1 — 0.5 (polish 2σ);\n- the gradient test: 1 — 0.25 (base);"
+            "\n- the radius: 1 — 1 (grid +0.05).") in s
+    assert ("its end over the optimum, minus 1, by the optimum (the floor is soft; a negative value — the end below the best optimum "
+            "found, which is converged only to that): 3e-07: +0.0e+00; 6e-08: +0.0e+00; 4e-09: +0.0e+00; 2e-09: +1.0e-01; "
+            "2.5e-11: +1.5e-02.") in s
+    q2 = [dict(B3[1]), dict(B3[0])]
+    q2[0]['budget, no test'] = P(0.99998, st=3)
+    s2 = '\n'.join(WM.b3_lines(q2))
+    assert "6e-08: -2.0e-05 … +0.0e+00." in s2
     assert WM.b3_lines([]) == [] and WM.b3_lines(None) == []
+
+
+def test_seed_rule_with_two_seed_kernels_and_its_default():
+    """Referee round 70 (S02, S05–S08): with two kernels near their seeds the rule takes the larger of their moves, each the nearer of its
+    start and its ascent target — one decided by the target —; the seed set is |w| ≤ 10⁻²·max|w|, `sliding_iss`'s default."""
+    import inspect
+    from src.core import rich_transit as RT
+    assert (inspect.signature(WM.seed_rule).parameters['wfrac'].default
+            == inspect.signature(RT.sliding_iss).parameters['polish_wfrac'].default == 1e-2)
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(1.0) ** 2))
+    c, w = np.array([-0.4, 0.03, 0.5]), np.array([5e-3, 0.8, 7e-3])
+    r0 = f - K.phi(c) @ w
+    t0, t2 = (RT.ascent_target(K, r0, c[i], 1.0)[0] for i in (0, 2))
+    cp = c.copy(); cp[0] = t0 + 0.2 * WM.SIG; cp[2] = c[2] + 0.7 * WM.SIG
+    r = WM.seed_rule(K, f, w, c, np.ones(3), cp, 1.0)
+    m0 = min(abs(cp[0] - c[0]), abs(cp[0] - t0)) / WM.SIG
+    m2 = min(abs(cp[2] - c[2]), abs(cp[2] - t2)) / WM.SIG
+    assert abs(cp[0] - c[0]) / WM.SIG > 1.0 and np.isclose(m0, 0.2)
+    assert np.isclose(r['move'], max(m0, m2)) and r['accepted']
+    assert not WM.seed_rule(K, f, w, c, np.ones(3), cp, 0.1)['accepted']
+    assert WM.seed_rule(K, f, np.array([5e-3, 0.8, 0.5]), c, np.ones(3), cp, 1.0)['move'] == m0
+
+
+def test_part_a5_on_its_own_numbers():
+    """Referee round 70 (A01–A05, A09): A5's frames at ρ = t, q, λ and the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero
+    rule — with its errors at the given K, by hand; the tail-ratio checks all exact."""
+    A = dict(rows=[dict(r=1.0, K=3), dict(r=1.0, K=4), dict(r=2.0, K=5)])
+    A5 = WM.part_A5(A)
+    x = next(r for r in A5['rows'] if r['r'] == 1.0)
+    ss = WM.sigma_star(1.0)
+    P = W.params(WM.SIG, ss)
+    tau2 = P['tau'] ** 2
+    b2 = np.sqrt(1 + 2 * tau2 / WM.SIG ** 2)
+    vhs, vM = tau2 * WM.SIG / ss, 2 * tau2 / (b2 + 1)
+    assert x['Ks'] == [3, 4] and np.isclose(x['vM'], vM / vhs) and np.isclose(x['q'], (b2 - 1) / (b2 + 1))
+    assert np.isclose(x['frames']['t']['v'], 1.0) and np.isclose(x['frames']['λ']['vp'], 1.0)
+    assert np.allclose(x['e_mframe'], [W.l2_error(*W.scaled_rule(K, WM.SIG, ss, vM), WM.SIG, ss) for K in (3, 4)])
+    assert all(c_['ok'] for c_ in A5['check'])
+    A5['rows'] = [dict(x, Ks=[3, 4, 5, 6], e_mframe=[1.0, 0.25, 0.05, 0.01]) for x in A5['rows']]
+    md = '\n'.join(WM.a5_lines(A5))
+    assert f"| 4, 5, 5 at K = 4–6 ({1 / x['t']:.4g}, {1 / x['q']:.4g}) |" in md and "ratio per kernel at the last three K" in md
+
+
+def test_b2_job_where_variable_projection_leaves_the_block():
+    """Referee round 70 (B04–B06, B09, V02, V03): `b2_job` from a two-kernel block away from the optimum — variable projection from the
+    block and from the half-squeeze nodes, the better end's distance, the stop, the closest nodes and the stationarity cosine — against a
+    direct `vp_fit`; `vp_fit` returns sorted centres, their least-squares coefficients, the rms, the status and the evaluations."""
+    from src.core import rich_transit as RT
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    r_ = 1.0
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(r_) ** 2))
+    rf = np.sqrt(np.mean(f ** 2))
+    c = np.array([0.2, -0.15])
+    cv, av, ev, st, nf = WM.vp_fit(K.phi, f, c)
+    assert np.all(np.diff(cv) > 0) and np.allclose(av, np.linalg.lstsq(K.phi(cv), f, rcond=None)[0])
+    assert np.isclose(ev, np.sqrt(np.mean((f - K.phi(cv) @ av) ** 2))) and isinstance(st, int) and isinstance(nf, int) and nf > 0
+    q = WM.b2_job((r_, 'base', 2, c))
+    yh, _ = W.half_squeeze(2, WM.SIG, WM.sigma_star(r_))
+    cr, _, er, _, _ = WM.vp_fit(K.phi, f, WM.C_B + yh)
+    assert np.isclose(q['e_block'], ev / rf) and np.isclose(q['e_rule'], er / rf) and q['vp_status'] == st and q['vp_nfev'] == nf
+    assert np.isclose(q['dc'], np.abs(np.sort(c) - (cv if ev <= er else cr)).max()) and q['dc'] > 0.01
+    assert np.isclose(q['vp_gap'], np.diff(cv).min() / WM.SIG)
+    Je = WM.vp_jacobian(K, f, cv)
+    re = f - K.phi(cv) @ av
+    assert np.isclose(q['vp_cos'], np.max(np.abs(Je.T @ re) / (np.linalg.norm(Je, axis=0) * np.linalg.norm(re))))
+
+
+def test_b3_jobs_and_run_b_with_variants(monkeypatch):
+    """Referee round 70 (P01, X02): B3's jobs are the paths with a non-optimal block; `run_B` with variants reruns those and merges them
+    into the stored paths (none dropped), without variants reruns all."""
+    o = lambda e: dict(e=e, e_opt=1.0)
+    B = [dict(r=0.5, var='base', blocks=[o(1.0), o(1.0005)]), dict(r=1.0, var='base', blocks=[o(1.0), o(1.2)]),
+         dict(r=0.5, var='polish 2σ', blocks=[o(2.0)])]
+    assert WM.b3_jobs(B) == [(1.0, 'base'), (0.5, 'polish 2σ')]
+    new = [dict(r=0.5, var='polish 2σ', blocks=[o(1.0)])]
+    monkeypatch.setattr(WM, 'part_B', lambda idx=None: new if idx is not None else ['all'])
+    got = WM.run_B(B, {1})
+    assert len(got) == 3 and next(b for b in got if b['var'] == 'polish 2σ')['blocks'] == [o(1.0)]
+    assert [(b['var'], b['r']) for b in got] == [('base', 0.5), ('base', 1.0), ('polish 2σ', 0.5)]
+    assert WM.run_B(B, None) == ['all']
+
+
+def test_b3_stops_the_path_at_the_stored_blocks_first_polish(monkeypatch):
+    """Referee round 70 (B3's cost): `first_nonoptimal` finds in B's stored blocks the first polished non-optimal block and the number of
+    polish calls before it; `path_polishes` with stop_after = n records call n and stops the path before its solve (R None, the solve
+    not called, `polish_block` restored); `b3_job` with the block restarts that recorded start, with the stored block's errors, and
+    refuses a rerun whose call n is not the block's size."""
+    from src.core import rich_transit as RT
+    o = lambda k, e, n: dict(k=k, e=e, e_opt=1.0, polish=[dict(status=1)] * n)
+    b = dict(r=0.5, var='base', blocks=[o(1, 1.0, 2), o(2, 3.0, 0), o(3, 1.5, 3), o(4, 2.0, 1)])
+    assert WM.first_nonoptimal(b) == dict(n0=2, k=3, e=1.5, e_opt=1.0, n_polish=3)
+    assert WM.first_nonoptimal(dict(blocks=[o(1, 1.0, 2), o(2, 1.0005, 1)])) is None
+    assert WM.b3_jobs([b, dict(r=1.0, var='base', blocks=[o(1, 1.0, 1)])]) == [(0.5, 'base', WM.first_nonoptimal(b))]
+    solved = []
+
+    def real_stub(K_, f_, w_, c_, s_, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
+        solved.append(c_.size)
+        return w_, c_, dict(status=1, nfev=1)
+    monkeypatch.setattr(RT, 'polish_block', real_stub)
+
+    def fake_path(L, K, f, c0, rho, **kw):
+        for k in (1, 1, 3, 3, 4):
+            RT.polish_block(K, f, np.full(k, 0.5), np.linspace(-0.1, 0.1, k), np.ones(k), info=True)
+        return 'full'
+    monkeypatch.setattr(RT, 'sliding_iss', fake_path)
+    R, K, f, calls = WM.path_polishes(0.5, 'base', stop_after=2)
+    assert R is None and len(calls) == 3 and calls[2]['c'].size == 3 and solved == [1, 1] and RT.polish_block is real_stub
+    R, K, f, calls = WM.path_polishes(0.5, 'base')
+    assert R == 'full' and len(calls) == 5 and solved == [1, 1, 1, 1, 3, 3, 4]
+    v = next(x for x in WM.VARIANTS_B if x[0] == 'base')
+    q = WM.b3_job((0.5, 'base', WM.first_nonoptimal(b)))
+    assert q['k'] == 3 and q['e_opt'] == 1.0 and q['e_block'] == 1.5 and q['n_polish'] == 3
+    assert q['settings'] == dict(nfev=5000, gtol=1e-15) and all(q[k]['nfev'] == 1 for k in WM.B3_KEYS)
+    rf = np.sqrt(np.mean(f ** 2))
+    st = calls[2]
+    assert np.isclose(q['e_start'], np.sqrt(np.mean((f - K.phi(st['c']) @ st['w']) ** 2)) / rf)
+    bad = dict(WM.first_nonoptimal(b), k=4)
+    try:
+        WM.b3_job((0.5, 'base', bad))
+        raise AssertionError('a mismatched block was accepted')
+    except RuntimeError as e:
+        assert 'not the stored block' in str(e)
+    assert v[0] == 'base'
+
+
+def test_lm_fit_in_double_and_long_double():
+    """Referee round 70 (B4): `lm_fit` from variable projection's end at τ/σ = 1/2, K = 8 (its optimum ≈ 2.1·10⁻¹⁰): in double no step
+    decreases the objective as the arithmetic resolves it (a stall, nothing gained), in long double the same solve goes on 10⁻⁵ below;
+    the iteration cap stops it; on an exact two-kernel sum from a perturbed start it reaches the sum; `lm_rms` is the long-double rms;
+    the defaults are B4's."""
+    import inspect
+    import pytest
+    from src.core import rich_transit as RT
+    if np.finfo(np.longdouble).eps >= 1e-18:
+        pytest.skip('long double is not extended on this platform')
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    ss = WM.sigma_star(0.5)
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * ss ** 2))
+    co, ao, eo = WM.sample_fit(K.phi, f, WM.C_B + W.half_squeeze(8, WM.SIG, ss)[0])
+    pd, itd, accd, std = WM.lm_fit(f, ao, co, np.float64)
+    pl, itl, accl, stl = WM.lm_fit(f, ao, co, np.longdouble)
+    ed, el = WM.lm_rms(f, pd, 8) / eo, WM.lm_rms(f, pl, 8) / eo
+    assert pd.dtype == np.float64 and pl.dtype == np.longdouble and std == stl == 'stall' and accd <= 5 and accl > 100
+    assert ed > 1 - 1e-6 and el < ed - 5e-6
+    p, it, acc, st = WM.lm_fit(f, ao, co, np.longdouble, max_iter=50)
+    assert it == 50 and st == 'cap' and WM.lm_rms(f, p, 8) / eo > el
+    w, c = np.array([0.5, 0.3]), np.array([-0.05, 0.2])
+    f2 = K.phi(c) @ w
+    p2, it2, acc2, st2 = WM.lm_fit(f2, w * np.array([1.02, 0.97]), c + np.array([0.01, -0.008]), np.float64)
+    assert st2 == 'stall' and acc2 > 3 and np.allclose(p2, np.r_[w, c], rtol=0, atol=1e-12) and WM.lm_rms(f2, p2, 2) < 1e-15
+    xl = WM.X_B.astype(np.longdouble)
+    pr = np.r_[w, c].astype(np.longdouble)
+    rl = (f2 + 1e-3).astype(np.longdouble) - np.exp(-(xl[:, None] - pr[None, 2:]) ** 2 / (2 * np.longdouble(WM.SIG) ** 2)) @ pr[:2]
+    assert WM.lm_rms(f2 + 1e-3, np.r_[w, c], 2) == float(np.sqrt(np.mean(rl * rl)))
+    sig = inspect.signature(WM.lm_fit).parameters
+    assert sig['max_iter'].default == WM.B4_CAP == 400_000 and sig['mu0'].default == 1e-20 and WM.B4_MAX == 2e-9
+    assert [k for k, _ in WM.B4_PREC] == ['double', 'long double'] and WM.B4_PREC[1][1] is np.longdouble
+
+
+def test_b4_jobs_job_and_lines(monkeypatch):
+    """Referee round 70 (B4): the jobs are B3's distinct blocks below B4_MAX (its first row for each, the block of that K nearest its
+    optimum), from the block and from the stored optimum with least-squares amplitudes; `b4_job` reports the start's and each end's
+    error over the optimum's for both arithmetics; `b4_lines` prints the table and the summary."""
+    from src.core import rich_transit as RT
+    K = RT.Bumps(WM.X_B, WM.SIG)
+    o = lambda k, e_opt, c: dict(k=k, e=2 * e_opt, e_opt=e_opt, c=np.array(c), w=np.full(len(c), 0.4), c_opt=np.array(c) + 0.01)
+    B = [dict(r=0.5, var='v1', blocks=[o(1, 1e-3, [0.0]), o(2, 3e-10, [-0.1, 0.1]), o(2, 5e-10, [-0.2, 0.2])]),
+         dict(r=0.5, var='v2', blocks=[o(2, 3e-10, [-0.15, 0.15])]),
+         dict(r=1.0, var='v1', blocks=[o(3, 1e-8, [-0.1, 0.0, 0.1])])]
+    q = lambda r_, var, k, e_opt: dict(r=r_, var=var, k=k, e_opt=e_opt)
+    B3 = [q(0.5, 'v1', 2, 5e-10), q(0.5, 'v2', 2, 3e-10), q(1.0, 'v1', 3, 1e-8), dict(r=2.0, var='v1', k=None)]
+    jobs = WM.b4_jobs(B, B3)
+    assert [(j[0], j[1], j[2], j[3]) for j in jobs] == [(0.5, 'v1', 2, 'block'), (0.5, 'v1', 2, 'optimum')]
+    assert np.array_equal(jobs[0][5], [-0.2, 0.2]) and np.allclose(jobs[1][5], [-0.19, 0.21], rtol=0, atol=1e-15) and jobs[0][6] == 5e-10
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(0.5) ** 2))
+    assert np.allclose(jobs[1][4], np.linalg.lstsq(K.phi(np.array([-0.19, 0.21])), f, rcond=None)[0])
+    assert WM.b4_jobs(B, None) == [] and WM.b4_jobs(B, [q(0.5, 'v1', 2, 2e-9)]) == []
+    seen = []
+
+    def fake(f_, w_, c_, dtype, max_iter=WM.B4_CAP, mu0=1e-20):
+        seen.append(dtype)
+        return np.r_[w_, c_ + (0.0 if dtype is np.longdouble else 0.001)].astype(dtype), 7, 5, 'stall'
+    monkeypatch.setattr(WM, 'lm_fit', fake)
+    rf = float(np.sqrt(np.mean(f ** 2)))
+    out = WM.b4_job(jobs[0])
+    assert seen == [np.float64, np.longdouble] and out['start'] == 'block' and out['k'] == 2
+    assert np.isclose(out['e_start'], WM.lm_rms(f, np.r_[jobs[0][4], jobs[0][5]], 2) / rf / 5e-10)
+    assert np.isclose(out['long double']['ratio'], out['e_start']) and out['double']['ratio'] != out['long double']['ratio']
+    assert out['double']['it'] == 7 and out['double']['acc'] == 5 and out['double']['stop'] == 'stall'
+    assert out['eps'] == float(np.finfo(np.longdouble).eps)
+    R = lambda ra: dict(ratio=ra, it=100, acc=90, stop='stall')
+    rows = [dict(r=0.25, var='x', k=6, start='block', e_opt=2.5e-11, e_start=4.95, double=R(1.0019), eps=1.0842e-19,
+                 **{'long double': R(0.99997)}),
+            dict(r=0.25, var='x', k=6, start='optimum', e_opt=2.5e-11, e_start=1.0, double=R(0.99997), eps=1.0842e-19,
+                 **{'long double': R(0.99996)})]
+    s = '\n'.join(WM.b4_lines(rows))
+    assert "the parameters and the residual in double or in long double (its ε 1.08e-19)" in s
+    assert "| 0.25 | x | 6 | 2.50e-11† | block | 4.95 | 1.001900, 100/90, stall | 0.999970, 100/90, stall |" in s
+    assert ("From the path's blocks, the end in double over the end in long double, minus 1, by the optimum: 2.5e-11 (τ/σ = 0.25, K = 6): "
+            "+1.9e-03. In long double the ends from the block and from the stored optimum agree within 1.0e-05; the stored optimum over "
+            "that end, minus 1: 2.5e-11 (τ/σ = 0.25, K = 6): +4.0e-05.") in s
+    assert WM.b4_lines(None) == [] and WM.b4_lines([]) == []

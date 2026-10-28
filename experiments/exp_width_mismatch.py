@@ -20,14 +20,16 @@ B. The transit: the sliding path (polished; the KKT exit rule) on f* (A_B, c* = 
    with as many kernels on the same samples (variable projection from the block and from the half-squeeze rule, the better), whether
    the relaxation passed the stationarity test, the first non-optimal block's polishes (status, evaluations, accepted), the block's
    nodes against the optimum's, the continuous half-squeeze error; the entries (the entrant's rate against the largest, its dual), the
-   chunks redone after a stall or a failed solve, the polish's rejections. B2: variable projection from every non-optimal block.
+   chunks redone after a stall or a failed solve, the polish's rejections. B2: variable projection from every non-optimal block. B3: each
+   path's first non-optimal block, its first polish restarted from its recorded start one setting at a time (the budget, the gradient
+   test). B4: the floor — the same Levenberg–Marquardt solve with the residual in double and in long double (referee round 70).
 C. Under noise: y = f* + ξ (i.i.d. N(0, s²) on X_B), the path to K_C + 1 entries (its centres in the window ± BOX_C·σ, the thresholds
    on max|y|, the KKT exit rule): the discrepancy rule's stop (the first block with rms ≤ (1 + DELTA)s) against its prediction from (i)
    — the first K with e_K²‖f*‖²_rms ≤ s²((1 + δ)² − 1 + 2K/N), e_K the half-squeeze rule's L² error — and the probability of each stop
    from the rms's expectation and scatter (`stop_law`), the stopped fit's error against (e_K²‖f*‖²_rms + 2Ks²/N)^{1/2} (e_K B's optima
    on the samples); the kernels at the feature and elsewhere; the largest relative gap's K.
 
-Usage: python experiments/exp_width_mismatch.py [--only A,B,C,D,B2,A5,B3] [--variants i,j] [--from-raw] → results/chaos/width_mismatch.md
+Usage: python experiments/exp_width_mismatch.py [--only A,B,C,D,B2,A5,B3,B4] [--variants i,j] [--from-raw] → results/chaos/width_mismatch.md
 (+ _raw.npz). --variants: B for those variants only (indices into VARIANTS_B), merged into the raw's B. WM_WORKERS (default 2).
 """
 import os
@@ -206,6 +208,12 @@ def part_B(idx=None):
         return pool.map(b_job, [(r_, v[0]) for i, v in enumerate(VARIANTS_B) if idx is None or i in idx for r_ in TAUS_B], chunksize=1)
 
 
+def run_B(old, idx):
+    """B's part: all paths (idx None), or the variants with indices idx rerun and merged into the stored ones (`merge_B`; referee round
+    70: a partial rerun must not drop the others)."""
+    return part_B() if idx is None else merge_B(old, part_B(idx))
+
+
 def merge_B(old, new):
     """B's paths: the new ones replace the old of the same width and variant; in the order of VARIANTS_B, then TAUS_B."""
     names = [v[0] for v in VARIANTS_B]
@@ -221,8 +229,9 @@ def b2_job(args):
     unfinished) or at another stationary point; dc, the block's largest distance from the better optimum's nodes; and at the block's
     centres (least-squares amplitudes) the condition numbers of the two problems' Jacobians — the joint fit in (w, c), as the polish
     solves it, and variable projection's in c alone (`vp_jacobian`, analytic), both with the centres in units of σ, and the ratio of their
-    smallest singular values (referee rounds 60, 65); where variable projection from the block stops: its status, its closest nodes (σ)
-    and the largest cosine between its residual and a column of its Jacobian (zero at a stationary point)."""
+    smallest singular values (referee rounds 60, 65) — and the same in the polish's own units (the centres in x) and with every column
+    scaled to unit norm (referee round 70: the comparison depends on the units); where variable projection from the block stops: its
+    status, its closest nodes (σ) and the largest cosine between its residual and a column of its Jacobian (zero at a stationary point)."""
     r_, var, k, c = args
     warnings.filterwarnings('ignore')
     K = RT.Bumps(X_B, SIG)
@@ -236,11 +245,16 @@ def b2_job(args):
     P = K.phi(c)
     wl = np.linalg.lstsq(P, f, rcond=None)[0]
     sv = lambda J: np.linalg.svd(J, compute_uv=False)
-    sj, sp = sv(np.c_[P, K.dphi(c) * wl[None, :] * SIG]), sv(vp_jacobian(K, f, c) * SIG)
+    eq = lambda J: J / np.where(np.linalg.norm(J, axis=0) > 0, np.linalg.norm(J, axis=0), 1.0)[None, :]
+    Jj, Jv = np.c_[P, K.dphi(c) * wl[None, :]], vp_jacobian(K, f, c)  # the polish's own units (the centres in x)
+    sj, sp = sv(np.c_[P, K.dphi(c) * wl[None, :] * SIG]), sv(Jv * SIG)
+    sjx, spx, sje, spe = sv(Jj), sv(Jv), sv(eq(Jj)), sv(eq(Jv))
     Je, re = vp_jacobian(K, f, cb), f - K.phi(cb) @ ab
     cos = float(np.max(np.abs(Je.T @ re) / (np.linalg.norm(Je, axis=0) * np.linalg.norm(re)))) if np.linalg.norm(re) > 0 else 0.0
     return dict(r=r_, var=var, k=k, e_block=eb / rf, e_rule=er / rf, dc=float(np.abs(c - (cb if eb <= er else cr)).max()),
-                cond_joint=float(sj[0] / sj[-1]), cond_vp=float(sp[0] / sp[-1]), smin_ratio=float(sp[-1] / sj[-1]), vp_status=st, vp_nfev=nf,
+                cond_joint=float(sj[0] / sj[-1]), cond_vp=float(sp[0] / sp[-1]), smin_ratio=float(sp[-1] / sj[-1]),
+                cond_joint_x=float(sjx[0] / sjx[-1]), cond_vp_x=float(spx[0] / spx[-1]), smin_ratio_x=float(spx[-1] / sjx[-1]),
+                smin_ratio_eq=float(spe[-1] / sje[-1]), vp_status=st, vp_nfev=nf,
                 vp_gap=float(np.diff(cb).min() / SIG) if cb.size > 1 else np.nan, vp_cos=cos)
 
 
@@ -254,85 +268,306 @@ def seed_rule(K, f, w, c, s, cp, step, wfrac=1e-2):
     return dict(accepted=bool(all(m <= step for m in mv)), move=float(max(mv)) if mv else 0.0)
 
 
-B3_NFEV = (50_000, 500_000)                                           # B3: the polish without its gradient test at these budgets
+B3_BIG = 500_000                                                      # B3 (referee round 70): the larger budget
+B3_KEYS = ('path', 'budget', 'no test', 'budget, no test')            # B3's restarts: the path's settings, then one or both changed
+
+
+class _StopPath(Exception):
+    """`path_polishes`' recorder: the call asked for is recorded, the rest of the path is not needed."""
+
+
+def path_polishes(r_, var, stop_after=None):
+    """B's path (r_, var) rerun as `b_job`'s with every `polish_block` call recorded (referee round 70): its start (w, c, s) and settings,
+    in the path's order (R['polish_log'] flattened: each call appends one record to its block's log). With stop_after = n the path stops
+    once call n (from 0) is recorded — before that call's solve — and R is None. Returns (R, K, f, calls)."""
+    name, step, shift, nfev, rep_, gt = next(v for v in VARIANTS_B if v[0] == var)
+    L, _, c0 = TM.setup()
+    K = RT.Bumps(X_B, SIG)
+    f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * sigma_star(r_) ** 2))
+    calls, real = [], RT.polish_block
+
+    def rec(K_, fstar, w, c, s, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
+        calls.append(dict(w=np.array(w, float), c=np.array(c, float), s=np.array(s, float), max_nfev=max_nfev, gtol=gtol))
+        if stop_after is not None and len(calls) > stop_after:
+            raise _StopPath
+        return real(K_, fstar, w, c, s, cbox=cbox, max_nfev=max_nfev, info=info, gtol=gtol)
+    RT.polish_block = rec
+    try:
+        R = RT.sliding_iss(L, K, f, c0 + shift, np.ones(c0.size), polish=True, max_events=3 * K_B, tol=0.0, max_entries=K_B + 1,
+                           max_doublings=MAX_DOUBLINGS, polish_step=step, exit_kkt=True, polish_nfev=nfev, repolish=rep_,
+                           polish_gtol=gt)
+    except _StopPath:
+        R = None
+    finally:
+        RT.polish_block = real
+    return R, K, f, calls
+
+
+def first_nonoptimal(b):
+    """B's path b (its stored blocks): the first block with polishes whose error is at least 1 + OPT_TOL times the optimum's, as
+    dict(n0 — the number of polish calls before its first —, k, e, e_opt, n_polish), or None."""
+    n0 = 0
+    for o in b['blocks']:
+        n_i = len(o['polish']) if 'polish' in o else 0
+        if o['k'] > 0 and n_i > 0 and abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL:
+            return dict(n0=n0, k=int(o['k']), e=float(o['e']), e_opt=float(o['e_opt']), n_polish=n_i)
+        n0 += n_i
+    return None
 
 
 def b3_job(args):
-    """B3 (referee round 65): a path's first non-optimal block — where its optimal range ends — restarted from the block's final state by
-    the polish's own solve (`polish_block`): with the path's budget and gradient test, and whether the path's seed rule (`seed_rule`) would
-    accept its end; and without the gradient test at the budgets B3_NFEV. Each: the solve's stop (TRF's status: 0 the budget, 1 the
-    gradient test, 2 the decrease test, 3 the step test), its evaluations and its error over the optimum's."""
-    r_, var, k, c, w, e_opt = args
+    """B3 (referee rounds 65, 70): the path's first non-optimal block (its error over the optimum's at least 1 + OPT_TOL), its first
+    polish restarted from that polish's recorded start (`path_polishes`) by `polish_block`, one setting at a time — the path's budget and
+    gradient test; the budget B3_BIG with the test; the path's budget without it; both changed —: each the solve's stop (TRF's status: 0
+    the budget, 1 the gradient test, 2 the decrease test, 3 the step test), its evaluations, its error over the optimum's and the path's
+    acceptance of its end (`seed_rule` with the path's polish step: the first polish has no improvement test)."""
+    r_, var = args[:2]
     _, step, _, nfev, _, gt = next(v for v in VARIANTS_B if v[0] == var)
     warnings.filterwarnings('ignore')
-    K = RT.Bumps(X_B, SIG)
-    f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * sigma_star(r_) ** 2))
+    t0 = time.time()
+    if len(args) > 2:                                                    # the block known from B's raw (`first_nonoptimal`): the path
+        blk = args[2]                                                    # rerun only to its first polish
+        _, K, f, calls = path_polishes(r_, var, stop_after=blk['n0'])
+        if len(calls) <= blk['n0'] or calls[blk['n0']]['c'].size != blk['k']:
+            raise RuntimeError(f"B3 {r_} {var}: the rerun's polish {blk['n0']} is not the stored block's ({len(calls)} calls)")
+        return b3_restart(r_, var, K, f, calls[blk['n0']], blk['k'], blk['e_opt'], blk['e'] / blk['e_opt'], blk['n_polish'], step,
+                          nfev, gt, t0)
+    R, K, f, calls = path_polishes(r_, var)
+    rf, ss, n0 = float(np.sqrt(np.mean(f ** 2))), sigma_star(r_), 0
+    for i, b in enumerate(blocks(R)):
+        n_i = len(R['polish_log'][i]) if i < len(R['polish_log']) else 0
+        if b['k'] > 0 and n_i > 0:
+            yh, _ = W.half_squeeze(b['k'], SIG, ss)
+            e_opt = min(sample_fit(K.phi, f, b['c'])[2], sample_fit(K.phi, f, C_B + yh)[2]) / rf
+            if abs(b['rms'] / rf / e_opt - 1) >= OPT_TOL:
+                return b3_restart(r_, var, K, f, calls[n0], b['k'], e_opt, b['rms'] / rf / e_opt, n_i, step, nfev, gt, t0)
+        n0 += n_i
+    return dict(r=r_, var=var, k=None, secs=time.time() - t0)
+
+
+def b3_restart(r_, var, K, f, st, k, e_opt, e_block, n_polish, step, nfev, gt, t0):
+    """B3's restarts of one recorded polish start st, one setting at a time (B3_KEYS), each judged by `seed_rule` with the path's
+    polish step."""
     rf = float(np.sqrt(np.mean(f ** 2)))
-    c, w = np.asarray(c, float), np.asarray(w, float)
-    s = np.sign(w)
-    out = dict(r=r_, var=var, k=k, e_opt=e_opt)
-    for key, nf, g in (('path', nfev, gt),) + tuple((f"{n:g}", n, None) for n in B3_NFEV):
-        wp, cp, info = RT.polish_block(K, f, w, c, s, max_nfev=nf, info=True, gtol=g)
-        out[key] = dict(info, ratio=float(np.sqrt(np.mean((f - K.phi(cp) @ wp) ** 2))) / rf / e_opt)
-        if key == 'path':
-            out[key].update(seed_rule(K, f, w, c, s, cp, step))
-    print(f"  B3 tau/sigma {r_} ({var}) K {k}: " + ', '.join(f"{key} {out[key]['status']}/{out[key]['nfev']} {out[key]['ratio']:.5f}"
-                                                         for key in out if isinstance(out[key], dict)), flush=True)
+    out = dict(r=r_, var=var, k=k, e_opt=e_opt, e_block=e_block, n_polish=n_polish,
+               e_start=float(np.sqrt(np.mean((f - K.phi(st['c']) @ st['w']) ** 2))) / rf / e_opt,
+               settings=dict(nfev=st['max_nfev'], gtol=st['gtol']))
+    for key, nf, g in zip(B3_KEYS, (nfev, B3_BIG, nfev, B3_BIG), (gt, gt, None, None)):
+        wp, cp, info = RT.polish_block(K, f, st['w'], st['c'], st['s'], max_nfev=nf, info=True, gtol=g)
+        out[key] = dict(info, ratio=float(np.sqrt(np.mean((f - K.phi(cp) @ wp) ** 2))) / rf / e_opt,
+                        **seed_rule(K, f, st['w'], st['c'], st['s'], cp, step))
+    out['secs'] = time.time() - t0
+    print(f"  B3 tau/sigma {r_} ({var}) K {k}: start {out['e_start']:.4g}, " + ', '.join(
+        f"{key} {out[key]['status']}/{out[key]['nfev']} {out[key]['ratio']:.5f}" for key in B3_KEYS)
+          + f" [{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def b3_jobs(B):
+    """B3's jobs: each of B's paths with a non-optimal block (its error at least 1 + OPT_TOL times the optimum's) — with the first such
+    block that was polished (`first_nonoptimal`) where the stored blocks record their polishes, so that the rerun stops at its first
+    polish."""
+    out = []
+    for b in B:
+        if any(abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL for o in b['blocks']):
+            blk = first_nonoptimal(b) if all('polish' in o and 'k' in o for o in b['blocks']) else None
+            out.append((b['r'], b['var']) if blk is None else (b['r'], b['var'], blk))
     return out
 
 
 def part_B3(B):
-    """B3: `b3_job` from each path's first non-optimal block."""
+    """B3: `b3_job` for `b3_jobs(B)`."""
     from multiprocessing import Pool
-    jobs = []
-    for b in B:
-        o = next((o for o in b['blocks'] if abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL), None)
-        if o is not None:
-            jobs.append((b['r'], b['var'], o['k'], np.asarray(o['c']), np.asarray(o['w']), o['e_opt']))
     with Pool(N_WORKERS) as pool:
-        return pool.map(b3_job, jobs, chunksize=1)
+        return pool.map(b3_job, b3_jobs(B), chunksize=1)
+
+
+def b3_binds(q):
+    """What bounds a B3 block's range end: the settings whose change carries the restart to the optimum (the budget, the gradient test,
+    both), the seed rule's radius where an end at the optimum is rejected, or nothing (the path's own settings reach it, accepted)."""
+    reach = lambda k: q[k]['ratio'] < 1 + OPT_TOL
+    if reach('path'):
+        return 'the radius' if not q['path']['accepted'] else 'nothing'
+    out = [k for k in ('budget', 'no test') if reach(k)]
+    lab = ('the budget' if out == ['budget'] else 'the gradient test' if out == ['no test'] else 'the budget or the gradient test'
+           if out else 'the budget and the gradient test' if reach('budget, no test') else 'neither')
+    rej = [k for k in B3_KEYS if reach(k) and not q[k]['accepted']]
+    return lab + (' (and the radius)' if rej else '')
 
 
 def b3_lines(B3):
-    """B3's table and summary: above E_FLOOR whether more budget without the gradient test carries the solve to the optimum (the budget,
-    the gradient test or the seed rule's radius bound the range), below it where the solve stops whatever the budget (the floor)."""
+    """B3's table and summary (referee round 70): per block the restarts' stops, errors and the seed rule, and what bounds its end."""
     if B3 is None or len(B3) == 0:                                    # raw-loaded: an object array
         return []
-    keys = ['path'] + [f"{n:g}" for n in B3_NFEV]
-    cell = lambda x: f"{x['status']}/{x['nfev']}, {x['ratio']:.5f}"
-    out = ['', "### B3. The range ends: the polish restarted from each path's first non-optimal block", '',
-           "From the block's final state, the polish's own solve (`polish_block`, TRF): with the path's budget and gradient test — its stop "
-           "(status 0: the budget; 1: the gradient test; 2: the decrease test; 3: the step test)/evaluations, its error over the optimum's, "
-           "and the path's seed rule on its end (the largest move of a kernel still near its seed, σ, from its start or its ascent target; "
-           "accepted if within the path's polish step) —, and without the gradient test at " + ', '.join(f"{n:g}" for n in B3_NFEV)
-           + f" evaluations; † the optimum below {E_FLOOR:g}:", '',
-           '| τ/σ | variant | K | optimum | the path\'s polish: stop/evaluations, over the optimum; seed rule | '
-           + ' | '.join(f"no gradient test, {n:g}" for n in B3_NFEV) + ' |', '|---|---|---|---|---|' + '---|' * len(B3_NFEV)]
-    for q in B3:
-        out.append(f"| {q['r']:g} | {q['var']} | {q['k']} | {q['e_opt']:.2e}{'†' if q['e_opt'] < E_FLOOR else ''} | {cell(q['path'])}; "
-                   f"{q['path']['move']:.2f}σ, {'accepted' if q['path']['accepted'] else 'rejected'} | "
-                   + ' | '.join(cell(q[k]) for k in keys[1:]) + ' |')
-    up = [q for q in B3 if q['e_opt'] >= E_FLOOR]
-    lo = [q for q in B3 if q['e_opt'] < E_FLOOR]
-    big = keys[-1]
-    hit = [q for q in up if q[big]['ratio'] < 1 + OPT_TOL]
-    miss = [q for q in up if q[big]['ratio'] >= 1 + OPT_TOL]
-    rej = [q for q in up if q['path']['ratio'] < 1 + OPT_TOL and not q['path']['accepted']]
-    span = lambda v, f_: f"{min(v):{f_}}" if min(v) == max(v) else f"{min(v):{f_}}–{max(v):{f_}}"
-    mid = keys[1]
-    out += ['', f"Above {E_FLOOR:g} ({len(up)} blocks): without the gradient test and with {big} evaluations the solve reaches the optimum "
-                f"(within {OPT_TOL:g}) from {len(hit)}"
-            + (f" (its error {span([q[big]['ratio'] for q in hit], '.5f')} times the optimum's, in {span([int(q[big]['nfev']) for q in hit], 'd')} "
-               f"evaluations, status {', '.join(sorted({str(q[big]['status']) for q in hit}))}; with {mid} evaluations from "
-               f"{sum(q[mid]['ratio'] < 1 + OPT_TOL for q in up)})" if hit else '')
-            + (f", the others {', '.join(f'{q[big]['ratio']:.4g}' for q in miss)} times above it" if miss else '')
-            + (f"; the path's own polish reaches it from {len(rej)} but its seed rule rejects the end (a kernel moving "
-               f"{span([q['path']['move'] for q in rej], '.2f')}σ)" if rej else '')
-            + (f". Below {E_FLOOR:g} ({len(lo)} blocks) the solve stops at {span([q[big]['ratio'] for q in lo], '.4f')} times the optimum "
-               f"with {big} evaluations (status {', '.join(str(q[big]['status']) for q in lo)}; with {keys[1]}: "
-               f"{', '.join(f'{q[keys[1]]['ratio']:.4f}' for q in lo)})" if lo else '') + '.', '']
+    rows = [q for q in B3 if q.get('k') is not None]
+    cell = lambda x: f"{x['status']}/{x['nfev']}, {x['ratio']:.5f}, {x['move']:.2f}σ {'a' if x['accepted'] else 'r'}"
+    out = ['', "### B3. The range ends: the polish restarted from its recorded start, one setting at a time (referee rounds 65, 70)", '',
+           f"Each path's first non-optimal block (its error at least {1 + OPT_TOL:g} times the optimum's): the path rerun with every polish's "
+           "start recorded, and from the block's first polish's start — its error over the optimum's — the polish's own solve "
+           f"(`polish_block`, TRF) with the path's budget and gradient test, with {B3_BIG:g} evaluations and the test, with the path's budget "
+           "without the test, and with both changed: each its stop (status 0: the budget; 1: the gradient test; 2: the decrease test; 3: the "
+           "step test)/evaluations, its error over the optimum's and the path's seed rule on its end (the largest move of a kernel near its "
+           f"seed, σ; a: accepted within the path's polish step, r: rejected); the block the path ended with; † the optimum below {E_FLOOR:g}:",
+           '', "| τ/σ | variant | K | optimum | start | the path's block | " + ' | '.join(B3_KEYS) + ' | bounded by |',
+           '|---|---|---|---|---|---|' + '---|' * len(B3_KEYS) + '---|']
+    for q in rows:
+        out.append(f"| {q['r']:g} | {q['var']} | {q['k']} | {q['e_opt']:.2e}{'†' if q['e_opt'] < E_FLOOR else ''} | {q['e_start']:.4g} | "
+                   f"{q['e_block']:.4g} | " + ' | '.join(cell(q[k]) for k in B3_KEYS) + f" | {b3_binds(q)} |")
+    up = [q for q in rows if q['e_opt'] >= E_FLOOR]
+    cnt = {}
+    for q in up:
+        cnt.setdefault(b3_binds(q), []).append(f"{q['r']:g} ({q['var']})")
+    lo = [q for q in rows if q['e_opt'] < E_FLOOR]
+    both = lambda q: q['budget, no test']
+    out += ['', f"Above {E_FLOOR:g} ({len(up)} blocks: τ/σ (variant)) the end is bounded by", '']
+    out += [f"- {k}: {len(v)} — {'; '.join(v)}" + (';' if i < len(cnt) - 1 else '.') for i, (k, v) in enumerate(sorted(cnt.items()))]
+    if lo:
+        out += ['', f"Below it ({len(lo)} blocks) the restart with both changed stops at " + ', '.join(
+            f"{both(q)['ratio']:.4f} ({both(q)['status']}/{both(q)['nfev']})" for q in lo) + " times the optimum."]
+    by = {}
+    for q in rows:
+        by.setdefault(float(f"{q['e_opt']:.3g}"), []).append(both(q)['ratio'] - 1)
+    out += ['', "The restart with both changed: its end over the optimum, minus 1, by the optimum (the floor is soft; a negative value — "
+            "the end below the best optimum found, which is converged only to that): " + '; '.join(
+                f"{e:.3g}: {min(v):+.1e}" + (f" … {max(v):+.1e}" if max(v) > min(v) else '') for e, v in sorted(by.items(), reverse=True))
+            + '.', '']
     return out
 
+
+
+B4_CAP, B4_MAX = 400_000, 2e-9                                        # B4 (referee round 70): the solve's iterations; the blocks below
+B4_PREC = (('double', np.float64), ('long double', np.longdouble))    # B4: the parameters' and the residual's arithmetic
+
+
+def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20):
+    """B4 (referee round 70): Levenberg–Marquardt on the joint fit in (w, c) on X_B — the parameters and the residual f − Φ(c)w in dtype
+    (np.float64 or np.longdouble), the Jacobian and the damped step in double: the least-squares problem [J; μ^{1/2}D]d ≈ [−r; 0], D the
+    columns' largest norms so far (its condition is the Jacobian's, not its square's). A step is accepted when the objective ½‖r‖²
+    computed in dtype decreases; Nielsen's damping from μ = mu0, near Gauss–Newton — the slow modes' curvature is ~10⁻¹⁷ of the largest,
+    and a larger damping shrinks their steps' predicted decrease below the objective's rounding. Stops after max_iter iterations ('cap')
+    or once μ exceeds 10¹⁰⁰ without a decrease ('stall': no step the arithmetic resolves decreases the objective). Returns (the
+    parameters (w, c) in dtype, iterations, accepted steps, stop)."""
+    x, fd = X_B.astype(dtype), np.asarray(f, float).astype(dtype)
+    n = len(w)
+    p = np.r_[np.asarray(w, float), np.asarray(c, float)].astype(dtype)
+    s2 = 2 * dtype(SIG) ** 2
+    resid = lambda p_: fd - np.exp(-(x[:, None] - p_[None, n:]) ** 2 / s2) @ p_[:n]
+
+    def jac(p_):
+        q = p_.astype(float)
+        u = X_B[:, None] - q[None, n:]
+        P = np.exp(-u ** 2 / (2 * SIG ** 2))
+        return -np.c_[P, P * u / SIG ** 2 * q[None, :n]]
+    r = resid(p)
+    F, J = r @ r / 2, jac(p)
+    D = np.linalg.norm(J, axis=0)
+    mu, nu, it, acc = mu0, 2.0, 0, 0
+    while it < max_iter:
+        it += 1
+        r64 = r.astype(float)
+        d = np.linalg.lstsq(np.r_[J, np.sqrt(mu) * np.diag(D)], np.r_[-r64, np.zeros(2 * n)], rcond=None)[0]
+        Jd = J @ d
+        pred = -(Jd @ r64) - 0.5 * (Jd @ Jd)
+        pn = p + d.astype(dtype)
+        rn = resid(pn)
+        Fn = rn @ rn / 2
+        if pred > 0 and Fn < F:
+            rho = float(F - Fn) / pred
+            p, r, F, acc = pn, rn, Fn, acc + 1
+            mu, nu = max(mu * max(1 / 3, 1 - (2 * rho - 1) ** 3), 1e-40), 2.0
+            J = jac(p)
+            D = np.maximum(D, np.linalg.norm(J, axis=0))
+        else:
+            mu, nu = mu * nu, 2 * nu
+            if mu > 1e100:
+                return p, it, acc, 'stall'
+    return p, it, acc, 'cap'
+
+
+def lm_rms(f, p, n):
+    """The rms of f − Φ(c)w on X_B in long double, p = (w, c) with n kernels."""
+    x, fd, p = X_B.astype(np.longdouble), np.asarray(f, float).astype(np.longdouble), np.asarray(p).astype(np.longdouble)
+    r = fd - np.exp(-(x[:, None] - p[None, n:]) ** 2 / (2 * np.longdouble(SIG) ** 2)) @ p[:n]
+    return float(np.sqrt(np.mean(r * r)))
+
+
+def b4_job(args):
+    """B4 (referee round 70): from one start — the path's block ('block') or the stored optimum's centres with least-squares amplitudes
+    ('optimum') — `lm_fit` with the residual in double and in long double (B4_PREC): the start's error and each end's over the stored
+    optimum's (the rms in long double), its iterations, accepted steps and stop, and long double's ε (an error if not extended)."""
+    r_, var, k, start, w0, c0, e_opt = args
+    warnings.filterwarnings('ignore')
+    t0 = time.time()
+    f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * sigma_star(r_) ** 2))
+    rf = float(np.sqrt(np.mean(f ** 2)))
+    out = dict(r=r_, var=var, k=k, start=start, e_opt=e_opt, e_start=lm_rms(f, np.r_[w0, c0], k) / rf / e_opt,
+               eps=float(np.finfo(np.longdouble).eps))
+    if out['eps'] >= np.finfo(float).eps:
+        raise RuntimeError("B4: long double is not extended on this platform")
+    for key, dt in B4_PREC:
+        p, it, acc, stop = lm_fit(f, w0, c0, dt)
+        out[key] = dict(ratio=lm_rms(f, p, k) / rf / e_opt, it=it, acc=acc, stop=stop)
+    out['secs'] = time.time() - t0
+    print(f"  B4 tau/sigma {r_} ({var}) K {k} from the {start}: {out['e_start']:.6g} → " + ', '.join(
+        f"{key} {out[key]['ratio']:.6f} ({out[key]['it']}, {out[key]['stop']})" for key, _ in B4_PREC) + f" [{out['secs']:.0f}s]",
+          flush=True)
+    return out
+
+
+def b4_jobs(B, B3):
+    """B4's jobs: each distinct block (width, K) of B3 whose optimum is below B4_MAX — B3's first row for it, its block in B's path (the
+    block with that K whose optimum is the row's) —, from the path's block and from the stored optimum."""
+    out, seen = [], set()
+    K = RT.Bumps(X_B, SIG)
+    for q in (B3 if B3 is not None else []):
+        if q.get('k') is None or q['e_opt'] >= B4_MAX or (q['r'], q['k']) in seen:
+            continue
+        seen.add((q['r'], q['k']))
+        b = next(b for b in B if b['r'] == q['r'] and b['var'] == q['var'])
+        o = min((o for o in b['blocks'] if o['k'] == q['k']), key=lambda o: abs(o['e_opt'] / q['e_opt'] - 1))
+        f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * sigma_star(q['r']) ** 2))
+        wo = np.linalg.lstsq(K.phi(o['c_opt']), f, rcond=None)[0]
+        out += [(q['r'], q['var'], q['k'], 'block', np.asarray(o['w'], float), np.asarray(o['c'], float), q['e_opt']),
+                (q['r'], q['var'], q['k'], 'optimum', wo, np.asarray(o['c_opt'], float), q['e_opt'])]
+    return out
+
+
+def part_B4(B, B3):
+    """B4: `b4_job` for `b4_jobs(B, B3)`."""
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(b4_job, b4_jobs(B, B3), chunksize=1)
+
+
+def b4_lines(B4):
+    """B4's table and summary (referee round 70): the same solve in double and in long double from the blocks near the floor."""
+    if B4 is None or len(B4) == 0:                                    # raw-loaded: an object array
+        return []
+    cell = lambda x: f"{x['ratio']:.6f}, {x['it']}/{x['acc']}, {x['stop']}"
+    out = ['', "### B4. The floor: the same solve with the residual in double and in long double (referee round 70)", '',
+           f"B3's blocks whose optimum is below {B4_MAX:g}, from the path's block and from the stored optimum (its centres with "
+           "least-squares amplitudes): Levenberg–Marquardt on the joint fit in (w, c) (`lm_fit`: the Jacobian and the step in double; the "
+           f"parameters and the residual in double or in long double (its ε {B4[0]['eps']:.3g}), a step accepted when the objective so "
+           "computed decreases) — the "
+           "start's error and each end's over the optimum's (the rms in long double), its iterations/accepted steps and its stop (stall: no "
+           f"step the arithmetic resolves decreases the objective; cap: {B4_CAP:g} iterations); † the optimum below {E_FLOOR:g}:", '',
+           "| τ/σ | variant | K | optimum | start | its error | " + ' | '.join(k for k, _ in B4_PREC) + ' |',
+           '|---|---|---|---|---|---|' + '---|' * len(B4_PREC)]
+    for q in B4:
+        out.append(f"| {q['r']:g} | {q['var']} | {q['k']} | {q['e_opt']:.2e}{'†' if q['e_opt'] < E_FLOOR else ''} | {q['start']} | "
+                   f"{q['e_start']:.6g} | " + ' | '.join(cell(q[k]) for k, _ in B4_PREC) + ' |')
+    key = lambda q: (q['r'], q['k'])
+    blk = sorted((q for q in B4 if q['start'] == 'block'), key=lambda q: -q['e_opt'])
+    opt = {key(q): q for q in B4 if q['start'] == 'optimum'}
+    lab = lambda q: f"{q['e_opt']:.3g} (τ/σ = {q['r']:g}, K = {q['k']})"
+    both = [q for q in blk if key(q) in opt]
+    out += ['', "From the path's blocks, the end in double over the end in long double, minus 1, by the optimum: " + '; '.join(
+        f"{lab(q)}: {q['double']['ratio'] / q['long double']['ratio'] - 1:+.1e}" for q in blk) + '.'
+            + (" In long double the ends from the block and from the stored optimum agree within "
+               f"{max(abs(q['long double']['ratio'] / opt[key(q)]['long double']['ratio'] - 1) for q in both):.1e}; the stored optimum over "
+               "that end, minus 1: " + '; '.join(f"{lab(q)}: {1 / opt[key(q)]['long double']['ratio'] - 1:+.1e}" for q in both) + '.'
+               if both else ''), '']
+    return out
 
 def gh_defect_v(n, K, v):
     """D_{n,K}(v) = E He_n(√v Z) − Σ_k w_k He_n(√v z_k), exactly (v rational, n even; referee round 65): He_n(√v z) = Σ_m c_m v^{m/2}z^m
@@ -391,15 +626,16 @@ def a5_lines(A5):
            "The Mehler frames of the kernel e^{−(y−y′)²/(4σ²)} (ratio ρ, Hermite scale ℓ² = 2σ²ρ/(1 − ρ²)): the Gauss–Hermite rule of the "
            "frame's own Gaussian N(0, v_ρ), v_ρ = 2σ²τ²/(2σ² + (1 − ρ)τ²), has no defect below 2K in the frame; v′ = v_ρ/ℓ² the measure's "
            "variance in the frame's units. At ρ = t (the half-squeeze rule), q (the Mercer expansion) and λ: v_ρ over the half-squeeze "
-           "variance, and v′; the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero rule — and its ratio per kernel at the last K "
-           "against 1/t and 1/q:", '',
+           "variance, and v′; the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero rule — and its ratio per kernel at the last "
+           "three K against 1/t and 1/q:", '',
            '| τ/σ | ρ = t: v/v_hs, v′ | ρ = q: v/v_hs, v′ | ρ = λ: v/v_hs, v′ | the Mercer frame\'s rule: ratio per kernel (1/t, 1/q) |',
            '|---|---|---|---|---|']
     for x in A5['rows']:
         f_ = x['frames']
         e = x['e_mframe']
         out.append(f"| {x['r']:g} | " + ' | '.join(f"{f_[k]['v']:.6f}, {f_[k]['vp']:.6f}" for k in ('t', 'q', 'λ'))
-                   + f" | {e[-2] / e[-1]:.4g} at K = {x['Ks'][-1]} ({1 / x['t']:.4g}, {1 / x['q']:.4g}) |")
+                   + f" | {', '.join(f'{e[i - 1] / e[i]:.4g}' for i in range(len(e) - 3, len(e)))} at K = {x['Ks'][-3]}–{x['Ks'][-1]} "
+                   f"({1 / x['t']:.4g}, {1 / x['q']:.4g}) |")
     ok = [c_ for c_ in A5['check'] if c_['ok']]
     out += ['', f"The first tail ratio D_{{2K+2}}/D_{{2K}} = −v′K(K + 2) + (v′ − 1)(K + 1)(2K + 1) (`gh_defect_v`, exact) at "
                 f"v′ = {', '.join(sorted({c_['v'] for c_ in A5['check']}, key=lambda s: Fraction(s)))}, K = 1 … "
@@ -440,6 +676,8 @@ def b2_line(B2):
     ends = lambda n: f"{n} {'ends' if n == 1 else 'end'}"
     span = lambda v, f_: f"{min(v):{f_}}" if min(v) == max(v) else f"{min(v):{f_}}–{max(v):{f_}}"
     nb = len(first) - len(fu)
+    sp_ = lambda k, f_: span([B2[i][k] for i in fu], f_)
+    md_ = lambda k: f"{np.median([B2[i][k] for i in fu]):.3g}"
     return [f"Variable projection from the non-optimal block's own centres (B2) reaches the best optimum found in "
             f"{sum(h for h, u in zip(hit, up) if u)} of the {sum(up)} blocks whose optimum is at least {E_FLOOR:g}"
             + (f"; {ends(len(near))} within 1% of it ({', '.join(f'{v:.4g}' for v in near)} times: in its basin, unconverged)" if near else '')
@@ -454,11 +692,12 @@ def b2_line(B2):
             f"counted ({sum(h for h, u in zip(hit, up) if not u)} reached). From the first non-optimal block of each path: "
             f"{sum(hit[i] for i in fu)} of {len(fu)}" + (f" (the others {', '.join(f'{v:.4g}' for v in sorted(fw))} times above it)" if fw else '')
             + (f"; on {nb} {'path' if nb == 1 else 'paths'} the first non-optimal block's optimum is below {E_FLOOR:g}" if nb else '') + "."
-            + (f" There the Jacobian's condition number (the centres in units of σ) is {span([B2[i]['cond_joint'] for i in fu], '.2g')} "
-               f"for the joint fit in (w, c), {span([B2[i]['cond_vp'] for i in fu], '.2g')} for variable projection's in c alone (analytic), "
-               f"and variable projection's smallest singular value over the joint fit's {span([B2[i]['smin_ratio'] for i in fu], '.3g')} "
-               f"(median {np.median([B2[i]['smin_ratio'] for i in fu]):.3g}): the slow modes are as slow in both, the gap at the stiff end."
-               if fu and 'smin_ratio' in B2[fu[0]] else ''),
+            + (f" There the Jacobian's condition number is {sp_('cond_joint_x', '.2g')} for the joint fit in (w, c) in the polish's own "
+               f"units ({sp_('cond_joint', '.2g')} with the centres in units of σ) and {sp_('cond_vp_x', '.2g')} ({sp_('cond_vp', '.2g')}) for "
+               f"variable projection's in c alone (analytic); the ratio of their smallest singular values, variable projection's over the "
+               f"joint fit's, depends on the units: {sp_('smin_ratio', '.3g')} (median {md_('smin_ratio')}) with the centres in units of σ, "
+               f"{sp_('smin_ratio_x', '.3g')} (median {md_('smin_ratio_x')}) in the polish's, {sp_('smin_ratio_eq', '.3g')} (median "
+               f"{md_('smin_ratio_eq')}) with every column scaled to unit norm." if fu and 'smin_ratio_eq' in B2[fu[0]] else ''),
             '']
 
 
@@ -541,8 +780,9 @@ def entry_lines(B):
             cid[(key, u)] = c_
         spread = max(spread, us_[-1] - lo_)
     out = ['', "The entries over the variants that record them, by the block they join — one event per width, starting grid, iteration and "
-           "kernel whose duals agree within 10⁻⁴ (the variants repeat a path's events until they part: the entries over the variants in "
-           f"brackets; the duals of one event agree to {spread:.1e}; referee round 65): the entrant had the largest current rate |⟨rφ_j⟩|; its rate over "
+           "kernel whose duals agree within 10⁻⁴ — the same entrant at the same iteration, whether or not the variants' paths have parted "
+           f"(the entries over the variants in brackets; the duals of one event agree to {spread:.1e}; referee rounds 65, 70) —: the entrant "
+           "had the largest current rate |⟨rφ_j⟩|; its rate over "
            "the largest; its dual |u_j| at the block's start; whether it starts beyond the block's outermost node (how far) or between its "
            "nodes (their duals). The entrant is the kernel of the least time to the wall (1 − |u_j|)/|⟨rφ_j⟩| (`sliding_iss`'s rule), its "
            "dual charged during the earlier blocks.", '',
@@ -681,7 +921,7 @@ def stop_law(s, rf, N, k_max=12):
     return float(Kr), {K: cdf[K] - cdf[K - 1] for K in range(1, k_max + 1)}
 
 
-def report(A=None, B=None, C=None, D=None, B2=None, A5=None, B3=None):
+def report(A=None, B=None, C=None, D=None, B2=None, A5=None, B3=None, B4=None):
     L_ = ['# Proposition D‴.58: the transit under width mismatch (`exp_width_mismatch.py`)', '',
           f"Kernels of width σ = {SIG}; a feature Aφ_σ*(· − c*), σ* = σ(1 + (τ/σ)²)^{{1/2}}; t = (σ* − σ)/(σ* + σ), λ = τ²/(σ² + σ*²) "
           "(`src/core/wide_feature.py`).", '']
@@ -811,6 +1051,7 @@ def report(A=None, B=None, C=None, D=None, B2=None, A5=None, B3=None):
                   f"{min(o['e'] for o in no):.2e} … {max(o['e'] for o in no):.2e}." if no else "none."), '']
         L_ += b2_line(B2)
         L_ += b3_lines(B3)
+        L_ += b4_lines(B4)
         L_ += entry_lines(B)
         for b in [x for x in B if x['var'] == VARIANTS_B[0][0]]:
             L_ += [f"### τ/σ = {b['r']:g}, {b['var']} (events: " + ', '.join(f"{j}{'+' if k == 'enter' else '−'}" for t_, j, k, c in b['events'])
@@ -903,7 +1144,7 @@ def main():
     raw = os.path.join(OUT, 'width_mismatch_raw.npz')
     md = os.path.join(OUT, 'width_mismatch.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'D', 'B2', 'A5', 'B3')
+    keys = ('A', 'B', 'C', 'D', 'B2', 'A5', 'B3', 'B4')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
@@ -911,9 +1152,8 @@ def main():
     idx = ({int(i) for i in sys.argv[sys.argv.index('--variants') + 1].split(',')} if '--variants' in sys.argv else None)
     res = dict(old)
     t0 = time.time()
-    run_B = (lambda: part_B()) if idx is None else (lambda: merge_B(res.get('B'), part_B(idx)))
-    for k, fn in (('A', part_A), ('B', run_B), ('C', part_C), ('D', part_D), ('B2', lambda: part_B2(res['B'])),
-                  ('A5', lambda: part_A5(res['A'])), ('B3', lambda: part_B3(res['B']))):
+    for k, fn in (('A', part_A), ('B', lambda: run_B(res.get('B'), idx)), ('C', part_C), ('D', part_D), ('B2', lambda: part_B2(res['B'])),
+                  ('A5', lambda: part_A5(res['A'])), ('B3', lambda: part_B3(res['B'])), ('B4', lambda: part_B4(res['B'], res['B3']))):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
