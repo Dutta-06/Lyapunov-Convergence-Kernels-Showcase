@@ -27,8 +27,9 @@ C. The closed loop of Proposition D‴.49 under its measurement noise (Part E th
    fractions shut and fully open, the first closing, the last reopening), each kernel's formation and its ejection beyond the range,
    and the fit's rms error over the last window (median, 5–95%). At s = S_EXTRA_C with the desired regressor, EXTRA_C's tests of the
    mechanism (referee round 50): the adaptation driven by the true error, the centres bounded, other gate thresholds and filters, another
-   noise seed. C2: the noise's beats — one tone (no difference frequencies), two tones far apart (a fast beat) and two close ones (a
-   slow beat), ungated at x_m.
+   noise seed. C2, ungated at x_m: the noise's structure — one tone (no difference frequencies), two tones far apart (a fast beat), two
+   close ones (a slow beat), the frequencies incommensurate with the reference's —, and the centres' metric: Wasserstein–Fisher–Rao
+   (mobility G·a, bounded) against the paradigm's (G·β·a = Gm|w|, growing with the coefficient), noise-free and noisy.
 
 Usage: python experiments/exp_dead_zone.py [--only A,A2,B,C,C2] [--from-raw] → results/chaos/dead_zone.md (+ _raw.npz).
 """
@@ -62,8 +63,9 @@ EXTRA_C = (('true error', 'none', dict(etrue=True)), ('box 1.2', 'none', dict(cb
            ('thresholds 2.0s, 2.5s', 'energy', dict(gate=(2.0, 2.5))), ('thresholds 2.0s, 2.5s', 'formation', dict(gate=(2.0, 2.5))),
            ('T_f = 40', 'energy', dict(Tf=40.0)), ('T_f = 40', 'formation', dict(Tf=40.0)),
            ('noise seed 8', 'none', dict(seed=8)), ('noise seed 8', 'energy', dict(seed=8)))
-C2_TONES = (('one tone, 20 rad/s', (20.0,), 0.02), ('one tone, 20 rad/s', (20.0,), 0.04), ('two tones, 10 and 30 rad/s', (10.0, 30.0), 0.02),
-            ('two tones, 20 and 20.07 rad/s', (20.0, 20.07), 0.02))   # C2: (name, frequencies, rms), ungated at x_m
+C2_RUNS = (('one tone, 21.37 rad/s', 0.02, dict(freqs=(21.37,))), ('one tone, 21.37 rad/s', 0.04, dict(freqs=(21.37,))),
+           ('two tones, 13.1 and 27.9 rad/s', 0.02, dict(freqs=(13.1, 27.9))), ('two tones, 21.37 and 21.44 rad/s', 0.02, dict(freqs=(21.37, 21.44))),
+           ('WFR metric', 0.0, dict(metric='wfr')), ('WFR metric', 0.02, dict(metric='wfr')), ('WFR metric', 0.03, dict(metric='wfr')))
 
 
 def stop_law(N, nK, delta=DELTA):
@@ -321,7 +323,7 @@ def noise_of(s, opts):
 def c_job(args):
     """C: one closed loop (D‴.49's setting, the C integrator) — mode 'none', 'leak', 'energy' or 'formation', the regressor at x̃ or x_m,
     a variant `name` with its options (EXTRA_C: the adaptation driven by the true error, the centres bounded, the gate's thresholds or
-    filter, the noise's seed; C2: the noise's frequencies `freqs`, equal amplitudes of total rms s), dense outputs."""
+    filter, the noise's seed; C2: the noise's frequencies `freqs`, equal amplitudes of total rms s, or the centres' metric), dense outputs."""
     s, regx, mode, name, opts = args
     import exp_closed_transit as CT
     from src.core import closed_loop as CL
@@ -337,7 +339,7 @@ def c_job(args):
     gate = (dict(mode=mode, Tf=opts.get('Tf', TF_C), lo=lo_f * s, hi=hi_f * s, theta=th) if mode in ('energy', 'formation') and s > 0
             else None)
     r = CL.simulate(L, EPS_C, CT.C0, CT.SIG, (CT.CSTAR, CT.ASTAR, CT.SIG), CT.KE, (0.0, 1.0, CT.OM, 0.0, np.sqrt(2) * CT.OM), ts,
-                    noise=noise_of(s, opts), th=th, regx=regx,
+                    noise=noise_of(s, opts), th=th, regx=regx, metric=opts.get('metric', 'paradigm'),
                     lam=(LEAK_C / Lam if mode == 'leak' else 0.0), gate=gate, etrue=opts.get('etrue', False),
                     cbox=opts.get('cbox', np.inf))
     act = np.abs(r['w'][-1]) > th
@@ -372,7 +374,7 @@ def part_C():
 
 def part_C2():
     from multiprocessing import Pool
-    jobs = [(s, True, 'none', f"{name}, s = {s:g}", dict(freqs=fr)) for name, fr, s in C2_TONES]
+    jobs = [(s, True, 'none', f"{name}, s = {s:g}", opts) for name, s, opts in C2_RUNS]
     with Pool(N_WORKERS) as pool:
         return pool.map(c_job, jobs, chunksize=1)
 
@@ -543,8 +545,9 @@ def report(A=None, B=None, C=None, A2=None, C2=None):
         if extra:
             L_ += ["", f"Tests of the mechanism at x_m, s = {S_EXTRA_C:g} unless stated (referee round 50): the adaptation driven by the true "
                        "error x − x_m (the control and the gate by the measured one), the centres bounded to [−1.2, 1.2], other gate "
-                       "thresholds and filters, another noise seed; C2: the noise's beats — one tone, two tones far apart, two close ones "
-                       "(the same rms):", "",
+                       "thresholds and filters, another noise seed; C2: the noise's structure — one tone, two tones far apart, two close "
+                       "ones (the same rms) — and the centres' Wasserstein–Fisher–Rao metric (mobility G·a, bounded, against the "
+                       "paradigm's Gm|w|):", "",
                    "| variant | adaptation | " + cols, "|---|---|---|---|---|---|---|---|---|---|"]
             L_ += [f"| {r['name']} | {lab[r['mode']]} | " + crow(r) for r in extra]
         tl = [r for r in base if r['regx'] and r['s'] == S_EXTRA_C] + extra
