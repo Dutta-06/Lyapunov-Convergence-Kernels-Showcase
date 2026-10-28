@@ -64,3 +64,23 @@ def test_optimal_fit_improves_slightly_on_the_rule():
     yo, ao, eo = W.optimal_fit(y, SIG, s_)
     assert 0.99 * e < eo < 0.997 * e
     assert np.abs(np.sort(yo) / np.sort(y) - 1).max() < 5e-3
+
+
+def test_the_fast_defects_and_the_tail_ratio():
+    """`gh_defects` (the remainders modulo He_K) equals `gh_defect`; the tail ratio is the series over its first term; the ratios
+    D_{2K+2j,K}/D_{2K,K} are polynomials in K of degree j with the leading coefficient binom(1/2, j)(−2)^j = −C_{j−1}/2^{j−1} (j ≤ 5:
+    interpolated on K = 1 … j + 1, checked on K = j + 2)."""
+    from fractions import Fraction
+    for K in range(1, 7):
+        assert W.gh_defects(K, 2 * K + 10) == [W.gh_defect(n, K) for n in range(2 * K + 11)]
+    s2, f2 = W.mehler_series(6, 0.5, n_terms=60)
+    assert abs(W.tail_ratio(6, 0.5, n_terms=60) - s2 / f2) < 1e-12
+    catalan = [1, 1, 2, 5, 14]
+    for j in range(1, 6):
+        pts = [(K, Fraction(W.gh_defects(K, 2 * K + 2 * j)[2 * K + 2 * j], W.gh_defects(K, 2 * K)[2 * K])) for K in range(1, j + 3)]
+        # the j-th divided difference over K = 1 … j + 1 is the leading coefficient; the (j + 1)-th vanishes (degree j)
+        def dd(ps):
+            if len(ps) == 1:
+                return ps[0][1]
+            return (dd(ps[1:]) - dd(ps[:-1])) / (ps[-1][0] - ps[0][0])
+        assert dd(pts[:j + 1]) == Fraction(-catalan[j - 1], 2 ** (j - 1)) and dd(pts) == 0

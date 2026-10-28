@@ -145,6 +145,34 @@ def gh_defect(n, K):
     return int(D)
 
 
+def gh_defects(K, n_max):
+    """D_{n,K} for n = 0 … n_max at once (integers): Q_K(He_m) is the He_0 coefficient of He_m modulo He_K — the remainders by
+    He_{m+1} = zHe_m − mHe_{m−1} and z·He_h = He_{h+1} + hHe_{h−1} (He_K ≡ 0), O(K) per degree —, and by the multiplication theorem
+    He_n(√2z) = Σ_i n!/(2^i i!(n − 2i)!)·2^{(n−2i)/2}He_{n−2i}(z) with E He_m(Z) = 0 for m ≥ 1."""
+    q, prev, c = [], None, [1] + [0] * (K - 1)
+    for m in range(n_max + 1):
+        q.append(c[0])
+        zc = [0] * K
+        for h, v in enumerate(c):
+            if v:
+                if h + 1 < K:
+                    zc[h + 1] += v
+                if h:
+                    zc[h - 1] += h * v
+        c, prev = [zc[i] - (m * prev[i] if prev is not None else 0) for i in range(K)], c
+    return [0 if n % 2 else -sum(factorial(n) // (2 ** i * factorial(i) * factorial(n - 2 * i)) * 2 ** (n // 2 - i) * q[n - 2 * i]
+                                 for i in range(n // 2)) for n in range(n_max + 1)]
+
+
+def tail_ratio(K, t, n_terms=200):
+    """The series over its first term, Σ_{j ≥ 0} t^{2j}(2K)!/(2K + 2j)!·(D_{2K+2j,K}/D_{2K,K})² — each term tending to binom(1/2, j)²t^{2j}
+    as K → ∞ (the ratios' leading coefficients binom(1/2, j)(−2)^j), so conjecturally the ratio to ₂F₁(−½, −½; 1; t²)."""
+    D = gh_defects(K, 2 * K + 2 * n_terms)
+    l0 = log(abs(D[2 * K]))
+    return float(sum(np.exp(2 * j * log(t) + 2 * (log(abs(D[2 * K + 2 * j])) - l0) + lgamma(2 * K + 1) - lgamma(2 * K + 2 * j + 1))
+                     for j in range(n_terms) if D[2 * K + 2 * j]))
+
+
 def mehler_series(K, t, n_terms=200):
     """(1 − t²)^{1/2}Σ_{n ≥ 2K}(tⁿ/n!)D_{n,K}² (the half-squeeze rule's squared relative L² error) and its first term; the terms by
     logarithms (D_{n,K} grows like a factorial)."""
