@@ -441,6 +441,9 @@ def test_f_and_s_jobs_on_a_few_draws(monkeypatch):
     c1, w1 = CF.one_fit(K, f1)
     la, lb = CF.knot_walls(K, c0, c1, w1, s * np.random.default_rng([seed, 0]).standard_normal((400, N)))
     assert r['q_law'] == np.quantile(np.minimum(la, lb), CF.ALPHA_C) and r['qB'] == np.quantile(lb, CF.ALPHA_C / 2)
+    assert r['qA'] == np.quantile(la, CF.ALPHA_C / 2)                     # referee round 67 (F03): each wall at α/2
+    f0 = w1 * K.phi(np.array([c1]))[:, 0]
+    assert r['np'] == CF.np_power(K, f1, f0, s, CF.ALPHA_C)               # (F04): the bound at the draws' noise s
     seen = []
     monkeypatch.setattr(RT, 'sliding_iss', lambda L_, K_, y, *a, **kw: (seen.append(y.copy()), dict(events=[]))[1])
     Dc, sc, hc, sdc = CF.c_jobs()[3]
@@ -463,17 +466,19 @@ def test_the_f_report_on_synthetic_jobs():
             k = Ds.index(D)
             rows = [dict(dt=1.0 if i < 50 * k else 9.0, p=0.5, pA=0.5, pB=0.5, tA=9.0, tB=9.0, z=sg * (3.0 if i < 40 * k else 0.0),
                          zs=sg * (3.0 if i < 40 * k else 0.0), w1=1.0) for i in range(200)]
-            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, rows=rows, q_law=2.0, qA=1.0, qB=1.0, np=min(1.0, 0.2 * (k + 1)), c1=cb))
-        rows0 = [dict(dt=1.0 if i < 20 else 9.0, p=0.01 if i < 10 else 0.5, pA=0.5, pB=0.5, tA=9.0, tB=9.0, z=0.0, zs=0.0, w1=1.0)
-                 for i in range(400)]
-        F.append(dict(A=A, cbar=cb, s=s, D=Ds[CF.H0_F], hyp=0, rows=rows0, q_law=2.0, qA=1.0, qB=1.0, np=0.0))
+            F.append(dict(A=A, cbar=cb, s=s, D=D, hyp=1, rows=rows, q_law=2.0, qA=1.0, qB=1.0, np=min(1.0, 0.2 * (k + 1)), c1=cb,
+                          w1=1.0))
+        rows0 = [dict(dt=1.0 if i < 20 else 9.0, p=0.01 if i < 10 else 0.5, pA=0.5, pB=0.5, tA=1.0 if i < 10 else 9.0, tB=9.0, z=0.0,
+                      zs=0.0, w1=1.0) for i in range(400)]                # the knot's H0 rejections all at the fit's-sign wall
+        F.append(dict(A=A, cbar=cb, s=s, D=Ds[CF.H0_F], hyp=0, rows=rows0, q_law=2.0, qA=1.0, qB=1.0, np=0.0, w1=1.0))
     md = '\n'.join(CF.f_lines(F))
     knot = CF.crossing(list(Ds), [min(1.0, 0.25 * j) for j in range(len(Ds))])
     z = CF.crossing(list(Ds), [min(1.0, 0.2 * j) for j in range(len(Ds))])
     npd = CF.crossing(list(Ds), [min(1.0, 0.2 * (j + 1)) for j in range(len(Ds))])
-    row = (f"| {s:g} | {cb:g} | {knot:.4g}, > {Ds[-1]:g}, > {Ds[-1]:g}, > {Ds[-1]:g}, > {Ds[-1]:g}, {z:.4g}, {z:.4g}, {z:.4g}, {npd:.4g} | "
-           "0.050, 0.025, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 |")
-    assert md.count(row) == 2
+    row = lambda al: (f"| {s:g} | {cb:g} | {knot:.4g}, > {Ds[-1]:g}, > {Ds[-1]:g}, > {Ds[-1]:g}, > {Ds[-1]:g}, {z:.4g}, {z:.4g}, {z:.4g}, "
+                      f"{al}, {npd:.4g} | 0.050, 0.025, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000 |")
+    assert md.count(row(f"{z:.4g}")) == 1 and md.count(row(f"> {Ds[-1]:g}")) == 1    # the allocation 1: one-sided toward the fit's sign
+    assert 'spends α·1.000 toward the fit\'s sign' in md and 'The noise over the one-bump fit\'s coefficient, s/|ŵ|' in md
     assert '## F. Resolution across the grid cell, for both signs' in md
 
 
@@ -627,18 +632,121 @@ def test_the_runner_ups_own_knot(monkeypatch):
 
 
 def test_the_e_prime_report_with_the_runner_ups_knot():
-    """Referee round 64: E′'s column of the runner-up's own knot — its size and power against its law's quantile."""
+    """Referee rounds 64 and 67: E′'s columns — the runner-up's own knot's size and power against its law's quantile, the knot against
+    its own law at the truth, the t-version's size (Z02), the free width's power (D02), the margin from the uncensored μ̂ — and the
+    minimum's part (the knot against its law less the own knot) per cell, with U's first entrants against S's swaps."""
     D, s_ = CF.CELLS_E[0]
     cb = CF.OFFSETS_E[0]
-    rows0 = [dict(dt=1.0, p=0.5, c1=0.0, w1=1.0) for _ in range(10)]
+    rows0 = [dict(dt=1.0 if i < 2 else 3.0, p=0.5, c1=0.0, w1=1.0) for i in range(10)]
     rows1 = [dict(dt=1.0, p=0.5, c1=0.0, w1=1.0) for _ in range(4)]
-    E_ = [dict(D=D, s=s_, cbar=cb, rows0=rows0, rows1=rows1, np=0.5)]
-    srow = dict(z=0.0, t=0.0, zs=0.0, z2=0.0, swap=False, mu=0.1, dfit=0.0, w1=1.0)
-    S = [dict(kind='E', D=D, s=s_, cbar=cb, rows0=[srow] * 10, rows1=[srow] * 4, mu_true=0.1, cos2=0.9)]
-    U = [dict(D=D, s=s_, cbar=cb, q2=2.0, t2_0=[1.0] + [3.0] * 9, t2_1=[1.0, 1.0, 1.0, 3.0])]
+    E_ = [dict(D=D, s=s_, cbar=cb, rows0=rows0, rows1=rows1, np=0.5, q_law=2.0)]
+    row = lambda t=0.0, zs=0.0, mu_u=0.1: dict(z=0.0, t=t, zs=zs, z2=0.0, swap=False, mu=0.1, mu_u=mu_u, dfit=0.0, w1=1.0)
+    S = [dict(kind='E', D=D, s=s_, cbar=cb, rows0=[row(t=2.0 if i < 3 else 0.0, mu_u=0.1 + 0.01 * (i % 2)) for i in range(10)],
+              rows1=[row(zs=2.0 if i < 2 else -2.0) for i in range(4)], mu_true=0.1, cos2=0.9)]
+    U = [dict(D=D, s=s_, cbar=cb, q2=2.0, t2_0=[1.0] + [3.0] * 9, t2_1=[1.0, 1.0, 1.0, 3.0], first_0=[False] * 10, first_1=[False] * 4)]
     md = '\n'.join(CF.e_prime_lines(E_, S, U))
-    assert '| 0.100, 0.750 |' in md
+    assert '| 0.100, 0.750 |' in md and '; 0.200, 1.000 |' in md            # the own knot; the knot against its law at the truth
+    assert '| 0.300 |' in md and ', 0.500 |' in md                          # the t size (3 of 10), z_σ's power (2 of 4)
+    assert f"0.1000, {0.005 / s_:.3f}, {0.1 / 0.005:.2f} |" in md               # sd(μ̂) of the uncensored margins 0.10/0.11
+    assert f"({cb:g}, {D:g}, {s_:g}) +0.2500" in md and '0.0000 at most apart' in md
     assert '| — |' in '\n'.join(CF.e_prime_lines(E_, S))
+
+
+def test_the_walls_per_draw_and_per_law_against_an_independent_definition():
+    """Referee round 67 (D01, K01): `draw_stats`' tA, tB are `walls_at_fit`'s in order — the fit's-sign wall first, the knot of a
+    same-sign pair there —, and `knot_walls`' per-wall minima equal an independent computation: each kernel but the first entrant moves
+    at n_j = ⟨Rξ, φ_j⟩ toward the wall sign(n_j), reaching it at (1 − sign(n_j)u_j)/|n_j|, on the fit's-sign wall iff sign n_j = sign ŵ."""
+    L, K, c0 = CF.setup()
+    N = K.xs.size
+    f1 = X.bumps_target(K, CF.pair_centres(0.8, 0.6, 0.025), (0.8, 0.6))
+    y = f1 + 0.003 * np.random.default_rng(8).standard_normal(N)
+    c, w = CF.one_fit(K, y)
+    d = CF.draw_stats(K, c0, y, c, w, 0.003)
+    assert (d['tA'], d['tB']) == CF.walls_at_fit(K, c0, y, c, w) and d['tA'] < d['tB']
+    for c_, w_ in ((0.032, 1.4), (0.032, -1.4)):
+        Xi = 0.01 * np.random.default_rng(4).standard_normal((50, N))
+        la, lb = CF.knot_walls(K, c0, c_, w_, Xi)
+        Phi = K.phi(c0)
+        R = CF.tangent_projector(K, c_, w_)
+        for m in range(50):
+            v = (w_ * K.phi(np.array([c_]))[:, 0] + Xi[m]) @ Phi / N
+            j1 = int(np.argmax(np.abs(v)))
+            n = (R @ Xi[m]) @ Phi / N
+            own, oth = np.inf, np.inf
+            for j in range(c0.size):
+                if j == j1 or n[j] == 0:
+                    continue
+                t = (1 - np.sign(n[j]) * v[j] / abs(v[j1])) / abs(n[j])
+                if np.sign(n[j]) == np.sign(w_):
+                    own = min(own, t)
+                else:
+                    oth = min(oth, t)
+            assert np.isclose(la[m], own, rtol=1e-10) and np.isclose(lb[m], oth, rtol=1e-10)
+
+
+def test_f_jobs_and_the_width_escape():
+    """Referee round 67 (F07, S03): F's H0 draws are at the third separation of each (pair, offset, s), the H1 cells at all; `width_z`
+    is finite while the fitted width stays in (σ/5, 5σ) and ±∞ beyond."""
+    jobs = CF.f_jobs()
+    h0 = [j for j in jobs if j[4] == 0]
+    assert CF.H0_F == 2 and len(h0) == len(CF.PAIRS_F) * len(CF.OFFSETS_F) * len(CF.SIGMAS_F)
+    assert all(j[3] == CF.DELTAS_F[j[2]][2] and j[5] == CF.R0_F for j in h0)
+    L, K, c0 = CF.setup()
+    s0 = K.sig
+    for sg, fin in ((0.21 * s0, True), (0.19 * s0, False), (4.9 * s0, True), (5.1 * s0, False)):
+        old = CF.width_fit
+        CF.width_fit = lambda K_, y, c, w, sg=sg: (sg, 1.0)
+        try:
+            z = CF.width_z(K, np.zeros(K.xs.size), 0.0, 1.0, 0.01)
+        finally:
+            CF.width_fit = old
+        assert np.isfinite(z) == fin and (fin or np.sign(z) == np.sign(sg - s0))
+
+
+def test_u_job_at_a_swapping_tie_and_at_the_centre(monkeypatch):
+    """Referee round 67 (U09, U01): at the tie c̄ = 0.049, where the runner-up j₂ often leads, `u_job`'s dual is over the largest
+    correlation (j₂'s own when it leads: the first entrant's knot then); at c̄ = 0 the runner-up is j₁ − 1, as `predicted_delay` says."""
+    monkeypatch.setattr(CF, 'M_LAW', 64)
+    L, K, c0 = CF.setup()
+    N = K.xs.size
+    Phi = K.phi(c0)
+    for D, s, cb, seed in (CF.e_jobs()[14], CF.e_jobs()[0]):
+        f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, D, cb), CF.PAIR_C)
+        c1, w1 = CF.one_fit(K, f1)
+        f0 = w1 * K.phi(np.array([c1]))[:, 0]
+        rng = np.random.default_rng(seed)
+        ys = [f0 + s * rng.standard_normal(N) for _ in range(12)]
+        fits = [CF.one_fit(K, y) for y in ys]
+        u = CF.u_job((D, s, cb, seed, (12, 0), fits))
+        j2 = CF.predicted_delay(K, f1, c0, *CF.PAIR_C, D, cbar=cb)[1]
+        j1 = int(np.argmax(np.abs(Phi.T @ f1)))
+        assert u['j2'] == j2 and (j2 == j1 - 1) == (cb == 0.0)
+        swaps = 0
+        for y, (cf, wf), t2, fst in zip(ys, fits, u['t2_0'], u['first_0']):
+            g = Phi.T @ y / N
+            lead = int(np.argmax(np.abs(g))) == j2
+            k = j1 if lead else j2
+            v = Phi[:, k] @ (y - wf * K.phi(np.array([cf]))[:, 0]) / N
+            assert np.isclose(t2, (1 - np.sign(v) * g[k] / np.abs(g).max()) / abs(v), rtol=1e-12) and fst == lead
+            swaps += lead
+        assert (swaps > 0) == (cb == 0.049)
+
+
+def test_the_allocated_score_and_the_paired_comparison():
+    """Referee round 67: the score with the knot's allocation spends α·a toward the fit's sign and α·(1 − a) away (a = 1: z one-sided);
+    `knot_allocation` is the share of the calibrated knot's H0 rejections at the fit's-sign wall; `paired` compares two tests' Δ₅₀ over
+    their common cells."""
+    from scipy.stats import norm
+    rows = [dict(z=z, zs=0.0, w1=w) for z, w in ((1.70, 1.0), (-1.70, -1.0), (-2.0, 1.0), (-2.7, 1.0), (1.60, 1.0))]
+    r = CF.rejections(rows, 1.0, alloc=0.907)
+    assert norm.ppf(1 - 0.05 * 0.907) < 1.70 and list(r['alloc']) == [True, True, False, True, False]
+    assert list(CF.rejections(rows, 1.0, alloc=1.0)['alloc']) == list(CF.rejections(rows, 1.0)['z'])
+    q = lambda p, tA, tB: dict(p=p, tA=tA, tB=tB)
+    F = [dict(A=(0.8, 0.6), hyp=0, rows=[q(0.01, 1, 2), q(0.01, 1, 2), q(0.01, 3, 2), q(0.5, 1, 2)]),
+         dict(A=(0.8, 0.6), hyp=1, rows=[q(0.01, 3, 2)])]
+    assert CF.knot_allocation(F, (0.8, 0.6)) == 2 / 3 and CF.knot_allocation(F, (0.8, -0.4)) == 1.0
+    txt = CF.paired({1: 1.1, 2: 0.9, 3: 1.2}, {1: 1.0, 2: 1.0, 4: 1.0}, 'a against b')
+    assert txt == 'a against b 1.000 [0.900, 1.100], smaller in 1 of 2' and CF.paired({}, {}, 'x') == 'x —'
 
 
 def test_the_separations_bound():

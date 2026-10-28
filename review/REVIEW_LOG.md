@@ -2708,3 +2708,36 @@ solve stops on its step test wherever its budget, gradient test or radius stand,
 claim about the floor, not the solver. Restarting the solve from each end with one setting changed at a time — the cheapest experiment
 on the table — separates the two, and a mutation pass on the variant plumbing (here the gradient setting a refactor dropped silently)
 belongs with every new variant.
+
+## Round 67 (adversarial review of Proposition D‴.52 as revised after round 64, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bn: Proposition D‴.52 as revised after round 64, with its code and results at
+88933bf (`review/REVIEW_round67_D3bn.md`). The referee:
+- regenerated the md byte for byte and reran all 15 U jobs, all 95 S jobs, five F jobs and three A rows bit-identically, and wrote U
+  again from scratch;
+- checked the ISS against LARS and the lasso on 400 noisy targets, re-derived (iv)'s cosine and the moving null;
+- compared the tests like for like with paired bootstraps, decomposed the knot's loss with each knot against its own law, froze the
+  runner-up's margin, recomputed E′'s margin uncensored and Smith's criterion by exact roots;
+- ran 71 single-point mutants and ported round 64's surviving ones.
+
+**Verdicts (D3bn).** Reproducibility, the LARS identity, (iv), the de facto one-sided knot, the walls' bias, Part U and the moving null
+hold. But the two-sided half of the like-for-like comparison was not like for like: the full knot, de facto one-sided, was set against
+the two-sided |z|; both walls at α/2 trail |z| in 23 of 24 cells, and a score spending α the knot's way reaches ½ at 1.02 × NP against
+the knot's 1.06. Minors: the minimum's part changes sign at the tie; the Status equated Liu–Nehorai's GLRT limit with Smith's criterion
+where they part; E′'s margin column was censored at the tie; 8 of round 64's non-equivalent mutants and two new ones in U survived;
+leading orders without their range; misquotes.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bn-1 | major | The two-sided comparison not like for like | `rejections`' 'alloc': the score spending α as the calibrated knot does (`knot_allocation`: 90.7% and 90.1% toward the fit's sign: ŵz > 1.692 or −ŵz > 2.601); F prints its Δ₅₀ (1.019 and 1.257 × NP) and `paired` comparisons per pair — the calibrated knot over the allocated score 1.045 (smaller in 2 of 24), both walls over |z| 1.026 (1 of 24), the fit's-sign wall over the one-sided z 1.043 (0 of 24), the knot over |z| 0.987 (17 of 24); (iii) and New rewritten: one-sided against one-sided, two-sided against two-sided, and with the knot's own allocation; New quantified (4–6% in Δ₅₀, about 20% in samples) |
+| D3bn-2 | minor | The minimum's part changes sign at the tie | E′: the full knot against its own law at the truth (size, power) and the minimum's part per cell in all 15 — −0.1075 … −0.0300 at c̄ ≤ 0.032, −0.0075 … +0.0175 at c̄ ≥ 0.045 (positive in 5 of 6); (iii): a loss away from the tie, a small gain at it; the margin's noise enters the knot's numerator μ̂ |
+| D3bn-3 | minor | Liu–Nehorai = Smith only with equal or known amplitudes; local-fit constants | Status: the identification restricted; otherwise Smith's criterion an estimation threshold, not a detection limit; `smith_line` prints the constants at the integer powers (501Δ³, 119Δ²) beside the fitted exponents |
+| D3bn-4 | minor | E′'s margin censored | `s_job`'s 'mu_u' (the runner-up's dual over the noiseless first entrant's correlation, not the largest; S rerun, every other field bit-identical); E′'s margin column from it: sd(μ̂)/s 0.148–0.170, the tie cell's margin 0.71 sd |
+| D3bn-5 | minor | Surviving mutants | Tests: `draw_stats`' walls in `walls_at_fit`'s order and `knot_walls` against an independent per-kernel definition (D01, K01); `f_job`'s qA at α/2 and the bound at the draws' s (F03, F04); `f_jobs`' H0 separation (F07); E′'s t size and z_σ power and the uncensored margin (Z02, D02); `width_z`'s escape window (S03); `u_job` at a swapping tie cell and at c̄ = 0 (U09, U01); U's first entrants read against S's swaps (U10); the allocated score, `knot_allocation`, `paired` |
+| D3bn-6 | cosmetic | Leading orders without their range | (iv) and the proof: cos + O(ϑ⁴ + (Δ/σ)⁴); the moving null "to leading order"; the title "≈ 1.09 (1.04–1.18)" |
+| D3bn-7 | cosmetic | Misquotes, loose ends | the opposite-sign knot over 23 cells; the walls mechanism with the walls test's own α/2 components (0.0034 and 0.0345 under H1 against 0.0223 and 0.0235 under H0); the calibrated knot's size per offset (0.0512 at c̄ = 0); z's tested range s/|ŵ| = 0.0021–0.0735; z₂'s size in E′; Neyman–Scott 1966 |
+
+**Lesson.** Like for like has two halves, and a fix applied to one of them is not the rule. Round 64 matched the one-sided comparison and
+left the two-sided one comparing a test that spends α on one side with one that splits it; the measure that settles it — a score spending
+α exactly as the knot does — took one line of code. A decomposition is a claim about every cell, signs included: the part quoted only
+where it was a loss turned out to be a gain where it was not quoted.
