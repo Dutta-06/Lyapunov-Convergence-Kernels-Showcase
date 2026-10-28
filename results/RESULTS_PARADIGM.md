@@ -1336,6 +1336,39 @@ core's profile at their path margins, their displacements the creep's εC_j, the
 shifts) + εD_j — the shifts' term needed —, and the entries cross at τ_k + ε^{1/2}(s_θ + σ_k); on target 41 at 10⁻⁹ (an entrant that
 slides, one that arrives late) the sign per entry and the shifts, with converged predictions, (H3) at every entry and the block at S_k.
 
+## Theorem D‴.55 — exact recovery by the sliding transit (`exp_transit_certificate.py` → `chaos/transit_certificate.md`)
+
+- The sliding inverse scale space `sliding_iss_nd` (in one dimension on the 1-D samples, with the exact Jacobian; a fast-flow chunk that
+  LSODA has not finished within 2·10⁵ evaluations redone by Radau), its least-squares polish bounded; three features of the kernels'
+  width; E the starting kernels of largest correlation; exact with E: the active set E, the residual below 10⁻⁸, no exits; the
+  skeletons recomputed from the targets at report time.
+- (A) One dimension (21 kernels of width 0.12 at spacing 0.1; 400 targets, minimal separations 0.25 … 0.6, amplitudes ±U(0.4, 1)):
+  every path an exact fit with three kernels, exact with E on 262; exactness with E predicted by the fitted skeleton on 400, the linear
+  skeleton on 397 (its misses at m_sk = −0.0036, −0.0095 and −0.188, where the fitted skeleton's margins are +0.006 … +0.008), the atoms
+  subtracted on 390, the relative margin on 344, the certificate on 331 (its disagreements at |m| ≤ 0.195), the first entrant on 327
+  (65 decided at the first entry), always E on 262; with the polish off the flow ends as the polished path on 400 of 400.
+- (B) The amplitudes' range (40 configurations, |A_k| = 10^{−r·u_k}, r = 0 … 3, ranges up to 749): the outcome changes with the range on
+  9 (all at |m|/q ≤ 0.67); both skeletons right on 160 of 160, the atoms subtracted on 140, the first entrant on 125, the certificate on
+  119, always E on 113, the relative margin on 107.
+- (C) The plane (17² kernels of width 0.15 at spacing 0.125; 120 targets): every path exact with three kernels; both skeletons right on
+  120, the atoms subtracted on 117, the relative margin on 102, the first entrant on 98, the certificate on 89, always E on 83.
+- (D) Designed families: (a) lattice pairs 0.3, 0.4, 0.5 apart at the ratios 10⁻³ … 10³ — at 0.3 the outcome changes with the ratio
+  while the certificate's margins are −0.34 and +0.22 —, the fitted skeleton right on 54 of 54, the linear skeleton on 52; (b) 240 pairs at
+  1.5σ … 4σ over a grid cell: exact with E on 84, both skeletons and the unpolished flow right on 240, the certificate on 151; (c) 30 of
+  A's targets in all six orders of the amplitudes 1, 10^{−1/2}, 10^{−1}: no outcome changes with the order. Outside |m| ≤ 0.8q the
+  certificate is wrong on 25 of 333 designed targets (|m|/q up to 1.62). Over all 1154 targets: the fitted skeleton 1154, the linear
+  skeleton 1149, the atoms subtracted 1100, the relative margin 1014, the first entrant 977, the certificate 903, always E 763.
+- (E) The two-feature map (4802 points): the fitted skeleton's threshold D*(ℓ) at most 4.67σ, without the second feature's own near
+  ties (m₀ ≤ 0.05) at most 3.33σ (same signs) and 2.83σ (opposite); the outcome constant at both ends of the ratio on 48–49 of 49
+  separations; the linear skeleton's sign the fitted skeleton's at 4719 points; |m_sk − m_fit| against the amplitude ratio of slope
+  0.98–1.00 (first order in the tail); the path at 240 sampled points as the fitted skeleton at all 240.
+- (F) The range 10⁶ (amplitudes 1, 10⁻³, 10⁻⁶ in all six orders at 5σ and 3σ, exits only below 10⁻¹² of the largest coefficient): at 5σ
+  every path exact with E, at 3σ exact with E on 2 of 12 (one an exact fit with four kernels); both skeletons right on all 24.
+
+Tests (`tests/test_transit_certificate.py`, 19): the certificate's and the skeletons' margins, the fitted skeleton on negative features
+and on stored targets that break its mutants, the atoms baseline, the entrants near the window's edge, the ascent's end, the outcome's
+counts and absolute tolerance, the bounded polish, the polish safeguard on stored paths in both implementations.
+
 ## Remark D‴.16 — dither and the mass constraint (`exp_dither_ot.py` → `chaos/dither_ot.md`)
 
 - Dithered averaged slow loop (Langevin in slow time, Gibbs law exp(−J_m/τ₀)), m = 15 from the counts (6, 5, 4), matching prior,

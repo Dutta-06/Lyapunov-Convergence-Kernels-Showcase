@@ -108,8 +108,11 @@ whose claims it re-examines in its Section 2. The LaTeX source is in [manuscript
   into them, and the sliding path alone estimates the mass below which the loop forms exactly its kernels — within a factor 2 of the
   loop's own threshold on three targets in four (Proposition D‴.51); and the sliding limit is proved: between entries the loop is
   slaved to the block's fit, each entry is an inner layer of which the fit is a Lyapunov function, and the loop converges to the
-  sliding path at the rate (mass)^{1/2}, the entries' pulls and shifts its first correction (Theorem D‴.53); rounds 7–33, 35–37, 39
-  and 41 of the review log cover all of them up to D‴.53, and their remarks.
+  sliding path at the rate (mass)^{1/2}, the entries' pulls and shifts its first correction (Theorem D‴.53); from small masses separated
+  features are recovered exactly, each by its starting kernel of largest correlation, whatever the amplitudes, and at a finite
+  separation the outcome is computable without the flow — K least-squares fits and piecewise linear duals (the fitted skeleton), right
+  on all 1154 targets tested, against 903 for an amplitude-free certificate (Theorem D‴.55); rounds 7–33, 35–37, 39, 41, 43 and 46 of
+  the review log cover all of them, and their remarks.
 
 ---
 
