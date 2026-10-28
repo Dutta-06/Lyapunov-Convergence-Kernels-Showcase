@@ -25,10 +25,10 @@ def test_block_stiffnesses_are_the_closed_forms():
         assert r['hess'][2] > 10 * r['hess'][1]                           # the other two are of order one
         split.append(r['hess'][0] / D ** 6)
     assert np.ptp(split) / np.mean(split) < 1e-3                         # amplitude-free
-    vs = CF.taylor_basis(K, CF.CBAR)                                     # the continuum's √π/(48σ⁵ℓ) and √π/(8σ³ℓ), ℓ = 2, to the grid
-    s = K.sig
-    assert abs(CF.perp_norm2(vs, 3) / (np.sqrt(np.pi) / (48 * s ** 5 * 2)) - 1) < 2e-2
-    assert abs(CF.perp_norm2(vs, 2) / (np.sqrt(np.pi) / (8 * s ** 3 * 2)) - 1) < 2e-2
+    vs = CF.taylor_basis(K, CF.CBAR)                                     # the continuum's √π/(48σ⁵ℓ) and √π/(8σ³ℓ), ℓ = Nh (round 55)
+    s, ell = K.sig, K.xs.size * (K.xs[1] - K.xs[0])
+    assert abs(CF.perp_norm2(vs, 3) / (np.sqrt(np.pi) / (48 * s ** 5 * ell)) - 1) < 1e-4
+    assert abs(CF.perp_norm2(vs, 2) / (np.sqrt(np.pi) / (8 * s ** 3 * ell)) - 1) < 1e-4
 
 
 def test_flow_relaxes_the_split_at_the_mobility_weighted_stiffness():
@@ -78,11 +78,6 @@ def test_predicted_delay_scales_as_the_inverse_square_separation():
     assert abs(d[1] / d[0] / 4 - 1) < 2e-2
 
 
-if __name__ == '__main__':
-    for name, fn in list(globals().items()):
-        if name.startswith('test_'):
-            fn(); print(name, 'ok')
-
 
 def test_c_job_stops_at_the_second_entry_and_places_within_a_budget(monkeypatch):
     """C's draws stop at the second entry (the delay only); the first R_D under H1 are relaxed again after it within RHS_D right-hand-side
@@ -100,3 +95,139 @@ def test_c_job_stops_at_the_second_entry_and_places_within_a_budget(monkeypatch)
     assert all(q['oob'] and 'c' not in q for q in rows[:2]) and all(np.isfinite(q['dt']) for q in rows)
     h0 = CF.c_job((0.3, 0.003, 0, 7))['rows']
     assert not any('oob' in q for q in h0)
+
+
+def test_the_opposite_sign_pair_enters_at_the_other_wall():
+    """Referee round 55: for (0.8, −0.4) at Δ = 0.0125 the predicted second entrant is kernel 13 at the wall −1 (the flank, the
+    minority's sign), the path's too, its delay 0.907 of the leading order (the O(ϑ) correction, ϑ = 25Δ)."""
+    r = CF.a_job((0.8, -0.4, 0.0125))
+    (t1, j1), (t2, j2) = r['entries'][:2]
+    dt, j, wall = r['pred']
+    assert (j, wall) == (13, -1) and j2 == 13 and 0.9 < (t2 - t1) / dt < 0.92
+
+
+def test_the_split_moves_the_centres_by_half_the_separation_per_weight():
+    """Referee round 55: the flow's split eigenvector moves each centre by Δ/(2w_k) per unit of weight moved, to 0.2% at Δ = 0.0125."""
+    for A in ((0.8, 0.6), (0.8, -0.4)):
+        r = CF.b_job(A + (0.0125,))
+        assert r['split'][1] > 0.999 and np.allclose(r['split_c'], 1, atol=2e-3)
+
+
+def test_detection_on_a_synthetic_table():
+    """Referee round 55: `detection`'s H0 quantile, power and Δ₅₀ (log-linear interpolation of the power at ½) on synthetic draws."""
+    C, pw = [], {}
+    Ds = sorted(CF.DELTAS_C)
+    for k, D in enumerate(Ds):
+        for s in CF.SIGMAS_C:
+            p = min(1.0, 0.1 * k * (1 + CF.SIGMAS_C.index(s) % 2))
+            n1 = int(round(p * 20))
+            C += [dict(D=D, s=s, hyp=0, rows=[dict(dt=float(t)) for t in range(1, 201)]),
+                  dict(D=D, s=s, hyp=1, rows=[dict(dt=5.0)] * n1 + [dict(dt=500.0)] * (20 - n1))]
+            pw[(D, s)] = n1 / 20
+    det, d50 = CF.detection(C)
+    q = np.quantile(np.arange(1, 201), CF.ALPHA_C)
+    assert all(abs(det[k_]['q0'] - q) < 1e-12 and det[k_]['power'] == pw[k_] for k_ in pw)
+    for s in CF.SIGMAS_C:
+        p = [pw[(D, s)] for D in Ds]
+        k = next(i for i in range(len(Ds) - 1) if p[i] < 0.5 <= p[i + 1])
+        t = (0.5 - p[k]) / (p[k + 1] - p[k])
+        assert abs(d50[s] - np.exp(np.log(Ds[k]) + t * np.log(Ds[k + 1] / Ds[k]))) < 1e-12
+
+
+def test_the_knot_law_is_the_paths_first_order():
+    """Referee round 55: under one bump with noise sξ, `knot_of` — the first entry by the duals, then their rates ⟨Rξ, φ_j⟩ to the walls —
+    is the path's second knot to first order: the relative difference 10⁻⁸ at s = 10⁻³, falling ∝ s; its law's quantile ∝ 1/s up to the
+    margins' O(s) noise."""
+    L, K, c0 = CF.setup()
+    f1 = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, 0.025), CF.PAIR_C)
+    c1, w1 = CF.one_fit(K, f1)
+    xi = np.random.default_rng(3).standard_normal(K.xs.size)
+    err = []
+    for s in (1e-3, 1e-4):
+        R = RT.sliding_iss(L, K, w1 * K.phi(np.array([c1]))[:, 0] + s * xi, c0, np.ones(c0.size), max_events=2, polish=True, max_entries=2)
+        ent = [t for t, j, k, c in R['events'] if k == 'enter']
+        err.append(abs((ent[1] - ent[0]) / CF.knot_of(K, c0, c1, w1, s * xi[None, :])[0] - 1))
+    assert err[0] < 1e-7 and 5 < err[0] / err[1] < 20
+    q = [np.quantile(CF.knot_law(K, c0, c1, w1, s, 4000, np.random.default_rng(1)), 0.05) * s for s in (1e-5, 1e-4, 1e-3)]
+    d1, d2 = q[1] / q[0] - 1, q[2] / q[0] - 1                    # ∝ 1/s up to the margins' noise, O(s)
+    assert abs(d1) < 1e-3 and 5 < d2 / d1 < 15
+
+
+def test_one_fit_is_stationary():
+    """Referee round 55: `one_fit` returns the single-kernel least-squares fit (the gradient in (w, c) vanishes), not one Newton step."""
+    L, K, c0 = CF.setup()
+    for D in (0.3, 0.025):
+        f = X.bumps_target(K, CF.pair_centres(*CF.PAIR_C, D), CF.PAIR_C)
+        c, w = CF.one_fit(K, f)
+        ph, dp = K.phi(np.array([c]))[:, 0], K.dphi(np.array([c]))[:, 0]
+        r = f - w * ph
+        assert abs(ph @ r) < 1e-12 and abs(w * (dp @ r)) < 1e-12
+
+
+def test_the_delay_draws_are_noisy_bounded_and_the_hypotheses_differ(monkeypatch):
+    """Referee round 55: the delay runs stop at the second entry (max_entries = 2); the draws differ (noise); under H0 the delay is far
+    longer than under H1 at Δ = 0.3; Δτ₂ is the gap τ₂ − τ₁."""
+    monkeypatch.setattr(CF, 'R_C', 4)
+    monkeypatch.setattr(CF, 'R_D', 0)
+    kws, real = [], RT.sliding_iss
+
+    def spy(*a, **kw):
+        kws.append(kw)
+        return real(*a, **kw)
+    monkeypatch.setattr(RT, 'sliding_iss', spy)
+    d1 = [q['dt'] for q in CF.c_job((0.3, 0.003, 1, 7))['rows']]
+    d0 = [q['dt'] for q in CF.c_job((0.3, 0.003, 0, 7))['rows']]
+    assert all(k.get('max_entries') == 2 for k in kws) and len(kws) == 8
+    assert len(set(d1)) == 4 and len(set(d0)) == 4 and max(d1) < 10 < 100 < min(d0)
+    fake = dict(events=[(5.0, 10, 'enter', 0.0), (7.5, 11, 'enter', 0.1)], hist=[], act=np.zeros(21, bool), relaxed=[True])
+    monkeypatch.setattr(RT, 'sliding_iss', lambda *a, **kw: fake)
+    assert CF.c_job((0.3, 0.003, 0, 7))['rows'][0]['dt'] == 2.5
+
+
+def test_placed_blocks_are_sorted_and_relaxed(monkeypatch):
+    """Referee round 55: a placement run's block is recorded with its coefficients in its centres' order, and only if it relaxed."""
+    monkeypatch.setattr(CF, 'R_C', 1)
+    monkeypatch.setattr(CF, 'R_D', 1)
+    act = np.zeros(21, bool); act[[3, 7]] = True
+    c = np.zeros(21); c[3], c[7] = 0.5, -0.5
+    w = np.zeros(21); w[3], w[7] = 1.0, 2.0
+    delay = dict(events=[(5.0, 10, 'enter', 0.0), (7.5, 11, 'enter', 0.1)], hist=[], act=act, relaxed=[True])
+    for rel, placed in (([True, True], True), ([True, False], False)):
+        place = dict(events=delay['events'], hist=[], act=act, c=c, w=w, relaxed=rel, out_of_budget=False)
+        monkeypatch.setattr(RT, 'sliding_iss', lambda *a, **kw: place if kw.get('max_rhs') else delay)
+        row = CF.c_job((0.3, 0.003, 1, 7))['rows'][0]
+        assert ('c' in row) == placed and not row['oob']
+        if placed:
+            assert row['c'] == [-0.5, 0.5] and row['w'] == [2.0, 1.0]
+
+
+def test_the_report_on_synthetic_results():
+    """Referee round 55: the report's cells — A's ratio and scaled delays, B's slopes and the split's centre components, C's powers with
+    the Neyman–Pearson bound, D's errors over the Cramér–Rao bounds, the blocks near their features and the adjacent second entrants."""
+    A = [dict(A=(0.8, 0.6), D=0.025, entries=[(2.0, 10), (1002.0, 11)], pred=(800.0, 11, 1), n_act=2, cs=[0.0, 0.04],
+              c_end=[0.0, 0.04], w_end=[0.8, 0.6], rms=1e-14)]
+    md = CF.report(A=A)
+    assert '| 1000 | 800 (11, +1) | 1.2500 | 0.625 | 25 |' in md
+    B = [dict(A=(0.8, 0.6), D=D, hess=[1e-6 * (D / 0.05) ** 6, 1e-2 * (D / 0.05) ** 2, 1.0, 2.0], rates=[1.0, 2.0, 3.0, 4.0],
+              pred=(1e-6, 1e-2), split=(3e-6 * (D / 0.05) ** 6, 0.9999), sep=(5.0 * (D / 0.05) ** 2, 0.999), pred_flow=(1.0, 1.0),
+              split_c=[1.0012, 1.0011], mu=[0.1, 0.1]) for D in (0.05, 0.025)]
+    md = CF.report(B=B)
+    assert md.count('| 6.000, 2.000 |') == 2 and '; centres 1.0012, 1.0011)' in md
+    rows = lambda dts, **kw: [dict(dt=float(t), j=[10, 11], **kw) for t in dts]
+    C = []
+    for D in CF.DELTAS_C:
+        for s in CF.SIGMAS_C:
+            C.append(dict(D=D, s=s, hyp=0, rows=rows(range(100, 300))))
+            cs = CF.pair_centres(*CF.PAIR_C, D)
+            C.append(dict(D=D, s=s, hyp=1, rows=rows([50] * 200, c=list(cs + [0.001, -0.001]), w=[0.8, 0.6], oob=False)))
+    md = CF.report(C=C)
+    L, K, c0 = CF.setup()
+    for D in (0.3, 0.0125):
+        cs = CF.pair_centres(*CF.PAIR_C, D)
+        f1 = X.bumps_target(K, cs, CF.PAIR_C)
+        c1, w1 = CF.one_fit(K, f1)
+        npw = CF.np_power(K, f1, w1 * K.phi(np.array([c1]))[:, 0], 0.001)
+        assert f"| {D:g} | 1.00 [{npw:.2f}] (50, 200) |" in md
+        cp, cf_ = CF.crb(K, cs, np.array(CF.PAIR_C), 0.001)
+        assert (f"| {D:g} | 0.001 | 200, 0 (200) | 1.000e-03 | {1e-3 * D ** 2 / 1e-3:.3g} | {1e-3 / cp:.3g} | 0.000e+00 | 0 | 0 | "
+                f"200 | 40 |") in md

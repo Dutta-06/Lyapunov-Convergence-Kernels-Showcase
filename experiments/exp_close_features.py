@@ -17,12 +17,20 @@ B. The two-kernel block at its exact fit: the Gauss–Newton Hessian's eigenvalu
    curve's flow linearised at the fit) against Δ — ∝ 1, 1, Δ², Δ⁶.
 C. Number detection under label noise: y = f* + ξ, ξ i.i.d. N(0, s²) on the samples, A = (0.8, 0.6); under H1 the pair, under H0 the
    one-bump fit closest to it (the single-kernel least-squares fit of f*); R_C draws each; the second entry's delay Δτ₂ as the statistic:
-   the power at the false-alarm rate 5% against Δ for each s, the separation Δ₅₀ where the power crosses ½, its slope in log s (½
-   predicted: Δ² ∝ s).
+   the power at the false-alarm rate 5% — the threshold the H0 draws' quantile at the true offset: an oracle-calibrated simple null
+   (referee round 55) — against Δ for each s, beside the Neyman–Pearson bound Φ(‖f₁ − f₀‖/s − z₀.₉₅) of the same simple hypotheses; the
+   separation Δ₅₀ where the power crosses ½ (with bootstrap intervals), its slope in log s (½ predicted: Δ² ∝ s).
 D. Placement under label noise: the two-kernel block after the second entry on the H1 draws — the rms errors of the positions and of the
-   amplitude ratio against s/Δ² and s/Δ³ (the moments' singular values Δ, Δ³).
+   amplitude ratio against s/Δ² and s/Δ³ (the moments' singular values Δ, Δ³) and against their Cramér–Rao bounds at the truth; how many
+   blocks hold both kernels within σ of the centroid, and how many second entrants are the first's neighbours.
+E. The null law and its calibration across the grid offset (referee round 55): at the centroids OFFSETS_E within one grid cell and the
+   cells CELLS_E near Δ₅₀, R0_E draws under H0 and R1_E under H1; after the first fit the duals move at ⟨r₁φ_j⟩, r₁ = Rξ to first order
+   (R the projection off the fit's tangent span(φ, w∂_cφ)), so the null delay is min_j (1 − sign(n_j)u_j)/|n_j|, n ~ N(0, s²ΦᵀRΦ/N²),
+   over the whole dictionary (`knot_law`). Its quantile at the truth against the H0 draws'; the test calibrated per draw by a parametric
+   bootstrap of that law at the draw's own first fit (ĉ, ŵ): its size and power at every offset, against the oracle-calibrated test, the
+   fixed threshold of the offset CBAR, and the Neyman–Pearson bound.
 
-Output: results/chaos/close_features.md and close_features_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D`).
+Output: results/chaos/close_features.md and close_features_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D,E`).
 """
 import os
 import sys
@@ -49,6 +57,9 @@ DELTAS_B = (0.2, 0.1, 0.05, 0.025, 0.0125)
 PAIR_C, SIGMAS_C, R_C, ALPHA_C = (0.8, 0.6), (0.001, 0.003, 0.01, 0.03), 200, 0.05
 R_D, RHS_D = 40, 400_000          # D: the placement draws per (Δ, s) under H1 and their budget of right-hand-side evaluations each
 DELTAS_C = (0.3, 0.2, 0.14, 0.1, 0.07, 0.05, 0.035, 0.025, 0.0175, 0.0125)
+OFFSETS_E, CELLS_E = (0.0, 0.02, 0.032, 0.045, 0.049), ((0.0175, 0.003), (0.025, 0.01), (0.05, 0.03))
+R0_E, R1_E, M_E, M_LAW = 1000, 400, 2000, 20000   # E: draws under H0 and H1, the bootstrap per draw, the law's samples at the truth
+N_BOOT = 2000                                    # C: bootstrap resamples for Δ₅₀'s intervals
 
 
 def setup():
@@ -58,12 +69,13 @@ def setup():
     return L, K, np.linspace(-1, 1, X.D_C)
 
 
-def pair_centres(A1, A2, D):
-    """The pair's centres: the centroid at CBAR (A ≠ 0), the midpoint at CBAR (a dipole)."""
+def pair_centres(A1, A2, D, cbar=None):
+    """The pair's centres: the centroid at cbar (default CBAR; A ≠ 0), the midpoint at cbar (a dipole)."""
+    cb = CBAR if cbar is None else cbar
     A = A1 + A2
     if abs(A) < 1e-12:
-        return np.array([CBAR - D / 2, CBAR + D / 2])
-    return np.array([CBAR - A2 * D / A, CBAR + A1 * D / A])
+        return np.array([cb - D / 2, cb + D / 2])
+    return np.array([cb - A2 * D / A, cb + A1 * D / A])
 
 
 def d2phi(K, c):
@@ -184,11 +196,14 @@ def b_job(args):
         Vr = np.real(V)
         cos = np.abs(Vr.T @ s_) / (np.linalg.norm(Vr, axis=0) * np.linalg.norm(s_))
         k = int(np.argmax(cos))
-        return float(-np.real(ev[k])), float(cos[k])
+        return float(-np.real(ev[k])), float(cos[k]), Vr[:, k]
     split = mode(np.r_[1 / wp[0], -1 / wp[1], D / (2 * A1), D / (2 * A2)])
     sep = mode(np.r_[0.0, 0.0, 1 / A1, -1 / A2])
+    v = split[2]
+    a = (v[0] * wp[0] - v[1] * wp[1]) / 2                             # the weight moved, w = ±a; the centres against Δ/(2w_k)·a
+    comp = [float(v[2] / (D / (2 * A1) * a)), float(v[3] / (D / (2 * A2) * a))]
     return dict(A=(A1, A2), D=D, hess=hess.tolist(), rates=rates.tolist(), pred=(l1, l2), mu=mu.tolist(),
-                split=split, sep=sep, pred_flow=(pred_split, pred_sep))
+                split=split[:2], sep=sep[:2], pred_flow=(pred_split, pred_sep), split_c=comp)
 
 
 def part_B():
@@ -212,6 +227,81 @@ def one_fit(K, f):
         hs = w * w * (dp @ dp)
         c = c + gr / hs
     return float(c), float(w)
+
+
+def tangent_projector(K, c, w):
+    """R = I − T(TᵀT)⁻¹Tᵀ, T = [φ(c), w∂_cφ(c)]: the projection off the one-kernel fit's tangent span."""
+    T = np.c_[K.phi(np.array([c]))[:, 0], w * K.dphi(np.array([c]))[:, 0]]
+    return np.eye(K.xs.size) - T @ np.linalg.solve(T.T @ T, T.T)
+
+
+def knot_of(K, c0, c, w, Xi):
+    """The second knot of the one-bump target wφ(c) under the noise rows Xi, first order in the noise, in the sliding limit (referee round
+    55): the first entrant j₁ the largest |⟨yφ_j⟩| (equal masses: the duals at its entry u_j = ⟨yφ_j⟩/|⟨yφ_{j₁}⟩|), then the duals' rates
+    n_j = ⟨Rξ, φ_j⟩ (r₁ = Rξ) to their walls: Δτ₂ = min_{j ≠ j₁} (1 − sign(n_j)u_j)/|n_j|."""
+    N, M = K.xs.size, Xi.shape[0]
+    Phi = K.phi(c0)
+    v0 = (w * K.phi(np.array([c]))[:, 0][None, :] + Xi) @ Phi / N
+    j1 = np.argmax(np.abs(v0), axis=1)
+    u = v0 / np.abs(v0[np.arange(M), j1])[:, None]
+    n = Xi @ (tangent_projector(K, c, w) @ Phi) / N
+    with np.errstate(divide='ignore'):
+        t = (1 - np.sign(n) * u) / np.abs(n)
+    t[np.arange(M), j1] = np.inf
+    return t.min(axis=1)
+
+
+def knot_law(K, c0, c, w, s, M, rng):
+    """The second knot's null law at the one-bump fit (c, w): `knot_of` on M draws of i.i.d. N(0, s²) noise."""
+    return knot_of(K, c0, c, w, s * rng.standard_normal((M, K.xs.size)))
+
+
+def np_power(K, f1, f0, s, alpha=0.05):
+    """The Neyman–Pearson power of the simple hypotheses f₀ against f₁ under i.i.d. N(0, s²) labels: Φ(‖f₁ − f₀‖/s − z_{1−α})."""
+    from scipy.stats import norm
+    return float(norm.cdf(np.linalg.norm(f1 - f0) / s - norm.ppf(1 - alpha)))
+
+
+def e_job(args):
+    """E: at the centroid cbar, R0_E draws under H0 (the one-bump fit of the pair) and R1_E under H1: the second knot Δτ₂, the entrants,
+    the first fit (ĉ, ŵ) and the knot's p-value under the law bootstrapped at that fit (M_E draws); the law at the truth (M_LAW draws),
+    the Neyman–Pearson power and the projected noise's std over the unprojected one per kernel, (⟨(Rφ_j)²⟩/⟨φ_j²⟩)^{1/2}."""
+    D, s, cbar, seed = args
+    t0 = time.time()
+    L, K, c0 = setup()
+    N = K.xs.size
+    f1 = X.bumps_target(K, pair_centres(*PAIR_C, D, cbar), PAIR_C)
+    c1, w1 = one_fit(K, f1)
+    f0 = w1 * K.phi(np.array([c1]))[:, 0]
+    rng = np.random.default_rng(seed)
+    rows = {}
+    for hyp, f, R_ in ((0, f0, R0_E), (1, f1, R1_E)):
+        out = []
+        for r in range(R_):
+            y = f + s * rng.standard_normal(N)
+            R = RT.sliding_iss(L, K, y, c0, np.ones(c0.size), max_events=2, polish=True, max_entries=2)
+            ent = [(t, j) for t, j, k, c in R['events'] if k == 'enter']
+            dt = ent[1][0] - ent[0][0] if len(ent) > 1 else np.inf
+            h = R['hist'][1]
+            a = int(np.flatnonzero(h[2])[0])
+            law = knot_law(K, c0, float(h[1][a]), float(h[2][a]), s, M_E, np.random.default_rng([seed, hyp, r]))
+            out.append(dict(dt=float(dt), j=[j for t, j in ent], c1=float(h[1][a]), w1=float(h[2][a]), p=float(np.mean(law <= dt))))
+        rows[hyp] = out
+    law0 = knot_law(K, c0, c1, w1, s, M_LAW, np.random.default_rng([seed, 9]))
+    Rm = tangent_projector(K, c1, w1)
+    Phi = K.phi(c0)
+    ratio = np.sqrt(np.mean((Rm @ Phi) ** 2, axis=0) / np.mean(Phi ** 2, axis=0))
+    print(f"  E Δ {D:g} s {s:g} c̄ {cbar:g}: H0 q·s {np.quantile([q['dt'] for q in rows[0]], ALPHA_C) * s:.3f} (law "
+          f"{np.quantile(law0, ALPHA_C) * s:.3f}) [{time.time() - t0:.0f}s]", flush=True)
+    return dict(D=D, s=s, cbar=cbar, rows0=rows[0], rows1=rows[1], q_law=float(np.quantile(law0, ALPHA_C)),
+                np=np_power(K, f1, f0, s), ratio=ratio.tolist(), c1=c1, w1=w1)
+
+
+def part_E():
+    from multiprocessing import Pool
+    jobs = [(D, s, cb, 55000 + 100 * i + k) for i, (D, s) in enumerate(CELLS_E) for k, cb in enumerate(OFFSETS_E)]
+    with Pool(N_WORKERS) as pool:
+        return pool.map(e_job, jobs, chunksize=1)
 
 
 def c_job(args):
@@ -258,6 +348,15 @@ def part_C():
         return pool.map(c_job, jobs, chunksize=1)
 
 
+def crossing(Ds, pw, level=0.5):
+    """The separation where the power, increasing in Δ, first crosses `level` (log-linear interpolation), NaN if it does not."""
+    for k in range(len(Ds) - 1):
+        if pw[k] < level <= pw[k + 1]:
+            t = (level - pw[k]) / (pw[k + 1] - pw[k])
+            return float(np.exp(np.log(Ds[k]) + t * (np.log(Ds[k + 1]) - np.log(Ds[k]))))
+    return np.nan
+
+
 def detection(C):
     """Per (Δ, s): the H0 quantile of Δτ₂ at ALPHA_C and the H1 power; Δ₅₀(s) by log-linear interpolation of the power."""
     tab = {}
@@ -267,20 +366,43 @@ def detection(C):
     for (D, s), d in tab.items():
         q = np.quantile(d[0], ALPHA_C)
         out[(D, s)] = dict(q0=float(q), power=float(np.mean(d[1] < q)), med1=float(np.median(d[1])), med0=float(np.median(d[0])))
-    d50 = {}
-    for s in SIGMAS_C:
-        Ds = sorted(DELTAS_C)
-        pw = [out[(D, s)]['power'] for D in Ds]
-        d50[s] = np.nan
-        for k in range(len(Ds) - 1):
-            if pw[k] < 0.5 <= pw[k + 1]:
-                t = (0.5 - pw[k]) / (pw[k + 1] - pw[k])
-                d50[s] = float(np.exp(np.log(Ds[k]) + t * (np.log(Ds[k + 1]) - np.log(Ds[k]))))
-                break
+    Ds = sorted(DELTAS_C)
+    d50 = {s: crossing(Ds, [out[(D, s)]['power'] for D in Ds]) for s in SIGMAS_C}
     return out, d50
 
 
-def report(A=None, B=None, C=None):
+def d50_bootstrap(C, n=N_BOOT, seed=5500):
+    """Δ₅₀'s and its slope's 95% intervals: both hypotheses' draws resampled per cell (the H0 quantile recomputed each time)."""
+    tab = {}
+    for r in C:
+        tab.setdefault((r['D'], r['s']), {})[r['hyp']] = np.array([q['dt'] for q in r['rows']])
+    rng = np.random.default_rng(seed)
+    Ds = sorted(DELTAS_C)
+    pw = {}
+    for (D, s), d in sorted(tab.items()):
+        q = np.quantile(d[0][rng.integers(0, d[0].size, (n, d[0].size))], ALPHA_C, axis=1)
+        pw[(D, s)] = np.mean(d[1][rng.integers(0, d[1].size, (n, d[1].size))] < q[:, None], axis=1)
+    d50 = {s: np.array([crossing(Ds, [pw[(D, s)][b] for D in Ds]) for b in range(n)]) for s in SIGMAS_C}
+    sl = []
+    for b in range(n):
+        x = [(np.log(s), np.log(d50[s][b])) for s in SIGMAS_C if np.isfinite(d50[s][b])]
+        sl.append(np.polyfit(*np.array(x).T, 1)[0] if len(x) >= 2 else np.nan)
+    ci = lambda v: ((float(np.nanpercentile(v, 2.5)), float(np.nanpercentile(v, 97.5))) if np.isfinite(v).any() else (np.nan, np.nan)) + \
+        (int(np.sum(~np.isfinite(v))),)
+    return {s: ci(d50[s]) for s in SIGMAS_C}, ci(np.array(sl))
+
+
+def crb(K, cs, w, s):
+    """The Cramér–Rao bounds of the two-kernel fit at the truth, s²(JᵀJ)⁻¹ (J the samples' Jacobian in (w₁, w₂, c₁, c₂)): the positions'
+    rms ((Var c₁ + Var c₂)/2)^{1/2} and the split w₁/(w₁ + w₂)'s std."""
+    J = np.c_[K.phi(cs), K.dphi(cs) * w[None, :]]
+    Cov = s ** 2 * np.linalg.inv(J.T @ J)
+    W = w.sum()
+    g = np.array([w[1] / W ** 2, -w[0] / W ** 2, 0.0, 0.0])
+    return float(np.sqrt((Cov[2, 2] + Cov[3, 3]) / 2)), float(np.sqrt(g @ Cov @ g))
+
+
+def report(A=None, B=None, C=None, E_=None):
     fmt = E.fmt
     L_ = ['# Proposition D‴.52: close features (`exp_close_features.py`)', '',
           f"The sliding inverse scale space (polished) on two bumps of the kernels' width {X.SIG_C} a distance Δ apart, the centroid (the "
@@ -314,7 +436,8 @@ def report(A=None, B=None, C=None):
                'compared with λ₁·2/(1/μ₁ + 1/μ₂) (μ_k the amplitudes\' mobility, ẇ = −μ∂E/∂w) and, at frozen amplitudes, '
                'Gm·4Δ²⟨(P_{⊥e₁}e₂)²⟩w₁²w₂²/(w₁² + w₂²).', '',
                '| A₁, A₂ | Δ | Hessian eigenvalues | λ₂/Δ², λ₁/Δ⁶ | predicted | slopes | flow rates | split: r/Δ⁶ (predicted; '
-               'the mode\'s overlap) | separation: r/Δ² (predicted; overlap) | slopes |',
+               'the mode\'s overlap; its centre components over Δ/(2w_k) per unit weight moved) | separation: r/Δ² (predicted; overlap) '
+               '| slopes |',
                '|---|---|---|---|---|---|---|---|---|---|']
         prev = {}
         for r in B:
@@ -332,7 +455,9 @@ def report(A=None, B=None, C=None):
             pt = f"{pl[1] / r['D'] ** 2:.4g}, {pl[0] / r['D'] ** 6:.4g}" if pl else '—'
             D6, D2 = r['D'] ** 6, r['D'] ** 2
             if sp:
-                fs = (f"{sp[0] / D6:.4g} ({pf[0] / D6:.4g}; {sp[1]:.3f}) | {se[0] / D2:.4g} ({pf[1] / D2:.4g}; {se[1]:.3f})")
+                sc = r.get('split_c')
+                fs = (f"{sp[0] / D6:.4g} ({pf[0] / D6:.4g}; {sp[1]:.3f}" + (f"; centres {sc[0]:.4f}, {sc[1]:.4f}" if sc is not None else '')
+                      + f") | {se[0] / D2:.4g} ({pf[1] / D2:.4g}; {se[1]:.3f})")
             else:
                 fs = f"{q[0] / D6:.4g} | {q[1] / D2:.4g}"
             L_.append(f"| {key[0]:g}, {key[1]:g} | {r['D']:g} | {', '.join(f'{v:.3e}' for v in h)} | {h[1] / D2:.4g}, "
@@ -342,17 +467,24 @@ def report(A=None, B=None, C=None):
         det, d50 = detection(C)
         L_ += ['## C. Number detection under label noise', '',
                f"A = {PAIR_C}; {R_C} draws per hypothesis; H0 the closest one-bump target; the power of Δτ₂ < its H0 quantile "
-               f"{ALPHA_C:g} (the medians of Δτ₂ under H1 and H0):", '',
+               f"{ALPHA_C:g} at the true offset (an oracle-calibrated simple null; E calibrates it), in brackets the Neyman–Pearson power "
+               "Φ(‖f₁ − f₀‖/s − z₀.₉₅) of the same simple hypotheses (the medians of Δτ₂ under H1 and H0):", '',
                '| Δ | ' + ' | '.join(f's = {s:g}' for s in SIGMAS_C) + ' |', '|---|' + '---|' * len(SIGMAS_C)]
+        Lc, Kc, c0c = setup()
+        npw = {}
         for D in DELTAS_C:
-            L_.append(f"| {D:g} | " + ' | '.join(f"{det[(D, s)]['power']:.2f} ({det[(D, s)]['med1']:.3g}, {det[(D, s)]['med0']:.3g})"
-                                                for s in SIGMAS_C) + ' |')
+            f1 = X.bumps_target(Kc, pair_centres(*PAIR_C, D), PAIR_C)
+            c1_, w1_ = one_fit(Kc, f1)
+            for s_ in SIGMAS_C:
+                npw[(D, s_)] = np_power(Kc, f1, w1_ * Kc.phi(np.array([c1_]))[:, 0], s_, ALPHA_C)
+        for D in DELTAS_C:
+            L_.append(f"| {D:g} | " + ' | '.join(f"{det[(D, s)]['power']:.2f} [{npw[(D, s)]:.2f}] ({det[(D, s)]['med1']:.3g}, "
+                                                f"{det[(D, s)]['med0']:.3g})" for s in SIGMAS_C) + ' |')
         ss = np.array([s for s in SIGMAS_C if np.isfinite(d50[s])])
         dd = np.array([d50[s] for s in ss])
         sl = np.polyfit(np.log(ss), np.log(dd), 1)[0] if ss.size >= 2 else np.nan
         # the prediction: under H1 the second entry comes after ≈ C₁/Δ² (C₁ the leading order's Δτ₂Δ² at the smallest Δ, (i)), so the
         # power is ½ where C₁/Δ² meets the H0 quantile q_α (∝ √N/s): Δ₅₀ = (C₁/q_α)^{1/2}, q_α interpolated in log Δ at the crossing
-        Lc, Kc, c0c = setup()
         Dm = min(DELTAS_C)
         C1 = predicted_delay(Kc, X.bumps_target(Kc, pair_centres(*PAIR_C, Dm), PAIR_C), c0c, *PAIR_C, Dm)[0] * Dm ** 2
         pred50 = {}
@@ -366,31 +498,76 @@ def report(A=None, B=None, C=None):
                     pred50[s_] = float(np.exp(np.log(Ds[k]) + t * (np.log(Ds[k + 1]) - np.log(Ds[k]))))
                     break
         qs = {s_: float(np.median([det[(D, s_)]['q0'] for D in DELTAS_C]) * s_) for s_ in SIGMAS_C}
+        ci50, cisl = d50_bootstrap(C)
+        npd = {s_: crossing(sorted(DELTAS_C), [npw[(D, s_)] for D in sorted(DELTAS_C)]) for s_ in SIGMAS_C}
         L_ += ['', 'Δ₅₀ (the power ½): ' + ', '.join(f's = {s:g}: {fmt(d50[s])}' for s in SIGMAS_C) +
                f"; the slope of log Δ₅₀ in log s {sl:.3f} (½ predicted). Predicted from (i) and the H0 quantile, Δ₅₀ = (C₁/q_α)^{{1/2}} "
                f"(C₁ = {C1:.4f}, the leading order's Δτ₂Δ² at Δ = {Dm:g}): " + ', '.join(f's = {s:g}: {fmt(pred50[s])}' for s in SIGMAS_C) +
-               "; the H0 quantile times s (its median over Δ; constant if q_α ∝ 1/s): " + ', '.join(f'{qs[s]:.4g}' for s in SIGMAS_C) + '.', '']
+               "; the H0 quantile times s (its median over Δ; constant if q_α ∝ 1/s): " + ', '.join(f'{qs[s]:.4g}' for s in SIGMAS_C) + '. '
+               f"The bootstrap's 95% intervals ({N_BOOT} resamples of both hypotheses' draws per cell): Δ₅₀ "
+               + ', '.join(f"s = {s:g}: " + ('— (no crossing)' if ci50[s][2] == N_BOOT else f"[{ci50[s][0]:.4g}, {ci50[s][1]:.4g}]"
+                                                 + (f" ({ci50[s][2]} resamples without a crossing)" if ci50[s][2] else ''))
+                           for s in SIGMAS_C)
+               + f"; the slope [{cisl[0]:.3f}, {cisl[1]:.3f}]. The Neyman–Pearson bound's Δ₅₀: "
+               + ', '.join(f's = {s:g}: {fmt(npd[s])}' for s in SIGMAS_C) + '.', '']
         L_ += ['## D. Placement under label noise (the two-kernel block after the second entry, H1)', '',
                f"The first {R_D} H1 draws of each (Δ, s) relaxed after the second entry within {RHS_D} right-hand-side evaluations (a "
                "block near coalescence relaxes at a rate ∝ Δ⁶, B): the placed blocks (two kernels, relaxed) and those out of budget; "
-               "the rms errors over the placed ones:", '',
-               '| Δ | s | placed, out of budget (of the draws) | rms position error | × Δ²/s | rms error of w₁/(w₁ + w₂) | × Δ³/s |',
-               '|---|---|---|---|---|---|---|']
+               "the rms errors over the placed ones, against the Cramér–Rao bounds at the truth (s²(JᵀJ)⁻¹, `crb`); the placed blocks "
+               "with both kernels within σ of their features, and the draws whose second entrant is the first's neighbour:", '',
+               '| Δ | s | placed, out of budget (of the draws) | rms position error | × Δ²/s | / CRB | rms error of w₁/(w₁ + w₂) | × Δ³/s | '
+               '/ CRB | both within σ | second entrant adjacent |',
+               '|---|---|---|---|---|---|---|---|---|---|---|']
         cs_truth = {D: pair_centres(*PAIR_C, D) for D in DELTAS_C}
         for r in C:
             if r['hyp'] != 1:
                 continue
             ok = [q for q in r['rows'] if 'c' in q]
             tried = [q for q in r['rows'] if 'oob' in q]
+            adj = sum(len(q['j']) > 1 and abs(q['j'][1] - q['j'][0]) <= 1 for q in r['rows'][:R_D])
             if not ok:
                 if tried:
-                    L_.append(f"| {r['D']:g} | {r['s']:g} | 0, {sum(q['oob'] for q in tried)} ({len(tried)}) | — | — | — | — |")
+                    L_.append(f"| {r['D']:g} | {r['s']:g} | 0, {sum(q['oob'] for q in tried)} ({len(tried)}) | — | — | — | — | — | — | — | "
+                              f"{adj} |")
                 continue
             pe = np.sqrt(np.mean([np.mean((np.array(q['c']) - cs_truth[r['D']]) ** 2) for q in ok]))
             fr = np.sqrt(np.mean([(q['w'][0] / (q['w'][0] + q['w'][1]) - PAIR_C[0] / sum(PAIR_C)) ** 2 for q in ok]))
+            cp, cf_ = crb(Kc, cs_truth[r['D']], np.array(PAIR_C), r['s'])
+            both = sum(bool(np.all(np.abs(np.array(q['c']) - cs_truth[r['D']]) < X.SIG_C)) for q in ok)
             L_.append(f"| {r['D']:g} | {r['s']:g} | {len(ok)}, {sum(q['oob'] for q in tried)} ({len(tried)}) | {pe:.3e} | "
-                      f"{pe * r['D'] ** 2 / r['s']:.3g} | {fr:.3e} | "
-                      f"{fr * r['D'] ** 3 / r['s']:.3g} |")
+                      f"{pe * r['D'] ** 2 / r['s']:.3g} | {pe / cp:.3g} | {fr:.3e} | {fr * r['D'] ** 3 / r['s']:.3g} | {fr / cf_:.3g} | "
+                      f"{both} | {adj} |")
+        L_.append('')
+        D0 = min(DELTAS_C)
+        cp, cf_ = crb(Kc, pair_centres(*PAIR_C, D0), np.array(PAIR_C), 1.0)
+        L_ += [f"The Cramér–Rao constants at Δ = {D0:g}: the positions' rms × Δ²/s {cp * D0 ** 2:.4f}, the split's × Δ³/s "
+               f"{cf_ * D0 ** 3:.4f}.", '']
+    if E_ is not None:
+        L_ += ['## E. The null law and its calibration across the grid offset', '',
+               f"At the centroids c̄ = {', '.join(f'{c:g}' for c in OFFSETS_E)} (the kernels on a grid of spacing 0.1: c̄ = 0.05 is a tie) and "
+               f"the cells (Δ, s) = {', '.join(f'({D:g}, {s:g})' for D, s in CELLS_E)}, {R0_E} draws under H0 (the one-bump fit) and "
+               f"{R1_E} under H1. The H0 quantile of Δτ₂ at {ALPHA_C:g} times s from the draws and from the null law at the truth "
+               f"(`knot_law`, {M_LAW} samples: min_j (1 − sign(n_j)u_j)/|n_j|, n ~ N(0, s²ΦᵀRΦ/N²), R the projection off the fit's "
+               "tangent span); the projected noise's std over the unprojected one, (⟨(Rφ_j)²⟩/⟨φ_j²⟩)^{1/2}, for the two kernels next to "
+               "the fit; the share of the H0 second entrants next to the first; the false-alarm rate of the threshold set at "
+               f"c̄ = {CBAR:g} and of the test calibrated per draw by the law bootstrapped at its own first fit ({M_E} samples); the power of "
+               "the oracle-calibrated test (the offset's own H0 quantile), of the calibrated test, and the Neyman–Pearson bound:", '',
+               '| Δ, s | c̄ | H0 quantile × s: draws, law | std ratio next to the fit | H0 second entrants adjacent | false alarms: '
+               f'c̄ = {CBAR:g} threshold, calibrated | power: oracle, calibrated, Neyman–Pearson |', '|---|---|---|---|---|---|---|']
+        for D, s_ in CELLS_E:
+            es = sorted([e for e in E_ if e['D'] == D and e['s'] == s_], key=lambda e: e['cbar'])
+            ref = next((e for e in es if abs(e['cbar'] - CBAR) < 1e-12), None)
+            qref = np.quantile([q['dt'] for q in ref['rows0']], ALPHA_C) if ref is not None else np.nan
+            for e in es:
+                d0 = np.array([q['dt'] for q in e['rows0']]); d1 = np.array([q['dt'] for q in e['rows1']])
+                p0 = np.array([q['p'] for q in e['rows0']]); p1 = np.array([q['p'] for q in e['rows1']])
+                q0 = np.quantile(d0, ALPHA_C)
+                cg = np.linspace(-1, 1, len(e['ratio']))
+                nb = np.argsort(np.abs(cg - e['c1']))[:2]
+                adj = np.mean([abs(q['j'][1] - q['j'][0]) <= 1 for q in e['rows0'] if len(q['j']) > 1])
+                L_.append(f"| {D:g}, {s_:g} | {e['cbar']:g} | {q0 * s_:.3f}, {e['q_law'] * s_:.3f} | "
+                          + ', '.join(f"{e['ratio'][k]:.3f}" for k in sorted(nb)) + f" | {adj:.2f} | {np.mean(d0 < qref):.3f}, "
+                          f"{np.mean(p0 < ALPHA_C):.3f} | {np.mean(d1 < q0):.3f}, {np.mean(p1 < ALPHA_C):.3f}, {e['np']:.3f} |")
         L_.append('')
     L_.append('Numbers are produced by `experiments/exp_close_features.py`; nothing is edited by hand.')
     return '\n'.join(L_) + '\n'
@@ -400,15 +577,15 @@ def main():
     raw = os.path.join(OUT, 'close_features_raw.npz')
     md = os.path.join(OUT, 'close_features.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C')
+    keys = ('A', 'B', 'C', 'E')
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[get(k) for k in keys]))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'C', 'D'}
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'C', 'D', 'E'}
     res = dict(old)
     t0 = time.time()
-    for k, fn in (('B', part_B), ('A', part_A), ('C', part_C)):
+    for k, fn in (('B', part_B), ('A', part_A), ('C', part_C), ('E', part_E)):
         if k in parts or (k == 'C' and 'D' in parts):
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
