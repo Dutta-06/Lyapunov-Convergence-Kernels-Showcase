@@ -867,6 +867,17 @@ def v_law(dd, w, we, Ap=AP_V):
     return float(np.sqrt(max(Ap * dd ** 2 * np.exp(-dd ** 2 / 4) * we / (w * (we + w)), 0.0)))
 
 
+def toward_branches(V, V3=None):
+    """V's and V3's one-dimensional branches toward A′, each (d, A′) once (V3's A′/A = AP_V/A_B column repeats V's: referee round 53)."""
+    seen, out = set(), []
+    for r in list(V) + (list(V3) if V3 is not None else []):
+        k = (float(r['d']), float(r.get('Ap', AP_V)))
+        if r['n'] == 1 and r.get('side', 1) == 1 and k not in seen:
+            seen.add(k)
+            out.append(r)
+    return out
+
+
 def e3_law(w, dd, side, A=A_B, Ap=AP_V):
     """(v)'s hold at the third moment (referee round 53), one dimension, the continuum: at the second moment the rests' energy
     E₀ − P²/(2B) does not depend on w; the third, M₃ = w(1 − w²/w_e²)δ³ (w_e = A − w), adds −(1/6)M₃P₃ with
@@ -1713,13 +1724,14 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             else:
                 fold = f"none above {W_V[-1]:g} | {lev:.3g} | — | —"
             L_.append(f"| {r['d']:g} | {', '.join(cells)} | {fold} |")
-        gr = [(b['E'] - a['E']) / (b['w'] - a['w']) for r in list(V) + (list(V3) if V3 is not None else []) if r['n'] == 1
-              for a, b in zip(r['rows'][:-1], r['rows'][1:]) if 'E' in a]
+        gr = [(b['E'] - a['E']) / (b['w'] - a['w']) for r in toward_branches(V, V3) for a, b in zip(r['rows'][:-1], r['rows'][1:])
+              if 'E' in a]
         if gr:
-            L_ += ["", f"Along V's and V3's one-dimensional branches (the runner-up toward A′) the rests' energy E*(w) (the minimum over the "
-                       f"other parameters) {'increases with w at every step' if min(gr) > 0 else 'does NOT increase with w at every step'} "
+            L_ += ["", f"Along V's and V3's distinct one-dimensional branches (the runner-up toward A′; V3's A′/A = {AP_V / A_B:g} column "
+                       f"repeats V's) the rests' energy E*(w) (the minimum over the other parameters) "
+                       f"{'increases with w at every step' if min(gr) > 0 else 'does NOT increase with w at every step'} "
                        f"({len(gr)} steps; the secant dE*/dw from {min(gr):.2e} to {max(gr):.2e}): with w free the runner-up's coefficient "
-                       "decays toward the fold — the hold of (v) (referee round 49)."]
+                       "decays toward the fold on this side — the hold of (v) (referee round 49; the far side: VF)."]
         e3 = [(r, e3_ratios(r)) for r in list(V) + (list(VF) if VF is not None else []) if r['n'] == 1 and r.get('Ap', AP_V) == AP_V]
         if any(q for _, q in e3):
             L_ += ["", "The hold's third-moment law (`e3_law`: E*₃ = ∓(1/6)P₃(M₂*)^{3/2}(1 − w/w_e)(w(1 + w/w_e))^{−1/2}, P₃ = A′√π(d/σ)³"
@@ -1837,11 +1849,12 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                "offset H/√2 (the planar edge problem: in the continuum it depends on |t| only) and at H/2 (the planar offset); the last "
                "triples put a corner between x_θ(H/√2) and x_θ(H/2), where only the true offset's product gets the count:", "",
                "| gaps (x₁, x₂, x₃) | 8-kernel: formed (stop) | the product at H/√2: formed, max \\|Δ share\\|, the formed corners' relative "
-               "errors | at H/2: formed, max \\|Δ share\\|, the formed corners' relative errors |",
-               "|---|---|---|---|"]
+               "errors | the unformed corners with shares ≥ 5·10⁻⁴: the product at H/√2's relative errors (corners) | at H/2: formed, "
+               "max \\|Δ share\\|, the formed corners' relative errors |",
+               "|---|---|---|---|---|"]
         for r in T3['cube']:
             sh = np.array(r['shares'])
-            row = []
+            row, tails = [], '—'
             for pf in ((lambda v: T3['edge'][v]), ((lambda v: float(p_edge(T, v, H / 2))) if T is not None and 'pt' in T else None)):
                 if pf is None:
                     row.append('—')
@@ -1851,7 +1864,11 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                 big = sh > TH_REL
                 rel = (prod[big] - sh[big]) / sh[big]
                 row.append(f"{int((prod > TH_REL).sum())}, {np.abs(prod - sh).max():.2e}, {', '.join(f'{q:+.2%}' for q in rel)}")
-            L_.append(f"| ({', '.join(f'{v:g}' for v in r['x'])}) | {int((sh > TH_REL).sum())} ({r['stop']}) | {row[0]} | {row[1]} |")
+                small = (~big) & (sh >= 5e-4)
+                if not row[1:] and small.any():                      # the frozen tails, at the true offset (referee round 53)
+                    rs = (prod[small] - sh[small]) / sh[small]
+                    tails = f"{rs.min():+.1%} … {rs.max():+.1%} ({int(small.sum())})" if small.sum() > 1 else f"{rs[0]:+.1%} (1)"
+            L_.append(f"| ({', '.join(f'{v:g}' for v in r['x'])}) | {int((sh > TH_REL).sum())} ({r['stop']}) | {row[0]} | {tails} | {row[1]} |")
         L_.append("")
     if D2 is not None and T is not None and 'pt' in T:
         xt_ = x_theta_t(T)

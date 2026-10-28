@@ -362,6 +362,17 @@ def test_t3_product_takes_the_complements():
     assert abs(pr[S.index((0, 0, 0))] - 0.9 * 0.7 * 0.98) < 1e-15 and abs(pr[S.index((1, 1, 0))] - 0.1 * 0.3 * 0.98) < 1e-15
 
 
+def test_the_t3_report_prints_the_frozen_tails():
+    """T3's table (round 53): the unformed corners with shares ≥ 5·10⁻⁴ get the product's relative error at H/√2."""
+    pv = {1.0: 0.3, 3.0: 0.05}
+    S = [(a, b, c) for a in (0, 1) for b in (0, 1) for c in (0, 1)]
+    x = (1.0, 1.0, 3.0)
+    sh = TN.t3_product([pv[v] for v in x], S)
+    sh[S.index((1, 1, 1))] *= 1.25                                           # 0.0045 → the product 20% below
+    md = TN.report(T3=dict(edge=pv, cube=[dict(x=x, S=S, shares=sh.tolist(), stop='converged', drift=0.0)]))
+    assert '| (1, 1, 3) | 7 (converged) | 7, ' in md and '| -20.0% (1) | — |' in md
+
+
 def test_d2_report_shift_against_x_theta_at_the_offset():
     """D2's shift is the loop's crossing minus x_θ at its offset |t| (not at t = 0)."""
     xc = np.array([6.3, 6.2, 5.5])
@@ -393,6 +404,7 @@ def test_the_secant_line_covers_v3():
     down = dict(up, Ap=1.4, rows=[dict(w=0.3, we=0.5, along=0.1, across=0.0, E=1.0), dict(w=0.1, we=0.7, along=0.2, across=0.0, E=2.0)])
     assert 'increases with w at every step' in TN.report(V=[up])
     assert 'does NOT increase with w at every step' in TN.report(V=[up], V3=[down])
+    assert '(1 steps;' in TN.report(V=[up], V3=[dict(up)]) and '(2 steps;' in TN.report(V=[up], V3=[dict(up, Ap=1.4)])   # each branch once
 
 
 def test_the_race_job_both_sides():
