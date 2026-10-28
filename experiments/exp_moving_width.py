@@ -306,6 +306,17 @@ def g_job(args):
     return dict(dmin=dmin, q=q, entries=n_ent, flow=flow, status=int(sol.status), loops=loops, secs=time.time() - t0)
 
 
+def dipole_exponents(flow):
+    """The last two outputs' log-slopes of the largest |w| and of the opposite-sign pair's distance against s (the dipole: +1/3, −1/3 —
+    on the free law's exponential branch the coefficient's mobility grows like |w| and the pair's energy excess falls like 1/w² at a
+    fixed moment)."""
+    a, b = flow[-2], flow[-1]
+    if a['sep'] is None or b['sep'] is None:
+        return None
+    ls = np.log(b['s'] / a['s'])
+    return float(np.log(b['wmax'] / a['wmax']) / ls), float(np.log(b['sep'] / a['sep']) / ls)
+
+
 def part_G(C):
     """G: C's targets whose moving-width path was stopped by its budget."""
     from multiprocessing import Pool
@@ -410,15 +421,18 @@ def report(A=None, B=None, C=None, D=None, Ee=None, F=None, G=None):
                f"curve to s = {S_G[-1]:g} — the largest |w| and the closest opposite-sign pair (|Δc|/σ + |Δlog σ|) at s = "
                f"{', '.join(f'{v:g}' for v in S_G)} —; and the real loop at ε = {', '.join(f'{e:g}' for e in EPS_G)} to τ = {TAU_G:g}: its "
                "formed kernels, the coinciding pairs' coefficients, the largest |w| over the largest amplitude and the residual:", '',
-               '| Δ ≥ | target | entries | the flow: largest \\|w\\| | the opposite-sign pair\'s distance | residual | the loop: formed, pairs, '
-               'max\\|w\\|/max\\|A\\|, residual |', '|---|---|---|---|---|---|---|']
+               '| Δ ≥ | target | entries | the flow: largest \\|w\\| | the opposite-sign pair\'s distance | the last factor 100 in s: the '
+               'exponents of \\|w\\| and the distance | residual | the loop: formed, pairs, max\\|w\\|/max\\|A\\|, residual |',
+               '|---|---|---|---|---|---|---|---|']
         for r in G:
             fl = r['flow']
             lp = '; '.join(f"ε = {x['eps']:g}: {x['formed']}, " + (', '.join(f"{a:+.3f}/{b:+.3f}" for a, b in x['pairs']) or 'none')
                            + f", {x['wmax']:.2f}, {x['rms']:.1e}" for x in r['loops'])
             wm = ', '.join(f"{x['wmax']:.3g}" for x in fl)
+            ex = dipole_exponents(fl)
             L_.append(f"| {r['dmin']:g} | {r['q']} | {r['entries']} | {wm} | "
-                      + ', '.join('—' if x['sep'] is None else f"{x['sep']:.2e}" for x in fl) + f" | {fl[-1]['rms']:.2e} | {lp} |")
+                      + ', '.join('—' if x['sep'] is None else f"{x['sep']:.2e}" for x in fl)
+                      + (f" | {ex[0]:+.3f}, {ex[1]:+.3f}" if ex is not None else ' | —') + f" | {fl[-1]['rms']:.2e} | {lp} |")
         L_.append('')
     L_ += ['Numbers are produced by `experiments/exp_moving_width.py`; nothing is edited by hand.']
     return '\n'.join(L_) + '\n'

@@ -537,7 +537,7 @@ def report(A=None, B=None, B2=None, C=None, B3=None):
         L_.append("")
     if B2 is not None:
         mt, fr, s = B2_CASE
-        full = next((r for r in (B or []) if r['metric'] == mt and r['freqs'] == list(fr) and r['s'] == s), None)
+        full = next((r for r in (B if B is not None else []) if r['metric'] == mt and r['freqs'] == list(fr) and r['s'] == s), None)
         L_ += ["## B2. Which averages drive the drift", "",
                f"{mt}, {noise_label(list(fr))}, s = {s:g}: the averaged loop's Δw and Δc at period {MARKS_B[-1]} without each tone average, "
                "and with the envelopes replaced by their quasi-static values (A's oscillator law), against the full average"

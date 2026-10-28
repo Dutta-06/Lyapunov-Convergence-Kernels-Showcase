@@ -98,5 +98,8 @@ def test_the_g_report():
     G = [dict(dmin=0.4, q=9, entries=2, flow=flow, status=0,
               loops=[dict(eps=1e-6, formed=4, pairs=[(4.5, -3.96)], wmax=5.33, rms=2e-10)])]
     md = M.report(G=G)
-    assert '| 0.4 | 9 | 2 | 0.9, 4.6, 20, 92, 425 | 5.90e+00, 2.90e-01, 6.20e-02, 1.30e-02, 2.90e-03 | 1.23e-01 |' in md
+    assert ('| 0.4 | 9 | 2 | 0.9, 4.6, 20, 92, 425 | 5.90e+00, 2.90e-01, 6.20e-02, 1.30e-02, 2.90e-03 | +0.332, -0.326 | 1.23e-01 |'
+            in md)
+    ex = M.dipole_exponents([dict(s=1e9, wmax=1.0, sep=1.0), dict(s=1e11, wmax=100 ** (1 / 3), sep=100 ** (-1 / 3))])
+    assert abs(ex[0] - 1 / 3) < 1e-12 and abs(ex[1] + 1 / 3) < 1e-12 and M.dipole_exponents(flow[:1] + [dict(flow[1], sep=None)]) is None
     assert 'ε = 1e-06: 4, +4.500/-3.960, 5.33, 2.0e-10 |' in md
