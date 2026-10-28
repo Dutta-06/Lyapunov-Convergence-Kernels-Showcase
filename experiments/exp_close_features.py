@@ -624,6 +624,7 @@ def report(A=None, B=None, C=None, E_=None):
                f'entrants adjacent | false alarms: c̄ = {CBAR:g} threshold, calibrated | power: oracle, calibrated, Neyman–Pearson |',
                '|---|---|---|---|---|---|---|---|']
         Le, Ke, c0e = setup()
+        summ = []                                                      # per cell: the law over the draws, the false alarms, the powers
         for D, s_ in CELLS_E:
             es = sorted([e for e in E_ if e['D'] == D and e['s'] == s_], key=lambda e: e['cbar'])
             ref = next((e for e in es if abs(e['cbar'] - CBAR) < 1e-12), None)
@@ -632,6 +633,8 @@ def report(A=None, B=None, C=None, E_=None):
                 d0 = np.array([q['dt'] for q in e['rows0']]); d1 = np.array([q['dt'] for q in e['rows1']])
                 p0 = np.array([q['p'] for q in e['rows0']]); p1 = np.array([q['p'] for q in e['rows1']])
                 q0 = np.quantile(d0, ALPHA_C)
+                summ.append(dict(cbar=e['cbar'], law=e['q_law'] / q0, fa_fix=np.mean(d0 < qref), fa_cal=np.mean(p0 < ALPHA_C),
+                                 pw_or=np.mean(d1 < q0), pw_cal=np.mean(p1 < ALPHA_C), np=e['np']))
                 cg = np.linspace(-1, 1, len(e['ratio']))
                 nb = np.argsort(np.abs(cg - e['c1']))[:2]
                 adj = np.mean([abs(q['j'][1] - q['j'][0]) <= 1 for q in e['rows0'] if len(q['j']) > 1])
@@ -640,6 +643,19 @@ def report(A=None, B=None, C=None, E_=None):
                 L_.append(f"| {D:g}, {s_:g} | {e['cbar']:g} | {pd[0] * D ** 2:.3f} ({pd[1]}) | {q0 * s_:.3f}, {e['q_law'] * s_:.3f} | "
                           + ', '.join(f"{e['ratio'][k]:.3f}" for k in sorted(nb)) + f" | {adj:.2f} | {np.mean(d0 < qref):.3f}, "
                           f"{np.mean(p0 < ALPHA_C):.3f} | {np.mean(d1 < q0):.3f}, {np.mean(p1 < ALPHA_C):.3f}, {e['np']:.3f} |")
+        if summ:
+            law = np.array([q['law'] for q in summ])
+            near = [q for q in summ if q['cbar'] > CBAR + 1e-12]
+            far_ = [q for q in summ if q['cbar'] <= CBAR + 1e-12]
+            dp = np.array([q['pw_cal'] - q['pw_or'] for q in summ])
+            L_ += ['', f"Over the {len(summ)} cells: the law's H0 quantile over the draws' {law.min():.3f}–{law.max():.3f} (median "
+                       f"{np.median(law):.3f}); the false alarms of the threshold fixed at c̄ = {CBAR:g} "
+                       f"{min(q['fa_fix'] for q in far_):.3f}–{max(q['fa_fix'] for q in far_):.3f} at c̄ ≤ {CBAR:g} and "
+                       f"{min(q['fa_fix'] for q in near):.3f}–{max(q['fa_fix'] for q in near):.3f} beyond, of the calibrated test "
+                       f"{min(q['fa_cal'] for q in summ):.3f}–{max(q['fa_cal'] for q in summ):.3f} (nominal {ALPHA_C:g}); the calibrated "
+                       f"test's power minus the oracle's {dp.min():+.3f} … {dp.max():+.3f}, within 0.05 in {int(np.sum(np.abs(dp) <= 0.05))} "
+                       f"of {len(summ)}; the Neyman–Pearson bound minus the larger of the two powers "
+                       f"{min(q['np'] - max(q['pw_or'], q['pw_cal']) for q in summ):.3f}–{max(q['np'] - max(q['pw_or'], q['pw_cal']) for q in summ):.3f}."]
         L_.append('')
     L_.append('Numbers are produced by `experiments/exp_close_features.py`; nothing is edited by hand.')
     return '\n'.join(L_) + '\n'

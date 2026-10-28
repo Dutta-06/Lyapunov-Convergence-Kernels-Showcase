@@ -249,3 +249,23 @@ def test_the_report_on_synthetic_results():
                 f"200 | 40 |") in md
     assert "Under H0 the second entrant is the first's neighbour in 100.0% of the 8000 draws, in 100.0% of the earliest 5%" in md
     assert 'The largest coefficient of a placed block: Δ = 0.3, s = 0.001, w = (0.8, 0.6) (their sum 1.4)' in md
+
+
+def test_the_e_report_on_synthetic_draws():
+    """E's rows and summary (round 55): the draws' H0 quantile against the law's, the threshold fixed at c̄ = CBAR applied beyond its
+    offset, the calibrated test's size and the powers, on hand-made draws (H0 delays uniform on [a, 2a], the bootstrap p-values i/100)."""
+    rng = np.random.default_rng(3)
+    D, s = CF.CELLS_E[0]
+    E_ = []
+    for cb, a in ((CF.CBAR, 1.0), (0.049, 0.1)):
+        d0 = a * (1 + rng.random(100))
+        d1 = a * (0.5 + rng.random(100))
+        E_.append(dict(D=D, s=s, cbar=cb, rows0=[dict(dt=float(x), p=i / 100, j=[5, 6]) for i, x in enumerate(d0)],
+                       rows1=[dict(dt=float(x), p=0.0, j=[5, 7]) for x in d1], q_law=1.05 * float(np.quantile(d0, CF.ALPHA_C)),
+                       ratio=np.full(21, 0.1), c1=cb, np=0.9))
+    md = CF.report(E_=E_)
+    assert md.count(f'| {D:g}, {s:g} | ') == 2 and '| 0.050, 0.050 |' in md and '| 1.000, 0.050 |' in md
+    assert ("Over the 2 cells: the law's H0 quantile over the draws' 1.050–1.050 (median 1.050); the false alarms of the threshold fixed at "
+            f"c̄ = {CF.CBAR:g} 0.050–0.050 at c̄ ≤ {CF.CBAR:g} and 1.000–1.000 beyond, of the calibrated test 0.050–0.050 (nominal 0.05)") in md
+    pw = [np.mean(np.array([q['dt'] for q in e['rows1']]) < np.quantile([q['dt'] for q in e['rows0']], CF.ALPHA_C)) for e in E_]
+    assert f"power minus the oracle's {1 - max(pw):+.3f} … {1 - min(pw):+.3f}, within 0.05 in 0 of 2" in md

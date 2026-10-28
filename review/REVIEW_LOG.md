@@ -2072,3 +2072,45 @@ mirrored geometry reverses it — a held tail that grows instead of leaving. The
 collapses the pair below double precision before the instability chooses the side, so a side computed near that floor is a draw of the
 integration's error. Record the quantity that decides (the side, the pair's closest approach), compare tolerances where that quantity
 is resolved, and solve the ε-free problem, which reproduces the loop's departures in seconds, before scanning masses.
+
+
+## Round 55 (adversarial review of Proposition D‴.52, close features, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bb: the first draft of Proposition D‴.52 with its code and results at fa25a4f
+(`review/REVIEW_round55_D3bb.md`). The referee:
+- reran cells of A, B, C and D and compared them with the raw;
+- rebuilt (i)'s prediction from the exact one-bump residual and to the next order (T₃);
+- re-derived (ii)'s determinant and spectra, and scaled the amplitude mobilities;
+- computed the projected noise per kernel and identified which kernel enters second under H0 in all 8000 draws;
+- reran C's (Δ, s) = (0.025, 0.01) cell at five centroids within a grid cell;
+- computed the Neyman–Pearson bound per cell and the Cramér–Rao bound per placement cell;
+- bootstrapped Δ₅₀ and its slope;
+- ran 41 single-replacement mutants and checked the literature.
+
+**Verdicts (D3bb).** The deterministic core holds and is stronger than the draft shows. The path is the exact-residual law, the third
+moment explains the opposite-sign pair's slow convergence, the counting statistic's power sits at the Neyman–Pearson bound, and the
+placement errors are at the Cramér–Rao bound. But (iii) was false as written. The noise reaches the duals through the projection off
+the first fit's tangent span, not as s²⟨φ_j²⟩/N. The H0 delay is set over the whole dictionary, mostly by far kernels. And the test's
+threshold was the H0 quantile at the true offset — an oracle null whose quantile swings 13× within one grid cell. Elsewhere: (i)'s
+error term missed the (Δ/σ)² part, (i) had no no-tie hypothesis, r_sep's "(1 + O(Δ))" fails below Δ ≈ 0.003, the saturation in D was
+mis-described, several numbers were misquoted, the knot-test literature was missing, and 24 of 41 mutants survived.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bb-1 | major | The test calibrated at the true offset; the null depends on the grid offset | Part E (new): five centroids across a grid cell × three cells near Δ₅₀, 1000 H0 and 400 H1 draws each; the H0 quantile against the law's at the truth; a test calibrated per draw by bootstrapping the law at the draw's own first fit (size and power at every offset), the oracle-calibrated test, the fixed threshold of the old offset, the Neyman–Pearson bound; C's caption names its oracle-calibrated simple null. Outcome: the H0 quantile × s 7.4–8.2 at c̄ ≤ 0.032 and 0.46–0.81 at 0.049, the law 0.891–1.080 of the draws'; the fixed threshold's false alarms 0.214–0.454 beyond its offset, the calibrated test's 0.019–0.062 in all 15 cells, its power within 0.05 of the oracle's in 12 of 15 |
+| D3bb-2 | major | (iii)'s noise law and H0 mechanism false | `knot_of`/`knot_law`: the second knot to first order in the noise — the first entry by the duals, the rates ⟨Rξ, φ_j⟩ to the walls over the whole dictionary (the path's knot to 10⁻⁸ at s = 10⁻³, error ∝ s); (iii) rewritten with the projected rates, the law, its offset dependence and the matched-filter reason for the near-Neyman–Pearson power; C prints the H0 second entrants next to the first (16.6% overall, 70.2% of each cell's earliest 5%) |
+| D3bb-3 | major | Knot tests prior art; Liu–Zhang misattributed; references missing | Status: Azaïs–De Castro–Mourareau, the covariance and spacing tests, Liu–Zhang (Liu–He–Ammari for positive sources), Smith 2005, Demanet–Nguyen, Li–Liao, the confluent-Vandermonde references, sliding Frank–Wolfe and ADCG; "New" limited to the delay law with its offset dependence, the first-order null law and its calibration, the near-Neyman–Pearson power, the mobility-weighted rates |
+| D3bb-4 | minor | (i)'s error term | (1 + O(ϑ) + O((Δ/σ)²(1 + \|A₁A₂\|/A²))); `predicted_delay(order=3)` with the T₃ term — A's new column: (0.8, −0.4) 1.053, 1.012, 1.003 |
+| D3bb-5 | minor | No no-tie hypothesis; the constant's offset dependence | (i) assumes a unique first entrant and a margin bounded away from a tie; E prints the noiseless Δτ₂Δ² at each offset |
+| D3bb-6 | minor | r_sep's "(1 + O(Δ))" wrong | `sep_regimes`: the separation's rate from the exact −D·JᵀJ over the frozen and the relaxed formulas at Δ = 0.025 … 0.0005; (ii) states both regimes |
+| D3bb-7 | minor | D's saturation mis-described; the Cramér–Rao constants unstated | D's table: the errors over their Cramér–Rao bounds, the blocks with both kernels near their features, the adjacent second entrants; the constants 0.0070, 0.0068, the split lost at s ≈ 14.8Δ³; the outlier's coefficients printed |
+| D3bb-8 | minor | Misquoted numbers | 1.4–3.2%, 1.84–1.93, 2.3–4.7%, 0.006–0.012; the outlier w = (−698.6, 700); A's ratio path/prediction; Δ = 0.2's different kernels |
+| D3bb-9 | minor | 24 of 41 mutants survive | tests: the opposite-sign entrant at the other wall with the T₃ term, the split's centre components, `detection` on a synthetic table, the knot law against the path, `one_fit`'s stationarity, the delay runs (bounded, noisy, distinct hypotheses, Δτ₂ = τ₂ − τ₁), placed blocks sorted and relaxed, the report's cells, the separation's two regimes |
+| D3bb-10 | minor | No statistical precision | C: bootstrap 95% intervals for Δ₅₀ and its slope (2000 resamples); E: 1000 H0 draws per cell |
+| D3bb-11 | cosmetic | Notation; ℓ; classical facts; eigenvector components | the proof's θ = w₂/W, W, δ defined; ℓ = Nh (the constants to 10⁻⁴); the orders called classical; the end at the exact fit marked numerical; B prints the split eigenvector's centre components (Δ/(2w_k) to 0.14%); the `__main__` block removed |
+
+**Lesson.** A statistic's null must be calibrated over the nuisance parameters the experiment held fixed — here the feature's offset
+from the dictionary's grid. The cure was the law itself: the second knot to first order in the noise is a minimum over the dictionary of
+margins over projected Gaussian rates, which reproduces the path's knot to 10⁻⁸ and gives a per-draw calibration by bootstrapping it at
+the data's own first fit. The same exercise showed the statistic's strength: its power at the true offset sits at the Neyman–Pearson
+bound, because the runner-up's projected kernel is nearly the matched filter of the pair's deviation from one bump.
