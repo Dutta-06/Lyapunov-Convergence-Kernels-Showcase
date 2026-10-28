@@ -2811,3 +2811,38 @@ two independent 20000-sample laws that share their whole lower tail in distribut
 difference produced the "gain" in 5 of 6 cells. Drawing both laws from the same samples is a one-seed change that makes the part exactly
 zero, as the inequality bounding it (the full knot never later than the pair's own) requires. And a test written to kill a mutant must
 execute the mutated function: checking a report on hand-made rows cannot see a broken score, width statistic or margin upstream.
+
+## Round 68 (adversarial review of Proposition D‴.59 as revised after round 61, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bo: Proposition D‴.59 as revised after round 61, with its code and results at
+2391685 (`review/REVIEW_round68_D3bo.md`). The referee:
+- regenerated the md, reran G, H, H2, H3 and HL jobs and A–D;
+- ran the loop on H's asymmetric targets to τ = 10⁵, the path without its polish, and the landing on a fine time grid down to ε = 10⁻¹²;
+- predicted τ₃ from the path's duals, measured E against Δc at frozen v and ran target 20 to τ = 10⁷ and target 9 to 5·10⁹;
+- traced H2's ends (stop reasons, a re-entering kernel of negative width, invisible spikes, capped polishes, a converged re-polish);
+- ran 73 single-point mutants.
+
+**Verdicts (D3bo).** (i), (ii)(a), the dipole law and v ∝ ε^{−1/6} hold. Three majors: "the cancellation is the path's", "which the loop
+does not keep" were contradicted — on asymmetric pairs the loop and the polish-free path keep it, and on the symmetric pair it is the
+polish's (accepted at its evaluation budget); the pair does not land at τ₃ — an intermediate phase (three formed kernels, the pair on no
+feature) lasts to the next formation τ₄, the landed v differs from the law's by an O(1) factor κ, the grid's τ₃ was late, and "landed" is a
+threshold p ≲ 0.28; H2's "exploding times while the residual creeps down" were artefacts (the dictionary exhausted, a negative-width
+re-entry at τ = 2.3·10⁶⁷, invisible spikes, capped polishes). Minors: the collapse law (E ∝ Δc⁸: τ^{−1/6}, τ^{−2/3}; "frozen" the same law
+later); 13 non-equivalent surviving mutants and untested job code; (i)'s "from any start"; literature; C's table; cosmetic.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bo-1 | major | The cancellation's attribution | HL: the asymmetric targets at ε = 10⁻⁶ and 10⁻⁸ to τ = 10⁵ (11–12 negative kernels and \|w\| 2.19–2.69, still growing, at 10⁻⁸; 4–6 at 10⁻⁶; c₂ +0.01 exact there); HP: the path without its polish (the equal pair \|w\| 0.929 against 3.24, the asymmetric ones keep the cancellation); `stop_anatomy` flags the polishes stopped at their budget; (ii)(b), Status, New: the path's and the loop's on asymmetric pairs, the polish's on the symmetric one |
+| D3bo-2 | major | The landing | G on a fine grid (τ = 10 … 140 by 0.1) at ε = 10⁻⁵ … 10⁻¹² (`fine_phases`): τ₃, τ₄, the dipole phase's slopes, v(τ₃⁻) over the law, the intermediate phase, the landing's τ, κ and p; GT: τ₃ from the path's duals (`t3_from_duals`: the duals advanced to τ_d — the path's history stops at the previous entry — and moved by the block's residual at s = 10¹¹), within 0.073 of the loop's at 10⁻¹²; (ii)(c) and the proof: four stages, v_land = κv(τ₃⁻) (κ 0.752–1.116, ε-free to 0.4%), landed ⇔ p ≲ 0.28 from (a)'s moments (34067 of 36535 states agree) |
+| D3bo-3 | major | H2's ends artefacts | H2 prints why each path ended (active kernels of 21, polishes stopped at their budget, negative widths, kernels invisible on the samples); (ii)(b), Status and Numerics: the ends the dictionary's and the polish's, "exploding times" dropped |
+| D3bo-4 | minor | The collapse law | (ii)(c) and the proof: Δc⁻⁶ = Δc_L⁻⁶ + 48aGm(W²/(w_a² + w_b²))Λ(ε)(τ − τ_L) from E ≈ aΔc⁸ ((a)'s O(Δc⁴)) and the metric restricted to a pinned centre of mass; GL: target 20 at 10⁻¹⁰ to τ = 10⁷, the exponents −0.1669, −0.3320, −0.6667; "frozen" dropped (landed at a small p, the same law later) |
+| D3bo-5 | minor | Mutants; untested job code | tests: `pair_fits` and `pair_index` at their boundaries; `h_stats`' 1% threshold; `stop_anatomy`; `fine_phases` with an intermediate phase; `t3_from_duals` against GT and the loop; `hl_job` against `loop_nd`; `h_job` with a tolerance (the last entry's τ, the last blocks) and `h3_targets`; the oracle against a direct fit |
+| D3bo-6 | minor | (i)'s start | (i), the proof and the Status: from a start of energy below ½‖f*‖² (a large coefficient drives the width down: ∂_σE = ½π^{1/2}w(w − A)) |
+| D3bo-7 | minor | Literature | Status: Xu–Du (COLT 2023) and Dwivedi et al. (Ann. Statist. 2020) [memory]; the unverified NeurIPS 2025 entry dropped; New narrowed to the stages, τ₃ from the path and the derived collapse law |
+| D3bo-8 | minor | C's table | C's table counts a budget-stopped path at its stalled block (`moving_state`): formed kernels 2–4, the largest residual 0.12 and 0.14 |
+| D3bo-9 | cosmetic | Wording | the null cluster no longer "idle"; "the five cells with a phase" replaced by the fine grid's six |
+
+**Lesson.** A conclusion of the form "X is the path's", "the pair lands" or "the cell is frozen" needs the control that could make it
+false: the loop on the asymmetric pairs and the path without its polish, the landing timed on a grid finer than the event, the collapse
+followed past the window that made it look frozen. Each control here overturned the conclusion it tested and strengthened the result
+around it: the dipole phase obeys the block's law, τ₃ follows from the path alone, and the collapse has a law.

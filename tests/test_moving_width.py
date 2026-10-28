@@ -8,6 +8,7 @@ from src.core import moving_width as MW
 from src.core import rich_transit_nd as RN
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
+import exp_moving_width as MWE  # noqa: E402
 
 
 def test_bumps_cw_derivatives_and_grams():
@@ -324,3 +325,143 @@ def test_the_oracle_fit_starts_at_the_truth():
     xi = 1e-3 * np.random.default_rng(1).standard_normal(f.size)
     e = M.oracle_error(f, xi, cs, ss, As)
     assert 1e-5 < e < 1e-3
+
+
+def test_pair_fits_and_pair_index_at_their_boundaries():
+    """Referee round 68 (F2, F4, F5, I1): a pair fits a feature only with W of the feature's sign and size (not −A, not 0) and its centre
+    of mass — not its midpoint — at the feature; `pair_index` pairs kernels only when both centre and width agree."""
+    th = np.array([[0.0, 0.06], [0.02, 0.06]])
+    w = np.array([1.5, -0.5])                                          # W = 1, centre of mass −0.01, midpoint +0.01
+    assert MWE.pair_fits(th, w, 0, 1, [-0.01], [0.06], [1.0])
+    assert not MWE.pair_fits(th, w, 0, 1, [0.01], [0.06], [1.0])      # the midpoint is not the centre of mass
+    assert not MWE.pair_fits(th, -w, 0, 1, [-0.01], [0.06], [1.0])    # W = −1: the wrong sign
+    assert not MWE.pair_fits(th, np.array([0.5, -0.5]), 0, 1, [0.0], [0.06], [0.0])   # W = 0 fits nothing
+    assert MWE.pair_index(np.array([[0.1, 0.06], [0.1, 0.0601]]), [1.0, 1.0]) == [(0, 1)]
+    assert MWE.pair_index(np.array([[0.1, 0.3], [0.1, 0.06]]), [1.0, 1.0]) == []      # one centre, two widths
+
+
+def test_h_stats_counts_negatives_below_one_percent_of_the_smallest_amplitude():
+    """Referee round 68 (H1, H7): a block's only negative at −0.5% of the smallest amplitude is not counted, one at −2% is; the
+    threshold is the smallest amplitude's, not the largest's."""
+    m = dict(w=[1.0, -0.005], theta=[[0.0, 0.06], [0.1, 0.06]])
+    r = MWE.h_stats([np.array([1.0, -0.005])], m, (1.0, 0.6))
+    assert r['neg_path'] == 0 and r['neg_end'] == 0 and r['wmin_path'] == -0.005
+    r = MWE.h_stats([np.array([1.0, -0.008])], dict(m, w=[1.0, -0.008]), (1.0, 0.6))
+    assert r['neg_path'] == 1 and r['neg_end'] == 1                    # −0.008 is beyond 1% of 0.6, not of 1.0
+
+
+def test_stop_anatomy():
+    """Referee round 68: `stop_anatomy` counts the active kernels (all: the dictionary exhausted), the accepted polishes and those stopped
+    by their budget, the kernels of negative width and those invisible on the samples."""
+    d = MWE.C0.size
+    act = np.ones(d, bool)
+    c = np.c_[np.linspace(-1, 1, d), np.full(d, 0.06)]
+    c[3] = [0.775, -3e-4]                                               # negative width, invisible on the samples
+    log = [[dict(status=0, accepted=True), dict(status=1, accepted=False)], [dict(status=2, accepted=True)]]
+    r = MWE.stop_anatomy(dict(act=act, c=c, polish_log=log))
+    assert r == dict(n_act=d, exhausted=True, pol_acc=2, pol_capped=1, neg_sigma=1, invisible=1)
+    act[0] = False
+    assert MWE.stop_anatomy(dict(act=act, c=c, polish_log=[]))['exhausted'] is False
+
+
+def test_fine_phases_with_an_intermediate_phase():
+    """Referee round 68: `fine_phases` finds τ₃ and τ₄ as formations, v before τ₃, the intermediate phase between them, the first
+    landing after τ₃ with its p, and counts where p ≤ P_LAND agrees with the landing."""
+    cs, ss, As = [0.0, 0.5], [0.06, 0.06], [1.0, 0.8]
+    dip = lambda v, c: (np.array([[c - 0.01, 0.06], [c + 0.01, 0.06]]), np.array([1.0 + v, -v]))
+    sts = [(10.0, *dip(0.5, 0.2)), (12.0, *dip(0.6, 0.2))]               # the dipole phase (n0 = 2), off the features
+    th, w = dip(0.7, 0.2)
+    sts.append((14.0, np.r_[th, [[0.5, 0.06]]], np.r_[w, 0.8]))          # τ₃: a third kernel forms
+    sts.append((20.0, np.r_[th, [[0.5, 0.06]]], np.r_[w, 0.8]))          # the intermediate phase
+    th2, w2 = np.array([[-0.0001, 0.06], [0.0003, 0.06]]), np.array([1.05, -0.05])
+    sts.append((26.0, np.r_[th2, [[0.5, 0.06], [0.9, 0.06]]], np.r_[w2, 0.8, 0.01]))   # τ₄, landed
+    r = MWE.fine_phases(sts, 2, 5.0, cs, ss, As)
+    assert (r['t3'], r['t4'], r['v3']) == (14.0, 26.0, 1.1)                # v = |w_a − w_b|/2 at τ = 12
+    assert r['inter']['n'] == 3 and r['inter']['off'] > 1 and r['t_land'] == 26.0 and abs(r['v_land'] - 0.55) < 1e-12
+    p = 1.1 * 0.0004 / (1.0 * 0.06)
+    assert abs(r['p_land'] - p) < 1e-12 and r['agree'][1] >= 1
+
+
+RAW_MW = os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'moving_width_raw.npz')
+
+
+def test_t3_from_duals_reproduces_gt_and_the_loop():
+    """Referee round 68: τ₃ from the sliding path alone — the duals advanced to the dipole block's entry τ_d, then moved by the block's
+    residual at the end of its flow — reproduces GT's raw for target 9 and lies within the fine grid's step (0.1) of the loop's τ₃ at the
+    smallest mass, for every G target (raw)."""
+    raw = MWE.E.load(RAW_MW)
+    gt = {x['q']: x['t3_pred'] for x in raw['GT']}
+    g = next(r for r in raw['G'] if r['q'] == 9)
+    t = MWE.gt_job((9, np.array(g['cs']), np.array(g['ss']), np.array(g['As']), int(g['entries']), g['flow'][-1]['theta'],
+                    g['flow'][-1]['w']))['t3_pred']
+    assert np.isclose(t, gt[9], rtol=1e-9, atol=0)
+    n = 0
+    for r in raw['G']:
+        if r['q'] in gt and r.get('fine'):
+            ph = r['fine'][min(r['fine'])]
+            assert abs(gt[r['q']] - ph['t3']) < 0.1
+            n += 1
+    assert n == 6
+
+
+def test_hl_job_on_a_cheap_case(monkeypatch):
+    """Referee round 68 (R8): `hl_job` on H's separated target at one mass and time — the formed set is the loop's kernels above 1% of the
+    smallest amplitude, with its count of negatives, smallest width, largest |w| over all kernels and the residual."""
+    monkeypatch.setattr(MWE, 'EPS_HL', (1e-6,))
+    monkeypatch.setattr(MWE, 'TAUS_HL', (60.0,))
+    name, cs, ss, As = next(t for t in MWE.H_TARGETS if t[0] == 'σ* 0.06, A₂ 0.6')
+    r = MWE.hl_job((name, cs, ss, As))
+    L, K = MWE.law(), MWE.MW.BumpsCW(MWE.XS, MWE.S0)
+    f = MWE.feature_sum(cs, ss, As)
+    _, W, C, Lam, _ = MWE.RN.loop_nd(L, K, f, MWE.theta0(), 1e-6, np.r_[0.0, 60.0], rtol=1e-9, atol=1e-12)
+    big = np.flatnonzero(np.abs(W[1]) > 1e-2 * 0.6)
+    (q,) = r['loops']
+    assert np.allclose(q['w'], W[1][big], rtol=1e-12, atol=0) and np.allclose(q['theta'], C[1][big], rtol=1e-12, atol=0)
+    assert q['neg'] == int(np.sum(W[1][big] < 0)) and q['wmax'] == float(np.abs(W[1]).max())
+    assert q['smin'] == float(np.abs(C[1][big][:, 1]).min())
+    assert np.isclose(q['rms'], np.sqrt(np.mean((f - K.synth(C[1], W[1])) ** 2)), rtol=1e-12, atol=0)
+
+
+def test_h_job_with_a_tolerance_and_h3_targets():
+    """Referee round 68 (R7, R9, R10): `h_job` with a tolerance records the last entry's τ (the path's last event, not its first), the last
+    blocks' residuals (the history's last six) and the clusters; H3's targets are equal amplitudes 1 at ±c for every separation."""
+    name, cs, ss, As = next(t for t in MWE.H_TARGETS if t[0] == 'σ* 0.06, A₂ 0.6')
+    r = MWE.h_job((name, cs, ss, As, 1e-13))
+    Rm = MWE.RN.sliding_iss_nd(MWE.law(), MWE.MW.BumpsCW(MWE.XS, MWE.S0), MWE.feature_sum(cs, ss, As), MWE.theta0(),
+                               np.ones(MWE.C0.size), max_events=40, exit_kkt=True, max_rhs=MWE.MAX_RHS_MOVING, tol=1e-13)
+    ent = [e for e in Rm['events'] if e[1] is not None]
+    assert len(ent) >= 2 and r['last_tau'] == float(Rm['events'][-1][0]) and r['last_tau'] > float(Rm['events'][0][0])
+    assert r['rms_blocks'] == [float(h[3]) for h in Rm['hist'][-6:]]
+    assert r['outcome'] == 'exact'
+    for nm, c, s_, A in MWE.h3_targets():
+        assert tuple(A) == (1.0, 1.0) and tuple(s_) == (0.06, 0.06) and c[0] == -c[1] and nm.endswith(f"±{c[1]:g}")
+
+
+def test_oracle_error_against_a_direct_fit():
+    """Referee round 68 (E2, E3): the oracle's error is the rms against f of the K-kernel least-squares fit of the data f + ξ (not of
+    f + ½ξ, and not measured against the data), started at the truth — checked against a direct fit."""
+    from scipy.optimize import least_squares
+    cs, ss, As = (-0.3, 0.25), (0.05, 0.08), (1.0, -0.7)
+    f = MWE.feature_sum(cs, ss, As)
+    xi = 0.01 * np.random.default_rng(5).standard_normal(MWE.XS.size)
+    K = MWE.MW.BumpsCW(MWE.XS, MWE.S0)
+    sol = least_squares(lambda z: f + xi - K.synth(z[2:].reshape(2, 2), z[:2]), np.r_[As, np.c_[cs, ss].ravel()], method='lm',
+                        xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=20000)
+    e = np.sqrt(np.mean((K.synth(sol.x[2:].reshape(2, 2), sol.x[:2]) - f) ** 2))
+    assert np.isclose(MWE.oracle_error(f, xi, cs, ss, As), e, rtol=1e-10, atol=0)
+    assert abs(e - np.sqrt(np.mean(xi ** 2))) > 1e-3
+
+
+def test_c_table_counts_a_budget_stop_at_its_stalled_block():
+    """Referee round 68 (D3bo-8): C's table counts a budget-stopped path at its stalled block — the residual G's `stalled_summary` records
+    for the same target, the formed kernels the stalled block's (raw)."""
+    raw = MWE.E.load(RAW_MW)
+    g = {(r['dmin'], r['q']): r for r in raw['G']}
+    n = 0
+    for r in raw['C']:
+        if r['moving'].get('stalled') is not None:
+            k, rms = MWE.moving_state(r)
+            st = g[(r['dmin'], r['q'])]['stalled']
+            assert np.isclose(rms, st['rms'], rtol=1e-9, atol=0) and k == int(np.sum(np.abs(r['moving']['stalled']['w']) > 1e-2 * min(abs(a) for a in r['As'])))
+            n += 1
+    assert n == 6
