@@ -241,6 +241,7 @@ def ascent_target(K, r, c, s, step=None, max_steps=4000):
 
 
 STIFF_BUDGET = 200000                       # right-hand-side evaluations of one LSODA chunk before `relax_chunk` redoes it by Radau
+RELAX_SPLITS = 6                            # a chunk whose solve fails even by Radau is halved, to this depth
 
 
 class _Stalled(Exception):
@@ -251,12 +252,15 @@ class _OutOfBudget(Exception):
     pass
 
 
-def relax_chunk(rhs, z, chunk, jac=None, rtol=1e-10, atol=1e-13, budget=None):
+def relax_chunk(rhs, z, chunk, jac=None, rtol=1e-10, atol=1e-13, budget=None, _depth=0):
     """One chunk of a block's fast flow from z over (0, chunk): LSODA, unless it spends more than `budget` (STIFF_BUDGET) right-hand-side
     evaluations — its stiffness detection can fail on a block whose coefficients span many decades (fast modes at −44 and slow ones at
     10⁻¹², integrated by the non-stiff method: 6.7·10⁶ evaluations against Radau's 100) —, then the chunk is redone from z by Radau (the
-    exact Jacobian when given). Below the budget the LSODA call is the one `sliding_iss` always made, so paths that never stall are
-    unchanged. Returns (the end state, whether the chunk was redone)."""
+    exact Jacobian when given). A solve that fails (LSODA's "unexpected istate" from relaxed states on chunks beyond ~10¹¹, its last state
+    the start — returned before as if the chunk had run: referee round 48) is also redone by Radau, and if Radau fails too, as two half
+    chunks, to the depth RELAX_SPLITS. Below the budget a successful LSODA call is the one `sliding_iss` always made, so paths that never
+    stall or fail are unchanged. Returns (the end state, how: 0 LSODA, 1 redone by Radau after the stall, 2 redone after a failed solve,
+    3 failed even halved — the state the last successful piece reached)."""
     budget = STIFF_BUDGET if budget is None else budget
     kw = {} if jac is None else dict(jac=jac)
     n = [0]
@@ -267,14 +271,34 @@ def relax_chunk(rhs, z, chunk, jac=None, rtol=1e-10, atol=1e-13, budget=None):
             raise _Stalled
         return rhs(s, y)
     try:
-        return solve_ivp(counted, (0, chunk), z, method='LSODA', rtol=rtol, atol=atol, **kw).y[:, -1], False
+        sol = solve_ivp(counted, (0, chunk), z, method='LSODA', rtol=rtol, atol=atol, **kw)
+        if sol.success:
+            return sol.y[:, -1], 0
+        how = 2
     except _Stalled:
-        return solve_ivp(rhs, (0, chunk), z, method='Radau', rtol=rtol, atol=atol, **kw).y[:, -1], True
+        how = 1
+    sol = solve_ivp(rhs, (0, chunk), z, method='Radau', rtol=rtol, atol=atol, **kw)
+    if sol.success:
+        return sol.y[:, -1], how
+    if _depth >= RELAX_SPLITS:
+        return z, 3
+    z1, h1 = relax_chunk(rhs, z, chunk / 2, jac, rtol, atol, budget, _depth + 1)
+    if h1 == 3:
+        return z1, 3
+    z2, h2 = relax_chunk(rhs, z1, chunk / 2, jac, rtol, atol, budget, _depth + 1)
+    return z2, 3 if h2 == 3 else 2
+
+
+def leaves(si, g, wi, big, own=None):
+    """The block's kernels that leave: a small coefficient (not `big`) and a correlation pointing into its box (s_i⟨rφ_i⟩ < 0) — and, with
+    own (⟨φ_iφ_i⟩, the exit_kkt rule), still inward with the kernel's own contribution removed, s_i(⟨rφ_i⟩ + w_i⟨φ_iφ_i⟩) < 0."""
+    out = ~big & (si * g < 0)
+    return out if own is None else out & (si * (g + wi * own) < 0)
 
 
 def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
                 max_doublings=14, polish=False, max_entries=None, polish_step=1.0, polish_wfrac=1e-2, box=None, w_scale=None,
-                max_rhs=None):
+                max_rhs=None, exit_kkt=False):
     """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
     left the block), their u_j growing at ⟨rφ(c_j)⟩ (r the active block's residual); the entrants — every kernel whose |u_j| reaches ρ_j
     within the relative tie_tol of the first, so that exact ties enter together — join the active block with the coefficient `seed` (the
@@ -299,12 +323,16 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     and the polish's thresholds as multiples of w_scale (the data's scale) instead of max|w|. max_rhs: a budget of right-hand-side
     evaluations for the whole path (deterministic, unlike a wall-clock limit); spent, the path stops before the block that spent it is
     relaxed ('out_of_budget' True). 'ev_iter' gives each event's iteration i: hist[i] is the state before the iteration's entries and
-    hist[i + 1] the block relaxed after them (ties enter in one iteration; an exit and a re-entry at the same τ in two)."""
+    hist[i + 1] the block relaxed after them (ties enter in one iteration; an exit and a re-entry at the same τ in two). exit_kkt: a
+    kernel leaves only if its correlation stays inward with its own contribution w_i⟨φ_iφ_i⟩ removed — otherwise the removal turns it
+    outward and the kernel re-enters at the same τ, a cycle of entries and exits (referee round 48); False keeps the paths of the results
+    committed before. The chunks redone after a failed solve and those that failed even halved (`relax_chunk`) are counted as
+    'solver_redone' and 'solver_failed' (a failed chunk ends its relaxation unrelaxed)."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
     act = np.zeros(d, bool)
-    tau, ev, hist, relaxed, n_rej, n_stiff = 0.0, [], [], [], 0, 0
+    tau, ev, hist, relaxed, n_rej, n_stiff, n_redo, n_fail = 0.0, [], [], [], 0, 0, 0, 0
     nx = K.xs.size
     scale = float(np.abs(K.phi(c).T @ K.filt(fstar)).max()) / nx
     rhs = critical_rhs(L, K, fstar)
@@ -351,9 +379,13 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
         try:
             for _k in range(max_doublings + 1):
-                z, stalled = relax_chunk(rhs, z, chunk)
-                n_stiff += stalled
+                z, how = relax_chunk(rhs, z, chunk)
+                n_stiff += how == 1
+                n_redo += how == 2
                 elapsed += chunk
+                if how == 3:
+                    n_fail += 1
+                    break
                 if box is not None and np.any((z[n:] < box[0]) | (z[n:] > box[1])):
                     runaway = True
                     break
@@ -388,12 +420,17 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         al[idx] = z[:n]; c[idx] = z[n:]
         if runaway:
             break
+        own = None
+        if exit_kkt:
+            Pz = K.phi(z[n:])
+            own = np.array([Pz[:, q] @ K.filt(Pz[:, q]) for q in range(n)]) / nx
         for k, i in enumerate(idx):
-            if not big[k] and si[k] * g[k] < 0:
+            if leaves(si, g, wi, big, own)[k]:
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', float(c[i]))); ev_iter.append(it)
     return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej,
-                stiff_redone=n_stiff, ev_iter=ev_iter, runaway=runaway, out_of_budget=out_of_budget, nfev=nfev[0])
+                stiff_redone=n_stiff, ev_iter=ev_iter, runaway=runaway, out_of_budget=out_of_budget, nfev=nfev[0], solver_redone=n_redo,
+                solver_failed=n_fail)
 
 
 def wfr_inactive_rhs(L, K, fstar, rho):

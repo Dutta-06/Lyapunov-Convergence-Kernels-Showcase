@@ -208,7 +208,7 @@ def polish_block_nd(K, fstar, w, c, s):
 
 
 def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
-                   max_doublings=14, polish=True, max_entries=None, polish_step=1.0, polish_wfrac=1e-2):
+                   max_doublings=14, polish=True, max_entries=None, polish_step=1.0, polish_wfrac=1e-2, exit_kkt=False):
     """The sliding inverse scale space in ℝⁿ (`rich_transit.sliding_iss` with the centres c (d, n)): the inactive kernels stay where they
     are, their u_j growing at ⟨rφ(c_j)⟩; the entrants (every kernel whose |u_j| reaches ρ_j within tie_tol of the first: ties enter
     together) join the block with the coefficient `seed`; the block relaxes by the fast flow (polished by least squares after the first
@@ -217,13 +217,14 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
     stiff_redone — the chunks of the flow redone by Radau, `rich_transit.relax_chunk`). The polish
     is accepted only if every kernel whose coefficient is below polish_wfrac·max|w| lands within polish_step kernel widths of its start
     or of the end of its correlation's ascent (`rich_transit.ascent_target`), else tried again after each doubling (`sliding_iss`).
-    max_entries: stop as soon as that many kernels have entered, before the block relaxes."""
+    max_entries: stop as soon as that many kernels have entered, before the block relaxes. exit_kkt and the counts 'solver_redone',
+    'solver_failed': as `rich_transit.sliding_iss` (referee round 48)."""
     c0 = np.atleast_2d(np.asarray(c0, float))
     d, n = c0.shape
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
     act = np.zeros(d, bool)
-    tau, ev, hist, relaxed, n_rej, n_stiff = 0.0, [], [], [], 0, 0
+    tau, ev, hist, relaxed, n_rej, n_stiff, n_redo, n_fail = 0.0, [], [], [], 0, 0, 0, 0
     scale = float(np.abs(K.corr(c, fstar)[0]).max())
     rhs, jac = critical_rhs_nd(L, K, fstar), critical_jac_nd(L, K, fstar)
     for _ in range(max_events):
@@ -255,9 +256,13 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
         z = np.r_[al[idx], c[idx].ravel()]
         elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
         for _k in range(max_doublings + 1):
-            z, stalled = _RT.relax_chunk(rhs, z, chunk, jac=jac)
-            n_stiff += stalled
+            z, how = _RT.relax_chunk(rhs, z, chunk, jac=jac)
+            n_stiff += how == 1
+            n_redo += how == 2
             elapsed += chunk
+            if how == 3:
+                n_fail += 1
+                break
             if not polished:
                 w0 = critical_w(L, z[:k])
                 cz = z[k:].reshape(k, n)
@@ -284,12 +289,17 @@ def sliding_iss_nd(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_t
             chunk = elapsed
         relaxed.append(ok)
         al[idx] = z[:k]; c[idx] = z[k:].reshape(k, n)
+        own = None
+        if exit_kkt:
+            Pc = K.phi(ci)
+            own = (Pc ** 2).sum(0) / Pc.shape[0]
+        out = _RT.leaves(si, g, wi, big, own)
         for q, i in enumerate(idx):
-            if not big[q] and si[q] * g[q] < 0:
+            if out[q]:
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', c[i].copy()))
     return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej,
-                stiff_redone=n_stiff)
+                stiff_redone=n_stiff, solver_redone=n_redo, solver_failed=n_fail)
 
 
 def path_duals_nd(K, fstar, R):

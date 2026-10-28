@@ -263,3 +263,37 @@ def test_sliding_paths_through_a_block_that_stalls_lsoda():
             assert all(R['relaxed']) and R['stiff_redone'] >= 1 and R['hist'][-1][3] < 1e-14
     finally:
         RT.STIFF_BUDGET = budget
+
+
+def test_relax_chunk_redoes_a_failed_lsoda_solve():
+    """From a relaxed block LSODA fails on a chunk of 3·10¹¹ ("unexpected istate", its last state the start) — `relax_chunk` used to
+    return that start as if the chunk had run (referee round 48); it redoes the chunk by Radau and says so (how = 2)."""
+    import os
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'experiments')))
+    import exp_noisy_certificate as NC
+    L_, K_, c0, f, cert, R0, P = NC.noiseless(np.array([-0.52, 0.02, 0.61]), np.array([0.8, -0.35, 0.9]))
+    w, c = R0['hist'][-1][2], R0['hist'][-1][1]
+    i = np.flatnonzero(w)
+    z0 = np.r_[np.sign(w[i]) * RT._alpha_of(L_, np.abs(w[i]), RT.coef_crit), c[i]]
+    rhs = RT.critical_rhs(L_, K_, f)
+    sol = solve_ivp(rhs, (0, 3e11), z0, method='LSODA', rtol=1e-10, atol=1e-13)
+    assert not sol.success and sol.t[-1] == 0.0
+    z, how = RT.relax_chunk(rhs, z0, 3e11)
+    rad = solve_ivp(rhs, (0, 3e11), z0, method='Radau', rtol=1e-10, atol=1e-13)
+    assert how == 2 and rad.success and np.array_equal(z, rad.y[:, -1])
+    z, how = RT.relax_chunk(rhs, z0, 1e10)
+    assert how == 0
+
+
+def test_leaves_with_the_kernels_own_contribution_removed():
+    """A small coefficient with an inward correlation leaves; under exit_kkt only if the correlation stays inward once the kernel's own
+    contribution w_i⟨φ_iφ_i⟩ is removed — else the removal turns it outward and it re-enters at the same τ (referee round 48)."""
+    si = np.array([1.0, 1.0, -1.0, 1.0])
+    g = np.array([-1e-9, -1e-9, 1e-9, 1e-9])
+    wi = np.array([1e-7, 1e-12, -1e-12, 1e-12])
+    big = np.array([False, False, False, False])
+    own = np.full(4, 0.5)
+    assert RT.leaves(si, g, wi, big).tolist() == [True, True, True, False]
+    assert RT.leaves(si, g, wi, big, own).tolist() == [False, True, True, False]
+    assert not RT.leaves(si, g, wi, np.ones(4, bool), own).any()

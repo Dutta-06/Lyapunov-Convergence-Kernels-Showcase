@@ -95,10 +95,12 @@ def noiseless(cs, As):
 
 
 def noisy(L, K, c0, f, xi, nK, more=1, max_rhs=None):
-    """The path on y = f* + ξ up to its (K + more)-th entry, the centres in `box_of`, the thresholds on the scale max|y|."""
+    """The path on y = f* + ξ up to its (K + more)-th entry, the centres in `box_of`, the thresholds on the scale max|y|, the exits by
+    the rule that keeps a kernel whose removal would turn its correlation outward (`exit_kkt`: no cycles of exits and re-entries at one
+    τ, referee round 48)."""
     y = f + xi
     return RT.sliding_iss(L, K, y, c0, np.ones(c0.size), polish=True, max_events=2 * (nK + more) + 2, tol=0.0, max_entries=nK + more,
-                          box=box_of(K), w_scale=float(np.abs(y).max()), max_rhs=max_rhs)
+                          box=box_of(K), w_scale=float(np.abs(y).max()), max_rhs=max_rhs, exit_kkt=True)
 
 
 def noise(seed, q, i, k, s, nx):
@@ -461,7 +463,8 @@ def report(A=None, B=None, B2=None, E_=None):
           "The sliding path on y = f* + ξ (21 Gaussian kernels of width 0.12 on a grid of spacing 0.1, 61 samples of [−1, 1]) against its "
           f"first-order response along the noiseless path (`path_response`); targets: three features at least {DMIN} apart (D‴.55's "
           f"recipe), certificate margin m > 0.8q. The noisy paths keep their centres in the samples' window ± {BOX:g}σ (a relaxation that "
-          "carries one out stops the path: runaway) and judge exits and stationarity on the data's scale max|y|.", '']
+          "carries one out stops the path: runaway) and judge exits and stationarity on the data's scale max|y|; a kernel exits only if "
+          "its correlation stays inward with its own contribution removed.", '']
     if A is not None:
         L_ += ['## A. The response is the first order', '',
                "Per target (one noise direction ξ, unit variance per sample) and level h: the noisy path's entry times and its duals at the "
