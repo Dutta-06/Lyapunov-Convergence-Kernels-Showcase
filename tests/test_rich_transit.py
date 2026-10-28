@@ -228,3 +228,38 @@ def test_ascent_target_climbs_to_the_residuals_nearest_peak():
     assert RT.ascent_target(K, r, 0.3, -1.0)[0] > 0.3
     r2 = K.phi(np.array([-0.4]))[:, 0] + K.phi(np.array([0.5]))[:, 0]
     assert abs(RT.ascent_target(K, r2, 0.3, 1.0)[0] - 0.5) < 0.02 and abs(RT.ascent_target(K, r2, -0.2, 1.0)[0] + 0.4) < 0.02
+
+
+def test_relax_chunk_is_lsoda_below_its_budget_and_radau_above():
+    """`relax_chunk`: below the budget the LSODA call itself (bit for bit), above it the chunk redone from its start by Radau."""
+    rhs = RT.critical_rhs(L, K, FSTAR)
+    z0 = np.r_[np.array([0.3, -0.2, 1e-3]), np.array([-0.5, 0.1, 0.6])]
+    ref = solve_ivp(rhs, (0, 50.0), z0, method='LSODA', rtol=1e-10, atol=1e-13).y[:, -1]
+    z, redone = RT.relax_chunk(rhs, z0, 50.0)
+    assert not redone and np.array_equal(z, ref)
+    rad = solve_ivp(rhs, (0, 50.0), z0, method='Radau', rtol=1e-10, atol=1e-13).y[:, -1]
+    z, redone = RT.relax_chunk(rhs, z0, 50.0, budget=10)
+    assert redone and np.array_equal(z, rad)
+
+
+def test_sliding_paths_through_a_block_that_stalls_lsoda():
+    """Three features at −0.587, 0.013, 0.613 with amplitudes 10⁻³, 10⁻⁶, 1 (referee round 46's wide range): the third block's coefficients
+    span six decades and LSODA integrates it non-stiffly (6.7·10⁶ evaluations, 610 s). With the budget at 2·10⁴ the chunk is redone by
+    Radau: both paths enter the three features' kernels — the largest first — and relax to the exact fit."""
+    import os
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'experiments'))
+    import exp_mirror_transit as X
+    from src.core import rich_transit_nd as RN
+    c0 = np.linspace(-1, 1, 21)
+    f = X.bumps_target(K, np.array([-0.6, 0.0, 0.6]) + 0.013, np.array([1e-3, 1e-6, 1.0]))
+    budget = RT.STIFF_BUDGET
+    RT.STIFF_BUDGET = 20000
+    try:
+        for R in (RT.sliding_iss(L, K, f, c0, np.ones(21), polish=True, exit_tol=1e-12, max_events=12),
+                  RN.sliding_iss_nd(L, RN.BumpsND(K.xs[:, None], K.sig), f, c0[:, None], np.ones(21), polish=True, exit_tol=1e-12,
+                                    max_events=12)):
+            assert [(j, k) for t, j, k, c in R['events']] == [(16, 'enter'), (4, 'enter'), (10, 'enter')]
+            assert all(R['relaxed']) and R['stiff_redone'] >= 1 and R['hist'][-1][3] < 1e-14
+    finally:
+        RT.STIFF_BUDGET = budget

@@ -237,6 +237,34 @@ def ascent_target(K, r, c, s, step=None, max_steps=4000):
     return c
 
 
+STIFF_BUDGET = 200000                       # right-hand-side evaluations of one LSODA chunk before `relax_chunk` redoes it by Radau
+
+
+class _Stalled(Exception):
+    pass
+
+
+def relax_chunk(rhs, z, chunk, jac=None, rtol=1e-10, atol=1e-13, budget=None):
+    """One chunk of a block's fast flow from z over (0, chunk): LSODA, unless it spends more than `budget` (STIFF_BUDGET) right-hand-side
+    evaluations — its stiffness detection can fail on a block whose coefficients span many decades (fast modes at −44 and slow ones at
+    10⁻¹², integrated by the non-stiff method: 6.7·10⁶ evaluations against Radau's 100) —, then the chunk is redone from z by Radau (the
+    exact Jacobian when given). Below the budget the LSODA call is the one `sliding_iss` always made, so paths that never stall are
+    unchanged. Returns (the end state, whether the chunk was redone)."""
+    budget = STIFF_BUDGET if budget is None else budget
+    kw = {} if jac is None else dict(jac=jac)
+    n = [0]
+
+    def counted(s, y):
+        n[0] += 1
+        if n[0] > budget:
+            raise _Stalled
+        return rhs(s, y)
+    try:
+        return solve_ivp(counted, (0, chunk), z, method='LSODA', rtol=rtol, atol=atol, **kw).y[:, -1], False
+    except _Stalled:
+        return solve_ivp(rhs, (0, chunk), z, method='Radau', rtol=rtol, atol=atol, **kw).y[:, -1], True
+
+
 def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
                 max_doublings=14, polish=False, max_entries=None, polish_step=1.0, polish_wfrac=1e-2):
     """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
@@ -254,13 +282,13 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     polish_step kernel widths of where the flow would carry it — its start, or the end of its correlation's ascent (`ascent_target`):
     such a kernel's centre is undetermined by the fit, and the solve can carry it into another feature's basin (referee round 43); a kernel
     with a coefficient moves where the fit takes it. Otherwise the flow goes on and the polish is tried again after each doubling. The
-    count of rejected polishes is returned as 'polish_rejected'.
+    count of rejected polishes is returned as 'polish_rejected', that of the flow's chunks redone by Radau (`relax_chunk`) as 'stiff_redone'.
     max_entries: stop as soon as that many kernels have entered, before the block relaxes (the path's events up to that entry)."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
     act = np.zeros(d, bool)
-    tau, ev, hist, relaxed, n_rej = 0.0, [], [], [], 0
+    tau, ev, hist, relaxed, n_rej, n_stiff = 0.0, [], [], [], 0, 0
     nx = K.xs.size
     scale = float(np.abs(K.phi(c).T @ K.filt(fstar)).max()) / nx
     rhs = critical_rhs(L, K, fstar)
@@ -295,8 +323,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
         z = np.r_[al[idx], c[idx]]
         elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
         for _k in range(max_doublings + 1):
-            sol = solve_ivp(rhs, (0, chunk), z, method='LSODA', rtol=1e-10, atol=1e-13)
-            z = sol.y[:, -1]
+            z, stalled = relax_chunk(rhs, z, chunk)
+            n_stiff += stalled
             elapsed += chunk
             if not polished:
                 w0 = critical_w(L, z[:n])
@@ -327,7 +355,8 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
             if not big[k] and si[k] * g[k] < 0:
                 act[i] = False; al[i] = 0.0
                 ev.append((tau, int(i), 'exit', float(c[i])))
-    return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej)
+    return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej,
+                stiff_redone=n_stiff)
 
 
 def wfr_inactive_rhs(L, K, fstar, rho):
