@@ -2230,3 +2230,55 @@ law of the relative mode explains it instead. A lighter kernel trails a moving b
 sampling window's edge, through ⟨φ, ∇φ⟩ ≠ 0) pins a formed runner-up's offset deterministically. The test that tells physics from
 arithmetic is to change one and keep the other: the long double kept the pin, and moving the window's edge removed it. An unexplained
 floor is a hypothesis about the arithmetic only until a law for it is written down and tried.
+
+
+## Round 34 (adversarial review of Proposition D‴.44, the replicator's own masses on a kernel dictionary under measurement noise, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3ag: Proposition D‴.44 and its code at 99263ba (`review/REVIEW_round34_D3ag.md`).
+The referee:
+- re-derived (i)–(iv) by hand and regenerated the md from the raw file;
+- compared the closed-form drift with Katzenberger's at Part B's own step and correlation, for all three laws;
+- projected the paradigm's AR(1) paths onto M by the noiseless flow on an early and a late window (σ = 0.03 and 0.015, h = 1 and 0.5);
+- measured the Itô term and the centring's cross term along the paradigm's white flows, and took loop integrals of the drifts on M;
+- checked the excess bound with the conserved K at 246 points, R_null − R_free under white and slow Ψ, D*'s convexity and its minimiser's
+  support;
+- re-ran three off-basis-pursuit ends with solve_ivp's status recorded and Part D's timed-out flow;
+- ran 34 single-replacement mutants and web searches on the literature.
+
+**Verdicts (D3ag).** The identities hold — the closed form equals Katzenberger's drift at Part B's own h and τ_c, the free masses'
+cancellation is exact, the bound is true —, but the proposition proves its minimiser statements for the flat (√β) update and runs its
+numbers on the paradigm's (log β) update, which is not a gradient on M; its medians hid the instances where the two differ:
+- the paradigm's drift is not a gradient (loop integrals ∝ ε², 2.1·10⁻⁸ at ε = 10⁻²); its gauge settles at Gm|w|(1 − t⁴) = γa³t³, not
+  at D*'s split; its free ends leave basis pursuit on most instances where basis pursuit fails;
+- the Itô term is not O(γ/G) at the ends (0.95–1.28 of the flat drift), and the conserved law's cross term dominates there;
+- (iv) is false for coloured noise and for the paradigm's update;
+- "every atom used near saturation" holds only for the flat update: the paradigm's conserved ends are (N + 1)-sparse;
+- Part B's AR(1) lag is the order-v expansion's limit at σ²τ_c/h ≈ 1, not a bug; its "dev" mixes in an O(σ²) offset of E[w(x)];
+- the tests killed 11 of 34 mutants.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ag-1 | major | Minimiser statements describe the flat update; the paradigm's is non-gradient | (i)(c): the paradigm's drift −P_gP(∇R − ν), dν = Σ(4γω_i/(Nm))ϱ_ia_ia′_i dα_i∧dϱ_i ≠ 0 on M — "minimisers" for the flat update only; (i)(d): for free masses the paradigm's selection is each atom's Euler lag −(2ω_i/(Nm))dv_i/dζ_i, and Q (D‴.45) drifts by (ω_iγβ_i/(Nm))(κγa_i² − 2Gβ_i(1 − t_i⁴)), κ = 2 (paradigm) or 1 (flat), for every colour, without quadratic variation; (ii)(b): its ends' conditions — every alive atom at the gauge equilibrium Gβ(1 − t⁴) = γa² (D*'s split with G halved) and ω_iζ(|w_i|)sign w_i ∈ range Φᵀ, ζ = (2γa_max/(Nm))t(1 − t²)/(1 + t²): a logarithmic penalty above the threshold, so sparse, path-dependent ends. A: loop integrals (flat |∮| ≤ 1.03·10⁻¹⁹, paradigm 2.40·10⁻⁹ and 6.25·10⁻⁹ at ε = 10⁻², ratios 4.00), Q's drift against Katzenberger's to 8.6·10⁻⁷–1.6·10⁻⁶, its quadratic variation ≤ 8.5·10⁻¹⁷; C: the gauge ratio at the free ends (paradigm 1.0000 [1.0000, 1.0000] for every colour, flat 0.5000 [0.5000, 0.5000]); `mass_dictionary.q_drift`, `euler_lag`, `gauge_t`, `gauge_ratio`, `mirror_rate_eq` |
+| D3ag-2 | major | "O(γ/G) relative" false at the ends | (i)(b): γa_i²/(2Gβ_ia′_i² + γa_i²) of the mass drift, O(1) at the ends; A: along Part B's white flows the Itô term 0.037 → 1.000 of the flat drift (at most 1.304; free 0.028 → 1.000) |
+| D3ag-3 | major | The cross term dominates at the ends | (i)(b): the cross fitness −(γ²/(2N))a_iφ_iᵀf(K)y; (iii)(b): it favours atoms opposing the target, and its push on ‖w‖₁ balances the rest's at the end; A: cross/net 0.024 → 8.2·10¹² and the pushes (cross, rest) 5.8·10⁻⁶, 4.8·10⁻⁴ at s = 0, 3.72·10⁻⁷, −3.72·10⁻⁷ at 10⁷; `mass_dictionary.cross_term` |
+| D3ag-4 | major | (iv) false for coloured noise and the paradigm's update | Title, (iv), Status: white noise and the flat update; R_null − R_free = (1/τ)log(1 − τ(γ/N)yᵀ(I + τK_free)⁻¹y) for slow Ψ (A: white −1.082422·10⁻³ = −(γ/N)|y|² at six points, slow −2.11·10⁻⁵ … −9.60·10⁻⁶); C, D: the null kernel against free masses per instance (ends differ on 4–11 of 16 on the Gaussian designs, 0–2 of 8 on the kernel dictionaries; the null kernel misses the truth where both find it on 0–7 instances, 0 on the dictionaries); test of the white constant and the slow lemma |
+| D3ag-5 | major | Per-instance agreement with basis pursuit hidden by medians | C, D: every row over one instance set (n), the truth and "at basis pursuit (10⁻³)" split by bp_ok, the largest distance; numerics restated (free masses within 10⁻³ of basis pursuit where it is the truth on 12–13 of 13, 6/6, 7/7, 3/3; elsewhere on 1–2 of 3, 2–3 of 10, 0–1 of 1, 1–2 of 5) |
+| D3ag-6 | major | "Every kernel used near saturation" only for the flat update | (iii)(a)–(b): the flat ends use every atom; the paradigm's conserved ends are near-vertices of {Φw = y, ‖w‖₁ ≤ a_max} with at most N + 1 atoms used (C, D: used 5.9–6.0 of 12, at most 6; 7.5–7.8 of 16, at most 9) |
+| D3ag-7 | major | Part B's AR(1) lag: the order-v expansion's limit | B rebuilt: from the flow's state at s = 1500, every path projected onto M by the noiseless flow (`settle`) at the window's ends, the projected advance over the flow's ± s.e., the raw mean's offset (z); AR(1) at σ²τ_c = 0.9, 0.225, 0.05 (h = 1) and 0.45, 0.1 (h = 0.5): the projected advance over the flow's 0.008, 0.113, 0.808, 0.818, 0.970 (conserved, in order of σ²τ_c/h = 0.9, 0.9, 0.225, 0.2, 0.05), free 0.857 → 0.991, null kernel −0.340 → 0.904, fresh 0.999–1.001; (iii), Status: slow-noise claims are the reduced flows' (σ²τ_c/h → 0) |
+| D3ag-8 | major | Tests kill 11 of 34 mutants | Tests: D* at atol = 0 and its minimiser equation (G = 1, 2); the bound's equality case with unequal columns and a_max = 2; one noiseless step against the law; one noisy step's covariance, mean and the AR(1) stationarity and lag correlation; Q's drift (closed form, Katzenberger's, no quadratic variation); the Euler lag; the gauge equilibria and the mirror rate against η's closed form; loop integrals; the cross term; R_null − R_free; `summary` on hand-built states; `filt_of`; the report on a synthetic result; `settle`; the floor; FlowFailed and FlowTimeout's last state — 30 of 30 single-replacement mutants killed (library 20, experiment 10) |
+| D3ag-9 | minor | "Weighted basis pursuit above the threshold" | (ii)(a): a dense ℓ^{4/3}-perturbation of weighted basis pursuit (D* convex, D*′(0) = 0); C: the flat end against the D* minimiser (median, largest), that minimiser against basis pursuit, the flat ends on the truth (the flat ends 5.9·10⁻⁵–5.7·10⁻⁴ from the D* minimiser (median), that minimiser 4.0·10⁻⁴–2.0·10⁻³ from basis pursuit; the flat ends on the truth 2/16, 0/16, 2/8, 0/7) |
+| D3ag-10 | minor | The slow count's leading term | (ii)(c): min(k, N) log τ_c/τ_c, K's eigenvalues above 1/τ_c, the O(1/τ_c) term not uniform, gradient selections only |
+| D3ag-11 | minor | The conserved-K inequality's proof; Part A and the test checked tr K_free; boundary fits are limits | (iii): both Cauchy–Schwarz steps, the boundary value tr K → (γa_max/N)Σ|φ_i|²|w_i| − (γ/N)|y|², the boundary a limit; A's table: tr K and tr K_free; the test on the conserved K with the equality case |
+| D3ag-12 | minor | The E bound vacuous at a_max ≥ 3.16, loose; no saturation at a_max = 4 | (iii): the bound's range and the threshold γa_max³/(Gm); E: the bound, max|a|/a_max and the threshold against the median used |w_i| (E/m 0.0021–0.3469 against the bound 0.158–1.265; at a_max = 4 the median used coefficient 0.038 below the threshold 0.5333, max|a|/a_max 0.862) |
+| D3ag-13 | minor | Part D's timed-out row mixed denominators | `flow`'s FlowTimeout and FlowFailed carry the last state; C, D: one instance set per row with n, a stopped flow listed with its last state (one: k = 3, instance 1, free, flat, over the limit at s = 2.83·10⁷, on the truth) |
+| D3ag-14 | minor | Part B fresh: "within 0.002" hides an O(v) offset | B: the projected comparison (fresh rows), the raw offset in s.e. |
+| D3ag-15 | minor | `flow()` ignores sol.status; the null kernel's E/m included \|w_0\| | `flow`: a failed piece redone with Radau, else FlowFailed; `summary`: E/m = 1 − ‖w‖₁/a_max over the real atoms |
+| D3ag-16 | minor | Novelty overstated | Status: the cancellation a corollary of the log-coordinate Itô correction (exponential learning, stochastic mirror descent), D*'s branches the quadratic and depth-3 penalties, support counting (Tipping; Wipf–Rao; stochastic collapse); new: the Euler lag, Q's drift, the gauge equilibrium and the logarithmic selection, the inflation and its cross term, the null kernel's white equivalence |
+| D3ag-17 | cosmetic | Renormalisation argument; M for free masses; representability; the null kernel's comparison; "nan" | (i)'s proof: the radial drifts P-normal, removed by the projection; M the law's own; "basis pursuit's solution representable"; the null kernel compared with free masses per instance; "—" for undefined E/m |
+
+**Lesson.** A potential describes one update; before a minimiser theorem is put beside numbers, a one-second loop integral tells whether the
+dynamics measured is a gradient flow at all. Here it was not, and the right description of the paradigm's update was not a modified
+potential but a conservation law: Q, conserved by the noiseless free law for every target, has no noise of its own, so the selection's
+drift on it is a one-line Itô computation — and its zero is exactly the gauge equilibrium the referee measured. Medians over instances where
+every method agrees hide what distinguishes the methods; the rows have to be split by the instances where the candidate answers differ. A
+reduced flow is validated in the limit it claims — σ²τ_c/h → 0 here — and against the projected state, not the raw mean.
