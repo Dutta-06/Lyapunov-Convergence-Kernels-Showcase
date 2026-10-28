@@ -182,3 +182,56 @@ def test_outcome_tolerances():
     assert TC.outcome(R(2 * TC.RMS_TOL), [3, 9], 2) == 'not'
     assert TC.outcome(R(0.5 * TC.RMS_TOL, ev + [(2.0, 5, 'enter', 0.0)]), [3, 9], 2) == 'other'
     assert TC.outcome(R(0.5 * TC.RMS_TOL), [3, 8], 2) == 'other'
+
+
+def test_skeletons_on_the_targets_that_break_their_mutants():
+    """Round 46's surviving mutants, each on a stored target it gets wrong: the linear skeleton's tangent directions at the features (not
+    the starting points; B's configuration 31 at r = 3, exact with E); the fitted skeleton's boxes with the features' signs (D(a)'s
+    opposite-sign pair 0.5 apart at the ratio 50) and its fit started at the features (B's configuration 11 at r = 3)."""
+    L, K, c0 = TM.setup()
+    cs = np.array([0.628354315580911, -0.04456980956766876, -0.6300330902222451])
+    As = np.array([-0.5978787114809792, -0.31619518893970555, -0.0021571116965809])
+    sk = TC.skeleton(K, c0, cs, As)
+    assert sk['ok'] and sk['margin'] > 0.01                            # tangents at the starting points: −0.97
+    assert TC.job_1d((cs, As))['out'] == 'nearest'
+    fit = TC.skeleton(K, c0, np.array([-0.1, 0.4]) + TC.LAT_OFF, np.array([1.0, -50.0]), fit=True)
+    assert fit['ok'] and fit['margin'] > 0.1                           # every box positive: −0.99
+    cs = np.array([-0.26146688489923686, 0.6985887704301363, -0.6172569386174308])
+    As = np.array([0.9608083993684658, 0.001283451133584242, 0.0018132196297868347])
+    fit = TC.skeleton(K, c0, cs, As, fit=True)
+    assert fit['ok'] and fit['margin'] > 0.01                          # started at the starting points: −0.34
+    assert TC.job_1d((cs, As))['out'] == 'nearest'
+
+
+def test_outcome_counts_kernels_and_its_tolerance_is_absolute():
+    """`outcome`: the residual's tolerance is 10⁻⁸ (absolute), and an exact fit with more kernels than features is neither exact with E
+    nor with other kernels (Part F's four-kernel fit)."""
+    act = np.zeros(21, bool); act[[3, 9]] = True
+    ev = [(0.0, 3, 'enter', 0.0), (1.0, 9, 'enter', 0.0)]
+    R = lambda rms, a=act, events=ev: dict(events=events, act=a, hist=[(0.0, None, None, 1.0), (1.0, None, None, rms)])
+    assert TC.outcome(R(5e-9), [3, 9], 2) == 'nearest' and TC.outcome(R(2e-8), [3, 9], 2) == 'not'
+    a3 = act.copy(); a3[5] = True
+    assert TC.outcome(R(1e-12, a3, ev + [(2.0, 5, 'enter', 0.0)]), [3, 9], 2) == 'not'
+
+
+def test_the_polish_safeguard_on_stored_paths():
+    """Round 46's surviving safeguard mutants, on stored paths (both `sliding_iss` and `sliding_iss_nd`, the experiment's): A's target 114
+    accepts a near-seed kernel's polish 3.8σ from its start because it lands at its correlation's ascent (bounded by the start only, by
+    the ascent of the wrong sign or by a quarter width it is rejected three times); A's target 12 and B's configuration 28 at r = 3 reject
+    2 and 4 polishes, each retried (B's configuration 14 at r = 2 ends exact with E only with the near-seed scale relative to the block)."""
+    L, K, c0 = TM.setup()
+    T = {'A114': ([0.6541004699596475, 0.14717182832824738, -0.1741542573559407],
+                  [-0.9993392739038046, -0.5218652653923312, -0.8701696976682551], 'other', 0),
+         'A12': ([-0.3482759573852491, -0.0002953631766601239, -0.6856589204161185],
+                 [0.8834332947114262, 0.9508709095889194, 0.40545651538789224], 'other', 2),
+         'B115': ([0.23946960475117063, -0.19182582990096742, -0.6226746645823192],
+                  [-0.017550238780768175, 0.0041097263697728054, 0.0032936667939692126], 'nearest', 4),
+         'B58': ([-0.05502623411688401, -0.4293485291166097, 0.5138963933303842],
+                 [0.044839474500752985, 0.08864282863781996, 0.03386534213286307], 'nearest', 1)}
+    for name, (cs, As, out, rej) in T.items():
+        cs, As = np.array(cs), np.array(As)
+        e = TC.entrants(K, c0, cs)[0]
+        R1 = TC.RT.sliding_iss(L, K, TC.X.bumps_target(K, cs, As), c0, np.ones(c0.size), polish=True)
+        Rn = TC.job_1d((cs, As))
+        assert (TC.outcome(R1, e, 3), int(R1['polish_rejected'])) == (out, rej), name
+        assert (Rn['out'], Rn['rej']) == (out, rej), name

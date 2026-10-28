@@ -384,6 +384,8 @@ def fill_margins(rows, dim=1):
 
 PREDICTORS = (('m', 'the certificate, 1 − max off E'), ('m_rel', 'the relative margin'), ('m_vor', 'the single feature (no signs or sums)'),
               ('m_atoms', 'the atoms subtracted (no tangent directions)'), ('m_skel', "the path's skeleton"), ('m_fit', 'the fitted skeleton'))
+SHORT = dict(m='the certificate', m_rel='relative', m_vor='single-feature', m_atoms='atoms subtracted', m_skel='the skeleton',
+             m_fit='the fitted skeleton')                              # D(b)'s column labels
 
 
 def predictors(rows):
@@ -502,8 +504,8 @@ def report(A=None, B=None, C=None, D=None, E_=None, F=None):
                           f"{r0['m_vor']:+.4f} | " + ' | '.join(code[r['out']] for r in rs) + " |")
         L_ += ["", f"(b) Two features at s·σ, equal amplitudes, the midpoint uniform over a grid cell ({N_OFF_D} per row): the outcomes and "
                "how often each margin's sign is right:", "",
-               "| s | signs | E, O, ×, t | m > 0 | the certificate right | relative right | single-feature right | the skeleton right | "
-               "the fitted skeleton right | always E right |", '|---|---|---|---|---|---|---|---|---|---|']
+               "| s | signs | E, O, ×, t | m > 0 | " + ' | '.join(f"{SHORT[k]} right" for k, _ in PREDICTORS) + " | always E right |",
+               '|---' * (5 + len(PREDICTORS)) + '|']
         for s_ in SEPS_D:
             for sg in (1.0, -1.0):
                 rs = [r for r in db if r['tag'][1] == s_ and r['tag'][2] == sg and not r['skip']]
@@ -523,8 +525,10 @@ def report(A=None, B=None, C=None, D=None, E_=None, F=None):
                predictors(dc) + f". Paths over {T_MAX} s: {sum(r['out'] == 'timeout' for r in D)}; polishes rejected: "
                f"{sum(max(r.get('rej', 0), 0) for r in D)} on {sum(r.get('rej', 0) > 0 for r in D)} paths.", ""]
         bad_b = [r for r in db if not r['skip'] and r['out'] != 'nearest' and r['m_vor'] > M0_E]
-        L_ += [f"D(b)'s failures that are not the second feature's own near ties (m₀ > {M0_E:g}): " + (', '.join(
-            f"{r['tag'][1]:g}σ {'+ +' if r['tag'][2] > 0 else '+ −'} (m₀ = {r['m_vor']:.3f}, {r['out']})" for r in bad_b) or 'none') + ".", ""]
+        by_s = [(s_, sg, [r for r in bad_b if r['tag'][1] == s_ and r['tag'][2] == sg]) for s_ in SEPS_D for sg in (1.0, -1.0)]
+        L_ += [f"D(b)'s failures that are not the second feature's own near ties (m₀ > {M0_E:g}), per row: " + ', '.join(
+            f"{s_:g}σ {'+ +' if sg > 0 else '+ −'} {len(rs)}" + (" (m₀ = " + ', '.join(f"{r['m_vor']:.3f}" for r in rs) + ")"
+                                                              if 0 < len(rs) <= 4 else '') for s_, sg, rs in by_s) + ".", ""]
         dd = [r for r in D if not r['skip'] and r['out'] != 'timeout']
         sent = []
         for C_ in BANDS:                                               # the band of A and C, tested on the designed families
