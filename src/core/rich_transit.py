@@ -199,15 +199,18 @@ def critical_rhs(L, K, fstar, metric='paradigm', b0=0.0):
     return f
 
 
-def polish_block(K, fstar, w, c, s):
+def polish_block(K, fstar, w, c, s, cbox=None):
     """The active block's fit from (w, c) by a sign-constrained least-squares solve (trust-region reflective): min ½⟨(f* − Φ(c)w)²⟩ over
     (w, c) with s_iw_i ≥ 0. On a dictionary (K.filt the identity) the fast flow is a gradient flow of this fit, so its end is a stationary
     point of it; the solve reaches the point where the flow crawls along the block's slow modes (two kernels Δ apart: the fit's Hessian has
-    eigenvalues ∝ 1, 1, Δ², Δ⁶ — Proposition D‴.52). Returns (w, c)."""
+    eigenvalues ∝ 1, 1, Δ², Δ⁶ — Proposition D‴.52). cbox: (lo, hi), the centres kept in [lo, hi] (on noisy data the fit can have no
+    minimiser: a kernel leaving the samples' window fits the noise at the edge with a coefficient growing without bound — referee round
+    45). Returns (w, c)."""
     from scipy.optimize import least_squares
     n, nx = w.size, K.xs.size
-    lo = np.r_[np.where(s > 0, 0.0, -np.inf), np.full(n, -np.inf)]
-    hi = np.r_[np.where(s > 0, np.inf, 0.0), np.full(n, np.inf)]
+    clo, chi = (-np.inf, np.inf) if cbox is None else cbox
+    lo = np.r_[np.where(s > 0, 0.0, -np.inf), np.full(n, clo)]
+    hi = np.r_[np.where(s > 0, np.inf, 0.0), np.full(n, chi)]
     z0 = np.r_[np.where(s > 0, np.maximum(w, 1e-300), np.minimum(w, -1e-300)), c]
     sol = least_squares(lambda z: (fstar - K.phi(z[n:]) @ z[:n]) / np.sqrt(nx), z0,
                         jac=lambda z: -np.c_[K.phi(z[n:]), K.dphi(z[n:]) * z[:n][None, :]] / np.sqrt(nx),
@@ -244,6 +247,10 @@ class _Stalled(Exception):
     pass
 
 
+class _OutOfBudget(Exception):
+    pass
+
+
 def relax_chunk(rhs, z, chunk, jac=None, rtol=1e-10, atol=1e-13, budget=None):
     """One chunk of a block's fast flow from z over (0, chunk): LSODA, unless it spends more than `budget` (STIFF_BUDGET) right-hand-side
     evaluations — its stiffness detection can fail on a block whose coefficients span many decades (fast modes at −44 and slow ones at
@@ -266,7 +273,8 @@ def relax_chunk(rhs, z, chunk, jac=None, rtol=1e-10, atol=1e-13, budget=None):
 
 
 def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=1e-6, max_events=60, tie_tol=1e-9, gtol=1e-9,
-                max_doublings=14, polish=False, max_entries=None, polish_step=1.0, polish_wfrac=1e-2):
+                max_doublings=14, polish=False, max_entries=None, polish_step=1.0, polish_wfrac=1e-2, box=None, w_scale=None,
+                max_rhs=None):
     """The sliding inverse scale space (the paradigm's metric). The inactive kernels stay where they are (their start, or where they
     left the block), their u_j growing at ⟨rφ(c_j)⟩ (r the active block's residual); the entrants — every kernel whose |u_j| reaches ρ_j
     within the relative tie_tol of the first, so that exact ties enter together — join the active block with the coefficient `seed` (the
@@ -283,7 +291,15 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     such a kernel's centre is undetermined by the fit, and the solve can carry it into another feature's basin (referee round 43); a kernel
     with a coefficient moves where the fit takes it. Otherwise the flow goes on and the polish is tried again after each doubling. The
     count of rejected polishes is returned as 'polish_rejected', that of the flow's chunks redone by Radau (`relax_chunk`) as 'stiff_redone'.
-    max_entries: stop as soon as that many kernels have entered, before the block relaxes (the path's events up to that entry)."""
+    max_entries: stop as soon as that many kernels have entered, before the block relaxes (the path's events up to that entry).
+    Past the first kernel that fits noise the fit can have no minimiser — a kernel leaves the samples' window and its coefficient grows
+    without bound, fitting the noise at the edge — and thresholds relative to max|w| then take the features' kernels for small ones
+    (referee round 45). box: (lo, hi) — the centres stay in [lo, hi] in the polish, and a relaxation that carries one outside stops the
+    path ('runaway' True; that block's state is returned as c, w but is not a fit of hist). w_scale: the exits', the stationarity check's
+    and the polish's thresholds as multiples of w_scale (the data's scale) instead of max|w|. max_rhs: a budget of right-hand-side
+    evaluations for the whole path (deterministic, unlike a wall-clock limit); spent, the path stops before the block that spent it is
+    relaxed ('out_of_budget' True). 'ev_iter' gives each event's iteration i: hist[i] is the state before the iteration's entries and
+    hist[i + 1] the block relaxed after them (ties enter in one iteration; an exit and a re-entry at the same τ in two)."""
     d = len(c0)
     rho = np.broadcast_to(np.asarray(rho, float), (d,))
     u = np.zeros(d); c = np.array(c0, float); al = np.zeros(d)
@@ -292,9 +308,20 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
     nx = K.xs.size
     scale = float(np.abs(K.phi(c).T @ K.filt(fstar)).max()) / nx
     rhs = critical_rhs(L, K, fstar)
+    nfev = [0]
+    if max_rhs is not None:
+        rhs_ = rhs
+
+        def rhs(s_, y_):
+            nfev[0] += 1
+            if nfev[0] > max_rhs:
+                raise _OutOfBudget
+            return rhs_(s_, y_)
+    runaway = out_of_budget = False
+    ev_iter = []
     if polish and type(K).filt.__qualname__ != 'Bumps.filt':
         raise ValueError('polish needs a dictionary (the identity filter)')
-    for _ in range(max_events):
+    for it in range(max_events):
         w = np.where(act, critical_w(L, al), 0.0)
         r = fstar - K.phi(c) @ w
         rms = float(np.sqrt(np.mean(r ** 2)))
@@ -315,48 +342,58 @@ def sliding_iss(L, K, fstar, c0, rho, seed=1e-7, t_fast=1e5, tol=1e-9, exit_tol=
             u[j] = np.sign(v[j]) * rho[j]
             act[j] = True
             al[j] = np.sign(v[j]) * (seed * L.m * L.A ** 2 / (2 * L.c)) ** (1 / 3)
-            ev.append((tau, int(j), 'enter', float(c[j])))
+            ev.append((tau, int(j), 'enter', float(c[j]))); ev_iter.append(it)
         if max_entries is not None and sum(e[2] == 'enter' for e in ev) >= max_entries:
             break
         idx = np.flatnonzero(act)
         n = idx.size
         z = np.r_[al[idx], c[idx]]
         elapsed, chunk, ok, polished = 0.0, float(t_fast), False, not polish
-        for _k in range(max_doublings + 1):
-            z, stalled = relax_chunk(rhs, z, chunk)
-            n_stiff += stalled
-            elapsed += chunk
-            if not polished:
-                w0 = critical_w(L, z[:n])
-                wp, cp = polish_block(K, fstar, w0, z[n:], np.sign(u[idx]))
-                seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * np.abs(w0).max())
-                r0 = K.filt(fstar - K.phi(z[n:]) @ w0)
-                good = all(abs(cp[i] - z[n + i]) <= polish_step * K.sig or
-                           abs(cp[i] - ascent_target(K, r0, z[n + i], np.sign(u[idx[i]]))[0]) <= polish_step * K.sig for i in seedy)
-                if good:
-                    z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp]
-                    polished = True
-                else:
-                    n_rej += 1
-            wi = critical_w(L, z[:n])
-            ri = K.filt(fstar - K.phi(z[n:]) @ wi)
-            g = K.phi(z[n:]).T @ ri / nx
-            h = K.dphi(z[n:]).T @ ri / nx
-            big = np.abs(wi) > exit_tol * np.abs(wi).max()
-            si = np.sign(u[idx])
-            if (np.all(np.abs(g[big]) <= gtol * scale) and np.all(np.abs(wi[big] * h[big]) <= gtol * scale)
-                    and np.all(si[~big] * g[~big] <= gtol * scale)):
-                ok = True
-                break
-            chunk = elapsed
+        try:
+            for _k in range(max_doublings + 1):
+                z, stalled = relax_chunk(rhs, z, chunk)
+                n_stiff += stalled
+                elapsed += chunk
+                if box is not None and np.any((z[n:] < box[0]) | (z[n:] > box[1])):
+                    runaway = True
+                    break
+                if not polished:
+                    w0 = critical_w(L, z[:n])
+                    wp, cp = polish_block(K, fstar, w0, z[n:], np.sign(u[idx]), cbox=box)
+                    seedy = np.flatnonzero(np.abs(w0) <= polish_wfrac * (np.abs(w0).max() if w_scale is None else w_scale))
+                    r0 = K.filt(fstar - K.phi(z[n:]) @ w0)
+                    good = all(abs(cp[i] - z[n + i]) <= polish_step * K.sig or
+                               abs(cp[i] - ascent_target(K, r0, z[n + i], np.sign(u[idx[i]]))[0]) <= polish_step * K.sig for i in seedy)
+                    if good:
+                        z = np.r_[np.sign(wp) * _alpha_of(L, np.abs(wp), coef_crit), cp]
+                        polished = True
+                    else:
+                        n_rej += 1
+                wi = critical_w(L, z[:n])
+                ri = K.filt(fstar - K.phi(z[n:]) @ wi)
+                g = K.phi(z[n:]).T @ ri / nx
+                h = K.dphi(z[n:]).T @ ri / nx
+                big = np.abs(wi) > exit_tol * (np.abs(wi).max() if w_scale is None else w_scale)
+                si = np.sign(u[idx])
+                if (np.all(np.abs(g[big]) <= gtol * scale) and np.all(np.abs(wi[big] * h[big]) <= gtol * scale)
+                        and np.all(si[~big] * g[~big] <= gtol * scale)):
+                    ok = True
+                    break
+                chunk = elapsed
+        except _OutOfBudget:
+            out_of_budget = True
+            relaxed.append(False)
+            break
         relaxed.append(ok)
         al[idx] = z[:n]; c[idx] = z[n:]
+        if runaway:
+            break
         for k, i in enumerate(idx):
             if not big[k] and si[k] * g[k] < 0:
                 act[i] = False; al[i] = 0.0
-                ev.append((tau, int(i), 'exit', float(c[i])))
+                ev.append((tau, int(i), 'exit', float(c[i]))); ev_iter.append(it)
     return dict(events=ev, hist=hist, c=c, w=np.where(act, critical_w(L, al), 0.0), act=act, relaxed=relaxed, polish_rejected=n_rej,
-                stiff_redone=n_stiff)
+                stiff_redone=n_stiff, ev_iter=ev_iter, runaway=runaway, out_of_budget=out_of_budget, nfev=nfev[0])
 
 
 def wfr_inactive_rhs(L, K, fstar, rho):
