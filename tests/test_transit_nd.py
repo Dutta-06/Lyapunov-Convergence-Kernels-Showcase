@@ -263,3 +263,61 @@ def test_inner_job_reports_the_stop():
     """`inner_job` passes `inner_k`'s stop reason and the remaining-change estimate through (B4u records them: referee round 47)."""
     r = TN.inner_job(('edge', TN.A_B, (0.0, 4.0), TN.H / 2))
     assert r['stop'] == 'converged' and r['stationary'] and 'remaining' in r
+
+
+def test_v_law_is_the_static_rest_as_the_unfitted_feature_vanishes():
+    """(v)'s law with the pull projected off the entrant's φ (referee round 49) is exact to leading order: as A′ → 0 the static rest
+    point's displacement over the law tends to 1 (d = 6σ, w = 0.3: within 0.5%); the unprojected pull's (d/σ)² − 2 misses by 2.9%."""
+    from scipy.optimize import least_squares
+    dd, w, Ap = 6.0, 0.3, 1e-3
+    res, e = TN.v_residual(1, dd, Ap=Ap)
+    p0 = np.r_[TN.A_B - w, 0.0, 1e-3 * TN.SIG]
+    q = least_squares(res, p0, args=(w,), method='lm', xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=20000).x
+    along = float(q[2] * e[0]) / TN.SIG
+    law = TN.v_law(dd, w, q[0], Ap=Ap)
+    assert abs(along / law - 1) < 5e-3
+    old = float(np.sqrt(Ap * (dd ** 2 - 2) * np.exp(-dd ** 2 / 4) * q[0] / (w * (q[0] + w))))
+    assert abs(along / old - 1) > 0.02
+
+
+def test_c3_outcome_at_its_residual_cut_and_formed_by_feature():
+    row = lambda nf, cap, rms: dict(n_fin=nf, captured=cap, rms=rms)
+    assert TN.c3_outcome(row([1, 1, 1], [], 1.01e-8)) == 'stranded' and TN.c3_outcome(row([1, 1, 1], [], 0.99e-8)) == 'one kernel'
+    c0 = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
+    cs = np.array([[0.0, 0.0], [1.0, 0.0]])
+    As = np.array([1.0, 0.5])
+    w = np.array([0.5, 0.004, 1e-4])
+    bk = TN.formed_by_feature(c0, cs, As, w, c0)                       # the second kernel's 0.004 is below θ of feature 0's 1 …
+    assert bk['n_start'] == [1, 0] and bk['captured'] == []
+    w2 = np.array([0.5, 0.2, 0.1])                                     # … the third kernel, started nearest feature 1, ends at feature 0
+    bk = TN.formed_by_feature(c0, cs, As, w2, np.array([[0.0, 0.0], [1.0, 0.0], [0.1, 0.0]]))
+    assert bk['n_start'] == [1, 2] and bk['n_fin'] == [2, 1] and bk['captured'] == [(2, 1, 0)]
+
+
+def test_b4u_note_with_the_continuation():
+    """B4's caption on hand-built reruns: the stops' reasons, the counts, the shares' changes and the continuation's (B4x)."""
+    sh = lambda a: np.array([1 - a, a, 0.0, 0.0])
+    B4 = dict(rows=[dict(x=(5.0, 9.0), n=2, shares=sh(0.02), stationary=False), dict(x=(9.0, 9.0), n=1, shares=sh(0.009), stationary=False)])
+    B4u = dict(rows=[dict(x=(5.0, 9.0), n=2, shares=sh(0.020001), stop='cap', drift=2e-7, remaining=np.inf),
+                     dict(x=(9.0, 9.0), n=1, shares=sh(0.009), stop='converged', drift=1e-11, remaining=np.inf)])
+    B4x = dict(rows=[dict(x=(5.0, 9.0), n=2, shares=sh(0.0200025), stop='converged', drifts=[1e-9, 4e-8, 1e-7, 3e-8, 1e-9])])
+    s = TN.b4u_note(B4, B4u, B4x)
+    assert "1 at the doubling cap (the last drift 2.0e-07)" in s and "1 settled on rerun" in s
+    assert "their counts unchanged at 2 of 2, their shares moved by at most 1.0e-06" in s
+    assert "the counts unchanged at 1 of 1, the shares moved after the first cap by at most 1.5e-06" in s
+    assert "the drifts peaking at doublings 3–3, 1 settled, 0 at the new cap, 0 at the clock" in s
+    assert 'doublings to reach' not in s and 'no count changes for' not in s
+
+
+def test_the_fold_constant_and_its_level_in_the_report():
+    """V3's c = w_f/ℓ(d), ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)}, and `fold_level`'s c(d)ℓ(d) from V's folds (interpolated in d)."""
+    V = [dict(n=1, d=5.0, Ap=TN.AP_V, rows=[dict(w=0.3, we=0.5, along=0.1, across=0.0)], fold=(0.1424, 0.1424), along_fold=0.94),
+         dict(n=1, d=6.0, Ap=TN.AP_V, rows=[dict(w=0.3, we=0.5, along=0.08, across=0.0)], fold=(0.02066, 0.02066), along_fold=0.86)]
+    lev = lambda a, d: a * d ** 2 * np.exp(-d ** 2 / 4)
+    c5, c6 = 0.1424 / lev(TN.AP_V, 5.0), 0.02066 / lev(TN.AP_V, 6.0)
+    assert abs(TN.fold_level(5.5, 0.7, V) - 0.5 * (c5 + c6) * lev(0.7, 5.5)) < 1e-12
+    assert TN.fold_level(5.5, 0.7, None) is None
+    V3 = [dict(n=1, d=6.0, Ap=1.4, rows=[], fold=(0.0403, 0.0403), along_fold=0.85)]
+    md = TN.report(V=V, V3=V3)
+    row = next(l for l in md.splitlines() if l.startswith('| 6 |') and 'A′' not in l and l.count('|') == len(TN.AP_V3) + 2)
+    assert f"{0.0403 / lev(1.4, 6.0):.3f}" in row

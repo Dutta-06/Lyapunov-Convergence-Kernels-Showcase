@@ -87,7 +87,14 @@ D_V, AP_V, D_V2 = (5.0, 5.5, 6.0, 6.5, 7.0), 0.7, 6.0                   # V: the
 W_V = np.geomspace(0.3, 1e-4, 49)                                      # V: the tail's coefficients, descending (continuation)
 EPS_C3 = tuple(float(f'{e:.3g}') for e in np.geomspace(1.5e-10, 1e-8, 13)) + (3e-9, 3.13e-10)  # C3: the capture scan's masses
 RTOL_C3 = 1e-12                                                        # C3: the loop's tolerance (captures sit on a saddle: round 47)
-T3_X = ((1.0, 1.0, 1.0), (2.0, 2.0, 2.0), (1.0, 2.0, 3.0), (0.5, 3.0, 5.0), (3.0, 3.0, 3.0), (2.0, 4.0, 6.0), (4.0, 4.0, 4.0))
+T3_X = ((1.0, 1.0, 1.0), (2.0, 2.0, 2.0), (1.0, 2.0, 3.0), (0.5, 3.0, 5.0), (3.0, 3.0, 3.0), (2.0, 4.0, 6.0), (4.0, 4.0, 4.0),
+        (5.9, 9.0, 9.0), (5.95, 9.0, 9.0), (6.0, 9.0, 9.0))                # the last three: a corner between x_θ(H/√2) and x_θ(H/2)
+X_C4 = (3.0, 4.9, 7.0, 10.0, 17.3, 24.5)                                 # C4: the near tie's gap held fixed while ε varies (round 49)
+EPS_C4 = (1e-8, 1e-9, 1e-10, 1e-11, 1e-12)
+N_OUT_C4 = 160                                                           # C4: outputs from feature 0's entry to feature 2's, log-spaced
+D_V3, AP_V3 = (5.0, 6.0, 7.0), (0.35, 0.7, 1.4, 2.8)                     # V3: the fold against A′/A (A = A_B)
+MAX_DOUBLINGS_B4X = 24                                                   # B4x: B4's unsettled problems continued
+EPS_D2, T_D2 = (1e-5, 1e-6, 1e-8), (0.0, 3 * H / 8)                       # D2: the loop's threshold at the offsets 0 and 3H/8
 
 
 def law():
@@ -118,10 +125,11 @@ def margins(K, c0, A, cstar, idx):
     return 1 - v / v[0], v[0]
 
 
-def place(K, c0, A, kind, x, eps):
-    """The feature's centre near the tie with the runner-ups' margins ε^{1/2}x (edge: x₁₀; vertex: x₁₀, x₀₁ — the diagonal's follows), by
-    Newton's method on the offset from the tie toward the entrant."""
+def place(K, c0, A, kind, x, eps, t=0.0):
+    """The feature's centre near the tie with the runner-ups' margins ε^{1/2}x (edge: x₁₀, the feature at the offset t along the face;
+    vertex: x₁₀, x₀₁ — the diagonal's follows), by Newton's method on the offset from the tie toward the entrant."""
     pts, T = TIES[kind]
+    T = T + (np.array([0.0, t]) if kind == 'edge' else 0.0)
     idx = [kidx(c0, p) for p in pts]
     m = 1 if kind == 'edge' else 2
     tgt = np.sqrt(eps) * np.asarray(x, float)[:m]
@@ -644,9 +652,9 @@ def x_theta_avg(T):
     return float(np.trapezoid(x_theta_t(T), tt) / tt[-1])
 
 
-def targets_C2():
+def targets_C2(mu_t=MU_C2):
     """C2's designed targets on Part C's lattice: 'near tie' — feature 0 (A_B) near the face between (0, 2H) and (H, 2H), on their axis,
-    placed so that its runner-up's margin at the first entry (the target's correlations at the start: feature 0 enters first) is MU_C2;
+    placed so that its runner-up's margin at the first entry (the target's correlations at the start: feature 0 enters first) is mu_t;
     'window edge' — feature 0 at (0.96, 0), nearest (1, 0), the samples' entrant (0.875, 0)."""
     K, c0 = full()
     oth = np.array([[-0.5, -0.5], [0.5, -0.55]]), np.array([-0.6, 0.7])
@@ -656,10 +664,10 @@ def targets_C2():
         cs = np.r_[[[H / 2 + d, 2 * H]], oth[0]]
         v = np.abs(K.corr(c0[[e, r]], K.synth(cs, np.r_[A_B, oth[1]]))[0])
         return 1 - v[1] / v[0]
-    d = MU_C2 * 2 * SIG ** 2 / H
+    d = mu_t * 2 * SIG ** 2 / H
     for _ in range(30):
         g = (mu(d + 1e-8) - mu(d - 1e-8)) / 2e-8
-        step = (mu(d) - MU_C2) / g
+        step = (mu(d) - mu_t) / g
         d -= step
         if abs(step) < 1e-15:
             break
@@ -674,7 +682,7 @@ def targets_C2():
     d5 = d
     for _ in range(30):
         g = (mu5(d5 + 1e-8) - mu5(d5 - 1e-8)) / 2e-8
-        step = (mu5(d5) - MU_C2) / g
+        step = (mu5(d5) - mu_t) / g
         d5 -= step
         if abs(step) < 1e-15:
             break
@@ -760,16 +768,17 @@ def v_job(args):
     coefficients W_V by continuation (the tail started at the feature), its displacement along e and across it (σ units); where it runs
     off (beyond 2σ) the fold, located by bisection in log w between the last bound and the first unbound coefficient (from the last
     bound state)."""
-    n, dd = args
+    n, dd = args[:2]
+    Ap = args[2] if len(args) > 2 else AP_V
     from scipy.optimize import least_squares
-    res, e = v_residual(n, dd)
+    res, e = v_residual(n, dd, Ap=Ap)
 
     def settle(p0, w):
         s_ = least_squares(res, p0, args=(w,), method='lm', xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=20000)
         return s_.x, float(np.linalg.norm(s_.x[1 + n:])) <= 2 * SIG
     ws = W_V if n == 1 else W_V[::4]
     p = np.r_[A_B - ws[0], np.zeros(n), 1e-3 * SIG * e]
-    rows, fold = [], None
+    rows, fold, along_fold = [], None, None
     for w in ws:
         q, bound = settle(p, w)
         if not bound:
@@ -782,11 +791,12 @@ def v_job(args):
                 else:
                     lo = m_
             fold = (lo, hi)
+            along_fold = float(pl[1 + n:] @ e) / SIG
             break
         ct = q[1 + n:]
         rows.append(dict(w=float(w), we=float(q[0]), along=float(ct @ e) / SIG, across=float(np.linalg.norm(ct - (ct @ e) * e)) / SIG))
         p = q
-    return dict(n=n, d=dd, rows=rows, fold=fold)
+    return dict(n=n, d=dd, Ap=Ap, rows=rows, fold=fold, along_fold=along_fold)
 
 
 def part_V():
@@ -796,9 +806,11 @@ def part_V():
 
 
 def v_law(dd, w, we, Ap=AP_V):
-    """(v)'s displacement: Δ²/σ² = A′((d/σ)² − 2)e^{−d²/(4σ²)}·w_e/(w(w_e + w)) — the binding (∝ M₂²) and the curvature pull (∝ M₂) both
-    functions of the block's second moment M₂ = w(1 + w/w_e)|δ|²."""
-    return float(np.sqrt(max(Ap * (dd ** 2 - 2) * np.exp(-dd ** 2 / 4) * we / (w * (we + w)), 0.0)))
+    """(v)'s displacement to leading order: Δ²/σ² = ℓ(d)·w_e/(w(w_e + w)), ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)} — the binding (∝ M₂²) and the
+    curvature pull (∝ M₂, M₂ = w(1 + w/w_e)|δ|² the block's second moment), the pull projected off the entrant's φ as the binding is (the
+    entrant's coefficient slaved: ⟨r′, (∂²φ)_⊥⟩ = A′π^{n/2}σ^{n−2}(d/σ)²e^{−d²/(4σ²)}/4; referee round 49 — the unprojected pull gave
+    (d/σ)² − 2)."""
+    return float(np.sqrt(max(Ap * dd ** 2 * np.exp(-dd ** 2 / 4) * we / (w * (we + w)), 0.0)))
 
 
 def c3_job(args):
@@ -820,6 +832,111 @@ def part_C3():
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
         return pool.map(c3_job, [(n, e) for n in ('near tie', 'near tie 5σ') for e in EPS_C3], chunksize=1)
+
+
+def fold_level(d2, A2, V):
+    """The fold c(d)ℓ(d) of a same-sign feature A2 at the distance d2 (σ) from V's one-dimensional folds at A′ = AP_V, c(d) interpolated in
+    d (None without V)."""
+    vd = {r['d']: r for r in (V if V is not None else []) if r['n'] == 1 and r['fold'] is not None and r.get('Ap', AP_V) == AP_V}
+    if not vd:
+        return None
+    ds_ = sorted(vd)
+    c_ = np.interp(d2, ds_, [np.sqrt(vd[q]['fold'][0] * vd[q]['fold'][1]) / (AP_V * q ** 2 * np.exp(-q ** 2 / 4)) for q in ds_])
+    return float(c_ * A2 * d2 ** 2 * np.exp(-d2 ** 2 / 4))
+
+
+def c4_job(args):
+    """C4: C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{1/2}) at the mass ε: the loop (rtol RTOL_C3) with
+    N_OUT_C4 outputs log-spaced from feature 0's entry τ_e to feature 2's own entry τ₂ on the path; the runner-up's distance from feature 0
+    and its coefficient; its departure (the first output at which it is 2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against τ₂'s, its
+    coefficient there and its largest after the entry; the kernels formed per feature at the end and the outcome (`c3_outcome`)."""
+    x, eps = args
+    t0 = time.time()
+    L = law(); K, c0 = full()
+    cs, As = targets_C2(x * np.sqrt(eps))['near tie']
+    f = K.synth(cs, As)
+    R = RN.sliding_iss_nd(L, K, f, c0, np.ones(len(c0)))
+    near = np.argmin(np.linalg.norm(c0[:, None, :] - cs[None, :, :], axis=2), axis=1)
+    ent = [e for e in R['events'] if e[2] == 'enter']
+    t_e = ent[0][0]
+    t2 = next(e[0] for e in ent if near[e[1]] == 2)
+    v = np.abs(K.corr(c0, f)[0])
+    o = np.argsort(-np.where(near == 0, v, -1.0))
+    r0 = int(o[1])
+    dense = t_e + (t2 - t_e) * np.geomspace(1e-7, 1.0, N_OUT_C4)
+    taus = np.unique(np.r_[np.linspace(0, 1.3 * R['events'][-1][0], 27), dense])
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, taus, rtol=RTOL_C3, atol=1e-14)
+    dist = np.linalg.norm(C[:, r0, :] - cs[0], axis=1) / SIG
+    after = np.flatnonzero(taus > t_e)
+    dep = next((int(i) for i in after if dist[i] > 2.0), None)
+    held = after if dep is None else after[after < dep]
+    bk = formed_by_feature(c0, cs, As, W[-1], C[-1])
+    r = dict(x=x, eps=eps, mu=float(x * np.sqrt(eps)), tau_e=float(t_e), tau2=float(t2), s2=float((t2 - t_e) / np.sqrt(eps)),
+             s_dep=float((taus[dep] - t_e) / np.sqrt(eps)) if dep is not None else None,
+             w_dep=float(abs(W[dep - 1][r0])) if dep is not None else None,
+             w_max=float(np.abs(W[held, r0]).max()) if held.size else 0.0, d_held=float(dist[held].max()) if held.size else 0.0,
+             d2=float(np.linalg.norm(cs[2] - cs[0]) / SIG), A2=float(As[2]), n_fin=bk['n_fin'], captured=bk['captured'],
+             rms=float(np.sqrt(np.mean((f - K.synth(C[-1], W[-1])) ** 2))), d_end=float(dist[-1]), w_end=float(abs(W[-1][r0])),
+             secs=time.time() - t0)
+    print(f"  C4 x {x} eps {eps:g}: {c3_outcome(r)}, s_dep {r['s_dep']}, s2 {r['s2']:.3g} [{r['secs']:.0f}s]", flush=True)
+    return r
+
+
+def part_C4():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(c4_job, [(x, e) for x in X_C4 for e in EPS_C4], chunksize=1)
+
+
+def b4x_job(x):
+    """B4x: one of B4's unsettled problems continued to MAX_DOUBLINGS_B4X doublings (the drifts per doubling, the stop, the shares)."""
+    x1, x2 = x
+    L = law(); K, c0 = local()
+    xd = margins_diag(K, c0, x1, x2)
+    pts, T = TIES['vertex']
+    f = A_B * K.phi(np.atleast_2d(T))[:, 0]
+    t0 = time.time()
+    out = RN.inner_k(L, K, f, np.array(pts, float), np.array([0.0, x1, x2, xd]), share_tol=SHARE_TOL, max_doublings=MAX_DOUBLINGS_B4X,
+                     max_secs=8 * INNER_SECS)
+    return dict(x=(x1, x2), shares=out['shares'], n=int((out['shares'] > TH_REL).sum()), stop=out['stop'], drifts=list(out['drifts']),
+                secs=time.time() - t0)
+
+
+def part_B4x(B4):
+    from multiprocessing import Pool
+    pts = [tuple(r['x']) for r in B4['rows'] if not r['stationary']]
+    with Pool(N_WORKERS) as pool:
+        return dict(rows=pool.map(b4x_job, pts, chunksize=4))
+
+
+def part_V3():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(v_job, [(1, d, a) for d in D_V3 for a in AP_V3], chunksize=1)
+
+
+def d2_share(x, eps, t):
+    """D2: the edge loop's runner-up share at the gap x, the mass ε, the feature at the offset t along the face (Part A's loop)."""
+    L = law(); K, c0 = local()
+    cstar, idx = place(K, c0, A_B, 'edge', (x,), eps, t)
+    mu, v_e = margins(K, c0, A_B, cstar, idx)
+    f = A_B * K.phi(np.atleast_2d(cstar))[:, 0]
+    T_, W, C, Lam, AL = RN.loop_nd(L, K, f, c0, eps, np.linspace(0, TAU_A / v_e, 23))
+    w = np.abs(W[-1][idx])
+    return float(w[1] / w.sum())
+
+
+def d2_job(args):
+    """D2: the loop's formation threshold in the gap (the runner-up share crossing TH_REL, by bisection in [4.5, 8]) at (ε, t)."""
+    eps, t = args
+    t0 = time.time()
+    return dict(eps=eps, t=t, x=crossing(lambda x: d2_share(x, eps, t), 4.5, 8.0, 12), secs=time.time() - t0)
+
+
+def part_D2():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(d2_job, [(e, t) for e in EPS_D2 for t in T_D2], chunksize=1)
 
 
 def local_3d():
@@ -908,9 +1025,10 @@ def w_unbind(cs, As):
     return float(np.max(np.abs(As[1:]) * dk / SIG * np.exp(-dk ** 2 / (4 * SIG ** 2))))
 
 
-def b4u_note(B4, B4u):
-    """B4's caption: why the unsettled problems stopped (rerun, B4u), whether their counts changed, and the fewest doublings, at each
-    problem's last drift, before a share can reach the formation threshold (a count changes only when a share crosses TH_REL)."""
+def b4u_note(B4, B4u, B4x=None):
+    """B4's caption: why the unsettled problems stopped (rerun, B4u), whether their counts changed, and their continuation to
+    MAX_DOUBLINGS_B4X doublings (B4x: the counts and the shares' change after the cap — a margin over the last drift bounds nothing while
+    the drifts still grow: referee round 49)."""
     old = {tuple(r['x']): r for r in B4['rows']}
     by = {}
     for r in B4u['rows']:
@@ -923,25 +1041,25 @@ def b4u_note(B4, B4u):
             parts.append(f"{len(rs)} {lab}")
             continue
         d = [r['drift'] for r in rs]
-        rem = [r['remaining'] for r in rs if r.get('remaining') is not None]
-        fin = [x for x in rem if np.isfinite(x)]
-        parts.append(f"{len(rs)} {lab} (the last drift {min(d):.1e}" + (f" … {max(d):.1e}" if max(d) > min(d) else '')
-                     + (f"; the change still to come, from the drifts' fall, at most {max(fin):.1e} on {len(fin)}" if fin else '')
-                     + (f"; the drifts not yet falling on {len(rem) - len(fin)}" if len(rem) > len(fin) and len(rs) > 1 else
-                        "; the drifts not yet falling" if len(rem) > len(fin) else '') + ")")
-    open_ = [r for r in B4u['rows'] if r['stop'] != 'converged']
-    note = ''
-    if open_:
-        gap = [float(np.abs(np.asarray(r['shares']) - TH_REL).min()) for r in open_]
-        dbl = min(g / r['drift'] for g, r in zip(gap, open_))
-        note = (f"; the unsettled shares at least {min(gap):.1e} from the threshold, so at their last drifts no count changes for "
-                f"at least {dbl:.0f} more doublings")
+        parts.append(f"{len(rs)} {lab} (the last drift {min(d):.1e}" + (f" … {max(d):.1e}" if max(d) > min(d) else '') + ")")
     chg = max(float(np.abs(np.asarray(r['shares']) - np.asarray(old[tuple(r['x'])]['shares'])).max()) for r in B4u['rows'])
+    note = ''
+    if B4x is not None:
+        u = {tuple(r['x']): r for r in B4u['rows']}
+        xs_ = B4x['rows']
+        same_x = sum(int(r['n'] == old[tuple(r['x'])]['n']) for r in xs_)
+        mv = max(float(np.abs(np.asarray(r['shares']) - np.asarray(u[tuple(r['x'])]['shares'])).max()) for r in xs_ if tuple(r['x']) in u)
+        pk = [int(np.argmax(r['drifts'])) + 1 for r in xs_ if r['drifts']]
+        stops = {k: sum(r['stop'] == k for r in xs_) for k in ('converged', 'cap', 'clock')}
+        note = (f"; continued to {MAX_DOUBLINGS_B4X} doublings (B4x): the counts unchanged at {same_x} of {len(xs_)}, the shares moved "
+                f"after the first cap by at most {mv:.1e}, the drifts peaking at doublings {min(pk)}–{max(pk)}, "
+                f"{stops['converged']} settled, {stops['cap']} at the new cap, {stops['clock']} at the clock")
     return (f"; the {len(B4u['rows'])} others rerun with the stop's reason recorded: " + ', '.join(parts) +
             f", their counts unchanged at {same} of {len(B4u['rows'])}, their shares moved by at most {chg:.1e}" + note)
 
 
-def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None):
+def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None,
+           C4=None, B4x=None, V3=None, D2=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
@@ -1063,7 +1181,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                 f"The 4-kernel inner problem on the grid of gaps 0 … {g[-1]:g} in steps of {g[1] - g[0]:g} ({len(B4['rows'])} problems, x₁₀ ≤ x₀₁): the "
                 f"region N ≥ 3 has the area {a3:.1f} and N = 4 {a4:.1f} in the gaps' quarter-plane (trapezoid weights; "
                 f"{sum(bool(r['stationary']) for r in B4['rows'])} of {len(B4['rows'])} problems settled to the shares' tolerance "
-                f"{SHARE_TOL:g}" + (b4u_note(B4, B4u) if B4u is not None else '') + ")")
+                f"{SHARE_TOL:g}" + (b4u_note(B4, B4u, B4x) if B4u is not None else '') + ")")
         L_ += list(line[:2])
         if T is not None and 'pt' in T:
             Np = np.array([[product_count(T, a, b_) for b_ in g] for a in g])
@@ -1140,8 +1258,9 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                         miss.append(f"{e:g}: {r['n']}/{pr_} at ({r['gaps'][0]:.2f}, {r['gaps'][1]:.2f}) [{th[0]:.2f}, {th[1]:.2f}]")
             L_ += ["", "The misses — ε: the loop's count/the rule's at the gaps (x₁₀, x₀₁) [x_θ at their offsets]: " + '; '.join(miss) + "."
                    if miss else "", "",
-                   "The offset-blind rule (every factor at t = 0, x_θ(0)) agrees with the loop at " + ', '.join(blind) + " — D does not "
-                   "resolve x_θ(t) (referee round 47): the positions near a face, where the offset matters, are too few.", ""]
+                   "The offset-blind rule (every factor at t = 0, x_θ(0)) agrees with the loop at " + ', '.join(blind) + ": at these "
+                   "masses the loop's own threshold is shifted by more than x_θ varies along a face (D2), so D measures the shift, not "
+                   "x_θ(t) (referee round 49).", ""]
         L_.append("")
     if H_ is not None:
         g = np.asarray(H_['grid'], float)
@@ -1202,10 +1321,11 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                f"The feature (A = {A_B:g}) at the origin and an unfitted one (A′ = {AP_V:g}) at the distance d (the continuum: a trapezoid of "
                "step σ/20 in one dimension, σ/8 in the plane along the diagonal); the entrant (w_e, c_e) and the runner-up's centre free, its "
                "coefficient w fixed: the local minimum's displacement Δ of the runner-up toward the unfitted feature (by continuation in w) "
-               "against (v)'s law Δ² = σ²A′((d/σ)² − 2)e^{−d²/(4σ²)}·w_e/(w(w_e + w)); the fold — below it no minimum within 2σ — by "
-               "bisection; the level ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)}, the fold over it c(d), and the law's Δ at the fold:", "",
-               "| d/σ | Δ/σ (the law) at w = 0.3, 0.1, 0.03, 0.01, 0.003, 0.001 | the fold w_f | ℓ(d) | c(d) = w_f/ℓ | the law's Δ/σ at w_f |",
-               "|---|---|---|---|---|---|"]
+               "against (v)'s law Δ² = σ²ℓ(d)·w_e/(w(w_e + w)), ℓ(d) = A′(d/σ)²e^{−d²/(4σ²)} (the pull projected off the entrant's φ, as "
+               "the binding is: referee round 49); the fold — below it no minimum within 2σ — by bisection, the fold over ℓ(d), c(d), the "
+               "minimum's displacement at the fold, and the law's there:", "",
+               "| d/σ | Δ/σ (the law) at w = 0.3, 0.1, 0.03, 0.01, 0.003, 0.001 | the fold w_f | ℓ(d) | c(d) = w_f/ℓ | Δ/σ at w_f: the "
+               "minimum's (the law's) |", "|---|---|---|---|---|---|"]
         for r in [r for r in V if r['n'] == 1]:
             cells = []
             for wq in (0.3, 0.1, 0.03, 0.01, 0.003, 0.001):
@@ -1216,10 +1336,25 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             if r['fold'] is not None:
                 wf = float(np.sqrt(r['fold'][0] * r['fold'][1]))
                 wef = r['rows'][-1]['we']
-                fold = f"{wf:.4g} | {lev:.3g} | {wf / lev:.2f} | {v_law(r['d'], wf, wef):.3f}"
+                fold = (f"{wf:.4g} | {lev:.3g} | {wf / lev:.2f} | " + (f"{r['along_fold']:.3f}" if r.get('along_fold') is not None else '—')
+                        + f" ({v_law(r['d'], wf, wef):.3f})")
             else:
                 fold = f"none above {W_V[-1]:g} | {lev:.3g} | — | —"
             L_.append(f"| {r['d']:g} | {', '.join(cells)} | {fold} |")
+        if V3 is not None:
+            L_ += ["", "V3. The fold's constant against the unfitted feature's amplitude: c = w_f/ℓ(d) (one dimension, A = "
+                   f"{A_B:g}) at A′/A = " + ', '.join(f"{a / A_B:.3g}" for a in AP_V3) + ":", "",
+                   "| d/σ | " + ' | '.join(f"A′/A = {a / A_B:.3g}" for a in AP_V3) + " |", "|---|" + "---|" * len(AP_V3)]
+            for d_ in D_V3:
+                cells = []
+                for a in AP_V3:
+                    r3 = next((q for q in V3 if q['d'] == d_ and q['Ap'] == a), None)
+                    if r3 is None or r3['fold'] is None:
+                        cells.append('—')
+                        continue
+                    lev = a * d_ ** 2 * np.exp(-d_ ** 2 / 4)
+                    cells.append(f"{np.sqrt(r3['fold'][0] * r3['fold'][1]) / lev:.3f}")
+                L_.append(f"| {d_:g} | " + ' | '.join(cells) + " |")
         for r in [r for r in V if r['n'] == 2]:
             L_ += ["", f"The plane, d = {r['d']:g}σ along the diagonal: " + '; '.join(
                 f"w = {q['w']:.3g}: along {q['along']:.4f}, across {q['across']:.1e} (the law {v_law(r['d'], q['w'], q['we']):.4f})"
@@ -1235,8 +1370,11 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                f"the loop at the tolerance {RTOL_C3:g} (captures sit on a saddle): the runner-up's gap x, its coefficient after the entry "
                "against the fold at feature 2's distance (V: c(d)ℓ(d), interpolated in d), the kernels formed per feature by their final "
                "positions, the captured kernels, and the outcome — bound (feature 0 two kernels, the runner-up formed there), captured "
-               "(feature 0 one kernel, feature 2 fitted by the migrant), a capture tie (feature 2 two kernels), stranded (one kernel per feature, "
-               "the fit not exact at the end: the tail still on its way), one kernel (the runner-up not formed, the fit exact):", "",
+               "(feature 0 one kernel, feature 2 fitted by the migrant), a capture tie (feature 2 two kernels), stranded at the horizon (one "
+               "kernel per feature, the fit not exact at the end: the tail away from both features then — it can still be recalled to its "
+               "own), one kernel (the runner-up not formed, the fit exact). The runner-up's coefficient is read at the first output after "
+               "the entry (on the 5σ variant the runner-up has left by then: the coefficient is the captured kernel's). At a fixed μ the "
+               "gap x and the mass vary together; C4 separates them:", "",
                "| target | ε | gap x | the runner-up after the entry | the fold c(d)ℓ(d) | kernels per feature (final) | captured | rms | outcome |",
                "|---|---|---|---|---|---|---|---|---|"]
         vd = {r['d']: r for r in (V if V is not None else []) if r['n'] == 1 and r['fold'] is not None}
@@ -1256,12 +1394,28 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
             L_.append(f"| {r['name']} | {r['eps']:.3g} | {x:.3g} | {r['w_tail']:.3g} | {foldw} | {', '.join(map(str, nf))} | {cap} | "
                       f"{r['rms']:.1e} | {out} |")
         L_.append("")
+    if C4 is not None:
+        L_ += ["## C4. The race: the gap held, the mass varied", "",
+               f"C2's near tie with the runner-up's gap x held fixed (its margin μ = xε^{{1/2}}) at the masses {', '.join(f'{e:g}' for e in EPS_C4)} "
+               f"(rtol {RTOL_C3:g}): the runner-up's largest coefficient while within 2σ of feature 0 (after its entry) against the fold "
+               "c(d)ℓ(d) at feature 2's distance; its departure (2σ from feature 0) in s = (τ − τ_e)/ε^{1/2} against feature 2's own entry "
+               "s₂ = (τ₂ − τ_e)/ε^{1/2}, its coefficient at the departure; the final kernels per feature and the outcome:", "",
+               "| x | ε | max w held (/ fold) | departure s | s₂ | w at the departure (/ fold) | kernels per feature (final) | outcome |",
+               "|---|---|---|---|---|---|---|---|"]
+        for r in sorted(C4, key=lambda r: (r['x'], -r['eps'])):
+            fl = fold_level(r['d2'], r['A2'], V)
+            rel = lambda w: f"{w:.3g}" + (f" ({w / fl:.2f})" if fl else '')
+            L_.append(f"| {r['x']:g} | {r['eps']:g} | {rel(r['w_max'])} | " + (f"{r['s_dep']:.3g}" if r['s_dep'] is not None else 'none')
+                      + f" | {r['s2']:.3g} | " + (rel(r['w_dep']) if r['w_dep'] is not None else '—') + f" | "
+                      f"{', '.join(map(str, r['n_fin']))} | {c3_outcome(r)} |")
+        L_.append("")
     if T3 is not None:
         L_ += ["## T3. The product rule at a vertex of hℤ³", "",
                f"The 8 kernels at the corners of the cube {{0, H}}³ (samples on a tensor grid of spacing {DS:g}), the feature (A = {A_B:g}) at "
                "the cube's centre — each edge's axis at the transverse offset H/√2 ((n − 1)^{1/2}H/2; H/2 only in the plane) —; the corner "
                "1_S behind the entrant by Σ_{i∈S}x_i: the 8-kernel inner problem against the product of the edges' 2-kernel shares at the "
-               "offset H/√2 (the planar edge problem: in the continuum it depends on |t| only) and at H/2 (the planar offset):", "",
+               "offset H/√2 (the planar edge problem: in the continuum it depends on |t| only) and at H/2 (the planar offset); the last "
+               "triples put a corner between x_θ(H/√2) and x_θ(H/2), where only the true offset's product gets the count:", "",
                "| gaps (x₁, x₂, x₃) | 8-kernel: formed (stop) | the product at H/√2: formed, max \\|Δ share\\| | at H/2: formed, max \\|Δ share\\| |",
                "|---|---|---|---|"]
         for r in T3['cube']:
@@ -1275,6 +1429,16 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                 prod = np.array([np.prod([pv[i] if s_[i] else 1 - pv[i] for i in range(3)]) for s_ in r['S']])
                 row.append(f"{int((prod > TH_REL).sum())}, {np.abs(prod - sh).max():.2e}")
             L_.append(f"| ({', '.join(f'{v:g}' for v in r['x'])}) | {int((sh > TH_REL).sum())} ({r['stop']}) | {row[0]} | {row[1]} |")
+        L_.append("")
+    if D2 is not None and T is not None and 'pt' in T:
+        xt_ = x_theta_t(T)
+        L_ += ["## D2. The loop's threshold at a finite mass", "",
+               f"The edge loop (Part A's, A = {A_B:g}) with the feature at the offset t along the face: the gap at which its runner-up's share "
+               f"crosses {TH_REL:g} (bisection in [4.5, 8]) against the inner problem's x_θ(t) (T); the shift is the finite mass's:", "",
+               "| ε | t/H | the loop's crossing | x_θ(t) | shift |", "|---|---|---|---|---|"]
+        for r in sorted(D2, key=lambda r: (-r['eps'], r['t'])):
+            th = float(np.interp(abs(r['t']), T['t'], xt_))
+            L_.append(f"| {r['eps']:g} | {r['t'] / H:.3f} | {r['x']:.3f} | {th:.3f} | {r['x'] - th:+.3f} |")
         L_.append("")
     if W is not None:
         Kl, cl = local()
@@ -1325,7 +1489,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
                       f"{r['profile']:.6f} | {r['share'] - r['profile']:+.2e} | {r['end']:.1e} |")
         L_ += ["", "W5. The 2-fold profile split's runner-up share p(x) against the softmax 1/(1 + e^{κx}) at the formation threshold: "
                f"p's crossing of {TH_REL:g} (x_θ of coinciding kernels at the feature's centre) and the softmax's, the softmax's relative "
-               "error at p's crossing and at x = 8, and e^{−2α/a} at the runner-up's coefficient (its mirror coordinate α; the exponential "
+               "error at p's crossing and at x = 8, and e^{−2α/a} at the runner-up's coefficient (its amplitude coordinate α; the exponential "
                "branch's correction, D‴.51(i)):", "",
                "| A | x_θ: profile split, softmax | the softmax's error: at the crossing, at x = 8 | α/a | e^{−2α/a} |", "|---|---|---|---|---|"]
         for r in W['profile']:
@@ -1340,7 +1504,7 @@ def main():
     raw = os.path.join(OUT, 'transit_nd_raw.npz')
     md = os.path.join(OUT, 'transit_nd.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u')
+    keys = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2')
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[old.get(k) for k in keys]))
         return
@@ -1349,7 +1513,8 @@ def main():
     t0 = time.time()
     for k, fn in (('A', part_A), ('B', part_B), ('C', part_C), ('T', part_T), ('D', part_D), ('B4', part_B4), ('H', part_H),
                   ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2), ('V', part_V), ('C3', part_C3),
-                  ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4']))):
+                  ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4'])), ('C4', part_C4), ('B4x', lambda: part_B4x(res['B4'])),
+                  ('V3', part_V3), ('D2', part_D2)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
