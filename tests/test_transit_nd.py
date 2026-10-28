@@ -250,13 +250,18 @@ def test_inner_k_says_why_it_stopped():
 
 def test_c3_outcomes():
     """C3's classification by the final counts: a capture tie before a capture, a capture before the count, two kernels at feature 0
-    bound whatever the residual at the end (the finite mass's relaxation), one kernel per feature stranded only with a residual."""
-    row = lambda nf, cap, rms: dict(n_fin=nf, captured=cap, rms=rms)
+    bound whatever the residual at the end (the finite mass's relaxation); with one kernel per feature and a residual, the runner-up's
+    recorded distance decides (round 53): not departed (within 2σ throughout: C4's d_held, C2's d_max), stranded (it left), unsettled
+    (no distance recorded)."""
+    row = lambda nf, cap, rms, **kw: dict(n_fin=nf, captured=cap, rms=rms, **kw)
     assert TN.c3_outcome(row([1, 1, 2], [(163, 0, 2)], 1e-11)) == 'capture tie'
     assert TN.c3_outcome(row([1, 1, 1], [(163, 0, 2)], 1e-12)) == 'captured'
     assert TN.c3_outcome(row([2, 1, 1], [], 4e-8)) == 'bound'
-    assert TN.c3_outcome(row([1, 1, 1], [], 3e-6)) == 'stranded'
-    assert TN.c3_outcome(row([1, 1, 1], [], 1e-12)) == 'one kernel'
+    assert TN.c3_outcome(row([1, 1, 1], [], 3e-6)) == 'unsettled'
+    assert TN.c3_outcome(row([1, 1, 1], [], 3e-6, d_held=0.44)) == 'not departed'
+    assert TN.c3_outcome(row([1, 1, 1], [], 3e-6, d_max=0.39)) == 'not departed'
+    assert TN.c3_outcome(row([1, 1, 1], [], 3e-6, d_held=2.5)) == 'stranded'
+    assert TN.c3_outcome(row([1, 1, 1], [], 1e-12, d_held=0.4)) == 'one kernel'
 
 
 def test_inner_job_reports_the_stop():
@@ -282,7 +287,7 @@ def test_v_law_is_the_static_rest_as_the_unfitted_feature_vanishes():
 
 def test_c3_outcome_at_its_residual_cut_and_formed_by_feature():
     row = lambda nf, cap, rms: dict(n_fin=nf, captured=cap, rms=rms)
-    assert TN.c3_outcome(row([1, 1, 1], [], 1.01e-8)) == 'stranded' and TN.c3_outcome(row([1, 1, 1], [], 0.99e-8)) == 'one kernel'
+    assert TN.c3_outcome(row([1, 1, 1], [], 1.01e-8)) == 'unsettled' and TN.c3_outcome(row([1, 1, 1], [], 0.99e-8)) == 'one kernel'
     c0 = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
     cs = np.array([[0.0, 0.0], [1.0, 0.0]])
     As = np.array([1.0, 0.5])
@@ -324,17 +329,25 @@ def test_the_fold_constant_and_its_level_in_the_report():
 
 
 def test_v_job_off_its_branch_and_the_rests_energy():
-    """`v_job` (round 49): at A′/A = 3.5 and 5σ the tail is unbound at the grid's top; continued from 0.99A the entrant itself leaves for
-    A′ — no rows, flagged, the V3 cell 'entrant to A′'; on a branch the rests' energy E*(w) increases with w at every step (the hold), as
-    the report states; C4's report counts the two tolerances' agreement and names the disagreement."""
+    """`v_job` (rounds 49, 53): at A′/A = 3.5 and 5σ the tail is unbound at the grid's top; continued from 0.99A the cold start's small
+    entrant would leave for A′, a fresh start (the entrant moved along −e) finds the branch, which folds at c = 3.135; on a branch the
+    rests' energy E*(w) increases with w at every step (the hold), as the report states, and on the far side it decreases at every step
+    with no fold; C4's report counts the two tolerances' agreement and names the disagreement."""
     off = TN.v_job((1, 5.0, 2.8))
-    assert off['entrant_left'] and not off['rows'] and off['fold'] is None and abs(off['top'] - 0.99 * TN.A_B) < 1e-12
+    assert abs(off['top'] - 0.99 * TN.A_B) < 1e-12 and off['start'].startswith('fresh') and not off['entrant_left']
+    assert off['fold'] is not None and abs(np.sqrt(off['fold'][0] * off['fold'][1]) / (2.8 * 25 * np.exp(-25 / 4)) - 3.135) < 2e-3
     on = TN.v_job((1, 6.0, TN.AP_V))
-    assert not on['entrant_left'] and on['top'] == TN.W_V[0] and on['fold'] is not None
+    assert not on['entrant_left'] and on['top'] == TN.W_V[0] and on['fold'] is not None and on['start'] == 'cold'
     E, w = [q['E'] for q in on['rows']], [q['w'] for q in on['rows']]
     assert all((E[i + 1] - E[i]) / (w[i + 1] - w[i]) > 0 for i in range(len(E) - 1))
     md = TN.report(V=[on], V3=[off])
-    assert 'entrant to A′' in md and 'increases with w at every step' in md
+    assert '3.135 (fresh start)' in md and 'increases with w at every step' in md
+    far = TN.v_job((1, 6.0, TN.AP_V, -1))
+    Ef, wf = [q['E'] for q in far['rows']], [q['w'] for q in far['rows']]
+    assert far['fold'] is None and len(far['rows']) == len(TN.W_V) and all(q['along'] < 0 for q in far['rows'])
+    assert all((Ef[i + 1] - Ef[i]) / (wf[i + 1] - wf[i]) < 0 for i in range(len(Ef) - 1))
+    md = TN.report(V=[on], VF=[far])
+    assert f'| 1 | 6 | ' in md and f'none down to {TN.W_V[-1]:g} | {len(Ef) - 1} of {len(Ef) - 1},' in md
     base = dict(x=4.9, eps=1e-11, d2=6.08, A2=0.7, s_dep=None, s2=3.07e6, w_dep=None, w_max=0.0232, n_fin=[2, 1, 1], rms=5e-9, d_end=0.002,
                 captured=[], w_end=0.0232)
     other = dict(base, s_dep=3.3e5, w_dep=0.0165, w_max=0.0215, n_fin=[1, 1, 1], rms=1e-16, d_end=6.08, captured=[(5, 0, 2)], w_end=0.7)
@@ -342,3 +355,120 @@ def test_v_job_off_its_branch_and_the_rests_energy():
     assert 'the same outcome at 0 of 1 points; they differ at x = 4.9, ε = 1e-11: bound at 1e-12' in md
     md = TN.report(C4=[other], C4b=[other])
     assert 'the same outcome at 1 of 1 points.' in md
+
+
+def test_t3_product_takes_the_complements():
+    """T3's product rule: the corner 1_S gets Π_{i∈S}p_i Π_{i∉S}(1 − p_i), summing to 1 over the cube."""
+    pv = [0.1, 0.3, 0.02]
+    S = [(a, b, c) for a in (0, 1) for b in (0, 1) for c in (0, 1)]
+    pr = TN.t3_product(pv, S)
+    assert abs(pr.sum() - 1.0) < 1e-15
+    assert abs(pr[S.index((0, 0, 0))] - 0.9 * 0.7 * 0.98) < 1e-15 and abs(pr[S.index((1, 1, 0))] - 0.1 * 0.3 * 0.98) < 1e-15
+
+
+def test_d2_report_shift_against_x_theta_at_the_offset():
+    """D2's shift is the loop's crossing minus x_θ at its offset |t| (not at t = 0)."""
+    xc = np.array([6.3, 6.2, 5.5])
+    tt = np.array([0.0, TN.H / 8, TN.H / 2])
+    x = np.linspace(0.0, 10.0, 11)
+    T = dict(x=x, t=tt, pt=np.array([TN.TH_REL * (1 + 0.1 * (c - x)) for c in xc]))
+    D2 = [dict(eps=1e-6, t=TN.H / 2, x=5.63), dict(eps=1e-6, t=0.0, x=6.43)]
+    md = TN.report(T=T, D2=D2)
+    assert '| 1e-06 | 0.500 | 5.630 | 5.500 | +0.130 |' in md and '| 1e-06 | 0.000 | 6.430 | 6.300 | +0.130 |' in md
+
+
+def test_the_c3_fold_column_from_v():
+    """C3's fold column for the 5σ variant: c(d)·A₂·(d/σ)²e^{−d²/(4σ²)} at feature 2's distance (V's c(d) interpolated)."""
+    V = [dict(n=1, d=4.5, Ap=TN.AP_V, rows=[dict(w=0.3, we=0.5, along=0.1, across=0.0)], fold=(0.3, 0.3), along_fold=0.9),
+         dict(n=1, d=5.5, Ap=TN.AP_V, rows=[dict(w=0.3, we=0.5, along=0.1, across=0.0)], fold=(0.08, 0.08), along_fold=0.9)]
+    cs, As = TN.targets_C2()['near tie 5σ']
+    d2 = float(np.linalg.norm(cs[2] - cs[0]) / TN.SIG)
+    lev = lambda a, d: a * d ** 2 * np.exp(-d ** 2 / 4)
+    c_ = np.interp(d2, [4.5, 5.5], [0.3 / lev(TN.AP_V, 4.5), 0.08 / lev(TN.AP_V, 5.5)])
+    row = dict(name='near tie 5σ', eps=1e-9, mu=TN.MU_C2, w_tail=0.03, n_fin=[1, 1, 1], captured=[], rms=1e-12)
+    md = TN.report(V=V, C3=[row])
+    assert f"{c_ * As[2] * lev(1.0, d2):.3g} (d = {d2:.2f}σ)" in md
+
+
+def test_the_secant_line_covers_v3():
+    """The hold's sentence reads V's and V3's branches together: a V3 branch whose energy falls with w turns it."""
+    up = dict(n=1, d=6.0, Ap=TN.AP_V, rows=[dict(w=0.3, we=0.5, along=0.1, across=0.0, E=2.0), dict(w=0.1, we=0.7, along=0.2, across=0.0, E=1.0)],
+              fold=None, along_fold=None)
+    down = dict(up, Ap=1.4, rows=[dict(w=0.3, we=0.5, along=0.1, across=0.0, E=1.0), dict(w=0.1, we=0.7, along=0.2, across=0.0, E=2.0)])
+    assert 'increases with w at every step' in TN.report(V=[up])
+    assert 'does NOT increase with w at every step' in TN.report(V=[up], V3=[down])
+
+
+def test_the_race_job_both_sides():
+    """R's ε-free race (round 53): at the gap 7 the runner-up, a tail (below θ|A| after the layer), goes toward feature 2 on the near
+    tie and departs; on the mirrored target it goes to the far side, stays within 2σ and its coefficient grows."""
+    r = TN.race_job(('near tie', 7.0, 1e-10, 3e5))
+    assert r['side'] == 'toward' and r['s_d'] is not None and 5e4 < r['s_d'] < 2e5 and r['w_layer'] < TN.TH_REL * TN.A_B
+    assert r['d_dep'] > 2.0 >= r['d_pre'] and abs(r['s_layer'] / 1e3 - 1) < 0.05            # the departure at 2σ; the layer's end at 10³
+    m = TN.race_job(('near tie mirrored', 7.0, 1e-10, 3e5))
+    assert m['side'] == 'far' and m['s_d'] is None and m['d_end'] < 2.0 and m['w_end'] > m['w_layer'] > 0
+    assert m['closest'] < 1e-6 and r['closest'] < 1e-6                     # the inner layer's collapse
+
+
+def test_race_rule_and_the_r_report():
+    """The rule captured iff s_d < s₂, ties counted apart; the mirror and the scan tables; the FC line."""
+    assert TN.race_rule(1e5, 3e5) == 'captured' and TN.race_rule(4e5, 3e5) == 'not departed' and TN.race_rule(None, 3e5) == 'not departed'
+    mk = lambda x, side, sd, **kw: dict(dict(name='near tie', x=x, rtol=1e-13, s_end=3e8, status=0, side=side, closest=1e-9, s_d=sd,
+                                             w_dep=0.01 if sd else None, w_layer=0.02, marks=[1e4, 1e5], w_marks=[0.02, 0.02],
+                                             d_marks=[0.5, 0.6], s_theta=None, d_end=6.08, w_end=0.7), **kw)
+    R = dict(main=[mk(4.9, 'toward', 3.3e5), mk(7.0, 'toward', 9.9e4)],
+             mirror=[mk(7.0, 'far', None, name='near tie mirrored', s_theta=5.6e6, d_end=0.3, w_end=0.15)],
+             scan=[mk(4.9, 'toward', None, rtol=1e-13), mk(4.9, 'far', None, rtol=1e-12)])
+    c4 = lambda x, eps, out: dict(x=x, eps=eps, s2=9.7 / np.sqrt(eps), n_fin=[1, 1, 1] if out != 'bound' else [2, 1, 1],
+                                  captured=[(5, 0, 2)] if out == 'captured' else [], rms=1e-16 if out == 'captured' else 5e-9, d_held=0.3)
+    C4 = [c4(4.9, 1e-12, 'captured'), c4(7.0, 1e-8, 'bound'), c4(4.9, 1e-8, 'bound'),
+          dict(c4(7.0, 1e-9, 'captured'), n_fin=[1, 1, 2])]                                # a capture tie: counted apart
+    FC = [dict(name='near tie', side=-1, fold=(0.005, 0.005), at=(0.59, -0.58), w_end=0.003),
+          dict(name='near tie', side=1, fold=(0.01668, 0.01668), at=(0.842, 0.840), w_end=0.003),
+          dict(name='alone', side=1, fold=None, at=(0.59, -0.58), w_end=0.003)]
+    md = '\n'.join(TN.r_lines(R, None, C4, None, FC))
+    assert "against the loops' outcomes: 3 of 3 agree, 1 capture ties" in md
+    assert '| C4 | 7 | 1e-08 | 9.7e+04 | 9.9e+04 | not departed | bound |' in md
+    assert '| 7 | far | 1.0e-09 | 0.02 | 0.02, 0.02 | 0.300 | 5.6e+06 | none |' in md
+    assert 'Runs not toward, per tolerance: 1e-12: 1 of 1; 1e-13: 0 of 1.' in md
+    assert 'toward feature 2: the fold at w = 0.01668' in md and 'toward, feature 1 removed: no fold down to w = 0.003' in md
+    assert abs(TN.fc_fold(FC) - 0.01668) < 1e-15 and TN.fc_fold(None) is None
+
+
+def test_inner_k_clock_after_a_chunk_and_a_zero_drift(monkeypatch):
+    """inner_k's clock read after a completed chunk (not only inside the integration), and the remaining change when the shares stop
+    moving (one kernel: every drift zero → 0)."""
+    L = X.law()
+    K, _ = TN.local()
+    pts, T = TN.TIES['edge']
+    f = TN.A_B * K.phi(np.atleast_2d(T + np.array([0.0, TN.H / 2])))[:, 0]
+    clock = [0.0]
+    monkeypatch.setattr(RN.time, 'time', lambda: clock[0])
+    real = RN.solve_ivp
+
+    def chunk(*a, **k):
+        out = real(*a, **k)
+        clock[0] += 10.0
+        return out
+    monkeypatch.setattr(RN, 'solve_ivp', chunk)
+    r = RN.inner_k(L, K, f, np.array(pts, float), np.array([0.0, 4.0]), tol=0.0, max_secs=5.0)
+    assert r['stop'] == 'clock' and r['s'] > 0 and r['drifts'] == []
+    monkeypatch.setattr(RN, 'solve_ivp', real)
+    r1 = RN.inner_k(L, K, f, np.array(pts[:1], float), np.array([0.0]), tol=0.0, max_doublings=2)
+    assert r1['stop'] == 'cap' and r1['drifts'] == [0.0, 0.0] and r1['remaining'] == 0.0
+
+
+def test_the_third_moment_law_of_the_hold():
+    """e3_law: odd in the side, ∝ w^{−1/2} at small w (E*₃·w^{1/2} → ∓(1/6)P₃(M₂*)^{3/2}), increasing in w toward A′ and decreasing away;
+    V's measured secant tends to it as the displacement vanishes (d = 7σ: within 6% at w ≈ 0.28 on both sides)."""
+    d = 6.0
+    assert TN.e3_law(0.1, d, 1) == -TN.e3_law(0.1, d, -1)
+    w = np.array([1e-6, 1e-7])
+    l = TN.AP_V * d ** 2 * np.exp(-d ** 2 / 4)
+    P3 = TN.AP_V * np.sqrt(np.pi) * d ** 3 * np.exp(-d ** 2 / 4) / (8 * TN.SIG ** 2)
+    assert np.allclose(TN.e3_law(w, d, 1) * np.sqrt(w), -P3 * (TN.SIG ** 2 * l) ** 1.5 / 6, rtol=1e-5)
+    assert TN.e3_law(0.2, d, 1) > TN.e3_law(0.1, d, 1) and TN.e3_law(0.2, d, -1) < TN.e3_law(0.1, d, -1)
+    for side in (1, -1):
+        r = TN.v_job((1, 7.0, TN.AP_V, side))
+        q = TN.e3_ratios(r)
+        assert q and abs(q[0][0] - 0.28) < 0.05 and abs(q[0][1] - 1) < 0.06 and np.sign(q[0][2]) == side
