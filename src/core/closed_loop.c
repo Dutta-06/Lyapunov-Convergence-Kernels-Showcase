@@ -14,6 +14,10 @@
  * g_i = s_i + (1 − s_i)g with s_i = S((|w_i| − θ/2)/(θ/2)) — the formed kernels driven, the others gated (gate 2, the formation dead zone);
  * S(u) = u²(3 − 2u) on [0, 1], 0 below, 1 above (z_lo, z_hi the squared thresholds).
  *
+ * Two options for referee round 50's tests of the mechanism: etrue = 1 drives the adaptation (not the control, not the gate) with the
+ * true error x − x_m instead of the measured one; cbox < ∞ bounds the centres to [−cbox, cbox] (an outward velocity at the bound is
+ * zeroed).
+ *
  * Dormand–Prince 5(4) with the usual error control; the state is hit exactly at each output time. Returns the number of accepted steps,
  * or −1 if max_steps was exceeded, −2 if the step fell below 1e-14. Also returns the time each kernel first exceeds |w| > th
  * (linear interpolation within the step; NaN if never) and, in emax: max|e| over [0, per] and [T − per, T] (the measured error), the
@@ -24,8 +28,8 @@
 #include <stddef.h>
 
 typedef struct {
-    int d, nb, metric, regx, nn, gate;
-    double m, G, cc, amax, sig, ke, lam, Tf, zlo, zhi, theta;
+    int d, nb, metric, regx, nn, gate, etrue;
+    double m, G, cc, amax, sig, ke, lam, Tf, zlo, zhi, theta, cbox;
     double x0, amp, om, a2, om2;
     const double *bc, *ba, *bs, *b0, *nw, *nph, *nam;
 } Par;
@@ -53,6 +57,7 @@ static void rhs(const Par *p, double t, const double *y, double *dy, double *e_o
     for (k = 0; k < p->nn; k++) n += p->nam[k] * cos(p->nw[k] * t + p->nph[k]);
     xt = x + n;
     e = xt - xm;
+    double ea = p->etrue ? x - xm : e;                       /* the adaptation's drive */
     xr = p->regx ? xm : xt;
     for (k = 0; k < p->nb; k++) {
         double u = x - p->bc[k];
@@ -79,14 +84,18 @@ static void rhs(const Par *p, double t, const double *y, double *dy, double *e_o
             gi = si + (1.0 - si) * g;
         }
         fh += w * phc;
-        dy[1 + i] = gi * p->G * beta * da * e * phr;
+        dy[1 + i] = gi * p->G * beta * da * ea * phr;
         if (p->lam > 0.0) {
             /* the leak −λη on the mirror coordinate: α̇ −= λ η (dα/dη), dα/dη = G(b0 sech² + 2c tanh²) */
             double sch = 1.0 / cosh(al / p->amax);
             double mob = p->G * (p->b0[i] * sch * sch + 2.0 * p->cc * th * th);
             dy[1 + i] -= p->lam * eta_of(p, al, p->b0[i]) * mob;
         }
-        dy[1 + d + i] = gi * v * e * phr * ur / s2;
+        {
+            double dc = gi * v * ea * phr * ur / s2;
+            if ((c >= p->cbox && dc > 0.0) || (c <= -p->cbox && dc < 0.0)) dc = 0.0;
+            dy[1 + d + i] = dc;
+        }
     }
     dy[0] = fs - fh + dxm - p->ke * e;
     if (e_out) *e_out = e;
@@ -98,8 +107,8 @@ static double wabs(const Par *p, int i, double al)
     return fabs((p->b0[i] + 2.0 * p->cc * sh * sh) * p->amax * th / p->m);
 }
 
-/* ip = [d, nb, metric, regx, nn, nout, gate]; dp = [m, G, cc, amax, sig, ke, lam, x0, amp, om, a2, om2, rtol, atol, hmax, th, per,
- * max_steps, Tf, z_lo, z_hi, theta]; the state (x, α, c) and, with a gate, z */
+/* ip = [d, nb, metric, regx, nn, nout, gate, etrue]; dp = [m, G, cc, amax, sig, ke, lam, x0, amp, om, a2, om2, rtol, atol, hmax, th,
+ * per, max_steps, Tf, z_lo, z_hi, theta, cbox]; the state (x, α, c) and, with a gate, z */
 long simulate(const int *ip, const double *dp, const double *bc, const double *ba, const double *bs, const double *b0, const double *nw,
               const double *nph, const double *nam, const double *y0, const double *tout, double *yout, double *ent, double *emax,
               double *work)
@@ -116,8 +125,8 @@ long simulate(const int *ip, const double *dp, const double *bc, const double *b
         a63 = 46732.0 / 5247, a64 = 49.0 / 176, a65 = -5103.0 / 18656, b1 = 35.0 / 384, b3 = 500.0 / 1113, b4 = 125.0 / 192,
         b5 = -2187.0 / 6784, b6 = 11.0 / 84, e1 = 71.0 / 57600, e3 = -71.0 / 16695, e4 = 71.0 / 1920, e5 = -17253.0 / 339200,
         e6 = 22.0 / 525, e7 = -1.0 / 40;
-    p.d = d; p.nb = ip[1]; p.metric = ip[2]; p.regx = ip[3]; p.nn = ip[4]; p.gate = ip[6];
-    p.Tf = dp[18]; p.zlo = dp[19]; p.zhi = dp[20]; p.theta = dp[21];
+    p.d = d; p.nb = ip[1]; p.metric = ip[2]; p.regx = ip[3]; p.nn = ip[4]; p.gate = ip[6]; p.etrue = ip[7];
+    p.Tf = dp[18]; p.zlo = dp[19]; p.zhi = dp[20]; p.theta = dp[21]; p.cbox = dp[22];
     p.m = dp[0]; p.G = dp[1]; p.cc = dp[2]; p.amax = dp[3]; p.sig = dp[4]; p.ke = dp[5]; p.lam = dp[6];
     p.x0 = dp[7]; p.amp = dp[8]; p.om = dp[9]; p.a2 = dp[10]; p.om2 = dp[11];
     p.bc = bc; p.ba = ba; p.bs = bs; p.b0 = b0; p.nw = nw; p.nph = nph; p.nam = nam;

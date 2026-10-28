@@ -52,14 +52,16 @@ def tones(rms, w_lo, w_hi, k=16, seed=0):
 
 
 def simulate(L, b0, c0, sig, bumps, ke, ref, tout, x_init=None, metric='paradigm', regx=False, noise=None, lam=0.0, th=None,
-             per=None, rtol=1e-9, atol=1e-12, hmax=0.0, max_steps=10 ** 9, gate=None):
+             per=None, rtol=1e-9, atol=1e-12, hmax=0.0, max_steps=10 ** 9, gate=None, etrue=False, cbox=np.inf, al0=None):
     """Integrate the closed loop. L: the free law (m, G, γ, a_max); b0: the masses; c0: the kernels' starting centres; sig: their width;
     bumps = (centres, amplitudes, widths) of f; ref = (x₀, a, ω) or (x₀, a, ω, a₂, ω₂); tout: increasing output times (tout[0] the
     start); x_init: x(0) (default x_m(0)); regx: evaluate the adaptation's regressor at x_m instead of x̃; noise: `tones(...)` or None;
     lam: the leak; th: the formation threshold on |w| (entry times recorded; default no entries); per: the window for max|e| at the start
     and the end (default the reference's period); gate: Proposition D‴.57's dead zone, dict(mode='energy' or 'formation', Tf, lo, hi,
     theta, z0) — the error's energy filtered over Tf, the drive gated smoothly between the thresholds lo and hi on its rms, every kernel
-    ('energy') or those with |w| below about theta ('formation'), z0 the filter's start (default (2·hi)²: open). Returns dict(t, x, al, c,
+    ('energy') or those with |w| below about theta ('formation'), z0 the filter's start (default (2·hi)²: open); etrue: the adaptation
+    driven by the true error x − x_m (the control and the gate by the measured one); cbox: the centres bounded to [−cbox, cbox] (referee
+    round 50's tests of the mechanism); al0: the kernels' starting α (default 0). Returns dict(t, x, al, c,
     w, entries (time of the first |w_i| > th, NaN if never), e_first, e_last (max|x̃ − x_m| over the first and the last window per),
     e_true_last, e_true_rms_last (the true error x − x_m's max and rms over the last window), x_range (the state's least and largest value
     at the accepted steps), steps[, z the filtered energy])."""
@@ -76,12 +78,14 @@ def simulate(L, b0, c0, sig, bumps, ke, ref, tout, x_init=None, metric='paradigm
     nz = noise or dict(w=np.zeros(0), ph=np.zeros(0), amp=np.zeros(0))
     gm = {None: 0, 'energy': 1, 'formation': 2}[None if gate is None else gate['mode']]
     n = 1 + 2 * d + (gm > 0)
-    y0 = np.r_[x0 if x_init is None else float(x_init), np.zeros(d), c0]          # x_m(0) = x₀
+    al0 = np.zeros(d) if al0 is None else np.broadcast_to(np.asarray(al0, float), (d,))
+    y0 = np.r_[x0 if x_init is None else float(x_init), al0, c0]                  # x_m(0) = x₀
     if gm:
         y0 = np.r_[y0, gate.get('z0', (2 * gate['hi']) ** 2)]
-    ip = np.array([d, bc.size, METRICS[metric], int(bool(regx)), len(nz['w']), tout.size, gm], dtype=np.int32)
+    ip = np.array([d, bc.size, METRICS[metric], int(bool(regx)), len(nz['w']), tout.size, gm, int(bool(etrue))], dtype=np.int32)
     dp = np.array([L.m, L.G, L.c, L.A, sig, ke, lam, x0, a, om, a2, om2, rtol, atol, hmax, np.inf if th is None else th, per,
-                   float(max_steps)] + ([gate['Tf'], gate['lo'] ** 2, gate['hi'] ** 2, gate.get('theta', 0.0)] if gm else [1.0, 0.0, 1.0, 0.0]))
+                   float(max_steps)] + ([gate['Tf'], gate['lo'] ** 2, gate['hi'] ** 2, gate.get('theta', 0.0)] if gm else [1.0, 0.0, 1.0, 0.0])
+                  + [float(cbox)])
     yout = np.zeros((tout.size, n))
     ent = np.zeros(d)
     emax = np.zeros(6)

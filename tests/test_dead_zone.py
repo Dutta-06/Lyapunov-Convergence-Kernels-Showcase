@@ -1,5 +1,6 @@
-"""Proposition D‴.57: the transit's dead zone — the energy dead zone's frozen block in the sliding limit, the gated loop
-(`experiments/exp_dead_zone.py`), and the dead zone in the closed loop's C integrator (`closed_loop.simulate(gate=...)`)."""
+"""Proposition D‴.57: the transit's dead zone — the energy dead zone's frozen block in the sliding limit and its law given the stop, the
+gated loop, the report (`experiments/exp_dead_zone.py`), and the dead zone in the closed loop's C integrator
+(`closed_loop.simulate(gate=...)`)."""
 import os
 import sys
 import warnings
@@ -40,7 +41,8 @@ def test_gated_relax_stops_where_the_residuals_rms_reaches_the_threshold():
 
 def test_energy_dead_zone_freezes_the_last_block_on_the_energy_identity():
     """Target 0, s = 0.01 (Part A's first draw): the dead zone stops at the K-th entry; the frozen block's unrelaxed part u obeys |u|² =
-    (1 + δ)²s²N − |r_K|² to 10⁻³ (first order), and the frozen fit is the oracle's displaced by u (an identity of the bookkeeping)."""
+    (1 + δ)²s²N − |r_K|² to 10⁻³ (first order) and is the last entrant's amplitude deficit along its kernel off the block's tangent,
+    u = δw·P⊥φ_last (to 10⁻³), a shrinkage (δw > 0); the frozen fit is the oracle's displaced by u (an identity of the bookkeeping)."""
     cs, As = NC.targets()[0]
     L, K, c0, f, cert, R0, P = NC.noiseless(cs, As)
     nK, nx = cs.size, K.xs.size
@@ -49,20 +51,107 @@ def test_energy_dead_zone_freezes_the_last_block_on_the_energy_identity():
     d = DZ.a_draw(L, K, c0, f, sorted(cert['e']), xi, s, nK)
     assert d['exact'] and d['k'] == nK and d['crossed']
     assert abs(d['u2'] / d['u2_pred'] - 1) < 1e-3
+    assert d['dw'] > 0 and abs(d['dw'] * d['pnorm'] / np.sqrt(d['u2']) - 1) < 1e-3 and d['cos_last'] > 1 - 1e-3
     assert d['err_dz'] > d['err_or']
     u = np.sqrt(d['u2'] / nx)
     assert abs(d['err_dz'] ** 2 - (d['err_or'] ** 2 + u ** 2 - 2 * d['cross'] * d['err_or'] * u)) < 1e-12 * d['err_dz'] ** 2 + 1e-18
 
 
 def test_gated_loops_form_the_features_kernels_and_follow_the_sliding_limit():
-    """Part B's draw (target 0, s = 0.03, draw 0) at ε = 10⁻⁸ to τ_K + 3W: ungated the loop has formed noise kernels; either gate forms
-    the three features' kernels only, the energy dead zone's fit is the limit's frozen fit and the formation dead zone's the oracle's."""
+    """Part B's draw (target 0, s = 0.03, draw 1) at ε = 10⁻⁸ to τ_K + 3W: ungated the loop has formed noise kernels; either gate forms
+    the three features' kernels only, the energy dead zone's fit is the limit's frozen fit and the formation dead zone's the oracle's —
+    the fits themselves, not only their errors (measured 1.1·10⁻¹¹ rms)."""
     cs, As = NC.targets()[0]
-    out = DZ.b_job((0, cs, As, 0.03, 0))
+    out = DZ.b_job((0, cs, As, 0.03, 1))
     assert out['exact'] and out['k_lim'] == cs.size
     assert out['none']['formed'] > cs.size and out['energy']['formed'] == out['formation']['formed'] == cs.size
-    assert abs(out['energy']['err'] - out['err_dz_lim']) < 1e-8 and abs(out['formation']['err'] - out['err_or_lim']) < 1e-9
+    assert out['energy']['d_dz'] < 1e-8 and out['formation']['d_or'] < 1e-8
     assert out['energy']['err'] > 1.5 * out['formation']['err']
+
+
+def test_part_B_draws_its_noise_afresh_at_each_level():
+    """`b_noise`: Part B's draws at the three levels are not one vector rescaled (referee round 50), and a draw is reproducible."""
+    xs = [DZ.b_noise(0, 0, s, 61) / s for s in DZ.LEVELS_B]
+    assert all(np.abs(xs[i] - xs[j]).max() > 0.1 for i in range(3) for j in range(i))
+    assert np.array_equal(DZ.b_noise(3, 2, 0.03, 61), DZ.b_noise(3, 2, 0.03, 61))
+
+
+def test_the_stop_law_against_quadrature():
+    """`stop_law`: m = E[χ²_{N−2K} | χ²_{N−2K} ≤ (1 + δ)²N] against quadrature of x·p(x) (53.83 at N = 61, K = 3), E|u|²/(s²N) =
+    (c − m)/N and E err_dz²/s² = (2K + c − m)/N; the excess's growth with N: the rms ratio over (2 + N(2δ + δ²)/(2K))^{1/2} → 1."""
+    from scipy import integrate
+    from scipy.stats import chi2
+    for N in (61, 181, 541):
+        lw = DZ.stop_law(N, 3)
+        k, c = N - 6, (1 + DZ.DELTA) ** 2 * N
+        num = integrate.quad(lambda x: x * chi2.pdf(x, k), 0, c, limit=400, epsabs=0, epsrel=1e-12)[0]
+        assert abs(lw['m'] / (num / chi2.cdf(c, k)) - 1) < 1e-9 and abs(lw['p'] - chi2.cdf(c, k)) < 1e-15
+        assert abs(lw['dz'] - (6 + c - lw['m']) / N) < 1e-14 and abs(lw['u'] - (c - lw['m']) / N) < 1e-14
+    assert abs(DZ.stop_law(61, 3)['m'] - 53.83) < 5e-3 and abs(DZ.stop_law(61, 3)['dz'] - 0.4260) < 5e-5
+    lw = DZ.stop_law(10 ** 5, 3)
+    d = 2 * DZ.DELTA + DZ.DELTA ** 2
+    assert abs(np.sqrt(lw['dz'] / (6 / 10 ** 5)) / np.sqrt(2 + 10 ** 5 * d / 6) - 1) < 1e-3
+
+
+def test_gate_stats_and_kernel_events():
+    """`gate_stats` on a hand-made filtered energy: shut where z ≤ lo², fully open where z ≥ hi², the first closing at the first shut
+    output (not the first below hi²), the last reopening after the last shut stretch, in τ = t/Λ; `kernel_events`: each formed kernel's
+    formation, the feature nearest its centre then, and the first output time beyond the range after it."""
+    ts = np.arange(10.0)
+    z = np.array([9.0, 3.0, 1.0, 0.5, 2.5, 4.0, 0.9, 0.8, 1.5, 0.5])
+    g = DZ.gate_stats(z, ts, 1.0, 2.0, 2.0)
+    assert g['shut'] == 0.5 and g['open'] == 0.2 and g['first_close'] == 1.0 and g['last_reopen'] == 4.0 and g['shut_end']
+    g = DZ.gate_stats(np.full(4, 5.0), ts[:4], 1.0, 2.0, 2.0)
+    assert g['shut'] == 0.0 and g['open'] == 1.0 and np.isnan(g['first_close']) and np.isnan(g['last_reopen']) and not g['shut_end']
+    C = np.zeros((10, 3))
+    C[:, 1] = [-0.4] * 6 + [-1.3] * 4
+    C[:, 2] = [0.6] * 8 + [-0.45] * 2                                   # crosses to the other feature after its formation
+    ev = DZ.kernel_events(np.array([np.nan, 2.5, 6.0]), ts, C, 2.0, [-0.5, 0.6], 1.2)
+    assert [(e['i'], e['formed'], e['feature']) for e in ev] == [(1, 1.25, 0), (2, 3.0, 1)]
+    assert ev[0]['ejected'] == 3.0 and np.isnan(ev[1]['ejected'])
+
+
+def _draw(kept, k, s):
+    """A synthetic Part A draw: exact entry set, the order kept or swapped, the stop at entry k (−1: none of the first K)."""
+    d = dict(exact=True, exact_order=kept, exits=0, k=k, last=5)
+    if k == 3:
+        d.update(crossed=True, err_dz=2 * s, err_or=s, u2=0.3 * s * s * 61, u2_pred=0.3 * s * s * 61, cross=0.0, dw=1.8 * s, wj=0.6,
+                 pnorm=np.sqrt(0.3 * 61) / 1.8, cos_last=1.0, cos=0.99)
+    return d
+
+
+def test_the_report_on_synthetic_results():
+    """A: the draws split by entry order with the stop's count (later includes the draws that stop at none of the first K), the law's
+    numbers (E[χ²_{N−2K} | ≤ c] = 53.83); A3: a row per N; B: the fits' distances; C: the gate's shares and times, the timelines."""
+    lv = lambda s: dict(s=s, draws=[_draw(True, 3, s), _draw(True, 3, s), _draw(True, -1, s), _draw(False, 3, s),
+                                    dict(exact=False, exact_order=False, exits=1)])
+    md = DZ.report(A=[dict(q=0, levels=[lv(s) for s in DZ.LEVELS_A])])
+    assert '| 0.01 | noiseless | 3 | 2, 1, 0 | 2.000 [2.000, 2.000] |' in md and '| 0.01 | swapped | 1 | 1, 0, 0 |' in md
+    assert '= 53.83s² against 55s²' in md
+    assert '| 0.01 | noiseless | 2 | 1.0000 [1.0000, 1.0000]; 0.0e+00 |' in md
+    A2 = [dict(q=0, N=61, exact0=True, draws=[_draw(True, 3, DZ.S_A2), _draw(True, -1, DZ.S_A2), _draw(False, 3, DZ.S_A2)]),
+          dict(q=1, N=61, exact0=False, draws=[])]
+    assert '| 61 | 1/2 | 1, 1, 0; 1 |' in DZ.report(A2=A2)
+    A2 = [dict(q=0, N=181, exact0=True, draws=[_draw(True, 3, DZ.S_A2)])]
+    assert '| 4.0000 (0.2802) | 30.167 | 2.000 (2.907) |' in DZ.report(A2=A2)
+
+    def bm(formed, err, dd):
+        return dict(formed=formed, err=err, tau_gate=1.5, rms=0.01, d_dz=dd, d_or=dd)
+    B = [dict(q=0, s=0.01, k=0, exact=True, tau_K=1.0, W=1.0, k_lim=3, err_dz_lim=0.02, err_or_lim=0.01,
+              none=bm(5, 0.03, 1.0), energy=bm(3, 0.02, 1.3e-8), formation=bm(3, 0.01, 2e-9))]
+    assert '| 0.01 | 1, 0 | 5 [5, 5]; 3 [3, 3]; 3 [3, 3] | 3.000, 2.000, 1.000 | 0.667 | 1.3e-08, 2.0e-09 | 1.5000 | — |' in DZ.report(B=B)
+
+    def crun(regx, s, mode, name='base', gate=None, events=()):
+        return dict(s=s, regx=regx, mode=mode, name=name, n_act=3, outside=0, w=[0.9, -0.6, 0.75], c=[-0.52, 0.07, 0.61], e_last=0.05,
+                    e_true=0.01, fit_win=(0.02, 0.015, 0.07), formed_win=3.0, gate=gate, events=list(events))
+    g = dict(shut=0.11, open=0.72, first_close=149.5, last_reopen=float('nan'), shut_end=True)
+    ev = [dict(i=4, formed=136.5, feature=0, ejected=164.5), dict(i=5, formed=169.0, feature=2, ejected=float('nan'))]
+    md = DZ.report(C=[crun(False, 0.0, 'none'), crun(True, 0.0, 'none'), crun(True, DZ.S_EXTRA_C, 'formation', gate=g, events=ev),
+                      crun(True, DZ.S_EXTRA_C, 'none', name='true error')])
+    assert ('| x_m | 0.02 | the formation dead zone | 2, 1 | 3, 0 | 0.0200 [0.0150, 0.0700] | 3 | 0.0100 | 0.0500 | 0.11, 0.72 | '
+            '149.5, — |') in md
+    assert '| base, the formation dead zone | 4: 136.5 (-0.52) → 164.5; 5: 169.0 (+0.61) |' in md
+    assert '| true error | ungated | 0, 0 | 3, 0 |' in md and '| true error, ungated | — |' in md
 
 
 LAW = MF.FreeLaw(m=12.0, G=1.0, gamma=0.1, a_max=1.0)
@@ -92,3 +181,20 @@ def test_open_dead_zone_is_the_ungated_loop():
         r = CL.simulate(LAW, 1e-2, C0, SIG, (CSTAR, ASTAR, SIG), KE, (0.0, 1.0, OM), TS,
                         gate=dict(mode=mode, Tf=1e12, lo=0.5e-9, hi=1e-9, theta=0.01))
         assert np.abs(r['w'] - r0['w']).max() < OPEN_TOL and np.abs(r['c'] - r0['c']).max() < OPEN_TOL
+
+
+def test_the_formation_gate_drives_only_the_formed_kernels():
+    """The gate shut throughout (the filtered energy starts at 0, slow filter, high thresholds) with kernel 10 formed at the start
+    (α = 2, |w| > θ): the formation dead zone drives it (its α and centre move) and keeps every unformed kernel exactly at rest; the
+    energy dead zone keeps every kernel at rest."""
+    al0 = np.zeros(C0.size)
+    al0[10] = 2.0
+    ts = np.linspace(0, 200.0, 11)
+    rest = np.arange(C0.size) != 10
+    for mode in ('energy', 'formation'):
+        r = CL.simulate(LAW, 1e-2, C0, SIG, (CSTAR, ASTAR, SIG), KE, (0.0, 1.0, OM), ts, al0=al0,
+                        gate=dict(mode=mode, Tf=1e12, lo=10.0, hi=20.0, z0=0.0, theta=0.01))
+        assert r['w'][0, 10] > 0.01
+        assert np.abs(r['al'][:, rest]).max() == 0.0 and np.abs(r['c'][:, rest] - C0[rest]).max() == 0.0
+        moved = max(abs(r['al'][-1, 10] - 2.0), abs(r['c'][-1, 10] - C0[10]))
+        assert (moved > 0.05) if mode == 'formation' else (moved == 0.0)
