@@ -710,5 +710,162 @@ def test_rc_job_reproduces_the_raw():
     ref = next(r for r in _rc_main(raw) if r['name'] == 'near tie' and r['x'] == 5.48)
     r = TN.rc_job(('near tie', 5.48))
     assert r['side'] == ref['side']
-    for k in ('least', 'e_least', 's_least', 's_inj', 's_climb', 's_d'):
+    for k in ('least', 'e_least', 's_least', 's_inj', 's_climb', 's_d', 'efolds'):
         assert np.isclose(r[k], ref[k], rtol=1e-9, atol=0), k
+    _same_round72(r, ref)
+
+
+def _same_round72(r, ref):
+    """Referee round 72's fields of an `rc_job` row against the raw's: the forced D, the drifts, the climb's ends, the coefficient."""
+    for at in ('least', 'inj'):
+        for k in ('f64', 'coord', 'alias'):
+            assert np.allclose(r['forced'][at][k], ref['forced'][at][k], rtol=1e-6, atol=1e-9), (at, k)
+    assert np.allclose(r['d_coord'], ref['d_coord'], rtol=1e-12) and np.allclose(r['d_alias'], ref['d_alias'], rtol=1e-12)
+    for k in ('s_climbs', 'w_climbs'):
+        assert all((a is None and b is None) or np.isclose(a, b, rtol=1e-6) for a, b in zip(r[k], ref[k])), k
+    assert np.allclose(r['w_peak'], ref['w_peak'], rtol=1e-6)
+    assert (r['s_wdecay'] is None and ref['s_wdecay'] is None) or np.isclose(r['s_wdecay'], ref['s_wdecay'], rtol=1e-6)
+
+
+def _raw():
+    return E.load(os.path.join(os.path.dirname(__file__), '..', 'results', 'chaos', 'transit_nd_raw.npz'))
+
+
+def test_exact_sums_and_the_aliasing():
+    """Referee round 72 (D3bs-1): at RC's merged block `exact_drift` on the committed samples gives the long double's ∂c̄*/∂W (3.15·10⁻¹⁶σ per
+    unit W along x) — the samples' float64 coordinates', off the ideal grid by at most 3.7·10⁻¹⁵ —, on the ideal grid the aliasing's first
+    harmonic (1.25·10⁻³⁷σ, `alias_drift`), and one ideal coordinate moved by 4·10⁻¹⁵ next to the block moves the rest by more than
+    10⁻¹⁷σ; the dyadic grid's coordinates are exact."""
+    w = next(q for q in _raw()['RD'] if q['name'] == 'near tie')['rows'][1]
+    cs, As = TN.targets_C2(TN.MU_R)['near tie']
+    ax = lambda ds, ideal: [TN.sample_coords(TN.WIN_FAR[0], TN.WIN_FAR[1], ds, ideal), TN.sample_coords(TN.WIN_FAR[2], TN.WIN_FAR[3], ds, ideal)]
+    xc, xi = ax(TN.DS, False), ax(TN.DS, True)
+    ex = np.array(TN.exact_drift(w['c'], w['W'], cs, As, *xc)[0]) / TN.SIG
+    ei, Ji, p2i = TN.exact_drift(w['c'], w['W'], cs, As, *xi)
+    assert np.allclose(ex, w['exact'], rtol=1e-12, atol=0) and 3.1e-16 < ex[0] < 3.2e-16
+    assert np.allclose(np.array(ei) / TN.SIG, w['ideal'], rtol=1e-12, atol=0) and 1.2e-37 < w['ideal'][0] < 1.3e-37
+    al = TN.alias_drift(w['c'], Ji, p2i, (TN.WIN_FAR[0], TN.WIN_FAR[2]), TN.DS) / TN.SIG
+    assert np.allclose(al, np.array(ei) / TN.SIG, rtol=1e-9, atol=0)
+    K = TN.window(TN.WIN_FAR[3], TN.WIN_FAR[0], TN.WIN_FAR[1], TN.WIN_FAR[2])
+    P80 = TN.PairSums(TN.law(), K, cs, As, np.longdouble)
+    assert np.allclose(P80.block(np.array(w['c']), w['W'])[1] / TN.SIG, ex, rtol=1e-3, atol=0)
+    err = [max(abs(float(a - b)) for a, b in zip(xc[i], xi[i])) for i in range(2)]
+    assert 3e-15 < max(err) < 4e-15
+    assert all(a == b for i in range(2) for a, b in zip(*ax(TN.DS_DYADIC, False)[i:i + 1], *ax(TN.DS_DYADIC, True)[i:i + 1]))
+    from decimal import Decimal as Dm
+    k = int(np.argmin([abs(float(v) - w['c'][0]) for v in xi[0]]))
+    moved = [list(xi[0]), xi[1]]
+    moved[0][k] += Dm('4e-15')
+    assert abs(TN.exact_drift(w['c'], w['W'], cs, As, *moved)[0][0]) / TN.SIG > 1e-17
+
+
+def test_rd_on_the_raw():
+    """Referee round 72: RD — on the committed samples the long double's drift is the exact sums' to 10⁻³ and float64's within
+    2.2·10⁻¹⁶σ of it (its sums' rounding); the ideal grid's exact drift is the aliasing's and below 2·10⁻³⁷σ; on the dyadic grid the exact
+    drift is the aliasing's and below 10⁻⁴²σ, the long double's below 10⁻¹⁹σ and float64's below 2·10⁻¹⁶σ: each arithmetic's rounding."""
+    RD = _raw()['RD']
+    assert [(r['name'], r['x']) for r in RD] == list(TN.RD_JOBS) and all(len(r['rows']) == len(TN.S_RD) for r in RD)
+    for r in RD:
+        assert max(r['dy_coord_err']) == 0 and 3e-15 < max(r['coord_err']) < 4e-15
+        for w in r['rows']:
+            ex, ld, f = np.array(w['exact']), np.array(w['ld']), np.array(w['f64'])
+            assert np.max(np.abs(ld - ex)) < 1e-3 * np.max(np.abs(ex)) and np.max(np.abs(f - ex)) < 2.2e-16
+            assert np.allclose(w['alias'], w['ideal'], rtol=1e-10, atol=0) and np.max(np.abs(w['ideal'])) < 2e-37
+            assert np.allclose(w['dy_alias'], w['dy_exact'], rtol=1e-10, atol=0) and np.max(np.abs(w['dy_exact'])) < 1e-42
+            assert np.max(np.abs(w['dy_ld'])) < 1e-19 and np.max(np.abs(w['dy_f64'])) < 2e-16
+
+
+def test_rc_forced_thresholds_and_the_coefficient_on_the_raw():
+    """Referee round 72 (D3bs-1, -2): on the near tie the forced D exceeds the continuum's least for the samples' coordinates at x ≤ 5.48
+    (not at 6.04, 7) and for the aliasing at x = 3 only, its share on the far side (< 0; on the mirror > 0); s_d − s_climb(θ) agrees between
+    Part C's window and the continuum to 3·10⁻⁴ for every θ, the hold shrinking as θ grows; the runner-up's coefficient rises ∝ |D|²,
+    and is 1% below its value at the injection only where there is a hold (x ≤ 5.07)."""
+    raw = _raw()
+    main = _rc_main(raw)
+    for r in main:
+        fl = r['forced']['least']
+        sgn = -1 if r['name'] == 'near tie' else 1
+        assert np.sign(fl['coord'][1]) == np.sign(fl['alias'][1]) == np.sign(r['forced']['inj']['coord'][1]) == sgn
+        assert r['d_change'] < 1e-8
+        if r['name'] == 'near tie':
+            assert (fl['coord'][0] > r['least']) == (r['x'] <= 5.48) and (fl['alias'][0] > r['least']) == (r['x'] == 3.0)
+    N0 = 1681
+    pc = {r['x']: r for r in raw['RP'] if r['prec'] == 64 and r.get('win') is None and r['top'] == 1.0 and r['name'] == 'near tie'}
+    for r in (q for q in main if q['name'] == 'near tie'):
+        q = pc[r['x']]
+        hold_c = [q['s_d'] - c for c in q['s_climbs']]
+        hold_r = [(r['s_d'] - c) * N0 / r['N'] for c in r['s_climbs']]
+        assert all(abs(a / b - 1) < 3e-4 for a, b in zip(hold_r, hold_c)) and hold_c[0] > hold_c[1] > hold_c[2]
+        wc = r['w_climbs']
+        assert 90 < wc[1] / wc[0] < 110 and 90 < wc[2] / wc[1] < 120 and r['w_peak'][0] > wc[2]
+        assert (r['s_wdecay'] is not None) == (r['x'] <= 5.07)
+
+
+def test_rc_job_golden_rows_and_checks():
+    """Referee round 72 (D3bs-4): `rc_job` reproduces the raw on the mirrored target (side far, e_least < 0, no s_d), at x = 7 (the
+    earliest injection) and at every RC_CHECKS row — each check's arguments reach the job: 16 substeps move the least, y = 0 by more than
+    0.01 dex, another injection level the injection's s."""
+    raw = _raw()
+    main = {(r['name'], r['x']): r for r in _rc_main(raw)}
+    for args in (('near tie mirrored', 4.9), ('near tie', 7.0)):
+        r, ref = TN.rc_job(args), main[args]
+        assert r['side'] == ref['side'] and r['status'] == ref['status'] and (r['s_d'] is None) == (ref['s_d'] is None)
+        for k in ('least', 'e_least', 's_least', 's_inj', 's_climb', 'efolds'):
+            assert np.isclose(r[k], ref[k], rtol=1e-9, atol=0), (args, k)
+        _same_round72(r, ref)
+    assert main[('near tie mirrored', 4.9)]['e_least'] < 0 and main[('near tie mirrored', 4.9)]['side'] == 'far'
+    base = main[('near tie', 4.9)]
+    for c in TN.RC_CHECKS:
+        r = TN.rc_job(c)
+        ref = next(q for q in raw['RC'] if (q['name'], q['x'], q['sub'], q['ymode'], q['inj']) == c)
+        for k in ('least', 's_least', 's_inj', 's_d', 'efolds'):
+            assert np.isclose(r[k], ref[k], rtol=1e-9, atol=0), (c, k)
+        if c[2] != TN.SUB_RC:
+            assert r['least'] != base['least']
+        if c[3] == 'zero':
+            assert abs(r['least'] - base['least']) > 0.01
+        if c[4] != TN.INJ_RC:
+            assert r['s_inj'] != base['s_inj'] and r['least'] == base['least']
+
+
+def test_part_rc_jobs(monkeypatch):
+    """Referee round 72 (D3bs-4): `part_RC` runs the 14 main rows — both targets at every X_RC — and RC_CHECKS with their arguments."""
+    import multiprocessing
+    seen = []
+
+    class Fake:
+        def __init__(self, n):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def map(self, f, jobs, chunksize=1):
+            seen.extend(jobs)
+            return [None] * len(jobs)
+    monkeypatch.setattr(multiprocessing, 'Pool', Fake)
+    TN.part_RC()
+    assert seen[:14] == [(nm, x) for nm in ('near tie', 'near tie mirrored') for x in TN.X_RC] and seen[14:] == list(TN.RC_CHECKS)
+    assert [c[2:] for c in TN.RC_CHECKS] == [(16, 'y', 1e-9), (4, 'zero', 1e-9), (4, 'y', 1e-7), (4, 'y', 1e-11)]
+
+
+def test_rp_far_window_law_growth_and_the_unslaved_rates():
+    """Referee round 72 (D3bs-3, -4): on the far window `rp_job` at x = 3 reproduces the raw's law, D, growth rate and climbs; at every
+    float64 row the (D, y) system with the centroid unslaved is within 10⁻³ of the Jacobian's rates, where the κ-law errs by up to 10%, and
+    the κ-law's error is ε_b to first order (far window, x = 3, s ≈ 450: ε_b 0.088 against 0.101)."""
+    raw = _raw()
+    for x in (3.0, 5.07):
+        ref = next(q for q in raw['RP'] if q['x'] == x and q['name'] == 'near tie' and q.get('win') is not None
+                   and list(q['win']) == list(TN.WIN_FAR))
+        r = TN.rp_job(('near tie', x, 1.0, 64, TN.WIN_FAR))
+        assert np.allclose(r['law'], ref['law'], rtol=1e-6, atol=1e-30) and np.allclose(r['D'], ref['D'], rtol=1e-6, atol=1e-30)
+        assert np.isclose(r['grow'], ref['grow'], rtol=1e-6) and r['side'] == ref['side']
+        assert all((a is None and b is None) or np.isclose(a, b, rtol=1e-9) for a, b in zip(r['s_climbs'], ref['s_climbs']))
+    err = lambda j, k: max(abs(a - b) for a, b in zip(sorted(j[k]), sorted(j['jac']))) / max(abs(b) for b in j['jac'])
+    js = [j for r in raw['RP'] if r['prec'] == 64 for j in r['jac']]
+    assert max(err(j, 'law_y') for j in js) < 1e-3 and max(err(j, 'law') for j in js) > 0.09
+    f3 = next(q for q in raw['RP'] if q['x'] == 3.0 and q.get('win') is not None and list(q['win']) == list(TN.WIN_FAR))['jac'][0]
+    assert 0.085 < max(f3['eps_b']) < 0.09 and 0.095 < err(f3, 'law') < 0.105

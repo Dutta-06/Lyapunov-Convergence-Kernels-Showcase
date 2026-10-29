@@ -113,6 +113,9 @@ S_CONT_RC, N_CONT_RC, S_END_RC = 2e6, 800, 2e8                           # expon
                                                                         # end and outputs, the injected race's end (WIN_FAR's time)
 RC_CHECKS = (('near tie', 4.9, 16, 'y', 1e-9), ('near tie', 4.9, 4, 'zero', 1e-9), ('near tie', 4.9, 4, 'y', 1e-7),
              ('near tie', 4.9, 4, 'y', 1e-11))                         # RC: 16 substeps, y = 0, the injection at 10⁻⁷ and 10⁻¹¹σ
+THETAS_CLIMB = (1e-3, 1e-2, 1e-1)                                       # RC, RP (referee round 72): the climb's end at these |D| (σ)
+RD_JOBS, S_RD, RD_PREC = (('near tie', 3.0), ('near tie mirrored', 3.0)), (400.0, 4e3, 4e4), 80   # RD (referee round 72): RC's merged
+DS_DYADIC = 3 / 64                                                      # block at these s; exact sums to RD_PREC digits; a dyadic grid
 W_FC = np.geomspace(0.06, 0.003, 120)                                   # FC: the configuration's own fold (continuation in w)
 D_V3, AP_V3 = (5.0, 6.0, 7.0), (0.35, 0.7, 1.4, 2.8)                     # V3: the fold against A′/A (A = A_B)
 MAX_DOUBLINGS_B4X = 24                                                   # B4x: B4's unsettled problems continued
@@ -962,8 +965,8 @@ def fold_level(d2, A2, V):
 
 def c4_atol(eps):
     """C4's absolute tolerance: 1e-14, or 10⁻⁵ε below ε = 10⁻⁹ (the loop's state before the entry is at the masses' scale; referee round
-    66: the absolute tolerance sets the step on every component, the dormant kernels' α included, and at ε = 10⁻¹¹ and 10⁻¹⁴ the step's
-    error exceeded a formed runner-up's pin, which decides its side at 10⁻¹⁴σ)."""
+    66: the absolute tolerance sets the step on every component, the dormant kernels' α included, and at ε = 10⁻¹¹ the step's
+    error exceeded a formed runner-up's pin, which decides its side at 10⁻¹⁴σ; referee round 72: at ε = 10⁻¹¹)."""
     return min(1e-14, 1e-5 * eps)
 
 
@@ -1204,6 +1207,53 @@ class PairSums:
         return F.astype(float), (H - self.dt(W) * Q2).astype(float)
 
 
+def sample_coords(lo, hi, ds, ideal):
+    """RD (referee round 72): one axis of a window's samples as Decimals — the committed grid's float64 coordinates
+    (`np.arange(lo, hi + 1e-9, ds)`, each converted exactly; np.arange rounds lo + k·fl(ds) at every point) or the ideal grid's exact
+    lo + k·ds, as many points."""
+    from decimal import Decimal as Dm
+    xs = np.arange(lo, hi + 1e-9, ds)
+    return [Dm(float(v)) for v in xs] if not ideal else [Dm(repr(float(lo))) + k * Dm(repr(float(ds))) for k in range(xs.size)]
+
+
+def exact_drift(cb, W, cs, As, x1, x2, prec=RD_PREC):
+    """RD (referee round 72): the merged block's rest's shift with W, ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (`PairSums.block`), every sum over the
+    samples x1 × x2 (Decimals) exact to prec digits (Python's decimal; the two-dimensional sums factor into one-dimensional ones); the
+    state (cb, W), the target and σ the float64 values, converted exactly. Returns (∂c̄*/∂W, ∂F/∂c̄ as (11, 12, 22), ⟨φ²⟩), floats."""
+    from decimal import Decimal as Dm, localcontext
+    with localcontext() as ctx:
+        ctx.prec = prec
+        s2 = Dm(float(SIG)) ** 2
+
+        def fac(xs, c):
+            u = [x_ - Dm(float(c)) for x_ in xs]
+            g = [(-(d * d) / (2 * s2)).exp() for d in u]
+            return g, [g_ * d / s2 for g_, d in zip(g, u)], [g_ * (d * d / s2 - 1) / s2 for g_, d in zip(g, u)]
+        dot = lambda a, b: sum((p_ * q_ for p_, q_ in zip(a, b)), Dm(0))
+        g, gp, gpp = fac(x1, cb[0])
+        q, qp, qpp = fac(x2, cb[1])
+        fe = [(Dm(float(a)), fac(x1, c[0])[0], fac(x2, c[1])[0]) for c, a in zip(cs, As)]
+        N, Wd = Dm(len(x1) * len(x2)), Dm(float(W))
+        H11 = sum(a * dot(gf, gpp) * dot(qf, q) for a, gf, qf in fe) - Wd * dot(g, gpp) * dot(q, q)
+        H12 = sum(a * dot(gf, gp) * dot(qf, qp) for a, gf, qf in fe) - Wd * dot(g, gp) * dot(q, qp)
+        H22 = sum(a * dot(gf, g) * dot(qf, qpp) for a, gf, qf in fe) - Wd * dot(g, g) * dot(q, qpp)
+        J11 = (H11 - Wd * dot(gp, gp) * dot(q, q)) / N
+        J12 = (H12 - Wd * dot(gp, g) * dot(q, qp)) / N
+        J22 = (H22 - Wd * dot(g, g) * dot(qp, qp)) / N
+        p1, p2 = dot(g, gp) * dot(q, q) / N, dot(g, g) * dot(q, qp) / N
+        det = J11 * J22 - J12 * J12
+        return ((float((J22 * p1 - J12 * p2) / det), float((J11 * p2 - J12 * p1) / det)), (float(J11), float(J12), float(J22)),
+                float(dot(g, g) * dot(q, q) / N))
+
+
+def alias_drift(cb, J, phi2, lo, ds):
+    """RD (referee round 72): the aliasing's shift on an ideal grid of spacing ds from lo = (x₋, y₋) — Poisson summation's first harmonic,
+    ⟨φ, ∂_iφ⟩ = −⟨φ²⟩(2πq/ds)sin(2π(c_i − lo_i)/ds) up to O(q²), q = e^{−π²σ²/ds²} ((ii)(c)'s), through ∂F/∂c̄ = J (11, 12, 22)."""
+    q = np.exp(-np.pi ** 2 * SIG ** 2 / ds ** 2)
+    pd = [-phi2 * 2 * np.pi * q / ds * np.sin(2 * np.pi * (cb[i] - lo[i]) / ds) for i in range(2)]
+    return np.linalg.solve(np.array([[J[0], J[1]], [J[1], J[2]]]), pd)
+
+
 def relative_law(P, s, C, w, W, i0, iend, D0, lam0, Gm, slaved=True):
     """RP: the relative offset D = c_r − c_e (e the entrant, r the runner-up) integrated from the output i0 with D0 over the run's outputs
     to iend, the coefficients frozen per output interval (exponential steps; stopped where D stops being finite). With the block's
@@ -1300,18 +1350,21 @@ def rp_job(args):
         return [Ds[int(np.argmin(np.abs(s[idx] - q)))].tolist() for q in S_MARKS_RP], dc[int(np.argmin(np.abs(s[idx] - S_MARKS_RP[1])))]
     law_, dcdW_at = marks(True)
     law0 = marks(False)[0]
-    up = [int(i) for i in held if i > i_min and np.linalg.norm(D[i]) >= D_CLIMB * SIG]
-    s_climb = None
-    if up:                                                             # the climb's end, bisected on the dense output (referee round 66)
+    def climb_end(th):                                                 # the climb's end, bisected on the dense output (referee round 66)
+        up = [int(i) for i in held if i > i_min and np.linalg.norm(D[i]) >= th * SIG]
+        if not up:
+            return None
         a_, b_ = sol.t[up[0] - 1], sol.t[up[0]]
         for _ in range(80):
             m_ = 0.5 * (a_ + b_)
             zm = sol.sol(m_)
-            if np.linalg.norm(zm[4:6] - zm[2:4]) >= D_CLIMB * SIG:
+            if np.linalg.norm(zm[4:6] - zm[2:4]) >= th * SIG:
                 b_ = m_
             else:
                 a_ = m_
-        s_climb = 0.5 * (a_ + b_) - t_wall
+        return 0.5 * (a_ + b_) - t_wall
+    s_climb = climb_end(D_CLIMB)
+    s_climbs = [climb_end(th) for th in THETAS_CLIMB]                   # referee round 72: s_d − s_climb(θ) against θ
     jac = []
     for q in S_JAC_RP:
         i = at(q)
@@ -1323,11 +1376,23 @@ def rp_job(args):
         pr = np.sort(np.linalg.eigvals(lamD * Hb).real)
         ej = np.linalg.eigvals(lam0 * j0(0.0, sol.y[:, i]))
         near = sorted(float(ej[q].real) for q in np.argsort(np.min(np.abs(ej[:, None] - kap * pr[None, :]), axis=1))[:2])
-        jac.append(dict(s=float(s[i]), jac=near, law=(kap * pr).tolist(), law0=pr.tolist(), kappa=float(kap)))
+        # referee round 72: the centroid's offset y unslaved — the (D, y) system on the merged block's moments, Q = ⟨r, ∇²_cφ⟩,
+        # R = Q − W⟨∇_cφ∇_cφᵀ⟩: dD/ds = Λ₀Gm[(2ww_e/W)QD + (w − w_e)Ry], dy/ds = Λ₀Gm[((w² + w_e²)/W)Ry + (ww_e(w − w_e)/W²)QD];
+        # slaving y gives the κ-law, and its first correction is λ ≈ κλ_D(1 − ε_b), ε_b = (w − w_e)²ww_e/(w² + w_e²)²·R⁻¹Q
+        _, Hm, Q2m, _ = P.moments(0.5 * (C[i, 0] + C[i, 1]), W[i])
+        we_, wr_, Rm = w[i, 0], w[i, 1], (Hm - P.dt(W[i]) * Q2m).astype(float)
+        Hm = Hm.astype(float)
+        cD, cy = we_ * wr_ * (wr_ - we_) / W[i] ** 2, (we_ ** 2 + wr_ ** 2) / W[i]
+        M4 = lam0 * Gm * np.block([[2 * we_ * wr_ / W[i] * Hm, (wr_ - we_) * Rm], [cD * Hm, cy * Rm]])
+        e4 = np.linalg.eigvals(M4)
+        slow = sorted(float(e4[q].real) for q in np.argsort(np.min(np.abs(e4[:, None] - kap * pr[None, :]), axis=1))[:2])
+        eb = np.sort(np.linalg.eigvals((wr_ - we_) * cD / cy ** 2 * np.linalg.solve(Rm, Hm)).real)
+        jac.append(dict(s=float(s[i]), jac=near, law=(kap * pr).tolist(), law0=pr.tolist(), kappa=float(kap), law_y=slow,
+                        eps_b=eb.tolist()))
     grow = growth_rate(s, D, post)
     out = dict(name=name, x=float(x), top=float(top), win=None if win is None else list(win), N=int(K.N), prec=int(prec),
                status=int(sol.status), nfev=int(sol.nfev), D=[(D[at(q)] / SIG).tolist() for q in S_MARKS_RP], law=law_, law0=law0,
-               dcdW=None if dcdW_at is None else np.asarray(dcdW_at).tolist(), s_climb=s_climb, jac=jac,
+               dcdW=None if dcdW_at is None else np.asarray(dcdW_at).tolist(), s_climb=s_climb, s_climbs=s_climbs, jac=jac,
                least=float(np.linalg.norm(D[i_min]) / SIG), s_least=float(s[i_min]),
                e_least=float(D[i_min] @ ev / np.linalg.norm(D[i_min])) if np.linalg.norm(D[i_min]) > 0 else None, side=side, s_d=s_d,
                grow=grow, w_layer=float(abs(w[at(1e3), 1])), ulp=float(np.spacing(abs(C[at(S_MARKS_RP[1]), 1, 1])) / SIG),
@@ -1353,24 +1418,12 @@ def merged_rhs(P, lam0):
     return rhs
 
 
-def rc_job(args):
-    """RC (referee round 66): the relative mode in the continuum, continued about a merged block. R's race on WIN_FAR (`rp_job`'s run)
-    to s₁ = S1_RC; there the merged block — both kernels at the centroid c_b = (w_e c_e + w c_r)/W less its offset y = (∂F/∂c_b)⁻¹F(c_b)
-    off the merged rest (`PairSums.force`) — runs on (`merged_rhs`), and the centres' perturbation δc — δc_e = y − (w/W)D,
-    δc_r = y + (w_e/W)D, D the run's c_r − c_e at s₁ (ymode 'zero': y = 0) — by the race's exact Jacobian's centre block about it,
-    δc′ = J_cc δc (`critical_jac_nd`; the coefficients' coupling vanishes on a merged block at rest), in midpoint matrix exponentials,
-    `sub` per output interval (N_CONT_RC outputs, geometric to S_CONT_RC), the norm carried in logarithms: no floor. Past its least, once
-    the relative offset D = δc_r − δc_e has regrown to inj·σ and to twice its least, δc is injected into the float64 race — the merged
-    block's coefficients, its centre plus δc — run on (to S_END_RC) to the departure (2σ). Returns the least |D| (log₁₀ σ), its share
-    along e and its s, the contraction's e-folds from s₁ to it, the injection's s, the side (SIDE_R), the climb's end (|D| = D_CLIMB·σ)
-    and s_d — s in WIN_FAR's time."""
-    name, x = args[:2]
-    sub = int(args[2]) if len(args) > 2 else SUB_RC
-    ymode = args[3] if len(args) > 3 else 'y'
-    inj = float(args[4]) if len(args) > 4 else INJ_RC
+def merged_block(name, x):
+    """RC, RD (referee rounds 66, 72): R's race on WIN_FAR (`rp_job`'s run) to s₁ = S1_RC, and there the merged block — both kernels at
+    the centroid c_b = (w_e c_e + w c_r)/W less its offset y = (∂F/∂c_b)⁻¹F(c_b) off the merged rest (`PairSums.force`) — run on to
+    S_CONT_RC (`merged_rhs`): the setting, the race's state at s₁ (w, W, D = c_r − c_e, y) and the merged run; s in WIN_FAR's time from
+    the entrant's wall at t_wall."""
     from scipy.integrate import solve_ivp
-    from scipy.linalg import expm
-    t0 = time.time()
     L = law(); c0 = full()[1]
     K = window(WIN_FAR[3], WIN_FAR[0], WIN_FAR[1], WIN_FAR[2])
     cs, As = targets_C2(MU_R)[name]
@@ -1397,32 +1450,96 @@ def rc_job(args):
     F1, dF1 = P.force(cb, W1)
     y = np.linalg.solve(dF1, F1)
     cm = cb - y
-    yv = y if ymode == 'y' else np.zeros(2)
-    dc = np.r_[yv - w1[1] / W1 * D1, yv + w1[0] / W1 * D1]
     msol = solve_ivp(merged_rhs(P, lam0), (t_wall + S1_RC, t_wall + S_CONT_RC), np.r_[z1[:2], cm], **tol)
     assert msol.status == 0, msol.message
+    return dict(L=L, K=K, cs=cs, As=As, P=P, lam0=lam0, j0=j0, tol=tol, race=race, jac=jac, t_wall=t_wall, w1=w1, W1=W1, D1=D1, y=y,
+                msol=msol)
+
+
+def rc_job(args):
+    """RC (referee round 66): the relative mode in the continuum, continued about a merged block (`merged_block`): the centres'
+    perturbation δc — δc_e = y − (w/W)D, δc_r = y + (w_e/W)D, D the race's c_r − c_e at s₁ (ymode 'zero': y = 0) — by the race's exact
+    Jacobian's centre block about the merged block, δc′ = J_cc δc (`critical_jac_nd`; the coefficients' coupling vanishes on a merged
+    block at rest), in midpoint matrix exponentials, `sub` per output interval (N_CONT_RC outputs, geometric to S_CONT_RC), the norm
+    carried in logarithms: no floor. Past its least, once the relative offset D = δc_r − δc_e has regrown to inj·σ and to twice its least,
+    δc is injected into the float64 race — the merged block's coefficients, its centre plus δc — run on (to S_END_RC) to the departure
+    (2σ). Returns the least |D| (log₁₀ σ), its share along e and its s, the contraction's e-folds from s₁ to it, the injection's s, the
+    side (SIDE_R), the climb's end (|D| = D_CLIMB·σ) and s_d — s in WIN_FAR's time. Referee round 72: (1) the rest's drift as a forcing —
+    the merged base is no solution of the race: its kernels' speeds go as their coefficients, so a block moving at dc_b/ds forces D by
+    κk·dc_b/ds (κ = W²/(2(w² + w_e²)), k = 2(w − w_e)/W; δc_e by −(w/W) of it, δc_r by +(w_e/W)), here dc_b/ds = (∂c̄*/∂W)dW/ds for
+    the drift of the float64 sums (`PairSums.block`), of exact sums on the committed samples (their float64 coordinates) and on the ideal
+    grid (the aliasing; `exact_drift` at s₁, checked at S_CONT_RC): the forced D at the least and at the injection, |D| (log₁₀ σ) and its
+    share along e; (2) the climb's end at every THETAS_CLIMB; (3) the runner-up's coefficient after the injection — its change at each
+    climb's end, its peak (with |D| and s there) and where it has fallen 1% below its value at the injection."""
+    name, x = args[:2]
+    sub = int(args[2]) if len(args) > 2 else SUB_RC
+    ymode = args[3] if len(args) > 3 else 'y'
+    inj = float(args[4]) if len(args) > 4 else INJ_RC
+    from scipy.integrate import solve_ivp
+    from scipy.linalg import expm
+    t0 = time.time()
+    m = merged_block(name, x)
+    L, K, cs, As, P, lam0, j0, tol, race, jac, t_wall, msol = (m[k_] for k_ in ('L', 'K', 'cs', 'As', 'P', 'lam0', 'j0', 'tol', 'race',
+                                                                                 'jac', 't_wall', 'msol'))
+    w1, W1, D1, y = m['w1'], m['W1'], m['D1'], m['y']
+    yv = y if ymode == 'y' else np.zeros(2)
+    dc = np.r_[yv - w1[1] / W1 * D1, yv + w1[0] / W1 * D1]
     ev = (cs[2] - cs[0]) / np.linalg.norm(cs[2] - cs[0])
     lnn, u = np.log(np.linalg.norm(dc)), dc / np.linalg.norm(dc)
     lg0 = np.log10(np.linalg.norm(D1) / SIG)
     least, s_inj = (np.inf, None, None), None
+    xc = [sample_coords(WIN_FAR[0], WIN_FAR[1], DS, False), sample_coords(WIN_FAR[2], WIN_FAR[3], DS, False)]
+    xi = [sample_coords(WIN_FAR[0], WIN_FAR[1], DS, True), sample_coords(WIN_FAR[2], WIN_FAR[3], DS, True)]
+
+    def exact_pair(s_):
+        z_ = msol.sol(t_wall + s_)
+        c_, W_ = z_[2:4], float(RT.critical_w(L, z_[:2]).sum())
+        return np.array(exact_drift(c_, W_, cs, As, *xc)[0]), np.array(exact_drift(c_, W_, cs, As, *xi)[0])
+    d_coord, d_alias = exact_pair(S1_RC)
+    d_coord1, d_alias1 = exact_pair(S_CONT_RC)
+    Wat = lambda s_: float(RT.critical_w(L, msol.sol(t_wall + s_)[:2]).sum())
+    Fc, forced = np.zeros((4, 3)), {}
+
+    def snap():
+        Du = Fc[2:] - Fc[:2]
+        out_ = {}
+        for k_, v_ in (('coord', Du[:, :2] @ d_coord), ('alias', Du[:, :2] @ d_alias), ('f64', Du[:, 2])):
+            nv = float(np.linalg.norm(v_))
+            out_[k_] = (float(np.log10(nv / SIG)), float(v_ @ ev / nv)) if nv > 0 else (None, None)
+        return out_
     grid = np.geomspace(S1_RC, S_CONT_RC, N_CONT_RC)
     for a_, b_ in zip(grid[:-1], grid[1:]):
         hs = (b_ - a_) / sub
         for j in range(sub):
             zm = msol.sol(t_wall + a_ + (j + 0.5) * hs)
-            u = expm(lam0 * j0(0.0, np.r_[zm[:4], zm[2:4]])[2:, 2:] * hs) @ u
+            Jcc = lam0 * j0(0.0, np.r_[zm[:4], zm[2:4]])[2:, 2:]
+            u = expm(Jcc * hs) @ u
             nu = np.linalg.norm(u)
             lnn, u = lnn + np.log(nu), u / nu
+            wm = RT.critical_w(L, zm[:2])                               # the forcing, constant over the substep (referee round 72)
+            Wm = wm.sum()
+            fk = Wm ** 2 / (2 * (wm[0] ** 2 + wm[1] ** 2)) * 2 * (wm[1] - wm[0]) / Wm * (Wat(a_ + (j + 1) * hs) - Wat(a_ + j * hs)) / hs
+            Bm = np.column_stack([np.r_[-wm[1] / Wm * fk * d_, wm[0] / Wm * fk * d_]
+                                  for d_ in (np.array([1.0, 0.0]), np.array([0.0, 1.0]), P.block(zm[2:4], Wm)[1])])
+            Aug = np.zeros((7, 7))
+            Aug[:4, :4], Aug[:4, 4:] = Jcc * hs, Bm * hs
+            Ea = expm(Aug)
+            Fc = Ea[:4, :4] @ Fc + Ea[:4, 4:]
         Dv = u[2:] - u[:2]
         lg = (lnn + np.log(np.linalg.norm(Dv)) - np.log(SIG)) / np.log(10)
         if lg < least[0]:
             least = (float(lg), float(Dv @ ev / np.linalg.norm(Dv)), float(b_))
+            forced['least'] = snap()
         if lg >= np.log10(inj) and lg > least[0] + np.log10(2.0):
             s_inj = float(b_)
+            forced['inj'] = snap()
             break
     out = dict(name=name, x=float(x), sub=sub, ymode=ymode, inj=inj, N=int(K.N), lg_D1=float(lg0), least=least[0], e_least=least[1],
                s_least=least[2], efolds=float((lg0 - least[0]) * np.log(10)), y=float(np.linalg.norm(y) / SIG), s_inj=s_inj,
-               side=None, s_climb=None, s_d=None)
+               side=None, s_climb=None, s_d=None, forced=forced, d_coord=(d_coord / SIG).tolist(), d_alias=(d_alias / SIG).tolist(),
+               d_change=float(max(np.linalg.norm(d_coord1 - d_coord) / np.linalg.norm(d_coord),
+                                  np.linalg.norm(d_alias1 - d_alias) / np.linalg.norm(d_alias))),
+               s_climbs=[None] * len(THETAS_CLIMB), w_climbs=[None] * len(THETAS_CLIMB), w_peak=None, s_wdecay=None)
     if s_inj is not None:
         zm = msol.sol(t_wall + s_inj)
         dcv = np.exp(lnn) * u
@@ -1443,16 +1560,75 @@ def rc_job(args):
         def ev_far(t_, z):                                              # on the far side the race ends at its rests: stop there
             return (z[4:6] - cs[0]) @ ev / SIG + SIDE_R
         ev_far.terminal, ev_far.direction = True, -1
-        sol2 = solve_ivp(race, (t_wall + s_inj, t_wall + S_END_RC), zi, jac=jac, events=(ev_dep, ev_side, ev_climb, ev_far), **tol)
+
+        def climb_at(th):                                               # referee round 72: the climb's end at each THETAS_CLIMB
+            def ev_(t_, z):
+                return np.linalg.norm(z[4:6] - z[2:4]) / SIG - th
+            ev_.direction = 1
+            return ev_
+        sol2 = solve_ivp(race, (t_wall + s_inj, t_wall + S_END_RC), zi, jac=jac,
+                         events=(ev_dep, ev_side, ev_climb, ev_far) + tuple(climb_at(th) for th in THETAS_CLIMB), **tol)
         if sol2.t_events[1].size:
             out['side'] = 'toward' if (sol2.y_events[1][0][4:6] - cs[0]) @ ev > 0 else 'far'
         out['s_climb'] = float(sol2.t_events[2][0] - t_wall) if sol2.t_events[2].size else None
         out['s_d'] = float(sol2.t_events[0][0] - t_wall) if sol2.t_events[0].size else None
         out['status'] = int(sol2.status)
+        out['s_climbs'] = [float(sol2.t_events[4 + i][0] - t_wall) if sol2.t_events[4 + i].size else None
+                           for i in range(len(THETAS_CLIMB))]
+        # the runner-up's coefficient along the injected race (referee round 72): its change from the injection, at each climb's end,
+        # at its peak (with |D| there) and where it has fallen 1% below its value at the injection
+        ts = t_wall + s_inj + np.geomspace(1.0, max(sol2.t[-1] - t_wall - s_inj, 2.0), 4000)
+        Z = sol2.sol(ts)
+        rel = RT.critical_w(L, Z[:2].T)[:, 1] / RT.critical_w(L, zi[:2])[1] - 1
+        Dn = np.linalg.norm(Z[4:6] - Z[2:4], axis=0) / SIG
+        out['w_climbs'] = [None if sc is None else float(np.interp(sc + t_wall, ts, rel)) for sc in out['s_climbs']]
+        ip = int(np.argmax(rel))
+        out['w_peak'] = (float(rel[ip]), float(ts[ip] - t_wall), float(Dn[ip]))
+        dn = np.flatnonzero((np.arange(rel.size) > ip) & (rel < -0.01))
+        out['s_wdecay'] = float(ts[dn[0]] - t_wall) if dn.size else None
     out['secs'] = time.time() - t0
     print(f"  RC {name} x {x:g} sub {sub} {ymode} inj {inj:g}: least 10^{least[0]:.2f} ({least[1]:+.2f}) at {least[2]:.4g}, "
           f"side {out['side']}, climb {out['s_climb']}, s_d {out['s_d']} [{out['secs']:.0f}s]", flush=True)
     return out
+
+
+def rd_job(args):
+    """RD (referee round 72): what moves the block's rest with W on samples without an edge within reach — RC's merged block
+    (`merged_block`: the target `name`, the gap x, on WIN_FAR) at S_RD: ∂c̄*/∂W with the sums in float64 and in the long double
+    (`PairSums.block`) and exact (`exact_drift`, RD_PREC digits) on the committed samples (np.arange's float64 coordinates), exact on
+    the ideal grid (lo + k·ds exactly) against the aliasing's first harmonic (`alias_drift`), and all four on a dyadic grid (DS_DYADIC,
+    its float64 coordinates exact) over the same window; the committed and the dyadic coordinates' largest errors."""
+    name, x = args
+    t0 = time.time()
+    m = merged_block(name, x)
+    L, cs, As = m['L'], m['cs'], m['As']
+    lo = (WIN_FAR[0], WIN_FAR[2])
+    P80 = PairSums(L, m['K'], cs, As, np.longdouble)
+    Kd = RN.BumpsGrid2(np.arange(WIN_FAR[0], WIN_FAR[1] + 1e-9, DS_DYADIC), np.arange(WIN_FAR[2], WIN_FAR[3] + 1e-9, DS_DYADIC), SIG)
+    Pd64, Pd80 = PairSums(L, Kd, cs, As, np.float64), PairSums(L, Kd, cs, As, np.longdouble)
+    ax = lambda ds, ideal: [sample_coords(WIN_FAR[0], WIN_FAR[1], ds, ideal), sample_coords(WIN_FAR[2], WIN_FAR[3], ds, ideal)]
+    xc, xi, xdc, xd = ax(DS, False), ax(DS, True), ax(DS_DYADIC, False), ax(DS_DYADIC, True)
+    v = lambda d: (np.asarray(d, float) / SIG).tolist()
+    rows = []
+    for s_ in S_RD:
+        z = m['msol'].sol(m['t_wall'] + s_)
+        W, c = float(RT.critical_w(L, z[:2]).sum()), z[2:4]
+        ex = exact_drift(c, W, cs, As, *xc)[0]
+        ei, Ji, p2i = exact_drift(c, W, cs, As, *xi)
+        ed, Jd, p2d = exact_drift(c, W, cs, As, *xd)
+        rows.append(dict(s=float(s_), W=W, c=c.tolist(), f64=v(m['P'].block(c, W)[1]), ld=v(P80.block(c, W)[1]), exact=v(ex),
+                         ideal=v(ei), alias=v(alias_drift(c, Ji, p2i, lo, DS)), dy_f64=v(Pd64.block(c, W)[1]),
+                         dy_ld=v(Pd80.block(c, W)[1]), dy_exact=v(ed), dy_alias=v(alias_drift(c, Jd, p2d, lo, DS_DYADIC))))
+    err = lambda a, b: [max(abs(float(p_ - q_)) for p_, q_ in zip(a[i], b[i])) for i in range(2)]
+    out = dict(name=name, x=float(x), rows=rows, coord_err=err(xc, xi), dy_coord_err=err(xdc, xd), N=int(m['K'].N), N_dy=int(Kd.N),
+               secs=time.time() - t0)
+    print(f"  RD {name} x {x:g}: exact {rows[1]['exact']}, ideal {rows[1]['ideal']} [{out['secs']:.0f}s]", flush=True)
+    return out
+
+
+def part_RD():
+    """RD: RD_JOBS."""
+    return [rd_job(a) for a in RD_JOBS]
 
 
 def part_RC():
@@ -1798,8 +1974,9 @@ def rp_lines(RP):
            "long double (unit roundoff 5.4·10⁻²⁰; the state float64), on Part C's window with its top edge at 1 (the block "
            f"{edge(1.0):.2f}σ below it), nearer or farther, on the window with every edge at least {min(edges(WIN_FAR)):.2f}σ from "
            f"feature 0 (x ∈ "
-           f"[{WIN_FAR[0]:g}, {WIN_FAR[1]:g}], y ∈ [{WIN_FAR[2]:g}, {WIN_FAR[3]:g}]: the continuum, where the block's rest does not move "
-           f"with W) and with the right edge {edges(WIN_RIGHT)[1]:.2f}σ from it (x ∈ [{WIN_RIGHT[0]:g}, {WIN_RIGHT[1]:g}], y ∈ [{WIN_RIGHT[2]:g}, "
+           f"[{WIN_FAR[0]:g}, {WIN_FAR[1]:g}], y ∈ [{WIN_FAR[2]:g}, {WIN_FAR[3]:g}]: no edge within reach, the block's rest moving with W "
+           "only by the samples' own float64 coordinates — the same in the long double and in exact sums — and by the aliasing, RD) and "
+           f"with the right edge {edges(WIN_RIGHT)[1]:.2f}σ from it (x ∈ [{WIN_RIGHT[0]:g}, {WIN_RIGHT[1]:g}], y ∈ [{WIN_RIGHT[2]:g}, "
            f"{WIN_RIGHT[3]:g}]); N the samples (⟨·⟩ averages over them, so a window of N samples runs at N₀/N the speed of Part C's, "
            f"N₀ = {N0}). The relative offset D = c_r − c_e (σ) at s = " + ', '.join(f"{q:g}" for q in S_MARKS_RP)
            + f" against the law integrated from s = {S0_RP:g} with the block's centroid c_b = (w_e c_e + w c_r)/W slaved to its rest — "
@@ -1837,15 +2014,26 @@ def rp_lines(RP):
     if jr:
         js = [(r, j) for r in sorted(jr, key=key) for j in r['jac']]
         err = [max(abs(a - b) for a, b in zip(sorted(j['law']), sorted(j['jac']))) / max(abs(b) for b in j['jac']) for r, j in js]
+        erry = [max(abs(a - b) for a, b in zip(sorted(j['law_y']), sorted(j['jac']))) / max(abs(b) for b in j['jac']) if 'law_y' in j
+                else None for r, j in js]
         out += ["", "The rate (referee rounds 62 and 66), at every float64 row: the Jacobian's eigenvalues nearest the relative mode's (the "
                 "full two-kernel system, Λ₀ times `critical_jac_nd`) against the slaved law's κλ_D·eig⟨r, ∇²_cφ⟩ — its error over the largest rate — "
                 "and round 58's λ_D·eig⟨r, ∇²_cφ⟩ (λ_D = Λ₀·2Gm ww_e/W): " + '; '.join(
                     f"{r['name']}, x = {r['x']:g}, {wname(r)}, s = {j['s']:.4g}: " + ', '.join(f"{a:+.4g}" for a in j['jac'])
-                    + " against " + ', '.join(f"{a:+.4g}" for a in j['law']) + f" ({e_:.1%}; κ = {j['kappa']:.3f}; round 58: "
-                    + ', '.join(f"{a:+.4g}" for a in j['law0']) + ")" for (r, j), e_ in zip(js, err)) + ".",
+                    + " against " + ', '.join(f"{a:+.4g}" for a in j['law']) + f" ({e_:.1%}; κ = {j['kappa']:.3f}"
+                    + (f"; ε_b {', '.join(f'{b_:.3f}' for b_ in j['eps_b'])}; the (D, y) system " + ', '.join(f"{a:+.4g}" for a in j['law_y'])
+                       + f" ({ey:.1e})" if 'law_y' in j else '') + "; round 58: "
+                    + ', '.join(f"{a:+.4g}" for a in j['law0']) + ")" for (r, j), e_, ey in zip(js, err, erry)) + ".",
                 f"Over these rows κ = {min(j['kappa'] for r, j in js):.3f}–{max(j['kappa'] for r, j in js):.3f} and the slaved law's error "
                 f"{min(err):.1%}–{max(err):.1%} of the largest rate: the slaving holds while the centroid's modes are faster than the "
-                "relative mode, its error growing as they near it."]
+                "relative mode, its error growing as they near it"
+                + ("" if not all('law_y' in j for r, j in js) else
+                   f". Referee round 72: the slaving drops the centroid's offset y, slaved at first order in D (y = −(ww_e(w − w_e)/"
+                   "(W(w² + w_e²)))R⁻¹QD, Q = ⟨r, ∇²_cφ⟩, R = Q − W⟨∇_cφ∇_cφᵀ⟩), and its first correction is λ ≈ κλ_D(1 − ε_b), ε_b = "
+                   "(w − w_e)²ww_e/(w² + w_e²)²·R⁻¹Q = (1 − κ)λ_D/λ_b (λ_b the centroid's rate): ε_b (the larger) "
+                   f"{min(max(j['eps_b']) for r, j in js):.1%}–{max(max(j['eps_b']) for r, j in js):.1%} over these rows against the "
+                   f"slaved law's error {min(err):.1%}–{max(err):.1%}; the (D, y) system on the block's moments, y unslaved, within "
+                   f"{max(erry):.1e} of the Jacobian's rates (relative to the largest)") + "."]
     for top in [t for t in TOPS_RP if t != 1.0]:
         pairs = [(a, b) for a in std for b in RP if b['top'] == top and b['prec'] == 64 and b['name'] == 'near tie' and b['x'] == a['x']
                  and b.get('win') is None]
@@ -1873,7 +2061,10 @@ def rc_lines(RC, RP=None):
     main_ = [r for r in RC if (r['sub'], r['ymode'], r['inj']) == (SUB_RC, 'y', INJ_RC)]
     nf = main_[0]['N']
     pc = lambda v: '—' if v is None else f"{v:.4g} ({v * N0 / nf:.4g})"
-    out = ["## RC. The relative mode in the continuum: continued about a merged block, injected into the race (referee round 66)", "",
+    out = ["## RC. The relative mode in the continuum: continued about a merged block, injected into the race (referee rounds 66, 72)",
+           "",
+           "The continuum here is the far window's Jacobian with the rest's drift dropped (referee round 72: the drift as a forcing, "
+           "below and RD).", "",
            f"On the window with every edge at least {min(edges(WIN_FAR)):.2f}σ from the block (N = {nf}; s in its time, in brackets "
            f"times N₀/N: Part C's, N₀ = {N0}) R's race (`rp_job`'s) to s₁ = {S1_RC:g}; there the merged block — both kernels at the "
            "centroid c_b less its offset y = (∂F/∂c_b)⁻¹F(c_b) off the merged rest — runs on (`merged_rhs`), and the centres' "
@@ -1888,6 +2079,30 @@ def rc_lines(RC, RP=None):
     for r in sorted(main_, key=lambda r: (r['name'], r['x'])):
         out.append(f"| {r['name']} | {r['x']:g} | {r['least']:.2f} ({r['e_least']:+.2f}), {r['s_least']:.4g} | {r['efolds']:.0f} | "
                    + ('—' if r['s_inj'] is None else f"{r['s_inj']:.4g}") + f" | {r['side']} | {pc(r['s_climb'])} | {pc(r['s_d'])} |")
+    fz = [r for r in main_ if r.get('forced', {}).get('least')]
+    if fz:
+        lab = lambda t: '—' if t is None or t[0] is None else f"{t[0]:.2f} ({t[1]:+.2f})"
+        out += ["", "The rest's drift as a forcing (referee round 72): the merged base is no solution of the race — its kernels' speeds go "
+                "as their coefficients —, so a block whose rest moves with W forces the relative mode by κk(∂c̄*/∂W)dW/ds, k = 2(w − w_e)/W "
+                "(δc_e by −w/W of it, δc_r by +w_e/W). The forced D, log₁₀|D| σ (its share along e), at the continuum's least and at its "
+                "injection (the forced part's size there over the homogeneous one's, inj·σ: the linear response, its sign deciding the "
+                "side wherever it is the larger), for three drifts: the float64 sums' (`PairSums.block` along the merged run), exact sums on "
+                "these samples (their "
+                f"float64 coordinates: ∂c̄*/∂W = ({fz[0]['d_coord'][0]:+.3e}, {fz[0]['d_coord'][1]:+.3e})σ per unit W) and on the ideal "
+                f"grid (the aliasing: ({fz[0]['d_alias'][0]:+.3e}, {fz[0]['d_alias'][1]:+.3e})σ) — the exact drifts at s₁ and "
+                f"{S_CONT_RC:g} within {max(r['d_change'] for r in fz):.1e} relative —, against the continuum's least (the first column):",
+                "", "| target | x | least \\|D\\| (share along e) | forced at the least: float64 sums | exact (these samples) | ideal grid "
+                "(the aliasing) | at the injection, the forced over the homogeneous (dex; share): float64 sums | exact | ideal grid |",
+                "|---|---|---|---|---|---|---|---|---|"]
+        for r in sorted(fz, key=lambda r: (r['name'], r['x'])):
+            fl, fi = r['forced']['least'], r['forced'].get('inj', {})
+            over = lambda t: '—' if t is None or t[0] is None else f"{t[0] - np.log10(r['inj']):+.1f} ({t[1]:+.2f})"
+            out.append(f"| {r['name']} | {r['x']:g} | {r['least']:.2f} ({r['e_least']:+.2f}) | {lab(fl['f64'])} | {lab(fl['coord'])} | "
+                       f"{lab(fl['alias'])} | {over(fi.get('f64'))} | {over(fi.get('coord'))} | {over(fi.get('alias'))} |")
+        dom = lambda k: sorted(r['x'] for r in fz if r['name'] == 'near tie' and r['forced']['least'][k][0] is not None
+                               and r['forced']['least'][k][0] > r['least'])
+        out += ["", "On the near tie the forced D exceeds the continuum's least at x = " + ', '.join(f"{x:g}" for x in dom('coord'))
+                + " for the samples' coordinates and at x = " + (', '.join(f"{x:g}" for x in dom('alias')) or 'none') + " for the aliasing."]
     ck = [r for r in RC if r not in main_]
     ref = {(r['name'], r['x']): r for r in main_}
     if ck:
@@ -1914,7 +2129,56 @@ def rc_lines(RC, RP=None):
                         f"x = {r['x']:g}: climb {q['s_climb']:.4g} → {r['s_climb'] * N0 / nf:.4g}, s_d {q['s_d']:.4g} → "
                         f"{r['s_d'] * N0 / nf:.4g} ({(r['s_d'] * N0 / nf) / q['s_d'] - 1:+.1%}; shifts {r['s_d'] * N0 / nf - q['s_d']:.3g} "
                         f"and {r['s_climb'] * N0 / nf - q['s_climb']:.3g})" for r, q in sorted(cmp_, key=lambda t: t[0]['x'])) + "."]
+        th = [(r, q) for r, q in cmp_ if r.get('s_climbs') and q.get('s_climbs') and None not in r['s_climbs'] + q['s_climbs']]
+        if th:
+            out += ["", "The split is a convention, the shift an identity (referee round 72): s_d less the climb's end at |D| = θσ, θ = "
+                    + ', '.join(f"{t:g}" for t in THETAS_CLIMB) + ", on Part C's window and in the continuum (Part C's time), and their "
+                    "relative difference: " + '; '.join(
+                        f"x = {r['x']:g}: " + ', '.join(
+                            f"{q['s_d'] - q['s_climbs'][i]:.4g} and {(r['s_d'] - r['s_climbs'][i]) * N0 / nf:.4g} "
+                            f"({((r['s_d'] - r['s_climbs'][i]) * N0 / nf) / (q['s_d'] - q['s_climbs'][i]) - 1:+.1e})"
+                            for i in range(len(THETAS_CLIMB))) for r, q in sorted(th, key=lambda t: t[0]['x'])) + "."]
+    wr = [r for r in main_ if r.get('w_peak') is not None and r['side'] == 'toward']
+    if wr:
+        out += ["", "The runner-up's coefficient along the injected race toward feature 2 (referee round 72), relative to its value at the "
+                "injection: at the climb's ends θ = " + ', '.join(f"{t:g}" for t in THETAS_CLIMB) + ", its peak (|D| there; s in Part C's "
+                "time) and where it is 1% below: " + '; '.join(
+                    f"{r['name']}, x = {r['x']:g}: " + ', '.join('—' if v is None else f"{v:+.2e}" for v in r['w_climbs'])
+                    + f"; {r['w_peak'][0]:+.2e} at |D| = {r['w_peak'][2]:.3f}σ (s = {r['w_peak'][1] * N0 / nf:.4g}); "
+                    + ('none' if r['s_wdecay'] is None else f"{r['s_wdecay'] * N0 / nf:.4g}")
+                    for r in sorted(wr, key=lambda r: (r['name'], r['x']))) + "."]
     out.append("")
+    return out
+
+
+def rd_lines(RD):
+    """RD's report (referee round 72): ∂c̄*/∂W at RC's merged block in each arithmetic and on each grid."""
+    if RD is None or not len(RD):
+        return []
+    q = lambda ds: np.exp(-np.pi ** 2 * SIG ** 2 / ds ** 2)
+    vec = lambda v: f"({v[0]:+.3e}, {v[1]:+.3e})"
+    out = ["## RD. What moves the block's rest with W without an edge (referee round 72)", "",
+           f"RC's merged block (the gap x on the window x ∈ [{WIN_FAR[0]:g}, {WIN_FAR[1]:g}], y ∈ [{WIN_FAR[2]:g}, {WIN_FAR[3]:g}]) at "
+           f"s = {', '.join(f'{v:g}' for v in S_RD)}: the rest's shift ∂c̄*/∂W = (∂F/∂c̄)⁻¹⟨φ, ∇_cφ⟩ (σ per unit W; in the continuum 0, "
+           "⟨φ, ∇_cφ⟩ = ½∇_c‖φ‖²) with the sums in float64, in the long double and exact "
+           f"({RD_PREC} digits) on the committed samples (spacing {DS:g}, `np.arange`'s float64 coordinates, off the ideal grid by up to "
+           f"{max(RD[0]['coord_err']):.2e}), exact on the ideal grid against the aliasing's first harmonic (Poisson summation: "
+           f"⟨φ, ∂_iφ⟩ = −⟨φ²⟩(2πq/ds)sin(2π(c_i − x₀,ᵢ)/ds), q = e^{{−π²σ²/ds²}} = {q(DS):.3e}), and the same on a dyadic grid "
+           f"(spacing {DS_DYADIC:g}, its float64 coordinates exact: off by {max(RD[0]['dy_coord_err']):g}; q = {q(DS_DYADIC):.3e}):", "",
+           "| target | x | s | W | float64 | long double | exact | ideal grid, exact | the aliasing | dyadic: float64 | long double | exact | "
+           "the aliasing |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in RD:
+        for w in r['rows']:
+            out.append(f"| {r['name']} | {r['x']:g} | {w['s']:g} | {w['W']:.4f} | " + ' | '.join(
+                vec(w[k]) for k in ('f64', 'ld', 'exact', 'ideal', 'alias', 'dy_f64', 'dy_ld', 'dy_exact', 'dy_alias')) + " |")
+    ex = [w for r in RD for w in r['rows']]
+    rel = lambda a, b: max(abs(x_ - y_) for x_, y_ in zip(a, b)) / max(abs(y_) for y_ in b)
+    out += ["", f"On the committed samples the long double's drift is the exact sums' to {max(rel(w['ld'], w['exact']) for w in ex):.1e} "
+            "relative — the drift is the samples' coordinates', in any arithmetic — and float64's differs from it by up to "
+            f"{max(max(abs(a - b) for a, b in zip(w['f64'], w['exact'])) for w in ex):.1e}σ, its sums' rounding; on the ideal grid the exact drift is the aliasing's to {max(rel(w['alias'], w['ideal']) for w in ex):.1e}, "
+            f"on the dyadic grid to {max(rel(w['dy_alias'], w['dy_exact']) for w in ex):.1e}, where the long double's "
+            f"(|·| ≤ {max(max(abs(v) for v in w['dy_ld']) for w in ex):.1e}σ) and float64's (≤ {max(max(abs(v) for v in w['dy_f64']) for w in ex):.1e}σ) "
+            "are their sums' rounding.", ""]
     return out
 
 
@@ -2022,7 +2286,7 @@ def r_lines(R, C3=None, C4=None, C4b=None, FC=None, C4M=None):
 
 
 def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=None, C2=None, V=None, C3=None, T3=None, B4u=None,
-           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None, C4W=None, RC=None):
+           C4=None, B4x=None, V3=None, D2=None, C4b=None, R=None, VF=None, FC=None, C4M=None, RP=None, C4W=None, RC=None, RD=None):
     L = law()
     kap = np.pi * (2 * L.c) ** 0.5
     L_ = ["# Proposition D‴.54: the transit in ℝⁿ (`exp_transit_nd.py`)", "",
@@ -2442,6 +2706,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
     L_ += r_lines(R, C3, C4, C4b, FC, C4M)
     L_ += rp_lines(RP)
     L_ += rc_lines(RC, RP)
+    L_ += rd_lines(RD)
     if T3 is not None:
         L_ += ["## T3. The product rule at a vertex of hℤ³", "",
                f"The 8 kernels at the corners of the cube {{0, H}}³ (samples on a tensor grid of spacing {DS:g}), the feature (A = {A_B:g}) at "
@@ -2542,7 +2807,7 @@ def report(A=None, B=None, C=None, T=None, D=None, B4=None, H_=None, T2=None, W=
 
 
 KEYS = ('A', 'B', 'C', 'T', 'D', 'B4', 'H', 'T2', 'W', 'C2', 'V', 'C3', 'T3', 'B4u', 'C4', 'B4x', 'V3', 'D2', 'C4b', 'R', 'VF', 'FC', 'C4M',
-        'RP', 'C4W', 'RC')                                                           # the raw's parts, in `report`'s order
+        'RP', 'C4W', 'RC', 'RD')                                                     # the raw's parts, in `report`'s order
 
 
 def main():
@@ -2565,7 +2830,7 @@ def main():
                   ('T2', part_T2), ('W', lambda: part_W(res.get('T'))), ('C2', part_C2), ('V', part_V), ('C3', part_C3),
                   ('T3', part_T3), ('B4u', lambda: part_B4u(res['B4'])), ('C4', part_C4), ('B4x', lambda: part_B4x(res['B4'])),
                   ('V3', part_V3), ('D2', part_D2), ('C4b', part_C4b), ('R', part_R), ('VF', part_VF), ('FC', part_FC),
-                  ('C4M', part_C4M), ('RP', part_RP), ('C4W', part_C4W), ('RC', part_RC)):
+                  ('C4M', part_C4M), ('RP', part_RP), ('C4W', part_C4W), ('RC', part_RC), ('RD', part_RD)):
         if k in parts:
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))

@@ -2991,3 +2991,37 @@ dropped by a filter; wording and log loose ends.
 null holds its level until the tie: before reading a pattern, split by what sets the statistic's scale (here s/|ŵ|) and bin by the
 quantity the pattern is about (the null's own centre, not its label). And the range of nine noisy estimates describes their noise: a
 pooled value with its error is the statement.
+
+## Round 72 (adversarial review of Proposition D‴.54 as revised after round 66, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bs: Proposition D‴.54 as revised after round 66, with its code and results at
+37918e1 (`review/REVIEW_round72_D3bs.md`). The referee:
+- regenerated the md byte for byte and reran RC, RP, C4 and C4M jobs bit-identically;
+- wrote the ε-free race from scratch with closed-form integrals (no samples) in 130-digit arithmetic, fully nonlinear, and reproduced RC's
+  least |D| (10^{−98.716} at x = 3);
+- computed the block's rest's drift in float64, the long double and exact sums on the committed and on an ideal grid, and added it to RC's
+  linear system as a forcing;
+- checked s_d's identity against the climb's threshold, the coefficient's track, the proof's y and the κ-law's next order;
+- ran 62 single-point mutants; eleven literature searches.
+
+**Verdicts (D3bs).** No major issue; RC is right about the continuum. Minors: on samples the far window's drift is not rounding but the
+samples' own float64 coordinates (3.2·10⁻¹⁶σ per unit W, the same in the long double), deciding x ≤ 5.48, and on an ideal grid the
+aliasing (10⁻³⁷σ) decides x = 3; s_d's shift is an identity but its split into a climb and a hold a convention, and the coefficient's
+decay begins only at the rest, after a rise; the proof's y is the slaved centroid's first-order response, not a forcing, and the κ-law's
+error is ε_b at next order; 16 behaviour-changing surviving mutants (RC's checks vacuous to the tests); literature (Guo et al. 2018,
+Cousseau–Ozeki–Amari 2008, Biehl–Riegler–Wöhler 1996; Du–Hu–Lee's homogeneity) and a New that claimed the generic trailing. Slips.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bs-1 | minor | What moves the rest on samples | RD: ∂c_b*/∂W at RC's merged block in float64, the long double and exact (80-digit) sums on the committed samples ((+3.151·10⁻¹⁶, −8.227·10⁻¹⁷)σ per unit W; the long double's to 3.2·10⁻⁴), exact on the ideal grid ((+1.249·10⁻³⁷, −6.96·10⁻⁴⁰)σ, the aliasing's first harmonic to 2.4·10⁻¹⁴) and on a dyadic grid (exact coordinates: 5.6·10⁻⁴³σ, each arithmetic's rounding beside it); RC: the drift as a forcing κk(∂c_b*/∂W)dW/ds continued with the relative mode — the coordinates' forced D exceeds the continuum's least at x ≤ 5.48, the aliasing's at x = 3, both toward the far side on C2's target —; (iv), (v), the proof, Status, New, the RP/RC captions: the continuum in exact arithmetic, on samples the edge's, else the aliasing's or the coordinates' |
+| D3bs-2 | minor | s_d's split | RC and RP: the climb's end at θ = 10⁻³, 10⁻², 10⁻¹σ — s_d − s_climb(θ) equal on Part C's window and in the continuum to 7.5·10⁻¹² … 2·10⁻⁴ for every θ, the hold moving by ln 10/λ per decade —; the runner-up's coefficient along the injected race (rising ∝ \|D\|², peaking as D reaches its rest: +9.6·10⁻⁴ at 0.21σ, x = 3; 1% below from 6.56·10⁵); (v): the shift an identity, the split a convention, the hold beginning at the rest |
+| D3bs-3 | minor | The proof's y; the κ-law's error | RP: the (D, y) system on the block's moments, the centroid unslaved — within 5·10⁻⁴ of the Jacobian's rates where the κ-law errs by up to 10.1% — and ε_b = (w − w_e)²ww_e/(w² + w_e²)²·R⁻¹Q (0.4–8.8%); the proof: y first order in D, the κ-law dropping dy/ds, its error ε_b; in the continuum nothing forces D (y = 0 moves the least by 0.016 dex) |
+| D3bs-4 | minor | Surviving mutants | Tests: golden `rc_job` rows for the mirror (x = 4.9), the tail (x = 7) and every check row, each check differing from the main row where its argument acts; the new fields in the golden comparison; `part_RC`'s job list; `rp_job` on the far window at x = 3 and 5.07 (the law, D, the growth rate, the climbs); the unslaved rates and ε_b on the raw; `exact_drift`, `alias_drift`, `sample_coords` and RD on the raw (55 pass) |
+| D3bs-5 | minor | Literature and New | Status: Guo et al. (JMLR 2018), Cousseau–Ozeki–Amari (IEEE TNN 2008), Biehl–Riegler–Wöhler (J. Phys. A 1996); Fukumizu–Amari's line of critical points for the frozen split; Du–Hu–Lee restricted to positively homogeneous units; New: the race's consequences in this paradigm (the side, the pin, the climb, s_d), the relative mode's law generic to (a, θ) gradient flows |
+| D3bs-6 | cosmetic | Slips | 0.02 dex (y = 0: 0.016); the formed range 27–216 e-folds and 10^{−13.4} … 10^{−98.7}σ (x = 7 a tail); 6.97–7.49·10⁴ (the mirror's to 7.50·10⁴); R's x = 5.4772 beside RP's 6.10·10⁴ at 5.48; the κ-law's ranges at s ≈ 450 and 5000; the top edge at 1.5 (the right edge 6.25σ away; float64's and the long double's drifts); the mirror's −0.64; x = 6.04's validation; `c4_atol`'s docstring; C4's pin at (4.9, 10⁻⁹) resolved to a factor 2 |
+
+**Lesson.** "The continuum" must be said in full: the integral over ℝⁿ in exact arithmetic. A sampled problem has two deterministic
+sources that move what the continuum keeps fixed — the samples' aliasing and their float64 coordinates — and they act in any arithmetic,
+so a long-double run cannot tell them from the continuum, while exact sums on an ideal and on a dyadic grid separate all three. And a
+law's next order is the cheapest check of its error: here the unslaved two-variable system reproduces the Jacobian's rate to 5·10⁻⁴,
+where the slaved law's 10% had been read as a validity limit.
