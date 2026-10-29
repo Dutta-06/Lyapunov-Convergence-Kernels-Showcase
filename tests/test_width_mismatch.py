@@ -542,6 +542,27 @@ def test_the_entries_at_their_boundaries():
     assert '| an optimal block | 2 (2) | 1 |' in md and '| — | 2 (0.900–0.950) |' in md
 
 
+def test_frame_series_against_the_exact_defects():
+    """Referee round 81 (D3cb-5): `gh_nodes` is the Gauss–Hermite rule of N(0, 1) (He_K at its nodes zero, the weights summing to 1, to
+    the arithmetic's 110 digits); `frame_series` at rational ρ and v is Σ_{n ≥ 2K} (ρⁿ/n!)D_n(v)² with `gh_defect_v`'s exact defects."""
+    from decimal import Decimal, localcontext
+    from fractions import Fraction
+    from math import factorial
+    for K in (1, 3, 6):
+        zs, ws = WM.gh_nodes(K)
+        with localcontext() as ctx:
+            ctx.prec = WM.A5_PREC
+            assert abs(sum(ws) - 1) < Decimal(10) ** -100 and all(abs(WM.he_all(z, K)[K]) < Decimal(10) ** -90 for z in zs)
+    for K, rho, v in ((1, Fraction(1, 3), Fraction(3, 2)), (2, Fraction(1, 4), Fraction(2)), (3, Fraction(2, 5), Fraction(5, 4))):
+        with localcontext() as ctx:
+            ctx.prec = WM.A5_PREC
+            rd, vd = Decimal(rho.numerator) / rho.denominator, Decimal(v.numerator) / v.denominator
+        S, terms, low = WM.frame_series(K, rd, vd)
+        ref = [rho ** n / factorial(n) * WM.gh_defect_v(n, K, v) ** 2 for n in range(2 * K, 2 * K + 2 * len(terms), 2)]
+        assert all(abs(Fraction(t) / r_ - 1) < Fraction(1, 10 ** 60) for t, r_ in zip(terms, ref) if r_ != 0)
+        assert low < Decimal(10) ** -80
+
+
 def test_the_frames_and_the_first_tail_ratio():
     """Referee round 65: `gh_defect_v` at v = 2 is `gh_defect`, and the first tail ratio is −vK(K + 2) + (v − 1)(K + 1)(2K + 1) exactly;
     the frame at ρ = t is the half-squeeze rule's (v_ρ = τ²σ/σ*, v′ = 2), at ρ = λ v′ = 1, at ρ = q the variance 2τ²/(β² + 1)."""
@@ -663,14 +684,22 @@ def test_b3_binds_and_lines_on_synthetic_results():
     assert "Above 1e-10 (5 blocks: τ/σ (variant)) the end is bounded by" in s
     assert ("- neither (the budget spent): 1 — 0.75 (x);\n- nothing (inconsistent: the path's own polish reaches it, accepted): 1 — 1.5 (y);"
             "\n- the budget: 1 — 0.5 (polish 2σ);\n- the gradient test: 1 — 0.25 (base);\n- the radius: 1 — 1 (grid +0.05).") in s
-    assert ("by the optimum (one solver from one kind of start; a negative value is the end below the stored optimum, converged only to "
-            "that): 3e-07: +0.0e+00; 6e-08: +0.0e+00; 4e-09: +0.0e+00; 2e-09: +1.0e-01; 2.5e-11: +1.5e-02.") in s
-    B4 = [dict(r=0.25, k=6, start='block', **{'long double': dict(ratio=0.99)}), dict(r=0.25, k=6, start='optimum', **{'long double': dict(ratio=0.5)})]
+    assert ("by the optimum (one solver from one kind of start; above B4_MAX a negative value is the end below the stored optimum, "
+            "converged only to that): 3e-07: +0.0e+00; 6e-08: +0.0e+00; 4e-09: +0.0e+00; 2e-09: +1.0e-01; 2.5e-11: +1.5e-02.") in s
+    B4 = [dict(r=0.25, k=6, start='block', e_opt=2.5e-11, **{'long double': dict(ratio=0.99)}),
+          dict(r=0.25, k=6, start='optimum', e_opt=2.5e-11, **{'long double': dict(ratio=0.995)})]
     s4 = '\n'.join(WM.b3_lines([B3[5], alt(5, r=0.75, var='w', **{'budget, no test': P(0.99)})], B4))
     assert "stops at 1.0147 (0/5000: neither (the budget spent)), 0.9900 (0/5000: the budget and the gradient test) times the stored optimum." in s4
     s4 = '\n'.join(WM.b3_lines([B3[5]], B4))
-    assert "stops at 1.0147 (0/5000: neither (the budget spent)) times the stored optimum, 1.0249 times B4's long-double end." in s4
+    assert "stops at 1.0147 (0/5000: neither (the budget spent)) times the stored optimum, 1.0249 times B4's best end." in s4
     assert "2.5e-11: +2.5e-02." in s4
+    z2 = alt(5, var='z2', e_opt=2.6e-11, **{'budget, no test': P(1.0)})  # referee round 81 (D3cb-6): the reference over each row's own optimum
+    s4 = '\n'.join(WM.b3_lines([B3[5], z2], B4))
+    assert f"1.0249, {1.0 / (0.99 * 2.5e-11 / 2.6e-11):.4f} times B4's best end." in s4
+    Bs = [dict(r=0.25, var='z', blocks=[dict(k=6, e=1.1, e_opt=1.0, polish=[dict(status=0, nfev=5000)])]),
+          dict(r=0.25, var='z2', blocks=[dict(k=6, e=1.1, e_opt=1.0, polish=[dict(status=1, nfev=77)])])]
+    s5 = '\n'.join(WM.b3_lines([B3[5], z2], B4, Bs))
+    assert "The 'path' restart reproduces the first polish B stored — its stop and evaluations — at 1 of 2 blocks (not at 0.25 (z2))." in s5
     q2 = [dict(B3[1]), dict(B3[0])]
     q2[0]['budget, no test'] = P(0.99998, st=3)
     s2 = '\n'.join(WM.b3_lines(q2))
@@ -701,8 +730,10 @@ def test_seed_rule_with_two_seed_kernels_and_its_default():
 
 
 def test_part_a5_on_its_own_numbers():
-    """Referee round 70 (A01–A05, A09): A5's frames at ρ = t, q, λ and the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the Mercer-zero
-    rule — with its errors at the given K, by hand; the tail-ratio checks all exact."""
+    """Referee rounds 70, 81 (A01–A05, A09; D3cb-5): A5's frames at ρ = t, q, λ and the Mercer frame's rule N(0, 2τ²/(β² + 1)) — not the
+    Mercer-zero rule — with its errors at the given K, by hand; the tail-ratio checks all exact; the exact frame series (`a5_series`) is
+    the rule's error (its ratio per kernel the actual errors' to 10⁻⁴), its tail above the first term from K = 6 at τ/σ = 2, and its
+    lines."""
     A = dict(rows=[dict(r=1.0, K=3), dict(r=1.0, K=4), dict(r=2.0, K=5)])
     A5 = WM.part_A5(A)
     x = next(r for r in A5['rows'] if r['r'] == 1.0)
@@ -715,11 +746,18 @@ def test_part_a5_on_its_own_numbers():
     assert np.isclose(x['frames']['t']['v'], 1.0) and np.isclose(x['frames']['λ']['vp'], 1.0)
     assert np.allclose(x['e_mframe'], [W.l2_error(*W.scaled_rule(K, WM.SIG, ss, vM), WM.SIG, ss) for K in (3, 4)])
     assert all(c_['ok'] for c_ in A5['check'])
+    sr = {y['r']: y for y in A5['series']}
+    by = {y['K']: y for y in sr[1.0]['frames']['Mercer']}
+    rat = lambda K: float(np.sqrt(by[K - 1]['S'] / by[K]['S']))
+    e = [W.l2_error(*W.scaled_rule(K, WM.SIG, ss, vM), WM.SIG, ss) for K in (3, 4)]
+    assert abs(rat(4) / (e[0] / e[1]) - 1) < 1e-4                       # referee round 81: the exact series is the rule's error
+    assert sr[2.0]['frames']['Mercer'][4]['tail'] < 1 < sr[2.0]['frames']['Mercer'][5]['tail']   # the tail above the first from K = 6
     A5['rows'] = [dict(x, Ks=[3, 4, 5, 6], e_mframe=[1.0, 0.25, 0.05, 0.01]) for x in A5['rows']]
     md = '\n'.join(WM.a5_lines(A5))
     assert f"| 4.0000, 5.0000, 5.0000 at K = 4–6 ({1 / x['t']:.4g}, {1 / x['q']:.4g}) |" in md and "ratio per kernel at the last three K" in md
-    on = 2 / (x['q'] * (2 - x['frames']['q']['vp']))
-    assert "from K ≈ 2/(q(2 − v′)): 70.0 at τ/σ = 0.25 (the last K tested 6);" in md and f"; {on:.1f} at τ/σ = 1 (the last K tested 6);" in md
+    assert "2/(q(2 − v′))" not in md and "| 2 | Mercer | " in md and "| 1 | half-squeeze | " in md
+    assert (f"| 1 | Mercer | " + ', '.join(f"{by[K]['tail']:.3g}" for K in (5, 10, 20, 40)) + " | 8 | "
+            + ', '.join(f"{rat(K):.4f}" for K in (10, 20, 30, 40))) in md
 
 
 def test_b2_job_where_variable_projection_leaves_the_block():
@@ -805,14 +843,20 @@ def test_b3_stops_the_path_at_the_stored_blocks_first_polish(monkeypatch):
         except RuntimeError as e:
             assert msg in str(e)
     assert WM.b3_job((0.5, 'base', dict(WM.first_nonoptimal(b), first=dict(status=1))))['k'] == 3
+    solved.clear()                                                      # referee round 81: acceptance compared, before the larger restarts
+    try:
+        WM.b3_job((0.5, 'base', dict(WM.first_nonoptimal(b), first=dict(status=1, nfev=1, accepted=False))))
+        raise AssertionError('a mismatched acceptance was accepted')
+    except RuntimeError as e:
+        assert 'is not the stored first polish' in str(e) and solved == [1, 1, 1, 3]
 
 
 def test_lm_fit_in_double_and_long_double():
     """Referee rounds 70, 77 (B4): `lm_fit` from variable projection's end at τ/σ = 1/2, K = 8 (its optimum ≈ 2.1·10⁻¹⁰): in double the
     solve stalls with nothing gained (its steps lost to the residual's rounding), in long double the same solve goes on 10⁻⁵ below, and so
-    does the solve in double with the residual about an anchor; the iteration cap stops it; the anchored solve's 'flat' stop, its marks and
-    its refusal of long double; on an exact two-kernel sum from a perturbed start both reach the sum; `lm_rms` is the long-double rms;
-    the defaults are B4's."""
+    does the solve in double with the residual about an anchor; the iteration cap stops it; the anchored solve's marks, and (referee
+    round 81) the anchored solve in long double from the anchored double's end, ending no higher; on an exact two-kernel sum from a
+    perturbed start both reach the sum; `lm_rms` is the long-double rms; the defaults are B4's."""
     import inspect
     import pytest
     from src.core import rich_transit as RT
@@ -833,8 +877,8 @@ def test_lm_fit_in_double_and_long_double():
     marks = {10: None, 10 ** 9: None}
     WM.lm_fit(f, ao, co, np.float64, anchored=True, max_iter=50, marks=marks)
     assert np.array_equal(marks[10], WM.lm_fit(f, ao, co, np.float64, anchored=True, max_iter=10)[0]) and marks[10 ** 9] is None
-    with pytest.raises(ValueError):
-        WM.lm_fit(f, ao, co, np.longdouble, anchored=True)
+    pq, itq, accq, stq = WM.lm_fit(f, pa[:8], pa[8:], np.longdouble, anchored=True, max_iter=300)
+    assert pq.dtype == np.longdouble and WM.exact_rms(f, pq, 8) <= WM.exact_rms(f, pa, 8) * (1 + 1e-12)
     p, it, acc, st = WM.lm_fit(f, ao, co, np.longdouble, max_iter=50)
     assert it == 50 and st == 'cap' and WM.lm_rms(f, p, 8) / eo > el
     w, c = np.array([0.5, 0.3]), np.array([-0.05, 0.2])
@@ -849,15 +893,18 @@ def test_lm_fit_in_double_and_long_double():
     sig = inspect.signature(WM.lm_fit).parameters
     assert sig['max_iter'].default == WM.B4_CAP == 400_000 and sig['mu0'].default == 1e-20 and WM.B4_MAX == 2e-9
     assert sig['anchored'].default is False and sig['anchor_every'].default == WM.B4_ANCHOR == 2000 and WM.B4_FLAT == 1e-10
+    assert sig['stall_reanchor'].default is True and WM.EXACT_PREC == 60
     assert WM.B4_MARKS == (100_000, 200_000, 300_000) and sig['marks'].default is None
     assert [k for k, _ in WM.B4_PREC] == ['double', 'long double'] and WM.B4_PREC[1][1] is np.longdouble
 
 
 def test_b4_jobs_job_and_lines(monkeypatch):
-    """Referee rounds 70, 77 (B4; BS06, BS07): the jobs are B3's distinct blocks below B4_MAX (its first row for each — not the first path
-    of that width —, the block of that K nearest its optimum), from the block and from the stored optimum with least-squares amplitudes;
-    `b4_job` reports the start's and each end's error over the optimum's for both arithmetics, the anchored double with its marks and the
-    polish's TRF without the gradient test; `b4_lines` prints the table and the summaries."""
+    """Referee rounds 70, 77, 81 (B4; BS06, BS07; D3cb-2): the jobs are B3's distinct blocks below B4_MAX (its first row for each — not the
+    first path of that width —, the block of that K nearest its optimum), from the block and from the stored optimum with least-squares
+    amplitudes; `b4_job` (its solves faked, each call's values distinct) reports the start's and each end's exact and long-double error
+    over the optimum's, for both arithmetics, the anchored double with its marks and its predicted floor, without stall re-anchoring, the
+    long double's anchored solve from the anchored double's end, and the polish's TRF without the gradient test; `b4_lines` prints the
+    table against each block's best end and the summaries."""
     from src.core import rich_transit as RT
     K = RT.Bumps(WM.X_B, WM.SIG)
     o = lambda k, e_opt, c: dict(k=k, e=2 * e_opt, e_opt=e_opt, c=np.array(c), w=np.full(len(c), 0.4), c_opt=np.array(c) + 0.01)
@@ -876,59 +923,69 @@ def test_b4_jobs_job_and_lines(monkeypatch):
     assert np.allclose(jobs[1][4], np.linalg.lstsq(K.phi(np.array([-0.14, 0.16])), f, rcond=None)[0])
     assert WM.b4_jobs(B, None) == [] and WM.b4_jobs(B, [q(0.5, 'v1', 2, 2e-9)]) == []
     seen, pol = [], []
+    calls = iter(range(10))
 
-    def fake(f_, w_, c_, dtype, max_iter=WM.B4_CAP, mu0=1e-20, anchored=False, anchor_every=WM.B4_ANCHOR, marks=None):
-        seen.append((dtype, anchored, marks is not None))
+    def fake(f_, w_, c_, dtype, max_iter=WM.B4_CAP, mu0=1e-20, anchored=False, anchor_every=WM.B4_ANCHOR, marks=None, stall_reanchor=True):
+        i = next(calls)                                                 # referee round 81: distinct values per call, moved amplitudes
+        seen.append((dtype, anchored, marks is not None, stall_reanchor, np.r_[w_, c_].astype(float)))
         if marks is not None:
             marks[WM.B4_MARKS[0]] = np.r_[w_, c_ + 0.002]
-        shift = 0.003 if anchored else 0.0 if dtype is np.longdouble else 0.001
-        return np.r_[w_, c_ + shift].astype(dtype), 7, 5, 'cap' if anchored else 'stall'
+        return np.r_[w_ * (1 + 0.001 * i), c_ + 0.001 * (i + 1)].astype(dtype), 7 + i, 5 + i, ('stall', 'cap', 'flat')[i % 3]
     monkeypatch.setattr(WM, 'lm_fit', fake)
 
     def pb(K_, f_, w_, c_, s_, cbox=None, max_nfev=5000, info=False, gtol=1e-15):
         pol.append((max_nfev, gtol, info))
-        return w_, c_ + 0.004, dict(status=3, nfev=1234)
+        return w_ * 1.01, c_ + 0.004, dict(status=3, nfev=1234)
     monkeypatch.setattr(RT, 'polish_block', pb)
     rf = float(np.sqrt(np.mean(f ** 2)))
-    ratio = lambda dc: WM.lm_rms(f, np.r_[jobs[0][4], jobs[0][5] + dc], 2) / rf / 3e-10
+    w0, c0 = jobs[0][4], jobs[0][5]
+    ex = lambda w_, c_: WM.exact_rms(f, np.r_[w_, c_], 2) / rf / 3e-10
     out = WM.b4_job(jobs[0])
-    assert seen == [(np.float64, False, False), (np.longdouble, False, False), (np.float64, True, True)] and pol == [(WM.B3_BIG, None, True)]
-    assert out['start'] == 'block' and out['k'] == 2 and np.isclose(out['e_start'], ratio(0.0))
-    assert np.isclose(out['long double']['ratio'], out['e_start']) and np.isclose(out['double']['ratio'], ratio(0.001))
-    assert out['double']['it'] == 7 and out['double']['acc'] == 5 and out['double']['stop'] == 'stall'
-    assert np.isclose(out['anchored']['ratio'], ratio(0.003)) and out['anchored']['stop'] == 'cap'
+    assert [x[:4] for x in seen] == [(np.float64, False, False, True), (np.longdouble, False, False, True), (np.float64, True, True, True),
+                                     (np.float64, True, False, False), (np.longdouble, True, False, True)] and pol == [(WM.B3_BIG, None, True)]
+    pa = np.r_[w0 * 1.002, c0 + 0.003]                                  # the anchored double's end (call 2) starts the long double's
+    assert np.allclose(seen[4][4], pa, rtol=0, atol=1e-15) and all(np.array_equal(x[4], np.r_[w0, c0]) for x in seen[:4])
+    assert out['start'] == 'block' and out['k'] == 2 and out['e_start'] == ex(w0, c0)
+    for i, k_ in enumerate(('double', 'long double', 'anchored', 'nostall')):
+        q = out[k_]
+        assert (q['it'], q['acc'], q['stop']) == (7 + i, 5 + i, ('stall', 'cap', 'flat')[i % 3]), k_
+        assert np.isclose(q['ratio'], ex(w0 * (1 + 0.001 * i), c0 + 0.001 * (i + 1)), rtol=1e-12), k_
+        assert np.isclose(q['ratio_ld'], WM.lm_rms(f, np.r_[w0 * (1 + 0.001 * i), c0 + 0.001 * (i + 1)], 2) / rf / 3e-10, rtol=1e-12)
+    assert np.isclose(out['anchored ld']['ratio'], ex(pa[:2] * 1.004, pa[2:] + 0.005), rtol=1e-12)
+    assert out['double']['p_lo'] == [0.0] * 4 and np.allclose(out['double']['p'], np.r_[w0, c0 + 0.001], rtol=0, atol=1e-15)
     assert len(out['anchored']['marks']) == 1 and out['anchored']['marks'][0][0] == WM.B4_MARKS[0]
-    assert np.isclose(out['anchored']['marks'][0][1], ratio(0.002))
-    assert out['trf']['status'] == 3 and out['trf']['nfev'] == 1234 and np.isclose(out['trf']['ratio'], ratio(0.004))
+    assert np.isclose(out['anchored']['marks'][0][1], ex(w0, c0 + 0.002), rtol=1e-12)
+    assert out['anchored']['floor'] == WM.anchor_floor(f, pa, 2)
+    assert out['trf']['status'] == 3 and out['trf']['nfev'] == 1234 and np.isclose(out['trf']['ratio'], ex(w0 * 1.01, c0 + 0.004), rtol=1e-12)
     assert out['eps'] == float(np.finfo(np.longdouble).eps)
-    R = lambda ra, st='stall': dict(ratio=ra, it=100, acc=90, stop=st)
-    T = lambda ra: dict(ratio=ra, status=3, nfev=2500)
-    A = lambda ra, st='cap', mk=(): dict(ratio=ra, it=400000, acc=1000, stop=st, marks=[list(x) for x in mk])
-    rows = [dict(r=0.25, var='x', k=6, start='block', e_opt=2.5e-11, e_start=4.95, double=R(1.0019), eps=1.0842e-19, trf=T(1.01),
-                 anchored=A(0.99996, mk=((100000, 0.99997), (200000, 0.999965), (300000, 0.999961))), **{'long double': R(0.99997)}),
-            dict(r=0.25, var='x', k=6, start='optimum', e_opt=2.5e-11, e_start=1.0, double=R(0.99997), eps=1.0842e-19, trf=T(0.99999),
-                 anchored=A(0.99996, st='flat'), **{'long double': R(0.99996)}),
-            dict(r=1.0, var='y', k=12, start='block', e_opt=1.6e-9, e_start=1.47, double=R(0.999997), eps=1.0842e-19, trf=T(1.0),
-                 anchored=A(0.999996, st='stall'), **{'long double': R(0.999996)})]
+    R = lambda ra, rl, it=100, acc=90, st='stall': dict(ratio=ra, ratio_ld=rl, it=it, acc=acc, stop=st)
+    T = lambda ra, rl: dict(ratio=ra, ratio_ld=rl, status=3, nfev=2500)
+    cell = lambda r_, k, start, e_opt, e_start, d, ld, an, ns, al, tr, fl=7e-13, mk=(): dict(
+        r=r_, var='x', k=k, start=start, e_opt=e_opt, e_start=e_start, eps=1.0842e-19, double=d, nostall=ns, trf=tr,
+        anchored=dict(an, floor=fl, marks=[list(x) for x in mk]), **{'long double': ld, 'anchored ld': al})
+    rows = [cell(0.25, 6, 'block', 2.5e-11, 4.95, R(1.0019, 1.0019), R(0.99997, 0.99996), R(0.99996, 0.99996, 5000, 4000, 'flat'),
+                 R(0.999962, 0.999962, 900, 800), R(0.9999599, 0.9999599, 60, 50), T(1.01, 1.01), mk=((100000, 0.999961),)),
+            cell(0.25, 6, 'optimum', 2.5e-11, 1.00003, R(0.99997, 0.99997), R(0.99996, 0.999959), R(0.99996, 0.99996, 3000, 2000, 'flat'),
+                 R(0.99996, 0.99996, 40, 30), R(0.99996, 0.99996, 70, 60), T(0.99999, 0.99999), fl=2e-13),
+            cell(1.0, 12, 'block', 1.6e-9, 1.47, R(0.999997, 0.999997), R(0.999996, 0.999996), R(0.999996, 0.999996, 8000, 7000, 'stall'),
+                 R(0.999996, 0.999996), R(0.999996, 0.999996), T(1.0, 1.0)),
+            cell(1.0, 12, 'optimum', 1.6e-9, 1.0, R(0.999996, 0.999996), R(0.999996, 0.999996), R(0.999996, 0.999996, 9000, 8000, 'flat'),
+                 R(0.999996, 0.999996), R(0.999996, 0.999996), T(0.999996, 0.999996))]
     s = '\n'.join(WM.b4_lines(rows))
-    assert "the residual f − Φ(c)w, by direct subtraction, in double or in long double (its ε 1.08e-19), or in double about an anchor" in s
-    assert "re-anchored every 2000 accepted steps and at a stall" in s and "(`polish_block`, 500000 evaluations, no gradient test)" in s
-    assert ("| 0.25 | x | 6 | 2.50e-11† | block | 4.95 | 1.001900, 100/90, stall | 0.999970, 100/90, stall | 0.999960, 400000/1000, cap | "
-            "1.010000, 3/2500 |") in s
-    assert ("\n\nEach end over the long-double end from the path's block, minus 1, by the optimum — from the path's blocks, double: 1.6e-09 "
-            "(τ/σ = 1, K = 12): +1.0e-06; 2.5e-11 (τ/σ = 0.25, K = 6): +1.9e-03 — from the stored optima, double: 2.5e-11 (τ/σ = 0.25, "
-            "K = 6): +0.0e+00. In long double the ends from the block and from the stored optimum agree within 1.0e-05; the stored optimum "
-            "over that end, minus 1: 2.5e-11 (τ/σ = 0.25, K = 6): +3.0e-05.") in s
-    assert ("\n\nThe anchored double, from every start, over the long-double end from the path's block, minus 1: -1.0e-05 … +0.0e+00 (its "
-            "stops: flat 1, stall 1, cap 1); at the cap, the same after 100000, 200000, 300000 and 400000 iterations: 2.5e-11 (τ/σ = 0.25, "
-            "K = 6) from the block: +0.00e+00, -5.00e-06, -9.00e-06, -1.00e-05 — over its last 200000 iterations each end moves within "
-            "5.0e-06.") in s
-    assert ("\n\nThe polish's TRF from the path's blocks, over the long-double end, minus 1: 1.6e-09 (τ/σ = 1, K = 12): +4.0e-06 (3/2500); "
-            "2.5e-11 (τ/σ = 0.25, K = 6): +1.0e-02 (3/2500); from the stored optima: 2.5e-11 (τ/σ = 0.25, K = 6): +2.0e-05.") in s
-    old = [{k: v for k, v in x.items() if k not in ('anchored', 'trf')} for x in rows]
-    s0 = '\n'.join(WM.b4_lines(old))
-    assert "in long double (referee round 70)" in s0 and "anchor" not in s0 and "TRF" not in s0
-    assert "| 0.25 | x | 6 | 2.50e-11† | block | 4.95 | 1.001900, 100/90, stall | 0.999970, 100/90, stall |" in s0
+    assert "in double or in long double (its ε 1.08e-19), or about an anchor" in s and "(`polish_block`, 500000 evaluations, no gradient test)" in s
+    ex4 = lambda ra: f"{ra / 0.9999599 - 1:.1e}"
+    assert (f"| 0.25 | x | 6 | 2.50e-11† | block | 4.95 | {0.9999599:.12f} | {ex4(1.0019)}, 100/90, stall | {ex4(0.99997)}, 100/90, stall | "
+            f"{ex4(0.99996)}, 5000/4000, flat | {ex4(0.999962)}, 900/800, stall | {ex4(0.9999599)}, 60/50, stall | {ex4(1.01)}, 3/2500 |") in s
+    ev = [r_[k_]['ratio_ld'] / r_[k_]['ratio'] - 1 for r_ in rows for k_, _ in WM.B4_ENDS]
+    evl = [r_['long double']['ratio_ld'] / r_['long double']['ratio'] - 1 for r_ in rows]
+    assert (f"against the exact one, minus 1: {min(ev):+.1e} … {max(ev):+.1e} over every end, {min(evl):+.1e} … {max(evl):+.1e} at the "
+            "long-double solve's ends (2 of 4 below it") in s
+    assert "The anchored double's ends from the block and from the stored optimum agree within 0.0e+00; its stops: flat 3, stall 1, after 3000 … 9000 iterations" in s
+    assert "the floor the anchored double's frozen anchor rounding predicts, ‖P_Je₀‖²/(2‖r‖²) at its end (`anchor_floor`): 2.0e-13 … 7.0e-13" in s
+    assert f"The stored optimum over the best end, minus 1: 1.6e-09 (τ/σ = 1, K = 12): {1.0 / 0.999996 - 1:+.1e}; 2.5e-11 (τ/σ = 0.25, K = 6): {1.00003 / 0.9999599 - 1:+.1e}." in s
+    assert f"after 100000, 200000, 300000 iterations, over the best end, minus 1: 2.5e-11 (τ/σ = 0.25, K = 6) from the block: {0.999961 / 0.9999599 - 1:+.1e}." in s
+    best = WM.b4_best(rows)
+    assert best == {(0.25, 6): 0.9999599 * 2.5e-11, (1.0, 12): 0.999996 * 1.6e-9}
     assert WM.b4_lines(None) == [] and WM.b4_lines([]) == []
 
 
@@ -993,9 +1050,10 @@ def test_path_polishes_passes_the_settings_to_the_real_solve(monkeypatch):
 
 
 def test_lm_fit_flat_stop(monkeypatch):
-    """Referee round 77: the anchored solve stops ('flat') once a period's accepted steps lower the objective by less than B4_FLAT of
-    the anchor's — here a period of 20 accepted steps and B4_FLAT = ½; re-anchored after every accepted step, each step lowers the
-    objective as its own anchor computes it (with B4_FLAT = 0 the solve never stops 'flat')."""
+    """Referee rounds 77, 81: the anchored solve stops ('flat') once the exact rms over a period of anchor_every accepted steps falls by
+    less than B4_FLAT of itself — here a period of 20 and B4_FLAT = ½ —; the period's accepted steps are counted across the re-anchors
+    at stalls (the exact rms evaluated once at the start and once per period); without stall re-anchoring the solve stops at its first
+    stall, earlier."""
     from src.core import rich_transit as RT
     K = RT.Bumps(WM.X_B, WM.SIG)
     ss = WM.sigma_star(0.5)
@@ -1004,9 +1062,67 @@ def test_lm_fit_flat_stop(monkeypatch):
     monkeypatch.setattr(WM, 'B4_FLAT', 0.5)
     p, it, acc, st = WM.lm_fit(f, ao, co, np.float64, anchored=True, anchor_every=20)
     assert st == 'flat' and acc == 20 and it < 100
-    monkeypatch.setattr(WM, 'B4_FLAT', 0.0)
-    p, it, acc, st = WM.lm_fit(f, ao, co, np.float64, anchored=True, anchor_every=1, max_iter=2000)
-    assert st in ('cap', 'stall') and acc > 100
+    monkeypatch.setattr(WM, 'B4_FLAT', -1.0)                            # never flat
+    real, n_ex, stalls = WM.exact_rms, [], []
+    monkeypatch.setattr(WM, 'exact_rms', lambda *a: n_ex.append(1) or real(*a))
+    p, it, acc, st = WM.lm_fit(f, ao, co, np.float64, anchored=True, anchor_every=30, max_iter=1500)
+    assert st in ('cap', 'stall') and acc >= 60 and len(n_ex) == 1 + acc // 30
+    pn, itn, accn, stn = WM.lm_fit(f, ao, co, np.float64, anchored=True, anchor_every=30, max_iter=1500, stall_reanchor=False)
+    assert stn == 'stall' and itn < it and accn < acc
+    pd_, itd, accd, std_ = WM.lm_fit(f, ao, co, np.float64, max_iter=1500)
+    assert std_ == 'stall' and accd <= accn                              # direct subtraction stalls first: its rounding is not frozen
+
+
+def test_the_exact_residual_and_the_anchor_floor(monkeypatch):
+    """Referee round 81 (D3cb-1): `exact_resid` — every double and long double taken exactly, exp in 60-digit decimal — agrees with 90
+    digits to the double's rounding, the long double entering as its exact hi + lo; at B4's 2.55·10⁻¹¹ optimum (τ/σ = 1/4, K = 6) the
+    long-double rms by direct subtraction (`lm_rms`) is off by 10⁻¹³ … 10⁻⁹ relative, the residual by direct subtraction in double within
+    10⁻¹⁵ of max|f| (a few of its units in the last place); `anchor_floor` is ‖P_Je₀‖²/(2‖r‖²) for a rounding e₀ (here planted: its part in the Jacobian's range and a part
+    orthogonal to it)."""
+    from decimal import Decimal
+    from fractions import Fraction
+    import exp_cohesion_leak as E
+    raw = E.load(os.path.join(WM.OUT, 'width_mismatch_raw.npz'))
+    j = next(j for j in WM.b4_jobs(raw['B'], raw['B3']) if j[0] == 0.25 and j[2] == 6 and j[3] == 'optimum')
+    f = WM.A_B * np.exp(-(WM.X_B - WM.C_B) ** 2 / (2 * WM.sigma_star(0.25) ** 2))
+    p = np.r_[j[4], j[5]]
+    r60, e60 = WM.exact_resid(f, p, 6)
+    r90, e90 = WM.exact_resid(f, p, 6, prec=90)
+    assert np.array_equal(r60, r90) and e60 == e90
+    rd = f - np.exp(-(WM.X_B[:, None] - p[None, 6:]) ** 2 / (2 * WM.SIG ** 2)) @ p[:6]
+    assert np.abs(rd - r60).max() < 1e-15 * np.abs(f).max() and np.abs(rd - r60).max() > 0
+    rel = abs(WM.lm_rms(f, p, 6) / e60 - 1)
+    assert 1e-13 < rel < 1e-9
+    v = np.longdouble(1) / np.longdouble(3)
+    hi = float(v)
+    assert Fraction(WM._dec(v)) == Fraction(hi) + Fraction(float(v - np.longdouble(hi))) and WM._dec(v) != Decimal(hi)   # exact, in any context
+    u = WM.X_B[:, None] - p[None, 6:]
+    P = np.exp(-u ** 2 / (2 * WM.SIG ** 2))
+    J = -np.c_[P, P * u / WM.SIG ** 2 * p[None, :6]]
+    a = J[:, 0] * 1e-15
+    b = np.random.default_rng(3).standard_normal(len(WM.X_B))
+    b -= J @ np.linalg.lstsq(J, b, rcond=None)[0]                       # orthogonal to the range
+    b *= 1e-16 / np.abs(b).max()
+    monkeypatch.setattr(WM, 'exact_resid', lambda f_, p_, k_, prec=60: (rd - a - b, 0.0))
+    fl = WM.anchor_floor(f, p, 6)
+    assert np.isclose(fl, (a @ a) / (2 * ((rd - a - b) @ (rd - a - b))), rtol=1e-6)
+
+
+def test_b4_job_on_two_cells_against_the_raw():
+    """Referee round 81 (D3cb-2): the real `b4_job` — no fakes — on B4's two fastest cells (τ/σ = 1/4, K = 5, from the stored optimum and
+    from the path's block) reproduces the raw's row: every solve's exact and long-double errors, iterations, accepted steps, stop and
+    parameters, the anchored double's floor, TRF's status and evaluations."""
+    import exp_cohesion_leak as E
+    raw = E.load(os.path.join(WM.OUT, 'width_mismatch_raw.npz'))
+    for start in ('optimum', 'block'):
+        j = next(j for j in WM.b4_jobs(raw['B'], raw['B3']) if j[0] == 0.25 and j[2] == 5 and j[3] == start)
+        out = WM.b4_job(j)
+        x = next(q for q in raw['B4'] if (q['r'], q['k'], q['start']) == (0.25, 5, start))
+        assert out['e_start'] == x['e_start']
+        for k_, _ in WM.B4_ENDS:
+            for f_ in ('ratio', 'ratio_ld', 'p', 'p_lo') + (('status', 'nfev') if k_ == 'trf' else ('it', 'acc', 'stop')):
+                assert out[k_][f_] == x[k_][f_], (start, k_, f_)
+        assert out['anchored']['floor'] == x['anchored']['floor']
 
 
 def test_lm_fit_long_descent_from_the_paths_block():

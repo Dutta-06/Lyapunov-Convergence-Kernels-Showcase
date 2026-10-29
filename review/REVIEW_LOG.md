@@ -3179,3 +3179,40 @@ at their horizons, and two to four more decades showed the escape to the exact f
 A trend that has slowed has not stopped. Naming needs the same care: one v³ law covers both signs of K′, but only K′ > 0 approaches an
 infimum, and for K′ < 0 the four stages survive only because τ₄ comes before the dipole dissolves. And an isolated pair is a cheap control
 for an attribution — its energy is even in Δc, so the odd term that explains GL's remainder belongs to the neighbouring kernels.
+
+## Round 81 (adversarial review of Proposition D‴.58 as revised after round 77, 2026-10-29)
+
+**Design.** One referee, not modifying the repository. D3cb: Proposition D‴.58 as revised after round 77, with its code and results at
+dd88e96 (`review/REVIEW_round81_D3cb.md`). The referee:
+- regenerated the md byte for byte and reran all 12 B4 cells bit-identically, every field;
+- evaluated all 48 B4 ends and 17 marks exactly (60-digit decimal residuals, long doubles as exact hi + lo) against `lm_rms`;
+- instrumented the anchored solve (its re-anchors, the period's decrease, the jump at re-anchoring; without stall re-anchoring; with
+  anchor_every = 500; the anchored residual in long double from its end) and predicted its floor from the frozen anchor's rounding;
+- checked B3's labels and references, B2's Schur bound for Kaufman's and Golub–Pereyra's forms, and A5's frame series in 110-digit
+  decimal to K = 40;
+- ran 64 single-point mutants and the ten re-created round-77 survivors.
+
+**Verdicts (D3cb).** Reproducibility, the anchored residual's identity, the central claim (stronger in exact arithmetic: the anchored ends
+lie −1.385·10⁻⁸ … +2.2·10⁻¹⁶ off the long-double end and agree from both starts to 2·10⁻¹³), B3, B2 and the round-77 survivors (all killed
+now) hold. Two majors: B4's numbers below ~10⁻¹⁰ measured the long-double rms — biased low at all 12 long-double ends, the function that
+solve minimised — not the solves; nine behaviour-changing mutants of B4's new code survive behind the test's fakes. Minors: the solve
+re-anchored thousands of times at stalls and never periodically, its 'flat' stop dead and "to its own relative accuracy" false along the
+slow modes; the accurate solves' own floors unstated; A5's onset and its inference wrong, the rate computable; `b3_lines`' reference keyed
+across variants; two references for the optimum below 2·10⁻⁹. Cosmetic: the trapezoid floor's digits, wording, `b3_job`'s guard.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3cb-1 | major | B4 quoted below its instrument | `exact_resid`/`exact_rms` (the residual in 60-digit decimal, every double and long double taken exactly; `_dec` exact in any context): every B4 end and mark evaluated exactly, against its block's best end (`b4_best`); `lm_rms`'s error printed (−2.4·10⁻¹⁰ … +1.7·10⁻¹⁰, below the exact at 12 of 12 long-double ends); B4 rerun: double +1.9·10⁻⁸ … +2.3·10⁻³, long double up to +2.2·10⁻⁸, the anchored double within 1.3·10⁻¹² of the best end from all 12 starts, a block's two starts within 2.7·10⁻¹³; (iii), the Status and the Numerics restated; the test pins the evaluator against 90 digits and `lm_rms` at the 2.55·10⁻¹¹ optimum |
+| D3cb-2 | major | Surviving mutants behind fakes | Tests: the real `b4_job` on the two fastest cells against the raw in every field; the fakes return distinct values per call and moved amplitudes (the long double's anchored solve started from the anchored end); the period counted across stall re-anchors (the exact rms evaluated once per period); `b3_lines`' 'path' line with a mismatching row |
+| D3cb-3 | minor | The solve run, not the solve described | `lm_fit`: the 'flat' stop on the exact rms over anchor_every accepted steps counted across stall re-anchors (10 of 12 anchored solves now stop flat, after 1.5·10⁴–1.6·10⁵ iterations); `stall_reanchor=False` ('nostall', up to 9.8·10⁻⁹ above the best end: the anchored residual, not the restarts, passes the floor); the docstring and (iii): stall re-anchoring with the damping reset, the change's error proportional to the displacement |
+| D3cb-4 | minor | The accurate solves' floors | `anchor_floor`: ‖P_Je₀‖²/(2‖r‖²) from the frozen anchor's rounding (1.8·10⁻¹⁶ … 8.8·10⁻¹³) against the long double's anchored solve from the anchored end (`lm_fit` in long double about an anchor), which gains 2.2·10⁻¹⁶ … 1.3·10⁻¹²; (iii) and the Status: the direct subtraction's floor linear in its rounding, the anchored one quadratic |
+| D3cb-5 | minor | A5's onset and rate | `frame_series`, `gh_nodes`, `a5_series` (110 digits, K ≤ 40) and `a5_far` (140 digits, K = 60 … 120): the tail above the first term from K = 19, 8, 6 at τ/σ = 1/2, 1, 2 (not by 40 at 1/4); the Mercer frame's rule's ratio per kernel converging as K⁻² to 17.165, 5.3094, 2.33333 below 1/t; the series against the actual errors (to 6·10⁻¹⁴ … 3·10⁻⁵); the leading-order onset dropped; the Status: the slower fall shown at τ/σ = 1/2, 1, 2, its closed form open |
+| D3cb-6 | minor | `b3_lines`' reference across variants | the reference B4's best end, absolute, over each row's own optimum (`b4_best`); a test with two variants' optima at one (τ/σ, K) |
+| D3cb-7 | minor | Two references below 2·10⁻⁹ | one reference, the best end; (iii): the stored optimum 1.6·10⁻³ above it at 3/4, K = 11, the 0.1% test admitting ends up to 2.6·10⁻³ above it there |
+| D3cb-8 | cosmetic | Loose ends | the trapezoid floor's digits at 1/4 and 1/2 marked; "from the path's blocks at those K"; md's "above B4_MAX a negative value …"; `b3_job`'s guard inside `b3_restart`, right after the 'path' restart and with its acceptance (a test: the larger restarts never run on a mismatch) |
+
+**Lesson.** A claim about a floor needs an instrument finer than the floor. The long-double rms was the very function the long-double solve
+minimised, so it measured that solve as better than it was, and every difference B4 printed below 10⁻¹⁰ was the instrument's. Evaluating
+the residual exactly costs a tenth of a second an end and turns the claim into a measurement: the anchored residual reaches the optimum to
+10⁻¹², its own floor quadratic in its frozen rounding, and it is the residual, not the restarts, that passes the direct subtraction's
+floor. Describe the solver that ran: here thousands of stall re-anchors, not the periodic ones the text named.

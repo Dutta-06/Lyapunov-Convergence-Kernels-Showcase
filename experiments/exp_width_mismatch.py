@@ -331,13 +331,8 @@ def b3_job(args):
         _, K, f, calls = path_polishes(r_, var, stop_after=blk['n0'])
         if len(calls) <= blk['n0'] or calls[blk['n0']]['c'].size != blk['k']:
             raise RuntimeError(f"B3 {r_} {var}: the rerun's polish {blk['n0']} is not the stored block's ({len(calls)} calls)")
-        out = b3_restart(r_, var, K, f, calls[blk['n0']], blk['k'], blk['e_opt'], blk['e'] / blk['e_opt'], blk['n_polish'], step,
-                         nfev, gt, t0)
-        fs = blk.get('first') or {}                                      # referee round 77: the 'path' restart is the stored polish
-        if any(fs.get(k) is not None and out['path'][k] != fs[k] for k in ('status', 'nfev')):
-            raise RuntimeError(f"B3 {r_} {var}: the 'path' restart {out['path']['status']}/{out['path']['nfev']} is not the stored "
-                               f"first polish {fs.get('status')}/{fs.get('nfev')}")
-        return out
+        return b3_restart(r_, var, K, f, calls[blk['n0']], blk['k'], blk['e_opt'], blk['e'] / blk['e_opt'], blk['n_polish'], step,
+                          nfev, gt, t0, first=blk.get('first'))
     R, K, f, calls = path_polishes(r_, var)
     rf, ss, n0 = float(np.sqrt(np.mean(f ** 2))), sigma_star(r_), 0
     for i, b in enumerate(blocks(R)):
@@ -351,9 +346,10 @@ def b3_job(args):
     return dict(r=r_, var=var, k=None, secs=time.time() - t0)
 
 
-def b3_restart(r_, var, K, f, st, k, e_opt, e_block, n_polish, step, nfev, gt, t0):
+def b3_restart(r_, var, K, f, st, k, e_opt, e_block, n_polish, step, nfev, gt, t0, first=None):
     """B3's restarts of one recorded polish start st, one setting at a time (B3_KEYS), each judged by `seed_rule` with the path's
-    polish step."""
+    polish step. first: B's stored first polish of the block — the 'path' restart must reproduce its stop, evaluations and acceptance
+    (referee rounds 77, 81: checked before the larger restarts run; a RuntimeError otherwise)."""
     rf = float(np.sqrt(np.mean(f ** 2)))
     out = dict(r=r_, var=var, k=k, e_opt=e_opt, e_block=e_block, n_polish=n_polish,
                e_start=float(np.sqrt(np.mean((f - K.phi(st['c']) @ st['w']) ** 2))) / rf / e_opt,
@@ -362,6 +358,11 @@ def b3_restart(r_, var, K, f, st, k, e_opt, e_block, n_polish, step, nfev, gt, t
         wp, cp, info = RT.polish_block(K, f, st['w'], st['c'], st['s'], max_nfev=nf, info=True, gtol=g)
         out[key] = dict(info, ratio=float(np.sqrt(np.mean((f - K.phi(cp) @ wp) ** 2))) / rf / e_opt,
                         **seed_rule(K, f, st['w'], st['c'], st['s'], cp, step))
+        fs = first or {}
+        if key == 'path' and any(fs.get(x) is not None and out['path'][x] != fs[x] for x in ('status', 'nfev', 'accepted')):
+            raise RuntimeError(f"B3 {r_} {var}: the 'path' restart {out['path']['status']}/{out['path']['nfev']}/"
+                               f"{out['path']['accepted']} is not the stored first polish {fs.get('status')}/{fs.get('nfev')}/"
+                               f"{fs.get('accepted')}")
     out['secs'] = time.time() - t0
     print(f"  B3 tau/sigma {r_} ({var}) K {k}: start {out['e_start']:.4g}, " + ', '.join(
         f"{key} {out[key]['status']}/{out[key]['nfev']} {out[key]['ratio']:.5f}" for key in B3_KEYS)
@@ -412,14 +413,14 @@ def b3_binds(q, ref=1.0):
 
 
 def b3_lines(B3, B4=None, B=None):
-    """B3's table and summary (referee rounds 70, 77): per block the restarts' stops, errors and the seed rule, and what bounds its end —
-    judged, below B4_MAX, against B4's long-double end (from the path's block), the better optimum there; with B, the 'path' restarts
-    against the first polishes B stored (their stops and evaluations)."""
+    """B3's table and summary (referee rounds 70, 77, 81): per block the restarts' stops, errors and the seed rule, and what bounds its
+    end — judged, below B4_MAX, against B4's best end (`b4_best`: the lowest exact error any B4 solve reached there, over the row's own
+    optimum), the better optimum there; with B, the 'path' restarts against the first polishes B stored (their stops and evaluations)."""
     if B3 is None or len(B3) == 0:                                    # raw-loaded: an object array
         return []
     rows = [q for q in B3 if q.get('k') is not None]
-    refs = {(q['r'], q['k']): q['long double']['ratio'] for q in (B4 if B4 is not None else []) if q['start'] == 'block'}
-    ref = lambda q: refs.get((q['r'], q['k']), 1.0)
+    refs = b4_best(B4)                                                 # referee round 81: B4's best end, absolute, over each row's
+    ref = lambda q: refs[(q['r'], q['k'])] / q['e_opt'] if (q['r'], q['k']) in refs else 1.0   # own optimum
     cell = lambda x: f"{x['status']}/{x['nfev']}, {x['ratio']:.5f}, {x['move']:.2f}σ {'a' if x['accepted'] else 'r'}"
     out = ['', "### B3. The range ends: the polish restarted from its recorded start, one setting at a time (referee rounds 65, 70, 77)", '',
            f"Each path's first non-optimal block (its error at least {1 + OPT_TOL:g} times the optimum's): the path rerun with every polish's "
@@ -452,14 +453,14 @@ def b3_lines(B3, B4=None, B=None):
     if lo:
         out += ['', f"Below it ({len(lo)} blocks) the restart with both changed stops at " + ', '.join(
             f"{both(q)['ratio']:.4f} ({both(q)['status']}/{both(q)['nfev']}: {b3_binds(q, ref(q))})" for q in lo) + " times the stored "
-            "optimum" + (", " + ', '.join(f"{both(q)['ratio'] / ref(q):.4f}" for q in lo) + " times B4's long-double end" if all(
+            "optimum" + (", " + ', '.join(f"{both(q)['ratio'] / ref(q):.4f}" for q in lo) + " times B4's best end" if all(
                 (q['r'], q['k']) in refs for q in lo) else '') + "."]
     by = {}
     for q in rows:
         by.setdefault(float(f"{q['e_opt']:.3g}"), []).append(both(q)['ratio'] / ref(q) - 1)
     out += ['', "The restart with both changed (the polish's TRF): its end over the optimum, minus 1 — below " + f"{B4_MAX:g} over B4's "
-            "long-double end —, by the optimum (one solver from one kind of start; a negative value is the end below the stored optimum, "
-            "converged only to that): " + '; '.join(
+            "best end —, by the optimum (one solver from one kind of start; above B4_MAX a negative value is the end below the stored "
+            "optimum, converged only to that): " + '; '.join(
                 f"{e:.3g}: {min(v):+.1e}" + (f" … {max(v):+.1e}" if max(v) > min(v) else '') for e, v in sorted(by.items(), reverse=True))
             + '.', '']
     return out
@@ -468,43 +469,81 @@ def b3_lines(B3, B4=None, B=None):
 
 B4_CAP, B4_MAX = 400_000, 2e-9                                        # B4 (referee round 70): the solve's iterations; the blocks below
 B4_PREC = (('double', np.float64), ('long double', np.longdouble))    # B4: the parameters' and the residual's arithmetic
-B4_ANCHOR, B4_FLAT = 2000, 1e-10                                       # B4 (referee round 77): the anchored double's re-anchoring period
-                                                                       # (accepted steps) and its stop: ½‖r‖² over a period falls by less
+B4_ANCHOR, B4_FLAT = 2000, 1e-10                                       # B4 (referee rounds 77, 81): the anchored solve's period (accepted
+                                                                       # steps, counted across re-anchors) and its stop: the exact rms over a
+                                                                       # period falls by less than B4_FLAT of itself
 B4_MARKS = (100_000, 200_000, 300_000)                                 # B4 (round 77): the anchored double's end after these iterations
+EXACT_PREC = 60                                                        # B4 (referee round 81): the exact residual's digits
 
 
-def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20, anchored=False, anchor_every=B4_ANCHOR, marks=None):
+def _dec(v):
+    """A double, or a long double as its double-double hi + lo (the 64-bit significand splits exactly into two doubles), as an exact
+    Decimal (the sum formed at 200 digits, whatever the caller's context)."""
+    from decimal import Decimal, localcontext
+    if isinstance(v, np.longdouble):
+        hi = float(v)
+        with localcontext() as ctx:
+            ctx.prec = 200
+            return +(Decimal(hi) + Decimal(float(v - np.longdouble(hi))))
+    return Decimal(float(v))
+
+
+def exact_resid(f, p, n, prec=EXACT_PREC):
+    """The residual f − Φ(c)w on X_B, evaluated exactly to its double rounding (referee round 81): the samples, f, σ and p = (w, c) (n
+    kernels, double or long double) taken exactly, the arithmetic in prec-digit decimal (exp correctly rounded). Returns (the residual,
+    each sample's rounded to double; its rms, rounded to double)."""
+    from decimal import Decimal, localcontext
+    p = np.asarray(p)
+    with localcontext() as ctx:
+        ctx.prec = prec
+        ws, cs = [_dec(v) for v in p[:n]], [_dec(v) for v in p[n:]]
+        s2 = 2 * Decimal(SIG) ** 2
+        r, tot = [], Decimal(0)
+        for xi, fi in zip(X_B, np.asarray(f, float)):
+            x_ = Decimal(float(xi))
+            ri = Decimal(float(fi)) - sum((w_ * (-(x_ - c_) ** 2 / s2).exp() for w_, c_ in zip(ws, cs)), Decimal(0))
+            r.append(float(ri))
+            tot += ri * ri
+        return np.array(r), float((tot / len(X_B)).sqrt())
+
+
+def exact_rms(f, p, n):
+    """`exact_resid`'s rms (referee round 81: B4's instrument, finer than the floors it measures)."""
+    return exact_resid(f, p, n)[1]
+
+
+def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20, anchored=False, anchor_every=B4_ANCHOR, marks=None, stall_reanchor=True):
     """B4 (referee round 70): Levenberg–Marquardt on the joint fit in (w, c) on X_B — the parameters and the residual f − Φ(c)w in dtype
     (np.float64 or np.longdouble), the Jacobian and the damped step in double: the least-squares problem [J; μ^{1/2}D]d ≈ [−r; 0], D the
     columns' largest norms so far (its condition is the Jacobian's, not its square's). A step is accepted when the objective ½‖r‖²
     computed in dtype decreases; Nielsen's damping from μ = mu0, near Gauss–Newton — the slow modes' curvature is ~10⁻¹⁷ of the largest,
     and a larger damping shrinks their steps' predicted decrease below the objective's rounding. Stops after max_iter iterations ('cap')
     or once μ exceeds 10¹⁰⁰ without a decrease ('stall': no step the solve computes decreases the objective as its residual evaluates
-    it). Referee round 77, anchored (double only): the residual about an anchor (w₀, c₀), r = r₀ − Σ_k φ₀_k[(w_k − w₀_k) +
-    w_k·expm1(Δ_k)], Δ_k = (c_k − c₀_k)(2x − c_k − c₀_k)/(2σ²), r₀ = f − Φ(c₀)w₀ by direct subtraction — its rounding fixed, the change
-    computed to its own relative accuracy —, re-anchored every anchor_every accepted steps and at a stall; it stops at a stall right
-    after an anchor, or ('flat') once a period's accepted steps lower the objective, as that anchor computes it, by less than B4_FLAT of
-    itself. marks: a dict whose keys are iteration counts, given the parameters after that many iterations. Returns (the parameters
-    (w, c) in dtype, iterations, accepted steps, stop)."""
+    it). Referee round 77, anchored: the residual about an anchor (w₀, c₀), r = r₀ − Σ_k φ₀_k[(w_k − w₀_k) + w_k·expm1(Δ_k)], Δ_k =
+    (c_k − c₀_k)(2x − c_k − c₀_k)/(2σ²), r₀ = f − Φ(c₀)w₀ by direct subtraction — its rounding frozen until the next anchor, the change
+    computed with an error proportional to the parameters' displacement from the anchor —, all in dtype (referee round 81: double or long
+    double). At a stall the solve re-anchors at its point and resets μ to mu0 (stall_reanchor; without it, it stops there), unless no
+    step was accepted since the last anchor; every anchor_every accepted steps, counted across those re-anchors, it re-anchors too, and
+    stops ('flat', referee round 81) if the exact rms (`exact_rms`) fell by less than B4_FLAT of itself over that period. marks: a dict
+    whose keys are iteration counts, given the parameters after that many iterations. Returns (the parameters (w, c) in dtype,
+    iterations, accepted steps, stop)."""
     x, fd = X_B.astype(dtype), np.asarray(f, float).astype(dtype)
     n = len(w)
     p = np.r_[np.asarray(w, float), np.asarray(c, float)].astype(dtype)
     s2 = 2 * dtype(SIG) ** 2
-    anc = {}
+    anc, prog = {}, {}
     if anchored:
-        if dtype is not np.float64:
-            raise ValueError("lm_fit: the anchored residual is double's")
-
         def set_anchor(p_):
             anc['w'], anc['c'] = p_[:n].copy(), p_[n:].copy()
-            anc['P'] = np.exp(-(X_B[:, None] - anc['c'][None, :]) ** 2 / (2 * SIG ** 2))
-            anc['r'] = np.asarray(f, float) - anc['P'] @ anc['w']
-            anc['acc'], anc['F'] = 0, float(anc['r'] @ anc['r'] / 2)
+            anc['P'] = np.exp(-(x[:, None] - anc['c'][None, :]) ** 2 / s2)
+            anc['r'] = fd - anc['P'] @ anc['w']
+            anc['acc'] = 0
 
         def resid(p_):
-            dl = (p_[None, n:] - anc['c'][None, :]) * (2 * X_B[:, None] - p_[None, n:] - anc['c'][None, :]) / (2 * SIG ** 2)
+            dl = (p_[None, n:] - anc['c'][None, :]) * (2 * x[:, None] - p_[None, n:] - anc['c'][None, :]) / s2
             return anc['r'] - (anc['P'] * ((p_[:n] - anc['w'])[None, :] + p_[None, :n] * np.expm1(dl))).sum(axis=1)
         set_anchor(p)
+        prog.update(acc=0, rms=exact_rms(f, p, n))
     else:
         resid = lambda p_: fd - np.exp(-(x[:, None] - p_[None, n:]) ** 2 / s2) @ p_[:n]
 
@@ -536,16 +575,19 @@ def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20, anchored=False, anchor_ev
             D = np.maximum(D, np.linalg.norm(J, axis=0))
             if anchored:
                 anc['acc'] += 1
-                if anc['acc'] >= anchor_every:                          # re-anchor: r₀ afresh at the current point
-                    if anc['F'] - F < B4_FLAT * anc['F']:
+                prog['acc'] += 1
+                if prog['acc'] >= anchor_every:                         # referee round 81: the period's exact decrease; re-anchor
+                    e_ = exact_rms(f, p, n)
+                    if prog['rms'] - e_ < B4_FLAT * e_:
                         return p, it, acc, 'flat'
+                    prog.update(acc=0, rms=e_)
                     set_anchor(p)
                     r = resid(p)
                     F = r @ r / 2
         else:
             mu, nu = mu * nu, 2 * nu
             if mu > 1e100:
-                if anchored and anc['acc'] > 0:                         # a stall since the last anchor: re-anchor and go on
+                if anchored and stall_reanchor and anc['acc'] > 0:      # a stall since the last anchor: re-anchor, μ reset
                     set_anchor(p)
                     r = resid(p)
                     F, mu, nu = r @ r / 2, mu0, 2.0
@@ -561,36 +603,66 @@ def lm_rms(f, p, n):
     return float(np.sqrt(np.mean(r * r)))
 
 
+def b4_end(f, p, k, rf, e_opt, **kw):
+    """One B4 end (referee round 81): its error over the optimum's evaluated exactly (`exact_rms`) and as `lm_rms` evaluates it, its
+    parameters (a long double as the doubles hi and lo, hi + lo exact) and kw."""
+    p = np.asarray(p)
+    hi = p.astype(float)
+    lo = (p - hi.astype(p.dtype)).astype(float) if p.dtype == np.longdouble else np.zeros_like(hi)
+    return dict(ratio=exact_rms(f, p, k) / rf / e_opt, ratio_ld=lm_rms(f, p, k) / rf / e_opt, p=hi.tolist(), p_lo=lo.tolist(), **kw)
+
+
+def anchor_floor(f, p, k):
+    """The anchored double's own floor, predicted (referee round 81): an anchor's rounding e₀ — the direct subtraction's residual in
+    double less the exact one, here at p —, frozen in the residual, moves the minimiser by −J⁺e₀ and raises the exact rms by
+    ‖P_Je₀‖²/(2‖r‖²) (P_J the projection on the Jacobian's range, r the exact residual); returns that ratio."""
+    p = np.asarray(p, float)
+    re = exact_resid(f, p, k)[0]
+    u = X_B[:, None] - p[None, k:]
+    P = np.exp(-u ** 2 / (2 * SIG ** 2))
+    e0 = (np.asarray(f, float) - P @ p[:k]) - re
+    J = -np.c_[P, P * u / SIG ** 2 * p[None, :k]]
+    pe = J @ np.linalg.lstsq(J, e0, rcond=None)[0]
+    return float(pe @ pe / (2 * (re @ re)))
+
+
 def b4_job(args):
     """B4 (referee round 70): from one start — the path's block ('block') or the stored optimum's centres with least-squares amplitudes
     ('optimum') — `lm_fit` with the residual in double and in long double (B4_PREC): the start's error and each end's over the stored
-    optimum's (the rms in long double), its iterations, accepted steps and stop, and long double's ε (an error if not extended); referee
-    round 77: the same solve in double with the residual about an anchor ('anchored'), and the polish's own TRF with B3_BIG evaluations
-    and no gradient test ('trf': its status and evaluations); the anchored end's error also after B4_MARKS iterations ('marks')."""
+    optimum's, its iterations, accepted steps and stop, and long double's ε (an error if not extended); referee round 77: the same solve
+    in double with the residual about an anchor ('anchored'), and the polish's own TRF with B3_BIG evaluations and no gradient test
+    ('trf': its status and evaluations); the anchored end's error also after B4_MARKS iterations ('marks'). Referee round 81: every error
+    exact (`b4_end`: also as `lm_rms` evaluates it, and the end's parameters); the anchored solve without re-anchoring at stalls
+    ('nostall'), the long double's anchored solve from the anchored double's end ('anchored ld'), and the anchored double's floor that
+    its frozen anchor's rounding predicts (`anchor_floor`)."""
     r_, var, k, start, w0, c0, e_opt = args
     warnings.filterwarnings('ignore')
     t0 = time.time()
     f = A_B * np.exp(-(X_B - C_B) ** 2 / (2 * sigma_star(r_) ** 2))
     rf = float(np.sqrt(np.mean(f ** 2)))
-    out = dict(r=r_, var=var, k=k, start=start, e_opt=e_opt, e_start=lm_rms(f, np.r_[w0, c0], k) / rf / e_opt,
+    out = dict(r=r_, var=var, k=k, start=start, e_opt=e_opt, e_start=exact_rms(f, np.r_[w0, c0], k) / rf / e_opt,
                eps=float(np.finfo(np.longdouble).eps))
     if out['eps'] >= np.finfo(float).eps:
         raise RuntimeError("B4: long double is not extended on this platform")
     for key, dt in B4_PREC:
         p, it, acc, stop = lm_fit(f, w0, c0, dt)
-        out[key] = dict(ratio=lm_rms(f, p, k) / rf / e_opt, it=it, acc=acc, stop=stop)
+        out[key] = b4_end(f, p, k, rf, e_opt, it=it, acc=acc, stop=stop)
     marks = dict.fromkeys(B4_MARKS)
     p, it, acc, stop = lm_fit(f, w0, c0, np.float64, anchored=True, marks=marks)  # referee round 77: double, the residual about an anchor
-    out['anchored'] = dict(ratio=lm_rms(f, p, k) / rf / e_opt, it=it, acc=acc, stop=stop,
-                           marks=[[m, lm_rms(f, q, k) / rf / e_opt] for m, q in marks.items() if q is not None])
+    out['anchored'] = b4_end(f, p, k, rf, e_opt, it=it, acc=acc, stop=stop, floor=anchor_floor(f, p, k),
+                             marks=[[m, exact_rms(f, q, k) / rf / e_opt] for m, q in marks.items() if q is not None])
+    pn, it, acc, stop = lm_fit(f, w0, c0, np.float64, anchored=True, stall_reanchor=False)    # referee round 81: no stall re-anchoring
+    out['nostall'] = b4_end(f, pn, k, rf, e_opt, it=it, acc=acc, stop=stop)
+    pl, it, acc, stop = lm_fit(f, p[:k], p[k:], np.longdouble, anchored=True)                # and the long double's, from that end
+    out['anchored ld'] = b4_end(f, pl, k, rf, e_opt, it=it, acc=acc, stop=stop)
     K = RT.Bumps(X_B, SIG)                                              # the polish's own solve from the same start: TRF, B3's budget,
     wp, cp, info = RT.polish_block(K, f, np.asarray(w0, float), np.asarray(c0, float), np.ones(k), max_nfev=B3_BIG, info=True,
                                    gtol=None)                          # no gradient test
-    out['trf'] = dict(ratio=lm_rms(f, np.r_[wp, cp], k) / rf / e_opt, status=int(info['status']), nfev=int(info['nfev']))
+    out['trf'] = b4_end(f, np.r_[wp, cp], k, rf, e_opt, status=int(info['status']), nfev=int(info['nfev']))
     out['secs'] = time.time() - t0
     print(f"  B4 tau/sigma {r_} ({var}) K {k} from the {start}: {out['e_start']:.6g} → " + ', '.join(
-        f"{key} {out[key]['ratio']:.6f} ({out[key]['it']}, {out[key]['stop']})" for key in [k for k, _ in B4_PREC] + ['anchored'])
-          + f", TRF {out['trf']['ratio']:.6f} ({out['trf']['status']}/{out['trf']['nfev']}) [{out['secs']:.0f}s]",
+        f"{key} {out[key]['ratio']:.12f} ({out[key]['it']}, {out[key]['stop']})" for key in [k for k, _ in B4_PREC] + ['anchored', 'nostall', 'anchored ld'])
+          + f", TRF {out['trf']['ratio']:.12f} ({out['trf']['status']}/{out['trf']['nfev']}) [{out['secs']:.0f}s]",
           flush=True)
     return out
 
@@ -620,62 +692,85 @@ def part_B4(B, B3):
         return pool.map(b4_job, b4_jobs(B, B3), chunksize=1)
 
 
+B4_ENDS = (('double', 'double'), ('long double', 'long double'), ('anchored', 'double, anchored'),
+           ('nostall', 'double, anchored, no stall re-anchoring'), ('anchored ld', "long double, anchored, from the anchored double's end"),
+           ('trf', 'TRF'))                                             # B4's solves (referee rounds 70, 77, 81)
+
+
+def b4_best(B4):
+    """B4's best end per block (τ/σ, K) (referee round 81): the lowest exact error any of its solves reached from either start, absolute
+    (relative to the target's rms: the ratio times its optimum's)."""
+    best = {}
+    for q in (B4 if B4 is not None else []):
+        for k_, _ in B4_ENDS:
+            if k_ in q:
+                best[(q['r'], q['k'])] = min(best.get((q['r'], q['k']), np.inf), q[k_]['ratio'] * q['e_opt'])
+    return best
+
+
 def b4_lines(B4):
-    """B4's table and summary (referee rounds 70, 77): the same solve in double and in long double from the blocks near the floor, in
-    double about an anchor, and the polish's own TRF; every end against the long-double end from the path's block."""
+    """B4's table and summaries (referee rounds 70, 77, 81): from the blocks near the floor and from the stored optima, Levenberg–Marquardt
+    with the residual in double and in long double by direct subtraction, in double about an anchor (with and without re-anchoring at
+    stalls), the long double's anchored solve from the anchored double's end, and the polish's own TRF — every end's error exact
+    (`exact_rms`) and against its block's best end (`b4_best`); `lm_rms`'s error at every end; the anchored double's floor that its
+    frozen anchor's rounding predicts (`anchor_floor`) against what the long double's anchored solve gains on it."""
     if B4 is None or len(B4) == 0:                                    # raw-loaded: an object array
         return []
-    cell = lambda x: f"{x['ratio']:.6f}, {x['it']}/{x['acc']}, {x['stop']}"
-    tcell = lambda x: f"{x['ratio']:.6f}, {x['status']}/{x['nfev']}"
-    has = 'anchored' in B4[0]
-    out = ['', "### B4. The floor: the same solve with the residual in double, in long double" + (" and about an anchor (referee rounds 70, 77)"
-                                                                                                  if has else " (referee round 70)"), '',
-           f"B3's blocks whose optimum is below {B4_MAX:g}, from the path's block and from the stored optimum (its centres with "
-           "least-squares amplitudes): Levenberg–Marquardt on the joint fit in (w, c) (`lm_fit`: the Jacobian and the step in double; the "
-           f"parameters and the residual f − Φ(c)w, by direct subtraction, in double or in long double (its ε {B4[0]['eps']:.3g})"
-           + (f", or in double about an anchor (w₀, c₀) — r = r₀ − Σ_kφ₀_k[(w_k − w₀_k) + w_k·expm1(Δ_k)], Δ_k = (c_k − c₀_k)(2x − c_k − c₀_k)/"
-              f"(2σ²), re-anchored every {B4_ANCHOR:g} accepted steps and at a stall —" if has else '')
-           + "; a step accepted when the objective so computed decreases)" + (f" and the polish's own TRF (`polish_block`, {B3_BIG:g} "
-           "evaluations, no gradient test)" if has else '') + ": the start's error and each end's over the optimum's (the rms in long double), "
-           "its iterations/accepted steps and its stop (stall: no step the solve computes decreases the objective as its residual "
-           f"evaluates it; cap: {B4_CAP:g} iterations" + (f"; flat: an anchor's {B4_ANCHOR:g} accepted steps lower it by less than "
-           f"{B4_FLAT:g} of itself" if has else '') + ")" + ("; TRF's cell its status/evaluations" if has else '') + "; † the optimum "
-           f"below {E_FLOOR:g}:", '',
-           "| τ/σ | variant | K | optimum | start | its error | " + ' | '.join(k for k, _ in B4_PREC)
-           + (' | double, anchored | TRF |' if has else ' |'), '|---|---|---|---|---|---|' + '---|' * (len(B4_PREC) + 2 * has)]
+    key = lambda q: (q['r'], q['k'])
+    best = b4_best(B4)
+    ex = lambda q, k_: q[k_]['ratio'] * q['e_opt'] / best[key(q)] - 1
+    cell = lambda q, k_: f"{ex(q, k_):.1e}, " + (f"{q[k_]['status']}/{q[k_]['nfev']}" if k_ == 'trf'
+                                                  else f"{q[k_]['it']}/{q[k_]['acc']}, {q[k_]['stop']}")
+    out = ['', "### B4. The floor: the same solve with the residual in double, in long double and about an anchor, evaluated exactly "
+               "(referee rounds 70, 77, 81)", '',
+           f"B3's blocks whose optimum is below {B4_MAX:g}, from the path's block and from the stored optimum (its centres with least-squares "
+           "amplitudes): Levenberg–Marquardt on the joint fit in (w, c) (`lm_fit`: the Jacobian and the step in double; a step accepted when "
+           "the objective, as the solve computes its residual, decreases) with the parameters and the residual f − Φ(c)w by direct "
+           f"subtraction in double or in long double (its ε {B4[0]['eps']:.3g}), or about an anchor (w₀, c₀) — r = r₀ − Σ_kφ₀_k[(w_k − w₀_k) "
+           "+ w_k·expm1(Δ_k)], Δ_k = (c_k − c₀_k)(2x − c_k − c₀_k)/(2σ²), r₀ by direct subtraction: in double re-anchored at each stall "
+           f"(μ reset) and every {B4_ANCHOR:g} accepted steps, or not at stalls, and in long double from the anchored double's end —, and the "
+           f"polish's own TRF (`polish_block`, {B3_BIG:g} evaluations, no gradient test). Every error is exact (`exact_rms`: the residual "
+           f"in {EXACT_PREC}-digit decimal arithmetic, every double and long double taken exactly); the start's error over the stored "
+           "optimum's; the block's best end — the lowest error any solve reached from either start — over it; and each end's excess over "
+           "that best, its iterations/accepted steps and stop (stall: no step the solve computes decreases its objective; flat: the exact "
+           f"rms fell by less than {B4_FLAT:g} of itself over {B4_ANCHOR:g} accepted steps; cap: {B4_CAP:g} iterations) or TRF's "
+           f"status/evaluations; † the optimum below {E_FLOOR:g}:", '',
+           "| τ/σ | variant | K | optimum | start | its error | the best end | " + ' | '.join(lab for _, lab in B4_ENDS) + ' |',
+           '|---|---|---|---|---|---|---|' + '---|' * len(B4_ENDS)]
     for q in B4:
         out.append(f"| {q['r']:g} | {q['var']} | {q['k']} | {q['e_opt']:.2e}{'†' if q['e_opt'] < E_FLOOR else ''} | {q['start']} | "
-                   f"{q['e_start']:.6g} | " + ' | '.join(cell(q[k]) for k, _ in B4_PREC)
-                   + (f" | {cell(q['anchored'])} | {tcell(q['trf'])} |" if has else ' |'))
-    key = lambda q: (q['r'], q['k'])
+                   f"{q['e_start']:.6g} | {best[key(q)] / q['e_opt']:.12f} | " + ' | '.join(cell(q, k_) for k_, _ in B4_ENDS) + ' |')
     blk = sorted((q for q in B4 if q['start'] == 'block'), key=lambda q: -q['e_opt'])
     opt = {key(q): q for q in B4 if q['start'] == 'optimum'}
-    ld = {key(q): q['long double']['ratio'] for q in blk}
-    lab = lambda q: f"{q['e_opt']:.3g} (τ/σ = {q['r']:g}, K = {q['k']})"
     both = [q for q in blk if key(q) in opt]
-    over = lambda q, k: q[k]['ratio'] / ld[key(q)] - 1
-    out += ['', "Each end over the long-double end from the path's block, minus 1, by the optimum — from the path's blocks, double: " + '; '.join(
-        f"{lab(q)}: {over(q, 'double'):+.1e}" for q in blk) + (" — from the stored optima, double: " + '; '.join(
-            f"{lab(q)}: {over(opt[key(q)], 'double'):+.1e}" for q in both) if both else '') + '.'
-            + (" In long double the ends from the block and from the stored optimum agree within "
-               f"{max(abs(q['long double']['ratio'] / opt[key(q)]['long double']['ratio'] - 1) for q in both):.1e}; the stored optimum over "
-               "that end, minus 1: " + '; '.join(f"{lab(q)}: {1 / ld[key(q)] - 1:+.1e}" for q in both) + '.' if both else '')]
-    if has:
-        an = [over(q, 'anchored') for q in B4 if key(q) in ld]
-        cap = [q for q in B4 if key(q) in ld and q['anchored']['stop'] == 'cap']
-        late = lambda q: [x for m, x in q['anchored']['marks'] if m >= B4_MARKS[1]] + [q['anchored']['ratio']]
-        spread = lambda q: (max(late(q)) - min(late(q))) / ld[key(q)]
-        out += ['', f"The anchored double, from every start, over the long-double end from the path's block, minus 1: {min(an):+.1e} … "
-                f"{max(an):+.1e} (its stops: " + ', '.join(f"{k} {sum(q['anchored']['stop'] == k for q in B4)}" for k in ('flat', 'stall', 'cap')
-                                                            if any(q['anchored']['stop'] == k for q in B4)) + ")"
-                + ("; at the cap, the same after " + ', '.join(f"{m:g}" for m, _ in cap[0]['anchored']['marks']) + f" and {B4_CAP:g} "
-                   "iterations: " + '; '.join(f"{lab(q)} from the {q['start']}: " + ', '.join(
-                       f"{x / ld[key(q)] - 1:+.2e}" for _, x in q['anchored']['marks']) + f", {over(q, 'anchored'):+.2e}" for q in cap)
-                   + f" — over its last {B4_CAP - B4_MARKS[1]:g} iterations each end moves within " + f"{max(spread(q) for q in cap):.1e}"
-                   if cap else '') + '.', '',
-                "The polish's TRF from the path's blocks, over the long-double end, minus 1: " + '; '.join(
-                    f"{lab(q)}: {over(q, 'trf'):+.1e} ({q['trf']['status']}/{q['trf']['nfev']})" for q in blk)
-                + ("; from the stored optima: " + '; '.join(f"{lab(q)}: {over(opt[key(q)], 'trf'):+.1e}" for q in both) if both else '') + '.']
+    lab = lambda q: f"{q['e_opt']:.3g} (τ/σ = {q['r']:g}, K = {q['k']})"
+    rng = lambda v: f"{min(v):+.1e} … {max(v):+.1e}"
+    ev = [q[k_]['ratio_ld'] / q[k_]['ratio'] - 1 for q in B4 for k_, _ in B4_ENDS]
+    evl = [q['long double']['ratio_ld'] / q['long double']['ratio'] - 1 for q in B4]
+    out += ['', f"The long-double rms by direct subtraction (`lm_rms`, B4's instrument until round 81) against the exact one, minus 1: "
+                f"{rng(ev)} over every end, {rng(evl)} at the long-double solve's ends ({sum(v < 0 for v in evl)} of {len(evl)} below it: that "
+                "solve minimised the same evaluation)."]
+    per = lambda k_: [ex(q, k_) for q in B4]
+    out += ['', "Each solve's excess over the best end, minus 1, from both starts: " + '; '.join(
+        f"{lab_} {rng(per(k_))}" for k_, lab_ in B4_ENDS) + ". By the optimum, from the path's blocks — " + '; '.join(
+        f"{lab(q)}: double {ex(q, 'double'):.1e}, long double {ex(q, 'long double'):.1e}" for q in blk) + '.']
+    if both:
+        agree = [abs(q['anchored']['ratio'] / opt[key(q)]['anchored']['ratio'] - 1) for q in both]
+        out += ['', "The anchored double's ends from the block and from the stored optimum agree within " f"{max(agree):.1e}; its stops: "
+                + ', '.join(f"{k} {sum(q['anchored']['stop'] == k for q in B4)}" for k in ('flat', 'stall', 'cap')
+                            if any(q['anchored']['stop'] == k for q in B4))
+                + f", after {min(q['anchored']['it'] for q in B4)} … {max(q['anchored']['it'] for q in B4)} iterations; without re-anchoring "
+                f"at stalls it stops after {min(q['nostall']['it'] for q in B4)} … {max(q['nostall']['it'] for q in B4)}. The long double's "
+                "anchored solve from the anchored double's end gains on it, minus 1, " + rng([q['anchored ld']['ratio'] / q['anchored']['ratio']
+                                                                                                - 1 for q in B4])
+                + "; the floor the anchored double's frozen anchor rounding predicts, ‖P_Je₀‖²/(2‖r‖²) at its end (`anchor_floor`): "
+                + f"{min(q['anchored']['floor'] for q in B4):.1e} … {max(q['anchored']['floor'] for q in B4):.1e}. The stored optimum over "
+                "the best end, minus 1: " + '; '.join(f"{lab(q)}: {opt[key(q)]['e_start'] * q['e_opt'] / best[key(q)] - 1:+.1e}"
+                                                      for q in both) + '.']
+    if any(q['anchored'].get('marks') for q in B4):
+        out += ['', "The anchored double's error after " + ', '.join(f"{m:g}" for m in B4_MARKS) + " iterations, over the best end, minus 1: "
+                + '; '.join(f"{lab(q)} from the {q['start']}: " + ', '.join(f"{x * q['e_opt'] / best[key(q)] - 1:+.1e}" for _, x in
+                                                                           q['anchored']['marks']) for q in B4 if q['anchored'].get('marks')) + '.']
     out.append('')
     return out
 
@@ -704,6 +799,106 @@ def frame(rho, sig, tau2):
     return v, v / (2 * sig ** 2 * rho / (1 - rho ** 2))
 
 
+A5_KMAX, A5_PREC = 40, 110                                            # A5 (referee round 81): the frame series exactly to K = A5_KMAX
+A5_FAR, A5_FAR_PREC = ((60, 80, 100, 120), (0.5, 1.0, 2.0)), 140       # A5: the Mercer frame's rule further, at these K and τ/σ
+
+
+def he_all(x, nmax):
+    """He_0 … He_nmax at x (He_{n+1} = xHe_n − nHe_{n−1})."""
+    h = [x * 0 + 1, x]
+    for n in range(1, nmax):
+        h.append(x * h[n] - n * h[n - 1])
+    return h
+
+
+def gh_nodes(K, prec=A5_PREC):
+    """The K-point Gauss–Hermite rule of N(0, 1) in prec-digit Decimal (referee round 81): numpy's nodes refined by Newton on He_K
+    (He_K′ = KHe_{K−1}), the weights K!/(K²He_{K−1}(z_k)²)."""
+    from decimal import Decimal, localcontext
+    with localcontext() as ctx:
+        ctx.prec = prec
+        zs, ws = [], []
+        for z in np.polynomial.hermite_e.hermegauss(K)[0]:
+            x_ = Decimal(float(z))
+            for _ in range(8):
+                h = he_all(x_, K)
+                x_ -= h[K] / (K * h[K - 1])
+            h = he_all(x_, K)
+            zs.append(x_)
+            ws.append(Decimal(factorial(K)) / (K * K * h[K - 1] ** 2))
+        return zs, ws
+
+
+def frame_series(K, rho, v, prec=A5_PREC, tol_exp=40):
+    """A K-point rule's error series in a Mehler frame, exactly (referee round 81): S(K) = Σ_{n ≥ 2K even} (ρⁿ/n!)D_n(v)², D_n(v) =
+    E He_n(√v Z) − Σ_k w_k He_n(√v z_k) the defect on He_n of the Gauss–Hermite rule of N(0, v) in the frame's units (E He_n(√v Z) =
+    (v − 1)^{n/2}(n − 1)!!), summed until a term falls below 10^{−tol_exp} of the sum; ρ and v Decimals. Returns (S, the terms, the
+    largest defect below 2K relative to its parts — zero but for the rounding)."""
+    from decimal import Decimal, localcontext
+    with localcontext() as ctx:
+        ctx.prec = prec
+        zs, ws = gh_nodes(K, prec)
+        xs = [v.sqrt() * z for z in zs]
+        h_prev, h_cur = [Decimal(0)] * K, [Decimal(1)] * K
+        S, terms, low = Decimal(0), [], Decimal(0)
+        dfact, nfact, rhon, tol, n = Decimal(1), Decimal(1), Decimal(1), Decimal(10) ** -tol_exp, 0
+        while True:
+            if n % 2 == 0:
+                E_ = (v - 1) ** (n // 2) * dfact
+                Q = sum(w * h for w, h in zip(ws, h_cur))
+                D = E_ - Q
+                if n < 2 * K:
+                    low = max(low, abs(D) / (abs(E_) + abs(Q) + 1))
+                else:
+                    terms.append(rhon / nfact * D * D)
+                    S += terms[-1]
+                    if len(terms) > 10 and terms[-1] < tol * S:
+                        return S, terms, low
+            h_prev, h_cur = h_cur, [x_ * hc - n * hp for x_, hc, hp in zip(xs, h_cur, h_prev)]
+            n += 1
+            nfact *= n
+            rhon *= rho
+            if n % 2 == 0:
+                dfact *= n - 1
+
+
+def a5_series(r_):
+    """A5's exact series at τ/σ = r_ (referee round 81): the Mercer frame's rule (ρ = q, v′ = 1 + q) and the half-squeeze rule (ρ = t,
+    v′ = 2), K = 1 … A5_KMAX: S(K), the first term's share, the tail over the first term, and the largest low defect."""
+    from decimal import Decimal, localcontext
+    with localcontext() as ctx:
+        ctx.prec = A5_PREC
+        b = (1 + 2 * Decimal(r_) ** 2).sqrt()
+        q = (b - 1) / (b + 1)
+        st = (1 + Decimal(r_) ** 2).sqrt()                              # σ*/σ
+        t = (st - 1) / (st + 1)
+        out = {}
+        for nm, rho, v in (('Mercer', q, 1 + q), ('half-squeeze', t, Decimal(2))):
+            rows = []
+            for K in range(1, A5_KMAX + 1):
+                S_, terms, low = frame_series(K, rho, v)
+                rows.append(dict(K=K, S=float(S_), first=float(terms[0] / S_), tail=float((S_ - terms[0]) / terms[0]), low=float(low)))
+            out[nm] = rows
+        return dict(r=r_, q=float(q), t=float(t), frames=out)
+
+
+def a5_far():
+    """The Mercer frame's rule's ratio per kernel further out (referee round 81): at τ/σ in A5_FAR[1] and K in A5_FAR[0], (S(K − 1)/S(K))^{1/2}
+    in A5_FAR_PREC digits, with the largest low defect."""
+    from decimal import Decimal, localcontext
+    out = []
+    for r_ in A5_FAR[1]:
+        with localcontext() as ctx:
+            ctx.prec = A5_FAR_PREC
+            b = (1 + 2 * Decimal(r_) ** 2).sqrt()
+            q = (b - 1) / (b + 1)
+            for K in A5_FAR[0]:
+                S0 = frame_series(K - 1, q, 1 + q, prec=A5_FAR_PREC)
+                S1 = frame_series(K, q, 1 + q, prec=A5_FAR_PREC)
+                out.append(dict(r=r_, K=K, ratio=float((S0[0] / S1[0]).sqrt()), low=float(max(S0[2], S1[2]))))
+    return out
+
+
 def part_A5(A):
     """A5 (referee round 65): per τ/σ the frames at ρ = t (the half-squeeze rule), q (the Mercer expansion) and λ (v′ = 1): v_ρ over the
     half-squeeze variance and v′; the Mercer frame's rule's (N(0, 2τ²/(β² + 1))) errors at A's K; and the first tail ratio in a frame of
@@ -725,11 +920,11 @@ def part_A5(A):
     chk = [dict(v=str(v), K=K, ok=bool(gh_defect_v(2 * K + 2, K, v) / gh_defect_v(2 * K, K, v)
                                        == -v * K * (K + 2) + (v - 1) * (K + 1) * (2 * K + 1)))
            for v in (Fraction(1), Fraction(3, 2), Fraction(2), Fraction(3), Fraction(7, 4)) for K in range(1, 13)]
-    return dict(rows=rows, check=chk)
+    return dict(rows=rows, check=chk, series=[a5_series(r_) for r_ in TAUS_A], far=a5_far())
 
 
-def a5_lines(A5):
-    """A5's table and the tail-ratio check."""
+def a5_lines(A5, A=None):
+    """A5's table, its exact frame series (`a5_series_lines`) and the tail-ratio check."""
     if A5 is None:
         return []
     out = ['', '### A5. The frames: which Gauss–Hermite rule a Mehler expansion singles out', '',
@@ -746,17 +941,61 @@ def a5_lines(A5):
         out.append(f"| {x['r']:g} | " + ' | '.join(f"{f_[k]['v']:.6f}, {f_[k]['vp']:.6f}" for k in ('t', 'q', 'λ'))
                    + f" | {', '.join(f'{e[i - 1] / e[i]:.4f}' for i in range(len(e) - 3, len(e)))} at K = {x['Ks'][-3]}–{x['Ks'][-1]} "
                    f"({1 / x['t']:.4g}, {1 / x['q']:.4g}) |")
-    on = [(x['r'], 2 / (x['q'] * (2 - x['frames']['q']['vp'])), x['Ks'][-1]) for x in A5['rows']]
-    out += ['', "The Mercer frame's rule in its own frame: its first tail ratio grows like (v′ − 2)K², so its second term exceeds its first "
-            "(the ratio of the two ≈ q²(2 − v′)²K²/4) from K ≈ 2/(q(2 − v′)): " + '; '.join(
-                f"{k:.1f} at τ/σ = {r_:g} (the last K tested {kl})" for r_, k, kl in on) + " — the ratio per kernel shows its rate only "
-            "beyond that K (referee round 77)."]
+    out += a5_series_lines(A5, A)
     ok = [c_ for c_ in A5['check'] if c_['ok']]
     out += ['', f"The first tail ratio D_{{2K+2}}/D_{{2K}} = −v′K(K + 2) + (v′ − 1)(K + 1)(2K + 1) (`gh_defect_v`, exact) at "
                 f"v′ = {', '.join(sorted({c_['v'] for c_ in A5['check']}, key=lambda s: Fraction(s)))}, K = 1 … "
                 f"{max(c_['K'] for c_ in A5['check'])}: " + (f"exact in all {len(ok)}" if len(ok) == len(A5['check'])
                                                               else f"FAILS in {len(A5['check']) - len(ok)} of {len(A5['check'])}")
             + " — −(K − 1) at v′ = 2, growing like (v′ − 2)K² at any other v′.", '']
+    return out
+
+
+def a5_series_lines(A5, A=None):
+    """A5's exact frame series (referee round 81): per τ/σ and frame the tail over the first term at K = 5, 10, 20, 40 and the first K from
+    which it exceeds 1, the ratio per kernel (S(K − 1)/S(K))^{1/2} at K = 10, 20, 30, 40 against 1/t and 1/q, and the series' ratio per
+    kernel against the actual errors' (the Mercer frame's rule's of A5's table, the half-squeeze rule's of A) where both exist."""
+    if A5 is None or not A5.get('series'):
+        return []
+    rows = {x['r']: x for x in A5['rows']}
+    act = {}
+    for x in (A['rows'] if A is not None else []):
+        act.setdefault(x['r'], {})[x['K']] = x['e_hs']
+    out = ['', f"The rules' error series in their frames, exactly (`frame_series`: {A5_PREC} digits, K = 1 … {A5_KMAX}; referee round 81) — the "
+               "Mercer frame's rule (ρ = q, v′ = 1 + q) and the half-squeeze rule (ρ = t, v′ = 2): the tail after the first term over the "
+               "first at K = 5, 10, 20, 40 and the first K from which it exceeds it; the ratio per kernel (S(K − 1)/S(K))^{1/2} at K = 10, "
+               "20, 30, 40 against 1/t and 1/q; and the series' ratio per kernel against the actual errors' where both are tabulated (the "
+               "largest relative difference):", '',
+           '| τ/σ | frame | tail/first at K = 5, 10, 20, 40 | the tail above the first from K | ratio per kernel at K = 10, 20, 30, 40 (1/t, 1/q) '
+           '| against the actual errors |', '|---|---|---|---|---|---|']
+    for x in A5['series']:
+        for nm, rs in x['frames'].items():
+            by = {y['K']: y for y in rs}
+            rat = lambda K: float(np.sqrt(by[K - 1]['S'] / by[K]['S']))
+            over = next((y['K'] for y in rs if y['tail'] > 1), None)
+            if nm == 'Mercer':
+                e = rows.get(x['r'], {}).get('e_mframe') or []
+                ks = rows.get(x['r'], {}).get('Ks') or []
+                ea = dict(zip(ks, e))
+            else:
+                ea = act.get(x['r'], {})
+            dif = [abs(rat(K) / (ea[K - 1] / ea[K]) - 1) for K in sorted(ea) if K - 1 in ea and K in by and K > 1]
+            out.append(f"| {x['r']:g} | {nm} | " + ', '.join(f"{by[K]['tail']:.3g}" for K in (5, 10, 20, 40)) + ' | '
+                       + ('—' if over is None else str(over)) + ' | ' + ', '.join(f"{rat(K):.4f}" for K in (10, 20, 30, 40))
+                       + f" ({1 / x['t']:.4g}, {1 / x['q']:.4g}) | " + (f"{max(dif):.1e} (K ≤ {max(ea)})" if dif else '—') + ' |')
+    low = max(y['low'] for x in A5['series'] for rs in x['frames'].values() for y in rs)
+    out += ['', f"The defects below 2K, zero exactly, are at most {low:.1e} of their parts (the rounding of the {A5_PREC}-digit arithmetic)."]
+    if A5.get('far'):
+        rs = {}
+        for y in A5['far']:
+            rs.setdefault(y['r'], []).append(y)
+        lim = lambda ys: ((ys[-1]['ratio'] * ys[-1]['K'] ** 2 - ys[-2]['ratio'] * ys[-2]['K'] ** 2)
+                          / (ys[-1]['K'] ** 2 - ys[-2]['K'] ** 2))                # r(K) = L + c/K² through the last two
+        out += ['', f"The Mercer frame's rule further out ({A5_FAR_PREC} digits): its ratio per kernel at K = " + ', '.join(f"{K}" for K in A5_FAR[0])
+                + " — " + '; '.join(f"τ/σ = {r_:g}: " + ', '.join(f"{y['ratio']:.6f}" for y in ys) + f" (the limit by K⁻² from the last two, "
+                                    f"{lim(ys):.6f}; 1/t {1 / next(x['t'] for x in A5['series'] if x['r'] == r_):.4f})"
+                                    for r_, ys in sorted(rs.items(), reverse=True))
+                + f" — the low defects at most {max(y['low'] for y in A5['far']):.1e}: it converges, as K⁻², to a rate below 1/t."]
     return out
 
 
@@ -1116,7 +1355,7 @@ def report(A=None, B=None, C=None, D=None, B2=None, A5=None, B3=None, B4=None):
                 rs = [x for x in A['narrow'] if x['q'] == q]
                 L_.append(f"| {q:g} | {1 / rs[0]['t']:.4f} | " + ', '.join(f"{x['K']}: {x['e']:.3e} ({abs(x['e'] / x['e_series'] - 1):.0e})"
                                                                          for x in rs) + f" | {rs[-2]['e'] / rs[-1]['e']:.4f} |")
-        L_ += a5_lines(A5)
+        L_ += a5_lines(A5, A)
         from scipy.special import hyp2f1
         L_ += ['', "The tail's share Σ_{n>2K}/(first term) against ₂F₁(−½, −½; 1; t²) − 1 (the share's limit if the ratios' leading "
                "coefficients govern the tail):", '', '| τ/σ | t | K = 5 | 10 | 20 | 30 | ₂F₁(−½, −½; 1; t²) − 1 |', '|---|---|---|---|---|---|---|']
