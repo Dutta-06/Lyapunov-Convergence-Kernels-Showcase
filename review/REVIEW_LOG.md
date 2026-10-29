@@ -3138,3 +3138,44 @@ positive part). Cosmetic: bins labelled by points; the pooled part at c̄ = 0 2.
 **Lesson.** A failure to detect a trend is not evidence of its absence: F's strong null alone (p = 0.15) had less power than E's draws of
 the same null, which the repository already held. Before attributing a trend to one of two subgroups, test the difference between them —
 here the two slopes do not differ — and use every draw of the same null and calibration.
+
+## Round 80 (adversarial review of Proposition D‴.59 as revised after round 74, 2026-10-29)
+
+**Design.** One referee, not modifying the repository. D3ca: Proposition D‴.59 as revised after round 74, with its code and results at
+74e57ea (`review/REVIEW_round80_D3ca.md`). The referee:
+- regenerated the md byte for byte, and reran GT through `kappa_from_path` on all six paths, GL, HLL and four A2 cells bit-identically;
+- ran a closure fit from every stored loop state at 10⁻¹⁰ in (τ₃, τ₄), and derived the dissolution times and the loop's κ without the
+  fine grid's offset;
+- computed target 20's slow manifold and every coordinate's share of its induced metric, also for the pair alone and on a wide window;
+- ran `hll_job` to τ = 10⁹ on the symmetric pair and two asymmetric ones, and `a2_job` to s = 10¹³;
+- derived (a)'s fourth-order coefficient for signed pairs, and v²(E − E_inf)/K − 1 against v;
+- ran 84 single-point mutants.
+
+**Verdicts (D3ca).** Reproducibility, every number (one rounding), the second phase's law for both signs of K′, the O(ε^{1/3}) rate as a
+bound, the collapse law and C (re-derived independently), (a) for signed pairs, the visibility counts and the rest hold. Three majors: for
+K′ < 0 the second dipole phase is no approach to an infimum — the block lies below its optimal dipole fit by |K′|/v² and the pair
+retracts; without τ₄ the dipole would dissolve at τ = 145.0, 154.1, 61.5 —; on the symmetric pair the loop keeps no cancellation — to
+τ = 10⁹ the extra kernels decay at 10⁻⁶ and form a null cluster beside an exact one-sign fit at 10⁻⁸, HP's end the same state —; A2's 10A
+"spike end" was the horizon's — the spike is J_N's σ → 0 plateau, escaped at s ≈ 2–6·10¹⁰. Minors: the collapse's finite-p correction
+(the mean width's share p²/36, c̄ moving, E's p⁹ term from the neighbouring kernels); the loop's κ carries the fine grid's offset and two
+targets switch sequence at larger ε; target 20's GT row is roundoff and nothing checks κ³'s sign; O(v⁻⁴), not O(v⁻³); 10
+behaviour-changing surviving mutants. Cosmetic: literature, wording.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3ca-1 | major | K′ < 0 | `kappa_from_path`: κ only where K > 0 and the bracket is positive; for K′ < 0 the dissolution time τ₃ + K(τ₃ − τ_d)/\|K′\| (GT: 145, 154.1, 61.44 for targets 18, 12, 29, after the path's τ₄ 97.89, 81.64, 46.97); (ii)(c)(2), the proof and the Status: for K′ > 0 an approach to the dipole infimum from above, for K′ < 0 a retraction below the optimal dipole fit, the law holding while K(τ₃ − τ_d) + K′(τ − τ₃) > 0; "the residual of that block's optimal dipole fit" for "its asymptotic residual" |
+| D3ca-2 | major | The symmetric pair | `fit_split` (HLL; at report time H, HP and HL): per feature the main kernel's error, and the others' Σ\|w\|, sum on the samples, widths and centres — a cancellation told from a null cluster; HLL to τ = 10⁹: the symmetric pair at 10⁻⁶ the others' Σ\|w\| 0.676 → 0.185, at 10⁻⁸ the main kernels' error 7.1·10⁻² → 1.4·10⁻⁵ with the others leaving the window (their sum 8.6·10⁻² → 2.2·10⁻⁵); A₂ 0.99 and 0.95 keep their cancellations (undecided); (ii)(b), the Status and New: on the symmetric pair the cancellation is the polish's |
+| D3ca-3 | major | A2's 10A | S_A2 to 10¹³ and 20A added; `a2_spike`: the plateau's outputs, its E and the escape — 3A to s = 3·10⁵, 5A to 3·10⁷, 10A to 1–3·10¹⁰, then exact; 20A still on it at 10¹³; E 0.644, 0.906, 0.976 of ½⟨f*²⟩ whatever w —; the test asserts 10A's escape; (i), the Status and the Numerics |
+| D3ca-4 | minor | The collapse's finite-p correction | GL: the local slope (d ln E/d ln Δc − 8)/p of the formed kernels' energy (0.951–0.963), the force's factor (d ln E/d ln Δc)/8, and with it and C the ratio 1 within −4.7·10⁻⁵ … +3.2·10⁻⁴; the mean width's share p²/36 (at most 0.00067); the proof: c̄ moves on the manifold (c* + M₃/(6Wσ²)) and the shares' motion cancels it, the arithmetic mean width moving a third as far as the weighted one, E even in Δc for a pair alone (the reflection about its feature), so the O(p) term is the neighbouring kernels' |
+| D3ca-5 | minor | The loop's κ | `kappa_loop`: κ′ with v carried by the law to the path's τ₃ (the grid's offset, +0.10 … +0.58% at 10⁻¹², removed; within −0.27 … +0.21% of the path's κ), and † where the loop's intermediate slope lies beyond 1 ± 0.5 times the path's law (another sequence: target 27 at 10⁻⁷ … 10⁻⁹, 18 at 10⁻⁷); (3): κ converges once the loop follows the path's sequence, O(ε^{1/3}) a bound |
+| D3ca-6 | minor | Target 20's GT row | `kappa_from_path`: a closure whose rms is below CLOSURE_EXACT = 10⁻¹² is exact — K′ = 0, no τ₄, κ = 1 (target 20: 4.4·10⁻¹⁷); GT prints every closure's rms and "— (exact)" |
+| D3ca-7 | minor | O(v⁻⁴) | the proof and `k_third`'s docstring: E − E_inf = K/v² + O(v⁻⁴), the pair's sum even in 1/v about the midpoint; the test asserts the relative error ∝ 1/v² |
+| D3ca-8 | minor | Surviving mutants | Tests: `gt_job` against GT's raw in every field (targets 9 and 20); `kappa_from_path` with its fits stubbed (the dissolution, no κ past it, an exact closure); `fine_phases` with a landing before τ₃, an exit before τ₄ and the midpoint state; `gl_job` at unequal widths; `h_stats` with an unformed invisible kernel; `hl_job`'s 1% threshold and ε reaching `loop_nd`, `hll_job`'s ε and split; `a2_job` at σ*/σ₀ = 0.25, its tolerances and 10A's escape; `fit_split` (each kernel main once) and `closure_fit`'s \|σ\|; of 21 single-point mutants of this round's code the tests kill 20, the last equivalent |
+| D3ca-9 | cosmetic | Literature | Ho–Nguyen's r̄(2) = 4 for one extra component [snippet, secondary], their weights positive (for signed pairs, (a)); "the pair one Gaussian to third order, its fourth-order term not vanishing" |
+| D3ca-10 | cosmetic | Wording | 0.7520–1.1145; `closure_fit` returns \|σ\|; GL's p (with \|Δc\|) and the landing's (with \|Δθ\|) named, differing by p²/72; "past τ₄, which target 20 lacks" |
+
+**Lesson.** A claim about where a flow ends is a claim about its future: A2's 10A spike and the symmetric loop's cancellation were states
+at their horizons, and two to four more decades showed the escape to the exact fit and the decay into a null cluster leaving the window.
+A trend that has slowed has not stopped. Naming needs the same care: one v³ law covers both signs of K′, but only K′ > 0 approaches an
+infimum, and for K′ < 0 the four stages survive only because τ₄ comes before the dipole dissolves. And an isolated pair is a cheap control
+for an attribution — its energy is even in Δc, so the odd term that explains GL's remainder belongs to the neighbouring kernels.
