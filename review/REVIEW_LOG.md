@@ -2876,7 +2876,7 @@ offset as a pattern (c̄ = 0.08 is 0.02 from the next kernel, the mirror of 0.02
 **Lesson.** An inequality settles one side. "Never later" with equal quantiles shows the minimum cannot lose at the tie; that it gains
 nothing is a separate fact about the draws, and a script should count it rather than print it as a consequence. A Monte Carlo difference
 needs its standard error before its extremes are read, and on a grid with mirror symmetry an offset and its mirror are one data point
-seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets [**erratum, round 75 (D3bv-1):** the fall is the weak null's ((0.8, −0.4), |ŵ| ≈ 0.4); the strong null (|ŵ| ≈ 1.4) holds its level until next to the tie, and the weak null's shifted centres are binned by their own distance] [**erratum, round 78 (D3by-1):** both nulls fall toward the tie — the strong null, E's and F's 24 600 draws pooled, 0.0505 → 0.0360 (trend z = −3.28), the weak 0.0508 → 0.0296–0.0325 (z = −3.24); their slopes do not differ (likelihood-ratio p = 0.16); F's strong null alone (z = −1.45) lacked the power to show it].
+seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets [**erratum, round 75 (D3bv-1):** the fall is the weak null's ((0.8, −0.4), |ŵ| ≈ 0.4); the strong null (|ŵ| ≈ 1.4) holds its level until next to the tie, and the weak null's shifted centres are binned by their own distance] [**erratum, round 78 (D3by-1):** both nulls fall toward the tie — the strong null, E's and F's 24 600 draws pooled, 0.0505 → 0.0360 (trend z = −3.28), the weak 0.0508 → 0.0296–0.0325 (z = −3.24); their slopes do not differ (likelihood-ratio p = 0.16); F's strong null alone (z = −1.45) lacked the power to show it] [**erratum, round 82 (D3cc-1):** neither null's size falls with the distance as such — they are ordered by the runner-up's margin at the null over its noise, μ₀/sd(μ̂): conservative where it is 1.2–5 (the strong and the weak null's 5 and 7 nulls there 0.0197 and 0.0246; their draws against the law at the truth 0.0450, 0.0436: the plug-in of the fitted null), at the level elsewhere (0.0492, 0.0434), with no trend in the distance outside that band (nulls as the units: permutation p = 0.736, 0.277); with the nulls as the units the distance's trend itself is weak (permutation p = 0.042, 0.017); "do not differ" read equality from a test that failed to detect a difference; and F's strong null shows the band (its 3 nulls there)].
 
 ## Round 69 (adversarial review of Proposition D‴.60 as revised after round 63, 2026-10-28)
 
@@ -2989,7 +2989,7 @@ dropped by a filter; wording and log loose ends.
 
 **Lesson.** A trend in pooled cells can belong to one of its parts. The size's fall with the distance is the weak null's, and the strong
 null holds its level until the tie [**erratum, round 78 (D3by-1):** not so — E's 15 000 draws of the strong null fall too (z = −2.97), and
-the two nulls' slopes do not differ (p = 0.16); a failure to detect a trend in F's 9600 is not its absence]: before reading a pattern, split by what sets the statistic's scale (here s/|ŵ|) and bin by the
+the two nulls' slopes do not differ (p = 0.16); a failure to detect a trend in F's 9600 is not its absence] [**erratum, round 82 (D3cc-1):** nor is a test's failure to detect a difference evidence that the slopes are equal; the sizes are ordered by the runner-up's margin at the null over its noise, not by the distance — see round 73's Lesson]: before reading a pattern, split by what sets the statistic's scale (here s/|ŵ|) and bin by the
 quantity the pattern is about (the null's own centre, not its label). And the range of nine noisy estimates describes their noise: a
 pooled value with its error is the statement.
 
@@ -3120,7 +3120,7 @@ the solver's, not a law.
 
 **Verdicts (D3by).** No major issue. Reproducibility, every number, the tie's zero in the population, the pooled bound (by AM–GM), the
 round-75 code, the N^{−1/4} law (slopes −0.247 … −0.250) and Smith's constants hold. Minors: "the size's fall with the distance is the
-weak null's" is contradicted by E's strong null (15 000 draws, trend z = −2.97) and the two nulls' slopes do not differ (p = 0.15); the new
+weak null's" is contradicted by E's strong null (15 000 draws, trend z = −2.97) and the two nulls' slopes do not differ (p = 0.15) [**erratum, round 82 (D3cc-1):** not shown to differ — p = 0.15 only fails to detect a difference; and the trend is the band of μ₀/sd(μ̂), not the distance]; the new
 tests miss most of what they are credited for (the FA mutants, the bins by label, the pooled part and bound); three sources do not carry
 what they are cited for (Chen 1995 an estimation rate corrected by Heinrich–Kahn 2018; Liu–Shao and Gassiat mixture results; the squared
 positive part). Cosmetic: bins labelled by points; the pooled part at c̄ = 0 2.1 SE above the population; one-sided bounds; loose ends.
@@ -3137,7 +3137,7 @@ positive part). Cosmetic: bins labelled by points; the pooled part at c̄ = 0 2.
 
 **Lesson.** A failure to detect a trend is not evidence of its absence: F's strong null alone (p = 0.15) had less power than E's draws of
 the same null, which the repository already held. Before attributing a trend to one of two subgroups, test the difference between them —
-here the two slopes do not differ — and use every draw of the same null and calibration.
+here the two slopes do not differ [**erratum, round 82 (D3cc-1):** the test, p = 0.16, failed to detect a difference — the converse of this lesson's first sentence —; and the sizes are ordered by the runner-up's margin at the null over its noise, not by the distance (round 73's Lesson)] — and use every draw of the same null and calibration.
 
 ## Round 80 (adversarial review of Proposition D‴.59 as revised after round 74, 2026-10-29)
 
@@ -3259,3 +3259,45 @@ kernel form bands with gaps, and a bisected "edge" is the lower boundary of whic
 events is tested at the events' time, on each run's own state and on draws it was not built on, against a null rule: here the same
 windows that failed as a static verdict anticipate 27 of 33 leaves on new draws with 2 flags in 1184 earlier windows, where the noise-free
 edge flags 465.
+
+## Round 82 (adversarial review of Proposition D‴.52 as revised after round 78, 2026-10-29)
+
+**Design.** One referee, not modifying the repository. D3cc: Proposition D‴.52 as revised after round 78, with its code and results at
+5201021 (`review/REVIEW_round82_D3cc.md`). The referee:
+- regenerated the md byte for byte, ran the 53 tests, and recomputed the round's new lines from the raw — the bins and their intervals,
+  the Cochran–Armitage z values, the logistic interaction by direct maximum likelihood, E′'s parts, bounds and contrast;
+- checked that E's and F's strong nulls are one null, statistic, calibration and seed scheme;
+- tested the nulls' spread at one distance against binomial noise (χ² within the md's bins, the logistic model's dispersion) and the trend
+  with the null as the unit (permutation, quasi-binomial);
+- computed each null's runner-up margin μ₀ and its noise sd(μ̂) by the delta method, read a band off E's two low cells, and ran two
+  pre-registered nulls in it away from the tie;
+- compared the calibrated test with the same draws' knots against the law at the truth;
+- ran 58 single-point mutants of the round's code and the 48 of D3by's that still apply.
+
+**Verdicts (D3cc).** Reproducibility, every new number (two orphaned |ŵ| ranges aside), the nulls' comparability, E′'s parts, bounds and
+contrast, and the sources but one sentence hold. One major: "grows conservative toward the tie for both nulls … the two slopes do not
+differ" reads a trend in the distance into nulls that disagree at one distance beyond binomial noise (χ² 39.6 on 8 df and 21.4 on 5;
+dispersion 2.1); with the null as the unit the strong null's trend is not established (permutation p 0.054); the nulls are ordered by the
+runner-up's margin at the null over its noise, μ₀/sd(μ̂) — conservative where it is 1.2–5 (12 nulls at 0.022, the other 51 at 0.048 with no
+residual trend), which predicted two pre-registered runs away from the tie (0.027, 0.0235) —, through the calibration's plug-in (the same
+draws against the law at the truth stay at 0.045); and "do not differ" asserts equality from p = 0.16. Minors: 13 behaviour-changing
+surviving mutants; the Chen sentence asserts the rate that was corrected. Cosmetic: two |ŵ| ranges the md no longer prints, a referee's
+estimate hard-coded in the md, the README's two contradicting readings, loose ends.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3cc-1 | major | The trend in the distance | `null_margin` (the null's own runner-up j₂ — the kernel other than the first entrant whose dual at the first entry is nearest its wall —, μ₀ = 1 − \|u_{j₂}\|, sd(μ̂)/s by the delta method, against its definition and a Monte Carlo), `margin_nulls`, `margin_lines` (F″: every H0 null — F's, E's, G's — with μ₀/sd(μ̂), its calibrated size and the same draws against the law at the truth; pooled in and outside the band; the law at the truth's rejections the calibration keeps, and those draws' fitted margins; with the nulls as the units the permutation trend (`perm_trend`), the quasi-binomial slope (`quasi_logit`, φ = Pearson χ²/(m − p)), the band and the distance in one model); G (`g_jobs`, `part_G`: six nulls chosen by μ₀/sd(μ̂) before they were run, two of them the referee's, 3000 draws each). In the band 5 and 7 nulls at 0.0197 and 0.0246 against the law at the truth's 0.0450 and 0.0436 on the same draws, outside it 0.0492 and 0.0434; the calibrated test makes 79 of the law at the truth's 266 rejections in the band (their fitted margins 0.46 of all draws') and 1258 of 1365 outside (1.00); with the nulls as the units the distance's permutation p 0.042 and 0.017 (quasi-binomial z −2.12, −2.54; φ 2.40, 1.62), the band's z −7.23 and −3.89 alone and −6.77, −3.08 beside the distance (whose z is then −0.37, −1.14), outside the band permutation p 0.736 and 0.277. Out of sample (G): the band's three nulls 0.0267, 0.0310, 0.0323 against the law at the truth's 0.0450, 0.0433, 0.0393 (pooled 0.0300 [0.0266, 0.0337]), the three outside it 0.0420, 0.0483, 0.0440, where the distance predicts 0.043–0.051 for all six: the direction replicates, the in-sample size (0.0197–0.0246) does not. (iii), the Status and the Numerics: the sizes ordered by μ₀/sd(μ̂) through the plug-in (Davidson–MacKinnon's size distortion of a parametric bootstrap; a double bootstrap as the remedy), the band a locator, its size not a constant; errata in the Round 73, 75 and 78 entries |
+| D3cc-2 | minor | Surviving mutants | Tests: a report-level test with E_; the logistic line's three numbers against scipy's maximum likelihood on a non-saturated design; `trend_z` with unequal groups; per-offset rows with p at α and at 0.01; the equal-size numbers through `f_lines` with both pairs; `null_margin` (its definition, a Monte Carlo, a tie, a negative null), `quasi_logit`, `perm_trend`, `dist_bins`, `bin_index` (inner edges, the last closed), `margin_lines`, `g_jobs` and `f_job`'s seed; the discordances by sign and the pooled bound needing every cell; `logit_fit`'s convergence check; a negative ŵ in the noise range and in the equal size. Of 154 single-point mutants (59 the referee's, 64 D3by's, 31 of this round's code; two identity controls; 15 anchors gone) the tests kill 99 and the md alone 21 at first; of the 17 that survived both, 13 are killed by the added tests and 4 are equivalent on these data: T06 (a guard the variance check repeats), L07 (a half Newton step converges to the same fit), J02 and J03 (j1 = j10 in every cell) |
+| D3cc-3 | minor | The Chen sentence | Status: Chen 1995 claimed n^{−1/4}; Heinrich–Kahn 2018 correct the local minimax rate to n^{−1/(4(m−m₀)+2)}, n^{−1/6} for one extra component [snippets] |
+| D3cc-4 | cosmetic | Two \|ŵ\| ranges | `size_nulls` carries each null's \|ŵ\|; `size_by_distance` prints its range per pair (1.3852–1.3988, 0.4027–0.4306) |
+| D3cc-5 | cosmetic | A referee's estimate in the md | the laws' own Monte Carlo error (0.003–0.006 per cell, referee round 78's estimate) marked as not reproduced, in the md's line and in D52 |
+| D3cc-6 | cosmetic | The README | the round-75 and round-78 readings marked as withdrawn; D3cc-1's reading stated |
+| D3cc-7 | cosmetic | Loose ends | `size_by_distance`'s dead `sets` and `lab` removed; `logit_fit` raises when it does not converge; the md names the Cochran–Armitage test and its binomial variance; E′'s first entrants "for E's pair"; the level sentence reworded (size ≤ α) |
+
+**Lesson.** A pattern read off a few cells is a hypothesis about cells not yet seen, and its test is to choose new ones by the variable that
+explains it, before running them. Here the band was read off E's two low cells; run where it predicts a loss and the distance does not, it
+was right in direction on all six nulls but not in size — out of sample the band loses half as much as in the cells it was read from.
+Inside the band the plug-in follows the draw: the draws whose knot comes early are those whose noise moved the fitted null toward the tie,
+so their own bootstrap law's knot comes early too, and the rejection is lost. Two older readings were undone by the units: a binomial z
+over draws, when nulls at one distance disagree beyond binomial noise, measures the nulls' spread rather than a trend, and a test that
+fails to detect a difference does not show the slopes equal.

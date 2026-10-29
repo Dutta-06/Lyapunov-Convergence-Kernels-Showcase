@@ -30,7 +30,7 @@ E. The null law and its calibration across the grid offset (referee round 55): a
    bootstrap of that law at the draw's own first fit (ĉ, ŵ): its size and power at every offset, against the oracle-calibrated test, the
    fixed threshold of the offset CBAR, and the Neyman–Pearson bound.
 
-Output: results/chaos/close_features.md and close_features_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D,E`).
+Output: results/chaos/close_features.md and close_features_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D,E,S,F,U,G`).
 """
 import math
 import os
@@ -67,6 +67,11 @@ SIGMAS_F = (0.003, 0.01, 0.03)
 DELTAS_F = {0.003: (0.007, 0.01, 0.014, 0.02, 0.028, 0.04), 0.01: (0.0125, 0.0175, 0.025, 0.035, 0.05, 0.07),
             0.03: (0.025, 0.035, 0.05, 0.07, 0.1, 0.14)}
 R1_F, R0_F, H0_F = 200, 400, 2                   # F: H1 draws per cell; H0 draws at the separation DELTAS_F[s][H0_F] per (pair, offset, s)
+G_CELLS = (((0.8, 0.6), 0.032, 0.1, 0.1), ((0.8, 0.6), 0.04, 0.06, 0.07), ((0.8, -0.4), 0.0, 0.05, 0.07),
+           ((0.8, 0.6), 0.0, 0.1, 0.1), ((0.8, 0.6), 0.032, 0.06, 0.07), ((0.8, -0.4), 0.02, 0.02, 0.035))
+R0_G, BAND_G, N_PERM = 3000, (1.2, 5.0), 2000    # G (referee round 82): H0 nulls (pair, c̄, s, Δ) chosen by μ₀/sd(μ̂) before they were run —
+                                                  # the first three in the band BAND_G (the first two the round-82 referee's), the others
+                                                  # outside it —, R0_G draws each; the permutations of the null-as-unit tests
 
 
 def setup():
@@ -552,8 +557,8 @@ def f_job(args):
     per draw the path's second knot Δτ₂ (to the second entry) and entrants, its first fit (ĉ, ŵ), `draw_stats` there, and the knot's
     bootstrap p-values at that fit (M_E samples of `knot_walls`): of Δτ₂ against the minimum, of each wall's knot against its own law;
     per cell the law at the truth (M_LAW samples: the α quantile of the minimum, the α/2 quantile per wall) and the Neyman–Pearson power."""
-    A, cbar, s, D, hyp, R_ = args
-    seed = f_seed(A, cbar, s, D, hyp)
+    A, cbar, s, D, hyp, R_ = args[:6]
+    seed = args[6] if len(args) > 6 else f_seed(A, cbar, s, D, hyp)            # G's cells carry their own seed (referee round 82)
     t0 = time.time()
     L, K, c0 = setup()
     N = K.xs.size
@@ -594,6 +599,18 @@ def part_F():
     from multiprocessing import Pool
     with Pool(N_WORKERS) as pool:
         return pool.map(f_job, f_jobs(), chunksize=1)
+
+
+def g_jobs():
+    """G's jobs (referee round 82): the H0 null of each G_CELLS pair at its offset, noise and separation, R0_G draws (`f_job`), seeds
+    820000 + 10i."""
+    return [(A, cb, s, D, 0, R0_G, 820000 + 10 * i) for i, (A, cb, s, D) in enumerate(G_CELLS)]
+
+
+def part_G():
+    from multiprocessing import Pool
+    with Pool(N_WORKERS) as pool:
+        return pool.map(f_job, g_jobs(), chunksize=1)
 
 
 def crossing(Ds, pw, level=0.5):
@@ -883,8 +900,8 @@ def e_prime_lines(E_, S, U=None):
                    if near else '') + f". U's share of H0 draws whose first entrant is j₂ against S's swaps: "
                 f"{max(abs(q['first'] - q['swap']) for q in uu):.4f} at most apart."
                 + (f" f₁'s and f₀'s first entrants (S's normalisation of μ̂, U's of μ₀) coincide in "
-                   f"{sum(u_['j1'] == u_['j10'] for u_ in U)} of {len(U)} cells (referee round 75; at offsets below half the spacing, all in "
-                   "the same kernel's half-cell, they cannot differ: referee round 78)." if U is not None and len(U)
+                   f"{sum(u_['j1'] == u_['j10'] for u_ in U)} of {len(U)} cells (referee round 75; for E's pair at offsets below half the "
+                   "spacing the two centres lie in the same kernel's half-cell, so they cannot differ: referee rounds 78, 82)." if U is not None and len(U)
                    and all('j10' in u_ for u_ in U) else '')
                 + (f" Both laws from the same samples (referee round 71): the full knot's α quantile from U's samples equals E's at the truth "
                    f"to {max(q['dq'] for q in uu if 'dq' in q):.1e}, and the own knot's equals it in "
@@ -943,17 +960,22 @@ def trend_z(groups):
 
 def logit_fit(X, k, n, it=100):
     """The binomial logistic regression of k of n on the design X by iteratively reweighted least squares: the coefficients, their
-    covariance and the deviance (referee round 78)."""
+    covariance and the deviance (referee round 78); np.linalg.LinAlgError if the iteration does not converge (referee round 82)."""
     X, k, n = np.asarray(X, float), np.asarray(k, float), np.asarray(n, float)
     b = np.zeros(X.shape[1])
+    conv = False
     for _ in range(it):
-        p = 1 / (1 + np.exp(-(X @ b)))
+        with np.errstate(over='ignore'):
+            p = 1 / (1 + np.exp(-(X @ b)))
         W = n * p * (1 - p)
         H = X.T @ (W[:, None] * X)
         step = np.linalg.solve(H, X.T @ (k - n * p))
         b = b + step
         if np.max(np.abs(step)) < 1e-12:
+            conv = True
             break
+    if not conv:                                                        # referee round 82: a separated design diverges without a
+        raise np.linalg.LinAlgError('logit_fit: no convergence')       # singular matrix — reported as one
     p = 1 / (1 + np.exp(-(X @ b)))
     W = n * p * (1 - p)
     cov = np.linalg.inv(X.T @ (W[:, None] * X))
@@ -962,13 +984,71 @@ def logit_fit(X, k, n, it=100):
     return b, cov, float(dv)
 
 
+def quasi_logit(X, k, n):
+    """`logit_fit` with the quasi-binomial dispersion (referee round 82: nulls at one distance disagree beyond binomial noise): φ = Pearson
+    χ²/(m − p) over the m groups and the p coefficients; the standard errors scaled by √φ. Returns (b, se, φ, deviance)."""
+    X, k, n = np.asarray(X, float), np.asarray(k, float), np.asarray(n, float)
+    b, cov, dv = logit_fit(X, k, n)
+    p = 1 / (1 + np.exp(-(X @ b)))
+    phi = float(np.sum((k - n * p) ** 2 / (n * p * (1 - p))) / max(len(k) - X.shape[1], 1))
+    return b, np.sqrt(np.diag(cov) * phi), phi, dv
+
+
+def perm_trend(groups, n_perm=None, seed=8200):
+    """The Cochran–Armitage z over groups (x, k, n) and its permutation p-value with the groups as the units (referee round 82): the
+    scores x permuted over the groups n_perm times (default N_PERM), p = (1 + #{|z_π| ≥ |z|})/(n_perm + 1). (None, None) without a z."""
+    z, _ = trend_z(groups)
+    if z is None:
+        return None, None
+    n_perm = N_PERM if n_perm is None else n_perm
+    rng = np.random.default_rng(seed)
+    xs = np.array([g[0] for g in groups], float)
+    hits = 0
+    for _ in range(n_perm):
+        zp, _ = trend_z([(x, g[1], g[2]) for x, g in zip(rng.permutation(xs), groups)])
+        hits += zp is not None and abs(zp) >= abs(z) - 1e-12
+    return z, (1 + hits) / (n_perm + 1)
+
+
+def null_margin(K, c0, c, w, Phi=None):
+    """The runner-up's margin at the one-bump null wφ(c) and its noise (referee round 82): the duals at the first entry u_j = ⟨fφ_j⟩/
+    |⟨fφ_{j₁}⟩| (j₁ = argmax|⟨fφ_j⟩|), the runner-up j₂ the other kernel nearest its wall, its margin μ₀ = 1 − |u_{j₂}|, and the
+    standard deviation per unit noise of μ̂ = 1 − sign(u_{j₂})⟨yφ_{j₂}⟩/|⟨yφ_{j₁}⟩| by the delta method, ‖φ_{j₂} − (⟨fφ_{j₂}⟩/⟨fφ_{j₁}⟩)
+    φ_{j₁}‖/|⟨fφ_{j₁}⟩| (sums over the samples). For the pair (0.8, 0.6) j₂ is (i)'s noiseless second entrant and μ₀ U's mu0.
+    Returns (j₂, μ₀, sd(μ̂)/s)."""
+    Phi = K.phi(c0) if Phi is None else Phi
+    g = Phi.T @ (w * K.phi(np.array([c]))[:, 0])
+    j1 = int(np.argmax(np.abs(g)))
+    m = 1 - np.abs(g / abs(g[j1]))
+    m[j1] = np.inf
+    j2 = int(np.argmin(m))
+    return j2, float(m[j2]), float(np.linalg.norm(Phi[:, j2] - (g[j2] / g[j1]) * Phi[:, j1]) / abs(g[j1]))
+
+
+def dist_bins():
+    """The bins of the nulls' own distances to the nearest kernel (referee rounds 75, 78): the distances of OFFSETS_F's centroids
+    (mirrors about the tie pooled) and the edges halfway between them, from 0 to the half spacing."""
+    h = 2.0 / (X.D_C - 1)
+    grid = sorted({round(null_distance(cb, h), 6) for cb in OFFSETS_F})
+    return grid, [0.0] + [0.5 * (a + b) for a, b in zip(grid[:-1], grid[1:])] + [h / 2]
+
+
+def bin_index(d, edges):
+    """The bin of a distance d: lo ≤ d < hi, the last bin closed."""
+    for i in range(len(edges) - 1):
+        if edges[i] <= d and (d < edges[i + 1] or (i == len(edges) - 2 and d <= edges[i + 1])):
+            return i
+    return None
+
+
 def size_nulls(F, E_=None):
     """Every H0 null of F (per row) and of E (per cell, the strong pair PAIR_C) with its own distance to the nearest kernel and its
-    calibrated p-values: (source, pair, distance, the p-values) (referee rounds 73, 75, 78)."""
+    calibrated p-values: (source, pair, distance, the p-values, the null's |ŵ|) (referee rounds 73, 75, 78, 82)."""
     h = 2.0 / (X.D_C - 1)
-    out = [('F', tuple(r['A']), null_distance(r.get('c1', r['cbar']), h), np.array([q['p'] for q in r['rows']]))
+    out = [('F', tuple(r['A']), null_distance(r.get('c1', r['cbar']), h), np.array([q['p'] for q in r['rows']]), abs(r.get('w1', np.nan)))
            for r in F if r['hyp'] == 0]
-    out += [('E', tuple(PAIR_C), null_distance(e['c1'], h), np.array([q['p'] for q in e['rows0']])) for e in (E_ if E_ is not None else [])]
+    out += [('E', tuple(PAIR_C), null_distance(e['c1'], h), np.array([q['p'] for q in e['rows0']]), abs(e.get('w1', np.nan)))
+            for e in (E_ if E_ is not None else [])]
     return out
 
 
@@ -978,13 +1058,10 @@ def size_by_distance(F, E_=None):
     distances (the interval of distances nearest each offset's {d(c̄)}, mirrors about the tie pooled; its nulls' distances) the size at α
     (Clopper–Pearson 95%) and at 0.01; per null the trend over the nulls' own distances (Cochran–Armitage), and the two nulls' slopes in
     one logistic model (distance, pair and their interaction; the interaction's likelihood-ratio test, and the common slope's z)."""
-    h = 2.0 / (X.D_C - 1)
-    grid = sorted({round(null_distance(cb, h), 6) for cb in OFFSETS_F})
-    edges = [0.0] + [0.5 * (a + b) for a, b in zip(grid[:-1], grid[1:])] + [h / 2]
+    grid, edges = dist_bins()
     nulls = size_nulls(F, E_)
     out, data = [], []
-    sets = [(f"Pair {A}, F" + (', E and pooled' if any(s_ == 'E' and B == tuple(A) for s_, B, _, _ in nulls) else ''), tuple(A)) for A in PAIRS_F]
-    for lab, A in sets:
+    for A in (tuple(A) for A in PAIRS_F):
         for src in (('F',), ('E',), ('F', 'E')):
             ns = [x for x in nulls if x[1] == A and x[0] in src]
             if not ns or (src != ('F',) and not any(x[0] == 'E' for x in ns)):
@@ -1004,9 +1081,12 @@ def size_by_distance(F, E_=None):
                              f"{k5 / pc.size:.4f} [{ci[0]:.4f}, {ci[1]:.4f}], {k1 / pc.size:.4f}")
             z, p = trend_z([(x[2], int(np.sum(x[3] < ALPHA_C)), x[3].size) for x in ns])
             nd = sum(x[3].size for x in ns)
-            out.append(f"Pair {A}, {'+'.join(src)} ({nd} H0 draws of {len(ns)} nulls), the size by the null's own distance to the nearest "
-                       "kernel (referee rounds 73, 75, 78): " + '; '.join(cells)
-                       + ('' if z is None else f"; the trend over the nulls' own distances z = {z:+.2f} (p = {p:.3f})") + '.')
+            ws = [x[4] for x in ns if np.isfinite(x[4])]
+            out.append(f"Pair {A}, {'+'.join(src)} ({nd} H0 draws of {len(ns)} nulls"
+                       + (f", the nulls' |ŵ| {min(ws):.4f}–{max(ws):.4f}" if ws else '') + "), the size by the null's own distance to the "
+                       "nearest kernel (referee rounds 73, 75, 78): " + '; '.join(cells)
+                       + ('' if z is None else f"; the trend over the nulls' own distances (Cochran–Armitage, binomial variance: the draws as "
+                                               f"the units) z = {z:+.2f} (p = {p:.3f})") + '.')
             if src == ('F', 'E') or (src == ('F',) and not any(x[0] == 'E' for x in nulls if x[1] == A)):
                 data += [(x[2], int(np.sum(x[3] < ALPHA_C)), x[3].size, A) for x in ns]
     prs = sorted({d[3] for d in data})
@@ -1023,6 +1103,143 @@ def size_by_distance(F, E_=None):
                    f"pooled): the slopes' difference (pair {prs[1]} against {prs[0]}) z = {bf[3] / np.sqrt(cf[3, 3]):+.2f}, its likelihood-"
                    f"ratio p = {math.erfc(np.sqrt(lr / 2)):.3f}; the common slope (without the interaction) z = {br[1] / np.sqrt(cr[1, 1]):+.2f}.")
     return out
+
+
+def margin_nulls(F, E_=None, G=None):
+    """Every H0 null of F, E (the pair PAIR_C) and G with its runner-up's margin (referee round 82): source, pair, s, c̄, Δ, the null's own
+    distance to the nearest kernel and |ŵ|, `null_margin` at its one-bump fit (j₂, μ₀, sd(μ̂)/s) and μ₀/sd(μ̂); its draws' calibrated
+    p-values, knots and the law at the truth's α quantile, and per draw the margin at the draw's own first fit (ĉ, ŵ) — the null the
+    bootstrap draws from."""
+    L_, K, c0 = setup()
+    Phi = K.phi(c0)
+    h = 2.0 / (X.D_C - 1)
+    src = ([('F', r, tuple(r['A']), r['rows']) for r in F if r['hyp'] == 0]
+           + [('E', e, tuple(PAIR_C), e['rows0']) for e in (E_ if E_ is not None else [])]
+           + [('G', r, tuple(r['A']), r['rows']) for r in (G if G is not None else []) if r['hyp'] == 0])
+    out = []
+    for nm, r, A, rows in src:
+        j2, mu0, sd = null_margin(K, c0, r['c1'], r['w1'], Phi)
+        out.append(dict(src=nm, A=A, s=r['s'], cbar=r['cbar'], D=r['D'], dist=null_distance(r['c1'], h), w1=abs(r['w1']), j2=j2, mu0=mu0,
+                        sd=sd, ratio=mu0 / (sd * r['s']), p=np.array([q['p'] for q in rows]), dt=np.array([q['dt'] for q in rows]),
+                        q_law=r['q_law'], fit=np.array([null_margin(K, c0, q['c1'], q['w1'], Phi)[1] for q in rows])))
+    return out
+
+
+def in_band(x):
+    """A null in the band BAND_G of μ₀/sd(μ̂) (referee round 82)."""
+    return BAND_G[0] < x['ratio'] < BAND_G[1]
+
+
+def pooled(ns, key='p'):
+    """Over the nulls ns: (rejections, draws) of the calibrated test (key 'p': p < α) or of the knot against the law at the truth ('t')."""
+    k = sum(int(np.sum(x['p'] < ALPHA_C)) if key == 'p' else int(np.sum(x['dt'] < x['q_law'])) for x in ns)
+    return k, sum(x['p'].size for x in ns)
+
+
+def fmt_rate(k, n):
+    lo, hi = cp_int(k, n)
+    return f"{k / n:.4f} [{lo:.4f}, {hi:.4f}]"
+
+
+def margin_lines(F, E_=None, G=None):
+    """F″ (referee round 82): the calibrated knot's size against the runner-up's margin at the null over its noise — per null (`margin_nulls`)
+    its μ₀/sd(μ̂), its size and the same draws against the law at the truth, and the draws the law at the truth rejects (how many the
+    calibrated test rejects too, and the margin at their own first fits); pooled in and outside the band BAND_G; with the nulls as the
+    units, the trend in the distance (permutation, quasi-binomial) and the band against it; G's nulls, chosen by μ₀/sd(μ̂) before they were
+    run, against the band's and the distance's predictions."""
+    if F is None or len(F) == 0:
+        return []
+    ns = margin_nulls(F, E_, G)
+    base = [x for x in ns if x['src'] != 'G']
+    gn = [x for x in ns if x['src'] == 'G']
+    out = ['', "### F″. The calibrated knot's size against the runner-up's margin at the null (referee round 82)", '',
+           "Every H0 null — F's, E's (the pair (0.8, 0.6)) and G's (below) — at its one-bump fit: the runner-up j₂ (the kernel, other than the "
+           "first entrant, whose dual at the first entry is nearest its wall), its margin μ₀ = 1 − |u_{j₂}|, the standard deviation of its "
+           "estimate μ̂ per unit noise by the delta method (`null_margin`; for the pair (0.8, 0.6) j₂ is (i)'s noiseless second entrant and μ₀ "
+           "E′'s), and μ₀/sd(μ̂); the calibrated knot's size at α (Clopper–Pearson 95%) and the same draws' knots against the law at the "
+           "truth; the draws the law at the truth rejects, how many of them the calibrated test rejects, and the median of the margin at their "
+           "own first fits (the null the bootstrap draws from) against all draws':", '',
+           "| pair | null | s | c̄ | distance | j₂ | μ₀ | sd(μ̂)/s | μ₀/sd(μ̂) | draws | calibrated size [CP] | against the law at the truth | "
+           "rejected by the law at the truth: calibrated too; their fitted margin, all draws' |",
+           '|---|---|---|---|---|---|---|---|---|---|---|---|---|']
+    for x in sorted(ns, key=lambda x: (x['A'], x['src'] == 'G', x['ratio'])):
+        k, n = pooled([x])
+        tr = x['dt'] < x['q_law']
+        out.append(f"| {x['A']} | {x['src']} | {x['s']:g} | {x['cbar']:g} | {x['dist']:.4f} | {x['j2']} | {x['mu0']:.4f} | {x['sd']:.4f} | "
+                   f"{x['ratio']:.2f} | {n} | {fmt_rate(k, n)} | {np.mean(tr):.4f} | {int(np.sum(tr & (x['p'] < ALPHA_C)))} of {int(tr.sum())}; "
+                   + (f"{np.median(x['fit'][tr]):.4f}" if tr.any() else '—') + f", {np.median(x['fit']):.4f} |")
+    parts = []
+    for A in sorted({x['A'] for x in base}) + ['both']:
+        sel = [x for x in base if A == 'both' or x['A'] == A]
+        for lab, g in (('in the band', [x for x in sel if in_band(x)]), ('outside it', [x for x in sel if not in_band(x)])):
+            if g:
+                parts.append(f"{'both pairs' if A == 'both' else f'pair {A}'} {lab}: {len(g)} nulls, {fmt_rate(*pooled(g))}, against the "
+                             f"law at the truth {fmt_rate(*pooled(g, 't'))}")
+    out += ['', f"Pooled by the band {BAND_G[0]:g} < μ₀/sd(μ̂) < {BAND_G[1]:g} (the round-82 referee's, read off E's two lowest cells) over "
+                "F's and E's nulls — the calibrated size [CP], and the same draws against the law at the truth: " + '; '.join(parts) + '.']
+    mech = []
+    for lab, g in (('in the band', [x for x in base if in_band(x)]), ('outside it', [x for x in base if not in_band(x)])):
+        tr = [(x['dt'] < x['q_law'], x) for x in g]
+        kt = sum(int(t.sum()) for t, _ in tr)
+        kc = sum(int(np.sum(t & (x['p'] < ALPHA_C))) for t, x in tr)
+        fr = [np.median(x['fit'][t]) / np.median(x['fit']) for t, x in tr if t.any() and np.median(x['fit']) > 0]
+        if g:
+            mech.append(f"{lab} the calibrated test makes {kc} of the law at the truth's {kt} rejections, and their fitted margin is "
+                        f"{np.median(fr):.2f} of all draws' (the median over the nulls of the ratio of the medians; {min(fr):.2f}–{max(fr):.2f})")
+    if mech:
+        out += ['', "Where the calibration loses its rejections (referee round 82): " + '; '.join(mech) + '.']
+    tests = []
+    for A in sorted({x['A'] for x in base}):
+        sel = [x for x in base if x['A'] == A]
+        grp = lambda g: [(x['dist'], int(np.sum(x['p'] < ALPHA_C)), x['p'].size) for x in g]
+        z, pp = perm_trend(grp(sel))
+        dd = np.array([x['dist'] for x in sel]); bb = np.array([1.0 if in_band(x) else 0.0 for x in sel])
+        kk = np.array([pooled([x])[0] for x in sel]); nn = np.array([x['p'].size for x in sel])
+        try:
+            bd, sd_d, phd, dvd = quasi_logit(np.c_[np.ones_like(dd), dd], kk, nn)
+            bf, sd_f, phf, dvf = quasi_logit(np.c_[np.ones_like(dd), bb, dd], kk, nn)
+            bo, sd_o, pho, dvo = quasi_logit(np.c_[np.ones_like(dd), bb], kk, nn)
+        except np.linalg.LinAlgError:
+            continue
+        out_ = [x for x in sel if not in_band(x)]
+        zo, po = perm_trend(grp(out_))
+        try:
+            bq, sd_q, phq, _ = quasi_logit(np.c_[np.ones(len(out_)), [x['dist'] for x in out_]], [pooled([x])[0] for x in out_],
+                                           [x['p'].size for x in out_])
+            outside = (f"; outside the band ({len(out_)} nulls) the distance's z = {bq[1] / sd_q[1]:+.2f} (φ = {phq:.2f}), the permutation "
+                       f"p = {po:.3f}")
+        except np.linalg.LinAlgError:
+            outside = ''
+        m = len(sel)
+        tests.append(f"pair {A} ({m} nulls): the trend in the distance — Cochran–Armitage z = {z:+.2f} with the draws as the units, its "
+                     f"permutation p = {pp:.3f} with the nulls as the units; the quasi-binomial slope z = {bd[1] / sd_d[1]:+.2f} (dispersion "
+                     f"φ = {phd:.2f}, deviance {dvd:.1f} on {m - 2} df) —; the band alone: deviance {dvo:.1f} on {m - 2} df (φ = {pho:.2f}), its "
+                     f"z = {bo[1] / sd_o[1]:+.2f}; both: the band's z = {bf[1] / sd_f[1]:+.2f}, the distance's {bf[2] / sd_f[2]:+.2f} (φ = "
+                     f"{phf:.2f})" + outside)
+    if tests:
+        out += ['', "With the nulls as the units (referee round 82): " + '; '.join(tests) + '.']
+    if gn:
+        grid, edges = dist_bins()
+        rows = []
+        for x in gn:
+            A = x['A']
+            same = [y for y in base if y['A'] == A]
+            band = [y for y in same if in_band(y) == in_band(x)]
+            i = bin_index(x['dist'], edges)
+            dist_ = [y for y in same if bin_index(y['dist'], edges) == i]
+            kb, nb = pooled(band); kd, nd = pooled(dist_)
+            rows.append(f"| {A} | {x['s']:g} | {x['cbar']:g} | {x['D']:g} | {x['dist']:.4f} | {x['ratio']:.2f} | "
+                        f"{'yes' if in_band(x) else 'no'} | " + (f"{kb / nb:.4f}" if nb else '—') + ' | ' + (f"{kd / nd:.4f}" if nd else '—')
+                        + f" | {fmt_rate(*pooled([x]))} | {fmt_rate(*pooled([x], 't'))} |")
+        gi, go = [x for x in gn if in_band(x)], [x for x in gn if not in_band(x)]
+        out += ['', "G — H0 nulls chosen by μ₀/sd(μ̂) before they were run (the first two the round-82 referee's), R0_G draws each, the same "
+                    "test (`f_job`): the band's prediction (F's and E's nulls of the pair on the same side of the band, pooled) and the "
+                    "distance's (those in the same distance bin as `size_by_distance`'s), against the calibrated size and the law at the "
+                    "truth:", '', '| pair | s | c̄ | Δ | distance | μ₀/sd(μ̂) | in the band | the band predicts | the distance predicts | '
+                                  'calibrated size [CP] | against the law at the truth [CP] |', '|---|---|---|---|---|---|---|---|---|---|---|'] + rows
+        out += ['', "G pooled: " + '; '.join(f"{lab} {len(g)} nulls, {fmt_rate(*pooled(g))}, against the law at the truth "
+                                               f"{fmt_rate(*pooled(g, 't'))}" for lab, g in (('in the band', gi), ('outside it', go)) if g) + '.']
+    return out + ['']
 
 
 def f_alloc_lines(F, least, small, names, keys, E_=None):
@@ -1299,7 +1516,7 @@ def f_lines(F, E_=None):
     return out
 
 
-def report(A=None, B=None, C=None, E_=None, S=None, F=None, U=None):
+def report(A=None, B=None, C=None, E_=None, S=None, F=None, U=None, G=None):
     fmt = E.fmt
     L_ = ['# Proposition D‴.52: close features (`exp_close_features.py`)', '',
           f"The sliding inverse scale space (polished) on two bumps of the kernels' width {X.SIG_C} a distance Δ apart, the centroid (the "
@@ -1560,6 +1777,7 @@ def report(A=None, B=None, C=None, E_=None, S=None, F=None, U=None):
             L_ += e_prime_lines(E_, S, U)
     if F is not None:
         L_ += f_lines(F, E_)
+        L_ += margin_lines(F, E_, G)
     L_.append('Numbers are produced by `experiments/exp_close_features.py`; nothing is edited by hand.')
     return '\n'.join(L_) + '\n'
 
@@ -1568,16 +1786,16 @@ def main():
     raw = os.path.join(OUT, 'close_features_raw.npz')
     md = os.path.join(OUT, 'close_features.md')
     old = E.load(raw)
-    keys = ('A', 'B', 'C', 'E', 'S', 'F', 'U')
+    keys = ('A', 'B', 'C', 'E', 'S', 'F', 'U', 'G')
     get = lambda k: old[k] if k in old else None
     if '--from-raw' in sys.argv:
         open(md, 'w').write(report(*[get(k) for k in keys]))
         return
-    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'C', 'D', 'E', 'S', 'F', 'U'}
+    parts = set(sys.argv[sys.argv.index('--only') + 1].split(',')) if '--only' in sys.argv else {'A', 'B', 'C', 'D', 'E', 'S', 'F', 'U', 'G'}
     res = dict(old)
     t0 = time.time()
     for k, fn in (('B', part_B), ('A', part_A), ('C', part_C), ('E', part_E), ('S', lambda: part_S(res['C'], res['E'])), ('F', part_F),
-                  ('U', lambda: part_U(res['E']))):
+                  ('U', lambda: part_U(res['E'])), ('G', part_G)):
         if k in parts or (k == 'C' and 'D' in parts):
             res[k] = fn(); E.save(raw, **res); print(f"[{time.time() - t0:.0f}s] {k}", flush=True)
             open(md, 'w').write(report(*[res.get(k) for k in keys]))
