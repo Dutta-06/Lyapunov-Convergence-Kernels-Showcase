@@ -1,5 +1,6 @@
 """Proposition D‴.52: close features — the second entry's delay ∝ Δ⁻² (a dipole's ∝ Δ⁻¹, the transit of its derivative shape), the
 two-kernel block's stiffnesses ∝ Δ² and Δ⁶ in closed form, and the fast flow's rates along those modes."""
+import math
 import os
 import sys
 
@@ -976,39 +977,54 @@ def test_u_job_null_margin_with_a_negative_pair(monkeypatch):
 
 
 def test_e_prime_lines_the_tie_and_the_parts_errors_on_the_raw():
-    """Referee round 73 (D3bt-1, -2, -5): on the raw, E′ prints the minimum's part per cell with its paired standard error, the full knot
-    against the own knot draw by draw (never later, up to round-off) and the H1 draws between the two knots at the tie's common threshold
-    (none); without U the null's margin is '—'."""
+    """Referee rounds 73, 78 (D3bt-1, -2, -5; D3by-2, -6): on the raw, E′ prints the minimum's part per cell with its paired standard
+    error (a zero count's one-sided bound), the parts pooled per offset with their standard errors and the two lowest offsets' contrast,
+    the full knot against the own knot draw by draw (never later, up to round-off), the H1 draws between the two knots at the tie's common
+    threshold (none) and the bound on the cells' mean share there (one-sided and two-sided); without U the null's margin is '—'."""
     raw = CF.E.load(RAW_CF)
     md = '\n'.join(CF.e_prime_lines(raw['E'], raw['S'], raw['U']))
     Ue = {(u['D'], u['s'], u['cbar']): u for u in raw['U']}
     betw = n1 = exc_n = exc_all = 0
     exc_max = 0.0
+    pool = {}
     for e in raw['E']:
         u = Ue[(e['D'], e['s'], e['cbar'])]
         d0 = np.array([q['dt'] for q in e['rows0']]); d1 = np.array([q['dt'] for q in e['rows1']])
         own = np.array(u['t2_1']) < u['q2']
         dd = (d1 < e['q_law']).astype(float) - own.astype(float)
         part = float(np.mean(d1 < e['q_law']) - np.mean(own))
-        se = (f"0 discordant of {dd.size}: ≤ {1 - 0.05 ** (1 / dd.size):.4f}" if not np.any(dd != 0)
+        se = (f"0 discordant of {dd.size}: ≤ {1 - 0.05 ** (1 / dd.size):.4f} one-sided, {1 - 0.025 ** (1 / dd.size):.4f} two-sided at 95%"
+              if not np.any(dd != 0)
               else f"{np.std(dd, ddof=1) / np.sqrt(dd.size):.3f}")
         assert f"({e['cbar']:g}, {e['D']:g}, {e['s']:g}) {part:+.4f} ({se})" in md
+        if e['cbar'] <= 0.032:
+            pool.setdefault(e['cbar'], []).append((part, np.std(dd, ddof=1) / np.sqrt(dd.size)))
         r = np.r_[d0, d1] / np.r_[u['t2_0'], u['t2_1']] - 1
         exc_n += int(np.sum(r > 0)); exc_all += r.size; exc_max = max(exc_max, float(r.max()))
         if u['q2'] == u['q_full']:
             betw += int(np.sum((d1 < u['q2']) & ~own)); n1 += own.size
+    pp = []
+    for cb in sorted(pool):
+        m_, s_ = np.mean([x for x, _ in pool[cb]]), np.sqrt(sum(y ** 2 for _, y in pool[cb])) / len(pool[cb])
+        pp.append((m_, s_))
+        assert f"c̄ = {cb:g} {m_:+.4f} ({s_:.4f})" in md
+    assert f"the two lowest offsets' pooled parts differ by z = {(pp[0][0] - pp[1][0]) / np.hypot(pp[0][1], pp[1][1]):+.2f}" in md
     assert exc_max < 1e-10 and n1 == 2400
     assert (f"exceeds it in {exc_n} of {exc_all} draws ({exc_all} with a finite own knot), by at most {exc_max:.1e} relative" in md
             and f"the threshold falls between the two knots of no H1 draw ({betw} of {n1} in those cells" in md and betw == 0)
-    assert "(0 discordant of 400: ≤ 0.0075)" in md
+    assert (f"the share at most {1 - 0.05 ** (1 / n1):.4f} (one-sided 95%; {1 - 0.025 ** (1 / n1):.4f} two-sided) for the cells' mean "
+            "share") in md
+    assert "(0 discordant of 400: ≤ 0.0075 one-sided, 0.0092 two-sided at 95%)" in md
     no_u = '\n'.join(CF.e_prime_lines(raw['E'], raw['S'], None))
     assert no_u.count('| —, ') == len(raw['E']) and 'The minimum' not in no_u
 
 
 def test_the_size_by_distance_to_the_nearest_kernel():
-    """Referee rounds 73, 75 (D3bt-4, D3bv-1; F04, F05, F09): `size_by_distance` per pair — each H0 null at the bin of its own centre's
-    distance to the nearest kernel (an offset and its mirror about the tie pooled; a null shifted off its c̄ binned by its own centre) —,
-    H1 rows left out, a p-value exactly at α no rejection, the interval the size's; `f_alloc_lines` prints it."""
+    """Referee rounds 73, 75, 78 (D3bt-4, D3bv-1, D3by-1, -4): `size_by_distance` per pair — each H0 null in the interval of distances
+    nearest an offset's, by its own centre's distance to the nearest kernel (an offset and its mirror about the tie pooled; a null shifted
+    off its c̄ binned by its own centre, here into another bin than its label's) —, the bin printed as its range with its nulls'
+    distances, H1 rows left out, a p-value exactly at α no rejection; E's nulls (the strong pair) beside F's and pooled; per line the
+    trend over the nulls' own distances; the two nulls in one logistic model; `f_alloc_lines` prints it."""
     s, D = CF.SIGMAS_F[0], CF.DELTAS_F[CF.SIGMAS_F[0]][CF.H0_F]
     a = CF.ALPHA_C
     row = lambda p: dict(p=p, tA=1.0, tB=2.0, z=0.0, w1=1.0)
@@ -1017,17 +1033,23 @@ def test_the_size_by_distance_to_the_nearest_kernel():
          dict(A=A0, cbar=0.08, c1=0.08, w1=1.4, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.005), row(0.03), row(0.5), row(0.5)]),
          dict(A=A0, cbar=0.02, c1=0.02, w1=1.4, s=s, D=D, hyp=1, qA=1.0, qB=1.0, rows=[row(0.0)] * 4),
          dict(A=A1, cbar=0.045, c1=0.0547, w1=0.43, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.001)] * 2 + [row(0.5)] * 2),
-         dict(A=A1, cbar=0.032, c1=0.032, w1=0.40, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.5)] * 4)]
+         dict(A=A1, cbar=0.032, c1=0.0417, w1=0.40, s=s, D=D, hyp=0, qA=1.0, qB=1.0, rows=[row(0.001)] + [row(0.5)] * 3)]
     out = '\n'.join(CF.size_by_distance(F))
     lo, hi = CF.cp_int(3, 8)
-    assert f"Pair {A0} (|ŵ| 1.400–1.400; the null's centre at most 0.0000 from c̄)" in out
-    assert f"0.02: 0.3750 [{lo:.4f}, {hi:.4f}], 0.1250." in out
-    lo, hi = CF.cp_int(2, 4)
-    assert f"Pair {A1} (|ŵ| 0.400–0.430; the null's centre at most 0.0097 from c̄)" in out
-    assert "0.032: 0.0000 [" in out and f"0.045: 0.5000 [{lo:.4f}, {hi:.4f}], 0.5000." in out
+    assert f"Pair {A0}, F (8 H0 draws of 2 nulls)" in out and f"[0.01, 0.026) (nulls at 0.0200–0.0200): 0.3750 [{lo:.4f}, {hi:.4f}], 0.1250" in out
+    lo, hi = CF.cp_int(3, 8)
+    assert f"Pair {A1}, F (8 H0 draws of 2 nulls)" in out
+    assert f"[0.0385, 0.047) (nulls at 0.0417–0.0453): 0.3750 [{lo:.4f}, {hi:.4f}], 0.3750" in out and "[0.026, 0.0385)" not in out.split(f"Pair {A1}")[1]
+    E_ = [dict(c1=c, rows0=[dict(p=p) for p in ps]) for c, ps in ((0.0, (0.01, 0.5, 0.5, 0.5)), (0.049, (0.02, 0.5, 0.5, 0.5)), (0.032, (0.02, 0.03, 0.5, 0.5)))]
+    out = '\n'.join(CF.size_by_distance(F, E_))
+    assert f"Pair {A0}, E (12 H0 draws of 3 nulls)" in out and f"Pair {A0}, F+E (20 H0 draws of 5 nulls)" in out
+    assert "[0, 0.01) (nulls at 0.0000–0.0000): 0.2500 [" in out and "[0.047, 0.05] (nulls at 0.0490–0.0490): 0.2500 [" in out
+    z, p = CF.trend_z([(0.0, 1, 4), (0.049, 1, 4), (0.032, 2, 4)])
+    assert f"the trend over the nulls' own distances z = {z:+.2f} (p = {p:.3f})" in out
+    assert "The two nulls in one logistic model of rejection at α over the nulls' own distances" in out
     keys = ('knot',)
     full = '\n'.join(CF.f_alloc_lines(F, {(A, k): [] for A in CF.PAIRS_F for k in keys},
-                                      {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys))
+                                      {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys, E_))
     assert out in full
 
 
@@ -1066,6 +1088,8 @@ def test_e_prime_counts_an_infinite_path_knot_and_the_first_entrants():
               first_1=[False] * 4, mu0=0.1, j1=7, j10=7)]
     md = '\n'.join(CF.e_prime_lines(E_, S, U))
     assert "exceeds it in 1 of 14 draws (14 with a finite own knot), by at most inf relative" in md
+    U2 = [dict(U[0], t2_1=[1.0, 1.0, 1.0, np.inf])]                     # referee round 78 (X04, X05): an infinite own knot left out
+    assert "exceeds it in 1 of 14 draws (13 with a finite own knot), by at most inf relative" in '\n'.join(CF.e_prime_lines(E_, S, U2))
     assert "f₁'s and f₀'s first entrants (S's normalisation of μ̂, U's of μ₀) coincide in 1 of 1 cells" in md
     U[0]['j10'] = 8
     assert "coincide in 0 of 1 cells" in '\n'.join(CF.e_prime_lines(E_, S, U))
@@ -1092,9 +1116,12 @@ def test_smith_line_with_a_non_integer_power_and_the_bound_itself(monkeypatch):
 
 
 def test_f_alloc_lines_on_rows_that_differ_by_pair_and_offset():
-    """Referee round 75 (D3bv-4; FA01, FA03–FA07): per pair and offset its own rejections at the fit's-sign wall; H1 rows left out of
-    every H0 statistic; the sizes at α = 0.01 by the fit's sign (a row with ŵ < 0 flips its z's side) over the H0 draws only."""
+    """Referee rounds 75, 78 (FA01, FA03–FA07): per pair and offset its own rejections at the fit's-sign wall; H1 rows left out of every H0
+    statistic; the sizes at α = 0.01 by the fit's sign (a row with ŵ < 0 flips its z's side) over the H0 draws only; the size per offset
+    (both pairs pooled, by the label c̄); the walls test's components at their own thresholds qA ≠ qB, under H0 and under H1 at the two
+    smallest separations only."""
     s, D = CF.SIGMAS_F[0], CF.DELTAS_F[CF.SIGMAS_F[0]][CF.H0_F]
+    D0, D2 = CF.DELTAS_F[s][0], CF.DELTAS_F[s][2]
     A0, A1 = CF.PAIRS_F
     r = lambda p, a, b, z, w: dict(p=p, tA=a, tB=b, z=z, w1=w)
     F = [dict(A=A0, cbar=0.0, c1=0.0, w1=1.4, s=s, D=D, hyp=0, qA=1.0, qB=2.0, q_law=0.5,
@@ -1103,17 +1130,20 @@ def test_f_alloc_lines_on_rows_that_differ_by_pair_and_offset():
               rows=[r(0.003, 0.5, 1.5, -3.0, -1.0), r(0.5, 2.0, 0.5, 0.0, 1.0)]),
          dict(A=A1, cbar=0.0, c1=0.0, w1=0.4, s=s, D=D, hyp=0, qA=1.0, qB=2.0, q_law=0.5,
               rows=[r(0.004, 2.0, 0.5, -3.0, 1.0), r(0.5, 2.0, 0.5, 2.7, 1.0)]),
-         dict(A=A0, cbar=0.0, c1=0.0, w1=1.4, s=s, D=D, hyp=1, qA=1.0, qB=2.0, q_law=0.5,
-              rows=[r(0.0, 0.5, 1.5, 9.0, 1.0)] * 5)]
+         dict(A=A0, cbar=0.0, c1=0.0, w1=1.4, s=s, D=D0, hyp=1, qA=1.0, qB=2.0, q_law=0.5,
+              rows=[r(0.0, 0.5, 1.5, 9.0, 1.0)] * 4 + [r(0.0, 1.5, 2.5, 9.0, 1.0)] * 4),
+         dict(A=A0, cbar=0.0, c1=0.0, w1=1.4, s=s, D=D2, hyp=1, qA=1.0, qB=2.0, q_law=0.5, rows=[r(0.0, 5.0, 5.0, 9.0, 1.0)] * 5)]
     keys = ('knot',)
     out = '\n'.join(CF.f_alloc_lines(F, {(A, k): [] for A in CF.PAIRS_F for k in keys},
                                      {(A, k, i): [0, 0] for A in CF.PAIRS_F for k in keys for i in (0, 1)}, dict(knot='knot (law)'), keys))
     assert f"Pair {A0} under H0: of the calibrated knot's 3 rejections 2 at the wall of the fit's sign (0.667; per offset 0: 1/2, 0.02: 1/1)." in out
     assert f"Pair {A1} under H0: of the calibrated knot's 1 rejections 0 at the wall of the fit's sign (0.000; per offset 0: 0/1)." in out
     assert "The sizes at α = 0.01 over the 6 H0 draws" in out
-    k = lambda n: f"{n / 6:.4f} [{CF.cp_int(n, 6)[0]:.4f}, {CF.cp_int(n, 6)[1]:.4f}]"
+    k = lambda n, m=6: f"{n / m:.4f} [{CF.cp_int(n, m)[0]:.4f}, {CF.cp_int(n, m)[1]:.4f}]"
     assert f"knot (calibrated) {k(4)}" in out and f"z, one-sided toward the same sign {k(3)}" in out
     assert f"z, one-sided toward the opposite sign {k(1)}" in out and f"\\|z\\| {k(4)}" in out
+    assert f"c̄ = 0: {k(3, 4)}, 0.7500" in out and f"c̄ = 0.02: {k(1, 2)}, 0.5000" in out
+    assert (f"pair {A0}, H0: 0.5000, 1.0000; pair {A0}, H1: 0.5000, 0.5000; pair {A1}, H0: 0.0000, 1.0000") in out
 
 
 def test_f_report_prints_the_noise_range_and_the_equal_size_lines():
@@ -1131,3 +1161,31 @@ def test_f_report_prints_the_noise_range_and_the_equal_size_lines():
     md = '\n'.join(CF.f_lines(F))
     assert f"s/|ŵ|, over F's draws (each at its own fit; referee rounds 67 and 71): {s / 2.0:.4f}–{s / 0.5:.4f}" in md
     assert md.count('at equal size (referee round 71)') == 2
+
+
+def test_trend_z_and_logit_fit_against_closed_forms():
+    """Referee round 78: the Cochran–Armitage statistic on two groups is the pooled two-proportion z with the score's sign; the logistic
+    fit of a saturated two-group model recovers the groups' log-odds, and its deviance is zero."""
+    z, p = CF.trend_z([(0.0, 30, 100), (1.0, 10, 100)])
+    pb = 40 / 200
+    zz = (10 / 100 - 30 / 100) / np.sqrt(pb * (1 - pb) * (1 / 100 + 1 / 100))
+    assert np.isclose(z, zz, rtol=1e-12) and np.isclose(p, math.erfc(abs(zz) / np.sqrt(2)), rtol=1e-12)
+    assert CF.trend_z([(0.0, 0, 10), (1.0, 0, 10)]) == (None, None) and CF.trend_z([(0.0, 3, 10)]) == (None, None)
+    b, cov, dv = CF.logit_fit(np.array([[1.0, 0.0], [1.0, 1.0]]), np.array([30.0, 10.0]), np.array([100.0, 100.0]))
+    assert np.allclose(b, [np.log(30 / 70), np.log(10 / 90) - np.log(30 / 70)], atol=1e-10) and abs(dv) < 1e-9
+    assert np.isclose(cov[1, 1], 1 / 30 + 1 / 70 + 1 / 10 + 1 / 90, rtol=1e-8)
+
+
+def test_crb_sep_against_a_finite_difference_bound():
+    """Referee round 78 (SL05): `crb_sep` is the separation's Cramér–Rao bound s²gᵀ(GᵀG)⁻¹g with G the samples' Jacobian by central
+    differences, the amplitudes unknown (G in w₁, w₂, c₁, c₂) or known (G in c₁, c₂)."""
+    L, K, c0 = CF.setup()
+    for A, D in (((0.8, 0.6), 0.05), ((0.8, -0.4), 0.025)):
+        cs, w = CF.pair_centres(*A, D), np.array(A)
+        f = lambda th: K.phi(th[2:]) @ th[:2]
+        th, h = np.r_[w, cs], 1e-5
+        G = np.column_stack([(f(th + h * e) - f(th - h * e)) / (2 * h) for e in np.eye(4)])
+        for known, cols, g in ((False, slice(0, 4), np.array([0.0, 0.0, -1.0, 1.0])), (True, slice(2, 4), np.array([-1.0, 1.0]))):
+            Gc = G[:, cols]
+            ref = 0.01 * np.sqrt(g @ np.linalg.inv(Gc.T @ Gc) @ g)
+            assert np.isclose(CF.crb_sep(K, cs, w, 0.01, known), ref, rtol=1e-6)

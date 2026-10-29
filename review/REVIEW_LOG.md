@@ -2876,7 +2876,7 @@ offset as a pattern (c̄ = 0.08 is 0.02 from the next kernel, the mirror of 0.02
 **Lesson.** An inequality settles one side. "Never later" with equal quantiles shows the minimum cannot lose at the tie; that it gains
 nothing is a separate fact about the draws, and a script should count it rather than print it as a consequence. A Monte Carlo difference
 needs its standard error before its extremes are read, and on a grid with mirror symmetry an offset and its mirror are one data point
-seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets [**erratum, round 75 (D3bv-1):** the fall is the weak null's ((0.8, −0.4), |ŵ| ≈ 0.4); the strong null (|ŵ| ≈ 1.4) holds its level until next to the tie, and the weak null's shifted centres are binned by their own distance].
+seen twice: pooled, the size falls smoothly with the distance from the nearest kernel instead of jumping between two offsets [**erratum, round 75 (D3bv-1):** the fall is the weak null's ((0.8, −0.4), |ŵ| ≈ 0.4); the strong null (|ŵ| ≈ 1.4) holds its level until next to the tie, and the weak null's shifted centres are binned by their own distance] [**erratum, round 78 (D3by-1):** both nulls fall toward the tie — the strong null, E's and F's 24 600 draws pooled, 0.0505 → 0.0360 (trend z = −3.28), the weak 0.0508 → 0.0296–0.0325 (z = −3.24); their slopes do not differ (likelihood-ratio p = 0.16); F's strong null alone (z = −1.45) lacked the power to show it].
 
 ## Round 69 (adversarial review of Proposition D‴.60 as revised after round 63, 2026-10-28)
 
@@ -2988,7 +2988,8 @@ dropped by a filter; wording and log loose ends.
 | D3bv-7 | cosmetic | Wording and log loose ends | "holds its level"; the threshold falls between the two knots of no H1 draw; "3293 of 21000" over all cells; E′'s header normalises by the null's own first entrant, and U prints that f₁'s and f₀'s first entrants coincide (15 of 15 cells); the Status's nested dashes; an erratum in place at round 71's Lesson |
 
 **Lesson.** A trend in pooled cells can belong to one of its parts. The size's fall with the distance is the weak null's, and the strong
-null holds its level until the tie: before reading a pattern, split by what sets the statistic's scale (here s/|ŵ|) and bin by the
+null holds its level until the tie [**erratum, round 78 (D3by-1):** not so — E's 15 000 draws of the strong null fall too (z = −2.97), and
+the two nulls' slopes do not differ (p = 0.16); a failure to detect a trend in F's 9600 is not its absence]: before reading a pattern, split by what sets the statistic's scale (here s/|ŵ|) and bin by the
 quantity the pattern is about (the null's own centre, not its label). And the range of nine noisy estimates describes their noise: a
 pooled value with its error is the statement.
 
@@ -3105,3 +3106,35 @@ anchored residual — its rounding fixed once, the change from the anchor comput
 long-double end, and the floor becomes a property of how the solvers evaluate the residual, not of the problem or the arithmetic. A
 verdict such as "neither" must carry the solve's stop, and excesses measured from one kind of start against an unconverged reference are
 the solver's, not a law.
+
+## Round 78 (adversarial review of Proposition D‴.52 as revised after round 75, 2026-10-29)
+
+**Design.** One referee, not modifying the repository. D3by: Proposition D‴.52 as revised after round 75, with its code and results at
+6764e41 (`review/REVIEW_round78_D3by.md`). The referee:
+- regenerated the md byte for byte, compared the raw part by part with round 73's, and reran all 15 U jobs bit-identically;
+- checked every number on the 32 lines round 75 changed, and all 598 decimal numbers of D52.md against the md;
+- recomputed the sizes by distance per H0 job, with trend tests and logistic models (pair × distance), and E's calibrated sizes;
+- ran the minimum's part in the population (10⁶ shared law samples and 10⁵ fresh H1 draws per cell), the N-scaling of Δ₅₀ (N = 61 … 481)
+  and Smith's constants by an independent finite-difference bound;
+- ran 63 single-point mutants (35 of round 75's code, 28 named by D3bv-4) and the identity.
+
+**Verdicts (D3by).** No major issue. Reproducibility, every number, the tie's zero in the population, the pooled bound (by AM–GM), the
+round-75 code, the N^{−1/4} law (slopes −0.247 … −0.250) and Smith's constants hold. Minors: "the size's fall with the distance is the
+weak null's" is contradicted by E's strong null (15 000 draws, trend z = −2.97) and the two nulls' slopes do not differ (p = 0.15); the new
+tests miss most of what they are credited for (the FA mutants, the bins by label, the pooled part and bound); three sources do not carry
+what they are cited for (Chen 1995 an estimation rate corrected by Heinrich–Kahn 2018; Liu–Shao and Gassiat mixture results; the squared
+positive part). Cosmetic: bins labelled by points; the pooled part at c̄ = 0 2.1 SE above the population; one-sided bounds; loose ends.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3by-1 | minor | The size's fall is not the weak null's | `size_by_distance` (with `size_nulls`, `trend_z`, `logit_fit`): F's and E's H0 nulls by their own distance — the strong null in F, in E and pooled (24 600 draws: 0.0505, 0.0502, 0.0459, 0.0433, 0.0360 [0.0305, 0.0420], trend z = −3.28), the weak (0.0508 … 0.0325, z = −3.24) —, and the two nulls in one logistic model (the slopes' difference z = +1.42, likelihood-ratio p = 0.157; the common slope z = −4.37); (iii) and the Numerics: "grows conservative toward the tie for both nulls"; the errata in place at rounds 73 and 75 (its Lesson) |
+| D3by-2 | minor | The tests' strength | Tests: the per-offset size line and the walls test's components (qA ≠ qB; H1 at the two smallest separations only) asserted; `size_by_distance` with a null binned by its own centre into another bin than its label's, with E's nulls, the trend and the logistic line; `trend_z` and `logit_fit` against closed forms; `crb_sep` against a finite-difference bound; E′'s pooled parts, their contrast and the pooled bound on the raw; an infinite own knot left out of the finite count |
+| D3by-3 | minor | Sources | Status: the score process's squared positive part; Liu–Shao and Gassiat with Dacunha-Castelle–Gassiat (mixtures), Davies alone as the regression analogue; the n^{−1/4} order as the contiguous alternatives' in testing homogeneity, Chen 1995 as the (corrected) estimation rate, Heinrich–Kahn 2018; Neyman–Scott's test and the score process in one clause; El Korso et al.'s year marked unchecked |
+| D3by-4 | cosmetic | Bins labelled by points | `size_by_distance` prints each bin as its interval of distances with its nulls' own distances; (iii) "within 0.01 of a kernel", "at 0.041–0.050" |
+| D3by-5 | cosmetic | The pooled part at c̄ = 0 | E′ prints the two lowest offsets' contrast (z = −1.19); (iii): the first two not distinguishable, the referee's population values (≈ 0.08, 0.08, 0.035) quoted as not reproduced; the laws' Monte Carlo error's size (0.003–0.006 per cell, the referee's estimate) |
+| D3by-6 | cosmetic | One-sided bounds | `part_se` and E′: "≤ 0.0075 one-sided, 0.0092 two-sided at 95%" per cell and "0.0012 (one-sided 95%; 0.0015 two-sided) for the cells' mean share" |
+| D3by-7 | cosmetic | Loose ends | Smith's fitted constants labelled by pair and amplitude case; the per-offset size marked as pooled over both nulls by the label; the first-entrant check said to be trivial below half the spacing; the dangling dash gone |
+
+**Lesson.** A failure to detect a trend is not evidence of its absence: F's strong null alone (p = 0.15) had less power than E's draws of
+the same null, which the repository already held. Before attributing a trend to one of two subgroups, test the difference between them —
+here the two slopes do not differ — and use every draw of the same null and calibration.

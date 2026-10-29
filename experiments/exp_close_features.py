@@ -32,6 +32,7 @@ E. The null law and its calibration across the grid offset (referee round 55): a
 
 Output: results/chaos/close_features.md and close_features_raw.npz (`--from-raw` regenerates the md; `--only A,B,C,D,E`).
 """
+import math
 import os
 import sys
 import time
@@ -866,18 +867,24 @@ def e_prime_lines(E_, S, U=None):
                 f"dictionary's minimum); at c̄ = {tie[0]['cb']:g} its power {', '.join(f'{q['u1']:.3f}' for q in tie)} against z₂'s "
                 f"{', '.join(f'{q['z2']:.3f}' for q in tie)} (the margin's noise).",
                 "The minimum's part (referee round 67) — the full knot against its own law at the truth less the runner-up's own knot, per cell "
-                "(c̄, Δ, s), with its standard error over the paired H1 draws (referee round 73; the laws' own Monte Carlo error not included): "
+                "(c̄, Δ, s), with its standard error over the paired H1 draws (referee round 73; the laws' own Monte Carlo error not included — "
+                "0.003–0.006 per cell by referee round 78's estimate, not reproduced here): "
                 + '; '.join(f"({q['cb']:g}, {q['D']:g}, {q['s']:g}) {q['law1'] - q['u1']:+.4f}" + part_se(q) for q in uu)
                 + f": at c̄ ≤ 0.032 {min(q['law1'] - q['u1'] for q in far):+.4f} … {max(q['law1'] - q['u1'] for q in far):+.4f} (pooled per "
                 "offset over its cells, with its standard error: " + '; '.join(
                     f"c̄ = {cb:g} {np.mean([q['law1'] - q['u1'] for q in far if q['cb'] == cb]):+.4f} ("
                     f"{np.sqrt(sum(q['se'] ** 2 for q in far if q['cb'] == cb)) / sum(q['cb'] == cb for q in far):.4f})"
-                    for cb in sorted({q['cb'] for q in far}) if all('se' in q for q in far if q['cb'] == cb)) + ")"
+                    for cb in sorted({q['cb'] for q in far}) if all('se' in q for q in far if q['cb'] == cb))
+                + (lambda pp: f"; the two lowest offsets' pooled parts differ by z = {(pp[0][0] - pp[1][0]) / np.hypot(pp[0][1], pp[1][1]):+.2f}"
+                   if len(pp) >= 2 else '')([(np.mean([q['law1'] - q['u1'] for q in far if q['cb'] == cb]),
+                                              np.sqrt(sum(q['se'] ** 2 for q in far if q['cb'] == cb)) / sum(q['cb'] == cb for q in far))
+                                             for cb in sorted({q['cb'] for q in far}) if all('se' in q for q in far if q['cb'] == cb)]) + ")"
                 + (f", at c̄ ≥ 0.045 {min(q['law1'] - q['u1'] for q in near):+.4f} … {max(q['law1'] - q['u1'] for q in near):+.4f}"
                    if near else '') + f". U's share of H0 draws whose first entrant is j₂ against S's swaps: "
                 f"{max(abs(q['first'] - q['swap']) for q in uu):.4f} at most apart."
                 + (f" f₁'s and f₀'s first entrants (S's normalisation of μ̂, U's of μ₀) coincide in "
-                   f"{sum(u_['j1'] == u_['j10'] for u_ in U)} of {len(U)} cells (referee round 75)." if U is not None and len(U)
+                   f"{sum(u_['j1'] == u_['j10'] for u_ in U)} of {len(U)} cells (referee round 75; at offsets below half the spacing, all in "
+                   "the same kernel's half-cell, they cannot differ: referee round 78)." if U is not None and len(U)
                    and all('j10' in u_ for u_ in U) else '')
                 + (f" Both laws from the same samples (referee round 71): the full knot's α quantile from U's samples equals E's at the truth "
                    f"to {max(q['dq'] for q in uu if 'dq' in q):.1e}, and the own knot's equals it in "
@@ -890,7 +897,8 @@ def e_prime_lines(E_, S, U=None):
                    "the share of H1 draws whose two knots straddle it, ≥ 0: where the quantiles coincide the minimum cannot lose, and it gains "
                    f"nothing there because the threshold falls between the two knots of no H1 draw ({sum(q['betw'] for q in uu if q.get('eq'))} "
                    f"of {sum(q['n1'] for q in uu if q.get('eq'))} in those cells"
-                   + (f", no discordant draw: the share at most {1 - 0.05 ** (1 / sum(q['n1'] for q in uu if q.get('eq'))):.4f} at 95%"
+                   + (f", no discordant draw: the share at most {1 - 0.05 ** (1 / sum(q['n1'] for q in uu if q.get('eq'))):.4f} (one-sided 95%; "
+                      f"{1 - 0.025 ** (1 / sum(q['n1'] for q in uu if q.get('eq'))):.4f} two-sided) for the cells' mean share"
                       if all(q.get('nd') == 0 for q in uu if q.get('eq')) else '') + "; referee rounds 73, 75)."
                    if any('dq' in q for q in uu) else ''), '']
     return out
@@ -902,7 +910,7 @@ def part_se(q):
     if 'se' not in q:
         return ''
     if q.get('nd') == 0:
-        return f" (0 discordant of {q['nn']}: ≤ {1 - 0.05 ** (1 / q['nn']):.4f})"
+        return f" (0 discordant of {q['nn']}: ≤ {1 - 0.05 ** (1 / q['nn']):.4f} one-sided, {1 - 0.025 ** (1 / q['nn']):.4f} two-sided at 95%)"
     return f" ({q['se']:.3f})"
 
 
@@ -918,35 +926,106 @@ def null_distance(c, h):
     return min(c % h, h - c % h)
 
 
-def size_by_distance(F):
-    """F's calibrated knot's size by the H0 null's own distance to the nearest kernel (referee rounds 73, 75), per pair — the two nulls
-    differ (the one-bump fits' |ŵ| ≈ 1.4 and 0.4) and the weak one's centre c₁ moves off c̄ with s —: each null at the bin of the
-    offsets' distances {d(c̄)} nearest its own d(c₁) (mirrors about the tie pooled), the size at α (Clopper–Pearson 95%), at 0.01."""
+def trend_z(groups):
+    """The Cochran–Armitage trend statistic of rejections over groups (x, k, n) — score x, k rejections of n — and its two-sided p-value
+    (referee round 78)."""
+    x, k, n = (np.array([g[i] for g in groups], float) for i in range(3))
+    N, K_ = n.sum(), k.sum()
+    if N == 0 or K_ in (0, N) or len(groups) < 2:
+        return None, None
+    pb, xb = K_ / N, float(np.sum(n * x) / N)
+    v = pb * (1 - pb) * float(np.sum(n * (x - xb) ** 2))
+    if v <= 0:
+        return None, None
+    z = float(np.sum(k * (x - xb)) / np.sqrt(v))
+    return z, float(math.erfc(abs(z) / np.sqrt(2)))
+
+
+def logit_fit(X, k, n, it=100):
+    """The binomial logistic regression of k of n on the design X by iteratively reweighted least squares: the coefficients, their
+    covariance and the deviance (referee round 78)."""
+    X, k, n = np.asarray(X, float), np.asarray(k, float), np.asarray(n, float)
+    b = np.zeros(X.shape[1])
+    for _ in range(it):
+        p = 1 / (1 + np.exp(-(X @ b)))
+        W = n * p * (1 - p)
+        H = X.T @ (W[:, None] * X)
+        step = np.linalg.solve(H, X.T @ (k - n * p))
+        b = b + step
+        if np.max(np.abs(step)) < 1e-12:
+            break
+    p = 1 / (1 + np.exp(-(X @ b)))
+    W = n * p * (1 - p)
+    cov = np.linalg.inv(X.T @ (W[:, None] * X))
+    with np.errstate(divide='ignore', invalid='ignore'):
+        dv = 2 * np.sum(np.where(k > 0, k * np.log(k / (n * p)), 0.0) + np.where(n - k > 0, (n - k) * np.log((n - k) / (n * (1 - p))), 0.0))
+    return b, cov, float(dv)
+
+
+def size_nulls(F, E_=None):
+    """Every H0 null of F (per row) and of E (per cell, the strong pair PAIR_C) with its own distance to the nearest kernel and its
+    calibrated p-values: (source, pair, distance, the p-values) (referee rounds 73, 75, 78)."""
     h = 2.0 / (X.D_C - 1)
-    grid = sorted({round(null_distance(cb, h), 6) for cb in OFFSETS_F})
-    out = []
-    for A in PAIRS_F:
-        h0 = [r for r in F if tuple(r['A']) == tuple(A) and r['hyp'] == 0]
-        if not h0:
-            continue
-        byd = {}
-        for r in h0:
-            d = min(grid, key=lambda g: abs(g - null_distance(r.get('c1', r['cbar']), h)))
-            byd.setdefault(d, []).extend(q['p'] for q in r['rows'])
-        cells = []
-        for d, pc in sorted(byd.items()):
-            pc = np.array(pc)
-            k5, k1 = int(np.sum(pc < ALPHA_C)), int(np.sum(pc < 0.01))
-            ci = cp_int(k5, pc.size)
-            cells.append(f"{d:g}: {k5 / pc.size:.4f} [{ci[0]:.4f}, {ci[1]:.4f}], {k1 / pc.size:.4f}")
-        ws = [abs(r['w1']) for r in h0 if 'w1' in r]
-        sh = max(abs(r.get('c1', r['cbar']) - r['cbar']) for r in h0)
-        out.append(f"Pair {A} (" + (f"|ŵ| {min(ws):.3f}–{max(ws):.3f}; " if ws else '') + f"the null's centre at most {sh:.4f} from c̄), the size by the null's own "
-                   "distance to the nearest kernel (mirrors about the tie pooled; referee rounds 73, 75): " + '; '.join(cells) + '.')
+    out = [('F', tuple(r['A']), null_distance(r.get('c1', r['cbar']), h), np.array([q['p'] for q in r['rows']]))
+           for r in F if r['hyp'] == 0]
+    out += [('E', tuple(PAIR_C), null_distance(e['c1'], h), np.array([q['p'] for q in e['rows0']])) for e in (E_ if E_ is not None else [])]
     return out
 
 
-def f_alloc_lines(F, least, small, names, keys):
+def size_by_distance(F, E_=None):
+    """The calibrated knot's size by the H0 null's own distance to the nearest kernel (referee rounds 73, 75, 78), for the weak null (F's
+    (0.8, −0.4), |ŵ| ≈ 0.4) and the strong one (0.8, 0.6) — F's draws, E's (the same null and calibration) and both pooled —: per bin of
+    distances (the interval of distances nearest each offset's {d(c̄)}, mirrors about the tie pooled; its nulls' distances) the size at α
+    (Clopper–Pearson 95%) and at 0.01; per null the trend over the nulls' own distances (Cochran–Armitage), and the two nulls' slopes in
+    one logistic model (distance, pair and their interaction; the interaction's likelihood-ratio test, and the common slope's z)."""
+    h = 2.0 / (X.D_C - 1)
+    grid = sorted({round(null_distance(cb, h), 6) for cb in OFFSETS_F})
+    edges = [0.0] + [0.5 * (a + b) for a, b in zip(grid[:-1], grid[1:])] + [h / 2]
+    nulls = size_nulls(F, E_)
+    out, data = [], []
+    sets = [(f"Pair {A}, F" + (', E and pooled' if any(s_ == 'E' and B == tuple(A) for s_, B, _, _ in nulls) else ''), tuple(A)) for A in PAIRS_F]
+    for lab, A in sets:
+        for src in (('F',), ('E',), ('F', 'E')):
+            ns = [x for x in nulls if x[1] == A and x[0] in src]
+            if not ns or (src != ('F',) and not any(x[0] == 'E' for x in ns)):
+                continue
+            cells = []
+            for i, g in enumerate(grid):
+                lo, hi = edges[i], edges[i + 1]
+                last = i == len(grid) - 1
+                inb = [x for x in ns if lo <= x[2] and (x[2] < hi or (last and x[2] <= hi))]
+                if not inb:
+                    continue
+                pc = np.concatenate([x[3] for x in inb])
+                k5, k1 = int(np.sum(pc < ALPHA_C)), int(np.sum(pc < 0.01))
+                ci = cp_int(k5, pc.size)
+                ds = [x[2] for x in inb]
+                cells.append(f"[{lo:.4g}, {hi:.4g}{']' if last else ')'} (nulls at {min(ds):.4f}–{max(ds):.4f}): "
+                             f"{k5 / pc.size:.4f} [{ci[0]:.4f}, {ci[1]:.4f}], {k1 / pc.size:.4f}")
+            z, p = trend_z([(x[2], int(np.sum(x[3] < ALPHA_C)), x[3].size) for x in ns])
+            nd = sum(x[3].size for x in ns)
+            out.append(f"Pair {A}, {'+'.join(src)} ({nd} H0 draws of {len(ns)} nulls), the size by the null's own distance to the nearest "
+                       "kernel (referee rounds 73, 75, 78): " + '; '.join(cells)
+                       + ('' if z is None else f"; the trend over the nulls' own distances z = {z:+.2f} (p = {p:.3f})") + '.')
+            if src == ('F', 'E') or (src == ('F',) and not any(x[0] == 'E' for x in nulls if x[1] == A)):
+                data += [(x[2], int(np.sum(x[3] < ALPHA_C)), x[3].size, A) for x in ns]
+    prs = sorted({d[3] for d in data})
+    if len(prs) == 2:
+        g = np.array([1.0 if d[3] == prs[1] else 0.0 for d in data])
+        dd = np.array([d[0] for d in data]); kk = np.array([d[1] for d in data]); nn = np.array([d[2] for d in data])
+        try:
+            bf, cf, dvf = logit_fit(np.c_[np.ones_like(dd), dd, g, g * dd], kk, nn)
+            br, cr, dvr = logit_fit(np.c_[np.ones_like(dd), dd, g], kk, nn)
+        except np.linalg.LinAlgError:                                   # a separated design: no finite fit
+            return out
+        lr = max(dvr - dvf, 0.0)
+        out.append(f"The two nulls in one logistic model of rejection at α over the nulls' own distances (the strong null's draws E and F "
+                   f"pooled): the slopes' difference (pair {prs[1]} against {prs[0]}) z = {bf[3] / np.sqrt(cf[3, 3]):+.2f}, its likelihood-"
+                   f"ratio p = {math.erfc(np.sqrt(lr / 2)):.3f}; the common slope (without the interaction) z = {br[1] / np.sqrt(cr[1, 1]):+.2f}.")
+    return out
+
+
+def f_alloc_lines(F, least, small, names, keys, E_=None):
     """F's allocation (referee round 64): under H0 the share of the calibrated knot's rejections at the wall of the fit's sign (tA < tB)
     per pair, pooled and per offset; each test's least power over Δ per cell (the cells below α) and its power pooled over the cells at
     the two smallest separations (Clopper–Pearson); the sizes at α = 0.01 pooled over the H0 draws."""
@@ -987,9 +1066,10 @@ def f_alloc_lines(F, least, small, names, keys):
                 k5, k1 = int(np.sum(pc < ALPHA_C)), int(np.sum(pc < 0.01))
                 per.append(f"c̄ = {cb:g}: {k5 / pc.size:.4f} [{cp_int(k5, pc.size)[0]:.4f}, {cp_int(k5, pc.size)[1]:.4f}], "
                            f"{k1 / pc.size:.4f}")
-        out.append(f"The calibrated knot's size per offset over both pairs' H0 draws (α = {ALPHA_C:g} with Clopper–Pearson 95%, then α = 0.01): "
+        out.append(f"The calibrated knot's size per offset c̄ — by the label, the two pairs' H0 draws pooled (referee round 78: by the null's "
+                   f"own distance and per null below) — (α = {ALPHA_C:g} with Clopper–Pearson 95%, then α = 0.01): "
                    + '; '.join(per) + '.')
-        out += size_by_distance(F)
+        out += size_by_distance(F, E_)
         out.append('')
     comp = []                                                           # referee round 67: the walls test's own components at α/2
     for A in PAIRS_F:
@@ -1125,7 +1205,7 @@ def part_U(E_):
         return pool.map(u_job, jobs, chunksize=1)
 
 
-def f_lines(F):
+def f_lines(F, E_=None):
     """F (referee round 59): per pair, noise and centroid offset the separation of power ½ of each test (law-calibrated knot, the knot
     calibrated per draw, both walls, the score z toward the pair's sign, |z|, the width's |z_σ|) against the Neyman–Pearson bound's, and
     the tests' false-alarm rates on the H0 draws; the opposite-sign pair's powers against Δ at c̄ = CBAR."""
@@ -1199,7 +1279,7 @@ def f_lines(F):
     out.append("False-alarm rates pooled over the H0 draws of both pairs (Clopper–Pearson 95%): "
                + '; '.join(f"{names[k]} {pool[k][0] / max(pool[k][1], 1):.4f} [{cp_int(*pool[k])[0]:.4f}, {cp_int(*pool[k])[1]:.4f}]"
                            for k in keys if pool[k][1]) + '.')
-    out += [''] + f_alloc_lines(F, least, small, names, keys)
+    out += [''] + f_alloc_lines(F, least, small, names, keys, E_)
     A = PAIRS_F[-1]
     sgn = float(np.sign(A[0] * A[1]))
     out += ['', f"The pair {A} at c̄ = {CBAR:g}: the powers against Δ (knot (law), both walls, z one-sided, |z|; Neyman–Pearson) — with "
@@ -1479,7 +1559,7 @@ def report(A=None, B=None, C=None, E_=None, S=None, F=None, U=None):
         if S is not None:
             L_ += e_prime_lines(E_, S, U)
     if F is not None:
-        L_ += f_lines(F)
+        L_ += f_lines(F, E_)
     L_.append('Numbers are produced by `experiments/exp_close_features.py`; nothing is edited by hand.')
     return '\n'.join(L_) + '\n'
 
