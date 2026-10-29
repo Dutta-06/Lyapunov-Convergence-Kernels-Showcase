@@ -3301,3 +3301,46 @@ Inside the band the plug-in follows the draw: the draws whose knot comes early a
 so their own bootstrap law's knot comes early too, and the rejection is lost. Two older readings were undone by the units: a binomial z
 over draws, when nulls at one distance disagree beyond binomial noise, measures the nulls' spread rather than a trend, and a test that
 fails to detect a difference does not show the slopes equal.
+
+## Round 83 (adversarial review of Proposition D‴.59 as revised after round 80, 2026-10-29)
+
+**Design.** One referee, not modifying the repository. D3cd: Proposition D‴.59 as revised after round 80, with its code and results at
+3b6aac7 (`review/REVIEW_round83_D3cd.md`). The referee:
+- regenerated the md byte for byte, ran the 43 tests, and reran all 15 A2 cells, the six GT rows, both GL runs and the four HLL cells (to
+  τ = 10⁹) bit-identically to the raw;
+- computed the dissolution times and κ³ both ways, and the loop's κ uncorrected, carried to the path's τ₃ and carried to the loop's own
+  grid crossing;
+- ran the loop on the fine grid at 34 (target, ε) cells, recording which kernel forms at τ₃ and τ₄ against the path's entrants;
+- re-derived the collapse's moment algebra by hand, and computed GL's local slope and remainder with E_formed, with E and mixed;
+- minimised target 20's landed pair alone at ±Δc (parity), on the samples and on symmetric windows;
+- compared `fit_split`'s main kernels with the best-fitting assignment on H, HP, H3, HL and HLL, and rerun H's symmetric polish;
+- evaluated A2's plateau against the one- and two-sample energies, and the early collapse under LSODA on three spans and under Radau and
+  BDF;
+- ran 75 single-point mutants.
+
+**Verdicts (D3cd).** Reproducibility, D3ca-1 (K′ < 0: the dissolution times, κ³ both ways), D3ca-6 (target 20's exact closure), τ₃ and τ₄
+the path's entrants by index on every path-sequence cell, † flagging exactly the cells on another sequence, D3ca-4's algebra, the parity
+of a lone pair, D3ca-2's conclusion (the symmetric pair's cancellation the polish's: one capped polish ×3.358) and D3ca-3's numbers hold.
+No major issue. Minors: GL's remainder mixes two energies (the published top end is the idle floor); `fit_split`'s c-only assignment
+misassigns two HL rows, its criterion drops the sign that tells a cancellation from a split, and "null cluster" is used where the md's own
+test fails; κ′ is not the loop's own κ, and target 12 converges only as ε^{0.1–0.3}; A2's plateau is the two-sample interpolation, not
+J_N's pointwise limit, a roundoff-dependent one-sample saddle comes first, and SPIKE_A2 has a thin margin; four behaviour-changing mutants
+survive. Cosmetic: † a proxy; wording, rounding, literature.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3cd-1 | minor | GL's remainder | `gl_lines`: the force factor from all kernels' energy, as in a = E/Δc⁸ — the ratio with C 1 within −6.3·10⁻⁵ … +1.2·10⁻⁴ (largest at τ = 574.3) —, E_formed's slope kept for E's next order (0.951–0.963, median 0.961; all kernels' 0.951–1.052 printed beside it); (ii)(c)(4)'s Numerics and the Status |
+| D3cd-2 | minor | `fit_split` | the main kernels the assignment of distinct formed kernels of the features' signs minimising the largest relative error, then the next (all assignments); each one's signed w/A − 1 and the others' Σw beside Σ\|w\|; computed at render time for HLL too; HLL's others' sum per decade and against the residual (the symmetric pair at 10⁻⁸: 2.2·10⁻⁵ of max f* against 5.3·10⁻⁹, falling ×16.2, 8.41, 6.14, 4.68; at 10⁻⁶ ×1.32–1.36, 1% of max f* 8.5 decades further). (ii)(b): a cancellation's main kernel inflated beside others of the other sign, a split's deficient (H3's −0.38, −0.37), a null cluster's exact with the others' sum below the residual; the symmetric pair's main kernels deficient, the others approaching a null cluster, not one at 10⁹ (HP's end likewise: 8.7·10⁻² against 9.7·10⁻⁶); the Status and New |
+| D3cd-3 | minor | κ′ and the rate | κ′ named ("v_land over the law's v at the path's τ₃"); GT: the loop's own κ bracketed by its own grid crossing ([1.1126, 1.1159], [0.7498, 0.7525], [0.9139, 0.9148], [0.9971, 1.0056], [1.0187, 1.0209], [0.7606, 0.7694]: the path's κ inside but on target 12, 0.25–0.35% below); κ′ − κ per mass on the path's sequence and its fall per decade where both are at least 10⁻³ (×1.9–2.6 on targets 9, 20, 27 and, from 10⁻⁷, 29 against 10^{1/3}; target 12 ×1.32–1.85, as ε^{0.12–0.27}); (ii)(c)(3): O(ε^{1/3}) asymptotically, target 12 pre-asymptotic over 10⁻⁷ … 10⁻¹² |
+| D3cd-4 | minor | A2's plateau | `a2_plateau`: E₂ = 1 − max_k (f*(x_k)² + f*(x_{k+1})²)/Σf*² = lim_{σ→0} min_c J_N (0.643650, 0.906294, 0.976497; checked by minimising J_N at a width of an eighth of the spacing) and the one-sample E₁ (0.8119, 0.9530, 0.9882); `a2_spike` by E within 10⁻³ of E₂ (PLATEAU_A2; the 3A/0.25 dip below 0.24σ* no longer near it); A2E (`a2e_job`): from 5A at σ*/σ₀ = 0.25 the flow passes the symmetric state on the sample c* at s = 10⁻³ (σ/σ* 0.1846, E 3.480), a saddle — ∂ċ/∂c = +1.05 … +1.09·10⁴ there, −383 … −279 while the width falls —; on A2's span LSODA's Adams steps (hλ ≤ 0.55) follow the offset's growth at 1.092·10⁴ per unit s to the plateau (from s = 0.0056), on the span (0, 10) its BDF steps (hλ 2.4–50, from s = 0.0026) damp the unstable offset (backward Euler's factor 1/(1 − hλ)) and the flow stays on the symmetric state to s = 10: A2's route the flow's, the short span's a solver artefact; (i), the Status and the Numerics, "(at the outputs)" |
+| D3cd-5 | minor | Surviving mutants | Tests: `hll_job` at ε = 10⁻⁸ with its times and tolerances; `gl_job`'s E_formed with the idle kernel on the feature (rtol 10⁻¹²) and E apart from it; `kappa_from_path`'s block and entrants; `fit_split`'s best assignment (HL's row), its tie-break, signs and Σw; `split_cells`; HLL's split from θ and w; `a2_plateau` against direct sums and J_N's minimum; `a2_spike` by E (3A/0.25 off the plateau); `a2e_job` (its outputs at s = 1, 10 bit-identical to `a2_job`'s, ∂ċ/∂c's sign, LSODA's steps and methods), the plateau's onset; `sq_job`, `sq_check`; `g_fine_lines`' bracket, † on '—', the rate line and the SQ paragraph; `gl_lines`' remainder with one energy. Of 135 single-point mutants — the referee's 75 (11 no longer applicable, their lines rewritten this round: SQ4, FS1–FS5, FS11, GL3, GL8, AS1, AS6) and 60 of this round's code — the tests kill 81 and the md alone 19, the referee's HJ1–HJ3 and GJe among the killed; of the 24 that survived both, the 14 of this round's are killed by tests added since, and the referee's 10 are among the 14 it found equivalent on the data (KF4, KF10, KL2, SQ5, FS10, AS2, AS3, CF2, GR4, LR1) |
+| D3cd-6 | cosmetic | † a proxy | SQ (`sq_job`, `sq_check`): G's loop rerun at G's outputs (its τ₃ and τ₄ G's at 48 of 48 cells), the formed sets at τ₃ and τ₄ against the path's block at τ_d with j3 and j4 (`kappa_from_path` returns them): the path's sequence at 34 of 48 cells — elsewhere kernel 9 at τ₃ (18 to 10⁻⁷, 27 to 10⁻⁹), kernel 10 (12 at 10⁻⁵, 10⁻⁶), an extra kernel (9 at 10⁻⁵, 20 at 10⁻⁵ and 10⁻⁶) or another τ₄ entrant (29 at 10⁻⁵) —; † from SQ, the slope proxy marking the same cells but three without a landing; † printed on '—' too |
+| D3cd-7 | cosmetic | Wording, rounding, literature | the dissolution times to five digits (144.98, 154.13, 61.443); parity "in the continuum", the samples breaking the reflection; New: the asymmetric pairs to τ = 10⁵ on five, to 10⁹ on the two continued; the symmetric decay at 10⁻⁶ a trend at the horizon; Ho–Nguyen's r̄(2) = 4 as attributed in "Dendrogram of mixing measures" (arXiv:2403.01684) [snippet] |
+
+**Lesson.** Round 83's referee asked that a check not borrow the quantity it tests, and each direct version found something the borrowed
+one hid. With one energy the remainder halves, and the published top end turns out to be the idle kernels' floor. With the best assignment
+and the sign, the fit's split tells a split from a cancellation, and shows the symmetric pair's "null cluster" still several thousand times
+above the residual at τ = 10⁹. With the loop's own crossing, target 12's κ is known to lie above the path's; with kernel indices, the
+sequence test needs no slope proxy. With the energy, the plateau is the two-sample interpolation, and following it back to s = 10⁻⁴
+exposes a saddle on the sample c*: the flow's instability is λ ≈ 1.1·10⁴, and the run that "stays" on it does so only because LSODA's
+backward differences damp an unstable mode at hλ > 2. When two solvers disagree, read the steps before trusting either.

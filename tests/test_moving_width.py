@@ -421,7 +421,8 @@ def test_t3_from_duals_reproduces_gt_and_the_loop():
         x = next(r for r in raw['GT'] if r['q'] == q)
         assert set(o) == set(x)
         for k_, v in o.items():
-            assert (v is None and x[k_] is None) or (isinstance(v, bool) and v == x[k_]) or np.isclose(v, x[k_], rtol=1e-9, atol=0), k_
+            assert ((v is None and x[k_] is None) or (isinstance(v, bool) and v == x[k_]) or (isinstance(v, list) and v == list(x[k_]))
+                    or np.isclose(v, x[k_], rtol=1e-9, atol=0)), k_
     assert next(r for r in raw['GT'] if r['q'] == 20)['exact'] is True
     n = 0
     for r in raw['G']:
@@ -617,6 +618,7 @@ def test_first_wall_and_kappa_from_the_path():
     assert o['exact'] is False and o['t_diss'] is None and o['Kp'] > 0 and o['rms2'] > MWE.CLOSURE_EXACT
     assert abs(o['kappa_path'] ** 3 - 1 - o['Kp'] * (o['t4_path'] - o['t3_path']) / (o['K_third'] * (o['t3_path'] - g['tau_d']))) < 1e-9
     assert o['t3_path'] == MWE.t3_from_duals(K, f, R, g['flow'][-1]['theta'], g['flow'][-1]['w'])
+    assert (o['block'], o['j3'], o['j4']) == ([4, 12], 3, 11)            # referee round 83: the path's block and entrants by index
 
 
 def test_kappa_from_path_dissolution_and_an_exact_closure(monkeypatch):
@@ -643,6 +645,7 @@ def test_kappa_from_path_dissolution_and_an_exact_closure(monkeypatch):
         return MWE.kappa_from_path(K_(), np.zeros(3), None, th, w)
     o = run(-4e-4, 30.0)                                                # τ₃ = 20, τ₄ = 50, dissolution at 20 + 2e-3·10/4e-4 = 70
     assert (o['t3_path'], o['t4_path']) == (20.0, 50.0) and abs(o['t_diss'] - 70.0) < 1e-12 and o['exact'] is False
+    assert (o['block'], o['j3'], o['j4']) == ([0], 1, 2)                # referee round 83: the indices
     assert abs(o['kappa_path'] - 0.4 ** (1 / 3)) < 1e-12 and abs(o['rms2'] - 1e-3) < 1e-15
     o = run(-4e-4, 60.0)                                                # τ₄ = 80 after the dissolution: no κ
     assert o['t4_path'] == 80.0 and abs(o['t_diss'] - 70.0) < 1e-12 and o['kappa_path'] is None
@@ -650,6 +653,7 @@ def test_kappa_from_path_dissolution_and_an_exact_closure(monkeypatch):
     assert o['t_diss'] is None and abs(o['kappa_path'] - 1.15 ** (1 / 3)) < 1e-12
     o = run(1e-30, 30.0, r2=np.full(3, 1e-17))                          # an exact closure: its K′ and τ₄ are roundoff
     assert o['exact'] is True and o['Kp'] == 0.0 and o['t4_path'] is None and o['kappa_path'] == 1.0 and o['t_diss'] is None
+    assert (o['j3'], o['j4']) == (1, None)
 
 
 def test_part_gt_takes_the_status_zero_entries(monkeypatch):
@@ -698,7 +702,7 @@ def test_gl_job_and_its_constant(monkeypatch):
     monkeypatch.setattr(MWE, 'TAUS_GL', taus)
     dcs = (2e-3, 1e-3)
     Wt = [np.zeros(3)] + [np.array([3.0, -2.0, 1e-4]) for _ in taus]
-    Ct = [np.zeros((3, 2))] + [np.array([[-0.4 * d, 0.05], [0.6 * d, 0.07], [0.5, 0.06]]) for d in dcs]
+    Ct = [np.zeros((3, 2))] + [np.array([[-0.4 * d, 0.05], [0.6 * d, 0.07], [0.0, 0.06]]) for d in dcs]   # the idle kernel on the feature
     monkeypatch.setattr(MWE.RN, 'loop_nd', lambda *a, **k: (None, Wt, Ct, 77.0, None))
     g = MWE.gl_job((5, cs, ss, As))
     K, L = MW.BumpsCW(MWE.XS, MWE.S0), MWE.law()
@@ -706,7 +710,9 @@ def test_gl_job_and_its_constant(monkeypatch):
     x = g['rows'][1]
     assert g['Lam'] == 77.0 and g['Gm'] == L.G * L.m and g['mu0'] == 4 * L.G * L.c / L.A and g['q'] == 5
     assert abs(x['dc'] - 1e-3) < 1e-15 and (x['wa'], x['wb'], x['A']) == (3.0, -2.0, 1.0) and abs(x['sbar'] - 0.06) < 1e-15
-    assert np.isclose(x['E'], np.mean((f - K.synth(Ct[2], Wt[2])) ** 2) / 2) and np.isclose(x['E_formed'], np.mean((f - K.synth(Ct[2][:2], Wt[2][:2])) ** 2) / 2)
+    ef = np.mean((f - K.synth(Ct[2][:2], Wt[2][:2])) ** 2) / 2
+    assert np.isclose(x['E'], np.mean((f - K.synth(Ct[2], Wt[2])) ** 2) / 2, rtol=1e-12, atol=0)
+    assert abs(x['E_formed'] / ef - 1) < 1e-12 and abs(x['E'] / ef - 1) > 1e-6   # referee round 83 (GJe): the idle kernel left out
     Gm, mu0, Lam, a = 12.0, 0.1, 50.0, 3e6
     wa, wb = 3.0, -2.0
     R = 48 * a * Gm * 1.0 / (wa ** 2 + wb ** 2) * Lam
@@ -735,22 +741,80 @@ def test_a2_one_kernel_from_large_coefficients(monkeypatch):
         e = r['rows'][-1]
         assert abs(e['w'] - 1) < 1e-8 and abs(e['sig'] - 1) < 1e-8 and e['E'] < 1e-20 and r['status'] == 0
     assert r3['E0'] == 4.0 and r10['E0'] == 81.0
-    sp3, sp10 = MWE.a2_spike(r3['rows']), MWE.a2_spike(r10['rows'])
+    e2 = MWE.a2_plateau(1.0)[0]
+    sp3, sp10 = MWE.a2_spike(r3['rows'], e2), MWE.a2_spike(r10['rows'], e2)
     assert sp3[0] == 1.0 and np.isclose(sp3[1], 10 ** 5.5, rtol=1e-12) and np.isclose(sp3[3], 1e6, rtol=1e-12)
     assert sp10[0] == 1.0 and np.isclose(sp10[1], 1e10, rtol=1e-12) and np.isclose(sp10[3], 10 ** 10.5, rtol=1e-12)
-    assert MWE.a2_spike(rq['rows']) is None
+    assert MWE.a2_spike(rq['rows'], MWE.a2_plateau(0.25)[0]) is None
     assert abs(sp10[2][0] - 0.906) < 1e-3 and abs(sp10[2][1] - sp3[2][1]) < 1e-4    # the plateau's E is J_N's limit, for every w
+    assert max(abs(sp3[2][0] - e2), abs(sp3[2][1] - e2)) < 1e-4 and max(abs(sp10[2][0] - e2), abs(sp10[2][1] - e2)) < 1e-8   # E₂
+    d3 = MWE.a2_job((0.25, 3.0))                                        # referee round 83 (AS6): 3A at 0.25 dips below 0.24σ*, no plateau
+    assert min(x['sig'] for x in d3['rows']) < 0.24 and MWE.a2_spike(d3['rows'], MWE.a2_plateau(0.25)[0]) is None
     md = '\n'.join(MWE.a2_lines([r3, r10]))
     e3 = r3['rows'][-1]
     assert (f"| 1 | 3 | 4 | {e3['w']:.4f}, {e3['sig']:.4g}, {e3['dc']:+.1e}, {e3['E']:.2e} (s = 1e+13) | "
             f"{min(x['sig'] for x in r3['rows']):.3g} | 1e+00 … 3e+05, {sp3[2][0]:.3f}–{sp3[2][1]:.3f} | 1e+06 | 0 |") in md
     assert MWE.a2_lines(None) == [] and MWE.a2_lines([]) == []
+    pl = MWE.a2_plateau(1.0)
+    assert f"E₂ {MWE.a2_plateau(0.25)[0]:.6f}, {pl[0]:.6f}, {MWE.a2_plateau(4.0)[0]:.6f}, E₁" in md
     import scipy.integrate
     seen = {}
     real = scipy.integrate.solve_ivp
     monkeypatch.setattr(scipy.integrate, 'solve_ivp', lambda *a, **k: seen.update(k) or real(*a, **k))
     MWE.a2_job((1.0, 2.5))
     assert (seen['rtol'], seen['atol'], seen['method']) == (1e-10, 1e-14, 'LSODA')
+
+
+def test_a2_plateau_is_the_two_sample_limit():
+    """Referee round 83 (D3cd-4): E₂ is the two samples nearest c* interpolated — J_N minimised over (c, w) at a width an eighth of the
+    samples' spacing equals it —, E₁ the one-sample limit at c = c* (a sample); both against direct sums."""
+    from scipy.optimize import minimize_scalar
+    for ratio in MWE.RATIOS_A2:
+        f = MWE.feature_sum([MWE.C_A], [ratio * MWE.S0], [MWE.A_A])
+        q = f ** 2 / np.sum(f ** 2)
+        j = int(np.argmin(np.abs(MWE.XS - MWE.C_A)))
+        e2, e1 = MWE.a2_plateau(ratio)
+        assert abs(MWE.XS[j] - MWE.C_A) < 1e-12 and abs(e1 - (1 - q[j])) < 1e-14 and abs(e2 - (1 - q[j] - q[j + 1])) < 1e-14
+        h = MWE.XS[1] - MWE.XS[0]
+        J = lambda c: 1 - np.dot(f, np.exp(-(MWE.XS - c) ** 2 / (2 * (h / 8) ** 2))) ** 2 / (
+            np.sum(np.exp(-(MWE.XS - c) ** 2 / (h / 8) ** 2)) * np.sum(f ** 2))
+        m = minimize_scalar(J, bounds=(MWE.XS[j], MWE.XS[j + 1]), method='bounded', options=dict(xatol=1e-12))
+        assert abs(m.fun - e2) < 1e-9 and J(MWE.C_A) > e1 - 1e-12
+
+
+def test_a2e_the_early_collapse(monkeypatch):
+    """Referee round 83 (D3cd-4): A2E — over A2's span its outputs at s = 1 and 10 are `a2_job`'s (the terminal event past s = 10 leaves
+    the steps alone); the span, the event and the table's first plateau output."""
+    r = MWE.a2e_job(1e13)
+    a = MWE.a2_job((0.25, 5.0))
+    rs = {x['s']: x for x in r['rows']}
+    assert r['status'] == 1 and len(r['rows']) == len(MWE.S_A2E) and r['span'] == 1e13
+    for k_ in (0, 2):                                                   # S_A2[0] = 1, S_A2[2] = 10
+        assert {k: v for k, v in rs[MWE.S_A2[k_]].items() if k != 'jcc'} == a['rows'][k_]
+    r10 = MWE.a2e_job(10.0)
+    assert r10['status'] == 0 and len(r10['rows']) == len(MWE.S_A2E)
+    r3 = {x['s']: x for x in r10['rows']}                               # round 83's AE3: ∂ċ/∂c, not ∂σ̇/∂σ — the saddle's sign
+    assert r3[1e-3]['jcc'] > 1e4 and r3[1e-4]['jcc'] < 0 and abs(r3[1e-3]['dc']) < 1e-12
+    for r_ in (r, r10):                                                 # round 83's AE4, AE5, AE7: LSODA's own steps
+        st = r_['steps']
+        assert st and all(MWE.S_A2E_STEPS[0] < x[0] for x in st) and st[-1][0] >= MWE.S_A2E_STEPS[1] > st[-2][0]
+        assert {x[2] for x in st} <= {1, 2} and all(abs(b[0] - a[0] - b[1]) < 1e-15 for a, b in zip(st[:-1], st[1:]))
+    on = lambda r_: {x[2] for x in r_['steps'] if abs(x[3]) < 1e-6}    # on the symmetric state BDF on the span (0, 10) only
+    assert on(r10) == {1, 2} and on(r) == {1}
+    e2 = MWE.a2_plateau(0.25)[0]
+    md = '\n'.join(MWE.a2_lines([a], [r, r10]))
+    first = next(x['s'] for x in r['rows'] if abs(x['E'] - e2) < MWE.PLATEAU_A2)
+    x1 = rs[1.0]
+    assert f"| 1e+13 | " in md and f"{x1['dc']:+.1e}, {x1['sig']:.4f}, {x1['E']:.3f} |" in md and f" | {first:.2g} |" in md
+    near = dict(r, rows=[dict(x, E=e2 + 0.05) if x['s'] < first else x for x in r['rows']])   # round 83's AL6: near E₂ is not on it
+    assert f" | {first:.2g} |" in '\n'.join(MWE.a2_lines([a], [near]))
+    import scipy.integrate
+    seen = {}
+    real = scipy.integrate.solve_ivp
+    monkeypatch.setattr(scipy.integrate, 'solve_ivp', lambda *a_, **k: seen.update(k, span=a_[1]) or real(*a_, **k))
+    MWE.a2e_job(10.0)
+    assert (seen['rtol'], seen['atol'], seen['method'], seen['span']) == (1e-10, 1e-14, 'LSODA', (0.0, 10.0))
+    assert seen['events'](10.0, None) < 0 < seen['events'](11.0, None) and seen['events'].terminal and tuple(seen['t_eval']) == MWE.S_A2E
 
 
 def test_loop_row_counts_visible_kernels_and_hll_job(monkeypatch):
@@ -761,10 +825,15 @@ def test_loop_row_counts_visible_kernels_and_hll_job(monkeypatch):
     monkeypatch.setattr(MWE, 'TAUS_HLL', (10.0,))
     Wt = [np.zeros(3), np.array([1.0, -0.005, 0.02])]
     Ct = [np.zeros((3, 2)), np.array([[-0.08, 0.06], [0.0, 0.06], [0.08, 0.06]])]
-    got = []
-    monkeypatch.setattr(MWE.RN, 'loop_nd', lambda *a, **k: got.append(a[4]) or (None, Wt, Ct, 1.0, None))
+    got, kw = [], []
+    monkeypatch.setattr(MWE.RN, 'loop_nd', lambda *a, **k: got.append(a[4]) or kw.append((a[5], k)) or (None, Wt, Ct, 1.0, None))
     r = MWE.hll_job(('σ* 0.06, equal', 1e-6))
     assert r['loops'][0]['w'] == [1.0, 0.02] and r['loops'][0]['wmax'] == 1.0 and r['eps'] == 1e-6 and got == [1e-6]   # HLLb
+    r8 = MWE.hll_job(('σ* 0.06, A₂ 0.99', 1e-8))                        # referee round 83 (HJ1–HJ3): the cell's mass, times, tolerances
+    assert got[-1] == 1e-8 and r8['eps'] == 1e-8 and list(kw[-1][0]) == [0.0, 10.0] and kw[-1][1] == dict(rtol=1e-9, atol=1e-12)
+    md = MWE.report(HLL=[dict(r8, loops=[dict(x, **{k_: None for k_ in ('main_err', 'n_rest')}) for x in r8['loops']])])
+    sp8 = MWE.fit_split([[-0.08, 0.06], [0.08, 0.06]], [1.0, 0.02], (-0.08, 0.08), (0.06, 0.06), (1.0, 0.99))
+    assert MWE.split_cells(sp8) + ' |' in md and "The others' sum on the samples (referee round 83)" in md   # the split from θ, w
     sp = MWE.fit_split([[-0.08, 0.06], [0.08, 0.06]], [1.0, 0.02], (-0.08, 0.08), (0.06, 0.06), (1.0, 1.0))
     assert {k_: r['loops'][0][k_] for k_ in sp} == sp                   # referee round 80: hll_job's split is `fit_split`'s
     monkeypatch.setattr(MWE, 'EPS_HL', (1e-7,))                         # HLa: hl_job's formed set at 1%, not 0.1%
@@ -782,13 +851,25 @@ def test_fit_split_tells_a_null_cluster_from_a_cancellation():
     K = MW.BumpsCW(MWE.XS, MWE.S0)
     foot = np.abs(K.synth(np.array([[0.0, 1.5], [1.9, 0.3]]), np.array([0.4, -0.4]))).max() / np.abs(MWE.feature_sum(cs, ss, As)).max()
     assert null['main_err'] == [0.0, 0.0] and null['n_rest'] == 2 and null['rest_w'] == 0.8 and abs(null['rest_foot'] - foot) < 1e-15
-    assert null['rest_sig'] == [0.3, 1.5] and null['rest_c'] == 1.9
+    assert null['rest_sig'] == [0.3, 1.5] and null['rest_c'] == 1.9 and null['main_dw'] == [0.0, 0.0] and null['rest_sw'] == 0.0
     canc = MWE.fit_split([[-0.08, 0.06], [0.0, 0.05], [0.0, 0.04]], [1.0, 3.0, -2.4], cs, ss, As)
     assert canc['main_err'] == [0.0, 2.0] and canc['n_rest'] == 1 and canc['rest_foot'] > 1   # feature 2's: the +3 kernel at 0
+    assert canc['main_dw'] == [0.0, 2.0] and canc['rest_sw'] == -2.4    # referee round 83: inflated, the other's of the other sign
+    th = [[-0.042, 0.0438], [-0.123, 0.06], [0.08, 0.06]]               # referee round 83 (D3cd-2a): HL's row — nearer in c, worse
+    near = MWE.fit_split(th, [0.0706, 1.58, 1.0], cs, ss, As)
+    assert abs(near['main_err'][0] - 0.043 / 0.06) < 1e-12 and abs(near['main_dw'][0] - 0.58) < 1e-12 and near['rest_w'] == 0.0706
+    tie = MWE.fit_split([[-0.08, 0.06], [0.08, 0.06], [0.08, 0.06]], [2.0, 2.0, 1.0], cs, ss, As)   # the largest errors tie: the next
+    assert tie['main_err'] == [1.0, 0.0] and tie['rest_sw'] == 2.0
+    spl = MWE.fit_split([[-0.08, 0.06], [-0.08, 0.06], [0.08, 0.06]], [0.6, 0.4, 1.0], cs, ss, As)   # a split: deficient, the rest
+    assert abs(spl['main_dw'][0] + 0.4) < 1e-12 and spl['rest_sw'] == 0.4
+    mm = MWE.fit_split([[0.0, 0.06], [0.0, 0.06]], [1.1, 0.2], (0.0, 0.0), (0.06, 0.06), (1.0, 2.0))   # FT1: the largest error first —
+    assert np.allclose(mm['main_err'], [0.8, 0.45], rtol=0, atol=1e-12)  # (0.8, 0.45) over (0.1, 0.9), which the smallest would take
+    assert MWE.fit_split([[-0.08, -0.06], [0.08, 0.06]], [1.0, 1.0], cs, ss, As)['main_err'] == [0.0, 0.0]   # FT7: |σ|
     assert MWE.fit_split([[0.0, 0.06]], [-1.0], (0.0,), (0.06,), (1.0,))['main_err'] == [None]
     once = MWE.fit_split([[0.0, 0.06], [0.5, 0.06]], [1.0, 1.0], cs, ss, As)     # each kernel main to one feature only (FS1)
     assert once['main_err'][0] == abs(0.0 + 0.08) / 0.06 and abs(once['main_err'][1] - abs(0.5 - 0.08) / 0.06) < 1e-12
-    assert MWE.split_cells(null) == f"0.0e+00, 0.0e+00 | 2, 0.800, {foot:.1e}, 0.300–1.500, 1.90"
+    assert MWE.split_cells(null) == f"0.0e+00 (+0), 0.0e+00 (+0) | 2, +0.000 (0.800), {foot:.1e}, 0.300–1.500, 1.90"
+    assert MWE.split_cells(canc).startswith("0.0e+00 (+0), 2.0e+00 (+2) | 1, -2.400 (2.400), ")
     r = dict(moving=dict(theta=[[-0.08, 0.06], [0.08, 0.06], [0.5, 0.06]], w=[1.0, 1.0, 0.005]), cs=cs, ss=ss, As=As)
     assert MWE.end_split(r)['n_rest'] == 0                              # the unformed kernel (0.5%) left out
 
@@ -819,19 +900,55 @@ def test_g_fine_lines_and_gl_lines_on_synthetic_results():
           dict(q=5, t3_pred=19.95, K_third=K3, Kp=0.0, t3_path=19.95, t4_path=None, kappa_path=1.0, t_diss=None, rms2=4e-17, exact=True)]
     md = '\n'.join(MWE.g_fine_lines(G, GT))
     kp_ = 0.97 / ((19.95 - t_d) / (19.9 - t_d)) ** (1 / 3)
+    lo = 0.97 / ((20.0 - t_d) / (19.9 - t_d)) ** (1 / 3)                 # referee round 83: the loop's own crossing's bracket
     assert f"| 4 | 1e-10 | 10 | 20 | 30 | 1.0000 | 1.0000 | 3, 2.5, -0.400, 1.0000 | 31, 0.970, {kp_:.3f}, 0.100 |" in md
     assert f"| 4 | 1e-06 | 10 | 20 | 30 | {(1.0 * Lam / lam6):.4f} |" in md
     assert f"| 3, 2.5, -0.400, -3.0000 | 31, 0.970, {kp_:.3f}†, 0.100 |" in md
     vl = (3 * mu0 * Lam * (K3 * (19.95 - t_d) + Kp * 10.0)) ** (1 / 3)
     vv = (0.97 * v3 + 0.5 - (-0.97 * v3 + 0.5)) / 2
-    assert (f"| 4 | {K3:.5e} ({K_:.5e}) | 19.95 (20) | {Kp / K3:+.4f} (1.0e-03) | 29.95 (30) | {td_:.4g} | 0.9600 ({kp_:.4f}) | "
+    assert (f"| 4 | {K3:.5e} ({K_:.5e}) | 19.95 (20) | {Kp / K3:+.4f} (1.0e-03) | 29.95 (30) | {td_:.5g} | 0.9600 ({kp_:.4f}; "
+            f"[{lo:.4f}, 0.9700]) | "
             f"{vl:.4g} ({0.97 * v3:.4g}) | {vv / (0.97 * v3) - 1:+.1e} |") in md
     vl5 = (3 * mu0 * Lam * K3 * (19.95 - t_d)) ** (1 / 3)
-    assert f"| 5 | {K3:.5e} ({K_:.5e}) | 19.95 (20) | 0, exact (4.0e-17) | — (exact) (30) | — | 1.0000 ({kp_:.4f}) | {vl5:.4g} (" in md
+    assert f"| 5 | {K3:.5e} ({K_:.5e}) | 19.95 (20) | 0, exact (4.0e-17) | — (exact) (30) | — | 1.0000 ({kp_:.4f}; [{lo:.4f}, 0.9700]) | {vl5:.4g} (" in md
     assert f"κ′ against the mass (ε = 1e-06, 1e-10; † another sequence): 4: {kp_:.3f}†, {kp_:.3f}; 5: {kp_:.3f}." in md
     off = ((19.95 - t_d) / (19.9 - t_d)) ** (1 / 3) - 1
     assert f"that κ′ removes, at ε = 1e-10: 4: {off:+.2%}, 5: {off:+.2%}." in md
     assert "agree in 11 of 16 (10 of 12 at ε ≤ 10⁻⁷; past τ₄ 6 of 9)." in md
+    assert "κ′ − κ (the path's)" not in md and "by index (SQ" not in md
+    assert (f"own crossing's bracket at the smallest mass (referee round 83): inside on none; outside on 4 (the bracket {lo / 0.96 - 1:+.2%} … "
+            f"{0.97 / 0.96 - 1:+.2%} off it), 5 (the bracket {lo - 1:+.2%} … {0.97 - 1:+.2%} off it).") in md
+    # referee round 83: SQ's direct test — 1e-10 on the path's sequence, 1e-6 not (kernel 5 at τ₃) —, † on '—', the rate
+    ev = lambda j3: [(10.0, [0, 1], []), (20.0, [j3], []), (30.0, [3], [])]
+    SQ = [dict(q=4, seq={1e-6: ev(5), 1e-10: ev(2)})]
+    GT[0].update(block=[0, 1], j3=2, j4=3)
+    G2 = [dict(G[0], fine={1e-6: dict(ph, agree=(1, 4), dip2=dip2x, v_land=None), 1e-10: ph}), G[1]]
+    md = '\n'.join(MWE.g_fine_lines(G2, GT, SQ))
+    assert "† another sequence — the loop's formed kernels at its τ₃ or τ₄ not the path's, by index (SQ, referee round 83) —" in md
+    assert f"κ′ against the mass (ε = 1e-06, 1e-10; † another sequence): 4: —†, {kp_:.3f}; 5: {kp_:.3f}." in md
+    assert ("the path's 4: {0, 1} + 2 + 3. The loop follows it at 1 of 2 cells (SQ's τ₃ and τ₄ are G's at 2 of 2); elsewhere: 4 at "
+            "1e-06: τ₃ 20 {0, 1, 5}, τ₄ 30 {0, 1, 3, 5}. The intermediate slope's proxy (beyond 1 ± 0.5 times the path's law, round 80) "
+            "marks the same cells.") in md
+    GTn = [dict(GT[0], block=None), GT[1]]                              # GF9: without GT's block SQ is not used — the proxy's †
+    md = '\n'.join(MWE.g_fine_lines(G2, GTn, SQ))
+    assert f"κ′ against the mass (ε = 1e-06, 1e-10; † another sequence): 4: —†, {kp_:.3f}; 5:" in md and "by index (SQ" not in md
+    SQ6 = [dict(q=4, seq={1e-6: ev(5), 1e-10: [(10.0, [0, 1], []), (20.0, [2], []), (35.0, [3], [])]})]   # GF6: τ₄ at 35, not G's 30
+    assert "(SQ's τ₃ and τ₄ are G's at 1 of 2)" in '\n'.join(MWE.g_fine_lines(G2, GT, SQ6))
+    SQ[0]['seq'][1e-6] = ev(2)                                          # on the path's sequence by index, the proxy's † differs
+    md = '\n'.join(MWE.g_fine_lines(G2, GT, SQ))
+    assert "follows it at 2 of 2 cells" in md and "differs at 4 at 1e-06." in md and "4: —, " in md
+    G3 = [dict(G[0], q=6, fine={e: dict(ph, v_land=0.97 * v3 * k_) for e, k_ in ((1e-8, 1.03), (1e-9, 1.01), (1e-10, 1.002))},
+               loops=[dict(loops[0], eps=e) for e in (1e-8, 1e-9, 1e-10)])]
+    GT3 = [dict(GT[0], q=6, kappa_path=kp_)]
+    md = '\n'.join(MWE.g_fine_lines(G3, GT3))
+    d8, d9, d10 = (kp_ * k_ - kp_ for k_ in (1.03, 1.01, 1.002))
+    assert (f"6: {d8:+.4f}, {d9:+.4f}, {d10:+.4f} (×{d8 / d9:.2f}–{d9 / d10:.2f}, as ε^{{{np.log10(d8 / d9):.2f}–"
+            f"{np.log10(d9 / d10):.2f}}})." in md and d10 >= 1e-3)
+    G4 = [dict(G3[0], fine={e: G3[0]['fine'][e] for e in (1e-8, 1e-10)})]   # GF4: two decades apart, no ratio
+    assert f"6: {d8:+.4f}, {d10:+.4f}." in '\n'.join(MWE.g_fine_lines(G4, GT3))
+    G3[0]['fine'][1e-10]['v_land'] = 0.97 * v3 * 1.0005                 # |κ′ − κ| below 10⁻³: no ratio with it
+    md = '\n'.join(MWE.g_fine_lines(G3, GT3))
+    assert f"(×{d8 / d9:.2f}, as ε^{{{np.log10(d8 / d9):.2f}}})." in md
     rows = [dict(tau=t, d=1e-3 * t ** (-1 / 6), dW=-0.01 * t ** (-1 / 3), rms=1e-6 * t ** (-2 / 3), E=1e-12, E_formed=0.9e-12,
                  dc=1e-3 * t ** (-1 / 6), wa=3.0, wb=-2.0, sbar=0.06, A=1.0) for t in (400.0, 800.0, 1600.0)]
     md = '\n'.join(MWE.gl_lines([dict(q=9, rows=rows, Lam=10.0, Gm=12.0, mu0=0.1)]))
@@ -852,6 +969,43 @@ def test_g_fine_lines_and_gl_lines_on_synthetic_results():
     ks = [(x - 8) / (0.5 * (pr(a['dc']) + pr(b['dc']))) for x, a, b in zip(sl, rows[:-1], rows[1:])]
     assert all(abs(k_ / k8 - 1) < 0.25 for k_ in ks)                   # the local slope sees E's next order, kp/(1 + kp)
     cons = [MWE.gl_constant(a, b, 12.0, 0.1, 10.0) for a, b in zip(rows[:-1], rows[1:])]
-    rem = [c[2] / (x / 8) - 1 for c, x in zip(cons, sl)]
+    st = [np.log(b['E'] / a['E']) / np.log(b['dc'] / a['dc']) for a, b in zip(rows[:-1], rows[1:])]   # referee round 83: all kernels'
+    kt = [(x - 8) / (0.5 * (pr(a['dc']) + pr(b['dc']))) for x, a, b in zip(st, rows[:-1], rows[1:])]
+    rem = [c[2] / (x / 8) - 1 for c, x in zip(cons, st)]
     assert f"(p their mean) {min(ks):.3f}–{max(ks):.3f}, median {np.median(ks):.3f}" in md and f"p²/36, at most {pr(3e-3) ** 2 / 36:.5f}." in md
+    assert f"(all kernels' energy: {min(kt):.3f}–{max(kt):.3f}, the idle kernels' floor in it)" in md and min(kt) != min(ks)
     assert f"the ratio with C is 1 {min(rem):+.1e} … {max(rem):+.1e}" in md
+
+
+def test_sq_job_and_sq_check(monkeypatch):
+    """Referee round 83 (D3cd-6): `sq_job` reruns G's loop at each mass on G's outputs and records, where the formed set (above 1% of the
+    smallest amplitude) changes, the kernels formed and unformed; `sq_check` finds the loop's τ₃ and τ₄ as `fine_phases` does and
+    compares the formed sets there with the path's block and entrants (an exact closure: no τ₄)."""
+    monkeypatch.setattr(MWE, 'TAUS_G', (10.0, 20.0))
+    monkeypatch.setattr(MWE, 'TAUS_FINE', (10.0, 15.0))
+    monkeypatch.setattr(MWE, 'EPS_G', (1e-6,))
+    monkeypatch.setattr(MWE, 'EPS_GX', (1e-12,))
+    Wt = [np.zeros(4), np.array([1.0, 0.0, 0.0, 0.0]), np.array([1.0, -0.5, 0.005, 0.0]), np.array([0.0, -0.5, 0.02, 0.0])]
+    got = []
+    monkeypatch.setattr(MWE.RN, 'loop_nd', lambda *a, **k: got.append((a[4], list(a[5]), k)) or (None, Wt, None, None, None))
+    r = MWE.sq_job((7, [0.0], [0.06], [1.0]))
+    ev = [(10.0, [0], []), (15.0, [1], []), (20.0, [2], [0])]           # 0.005 is not formed, 0.02 is
+    assert r == dict(q=7, seq={1e-6: ev, 1e-12: ev})
+    assert [g[0] for g in got] == [1e-6, 1e-12] and got[0][1] == [0.0, 10.0, 15.0, 20.0] and got[0][2] == dict(rtol=1e-9, atol=1e-12)
+    g = dict(block=[0, 1], j3=2, j4=3, exact=False)
+    path = [(10.0, [0, 1], []), (15.0, [2], []), (20.0, [3], [])]
+    assert MWE.sq_check(path, 12.0, 2, g) == (15.0, 20.0, [0, 1, 2], [0, 1, 2, 3], True)
+    assert MWE.sq_check(path, 12.0, 2, dict(g, j4=5))[4] is False        # another τ₄ entrant
+    early = [(10.0, [0, 1, 5], []), (20.0, [2], [])]                    # a third kernel before τ_d: τ₃ the first output past it
+    assert MWE.sq_check(early, 12.0, 2, g) == (15.0, 20.0, [0, 1, 5], [0, 1, 2, 5], False)
+    ex = dict(block=[0, 1], j3=2, j4=None, exact=True)
+    assert MWE.sq_check(path[:2], 12.0, 2, ex)[4] is True and MWE.sq_check(path, 12.0, 2, ex)[4] is False
+    assert MWE.sq_check(path[:2], 12.0, 2, dict(ex, exact=False))[4] is False
+    assert MWE.sq_check(path, 12.0, 2, dict(g, block=None))[4] is False
+    assert MWE.sq_check([(10.0, [0, 1], [])], 12.0, 2, g) == (None, None, None, None, False)
+    gone = [(10.0, [0, 1, 5], []), (12.5, [], [5]), (15.0, [2], []), (20.0, [3], [])]   # SK6: kernel 5 unformed before τ₃
+    assert MWE.sq_check(gone, 12.0, 2, g) == (15.0, 20.0, [0, 1, 2], [0, 1, 2, 3], True)
+    two = [(10.0, [0, 1], []), (15.0, [2, 3], []), (17.0, [], [3]), (20.0, [3], [])]   # SK2: two at τ₃, one leaves and comes back
+    assert MWE.sq_check(two, 12.0, 2, g)[:2] == (15.0, None)
+    assert MWE.sq_check(path, 15.0, 2, g)[:2] == (20.0, None)             # SK1: at an output equal to τ_d, τ₃ is the next one's
+    assert [a[0] for a in MWE.sq_args([dict(q=q, status=st, cs=[0.0], ss=[0.1], As=[1.0]) for q, st in ((1, 0), (2, 1), (3, 0))])] == [1, 3]

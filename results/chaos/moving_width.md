@@ -18,11 +18,11 @@ A = 0.8 at c* = 0.03, the width σ* = ratio·σ₀; moving widths: the kernels, 
 | 3 | 1 | yes | 3.5e-17, 0.0e+00, 5.6e-16 | 2.4e-16 | 4 | 7.17e-02 |
 | 4 | 1 | yes | 1.7e-17, 0.0e+00, 5.6e-16 | 2.8e-16 | 4 | 1.35e-01 |
 
-### A2. One kernel from a large coefficient (referee rounds 74, 80)
+### A2. One kernel from a large coefficient (referee rounds 74, 80, 83)
 
-A's feature at σ*/σ₀ = 0.25, 1, 4: one kernel at (c*, σ*) with w = 2.5, 3, 5, 10, 20·A — E(start) (1 − w/A)²·½⟨f*²⟩, (i)'s condition E(start) < ½‖f*‖² holding for w < 2A only —, its block's flow on the critical curve to s = 1e+13: at the end w/A, σ/σ*, (c − c*)/σ* and E over ½⟨f*²⟩; the smallest σ/σ* on the way (at the outputs); the spike — the outputs with σ/σ* below 0.2 —, its E over ½⟨f*²⟩, and the first output after it with σ/σ* back above 0.5 (the escape):
+A's feature at σ*/σ₀ = 0.25, 1, 4: one kernel at (c*, σ*) with w = 2.5, 3, 5, 10, 20·A — E(start) (1 − w/A)²·½⟨f*²⟩, (i)'s condition E(start) < ½‖f*‖² holding for w < 2A only —, its block's flow on the critical curve to s = 1e+13: at the end w/A, σ/σ*, (c − c*)/σ* and E over ½⟨f*²⟩; the smallest σ/σ* on the way (at the outputs); the plateau — the outputs with E/½⟨f*²⟩ within 0.001 of E₂, the kernel interpolating the two samples nearest c* (below) —, its E over ½⟨f*²⟩, and the first output after it with σ/σ* back above 0.5 (the escape):
 
-| σ*/σ₀ | w(start)/A | E(start)/½⟨f*²⟩ | end: w/A, σ/σ*, (c − c*)/σ*, E/½⟨f*²⟩ | smallest σ/σ* | on the spike: s, E/½⟨f*²⟩ | escaped at s | status |
+| σ*/σ₀ | w(start)/A | E(start)/½⟨f*²⟩ | end: w/A, σ/σ*, (c − c*)/σ*, E/½⟨f*²⟩ | smallest σ/σ* | on the plateau: s, E/½⟨f*²⟩ | escaped at s | status |
 |---|---|---|---|---|---|---|---|
 | 0.25 | 2.5 | 2.25 | 1.0000, 1, +0.0e+00, 2.23e-32 (s = 1e+13) | 0.304 | — | — | 0 |
 | 0.25 | 3 | 4 | 1.0000, 1, +1.2e-16, 2.51e-32 (s = 1e+13) | 0.235 | — | — | 0 |
@@ -39,6 +39,20 @@ A's feature at σ*/σ₀ = 0.25, 1, 4: one kernel at (c*, σ*) with w = 2.5, 3, 
 | 4 | 5 | 16 | 1.0000, 1, +1.1e-16, 2.63e-32 (s = 1e+13) | 0.00581 | 1e+00 … 3e+07, 0.976–0.976 | 1e+08 | 0 |
 | 4 | 10 | 81 | 1.0000, 1, +4.3e-17, 2.39e-32 (s = 1e+13) | 0.00485 | 1e+00 … 1e+10, 0.976–0.976 | 3e+10 | 0 |
 | 4 | 20 | 361 | 17.4894, 0.004354, +1.0e-02, 9.76e-01 (s = 1e+13) | 0.00426 | 1e+00 … 1e+13, 0.976–0.976 | not by the end | 0 |
+
+The plateau (referee round 83): a kernel narrower than the samples' spacing fits at most two neighbouring samples, so lim_{σ→0} min_c J_N interpolates the best pair, E₂ = 1 − max_k (f*(x_k)² + f*(x_{k+1})²)/Σf*² — here the two samples nearest c* —, and J_N's σ → 0 limit at a fixed c, on the best sample, is E₁ = 1 − max_k f*(x_k)²/Σf*²; over ½⟨f*²⟩ at σ*/σ₀ = 0.25, 1, 4: E₂ 0.643650, 0.906294, 0.976497, E₁ 0.8119, 0.9530, 0.9882.
+
+The early collapse (referee round 83): from 5A at σ*/σ₀ = 0.25 — c* = 0.03 is a sample — the block's flow (`a2_job`'s, LSODA) over the span (0, S), S = 10¹³ being A2's (a terminal event past s = 10 leaves its steps alone): (c − c*)/σ*, σ/σ* and E/½⟨f*²⟩ at s ≤ 10, and the first output on the plateau (E within 0.001 of E₂):
+
+| S | s = 1e-04 | s = 1e-03 | s = 1e-02 | s = 1e-01 | s = 1e+00 | s = 1e+01 | on the plateau from s |
+|---|---|---|---|---|---|---|---|
+| 1e+01 | +1.0e-15, 0.8626, 13.327 | +6.9e-16, 0.1846, 3.480 | -1.2e-16, 0.1840, 3.480 | +9.3e-16, 0.1840, 3.480 | +9.3e-16, 0.1841, 3.473 | +9.3e-16, 0.1846, 3.406 | not by s = 10 |
+| 1e+13 | +0.0e+00, 0.8626, 13.327 | -1.0e-14, 0.1846, 3.480 | -1.7e-01, 0.0921, 0.644 | -1.7e-01, 0.0921, 0.644 | -1.7e-01, 0.0921, 0.644 | -1.7e-01, 0.0921, 0.644 | 0.0056 |
+
+On the symmetric state (\|c − c*\| below 10⁻¹²σ*) the flow's ∂ċ/∂c is -3.833e+02 … -2.789e+02 while the width falls (σ/σ* 0.3440 … 0.8626, 8 outputs: stable in c) and +1.050e+04 … +1.089e+04 at σ/σ* 0.1840 … 0.1846 (17 outputs): a saddle in c, an offset growing ×e per 9.2e-05 … 9.5e-05 of s, left once roundoff has seeded the offset.
+LSODA's steps on the symmetric state (s in (0.001, 0.01], the offset below 10⁻⁶σ*; λ = 1.089e+04), S = 1e+01: Adams at hλ 0.14–0.42, BDF at hλ 2.4–50 from s = 0.00264; the offset's largest 2.2e-11σ*, at the last such step +9.3e-16σ*; over the Adams steps above 10⁻¹²σ* it grows at 1.101e+04 per unit s.
+LSODA's steps on the symmetric state (s in (0.001, 0.01], the offset below 10⁻⁶σ*; λ = 1.089e+04), S = 1e+13: Adams at hλ 0.14–0.55; the offset's largest 8.9e-07σ*, at the last such step -8.9e-07σ*; over the Adams steps above 10⁻¹²σ* it grows at 1.092e+04 per unit s.
+(An implicit step at hλ > 2 damps the unstable offset — backward Euler's factor 1/(1 − hλ) has modulus below 1 there —; on the Adams steps the offset grows at λ, the flow's own instability.)
 
 ## B. The one-kernel reduced energy (the continuum)
 
@@ -313,7 +327,7 @@ The landed v against the mass: v at τ = 400 and its ratio per decade of ε (10^
 Over the six targets: landed at τ = 6400 in 0 of 6 at ε = 1e-05, 3 of 6 at ε = 1e-06, 6 of 6 at ε = 1e-07, 6 of 6 at ε = 1e-08, 6 of 6 at ε = 1e-09, 6 of 6 at ε = 1e-10; at ε = 1e-10 the dipole phase's slope over the law 0.997–1.112 (the cells' medians, 5 cells with a phase), the landed v over the law's at the grid's τ₃ 0.71–1.09 (on the fine grid κ, below), v's ratio over the last decade 1.4078–1.5002; on the 25 cells landed at both 1600 and 6400, 6 not yet collapsing by τ = 6400 (|exponent| < 10⁻³: landed at a small p, the same law later — GL) (9 at 1e-06, 9 at 1e-07, 9 at 1e-08, 9 at 1e-09, 9 at 1e-10, 27 at 1e-10), the others collapsing with the exponents -0.235 … -0.173 (distance) and -0.906 … -0.689 (residual).
 
 
-The phases on a fine grid (τ = 10 … 140 by 0.1, with G's times; referee rounds 68, 74): τ₃ the first formation past the block's entry τ_d, τ₄ the next; over (τ_d, τ₃) the slopes of v³ over 3μ₀KΛ(ε) (median); v at the last time before τ₃ over the law's (3μ₀KΛ(ε)(t − τ_d))^{1/3} at that time t; at (τ₃ + τ₄)/2 the formed kernels, the dipole pair's offset from the nearest feature (σ*) and (W − A)/|A|, and over [τ₃, τ₄) the slopes of v³ over 3μ₀K′Λ(ε), K′ the three-kernel block's from the path (below; median); the first landing past τ₃ (centre of mass and W within 0.01): its τ, κ = v_land/v(τ₃⁻) with v(τ₃⁻) the loop's v at the last time before τ₃, κ′ with that v carried by the law to the path's τ₃ (`kappa_loop`; referee round 80: the grid's offset removed, below), and p = |w_a − w_b||Δθ|/(|W|σ̄); † another sequence — the intermediate slope beyond 1 ± 0.5 times the path's law —, its κ not the path's:
+The phases on a fine grid (τ = 10 … 140 by 0.1, with G's times; referee rounds 68, 74): τ₃ the first formation past the block's entry τ_d, τ₄ the next; over (τ_d, τ₃) the slopes of v³ over 3μ₀KΛ(ε) (median); v at the last time before τ₃ over the law's (3μ₀KΛ(ε)(t − τ_d))^{1/3} at that time t; at (τ₃ + τ₄)/2 the formed kernels, the dipole pair's offset from the nearest feature (σ*) and (W − A)/|A|, and over [τ₃, τ₄) the slopes of v³ over 3μ₀K′Λ(ε), K′ the three-kernel block's from the path (below; median); the first landing past τ₃ (centre of mass and W within 0.01): its τ, κ = v_land/v(τ₃⁻) with v(τ₃⁻) the loop's v at the last time before τ₃, κ′ = v_land over the law's v at the path's τ₃ (the loop's v before τ₃ carried by v³ ∝ τ − τ_d: `kappa_loop`, referee rounds 80, 83 — at larger masses not the loop's own κ, whose crossing is the loop's), and p = |w_a − w_b||Δθ|/(|W|σ̄); † another sequence — the loop's formed kernels at its τ₃ or τ₄ not the path's, by index (SQ, referee round 83) —, its κ not the path's:
 
 | target | ε | τ_d | τ₃ | τ₄ | dipole: slope | v(τ₃⁻)/law | intermediate: formed, offset, (W − A)/\|A\|, slope | landing: τ, κ, κ′, p |
 |---|---|---|---|---|---|---|---|---|
@@ -368,16 +382,22 @@ The phases on a fine grid (τ = 10 … 140 by 0.1, with G's times; referee round
 
 The intermediate phase from the path (`kappa_from_path`, referee rounds 74, 80): K from the third order, −⟨r_dip, ∇³φ:p³⟩/24 at the block's optimal dipole fit, beside G's v²(E − E_inf); τ₃ from the duals; K′/K, K′ the three-kernel block's (the τ₃ entrant added), with that block's closure rms (below 1e-12 the block fits exactly: K′ = 0, no τ₄, κ = 1); τ₄ from the duals moved on by that block's residual; for K′ < 0 the dissolution time τ₃ + K(τ₃ − τ_d)/|K′|, at which v³ would reach 0 (the four stages need τ₄ before it); κ = (1 + K′(τ₄ − τ₃)/(K(τ₃ − τ_d)))^{1/3}; the landing's v by the law v³ = 3μ₀Λ(ε)(K(τ₃ − τ_d) + K′(τ₄ − τ₃)) with the path's τ₃ and τ₄ — each against the loop's at the smallest mass (its κ as in the table above) —; and v at τ = 6400 over v_land at ε = 10⁻¹⁰, minus 1 (v after τ₄):
 
-| target | K: third order (G's) | τ₃: path (loop) | K′/K (the closure's rms) | τ₄: path (loop) | dissolution | κ: path (loop) | v_land: law (loop) | v(6400)/v_land − 1 |
+| target | K: third order (G's) | τ₃: path (loop) | K′/K (the closure's rms) | τ₄: path (loop) | dissolution | κ: path (loop: κ′; its own crossing's bracket) | v_land: law (loop) | v(6400)/v_land − 1 |
 |---|---|---|---|---|---|---|---|---|
-| 9 | 2.55975e-03 (2.55976e-03) | 29.16 (29.2) | +0.0461 (1.5e-02) | 124.3 (124.2) | — | 1.1145 (1.1139) | 44.01 (44.01) | +1.5e-08 |
-| 18 | 1.77964e-03 (1.77964e-03) | 34.23 (34.3) | -0.0833 (2.0e-02) | 97.89 (97.9) | 145 | 0.7520 (0.7517) | 24.5 (24.5) | +3.1e-06 |
-| 12 | 2.10530e-04 (2.10560e-04) | 58.44 (58.4) | -0.3563 (3.0e-02) | 81.64 (81.7) | 154.1 | 0.9116 (0.9135) | 22.54 (22.89) | +1.2e-05 |
-| 20 | 1.16958e-04 (1.16958e-04) | 36.17 (36.2) | 0, exact (4.4e-17) | — (exact) (—) | — | 1.0000 (0.9997) | 9.906 (9.899) | +2.7e-05 |
-| 27 | 6.10913e-04 (6.10914e-04) | 47.19 (47.2) | +0.2278 (5.6e-02) | 51.29 (51.3) | — | 1.0195 (1.0189) | 27.74 (27.73) | +7.0e-12 |
-| 29 | 1.34468e-03 (1.34468e-03) | 29.63 (29.7) | -0.0904 (1.0e-01) | 46.97 (47) | 61.44 | 0.7691 (0.7670) | 15.48 (15.44) | +1.6e-05 |
+| 9 | 2.55975e-03 (2.55976e-03) | 29.16 (29.2) | +0.0461 (1.5e-02) | 124.3 (124.2) | — | 1.1145 (1.1139; [1.1126, 1.1159]) | 44.01 (44.01) | +1.5e-08 |
+| 18 | 1.77964e-03 (1.77964e-03) | 34.23 (34.3) | -0.0833 (2.0e-02) | 97.89 (97.9) | 144.98 | 0.7520 (0.7517; [0.7498, 0.7525]) | 24.5 (24.5) | +3.1e-06 |
+| 12 | 2.10530e-04 (2.10560e-04) | 58.44 (58.4) | -0.3563 (3.0e-02) | 81.64 (81.7) | 154.13 | 0.9116 (0.9135; [0.9139, 0.9148]) | 22.54 (22.89) | +1.2e-05 |
+| 20 | 1.16958e-04 (1.16958e-04) | 36.17 (36.2) | 0, exact (4.4e-17) | — (exact) (—) | — | 1.0000 (0.9997; [0.9971, 1.0056]) | 9.906 (9.899) | +2.7e-05 |
+| 27 | 6.10913e-04 (6.10914e-04) | 47.19 (47.2) | +0.2278 (5.6e-02) | 51.29 (51.3) | — | 1.0195 (1.0189; [1.0187, 1.0209]) | 27.74 (27.73) | +7.0e-12 |
+| 29 | 1.34468e-03 (1.34468e-03) | 29.63 (29.7) | -0.0904 (1.0e-01) | 46.97 (47) | 61.443 | 0.7691 (0.7670; [0.7606, 0.7694]) | 15.48 (15.44) | +1.6e-05 |
 
-κ′ against the mass (ε = 1e-05, 1e-06, 1e-07, 1e-08, 1e-09, 1e-10, 1e-11, 1e-12; † another sequence): 9: —, 1.028, 1.082, 1.100, 1.108, 1.112, 1.113, 1.114; 18: —, —, 1.652†, 0.755, 0.752, 0.751, 0.752, 0.752; 12: —, —, 0.929, 0.925, 0.921, 0.918, 0.915, 0.914; 20: —, —, 0.992, 0.995, 0.998, 0.999, 0.999, 1.000; 27: —, —, 0.949†, 0.979†, 0.993†, 1.017, 1.018, 1.019; 29: —, 0.643, 0.662, 0.713, 0.744, 0.758, 0.764, 0.767. The grid's offset ((τ₃ − τ_d)/(t_v3 − τ_d))^{1/3} − 1 that κ′ removes, at ε = 1e-12: 9: +0.18%, 18: +0.10%, 12: +0.13%, 20: +0.58%, 27: +0.19%, 29: +0.32%. Over every fine-grid state with a dipole pair and p < 1, p ≤ 0.28 and the landing agree in 29177 of 29425 (25094 of 25335 at ε ≤ 10⁻⁷; past τ₄ 22800 of 22978).
+The path's κ against the loop's own crossing's bracket at the smallest mass (referee round 83): inside on 9, 18, 20, 27, 29; outside on 12 (the bracket +0.25% … +0.35% off it).
+
+κ′ against the mass (ε = 1e-05, 1e-06, 1e-07, 1e-08, 1e-09, 1e-10, 1e-11, 1e-12; † another sequence): 9: —†, 1.028, 1.082, 1.100, 1.108, 1.112, 1.113, 1.114; 18: —†, —†, 1.652†, 0.755, 0.752, 0.751, 0.752, 0.752; 12: —†, —†, 0.929, 0.925, 0.921, 0.918, 0.915, 0.914; 20: —†, —†, 0.992, 0.995, 0.998, 0.999, 0.999, 1.000; 27: —†, —†, 0.949†, 0.979†, 0.993†, 1.017, 1.018, 1.019; 29: —†, 0.643, 0.662, 0.713, 0.744, 0.758, 0.764, 0.767. The grid's offset ((τ₃ − τ_d)/(t_v3 − τ_d))^{1/3} − 1 that κ′ removes, at ε = 1e-12: 9: +0.18%, 18: +0.10%, 12: +0.13%, 20: +0.58%, 27: +0.19%, 29: +0.32%. Over every fine-grid state with a dipole pair and p < 1, p ≤ 0.28 and the landing agree in 29177 of 29425 (25094 of 25335 at ε ≤ 10⁻⁷; past τ₄ 22800 of 22978).
+
+κ′ − κ (the path's) on the path's sequence (referee round 83; ε as above, the masses on another sequence left out), and |κ′ − κ|'s fall per decade of ε where both are at least 10⁻³ — O(ε^{1/3}) is ×10^{1/3} = ×2.154 —: 9: -0.0864, -0.0329, -0.0143, -0.0063, -0.0028, -0.0013, -0.0006 (×2.22–2.63, as ε^{0.35–0.42}); 18: +0.0035, +0.0000, -0.0005, -0.0004, -0.0002; 12: +0.0173, +0.0131, +0.0097, +0.0063, +0.0036, +0.0020 (×1.32–1.85, as ε^{0.12–0.27}); 20: -0.0085, -0.0046, -0.0024, -0.0012, -0.0006, -0.0003 (×1.86–2.02, as ε^{0.27–0.31}); 27: -0.0027, -0.0012, -0.0006 (×2.21, as ε^{0.34}); 29: -0.1265, -0.1072, -0.0558, -0.0248, -0.0108, -0.0047, -0.0021 (×1.18–2.30, as ε^{0.07–0.36}).
+
+The loop's sequence by kernel index (SQ, referee round 83: G's loop rerun at G's outputs, the formed sets at the loop's τ₃ and τ₄ against the path's block at τ_d with its entrants j3 and j4, `kappa_from_path`): the path's 9: {4, 12} + 3 + 11; 18: {10, 16} + 4 + 15; 12: {3, 11} + 2 + 17; 20: {10, 11, 17} + 4; 27: {10, 16} + 17 + 3; 29: {4, 10} + 3 + 17. The loop follows it at 34 of 48 cells (SQ's τ₃ and τ₄ are G's at 48 of 48); elsewhere: 9 at 1e-05: τ₃ 22 {4, 11, 12}, τ₄ 26.2 {3, 4, 11, 12}; 18 at 1e-05: τ₃ 25.1 {9, 10, 16}, τ₄ 35.3 {4, 9, 10, 16}; 18 at 1e-06: τ₃ 25.1 {9, 10, 16}, τ₄ 41.3 {4, 9, 10, 16}; 18 at 1e-07: τ₃ 26.8 {9, 10, 16}, τ₄ 47.9 {4, 9, 10, 16}; 12 at 1e-05: τ₃ 24.4 {3, 10, 11}, τ₄ 69 {2, 3, 10, 11}; 12 at 1e-06: τ₃ 24.4 {3, 10, 11}, τ₄ 91 {3, 10, 11, 17}; 20 at 1e-05: τ₃ 32.3 {10, 11, 16, 17}, τ₄ —; 20 at 1e-06: τ₃ 32.3 {10, 11, 16, 17}, τ₄ —; 27 at 1e-05: τ₃ 31.6 {9, 10, 16}, τ₄ 40.5 {9, 10, 16, 17}; 27 at 1e-06: τ₃ 31.6 {9, 10, 16}, τ₄ 43.8 {9, 10, 16, 17}; 27 at 1e-07: τ₃ 34.1 {9, 10, 16}, τ₄ 45.5 {9, 10, 16, 17}; 27 at 1e-08: τ₃ 36.8 {9, 10, 16}, τ₄ 46.4 {9, 10, 16, 17}; 27 at 1e-09: τ₃ 44.8 {9, 10, 16}, τ₄ 46.9 {9, 10, 16, 17}; 29 at 1e-05: τ₃ 27.3 {3, 4, 10}, τ₄ 34.2 {3, 4, 10, 11}. The intermediate slope's proxy (beyond 1 ± 0.5 times the path's law, round 80) differs at 20 at 1e-05, 20 at 1e-06, 29 at 1e-05.
 
 
 ### GL. The collapse (referee rounds 68, 74): target 20 at ε = 1e-10 to τ = 1e+07
@@ -409,7 +429,7 @@ The law's constant (referee round 74) over successive rows: the measured d(Δc�
 | 1e+07 | 0.0282 | 0.9990 | 1.0038 | 0.0045 |
 
 Over the 28 intervals the ratio is 0.9030–0.9990, with C 1.0038–1.0180; the formed kernels' energy over all kernels' 1.000001–1.000787.
-The remainder with C against p: (ratio with C − 1)/p 0.123–0.134; a = E/Δc⁸ itself goes 7.893e+06 → 6.981e+06 along the run. E's next order in Δc from the local slope (referee round 80; the formed kernels' energy, the idle ones' floor left out): (d ln E/d ln Δc − 8)/p over the intervals (p their mean) 0.951–0.963, median 0.961, which raises the force over 8aΔc⁷ by 1 + 0.120p; with each interval's own force factor (d ln E/d ln Δc)/8 the ratio with C is 1 -4.7e-05 … +3.2e-04 (the largest |·| at τ = 1e+07); the mean width's share of the metric, p²/36, at most 0.00067.
+The remainder with C against p: (ratio with C − 1)/p 0.123–0.134; a = E/Δc⁸ itself goes 7.893e+06 → 6.981e+06 along the run. E's next order in Δc from the local slope (referee round 80; the formed kernels' energy, the idle ones' floor left out): (d ln E/d ln Δc − 8)/p over the intervals (p their mean) 0.951–0.963, median 0.961 (all kernels' energy: 0.951–1.052, the idle kernels' floor in it), which raises the force over 8aΔc⁷ by 1 + 0.120p; with each interval's own force factor (d ln E/d ln Δc)/8 — E all kernels' energy, as in a = E/Δc⁸ (referee round 83) — the ratio with C is 1 -6.3e-05 … +1.2e-04 (the largest |·| at τ = 574.3); the mean width's share of the metric, p²/36, at most 0.00067.
 
 
 ### GL. The collapse (referee rounds 68, 74): target 9 at ε = 1e-10 to τ = 1e+07
@@ -446,17 +466,17 @@ Over the 28 intervals the ratio is 0.9914–0.9979, with C 0.9926–0.9992; the 
 
 Two features φ(·; c, σ*) of the given amplitudes (both positive) at the centres ±0.08 — 0.16 apart, 1.33 times the kernels' starting width σ₀ = 0.12 — unless stated, the moving-width path (as C's: its tolerance 1e-09, its budget 1e+06): the outcome (as C's), the most kernels of the other sign in a block along the path and the most negative coefficient, the end's formed kernels of the other sign and the smallest formed width — counting only kernels visible on the samples (largest φ there at least 1e-10; referee round 74), the end's formed ones of the other sign including the invisible in brackets —, over all the end's active kernels those narrower than the samples' spacing and those of negative width (the widths are not constrained) and how many of them are formed, the formed kernels invisible on the samples, the largest |w|, the residual:
 
-| target | outcome | visible negative kernels along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | formed invisible | max\|w\| | residual | the main kernels' errors | the others: n, Σ\|w\|, on the samples, widths, \|c\| max |
+| target | outcome | visible negative kernels along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | formed invisible | max\|w\| | residual | the main kernels' errors (w/A − 1) | the others: n, Σw (Σ\|w\|), on the samples, widths, \|c\| max |
 |---|---|---|---|---|---|---|---|---|---|---|
-| σ* 0.04, equal | exact, null cluster | 10 (-0.427) | 2 (2) | 4.00e-02 | 0, 0 (0, 0) | 0 | 1 | 1.3e-13 | 9.2e-12, 9.2e-12 | 3, 0.219, 1.0e-11, 0.399–0.399, 0.00 |
-| σ* 0.06, equal | cancellation | 14 (-0.610) | 7 (7) | 4.96e-02 | 6, 0 (0, 0) | 0 | 3.24 | 4.3e-10 | 1.6e-05, 2.2e+00 | 7, 2.761, 2.3e+00, 0.050–0.059, 0.16 |
-| σ* 0.06, A₂ 0.99 | cancellation | 13 (-0.573) | 6 (6) | 5.19e-02 | 5, 1 (0, 0) | 0 | 2.93 | 9.6e-10 | 1.9e+00, 1.2e-05 | 6, 2.287, 2.0e+00, 0.052–0.059, 0.15 |
-| σ* 0.06, A₂ 0.95 | cancellation | 14 (-0.587) | 7 (7) | 4.92e-02 | 4, 1 (0, 0) | 0 | 3.14 | 6.0e-10 | 2.1e+00, 1.5e-05 | 7, 2.662, 2.2e+00, 0.049–0.059, 0.16 |
-| σ* 0.06, A₂ 0.9 | cancellation | 12 (-0.555) | 7 (7) | 5.12e-02 | 3, 1 (0, 0) | 0 | 2.84 | 8.1e-10 | 1.8e+00, 1.9e-01 | 7, 2.408, 1.9e+00, 0.051–0.060, 0.16 |
-| σ* 0.06, c₂ +0.01 | cancellation | 11 (-0.561) | 6 (7) | 5.26e-02 | 5, 1 (1, 0) | 1 | 2.85 | 4.4e-10 | 1.8e+00, 3.5e-06 | 7, 2.175, 1.9e+00, 0.000–0.058, 0.24 |
-| σ* 0.06, σ₂ 0.065 | cancellation | 14 (-0.603) | 7 (7) | 4.94e-02 | 5, 2 (0, 0) | 0 | 3.16 | 6.1e-10 | 2.2e+00, 1.1e-05 | 7, 2.663, 2.2e+00, 0.049–0.059, 0.16 |
-| σ* 0.04, A₂ 0.6 | exact | 0 (+0.600) | 0 (0) | 4.00e-02 | 0, 0 (0, 0) | 0 | 1 | 5.0e-17 | 2.2e-16, 3.3e-16 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, A₂ 0.6 | exact | 0 (+0.600) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 2.5e-16 | 1.2e-15, 3.0e-15 | 0, 0.000, 0.0e+00, —, — |
+| σ* 0.04, equal | exact, null cluster | 10 (-0.427) | 2 (2) | 4.00e-02 | 0, 0 (0, 0) | 0 | 1 | 1.3e-13 | 9.2e-12 (-9.2e-12), 9.2e-12 (-9.2e-12) | 3, -0.000 (0.219), 1.0e-11, 0.399–0.399, 0.00 |
+| σ* 0.06, equal | cancellation | 14 (-0.610) | 7 (7) | 4.96e-02 | 6, 0 (0, 0) | 0 | 3.24 | 4.3e-10 | 1.6e-05 (-1.6e-05), 2.2e+00 (+2.2) | 7, -2.761 (2.761), 2.3e+00, 0.050–0.059, 0.16 |
+| σ* 0.06, A₂ 0.99 | cancellation | 13 (-0.573) | 6 (6) | 5.19e-02 | 5, 1 (0, 0) | 0 | 2.93 | 9.6e-10 | 1.9e+00 (+1.9), 1.2e-05 (-1.2e-05) | 6, -2.287 (2.287), 2.0e+00, 0.052–0.059, 0.15 |
+| σ* 0.06, A₂ 0.95 | cancellation | 14 (-0.587) | 7 (7) | 4.92e-02 | 4, 1 (0, 0) | 0 | 3.14 | 6.0e-10 | 2.1e+00 (+2.1), 1.5e-05 (-1.5e-05) | 7, -2.662 (2.662), 2.2e+00, 0.049–0.059, 0.16 |
+| σ* 0.06, A₂ 0.9 | cancellation | 12 (-0.555) | 7 (7) | 5.12e-02 | 3, 1 (0, 0) | 0 | 2.84 | 8.1e-10 | 1.8e+00 (+1.8), 1.9e-01 (+0.19) | 7, -2.408 (2.408), 1.9e+00, 0.051–0.060, 0.16 |
+| σ* 0.06, c₂ +0.01 | cancellation | 11 (-0.561) | 6 (7) | 5.26e-02 | 5, 1 (1, 0) | 1 | 2.85 | 4.4e-10 | 1.8e+00 (+1.8), 3.5e-06 (-3.5e-06) | 7, -2.175 (2.175), 1.9e+00, 0.000–0.058, 0.24 |
+| σ* 0.06, σ₂ 0.065 | cancellation | 14 (-0.603) | 7 (7) | 4.94e-02 | 5, 2 (0, 0) | 0 | 3.16 | 6.1e-10 | 2.2e+00 (+2.2), 1.1e-05 (-1.1e-05) | 7, -2.663 (2.663), 2.2e+00, 0.049–0.059, 0.16 |
+| σ* 0.04, A₂ 0.6 | exact | 0 (+0.600) | 0 (0) | 4.00e-02 | 0, 0 (0, 0) | 0 | 1 | 5.0e-17 | 2.2e-16 (+2.2e-16), 3.3e-16 (-3.3e-16) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, A₂ 0.6 | exact | 0 (+0.600) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 2.5e-16 | 1.2e-15 (+2.2e-16), 3.0e-15 (-3e-15) | 0, +0.000 (0.000), 0.0e+00, —, — |
 
 ### H2. The σ* = 0.06 paths to a tolerance of 1e-13
 
@@ -478,114 +498,116 @@ Why they ended (referee rounds 68, 74): σ* 0.06, equal: the stop dictionary, 21
 
 The moving-width path (tolerance 10⁻⁹) with the least-squares polish off, against H's (with it): the outcome, the negative kernels visible on the samples along the path and at the end (all formed at the end in brackets), the largest |w|, the residual, the active kernels and why the path stopped (referee round 74: tolerance, budget, dictionary exhausted), and the fit's split at the end (referee round 80; as HLL's):
 
-| target | outcome (H) | visible negative along the path, at the end (H) | max\|w\| (H) | residual (H) | active | stop | the main kernels' errors | the others: n, Σ\|w\|, on the samples, widths, \|c\| max |
+| target | outcome (H) | visible negative along the path, at the end (H) | max\|w\| (H) | residual (H) | active | stop | the main kernels' errors (w/A − 1) | the others: n, Σw (Σ\|w\|), on the samples, widths, \|c\| max |
 |---|---|---|---|---|---|---|---|---|
-| σ* 0.04, equal | not fitted (exact, null cluster) | 10, 0 [0] (10, 2 [2]) | 1 (1) | 7.5e-07 (1.3e-13) | 21 | dictionary | 7.3e-05, 7.4e-05 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, equal | not fitted (cancellation) | 14, 12 [12] (14, 7 [7]) | 0.929 (3.24) | 9.7e-06 (4.3e-10) | 21 | dictionary | 7.1e-02, 7.1e-02 | 13, 1.936, 8.7e-02, 0.069–1.592, 1.69 |
-| σ* 0.06, A₂ 0.9 | stopped by the budget (cancellation) | 12, 6 [12] (12, 7 [7]) | 2.39 (2.84) | 1.4e-06 (8.1e-10) | 20 | budget | 1.4e+00, 1.4e-03 | 12, 2.604, 1.6e+00, 0.000–0.058, 0.28 |
-| σ* 0.06, c₂ +0.01 | not fitted (cancellation) | 11, 6 [11] (11, 6 [7]) | 2.26 (2.85) | 9.5e-07 (4.4e-10) | 21 | dictionary | 1.3e+00, 5.9e-04 | 11, 2.460, 1.5e+00, 0.000–0.056, 0.28 |
+| σ* 0.04, equal | not fitted (exact, null cluster) | 10, 0 [0] (10, 2 [2]) | 1 (1) | 7.5e-07 (1.3e-13) | 21 | dictionary | 7.3e-05 (-7.3e-05), 7.4e-05 (-7.4e-05) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, equal | not fitted (cancellation) | 14, 12 [12] (14, 7 [7]) | 0.929 (3.24) | 9.7e-06 (4.3e-10) | 21 | dictionary | 7.1e-02 (-0.071), 7.1e-02 (-0.071) | 13, -1.046 (1.936), 8.7e-02, 0.069–1.592, 1.69 |
+| σ* 0.06, A₂ 0.9 | stopped by the budget (cancellation) | 12, 6 [12] (12, 7 [7]) | 2.39 (2.84) | 1.4e-06 (8.1e-10) | 20 | budget | 1.4e+00 (+1.4), 1.4e-03 (-0.0014) | 12, -2.604 (2.604), 1.6e+00, 0.000–0.058, 0.28 |
+| σ* 0.06, c₂ +0.01 | not fitted (cancellation) | 11, 6 [11] (11, 6 [7]) | 2.26 (2.85) | 9.5e-07 (4.4e-10) | 21 | dictionary | 1.3e+00 (+1.3), 5.9e-04 (-0.00059) | 11, -2.460 (2.460), 1.5e+00, 0.000–0.056, 0.28 |
 
 ### H3. The separation scan
 
 σ* = 0.06, equal amplitudes 1, at ±c (2c in units of σ₀ in brackets; H's ±0.08 is 1.33σ₀), H's columns:
 
-| separation | outcome | visible negative kernels along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | formed invisible | max\|w\| | residual | the main kernels' errors | the others: n, Σ\|w\|, on the samples, widths, \|c\| max |
+| separation | outcome | visible negative kernels along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | formed invisible | max\|w\| | residual | the main kernels' errors (w/A − 1) | the others: n, Σw (Σ\|w\|), on the samples, widths, \|c\| max |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ±0.05 (0.83σ₀) | stopped by the budget | 10 (-0.240) | 10 (10) | 3.23e-02 | 0, 0 (0, 0) | 0 | 1.42 | 6.5e-06 | 1.1e+00, — | 10, 1.366, 3.3e-01, 0.032–0.062, 0.26 |
-| ±0.08 (1.33σ₀) | cancellation | 14 (-0.610) | 7 (7) | 4.96e-02 | 6, 0 (0, 0) | 0 | 3.24 | 4.3e-10 | 1.6e-05, 2.2e+00 | 7, 2.761, 2.3e+00, 0.050–0.059, 0.16 |
-| ±0.1 (1.67σ₀) | exact | 0 (+0.000) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 3.3e-10 | 3.2e-08, 3.2e-08 | 0, 0.000, 0.0e+00, —, — |
-| ±0.12 (2.00σ₀) | exact | 0 (-0.000) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 2.5e-12 | 8.0e-11, 8.0e-11 | 0, 0.000, 0.0e+00, —, — |
-| ±0.15 (2.50σ₀) | coinciding pair | 0 (+0.305) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 5.8e-16 | 3.8e-01, 2.2e-16 | 1, 0.378, 3.8e-01, 0.060–0.060, 0.15 |
-| ±0.2 (3.33σ₀) | coinciding pair | 0 (+0.231) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 0.631 | 2.3e-15 | 3.7e-01, 3.7e-01 | 2, 0.739, 3.7e-01, 0.060–0.060, 0.20 |
+| ±0.05 (0.83σ₀) | stopped by the budget | 10 (-0.240) | 10 (10) | 3.23e-02 | 0, 0 (0, 0) | 0 | 1.42 | 6.5e-06 | 1.1e+00 (+0.42), — | 10, -1.366 (1.366), 3.3e-01, 0.032–0.062, 0.26 |
+| ±0.08 (1.33σ₀) | cancellation | 14 (-0.610) | 7 (7) | 4.96e-02 | 6, 0 (0, 0) | 0 | 3.24 | 4.3e-10 | 1.6e-05 (-1.6e-05), 2.2e+00 (+2.2) | 7, -2.761 (2.761), 2.3e+00, 0.050–0.059, 0.16 |
+| ±0.1 (1.67σ₀) | exact | 0 (+0.000) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 3.3e-10 | 3.2e-08 (-3.2e-08), 3.2e-08 (-3.2e-08) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| ±0.12 (2.00σ₀) | exact | 0 (-0.000) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 2.5e-12 | 8.0e-11 (-8e-11), 8.0e-11 (-8e-11) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| ±0.15 (2.50σ₀) | coinciding pair | 0 (+0.305) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 5.8e-16 | 3.8e-01 (-0.38), 2.2e-16 (+2.2e-16) | 1, +0.378 (0.378), 3.8e-01, 0.060–0.060, 0.15 |
+| ±0.2 (3.33σ₀) | coinciding pair | 0 (+0.231) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 0.631 | 2.3e-15 | 3.7e-01 (-0.37), 3.7e-01 (-0.37) | 2, +0.739 (0.739), 3.7e-01, 0.060–0.060, 0.20 |
 
 ### HL. The real loop on H's targets (referee round 68: the asymmetric ones, to τ = 10⁵)
 
 The free law from α = 0 at the masses ε (`loop_nd`, rtol 10⁻⁹) at the times τ: the formed kernels (|w| above 1% of the smallest amplitude), those visible on the samples (largest φ there at least 1e-10; referee round 74) of the other sign, the invisible formed ones, the smallest visible width, the formed kernels centred outside the samples' window, the largest |w|, the residual, and the fit's split (referee round 80; as HLL's):
 
-| target | ε | τ | formed | visible of the other sign (most negative w) | invisible | smallest visible width | outside the window | max\|w\| | residual | the main kernels' errors | the others: n, Σ\|w\|, on the samples, widths, \|c\| max |
+| target | ε | τ | formed | visible of the other sign (most negative w) | invisible | smallest visible width | outside the window | max\|w\| | residual | the main kernels' errors (w/A − 1) | the others: n, Σw (Σ\|w\|), on the samples, widths, \|c\| max |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| σ* 0.04, equal | 1e-06 | 1600 | 9 | 6 (-0.027) | 0 | 0.036 | 0 | 0.951 | 7.8e-04 | 4.9e-02, 4.9e-02 | 7, 0.172, 5.5e-02, 0.036–0.245, 0.39 |
-| σ* 0.04, equal | 1e-06 | 6400 | 2 | 0 | 0 | 0.040 | 0 | 0.995 | 6.7e-05 | 5.0e-03, 5.0e-03 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.04, equal | 1e-06 | 25000 | 2 | 0 | 0 | 0.040 | 0 | 0.999 | 1.7e-05 | 1.3e-03, 1.3e-03 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.04, equal | 1e-06 | 100000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 5.3e-06 | 4.3e-04, 4.3e-04 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.04, equal | 1e-08 | 1600 | 9 | 8 (-0.408) | 0 | 0.024 | 0 | 0.716 | 7.2e-02 | 7.2e+00, — | 8, 2.625, 5.9e-01, 0.024–0.139, 0.51 |
-| σ* 0.04, equal | 1e-08 | 6400 | 2 | 0 | 0 | 0.040 | 0 | 0.998 | 2.0e-05 | 1.8e-03, 1.8e-03 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.04, equal | 1e-08 | 25000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 4.6e-06 | 4.3e-04, 4.3e-04 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.04, equal | 1e-08 | 100000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 1.5e-06 | 1.4e-04, 1.4e-04 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, equal | 1e-06 | 1600 | 7 | 6 (-0.389) | 0 | 0.037 | 0 | 0.979 | 2.7e-02 | 3.2e+00, — | 6, 1.964, 5.9e-01, 0.037–0.112, 0.40 |
-| σ* 0.06, equal | 1e-06 | 6400 | 9 | 6 (-0.112) | 0 | 0.047 | 0 | 0.572 | 1.4e-04 | 4.3e-01, 4.3e-01 | 7, 1.050, 4.9e-01, 0.047–0.190, 0.32 |
-| σ* 0.06, equal | 1e-06 | 25000 | 11 | 8 (-0.078) | 0 | 0.046 | 0 | 0.638 | 7.0e-05 | 3.6e-01, 3.6e-01 | 9, 0.859, 4.2e-01, 0.046–0.182, 0.39 |
-| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0 | 0.043 | 0 | 0.705 | 2.5e-05 | 3.0e-01, 3.0e-01 | 9, 0.676, 3.5e-01, 0.043–0.168, 0.36 |
-| σ* 0.06, equal | 1e-08 | 1600 | 7 | 6 (-0.389) | 0 | 0.037 | 0 | 0.979 | 2.7e-02 | 3.2e+00, — | 6, 1.964, 5.9e-01, 0.037–0.112, 0.40 |
-| σ* 0.06, equal | 1e-08 | 6400 | 13 | 12 (-0.456) | 0 | 0.024 | 0 | 0.958 | 2.1e-02 | 6.3e+00, — | 12, 3.939, 7.8e-01, 0.024–0.223, 0.75 |
-| σ* 0.06, equal | 1e-08 | 25000 | 17 | 14 (-0.211) | 0 | 0.049 | 2 | 0.799 | 3.5e-05 | 2.0e-01, 2.0e-01 | 15, 2.135, 2.4e-01, 0.049–1.617, 1.68 |
-| σ* 0.06, equal | 1e-08 | 100000 | 15 | 12 (-0.208) | 0 | 0.059 | 2 | 0.929 | 9.8e-06 | 7.1e-02, 7.1e-02 | 13, 1.936, 8.6e-02, 0.069–1.592, 1.69 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 1600 | 7 | 6 (-0.392) | 0 | 0.037 | 0 | 0.974 | 2.7e-02 | 3.2e+00, — | 6, 1.954, 6.0e-01, 0.037–0.112, 0.40 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 6400 | 9 | 3 (-0.448) | 3 | 0.044 | 0 | 1.58 | 2.3e-05 | 9.3e-01, 7.6e-03 | 7, 2.856, 9.3e-01, 0.000–0.073, 0.27 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 25000 | 9 | 3 (-0.438) | 3 | 0.047 | 0 | 1.63 | 8.3e-06 | 9.3e-01, 3.8e-03 | 7, 2.879, 9.2e-01, 0.000–0.071, 0.27 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 100000 | 9 | 3 (-0.430) | 3 | 0.049 | 0 | 1.67 | 3.3e-06 | 6.7e-01, 2.0e-03 | 7, 1.306, 9.4e-01, 0.000–0.061, 0.27 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 1600 | 7 | 6 (-0.392) | 0 | 0.037 | 0 | 0.974 | 2.7e-02 | 3.2e+00, — | 6, 1.954, 6.0e-01, 0.037–0.112, 0.40 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 6400 | 14 | 13 (-0.472) | 0 | 0.020 | 0 | 0.953 | 2.1e-02 | 6.9e+00, — | 13, 4.227, 8.1e-01, 0.020–0.248, 0.83 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 25000 | 14 | 6 (-0.550) | 6 | 0.038 | 0 | 2.3 | 4.7e-06 | 1.3e+00, 2.7e-03 | 12, 2.835, 1.6e+00, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 6 (-0.539) | 6 | 0.040 | 0 | 2.38 | 1.8e-06 | 1.4e+00, 1.5e-03 | 12, 2.784, 1.6e+00, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 1600 | 7 | 6 (-0.407) | 0 | 0.036 | 0 | 0.958 | 2.6e-02 | 3.2e+00, — | 6, 1.916, 6.3e-01, 0.036–0.115, 0.41 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 6400 | 8 | 3 (-0.432) | 3 | 0.050 | 0 | 1.74 | 2.1e-05 | 7.4e-01, 3.8e-03 | 6, 1.259, 9.1e-01, 0.001–0.057, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 25000 | 8 | 3 (-0.422) | 3 | 0.052 | 0 | 1.78 | 7.3e-06 | 7.8e-01, 1.6e-03 | 6, 1.235, 9.2e-01, 0.001–0.058, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 | 8.2e-01, 7.7e-04 | 6, 1.218, 9.2e-01, 0.001–0.058, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 1600 | 7 | 6 (-0.407) | 0 | 0.036 | 0 | 0.958 | 2.6e-02 | 3.2e+00, — | 6, 1.916, 6.3e-01, 0.036–0.115, 0.41 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 6400 | 13 | 12 (-0.479) | 0 | 0.023 | 0 | 0.946 | 2.1e-02 | 6.3e+00, — | 12, 3.854, 8.3e-01, 0.023–0.233, 0.76 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 25000 | 14 | 6 (-0.547) | 6 | 0.038 | 0 | 2.29 | 4.6e-06 | 1.3e+00, 2.8e-03 | 12, 2.622, 1.6e+00, 0.000–0.058, 0.28 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 100000 | 14 | 6 (-0.537) | 6 | 0.040 | 0 | 2.37 | 1.8e-06 | 1.4e+00, 1.6e-03 | 12, 2.572, 1.6e+00, 0.000–0.058, 0.28 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 1600 | 8 | 4 (-0.469) | 2 | 0.001 | 0 | 1.55 | 2.9e-04 | 6.4e-01, 3.0e-02 | 6, 1.373, 9.0e-01, 0.001–0.057, 0.26 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 6400 | 8 | 3 (-0.432) | 3 | 0.050 | 0 | 1.74 | 2.0e-05 | 7.4e-01, 3.9e-03 | 6, 1.281, 9.1e-01, 0.001–0.057, 0.26 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 25000 | 8 | 3 (-0.423) | 3 | 0.052 | 0 | 1.79 | 7.2e-06 | 7.9e-01, 1.7e-03 | 6, 1.257, 9.2e-01, 0.001–0.058, 0.26 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 | 8.2e-01, 8.2e-04 | 6, 1.241, 9.2e-01, 0.001–0.058, 0.26 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 1600 | 7 | 6 (-0.427) | 0 | 0.035 | 0 | 0.946 | 2.5e-02 | 3.1e+00, — | 6, 1.873, 6.6e-01, 0.035–0.118, 0.41 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 6400 | 14 | 12 (-0.586) | 0 | 0.010 | 0 | 1.25 | 6.3e-03 | 2.9e+00, 5.4e-01 | 12, 3.250, 1.2e+00, 0.010–0.157, 0.54 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 25000 | 14 | 6 (-0.542) | 6 | 0.038 | 0 | 2.3 | 4.6e-06 | 1.3e+00, 2.9e-03 | 12, 2.666, 1.6e+00, 0.000–0.058, 0.28 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 100000 | 14 | 6 (-0.532) | 6 | 0.040 | 0 | 2.37 | 1.8e-06 | 1.4e+00, 1.6e-03 | 12, 2.616, 1.6e+00, 0.000–0.058, 0.28 |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 1600 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08, 8.2e-09 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 6400 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08, 8.2e-09 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 25000 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08, 8.2e-09 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 100000 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08, 8.2e-09 | 0, 0.000, 0.0e+00, —, — |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 1600 | 7 | 6 (-0.391) | 0 | 0.038 | 0 | 0.934 | 3.5e-02 | 3.5e+00, — | 6, 2.007, 6.0e-01, 0.038–0.118, 0.43 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 6400 | 13 | 6 (-0.504) | 5 | 0.035 | 0 | 2.02 | 1.3e-05 | 1.0e+00, 3.0e-03 | 11, 2.547, 1.3e+00, 0.000–0.053, 0.28 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 25000 | 13 | 6 (-0.491) | 5 | 0.038 | 0 | 2.12 | 3.9e-06 | 1.1e+00, 1.4e-03 | 11, 2.488, 1.4e+00, 0.000–0.054, 0.28 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 100000 | 13 | 6 (-0.482) | 5 | 0.040 | 0 | 2.19 | 1.6e-06 | 1.2e+00, 7.8e-04 | 11, 2.449, 1.4e+00, 0.000–0.055, 0.28 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 1600 | 6 | 3 (-0.402) | 1 | 0.001 | 0 | 1.51 | 7.4e-05 | 5.1e-01, 6.6e-03 | 4, 0.832, 6.3e-01, 0.001–0.057, 0.27 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 6400 | 6 | 2 (-0.387) | 2 | 0.056 | 0 | 1.58 | 1.0e-05 | 5.8e-01, 1.2e-03 | 4, 0.806, 6.3e-01, 0.001–0.058, 0.27 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 25000 | 6 | 2 (-0.382) | 2 | 0.057 | 0 | 1.6 | 3.2e-06 | 6.0e-01, 4.4e-04 | 4, 0.797, 6.2e-01, 0.001–0.059, 0.27 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 100000 | 6 | 2 (-0.379) | 2 | 0.058 | 0 | 1.62 | 1.2e-06 | 6.2e-01, 1.7e-04 | 4, 0.791, 6.2e-01, 0.001–0.059, 0.27 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 1600 | 7 | 6 (-0.403) | 0 | 0.038 | 0 | 1.01 | 2.3e-02 | 3.1e+00, — | 6, 1.926, 6.1e-01, 0.038–0.113, 0.40 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 6400 | 13 | 12 (-0.474) | 0 | 0.025 | 0 | 0.991 | 1.7e-02 | 6.1e+00, — | 12, 3.883, 8.0e-01, 0.025–0.224, 0.74 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 25000 | 13 | 7 (-0.645) | 4 | 0.034 | 0 | 2.59 | 5.8e-06 | 1.6e+00, 2.8e-03 | 11, 3.255, 1.9e+00, 0.000–0.058, 0.28 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 100000 | 13 | 7 (-0.631) | 4 | 0.036 | 0 | 2.69 | 2.1e-06 | 1.7e+00, 1.5e-03 | 11, 3.183, 1.9e+00, 0.000–0.058, 0.28 |
+| σ* 0.04, equal | 1e-06 | 1600 | 9 | 6 (-0.027) | 0 | 0.036 | 0 | 0.951 | 7.8e-04 | 4.9e-02 (-0.049), 4.9e-02 (-0.049) | 7, -0.063 (0.172), 5.5e-02, 0.036–0.245, 0.39 |
+| σ* 0.04, equal | 1e-06 | 6400 | 2 | 0 | 0 | 0.040 | 0 | 0.995 | 6.7e-05 | 5.0e-03 (-0.005), 5.0e-03 (-0.005) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.04, equal | 1e-06 | 25000 | 2 | 0 | 0 | 0.040 | 0 | 0.999 | 1.7e-05 | 1.3e-03 (-0.0013), 1.3e-03 (-0.0013) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.04, equal | 1e-06 | 100000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 5.3e-06 | 4.3e-04 (-0.00043), 4.3e-04 (-0.00043) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.04, equal | 1e-08 | 1600 | 9 | 8 (-0.408) | 0 | 0.024 | 0 | 0.716 | 7.2e-02 | 7.2e+00 (-0.28), — | 8, -2.625 (2.625), 5.9e-01, 0.024–0.139, 0.51 |
+| σ* 0.04, equal | 1e-08 | 6400 | 2 | 0 | 0 | 0.040 | 0 | 0.998 | 2.0e-05 | 1.8e-03 (-0.0018), 1.8e-03 (-0.0018) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.04, equal | 1e-08 | 25000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 4.6e-06 | 4.3e-04 (-0.00043), 4.3e-04 (-0.00043) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.04, equal | 1e-08 | 100000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 1.5e-06 | 1.4e-04 (-0.00014), 1.4e-04 (-0.00014) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, equal | 1e-06 | 1600 | 7 | 6 (-0.389) | 0 | 0.037 | 0 | 0.979 | 2.7e-02 | 3.2e+00 (-0.021), — | 6, -1.964 (1.964), 5.9e-01, 0.037–0.112, 0.40 |
+| σ* 0.06, equal | 1e-06 | 6400 | 9 | 6 (-0.112) | 0 | 0.047 | 0 | 0.572 | 1.4e-04 | 4.3e-01 (-0.43), 4.3e-01 (-0.43) | 7, -0.043 (1.050), 4.9e-01, 0.047–0.190, 0.32 |
+| σ* 0.06, equal | 1e-06 | 25000 | 11 | 8 (-0.078) | 0 | 0.046 | 0 | 0.638 | 7.0e-05 | 3.6e-01 (-0.36), 3.6e-01 (-0.36) | 9, +0.000 (0.859), 4.2e-01, 0.046–0.182, 0.39 |
+| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0 | 0.043 | 0 | 0.705 | 2.5e-05 | 3.0e-01 (-0.3), 3.0e-01 (-0.3) | 9, +0.036 (0.676), 3.5e-01, 0.043–0.168, 0.36 |
+| σ* 0.06, equal | 1e-08 | 1600 | 7 | 6 (-0.389) | 0 | 0.037 | 0 | 0.979 | 2.7e-02 | 3.2e+00 (-0.021), — | 6, -1.964 (1.964), 5.9e-01, 0.037–0.112, 0.40 |
+| σ* 0.06, equal | 1e-08 | 6400 | 13 | 12 (-0.456) | 0 | 0.024 | 0 | 0.958 | 2.1e-02 | 6.3e+00 (-0.042), — | 12, -3.939 (3.939), 7.8e-01, 0.024–0.223, 0.75 |
+| σ* 0.06, equal | 1e-08 | 25000 | 17 | 14 (-0.211) | 0 | 0.049 | 2 | 0.799 | 3.5e-05 | 2.0e-01 (-0.2), 2.0e-01 (-0.2) | 15, -1.286 (2.135), 2.4e-01, 0.049–1.617, 1.68 |
+| σ* 0.06, equal | 1e-08 | 100000 | 15 | 12 (-0.208) | 0 | 0.059 | 2 | 0.929 | 9.8e-06 | 7.1e-02 (-0.071), 7.1e-02 (-0.071) | 13, -1.046 (1.936), 8.6e-02, 0.069–1.592, 1.69 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 1600 | 7 | 6 (-0.392) | 0 | 0.037 | 0 | 0.974 | 2.7e-02 | 3.2e+00 (-0.026), — | 6, -1.954 (1.954), 6.0e-01, 0.037–0.112, 0.40 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 6400 | 9 | 3 (-0.448) | 3 | 0.044 | 0 | 1.58 | 2.3e-05 | 7.1e-01 (+0.58), 7.6e-03 (-0.0076) | 7, -1.204 (1.345), 9.5e-01, 0.000–0.062, 0.27 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 25000 | 9 | 3 (-0.438) | 3 | 0.047 | 0 | 1.63 | 8.3e-06 | 6.5e-01 (+0.63), 3.8e-03 (-0.0038) | 7, -1.176 (1.323), 9.5e-01, 0.000–0.061, 0.27 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 100000 | 9 | 3 (-0.430) | 3 | 0.049 | 0 | 1.67 | 3.3e-06 | 6.7e-01 (+0.67), 2.0e-03 (-0.002) | 7, -1.156 (1.306), 9.4e-01, 0.000–0.061, 0.27 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1600 | 7 | 6 (-0.392) | 0 | 0.037 | 0 | 0.974 | 2.7e-02 | 3.2e+00 (-0.026), — | 6, -1.954 (1.954), 6.0e-01, 0.037–0.112, 0.40 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 6400 | 14 | 13 (-0.472) | 0 | 0.020 | 0 | 0.953 | 2.1e-02 | 6.9e+00 (-0.047), — | 13, -4.227 (4.227), 8.1e-01, 0.020–0.248, 0.83 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 25000 | 14 | 6 (-0.550) | 6 | 0.038 | 0 | 2.3 | 4.7e-06 | 1.3e+00 (+1.3), 2.7e-03 (-0.0027) | 12, -2.835 (2.835), 1.6e+00, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 6 (-0.539) | 6 | 0.040 | 0 | 2.38 | 1.8e-06 | 1.4e+00 (+1.4), 1.5e-03 (-0.0015) | 12, -2.784 (2.784), 1.6e+00, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 1600 | 7 | 6 (-0.407) | 0 | 0.036 | 0 | 0.958 | 2.6e-02 | 3.2e+00 (-0.042), — | 6, -1.916 (1.916), 6.3e-01, 0.036–0.115, 0.41 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 6400 | 8 | 3 (-0.432) | 3 | 0.050 | 0 | 1.74 | 2.1e-05 | 7.4e-01 (+0.74), 3.8e-03 (-0.0033) | 6, -1.259 (1.259), 9.1e-01, 0.001–0.057, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 25000 | 8 | 3 (-0.422) | 3 | 0.052 | 0 | 1.78 | 7.3e-06 | 7.8e-01 (+0.78), 1.6e-03 (-0.0015) | 6, -1.235 (1.235), 9.2e-01, 0.001–0.058, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 | 8.2e-01 (+0.82), 7.7e-04 (-0.00074) | 6, -1.218 (1.218), 9.2e-01, 0.001–0.058, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 1600 | 7 | 6 (-0.407) | 0 | 0.036 | 0 | 0.958 | 2.6e-02 | 3.2e+00 (-0.042), — | 6, -1.916 (1.916), 6.3e-01, 0.036–0.115, 0.41 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 6400 | 13 | 12 (-0.479) | 0 | 0.023 | 0 | 0.946 | 2.1e-02 | 6.3e+00 (-0.054), — | 12, -3.854 (3.854), 8.3e-01, 0.023–0.233, 0.76 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 25000 | 14 | 6 (-0.547) | 6 | 0.038 | 0 | 2.29 | 4.6e-06 | 1.3e+00 (+1.3), 2.8e-03 (-0.0028) | 12, -2.622 (2.622), 1.6e+00, 0.000–0.058, 0.28 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 100000 | 14 | 6 (-0.537) | 6 | 0.040 | 0 | 2.37 | 1.8e-06 | 1.4e+00 (+1.4), 1.6e-03 (-0.0016) | 12, -2.572 (2.572), 1.6e+00, 0.000–0.058, 0.28 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 1600 | 8 | 4 (-0.469) | 2 | 0.001 | 0 | 1.55 | 2.9e-04 | 6.4e-01 (+0.55), 3.0e-02 (-0.023) | 6, -1.373 (1.373), 9.0e-01, 0.001–0.057, 0.26 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 6400 | 8 | 3 (-0.432) | 3 | 0.050 | 0 | 1.74 | 2.0e-05 | 7.4e-01 (+0.74), 3.9e-03 (-0.0034) | 6, -1.281 (1.281), 9.1e-01, 0.001–0.057, 0.26 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 25000 | 8 | 3 (-0.423) | 3 | 0.052 | 0 | 1.79 | 7.2e-06 | 7.9e-01 (+0.79), 1.7e-03 (-0.0016) | 6, -1.257 (1.257), 9.2e-01, 0.001–0.058, 0.26 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 | 8.2e-01 (+0.82), 8.2e-04 (-0.00078) | 6, -1.241 (1.241), 9.2e-01, 0.001–0.058, 0.26 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 1600 | 7 | 6 (-0.427) | 0 | 0.035 | 0 | 0.946 | 2.5e-02 | 3.1e+00 (-0.054), — | 6, -1.873 (1.873), 6.6e-01, 0.035–0.118, 0.41 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 6400 | 14 | 12 (-0.586) | 0 | 0.010 | 0 | 1.25 | 6.3e-03 | 2.9e+00 (+0.25), 5.4e-01 (-0.54) | 12, -3.250 (3.250), 1.2e+00, 0.010–0.157, 0.54 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 25000 | 14 | 6 (-0.542) | 6 | 0.038 | 0 | 2.3 | 4.6e-06 | 1.3e+00 (+1.3), 2.9e-03 (-0.0029) | 12, -2.666 (2.666), 1.6e+00, 0.000–0.058, 0.28 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 100000 | 14 | 6 (-0.532) | 6 | 0.040 | 0 | 2.37 | 1.8e-06 | 1.4e+00 (+1.4), 1.6e-03 (-0.0016) | 12, -2.616 (2.616), 1.6e+00, 0.000–0.058, 0.28 |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 1600 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08 (-1.9e-08), 8.2e-09 (-3.4e-09) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 6400 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08 (-1.9e-08), 8.2e-09 (-3.4e-09) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 25000 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08 (-1.9e-08), 8.2e-09 (-3.4e-09) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 100000 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 | 1.9e-08 (-1.9e-08), 8.2e-09 (-3.4e-09) | 0, +0.000 (0.000), 0.0e+00, —, — |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 1600 | 7 | 6 (-0.391) | 0 | 0.038 | 0 | 0.934 | 3.5e-02 | 3.5e+00 (-0.066), — | 6, -2.007 (2.007), 6.0e-01, 0.038–0.118, 0.43 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 6400 | 13 | 6 (-0.504) | 5 | 0.035 | 0 | 2.02 | 1.3e-05 | 1.0e+00 (+1), 3.0e-03 (-0.0027) | 11, -2.547 (2.547), 1.3e+00, 0.000–0.053, 0.28 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 25000 | 13 | 6 (-0.491) | 5 | 0.038 | 0 | 2.12 | 3.9e-06 | 1.1e+00 (+1.1), 1.4e-03 (-0.0013) | 11, -2.488 (2.488), 1.4e+00, 0.000–0.054, 0.28 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 100000 | 13 | 6 (-0.482) | 5 | 0.040 | 0 | 2.19 | 1.6e-06 | 1.2e+00 (+1.2), 7.8e-04 (-0.00078) | 11, -2.449 (2.449), 1.4e+00, 0.000–0.055, 0.28 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 1600 | 6 | 3 (-0.402) | 1 | 0.001 | 0 | 1.51 | 7.4e-05 | 5.1e-01 (+0.51), 6.6e-03 (-0.0045) | 4, -0.832 (0.832), 6.3e-01, 0.001–0.057, 0.27 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 6400 | 6 | 2 (-0.387) | 2 | 0.056 | 0 | 1.58 | 1.0e-05 | 5.8e-01 (+0.58), 1.2e-03 (-0.00087) | 4, -0.806 (0.806), 6.3e-01, 0.001–0.058, 0.27 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 25000 | 6 | 2 (-0.382) | 2 | 0.057 | 0 | 1.6 | 3.2e-06 | 6.0e-01 (+0.6), 4.4e-04 (-0.00033) | 4, -0.797 (0.797), 6.2e-01, 0.001–0.059, 0.27 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 100000 | 6 | 2 (-0.379) | 2 | 0.058 | 0 | 1.62 | 1.2e-06 | 6.2e-01 (+0.62), 1.7e-04 (-0.00014) | 4, -0.791 (0.791), 6.2e-01, 0.001–0.059, 0.27 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 1600 | 7 | 6 (-0.403) | 0 | 0.038 | 0 | 1.01 | 2.3e-02 | —, 2.8e+00 (+0.011) | 6, -1.926 (1.926), 6.1e-01, 0.038–0.113, 0.40 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 6400 | 13 | 12 (-0.474) | 0 | 0.025 | 0 | 0.991 | 1.7e-02 | —, 5.6e+00 (-0.0086) | 12, -3.883 (3.883), 8.0e-01, 0.025–0.224, 0.74 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 25000 | 13 | 7 (-0.645) | 4 | 0.034 | 0 | 2.59 | 5.8e-06 | 1.6e+00 (+1.6), 2.8e-03 (-0.0028) | 11, -3.255 (3.255), 1.9e+00, 0.000–0.058, 0.28 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 100000 | 13 | 7 (-0.631) | 4 | 0.036 | 0 | 2.69 | 2.1e-06 | 1.7e+00 (+1.7), 1.5e-03 (-0.0015) | 11, -3.183 (3.183), 1.9e+00, 0.000–0.058, 0.28 |
 
-### HLL. HL's cells to τ = 10⁹ (referee rounds 74, 80)
+### HLL. HL's cells to τ = 10⁹ (referee rounds 74, 80, 83)
 
-HL's columns, and the fit's split: per feature its main kernel's largest relative error in (c, σ, w); the other formed kernels — their number, Σ\|w\|, their sum's largest value on the samples over max f* (a null cluster where it is small against the residual), their widths and their centres' largest \|c\|:
+HL's columns, and the fit's split (`fit_split`, referee round 83: the main kernels the assignment minimizing the largest error): per feature its main kernel's largest relative error in (c, σ, w) and its signed w/A − 1 (inflated: a cancellation; deficient: a split); the other formed kernels — their number, Σw and Σ\|w\|, their sum's largest value on the samples over max f* (a null cluster where it is small against the residual), their widths and their centres' largest \|c\|:
 
-| target | ε | τ | formed | visible of the other sign (most negative w) | invisible | smallest visible width | outside the window | max\|w\| | residual | the main kernels' errors | the others: n, Σ\|w\|, on the samples, widths, \|c\| max |
+| target | ε | τ | formed | visible of the other sign (most negative w) | invisible | smallest visible width | outside the window | max\|w\| | residual | the main kernels' errors (w/A − 1) | the others: n, Σw (Σ\|w\|), on the samples, widths, \|c\| max |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0 | 0.043 | 0 | 0.705 | 2.5e-05 | 3.0e-01, 3.0e-01 | 9, 0.676, 3.5e-01, 0.043–0.168, 0.36 |
-| σ* 0.06, equal | 1e-06 | 1e+06 | 11 | 8 (-0.036) | 0 | 0.041 | 0 | 0.783 | 7.1e-06 | 2.2e-01, 2.2e-01 | 9, 0.494, 2.5e-01, 0.041–0.169, 0.32 |
-| σ* 0.06, equal | 1e-06 | 1e+07 | 11 | 8 (-0.025) | 0 | 0.039 | 0 | 0.839 | 2.3e-06 | 1.6e-01, 1.6e-01 | 9, 0.362, 1.9e-01, 0.039–0.175, 0.29 |
-| σ* 0.06, equal | 1e-06 | 1e+08 | 11 | 8 (-0.019) | 0 | 0.040 | 0 | 0.88 | 6.5e-07 | 1.2e-01, 1.2e-01 | 9, 0.271, 1.4e-01, 0.040–0.180, 0.32 |
-| σ* 0.06, equal | 1e-06 | 1e+09 | 9 | 6 (-0.014) | 0 | 0.043 | 0 | 0.909 | 1.8e-07 | 9.1e-02, 9.1e-02 | 7, 0.185, 1.1e-01, 0.043–0.184, 0.29 |
-| σ* 0.06, equal | 1e-08 | 100000 | 15 | 12 (-0.208) | 0 | 0.059 | 2 | 0.929 | 9.8e-06 | 7.1e-02, 7.1e-02 | 13, 1.936, 8.6e-02, 0.069–1.592, 1.69 |
-| σ* 0.06, equal | 1e-08 | 1e+06 | 13 | 10 (-0.206) | 0 | 0.060 | 2 | 0.996 | 7.8e-07 | 4.3e-03, 4.3e-03 | 11, 1.903, 5.3e-03, 0.204–1.718, 1.84 |
-| σ* 0.06, equal | 1e-08 | 1e+07 | 13 | 10 (-0.205) | 0 | 0.060 | 2 | 1 | 1.2e-07 | 5.0e-04, 5.0e-04 | 11, 1.902, 6.3e-04, 0.247–1.800, 1.94 |
-| σ* 0.06, equal | 1e-08 | 1e+08 | 13 | 10 (-0.205) | 0 | 0.060 | 2 | 1 | 2.3e-08 | 7.6e-05, 7.6e-05 | 11, 1.902, 1.0e-04, 0.282–1.878, 2.04 |
-| σ* 0.06, equal | 1e-08 | 1e+09 | 13 | 10 (-0.204) | 0 | 0.060 | 2 | 1 | 5.4e-09 | 1.4e-05, 1.4e-05 | 11, 1.902, 2.2e-05, 0.314–1.953, 2.13 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 6 (-0.539) | 6 | 0.040 | 0 | 2.38 | 1.8e-06 | 1.4e+00, 1.5e-03 | 12, 2.784, 1.6e+00, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+06 | 14 | 6 (-0.526) | 6 | 0.043 | 0 | 2.48 | 4.4e-07 | 1.5e+00, 6.5e-04 | 12, 2.722, 1.7e+00, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+07 | 14 | 6 (-0.515) | 6 | 0.045 | 0 | 2.55 | 1.2e-07 | 1.6e+00, 2.8e-04 | 12, 2.671, 1.7e+00, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+08 | 14 | 6 (-0.506) | 6 | 0.047 | 0 | 2.62 | 3.0e-08 | 1.6e+00, 1.2e-04 | 12, 2.630, 1.7e+00, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+09 | 14 | 6 (-0.498) | 6 | 0.049 | 0 | 2.67 | 7.9e-09 | 1.7e+00, 5.0e-05 | 12, 2.595, 1.8e+00, 0.000–0.059, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 | 8.2e-01, 7.7e-04 | 6, 1.218, 9.2e-01, 0.001–0.058, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+06 | 8 | 3 (-0.407) | 3 | 0.055 | 0 | 1.86 | 6.1e-07 | 8.6e-01, 2.3e-04 | 6, 1.198, 9.2e-01, 0.000–0.058, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+07 | 8 | 3 (-0.402) | 3 | 0.056 | 0 | 1.89 | 1.3e-07 | 8.9e-01, 6.7e-05 | 6, 1.184, 9.2e-01, 0.000–0.059, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+08 | 8 | 3 (-0.398) | 3 | 0.057 | 0 | 1.91 | 2.9e-08 | 9.1e-01, 1.9e-05 | 6, 1.175, 9.2e-01, 0.000–0.059, 0.26 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+09 | 8 | 3 (-0.395) | 3 | 0.058 | 0 | 1.92 | 6.2e-09 | 9.2e-01, 5.3e-06 | 6, 1.168, 9.2e-01, 0.000–0.059, 0.26 |
+| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0 | 0.043 | 0 | 0.705 | 2.5e-05 | 3.0e-01 (-0.3), 3.0e-01 (-0.3) | 9, +0.036 (0.676), 3.5e-01, 0.043–0.168, 0.36 |
+| σ* 0.06, equal | 1e-06 | 1e+06 | 11 | 8 (-0.036) | 0 | 0.041 | 0 | 0.783 | 7.1e-06 | 2.2e-01 (-0.22), 2.2e-01 (-0.22) | 9, +0.030 (0.494), 2.5e-01, 0.041–0.169, 0.32 |
+| σ* 0.06, equal | 1e-06 | 1e+07 | 11 | 8 (-0.025) | 0 | 0.039 | 0 | 0.839 | 2.3e-06 | 1.6e-01 (-0.16), 1.6e-01 (-0.16) | 9, +0.025 (0.362), 1.9e-01, 0.039–0.175, 0.29 |
+| σ* 0.06, equal | 1e-06 | 1e+08 | 11 | 8 (-0.019) | 0 | 0.040 | 0 | 0.88 | 6.5e-07 | 1.2e-01 (-0.12), 1.2e-01 (-0.12) | 9, +0.016 (0.271), 1.4e-01, 0.040–0.180, 0.32 |
+| σ* 0.06, equal | 1e-06 | 1e+09 | 9 | 6 (-0.014) | 0 | 0.043 | 0 | 0.909 | 1.8e-07 | 9.1e-02 (-0.091), 9.1e-02 (-0.091) | 7, +0.033 (0.185), 1.1e-01, 0.043–0.184, 0.29 |
+| σ* 0.06, equal | 1e-08 | 100000 | 15 | 12 (-0.208) | 0 | 0.059 | 2 | 0.929 | 9.8e-06 | 7.1e-02 (-0.071), 7.1e-02 (-0.071) | 13, -1.046 (1.936), 8.6e-02, 0.069–1.592, 1.69 |
+| σ* 0.06, equal | 1e-08 | 1e+06 | 13 | 10 (-0.206) | 0 | 0.060 | 2 | 0.996 | 7.8e-07 | 4.3e-03 (-0.0043), 4.3e-03 (-0.0043) | 11, -0.995 (1.903), 5.3e-03, 0.204–1.718, 1.84 |
+| σ* 0.06, equal | 1e-08 | 1e+07 | 13 | 10 (-0.205) | 0 | 0.060 | 2 | 1 | 1.2e-07 | 5.0e-04 (-0.0005), 5.0e-04 (-0.0005) | 11, -0.984 (1.902), 6.3e-04, 0.247–1.800, 1.94 |
+| σ* 0.06, equal | 1e-08 | 1e+08 | 13 | 10 (-0.205) | 0 | 0.060 | 2 | 1 | 2.3e-08 | 7.6e-05 (-7.6e-05), 7.6e-05 (-7.6e-05) | 11, -0.974 (1.902), 1.0e-04, 0.282–1.878, 2.04 |
+| σ* 0.06, equal | 1e-08 | 1e+09 | 13 | 10 (-0.204) | 0 | 0.060 | 2 | 1 | 5.4e-09 | 1.4e-05 (-1.4e-05), 1.4e-05 (-1.4e-05) | 11, -0.964 (1.902), 2.2e-05, 0.314–1.953, 2.13 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 6 (-0.539) | 6 | 0.040 | 0 | 2.38 | 1.8e-06 | 1.4e+00 (+1.4), 1.5e-03 (-0.0015) | 12, -2.784 (2.784), 1.6e+00, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+06 | 14 | 6 (-0.526) | 6 | 0.043 | 0 | 2.48 | 4.4e-07 | 1.5e+00 (+1.5), 6.5e-04 (-0.00065) | 12, -2.722 (2.722), 1.7e+00, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+07 | 14 | 6 (-0.515) | 6 | 0.045 | 0 | 2.55 | 1.2e-07 | 1.6e+00 (+1.6), 2.8e-04 (-0.00028) | 12, -2.671 (2.671), 1.7e+00, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+08 | 14 | 6 (-0.506) | 6 | 0.047 | 0 | 2.62 | 3.0e-08 | 1.6e+00 (+1.6), 1.2e-04 (-0.00012) | 12, -2.630 (2.630), 1.7e+00, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+09 | 14 | 6 (-0.498) | 6 | 0.049 | 0 | 2.67 | 7.9e-09 | 1.7e+00 (+1.7), 5.0e-05 (-5e-05) | 12, -2.595 (2.595), 1.8e+00, 0.000–0.059, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 | 8.2e-01 (+0.82), 7.7e-04 (-0.00074) | 6, -1.218 (1.218), 9.2e-01, 0.001–0.058, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+06 | 8 | 3 (-0.407) | 3 | 0.055 | 0 | 1.86 | 6.1e-07 | 8.6e-01 (+0.86), 2.3e-04 (-0.00023) | 6, -1.198 (1.198), 9.2e-01, 0.000–0.058, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+07 | 8 | 3 (-0.402) | 3 | 0.056 | 0 | 1.89 | 1.3e-07 | 8.9e-01 (+0.89), 6.7e-05 (-6.7e-05) | 6, -1.184 (1.184), 9.2e-01, 0.000–0.059, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+08 | 8 | 3 (-0.398) | 3 | 0.057 | 0 | 1.91 | 2.9e-08 | 9.1e-01 (+0.91), 1.9e-05 (-1.9e-05) | 6, -1.175 (1.175), 9.2e-01, 0.000–0.059, 0.26 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 1e+09 | 8 | 3 (-0.395) | 3 | 0.058 | 0 | 1.92 | 6.2e-09 | 9.2e-01 (+0.92), 5.3e-06 (-5.3e-06) | 6, -1.168 (1.168), 9.2e-01, 0.000–0.059, 0.26 |
+
+The others' sum on the samples (referee round 83): its fall per decade of τ, and at the last τ against the residual's rms, both over max f* (a null cluster where the sum is the smaller): σ* 0.06, equal at 1e-06: ×1.36, 1.36, 1.34, 1.32; at τ = 1e+09 1.1e-01 against 1.8e-07 (1% of max f* after 8.5 more decades at the last decade's rate); σ* 0.06, equal at 1e-08: ×16.2, 8.41, 6.14, 4.68; at τ = 1e+09 2.2e-05 against 5.3e-09; σ* 0.06, A₂ 0.99 at 1e-08: ×0.975, 0.978, 0.984, 0.985; at τ = 1e+09 1.8e+00 against 7.7e-09; σ* 0.06, A₂ 0.95 at 1e-06: ×0.999, 0.996, 1, 0.996; at τ = 1e+09 9.2e-01 against 6.0e-09.
 
 Numbers are produced by `experiments/exp_moving_width.py`; nothing is edited by hand.
