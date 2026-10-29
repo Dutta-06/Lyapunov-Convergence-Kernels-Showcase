@@ -253,10 +253,12 @@ def test_h_statistics():
     and over all the end's kernels those narrower than the samples' spacing and those of negative width."""
     import exp_moving_width as M
     As = (1.0, 0.9)
-    ws = [np.array([0.5, -0.005]), np.array([1.0, -0.02, -0.3, 0.9]), np.array([1.0, -0.4])]
+    vis = lambda n: np.c_[np.linspace(-0.2, 0.2, n), np.full(n, 0.06)]
+    blocks = [(vis(2), np.array([0.5, -0.005])), (vis(4), np.array([1.0, -0.02, -0.3, 0.9])), (vis(2), np.array([1.0, -0.4]))]
     m = dict(w=[1.0, -0.2, 0.9, 1e-4, -2e-4], theta=[[-0.08, 0.06], [0.0, 0.05], [0.08, 0.07], [0.3, 0.004], [0.4, -0.003]])
-    h = M.h_stats(ws, m, As)
-    assert h == dict(neg_path=2, wmin_path=-0.4, neg_end=1, smin=0.05, sub=2, negw=1, wmax=1.0)
+    h = M.h_stats(blocks, m, As)
+    assert h == dict(neg_path=2, wmin_path=-0.4, neg_end=1, neg_end_all=1, smin=0.05, sub=2, negw=1, sub_formed=0, negw_formed=0,
+                     inv_formed=0, wmax=1.0)
     cl = M.clusters(m, [-0.08, 0.08], [0.06, 0.06], As)
     assert [n for n, x in cl] == [2, 1] and abs(cl[0][1] - (0.06 - 0.2 * 0.05) / 0.06) < 1e-12 and abs(cl[1][1] - 0.9 * 0.07 / (0.9 * 0.06)) < 1e-12
 
@@ -344,9 +346,10 @@ def test_h_stats_counts_negatives_below_one_percent_of_the_smallest_amplitude():
     """Referee round 68 (H1, H7): a block's only negative at −0.5% of the smallest amplitude is not counted, one at −2% is; the
     threshold is the smallest amplitude's, not the largest's."""
     m = dict(w=[1.0, -0.005], theta=[[0.0, 0.06], [0.1, 0.06]])
-    r = MWE.h_stats([np.array([1.0, -0.005])], m, (1.0, 0.6))
+    th = np.array(m['theta'])
+    r = MWE.h_stats([(th, np.array([1.0, -0.005]))], m, (1.0, 0.6))
     assert r['neg_path'] == 0 and r['neg_end'] == 0 and r['wmin_path'] == -0.005
-    r = MWE.h_stats([np.array([1.0, -0.008])], dict(m, w=[1.0, -0.008]), (1.0, 0.6))
+    r = MWE.h_stats([(th, np.array([1.0, -0.008]))], dict(m, w=[1.0, -0.008]), (1.0, 0.6))
     assert r['neg_path'] == 1 and r['neg_end'] == 1                    # −0.008 is beyond 1% of 0.6, not of 1.0
 
 
@@ -465,3 +468,249 @@ def test_c_table_counts_a_budget_stop_at_its_stalled_block():
             assert np.isclose(rms, st['rms'], rtol=1e-9, atol=0) and k == int(np.sum(np.abs(r['moving']['stalled']['w']) > 1e-2 * min(abs(a) for a in r['As'])))
             n += 1
     assert n == 6
+
+
+def test_visibility_and_h_stats_count_only_visible_kernels():
+    """Referee round 74 (D3bu-2): a kernel is visible on the samples if its largest φ there is at least VIS — a spike between two
+    samples (σ = 3·10⁻⁴, 0.005 from the nearest) is not, one of largest φ ≈ 3.7·10⁻⁶ (σ = 10⁻³) is —; H's negative kernels along the
+    path and at the end count the visible only (the end's formed ones of the other sign including the invisible in neg_end_all), the
+    formed invisible ones are counted, and the end's sub-sample and negative-width kernels with how many are formed."""
+    v = MWE.visibility([[0.005, 3e-4], [0.005, 1e-3], [0.0, 0.06], [0.2, 0.0]])
+    assert v[0] < MWE.VIS < v[1] and abs(v[1] - np.exp(-0.005 ** 2 / (2e-6))) < 1e-18 and v[2] == 1.0 and v[3] == 0.0
+    th = np.array([[-0.08, 0.06], [0.005, 3e-4], [0.08, 0.06], [0.3, -0.06]])
+    w = np.array([1.2, -0.7, 1.1, -0.3])
+    r = MWE.h_stats([(th, w)], dict(theta=th.tolist(), w=w.tolist()), (1.0, 1.0))
+    assert (r['neg_path'], r['wmin_path'], r['neg_end'], r['neg_end_all'], r['inv_formed']) == (1, -0.3, 1, 2, 1)
+    assert (r['sub'], r['sub_formed'], r['negw'], r['negw_formed']) == (1, 1, 1, 1) and r['smin'] == 0.06 and r['wmax'] == 1.2
+
+
+def test_path_stop_reasons():
+    """Referee round 74: why a path ended — its tolerance, its budget, the dictionary exhausted, the events' cap, no entrant."""
+    h = lambda rms: [(0.0, None, None, 1.0), (1.0, None, None, rms)]
+    act = np.ones(21, bool)
+    assert MWE.path_stop(dict(hist=h(1e-10), out_of_budget=True, act=act), 1e-9) == 'tolerance'
+    assert MWE.path_stop(dict(hist=h(1e-6), out_of_budget=True, act=act), 1e-9) == 'budget'
+    assert MWE.path_stop(dict(hist=h(1e-6), out_of_budget=False, act=act), 1e-9) == 'dictionary'
+    act[3] = False
+    assert MWE.path_stop(dict(hist=h(1e-6) * 20, out_of_budget=False, act=act), 1e-9) == 'events'
+    assert MWE.path_stop(dict(hist=h(1e-6), out_of_budget=False, act=act), 1e-9) == 'no entrant'
+
+
+def test_h_job_passes_its_polish_and_tolerance_and_clusters_unequal_amplitudes(monkeypatch):
+    """Referee round 74 (HJ1, HJ2, HJ5, HJ6): `h_job` with (…, None, False) runs the path without the polish at the tolerance 1e-9, with
+    a tolerance at that one with the polish; its stop and its clusters' masses Σw_i|σ_i|/(A_kσ_k) with unequal amplitudes."""
+    seen = []
+    th = np.array([[-0.08, 0.06], [0.081, 0.061], [0.5, 0.06]])
+    w = np.array([1.0, 0.6, 0.0])
+
+    def fake(L, K, f, c0, rho, **kw):
+        seen.append(kw)
+        act = np.array([True, True] + [False] * (c0.shape[0] - 2))
+        c = np.array(c0, float); c[:2] = th[:2]
+        ww = np.zeros(c0.shape[0]); ww[:2] = w[:2]
+        return dict(act=act, c=c, w=ww, hist=[(0.0, c, np.zeros_like(ww), 1.0), (1.0, c, ww, 2e-10)], events=[(1.0, 0, 'enter', c[0])],
+                    out_of_budget=False, nfev=10, polish_log=[], stalled=None)
+    monkeypatch.setattr(MWE.RN, 'sliding_iss_nd', fake)
+    name, cs, ss, As = 'x', (-0.08, 0.08), (0.06, 0.06), (1.0, 0.6)
+    r = MWE.h_job((name, cs, ss, As, None, False))
+    assert seen[-1]['polish'] is False and seen[-1]['tol'] == 1e-9 and r['polish'] is False and r['stop'] == 'tolerance'
+    r = MWE.h_job((name, cs, ss, As, 1e-13))
+    assert seen[-1]['polish'] is True and seen[-1]['tol'] == 1e-13 and r['stop'] == 'no entrant'
+    assert r['clusters'] == [(1, 1.0 * 0.06 / (1.0 * 0.06)), (1, 0.6 * 0.061 / (0.6 * 0.06))]
+
+
+def test_stop_anatomy_counts_a_faint_kernel_as_visible():
+    """Referee round 74 (SA4): a kernel of largest φ ≈ 10⁻⁶ on the samples is visible (VIS = 10⁻¹⁰), one between samples with
+    σ = 3·10⁻⁴ is not."""
+    c = np.array([[0.005, 1.2e-3], [0.005, 3e-4], [0.0, 0.06]])
+    r = MWE.stop_anatomy(dict(act=np.array([True, True, True]), c=c, polish_log=[]))
+    assert r['invisible'] == 1 and MWE.visibility(c[:1])[0] > 1e-7
+
+
+def test_d3phi_and_the_third_order_k():
+    """Referee round 74: `d3phi` is the third derivative of φ(θ̄ + tp) in t (against differences), and `k_third` is the dipole's K: a
+    pair at v, w = W/2 ± v, Δθ = p/v about the optimal dipole fit's θ̄ (`closure_fit`) has v²(E − E_inf) → K, the error falling like
+    1/v."""
+    K = MW.BumpsCW(MWE.XS, MWE.S0)
+    tb, p = np.array([0.05, 0.11]), np.array([0.013, -0.007])
+    ph = lambda t: K.phi((tb + t * p)[None, :])[:, 0]
+    h = 1e-3
+    fd = (ph(2 * h) - 2 * ph(h) + 2 * ph(-h) - ph(-2 * h)) / (2 * h ** 3)
+    assert np.abs(MWE.d3phi(tb, p) - fd).max() < 1e-4 * np.abs(fd).max()
+    f = MWE.feature_sum([0.0, 0.03], [0.06, 0.05], [1.0, -0.6])
+    cf = MWE.closure_fit(K, f, np.zeros((0, 2)), np.zeros(0), 0.4, np.array([0.015, 0.06]), np.array([0.015, 0.0]))
+    k = MWE.k_third(cf['r'], cf['tb'], cf['p'])
+    e_inf = np.mean(cf['r'] ** 2) / 2
+
+    def est(v):
+        d = cf['p'] / v
+        g = K.synth(np.array([cf['tb'] + d / 2, cf['tb'] - d / 2]), np.array([cf['W'] / 2 + v, cf['W'] / 2 - v]))
+        return v ** 2 * (np.mean((f - g) ** 2) / 2 - e_inf)
+    e1, e2 = abs(est(30.0) / k - 1), abs(est(300.0) / k - 1)       # beyond v ~ 10³ the pair's cancellation rounds E − E_inf
+    assert e2 < 0.05 * e1 and e2 < 1e-3 and k != 0 and np.sqrt(2 * e_inf) < 1e-3
+
+
+def test_first_wall_and_kappa_from_the_path():
+    """Referee round 74: `first_wall` — the first inactive dual to reach ±1 at the correlations v —; `kappa_from_path` on target 9 (G's
+    raw block): K from the third order is G's v²(E − E_inf), τ₃ and τ₄ within the fine grid's step of the loop's at the smallest mass,
+    κ within 0.5% of the loop's."""
+    j, t = MWE.first_wall(np.array([0.5, -0.2, 0.9]), np.array([False, True, False]), np.array([0.1, 1.0, -0.5]))
+    assert j == 2 and abs(t - 3.8) < 1e-12
+    assert MWE.first_wall(np.zeros(2), np.array([True, False]), np.array([1.0, 0.0])) == (None, float('inf'))
+    raw = MWE.E.load(RAW_MW)
+    g = next(r for r in raw['G'] if r['q'] == 9)
+    K, L = MW.BumpsCW(MWE.XS, MWE.S0), MWE.law()
+    f = MWE.feature_sum(g['cs'], g['ss'], g['As'])
+    R = MWE.RN.sliding_iss_nd(L, K, f, MWE.theta0(), np.ones(MWE.C0.size), max_entries=int(g['entries']), exit_kkt=True)
+    o = MWE.kappa_from_path(K, f, R, g['flow'][-1]['theta'], g['flow'][-1]['w'])
+    lw = g['law'][-1]
+    ph = g['fine'][min(g['fine'])]
+    assert abs(o['K_third'] / (lw['v'] ** 2 * (lw['E'] - lw['E_inf'])) - 1) < 1e-4
+    assert abs(o['t3_path'] - ph['t3']) < 0.1 and abs(o['t4_path'] - ph['t4']) < 0.2
+    assert abs(o['kappa_path'] / (ph['v_land'] / ph['v3']) - 1) < 5e-3
+    assert abs(o['kappa_path'] ** 3 - 1 - o['Kp'] * (o['t4_path'] - o['t3_path']) / (o['K_third'] * (o['t3_path'] - g['tau_d']))) < 1e-9
+    assert o['t3_path'] == MWE.t3_from_duals(K, f, R, g['flow'][-1]['theta'], g['flow'][-1]['w'])
+
+
+def test_part_gt_takes_the_status_zero_entries(monkeypatch):
+    """Referee round 74 (PG1): GT runs on G's entries whose block flow ended (status 0), not the others."""
+    got = []
+    monkeypatch.setattr(MWE, 'gt_job', lambda a: got.append(a[0]) or dict(q=a[0]))
+    G = [dict(q=q, status=st, cs=[0.0], ss=[0.1], As=[1.0], entries=2, flow=[dict(theta=[[0.0, 0.1]], w=[1.0])]) for q, st in ((1, 0), (2, -1), (3, 0))]
+    assert [x['q'] for x in MWE.part_GT(G)] == [1, 3] and got == [1, 3]
+
+
+def test_fine_phases_counts_a_sigma_dipole_with_its_width_difference():
+    """Referee round 74 (FP6, FP8, FP11, FP13): p takes |Δθ| — a landed σ-dipole (Δc = 0, Δσ ≠ 0) with 0.28 < p < 1 disagrees with the
+    landing —, a state with 0.28 < p < 1 off the features agrees, states with p ≥ 1 are not counted; the dipole phase's v is kept at
+    every tenth time with the last one's time; the intermediate phase's v and the sign of its (W − A)/|A|."""
+    cs, ss, As = [0.0, 0.5], [0.06, 0.06], [1.0, 0.8]
+    sts = []
+    for k in range(25):                                                 # the dipole phase: p ≥ 1, off the features
+        v = (0.5 * (k + 1)) ** (1 / 3)
+        sts.append((6.0 + k, np.array([[0.2 - 0.05, 0.06], [0.2 + 0.05, 0.06]]), np.array([1.0 + v, -v])))
+    third = [[0.5, 0.06]]
+    for k in range(30):                                                 # τ₃ = 31 … 60: three formed, the pair at W = 0.5 off the features
+        v = (sts[-1][2][0] - sts[-1][2][1]) / 2 + 0.01 * k
+        sts.append((31.0 + k, np.r_[np.array([[0.3, 0.06], [0.31, 0.06]]), third], np.array([0.25 + v, 0.25 - v, 0.8])))
+    land = np.array([[0.0, 0.06], [0.0001, 0.06], [0.5, 0.06], [0.9, 0.06]])
+    sts.append((61.0, land, np.array([1.05, -0.05, 0.8, 0.02])))          # τ₄, landed (p small)
+    sts.append((62.0, np.array([[0.0, 0.065], [0.0, 0.055], [0.5, 0.06], [0.9, 0.06]]), np.array([2.0, -1.0, 0.8, 0.02])))  # σ-dipole
+    sts.append((63.0, np.array([[0.1, 0.06], [0.106, 0.06], [0.5, 0.06], [0.9, 0.06]]), np.array([2.0, -1.0, 0.8, 0.02])))  # off, p 0.3
+    r = MWE.fine_phases(sts, 2, 5.0, cs, ss, As)
+    assert (r['t3'], r['t4'], r['t_v3']) == (31.0, 61.0, 30.0) and [t for t, v in r['dip']] == [6.0, 16.0, 26.0]
+    assert [t for t, v in r['dip2']][:3] == [31.0, 41.0, 51.0] and r['dip2'][-1][0] == 60.0
+    assert r['inter']['n'] == 3 and r['inter']['dW'] < 0 and r['t_land'] == 61.0
+    p62 = MWE.pair_p(sts[-2][1], sts[-2][2], 0, 1)
+    assert abs(p62 - 3 * 0.01 / (1.0 * 0.06)) < 1e-12 and 0.28 < p62 < 1
+    assert abs(MWE.pair_p(sts[-1][1], sts[-1][2], 0, 1) - 0.3) < 1e-9
+    # counted: τ = 61 (landed, p small: agrees), 62 (landed, p 0.5: disagrees), 63 (not landed, p 0.3: agrees); p ≥ 1 elsewhere
+    assert r['agree'] == (2, 3) and r['agree4'] == (1, 2)
+
+
+def test_gl_job_and_its_constant(monkeypatch):
+    """Referee round 74 (GJ1, GJ3, GJ4): `gl_job` reads the loop's states (`loop_nd` monkeypatched) — the dipole pair's Δc, w_a, w_b,
+    mean width and nearest amplitude, E of all kernels and of the formed ones, Λ, Gm, μ₀ —; `gl_constant` on rows on the law
+    Δc⁻⁶ = Δc_L⁻⁶ + 48aGm(W²/(w_a² + w_b²))Λτ is 1 (C = 0 at W = A) and its C is Gm W²(W − A)²(1/|w_a| + 1/|w_b|)/(μ₀Δc²(w_a² + w_b²))."""
+    cs, ss, As = [0.0], [0.06], [1.0]
+    taus = (400.0, 800.0)
+    monkeypatch.setattr(MWE, 'TAUS_GL', taus)
+    dcs = (2e-3, 1e-3)
+    Wt = [np.zeros(3)] + [np.array([3.0, -2.0, 1e-4]) for _ in taus]
+    Ct = [np.zeros((3, 2))] + [np.array([[-0.4 * d, 0.06], [0.6 * d, 0.06], [0.5, 0.06]]) for d in dcs]
+    monkeypatch.setattr(MWE.RN, 'loop_nd', lambda *a, **k: (None, Wt, Ct, 77.0, None))
+    g = MWE.gl_job((5, cs, ss, As))
+    K, L = MW.BumpsCW(MWE.XS, MWE.S0), MWE.law()
+    f = MWE.feature_sum(cs, ss, As)
+    x = g['rows'][1]
+    assert g['Lam'] == 77.0 and g['Gm'] == L.G * L.m and g['mu0'] == 4 * L.G * L.c / L.A and g['q'] == 5
+    assert abs(x['dc'] - 1e-3) < 1e-15 and (x['wa'], x['wb'], x['sbar'], x['A']) == (3.0, -2.0, 0.06, 1.0)
+    assert np.isclose(x['E'], np.mean((f - K.synth(Ct[2], Wt[2])) ** 2) / 2) and np.isclose(x['E_formed'], np.mean((f - K.synth(Ct[2][:2], Wt[2][:2])) ** 2) / 2)
+    Gm, mu0, Lam, a = 12.0, 0.1, 50.0, 3e6
+    wa, wb = 3.0, -2.0
+    R = 48 * a * Gm * 1.0 / (wa ** 2 + wb ** 2) * Lam
+    row = lambda t, dW=0.0: dict(tau=t, dc=(1e14 + R * t) ** (-1 / 6), wa=wa, wb=wb, sbar=0.06, A=1.0, dW=dW,
+                                 E=a * (1e14 + R * t) ** (-8 / 6))
+    p, r0, r1, c = MWE.gl_constant(row(100.0), row(200.0), Gm, mu0, Lam)
+    assert abs(r0 - 1) < 1e-9 and abs(r1 - 1) < 1e-9 and c == 0.0
+    x1 = row(200.0, dW=-0.01)
+    p, r0, r1, c = MWE.gl_constant(row(100.0, dW=-0.01), x1, Gm, mu0, Lam)
+    x0 = row(100.0, dW=-0.01)
+    cc = lambda x: Gm * 1.0 * 0.01 ** 2 * (1 / 3 + 1 / 2) / (mu0 * x['dc'] ** 2 * 13.0)
+    rate = lambda x: 48 * x['E'] / x['dc'] ** 8 * Gm * 1.0 / 13.0 * Lam
+    meas = (x1['dc'] ** -6 - x0['dc'] ** -6) / 100.0
+    assert abs(c - cc(x1)) < 1e-9 * c and abs(r0 - 1) < 1e-9
+    assert abs(r1 - meas / (0.5 * (rate(x0) / (1 + cc(x0)) + rate(x1) / (1 + cc(x1))))) < 1e-9 * r1 and r1 > r0
+    assert abs(p - 5.0 * x1['dc'] / 0.06) < 1e-12
+
+
+def test_a2_one_kernel_from_large_coefficients():
+    """Referee round 74 (D3bu-5): from (c*, σ*) with w = 3A (E(start) four times ½⟨f*²⟩, outside (i)'s condition) the one-kernel block
+    still converges to the exact fit; with 10A it ends as a spike (σ ≪ σ*, E near ½⟨f*²⟩); A2's table."""
+    r3, r10 = MWE.a2_job((1.0, 3.0)), MWE.a2_job((1.0, 10.0))
+    e3, e10 = r3['rows'][-1], r10['rows'][-1]
+    assert r3['E0'] == 4.0 and abs(e3['w'] - 1) < 1e-8 and abs(e3['sig'] - 1) < 1e-8 and e3['E'] < 1e-20
+    assert e10['sig'] < 0.1 and e10['E'] > 0.5 and min(x['sig'] for x in r3['rows']) < 0.1
+    md = '\n'.join(MWE.a2_lines([r3, r10]))
+    assert f"| 1 | 3 | 4 | {e3['w']:.4f}, {e3['sig']:.4g}, {e3['dc']:+.1e}, {e3['E']:.2e} (s = 1e+09) |" in md
+    assert MWE.a2_lines(None) == [] and MWE.a2_lines([]) == []
+
+
+def test_loop_row_counts_visible_kernels_and_hll_job(monkeypatch):
+    """Referee round 74 (R8, D3bu-2): HL's row counts the visible formed kernels of the other sign and the invisible formed ones;
+    `hll_job` keeps the loop's kernels above 1% of the smallest amplitude (one at 0.5% is not formed)."""
+    x = dict(tau=1e5, theta=[[-0.08, 0.06], [0.005, 3e-4], [0.08, 0.06], [2.0, 0.06]], w=[1.2, -0.7, -0.3, 0.5], wmax=1.2, rms=2e-6)
+    assert MWE.loop_row('t', 1e-8, x) == "| t | 1e-08 | 100000 | 4 | 1 (-0.300) | 1 | 0.060 | 1 | 1.2 | 2.0e-06 |"
+    monkeypatch.setattr(MWE, 'TAUS_HLL', (10.0,))
+    Wt = [np.zeros(3), np.array([1.0, -0.005, 0.02])]
+    Ct = [np.zeros((3, 2)), np.array([[-0.08, 0.06], [0.0, 0.06], [0.08, 0.06]])]
+    monkeypatch.setattr(MWE.RN, 'loop_nd', lambda *a, **k: (None, Wt, Ct, 1.0, None))
+    r = MWE.hll_job(('σ* 0.06, equal', 1e-6))
+    assert r['loops'][0]['w'] == [1.0, 0.02] and r['loops'][0]['wmax'] == 1.0 and r['eps'] == 1e-6
+
+
+def test_g_fine_lines_and_gl_lines_on_synthetic_results():
+    """Referee round 74: the fine-grid table evaluates the dipole law at the time of v(τ₃⁻) and the intermediate phase's slopes over
+    3μ₀K′Λ; the path's row (GT: K, K′/K, τ₃, τ₄, κ, the landing's v by the law, v after τ₄); κ against the mass and the agreement's
+    counts (all, ε ≤ 10⁻⁷, past τ₄); GL's constant table and its ranges."""
+    Lam, mu0, K_, Kp = 1e3, 0.1, 2e-3, -4e-4
+    rate = 3 * mu0 * K_ * Lam
+    t_d, t3, t4 = 10.0, 20.0, 30.0
+    dip = [(t, (rate * (t - t_d)) ** (1 / 3)) for t in (11.0, 15.0, 19.9)]
+    v3 = dip[-1][1]
+    dip2 = [(t, (v3 ** 3 + 3 * mu0 * Kp * Lam * (t - t3)) ** (1 / 3)) for t in (20.0, 25.0, 29.9)]
+    ph = dict(t3=t3, t4=t4, v3=v3, t_v3=19.9, dip=dip, dip2=dip2, inter=dict(n=3, off=2.5, dW=-0.4), t_land=31.0, v_land=0.97 * v3,
+              p_land=0.1, agree=(5, 6), agree4=(2, 3))
+    th = [[0.0, 0.06], [0.001, 0.06], [0.5, 0.06]]
+    loops = [dict(eps=1e-10, tau=6400.0, Lam=Lam, theta=th, w=[0.97 * v3 + 0.5, -0.97 * v3 + 0.5, 0.8], wmax=1.0, rms=1e-9)]
+    G = [dict(q=4, dmin=0.4, cs=[0.0, 0.5], ss=[0.06, 0.06], As=[1.0, 0.8], entries=2, tau_d=t_d, status=0, loops=loops,
+              law=[dict(v=10.0, E=K_ / 100.0 + 0.5, E_inf=0.5, mu0=mu0)], fine={1e-6: dict(ph, agree=(1, 4)), 1e-10: ph})]
+    GT = [dict(q=4, t3_pred=19.95, K_third=K_ * (1 + 1e-5), Kp=Kp, t3_path=19.95, t4_path=29.95, kappa_path=0.96)]
+    md = '\n'.join(MWE.g_fine_lines(G, GT))
+    lam6 = MWE.RT.transit_scale(MWE.law(), 1e-6)
+    assert f"| 4 | 1e-10 | 10 | 20 | 30 | 1.0000 | 1.0000 | 3, 2.5, -0.400, 1.0000 | 31, 0.970, 0.100 |" in md
+    assert f"| 4 | 1e-06 | 10 | 20 | 30 | {(1.0 * Lam / lam6):.4f} |" in md
+    vl = (3 * mu0 * Lam * (K_ * (1 + 1e-5) * (19.95 - t_d) + Kp * 10.0)) ** (1 / 3)
+    vv = (0.97 * v3 + 0.5 - (-0.97 * v3 + 0.5)) / 2
+    assert (f"| 4 | {K_ * (1 + 1e-5):.5e} ({K_:.5e}) | 19.95 (20) | {Kp / (K_ * (1 + 1e-5)):+.4f} | 29.95 (30) | 0.9600 (0.9700) | "
+            f"{vl:.4g} ({0.97 * v3:.4g}) | {vv / (0.97 * v3) - 1:+.1e} |") in md
+    assert "κ against the mass (ε = 1e-06, 1e-10): 4: 0.970, 0.970." in md
+    assert "agree in 6 of 10 (5 of 6 at ε ≤ 10⁻⁷; past τ₄ 4 of 6)." in md
+    rows = [dict(tau=t, d=1e-3 * t ** (-1 / 6), dW=-0.01 * t ** (-1 / 3), rms=1e-6 * t ** (-2 / 3), E=1e-12, E_formed=0.9e-12,
+                 dc=1e-3 * t ** (-1 / 6), wa=3.0, wb=-2.0, sbar=0.06, A=1.0) for t in (400.0, 800.0, 1600.0)]
+    md = '\n'.join(MWE.gl_lines([dict(q=9, rows=rows, Lam=10.0, Gm=12.0, mu0=0.1)]))
+    cons = [MWE.gl_constant(a, b, 12.0, 0.1, 10.0) for a, b in zip(rows[:-1], rows[1:])]
+    assert "### GL. The collapse (referee rounds 68, 74): target 9" in md
+    assert f"| 800 | {cons[0][0]:.4f} | {cons[0][1]:.4f} | {cons[0][2]:.4f} | {cons[0][3]:.4f} |" in md
+    assert (f"Over the 2 intervals the ratio is {min(c[1] for c in cons):.4f}–{max(c[1] for c in cons):.4f}, with C "
+            f"{min(c[2] for c in cons):.4f}–{max(c[2] for c in cons):.4f}; the formed kernels' energy over all kernels' 0.900000–0.900000.") in md
+    assert "The remainder with C against p" not in md                   # p's range below 0.05: no fit
+    # referee round 74: E = a₈Δc⁸(1 + kp) along the run — the line fits a/a_end against p and prints k
+    k8, sb, wa, wb = 0.8, 0.06, 3.0, -2.0
+    pr = lambda dc: abs(wa - wb) * dc / (abs(wa + wb) * sb)
+    rows = [dict(tau=t, d=dc, dW=-0.01, rms=1e-6, E=1e3 * dc ** 8 * (1 + k8 * pr(dc)), E_formed=1e3 * dc ** 8, dc=dc, wa=wa, wb=wb,
+                 sbar=sb, A=1.0) for t, dc in ((400.0, 3e-3), (800.0, 2e-3), (1600.0, 1e-3))]
+    md = '\n'.join(MWE.gl_lines([dict(q=9, rows=rows, Lam=10.0, Gm=12.0, mu0=0.1)]))
+    av = np.array([x['E'] / x['dc'] ** 8 for x in rows])
+    sl = np.polyfit([pr(x['dc']) for x in rows], av / av[-1], 1)
+    assert abs(sl[0] / sl[1] - k8) < 1e-9 and f"k = {sl[0] / sl[1]:.3f}" in md and f"p²/4, at most {pr(3e-3) ** 2 / 4:.4f}." in md

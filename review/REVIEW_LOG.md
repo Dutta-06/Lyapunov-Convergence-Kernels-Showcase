@@ -3025,3 +3025,42 @@ sources that move what the continuum keeps fixed — the samples' aliasing and t
 so a long-double run cannot tell them from the continuum, while exact sums on an ideal and on a dyadic grid separate all three. And a
 law's next order is the cheapest check of its error: here the unslaved two-variable system reproduces the Jacobian's rate to 5·10⁻⁴,
 where the slaved law's 10% had been read as a validity limit.
+
+## Round 74 (adversarial review of Proposition D‴.59 as revised after round 68, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bu: Proposition D‴.59 as revised after round 68, with its code and results at
+18bcfa0 (`review/REVIEW_round74_D3bu.md`). The referee:
+- regenerated the md byte for byte and reran G's fine phases at 10⁻¹², HL, HP and GL bit-identically, and `t3_from_duals` on the six paths;
+- fitted the intermediate phase's v³ and derived K′, τ₄ and κ from the path alone (a closure fit with the τ₃ entrant, K′ from the third
+  order, the duals moved on);
+- computed every formed kernel's largest φ on the samples in H, HP, H2 and HL, and ran the symmetric pair and A₂ 0.99 to τ = 10⁷;
+- re-derived (i)'s ∂_σE, (a)'s moments, the dipole law, the collapse's metric with the slaved coefficients, and the duals' rate, and ran
+  target 9 to τ = 10¹⁰;
+- ran one kernel from (c*, σ*) with w = 1.5A … 10A, and 71 single-point mutants.
+
+**Verdicts (D3bu).** Reproducibility, every number, τ₃ from the path, (a)'s landing algebra, K's third-order formula and the collapse
+law's exponents hold. Two majors: the intermediate phase is a second dipole phase — v³ linear in τ with the three-kernel block's K′ — and
+τ₄, κ and v_land follow from the path (κ not "ε-free": 0.729–2.905 over the cells, converging as ε → 0); (ii)(b)'s counts included dead
+spikes invisible on the samples (4–6 of the loop's 11–12 negatives at 10⁻⁸), which were the "widths below the samples' spacing", and the
+symmetric loop also keeps kernels of both signs. Minors: the collapse law's constant holds only as p → 0 (the slaved coefficients' drag,
+10% at p = 0.15; a undefined; τ_L misplaced); the landing statistic for p from Δc alone (a σ-dipole); (i)'s "a large one is not enough"
+(the condition is sufficient, not sharp); 13 behaviour-changing surviving mutants; the τ₃ proof's residual limit and the grid offset;
+Ho–Nguyen and a narrower New; cosmetic.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bu-1 | major | The intermediate phase; κ | GT (`kappa_from_path`): K from the third order (within 1.4·10⁻⁴ of G's), τ₃ from the duals, K′/K from the three-kernel block's optimal dipole fit (+0.0461, −0.0833, −0.3563, 0, +0.2278, −0.0904), τ₄ from the duals moved on (124.3, 97.89, 81.64, 51.29, 46.97 against the loop's 124.2, 97.9, 81.7, 51.3, 47), κ = (1 + K′(τ₄ − τ₃)/(K(τ₃ − τ_d)))^{1/3} (within 0.6% of the loop's at 10⁻¹²), v_land by the law, v frozen after τ₄ (2.7·10⁻⁵); G's fine table: the second phase's slope over 3μ₀K′Λ (0.9997–1.0012 at 10⁻¹²); (ii)(c)(2)–(3), the proof, Status, New: a second dipole phase, τ₄ and κ from the path, κ converging as ε → 0 |
+| D3bu-2 | major | Dead spikes counted; the symmetric loop | `visibility`: H, HP, H2 and HL count only kernels whose largest φ on the samples is at least 10⁻¹⁰ (6–7 visible negatives at the ends, every formed visible kernel ≥ 0.049 wide on the paths, ≥ 0.036 in the loop); HP prints its stop reasons (dictionary, budget); HLL: the symmetric pair at 10⁻⁶ and A₂ 0.99 at 10⁻⁸ to τ = 10⁷ (8 visible negatives, \|w\| 0.705 → 0.839; 6 visible, \|w\| 2.38 → 2.55, undecided); (ii)(b) and the Numerics: "widths below the samples' spacing" dropped, the symmetric loop fits with both signs at \|w\| < A, the polish's only the inflated cluster |
+| D3bu-3 | minor | The collapse law's constant | GL (`gl_constant`): the measured rate over the law, 0.903 → 0.999 as p falls 0.146 → 0.028, and over the law divided by 1 + C, C = GmW²(W − A)²(1/\|w_a\| + 1/\|w_b\|)/(μ₀Δc²(w_a² + w_b²)) the slaved coefficients' share of the metric, 1.018 → 1.004 — the remainder ∝ p, E's next order (a = E/Δc⁸ varying as 1 + 1.05p) —; target 9 added (0.991–0.998 at p = 0.015); (c)(4) and the proof: a defined, the law as p → 0 with C, τ_L after the relaxation, the induced-metric argument |
+| D3bu-4 | minor | The landing statistic | `pair_p` uses \|Δθ\| (a σ-dipole has Δc = 0): 29177 of 29425 states agree (22800 of 22978 past τ₄); the threshold called derived |
+| D3bu-5 | minor | (i)'s large coefficient | A2: from (c*, σ*) w = 2.5A, 3A, 5A converge exactly at σ*/σ₀ = 0.25, 1, 4 (the width dipping to 0.0058σ*), 10A ends as a spike; (i) and the Status: the condition sufficient, not sharp |
+| D3bu-6 | minor | Surviving mutants | Tests: `fine_phases` with a σ-dipole, 0.28 < p < 1 off the features, the slope sampling and dW's sign; `part_GT` on a status-0 entry; `h_job`'s polish and tolerance reaching `sliding_iss` (monkeypatched) and clusters at unequal amplitudes; `gl_job` and `gl_constant` (and the remainder's fit); `visibility`, `path_stop`, a faint kernel in `stop_anatomy`; `d3phi`/`k_third`, `first_wall` and `kappa_from_path` against the raw; A2; `loop_row` and `hll_job` with a kernel between 0.1% and 1% |
+| D3bu-7 | minor | The τ₃ proof; the grid offset | the proof: the block's state runs off but its residual converges, r = r_dip + O(s^{−2/3}), the duals' error O(ε^{1/3}); `fine_phases` evaluates the law at the time of v(τ₃⁻) (0.9995–1.0130 at 10⁻¹²) |
+| D3bu-8 | minor | Literature and New | Ho–Nguyen (Ann. Statist. 44(6), 2016) beside Pearson for (a)'s O(Δc⁴); Xu–Du's potential on pairwise distances [snippet]; the exponents generic; New narrowed to the stage sequence from the path and the law's constant with C |
+| D3bu-9 | cosmetic | Wording | "idle" dropped from the null cluster; "72 rows, 59 distinct"; G's stale t3_pred gone with G's rerun |
+
+**Lesson.** A phase that a script labels "numerical" may be the same law again: the intermediate phase was the dipole law with the
+three-kernel block's constant, and once it was seen as such every stage — τ₃, K′, τ₄, κ and the landing — came out of the path alone.
+Counting kernels needs the criterion that the samples can see: spikes invisible on every sample had been read as a fit narrower than
+the samples. And a law's constant checked against a run shows what the derivation leaves out — here the slaved coefficients' share of
+the metric, and after it E's next order.

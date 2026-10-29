@@ -18,6 +18,25 @@ A = 0.8 at c* = 0.03, the width σ* = ratio·σ₀; moving widths: the kernels, 
 | 3 | 1 | yes | 3.5e-17, 0.0e+00, 5.6e-16 | 2.4e-16 | 4 | 7.17e-02 |
 | 4 | 1 | yes | 1.7e-17, 0.0e+00, 5.6e-16 | 2.8e-16 | 4 | 1.35e-01 |
 
+### A2. One kernel from a large coefficient (referee round 74)
+
+A's feature at σ*/σ₀ = 0.25, 1, 4: one kernel at (c*, σ*) with w = 2.5, 3, 5, 10·A — E(start) (1 − w/A)²·½⟨f*²⟩, (i)'s condition E(start) < ½‖f*‖² holding for w < 2A only —, its block's flow on the critical curve to s = 1e+09: at the end w/A, σ/σ*, (c − c*)/σ* and E over ½⟨f*²⟩, and the smallest σ/σ* on the way (at the outputs):
+
+| σ*/σ₀ | w(start)/A | E(start)/½⟨f*²⟩ | end: w/A, σ/σ*, (c − c*)/σ*, E/½⟨f*²⟩ | smallest σ/σ* | status |
+|---|---|---|---|---|---|
+| 0.25 | 2.5 | 2.25 | 1.0000, 1, +0.0e+00, 2.23e-32 (s = 1e+09) | 0.304 | 0 |
+| 0.25 | 3 | 4 | 1.0000, 1, +1.2e-16, 2.51e-32 (s = 1e+09) | 0.235 | 0 |
+| 0.25 | 5 | 16 | 1.0000, 1, +0.0e+00, 2.23e-32 (s = 1e+09) | 0.0921 | 0 |
+| 0.25 | 10 | 81 | 9.9723, 0.07725, -1.7e-01, 6.44e-01 (s = 1e+09) | 0.0772 | 0 |
+| 1 | 2.5 | 2.25 | 1.0000, 1, +5.8e-17, 2.76e-32 (s = 1e+09) | 0.295 | 0 |
+| 1 | 3 | 4 | 1.0000, 1, -2.9e-17, 2.62e-32 (s = 1e+09) | 0.0281 | 0 |
+| 1 | 5 | 16 | 1.0000, 1, +2.9e-17, 2.49e-32 (s = 1e+09) | 0.0232 | 0 |
+| 1 | 10 | 81 | 9.9603, 0.01943, -4.2e-02, 9.06e-01 (s = 1e+09) | 0.0194 | 0 |
+| 4 | 2.5 | 2.25 | 1.0000, 1, +1.1e-16, 2.63e-32 (s = 1e+09) | 0.302 | 0 |
+| 4 | 3 | 4 | 1.0000, 1, +5.1e-17, 2.39e-32 (s = 1e+09) | 0.00704 | 0 |
+| 4 | 5 | 16 | 1.0000, 1, +5.8e-17, 2.48e-32 (s = 1e+09) | 0.00581 | 0 |
+| 4 | 10 | 81 | 9.9569, 0.004859, +1.0e-02, 9.76e-01 (s = 1e+09) | 0.00485 | 0 |
+
 ## B. The one-kernel reduced energy (the continuum)
 
 J(c, σ) = ½‖f*‖² − ½⟨f*, φ_{c,σ}⟩²/‖φ_{c,σ}‖² on a 241 × 241 grid (c within ±6σ*, σ from σ*/8 to 8σ*, A = 1, c* = 0): its grid-local minima and the closed-form gradient's largest relative error against central differences (20 random points):
@@ -234,7 +253,7 @@ The real loop at the masses ε from α = 0 (`loop_nd`, rtol 10⁻⁹) at τ = 40
 | 0.6 | 29 | 1e-05 | 1600 | 4 | 6.36e+00, +0.854/-0.395, 6.1e+00, +1.8e+00 | none | 1.00 | 6.0e-06 |
 | 0.6 | 29 | 1e-05 | 6400 | 4 | 6.39e+00, +0.854/-0.394, 6.1e+00, +1.8e+00 | none | 1.00 | 1.7e-06 |
 
-(ii)(a)'s width split on the landed pairs (L, 72 rows): the observed σ_b − σ_a over (w_b − w_a)Δc²/(6Wσ) 0.9828–1.0458 (median 0.9993), at |w_a − w_b||Δc|/(|W|σ) = 8.74e-03–2.84e-01; its largest deviation 4.6e-02 at the parameter 2.76e-01.
+(ii)(a)'s width split on the landed pairs (L, 72 rows, 59 distinct to six decimals: frozen states repeat): the observed σ_b − σ_a over (w_b − w_a)Δc²/(6Wσ) 0.9828–1.0458 (median 0.9993), at |w_a − w_b||Δc|/(|W|σ) = 8.74e-03–2.84e-01; its largest deviation 4.6e-02 at the parameter 2.76e-01.
 
 The three phases (`phases`): the dipole block's entry τ_d (the path's) and the next kernel's formation τ₃ in the loop; over the grid times between them the slopes of v³ (v the dipole pair's half-difference) against 3μ₀KΛ(ε) — the block's law in its fast time Λ(ε)τ, K and μ₀ from the flow's last output — (median [range]); the landed v (at τ = 400) against the law's (3μ₀KΛ(ε)(τ₃ − τ_d))^{1/3}; landed at τ = 400, 1600, 6400; over 1600 → 6400 the exponents in τ of the pair's distance and of the residual:
 
@@ -291,63 +310,74 @@ The landed v against the mass: v at τ = 400 and its ratio per decade of ε (10^
 Over the six targets: landed at τ = 6400 in 0 of 6 at ε = 1e-05, 3 of 6 at ε = 1e-06, 6 of 6 at ε = 1e-07, 6 of 6 at ε = 1e-08, 6 of 6 at ε = 1e-09, 6 of 6 at ε = 1e-10; at ε = 1e-10 the dipole phase's slope over the law 0.997–1.112 (the cells' medians, 5 cells with a phase), the landed v over the law's at the grid's τ₃ 0.71–1.09 (on the fine grid κ, below), v's ratio over the last decade 1.4078–1.5002; on the 25 cells landed at both 1600 and 6400, 6 not yet collapsing by τ = 6400 (|exponent| < 10⁻³: landed at a small p, the same law later — GL) (9 at 1e-06, 9 at 1e-07, 9 at 1e-08, 9 at 1e-09, 9 at 1e-10, 27 at 1e-10), the others collapsing with the exponents -0.235 … -0.173 (distance) and -0.906 … -0.689 (residual).
 
 
-The phases on a fine grid (τ = 10 … 140 by 0.1, with G's times; referee round 68): τ₃ the first formation past the block's entry τ_d, beside it τ₃ from the path's duals at τ_d moved by the block's residual at s = 10¹¹; τ₄ the next formation; over (τ_d, τ₃) the slopes of v³ over 3μ₀KΛ(ε) (median); v at the last time before τ₃ over the law's (3μ₀KΛ(ε)(τ₃ − τ_d))^{1/3}; at (τ₃ + τ₄)/2 the formed kernels, the dipole pair's offset from the nearest feature (σ*) and (W − A)/|A|; the first landing past τ₃ (centre of mass and W within 0.01): its τ, κ = v_land/v(τ₃⁻) and p = |w_a − w_b||Δc|/(|W|σ̄):
+The phases on a fine grid (τ = 10 … 140 by 0.1, with G's times; referee rounds 68, 74): τ₃ the first formation past the block's entry τ_d, τ₄ the next; over (τ_d, τ₃) the slopes of v³ over 3μ₀KΛ(ε) (median); v at the last time before τ₃ over the law's (3μ₀KΛ(ε)(t − τ_d))^{1/3} at that time t; at (τ₃ + τ₄)/2 the formed kernels, the dipole pair's offset from the nearest feature (σ*) and (W − A)/|A|, and over [τ₃, τ₄) the slopes of v³ over 3μ₀K′Λ(ε), K′ the three-kernel block's from the path (below; median); the first landing past τ₃ (centre of mass and W within 0.01): its τ, κ = v_land/v(τ₃⁻) and p = |w_a − w_b||Δθ|/(|W|σ̄):
 
-| target | ε | τ_d | τ₃ (from the duals) | τ₄ | slope | v(τ₃⁻)/law | intermediate: formed, offset, (W − A)/\|A\| | landing: τ, κ, p |
+| target | ε | τ_d | τ₃ | τ₄ | dipole: slope | v(τ₃⁻)/law | intermediate: formed, offset, (W − A)/\|A\|, slope | landing: τ, κ, p |
 |---|---|---|---|---|---|---|---|---|
-| 9 | 1e-05 | 17.75 | 22 (29.16) | 26.2 | 1.2870 | 1.1141 | 3, 0.0358, +0.197 | — |
-| 9 | 1e-06 | 17.75 | 27.7 (29.16) | 81.5 | 1.1006 | 1.0420 | 3, 10.1, -0.723 | 151.572, 1.080, 0.017 |
-| 9 | 1e-07 | 17.75 | 28.5 (29.16) | 110.4 | 1.0474 | 1.0199 | 3, 9.56, -0.711 | 128.8, 1.107, 0.137 |
-| 9 | 1e-08 | 17.75 | 28.9 (29.16) | 118.8 | 1.0214 | 1.0085 | 3, 9.36, -0.706 | 124.6, 1.112, 0.039 |
-| 9 | 1e-09 | 17.75 | 29.1 (29.16) | 122.1 | 1.0102 | 1.0027 | 3, 9.28, -0.704 | 124, 1.113, 0.018 |
-| 9 | 1e-10 | 17.75 | 29.1 (29.16) | 123.5 | 1.0048 | 0.9998 | 3, 9.24, -0.703 | 124, 1.117, 0.025 |
-| 9 | 1e-11 | 17.75 | 29.2 (29.16) | 124 | 1.0022 | 0.9984 | 3, 9.22, -0.702 | 124.2, 1.115, 0.015 |
-| 9 | 1e-12 | 17.75 | 29.2 (29.16) | 124.2 | 1.0010 | 0.9977 | 3, 9.21, -0.702 | 124.3, 1.116, 0.015 |
-| 18 | 1e-05 | 25 | 25.1 (34.23) | 35.3 | — | — | 3, 0.483, -0.013 | — |
-| 18 | 1e-06 | 25 | 25.1 (34.23) | 41.3 | — | — | 3, 0.51, -1.655 | 2785.76, —, 0.285 |
-| 18 | 1e-07 | 25 | 26.8 (34.23) | 47.9 | 1.0850 | 1.0151 | 3, 0.997, -1.530 | 918.959, 2.905, 0.275 |
-| 18 | 1e-08 | 25 | 34 (34.23) | 95.2 | 1.0129 | 1.0029 | 3, 2.85, -0.457 | 3200, 0.765, 0.284 |
-| 18 | 1e-09 | 25 | 34.1 (34.23) | 97 | 1.0061 | 0.9995 | 3, 2.85, -0.457 | 1055.61, 0.758, 0.280 |
-| 18 | 1e-10 | 25 | 34.2 (34.23) | 97.6 | 1.0026 | 0.9979 | 3, 2.85, -0.457 | 400, 0.755, 0.276 |
-| 18 | 1e-11 | 25 | 34.2 (34.23) | 97.8 | 1.0012 | 0.9971 | 3, 2.84, -0.457 | 174.11, 0.755, 0.284 |
-| 18 | 1e-12 | 25 | 34.3 (34.23) | 97.9 | 1.0006 | 0.9967 | 3, 2.84, -0.457 | 120.7, 0.752, 0.284 |
-| 12 | 1e-05 | 24.35 | 24.4 (58.44) | 69 | — | — | 3, 0.88, -0.548 | — |
-| 12 | 1e-06 | 24.35 | 24.4 (58.44) | 91 | — | — | 3, 14.8, +1.068 | — |
-| 12 | 1e-07 | 24.35 | 54.8 (58.44) | 80.2 | 1.7301 | 1.2565 | 3, 20.7, +0.864 | 1392.88, 0.966, 0.279 |
-| 12 | 1e-08 | 24.35 | 56.5 (58.44) | 81.3 | 1.3910 | 1.1549 | 3, 20.3, +0.861 | 400, 0.944, 0.284 |
-| 12 | 1e-09 | 24.35 | 57.4349 (58.44) | 81.5 | 1.2039 | 1.0894 | 3, 20.1, +0.860 | 174.11, 0.931, 0.277 |
-| 12 | 1e-10 | 24.35 | 58 (58.44) | 81.6 | 1.1039 | 1.0481 | 3, 20, +0.859 | 102.9, 0.923, 0.285 |
-| 12 | 1e-11 | 24.35 | 58.2 (58.44) | 81.7 | 1.0511 | 1.0248 | 3, 20, +0.859 | 87.3, 0.918, 0.284 |
-| 12 | 1e-12 | 24.35 | 58.4 (58.44) | 81.7 | 1.0240 | 1.0120 | 3, 20, +0.858 | 83.2, 0.915, 0.284 |
-| 20 | 1e-05 | 32.22 | 32.3 (36.17) | — | — | — | — | — |
-| 20 | 1e-06 | 32.22 | 32.3 (36.17) | — | — | — | — | — |
-| 20 | 1e-07 | 32.22 | 36 (36.17) | — | 0.9468 | 0.9921 | — | 696.44, 1.015, 0.281 |
-| 20 | 1e-08 | 32.22 | 36.1 (36.17) | — | 0.9768 | 0.9877 | — | 200, 1.010, 0.284 |
-| 20 | 1e-09 | 32.22 | 36.2 (36.17) | — | 0.9897 | 0.9887 | — | 78.5, 1.003, 0.285 |
-| 20 | 1e-10 | 32.22 | 36.2 (36.17) | — | 0.9954 | 0.9899 | — | 47.7, 1.005, 0.285 |
-| 20 | 1e-11 | 32.22 | 36.2 (36.17) | — | 0.9979 | 0.9906 | — | 39.4, 1.005, 0.285 |
-| 20 | 1e-12 | 32.22 | 36.2 (36.17) | — | 0.9990 | 0.9911 | — | 37.1, 1.006, 0.284 |
-| 27 | 1e-05 | 31.54 | 31.6 (47.19) | 40.5 | — | — | 3, 1.61, +0.837 | — |
-| 27 | 1e-06 | 31.54 | 31.6 (47.19) | 43.8 | — | — | 3, 0.238, +0.199 | — |
-| 27 | 1e-07 | 31.54 | 34.1 (47.19) | 45.5 | 1.0834 | 1.0191 | 3, 0.202, +0.134 | 229.74, 1.758, 0.280 |
-| 27 | 1e-08 | 31.54 | 36.8 (47.19) | 46.4 | 1.0214 | 1.0047 | 3, 0.2, +0.134 | 86, 1.417, 0.285 |
-| 27 | 1e-09 | 31.54 | 44.8 (47.19) | 46.9 | 1.0055 | 1.0006 | 3, 0.199, +0.134 | 56.3, 1.052, 0.284 |
-| 27 | 1e-10 | 31.54 | 47.1 (47.19) | 51.2 | 1.0024 | 0.9992 | 3, 0.728, +0.163 | 51.2, 1.021, 0.009 |
-| 27 | 1e-11 | 31.54 | 47.2 (47.19) | 51.3 | 1.0011 | 0.9985 | 3, 0.727, +0.163 | 51.3, 1.020, 0.009 |
-| 27 | 1e-12 | 31.54 | 47.2 (47.19) | 51.3 | 1.0005 | 0.9982 | 3, 0.727, +0.163 | 51.3, 1.021, 0.010 |
-| 29 | 1e-05 | 26.75 | 27.3 (29.63) | 34.2 | — | 0.9263 | 3, 7.47, +1.350 | — |
-| 29 | 1e-06 | 26.75 | 28.4 (29.63) | 43.5 | 0.9532 | 0.9736 | 3, 7.47, +1.340 | 918.959, 0.790, 0.287 |
-| 29 | 1e-07 | 26.75 | 29 (29.63) | 45.9 | 0.9973 | 0.9843 | 3, 7.49, +1.334 | 303.143, 0.729, 0.279 |
-| 29 | 1e-08 | 26.75 | 29.3 (29.63) | 46.7 | 1.0015 | 0.9870 | 3, 7.5, +1.331 | 101.8, 0.753, 0.286 |
-| 29 | 1e-09 | 26.75 | 29.5 (29.63) | 46.9 | 1.0014 | 0.9880 | 3, 7.5, +1.330 | 60.5, 0.765, 0.285 |
-| 29 | 1e-10 | 26.75 | 29.6 (29.63) | 47 | 1.0008 | 0.9884 | 3, 7.5, +1.330 | 50.5, 0.770, 0.283 |
-| 29 | 1e-11 | 26.75 | 29.7 (29.63) | 47 | 1.0004 | 0.9887 | 3, 7.5, +1.330 | 47.9, 0.767, 0.283 |
-| 29 | 1e-12 | 26.75 | 29.7 (29.63) | 47 | 1.0002 | 0.9886 | 3, 7.51, +1.329 | 47.3, 0.769, 0.270 |
+| 9 | 1e-05 | 17.75 | 22 | 26.2 | 1.2870 | 1.1230 | 3, 0.0358, +0.197, 25.7460 | — |
+| 9 | 1e-06 | 17.75 | 27.7 | 81.5 | 1.1006 | 1.0455 | 3, 10.1, -0.723, 1.1058 | 151.572, 1.080, 0.017 |
+| 9 | 1e-07 | 17.75 | 28.5 | 110.4 | 1.0474 | 1.0231 | 3, 9.56, -0.711, 1.0530 | 128.8, 1.107, 0.177 |
+| 9 | 1e-08 | 17.75 | 28.9 | 118.8 | 1.0214 | 1.0115 | 3, 9.36, -0.706, 1.0255 | 124.6, 1.112, 0.047 |
+| 9 | 1e-09 | 17.75 | 29.1 | 122.1 | 1.0102 | 1.0056 | 3, 9.28, -0.704, 1.0120 | 124, 1.113, 0.020 |
+| 9 | 1e-10 | 17.75 | 29.1 | 123.5 | 1.0048 | 1.0027 | 3, 9.24, -0.703, 1.0056 | 124, 1.117, 0.029 |
+| 9 | 1e-11 | 17.75 | 29.2 | 124 | 1.0022 | 1.0013 | 3, 9.22, -0.702, 1.0026 | 124.2, 1.115, 0.015 |
+| 9 | 1e-12 | 17.75 | 29.2 | 124.2 | 1.0010 | 1.0006 | 3, 9.21, -0.702, 1.0012 | 124.3, 1.116, 0.015 |
+| 18 | 1e-05 | 25 | 25.1 | 35.3 | — | — | 3, 0.483, -0.013, -16.6473 | — |
+| 18 | 1e-06 | 25 | 25.1 | 41.3 | — | — | 3, 0.51, -1.655, -21.2937 | 2785.76, —, 0.286 |
+| 18 | 1e-07 | 25 | 26.8 | 47.9 | 1.0850 | 1.0347 | 3, 0.997, -1.530, -25.1819 | 918.959, 2.905, 0.275 |
+| 18 | 1e-08 | 25 | 34 | 95.2 | 1.0129 | 1.0067 | 3, 2.85, -0.457, 0.9945 | 3200, 0.765, 0.284 |
+| 18 | 1e-09 | 25 | 34.1 | 97 | 1.0061 | 1.0032 | 3, 2.85, -0.457, 0.9974 | 1055.61, 0.758, 0.280 |
+| 18 | 1e-10 | 25 | 34.2 | 97.6 | 1.0026 | 1.0015 | 3, 2.85, -0.457, 0.9988 | 400, 0.755, 0.276 |
+| 18 | 1e-11 | 25 | 34.2 | 97.8 | 1.0012 | 1.0007 | 3, 2.84, -0.457, 0.9995 | 174.11, 0.755, 0.284 |
+| 18 | 1e-12 | 25 | 34.3 | 97.9 | 1.0006 | 1.0003 | 3, 2.84, -0.457, 0.9997 | 120.7, 0.752, 0.285 |
+| 12 | 1e-05 | 24.35 | 24.4 | 69 | — | — | 3, 0.88, -0.548, -9.1534 | — |
+| 12 | 1e-06 | 24.35 | 24.4 | 91 | — | — | 3, 14.8, +1.068, -10.7375 | — |
+| 12 | 1e-07 | 24.35 | 54.8 | 80.2 | 1.7301 | 1.2579 | 3, 20.7, +0.864, 0.9920 | 1392.88, 0.966, 0.279 |
+| 12 | 1e-08 | 24.35 | 56.5 | 81.3 | 1.3910 | 1.1561 | 3, 20.3, +0.861, 0.9956 | 400, 0.944, 0.284 |
+| 12 | 1e-09 | 24.35 | 57.4349 | 81.5 | 1.2039 | 1.0898 | 3, 20.1, +0.860, 0.9977 | 174.11, 0.931, 0.277 |
+| 12 | 1e-10 | 24.35 | 58 | 81.6 | 1.1039 | 1.0492 | 3, 20, +0.859, 0.9988 | 102.9, 0.923, 0.285 |
+| 12 | 1e-11 | 24.35 | 58.2 | 81.7 | 1.0511 | 1.0258 | 3, 20, +0.859, 0.9994 | 87.3, 0.918, 0.285 |
+| 12 | 1e-12 | 24.35 | 58.4 | 81.7 | 1.0240 | 1.0130 | 3, 20, +0.858, 0.9997 | 83.2, 0.915, 0.284 |
+| 20 | 1e-05 | 32.22 | 32.3 | — | — | — | — | — |
+| 20 | 1e-06 | 32.22 | 32.3 | — | — | — | — | — |
+| 20 | 1e-07 | 32.22 | 36 | — | 0.9468 | 1.0010 | — | 696.44, 1.015, 0.281 |
+| 20 | 1e-08 | 32.22 | 36.1 | — | 0.9768 | 0.9964 | — | 200, 1.010, 0.285 |
+| 20 | 1e-09 | 32.22 | 36.2 | — | 0.9897 | 0.9971 | — | 78.5, 1.003, 0.286 |
+| 20 | 1e-10 | 32.22 | 36.2 | — | 0.9954 | 0.9983 | — | 47.7, 1.005, 0.285 |
+| 20 | 1e-11 | 32.22 | 36.2 | — | 0.9979 | 0.9991 | — | 39.4, 1.005, 0.285 |
+| 20 | 1e-12 | 32.22 | 36.2 | — | 0.9990 | 0.9995 | — | 37.1, 1.006, 0.285 |
+| 27 | 1e-05 | 31.54 | 31.6 | 40.5 | — | — | 3, 1.61, +0.837, 2.9797 | — |
+| 27 | 1e-06 | 31.54 | 31.6 | 43.8 | — | — | 3, 0.238, +0.199, 4.6285 | — |
+| 27 | 1e-07 | 31.54 | 34.1 | 45.5 | 1.0834 | 1.0327 | 3, 0.202, +0.134, 4.4686 | 229.74, 1.758, 0.280 |
+| 27 | 1e-08 | 31.54 | 36.8 | 46.4 | 1.0214 | 1.0112 | 3, 0.2, +0.134, 4.4266 | 86, 1.417, 0.285 |
+| 27 | 1e-09 | 31.54 | 44.8 | 46.9 | 1.0055 | 1.0031 | 3, 0.199, +0.134, 4.4036 | 56.3, 1.052, 0.285 |
+| 27 | 1e-10 | 31.54 | 47.1 | 51.2 | 1.0024 | 1.0014 | 3, 0.728, +0.163, 1.0000 | 51.2, 1.021, 0.009 |
+| 27 | 1e-11 | 31.54 | 47.2 | 51.3 | 1.0011 | 1.0006 | 3, 0.727, +0.163, 1.0000 | 51.3, 1.020, 0.009 |
+| 27 | 1e-12 | 31.54 | 47.2 | 51.3 | 1.0005 | 1.0003 | 3, 0.727, +0.163, 1.0000 | 51.3, 1.021, 0.010 |
+| 29 | 1e-05 | 26.75 | 27.3 | 34.2 | — | 0.9906 | 3, 7.47, +1.350, 0.7795 | — |
+| 29 | 1e-06 | 26.75 | 28.4 | 43.5 | 0.9532 | 0.9941 | 3, 7.47, +1.340, 0.9648 | 918.959, 0.790, 0.287 |
+| 29 | 1e-07 | 26.75 | 29 | 45.9 | 0.9973 | 0.9994 | 3, 7.49, +1.334, 0.9835 | 303.143, 0.729, 0.279 |
+| 29 | 1e-08 | 26.75 | 29.3 | 46.7 | 1.0015 | 1.0003 | 3, 7.5, +1.331, 0.9928 | 101.8, 0.753, 0.286 |
+| 29 | 1e-09 | 26.75 | 29.5 | 46.9 | 1.0014 | 1.0003 | 3, 7.5, +1.330, 0.9969 | 60.5, 0.765, 0.285 |
+| 29 | 1e-10 | 26.75 | 29.6 | 47 | 1.0008 | 1.0002 | 3, 7.5, +1.330, 0.9986 | 50.5, 0.770, 0.284 |
+| 29 | 1e-11 | 26.75 | 29.7 | 47 | 1.0004 | 1.0001 | 3, 7.5, +1.330, 0.9994 | 47.9, 0.767, 0.284 |
+| 29 | 1e-12 | 26.75 | 29.7 | 47 | 1.0002 | 1.0001 | 3, 7.51, +1.329, 0.9997 | 47.3, 0.769, 0.270 |
 
-Over these cells κ = 0.729–2.905 (per target at the two smallest masses: 9: 1.116, 1.115; 18: 0.752, 0.755; 12: 0.915, 0.918; 20: 1.006, 1.005; 27: 1.021, 1.020; 29: 0.769, 0.767); over every fine-grid state with a dipole pair and p < 1, p ≤ 0.28 and the landing agree in 34067 of 36535. τ₃ from the path's duals (GT) against the loop's at the smallest mass: 9: 29.16 against 29.2; 18: 34.23 against 34.3; 12: 58.44 against 58.4; 20: 36.17 against 36.2; 27: 47.19 against 47.2; 29: 29.63 against 29.7 (the largest difference 0.073).
+The intermediate phase from the path (`kappa_from_path`, referee round 74): K from the third order, −⟨r_dip, ∇³φ:p³⟩/24 at the block's optimal dipole fit, beside G's v²(E − E_inf); τ₃ from the duals; K′/K, K′ the three-kernel block's (the τ₃ entrant added); τ₄ from the duals moved on by that block's residual; κ = (1 + K′(τ₄ − τ₃)/(K(τ₃ − τ_d)))^{1/3}; the landing's v by the law v³ = 3μ₀Λ(ε)(K(τ₃ − τ_d) + K′(τ₄ − τ₃)) with the path's τ₃ and τ₄ — each against the loop's at the smallest mass —; and v at τ = 6400 over v_land at ε = 10⁻¹⁰, minus 1 (v after τ₄):
+
+| target | K: third order (G's) | τ₃: path (loop) | K′/K | τ₄: path (loop) | κ: path (loop) | v_land: law (loop) | v(6400)/v_land − 1 |
+|---|---|---|---|---|---|---|---|
+| 9 | 2.55975e-03 (2.55976e-03) | 29.16 (29.2) | +0.0461 | 124.3 (124.2) | 1.1145 (1.1159) | 44.01 (44.01) | +1.5e-08 |
+| 18 | 1.77964e-03 (1.77964e-03) | 34.23 (34.3) | -0.0833 | 97.89 (97.9) | 0.7520 (0.7525) | 24.5 (24.5) | +3.1e-06 |
+| 12 | 2.10530e-04 (2.10560e-04) | 58.44 (58.4) | -0.3563 | 81.64 (81.7) | 0.9116 (0.9148) | 22.54 (22.89) | +1.2e-05 |
+| 20 | 1.16958e-04 (1.16958e-04) | 36.17 (36.2) | +0.0000 | 1.414e+17 (—) | 1.0000 (1.0056) | 9.906 (9.899) | +2.7e-05 |
+| 27 | 6.10913e-04 (6.10914e-04) | 47.19 (47.2) | +0.2278 | 51.29 (51.3) | 1.0195 (1.0209) | 27.74 (27.73) | +7.0e-12 |
+| 29 | 1.34468e-03 (1.34468e-03) | 29.63 (29.7) | -0.0904 | 46.97 (47) | 0.7691 (0.7694) | 15.48 (15.44) | +1.6e-05 |
+
+κ against the mass (ε = 1e-05, 1e-06, 1e-07, 1e-08, 1e-09, 1e-10, 1e-11, 1e-12): 9: —, 1.080, 1.107, 1.112, 1.113, 1.117, 1.115, 1.116; 18: —, —, 2.905, 0.765, 0.758, 0.755, 0.755, 0.752; 12: —, —, 0.966, 0.944, 0.931, 0.923, 0.918, 0.915; 20: —, —, 1.015, 1.010, 1.003, 1.005, 1.005, 1.006; 27: —, —, 1.758, 1.417, 1.052, 1.021, 1.020, 1.021; 29: —, 0.790, 0.729, 0.753, 0.765, 0.770, 0.767, 0.769. Over every fine-grid state with a dipole pair and p < 1, p ≤ 0.28 and the landing agree in 29177 of 29425 (25094 of 25335 at ε ≤ 10⁻⁷; past τ₄ 22800 of 22978).
 
 
-### GL. The collapse (referee round 68): target 20 at ε = 1e-10 to τ = 1e+07
+### GL. The collapse (referee rounds 68, 74): target 20 at ε = 1e-10 to τ = 1e+07
 
 The dipole pair's distance, (W − A)/|A| and the residual, and their local exponents in τ against the law's −1/6, −1/3, −2/3 (E ∝ Δc⁸ with the centre of mass pinned):
 
@@ -362,123 +392,183 @@ The dipole pair's distance, (W − A)/|A| and the residual, and their local expo
 | 2.354e+06 | 1.994e-03 | +1.602e-04 | 3.162e-10 | -0.1671, -0.3320, -0.6673 |
 | 1e+07 | 1.566e-03 | +9.910e-05 | 1.205e-10 | -0.1669, -0.3320, -0.6667 |
 
+The law's constant (referee round 74) over successive rows: the measured d(Δc⁻⁶)/dτ over 48aGm(W²/(w_a² + w_b²))Λ(ε), a = E/Δc⁸ (the proof's metric: the centres alone), and over it divided by 1 + C, C the slaved coefficients' share of the separation's metric (`gl_constant`); p = |w_a − w_b||Δc|/(|W|σ̄) and C at the interval's end:
+
+| τ | p | ratio | with C | C |
+|---|---|---|---|---|
+| 574.3 | 0.1456 | 0.9030 | 1.0180 | 0.1190 |
+| 2440 | 0.1130 | 0.9418 | 1.0139 | 0.0718 |
+| 1.037e+04 | 0.0885 | 0.9656 | 1.0109 | 0.0441 |
+| 4.405e+04 | 0.0695 | 0.9802 | 1.0086 | 0.0272 |
+| 1.872e+05 | 0.0546 | 0.9890 | 1.0067 | 0.0168 |
+| 7.953e+05 | 0.0429 | 0.9943 | 1.0053 | 0.0104 |
+| 3.379e+06 | 0.0338 | 0.9975 | 1.0043 | 0.0064 |
+| 1e+07 | 0.0282 | 0.9990 | 1.0038 | 0.0045 |
+
+Over the 28 intervals the ratio is 0.9030–0.9990, with C 1.0038–1.0180; the formed kernels' energy over all kernels' 1.000001–1.000787.
+The remainder with C against p: (ratio with C − 1)/p 0.123–0.134; a = E/Δc⁸ itself goes 7.893e+06 → 6.981e+06 along the run, a/a_end ≈ 0.971 + 1.017p — E's next order in Δc, E ≈ a₈Δc⁸(1 + kp), k = 1.048, which raises the force over 8aΔc⁷ by 1 + kp/8 = 1 + 0.131p; the mean width's share of the metric, p²/4, at most 0.0061.
+
+
+### GL. The collapse (referee rounds 68, 74): target 9 at ε = 1e-10 to τ = 1e+07
+
+The dipole pair's distance, (W − A)/|A| and the residual, and their local exponents in τ against the law's −1/6, −1/3, −2/3 (E ∝ Δc⁸ with the centre of mass pinned):
+
+| τ | distance | (W − A)/\|A\| | residual | exponents since the previous row: distance, W − A, residual |
+|---|---|---|---|---|
+| 400 | 2.090e-04 | -2.848e-05 | 9.395e-12 | — |
+| 1700 | 2.090e-04 | -2.848e-05 | 9.394e-12 | -0.0000, -0.0000, -0.0000 |
+| 7221 | 2.090e-04 | -2.848e-05 | 9.394e-12 | -0.0000, -0.0000, -0.0000 |
+| 3.068e+04 | 2.090e-04 | -2.848e-05 | 9.393e-12 | -0.0000, -0.0000, -0.0001 |
+| 1.304e+05 | 2.090e-04 | -2.847e-05 | 9.389e-12 | -0.0001, -0.0002, -0.0003 |
+| 5.539e+05 | 2.089e-04 | -2.844e-05 | 9.369e-12 | -0.0004, -0.0007, -0.0015 |
+| 2.354e+06 | 2.084e-04 | -2.831e-05 | 9.286e-12 | -0.0015, -0.0031, -0.0062 |
+| 1e+07 | 2.065e-04 | -2.780e-05 | 8.952e-12 | -0.0063, -0.0127, -0.0253 |
+
+The law's constant (referee round 74) over successive rows: the measured d(Δc⁻⁶)/dτ over 48aGm(W²/(w_a² + w_b²))Λ(ε), a = E/Δc⁸ (the proof's metric: the centres alone), and over it divided by 1 + C, C the slaved coefficients' share of the separation's metric (`gl_constant`); p = |w_a − w_b||Δc|/(|W|σ̄) and C at the interval's end:
+
+| τ | p | ratio | with C | C |
+|---|---|---|---|---|
+| 574.3 | 0.0151 | 0.9976 | 0.9989 | 0.0013 |
+| 2440 | 0.0151 | 0.9978 | 0.9990 | 0.0013 |
+| 1.037e+04 | 0.0151 | 0.9976 | 0.9988 | 0.0013 |
+| 4.405e+04 | 0.0151 | 0.9951 | 0.9963 | 0.0013 |
+| 1.872e+05 | 0.0151 | 0.9974 | 0.9987 | 0.0013 |
+| 7.953e+05 | 0.0151 | 0.9974 | 0.9987 | 0.0013 |
+| 3.379e+06 | 0.0150 | 0.9973 | 0.9986 | 0.0013 |
+| 1e+07 | 0.0149 | 0.9974 | 0.9986 | 0.0013 |
+
+Over the 28 intervals the ratio is 0.9914–0.9979, with C 0.9926–0.9992; the formed kernels' energy over all kernels' 0.999973–0.999995.
+
 ## H. Two features of one sign, close
 
-Two features φ(·; c, σ*) of the given amplitudes (both positive) at the centres ±0.08 — 0.16 apart, 1.33 times the kernels' starting width σ₀ = 0.12 — unless stated, the moving-width path (as C's: its tolerance 1e-09, its budget 1e+06): the outcome (as C's), the most kernels of the other sign in a block along the path and the most negative coefficient, the end's formed kernels of the other sign, the smallest formed width, over all the end's active kernels those narrower than the samples' spacing and those of negative width (the widths are not constrained), the largest |w|, the residual:
+Two features φ(·; c, σ*) of the given amplitudes (both positive) at the centres ±0.08 — 0.16 apart, 1.33 times the kernels' starting width σ₀ = 0.12 — unless stated, the moving-width path (as C's: its tolerance 1e-09, its budget 1e+06): the outcome (as C's), the most kernels of the other sign in a block along the path and the most negative coefficient, the end's formed kernels of the other sign and the smallest formed width — counting only kernels visible on the samples (largest φ there at least 1e-10; referee round 74), the end's formed ones of the other sign including the invisible in brackets —, over all the end's active kernels those narrower than the samples' spacing and those of negative width (the widths are not constrained) and how many of them are formed, the formed kernels invisible on the samples, the largest |w|, the residual:
 
-| target | outcome | negative kernels along the path (most negative w) | at the end | smallest width | sub-sample, negative widths (all active) | max\|w\| | residual |
-|---|---|---|---|---|---|---|---|
-| σ* 0.04, equal | exact, null cluster | 10 (-0.427) | 2 | 4.00e-02 | 0, 0 | 1 | 1.3e-13 |
-| σ* 0.06, equal | cancellation | 14 (-0.610) | 7 | 4.96e-02 | 6, 0 | 3.24 | 4.3e-10 |
-| σ* 0.06, A₂ 0.99 | cancellation | 13 (-0.573) | 6 | 5.19e-02 | 5, 1 | 2.93 | 9.6e-10 |
-| σ* 0.06, A₂ 0.95 | cancellation | 14 (-0.587) | 7 | 4.92e-02 | 4, 1 | 3.14 | 6.0e-10 |
-| σ* 0.06, A₂ 0.9 | cancellation | 12 (-0.555) | 7 | 5.12e-02 | 3, 1 | 2.84 | 8.1e-10 |
-| σ* 0.06, c₂ +0.01 | cancellation | 11 (-0.561) | 7 | 1.75e-04 | 5, 1 | 2.85 | 4.4e-10 |
-| σ* 0.06, σ₂ 0.065 | cancellation | 14 (-0.603) | 7 | 4.94e-02 | 5, 2 | 3.16 | 6.1e-10 |
-| σ* 0.04, A₂ 0.6 | exact | 0 (+0.600) | 0 | 4.00e-02 | 0, 0 | 1 | 5.0e-17 |
-| σ* 0.06, A₂ 0.6 | exact | 0 (+0.600) | 0 | 6.00e-02 | 0, 0 | 1 | 2.5e-16 |
+| target | outcome | visible negative kernels along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | formed invisible | max\|w\| | residual |
+|---|---|---|---|---|---|---|---|---|
+| σ* 0.04, equal | exact, null cluster | 10 (-0.427) | 2 (2) | 4.00e-02 | 0, 0 (0, 0) | 0 | 1 | 1.3e-13 |
+| σ* 0.06, equal | cancellation | 14 (-0.610) | 7 (7) | 4.96e-02 | 6, 0 (0, 0) | 0 | 3.24 | 4.3e-10 |
+| σ* 0.06, A₂ 0.99 | cancellation | 13 (-0.573) | 6 (6) | 5.19e-02 | 5, 1 (0, 0) | 0 | 2.93 | 9.6e-10 |
+| σ* 0.06, A₂ 0.95 | cancellation | 14 (-0.587) | 7 (7) | 4.92e-02 | 4, 1 (0, 0) | 0 | 3.14 | 6.0e-10 |
+| σ* 0.06, A₂ 0.9 | cancellation | 12 (-0.555) | 7 (7) | 5.12e-02 | 3, 1 (0, 0) | 0 | 2.84 | 8.1e-10 |
+| σ* 0.06, c₂ +0.01 | cancellation | 11 (-0.561) | 6 (7) | 5.26e-02 | 5, 1 (1, 0) | 1 | 2.85 | 4.4e-10 |
+| σ* 0.06, σ₂ 0.065 | cancellation | 14 (-0.603) | 7 (7) | 4.94e-02 | 5, 2 (0, 0) | 0 | 3.16 | 6.1e-10 |
+| σ* 0.04, A₂ 0.6 | exact | 0 (+0.600) | 0 (0) | 4.00e-02 | 0, 0 (0, 0) | 0 | 1 | 5.0e-17 |
+| σ* 0.06, A₂ 0.6 | exact | 0 (+0.600) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 2.5e-16 |
 
 ### H2. The σ* = 0.06 paths to a tolerance of 1e-13
 
 The same paths with the tolerance lowered (the 1e-09 ends were the tolerance's): the outcome, the entries and the last one's τ, the residuals of the last blocks, the formed kernels by the feature nearest each (their count and mass over the feature's, Σw_i|σ_i|/(Aσ*)), and H's columns:
 
-| target | outcome | entries (last τ) | the last blocks' residuals | formed per feature (count: mass) | negative along the path (most negative w) | at the end | smallest width | sub-sample, negative widths | max\|w\| |
+| target | outcome | entries (last τ) | the last blocks' residuals | formed per feature (count: mass) | visible negative along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | max\|w\| |
 |---|---|---|---|---|---|---|---|---|---|
-| σ* 0.06, equal | cancellation | 24 (1.10e+15) | 2.83e-10, 2.32e-10, 2.58e-10, 1.66e-10, 1.12e-10, 8.39e-11 | 1: 1.0000, 8: 1.0000 | 14 (-0.610) | 7 | 5.08e-02 | 6, 0 | 3.26 |
-| σ* 0.06, A₂ 0.99 | stopped by the budget | 25 (7.36e+13) | 1.15e-10, 7.94e-11, 5.88e-11, 4.66e-11, 3.73e-11, 2.89e-11 | 7: 1.0000, 1: 1.0000 | 13 (-0.573) | 6 | 5.43e-02 | 5, 1 | 2.96 |
-| σ* 0.06, A₂ 0.95 | cancellation | 27 (2.29e+16) | 1.01e-10, 7.49e-11, 6.48e-11, 5.37e-11, 4.97e-11, 4.13e-11 | 8: 1.0000, 1: 1.0000 | 14 (-0.587) | 7 | 5.14e-02 | 4, 1 | 3.18 |
-| σ* 0.06, A₂ 0.9 | stopped by the budget | 20 (1.16e+12) | 5.67e-09, 8.13e-10, 5.16e-10, 4.00e-10, 2.92e-10, 2.02e-10 | 7: 1.0002, 2: 0.9998 | 12 (-0.555) | 7 | 5.22e-02 | 3, 1 | 2.85 |
-| σ* 0.06, c₂ +0.01 | cancellation | 32 (2.34e+67) | 1.71e-11, 1.70e-11, 1.77e-11, 4.21e-11, 2.60e-11, 1.49e-11 | 7: 1.0000, 2: 0.9999 | 11 (-0.561) | 7 | 1.75e-04 | 6, 2 | 2.88 |
-| σ* 0.06, σ₂ 0.065 | cancellation | 24 (2.83e+14) | 1.92e-10, 1.31e-10, 9.62e-11, 7.51e-11, 6.68e-11, 4.99e-11 | 8: 1.0000, 1: 1.0000 | 14 (-0.603) | 7 | 5.15e-02 | 5, 2 | 3.2 |
-| σ* 0.06, A₂ 0.6 | exact | 2 (3.09e+02) | 2.28e-01, 4.88e-02, 2.48e-16 | 1: 1.0000, 1: 1.0000 | 0 (+0.600) | 0 | 6.00e-02 | 0, 0 | 1 |
+| σ* 0.06, equal | cancellation | 24 (1.10e+15) | 2.83e-10, 2.32e-10, 2.58e-10, 1.66e-10, 1.12e-10, 8.39e-11 | 1: 1.0000, 8: 1.0000 | 14 (-0.610) | 7 (7) | 5.08e-02 | 6, 0 (0, 0) | 3.26 |
+| σ* 0.06, A₂ 0.99 | stopped by the budget | 25 (7.36e+13) | 1.15e-10, 7.94e-11, 5.88e-11, 4.66e-11, 3.73e-11, 2.89e-11 | 7: 1.0000, 1: 1.0000 | 13 (-0.573) | 6 (6) | 5.43e-02 | 5, 1 (0, 0) | 2.96 |
+| σ* 0.06, A₂ 0.95 | cancellation | 27 (2.29e+16) | 1.01e-10, 7.49e-11, 6.48e-11, 5.37e-11, 4.97e-11, 4.13e-11 | 8: 1.0000, 1: 1.0000 | 14 (-0.587) | 7 (7) | 5.14e-02 | 4, 1 (0, 0) | 3.18 |
+| σ* 0.06, A₂ 0.9 | stopped by the budget | 20 (1.16e+12) | 5.67e-09, 8.13e-10, 5.16e-10, 4.00e-10, 2.92e-10, 2.02e-10 | 7: 1.0002, 2: 0.9998 | 12 (-0.555) | 7 (7) | 5.22e-02 | 3, 1 (0, 0) | 2.85 |
+| σ* 0.06, c₂ +0.01 | cancellation | 32 (2.34e+67) | 1.71e-11, 1.70e-11, 1.77e-11, 4.21e-11, 2.60e-11, 1.49e-11 | 7: 1.0000, 2: 0.9999 | 11 (-0.561) | 6 (7) | 5.48e-02 | 6, 2 (1, 0) | 2.88 |
+| σ* 0.06, σ₂ 0.065 | cancellation | 24 (2.83e+14) | 1.92e-10, 1.31e-10, 9.62e-11, 7.51e-11, 6.68e-11, 4.99e-11 | 8: 1.0000, 1: 1.0000 | 14 (-0.603) | 7 (7) | 5.15e-02 | 5, 2 (0, 0) | 3.2 |
+| σ* 0.06, A₂ 0.6 | exact | 2 (3.09e+02) | 2.28e-01, 4.88e-02, 2.48e-16 | 1: 1.0000, 1: 1.0000 | 0 (+0.600) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 1 |
 
-Why they ended (referee round 68): σ* 0.06, equal: 21 of 21 kernels active (the dictionary exhausted), 8 of the 17 accepted polishes stopped by their budget (status 0), 0 active kernels of negative width, 3 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.99: 20 of 21 kernels active, 10 of the 24 accepted polishes stopped by their budget (status 0), 1 active kernels of negative width, 2 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.95: 21 of 21 kernels active (the dictionary exhausted), 12 of the 27 accepted polishes stopped by their budget (status 0), 1 active kernels of negative width, 3 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.9: 17 of 21 kernels active, 6 of the 19 accepted polishes stopped by their budget (status 0), 1 active kernels of negative width, 3 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, c₂ +0.01: 21 of 21 kernels active (the dictionary exhausted), 14 of the 30 accepted polishes stopped by their budget (status 0), 2 active kernels of negative width, 4 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, σ₂ 0.065: 21 of 21 kernels active (the dictionary exhausted), 9 of the 24 accepted polishes stopped by their budget (status 0), 2 active kernels of negative width, 4 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.6: 2 of 21 kernels active, 0 of the 2 accepted polishes stopped by their budget (status 0), 0 active kernels of negative width, 0 invisible on the samples (largest φ below 10⁻¹⁰).
+Why they ended (referee rounds 68, 74): σ* 0.06, equal: the stop dictionary, 21 of 21 kernels active (the dictionary exhausted), 8 of the 17 accepted polishes stopped by their budget (status 0), 0 active kernels of negative width, 3 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.99: the stop budget, 20 of 21 kernels active, 10 of the 24 accepted polishes stopped by their budget (status 0), 1 active kernels of negative width, 2 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.95: the stop dictionary, 21 of 21 kernels active (the dictionary exhausted), 12 of the 27 accepted polishes stopped by their budget (status 0), 1 active kernels of negative width, 3 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.9: the stop budget, 17 of 21 kernels active, 6 of the 19 accepted polishes stopped by their budget (status 0), 1 active kernels of negative width, 3 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, c₂ +0.01: the stop dictionary, 21 of 21 kernels active (the dictionary exhausted), 14 of the 30 accepted polishes stopped by their budget (status 0), 2 active kernels of negative width, 4 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, σ₂ 0.065: the stop dictionary, 21 of 21 kernels active (the dictionary exhausted), 9 of the 24 accepted polishes stopped by their budget (status 0), 2 active kernels of negative width, 4 invisible on the samples (largest φ below 10⁻¹⁰); σ* 0.06, A₂ 0.6: the stop tolerance, 2 of 21 kernels active, 0 of the 2 accepted polishes stopped by their budget (status 0), 0 active kernels of negative width, 0 invisible on the samples (largest φ below 10⁻¹⁰).
 
 ### HP. H's path without the polish (referee round 68)
 
-The moving-width path (tolerance 10⁻⁹) with the least-squares polish off, against H's (with it): the outcome, the negative kernels along the path and at the end, the largest |w|, the residual, the active kernels:
+The moving-width path (tolerance 10⁻⁹) with the least-squares polish off, against H's (with it): the outcome, the negative kernels visible on the samples along the path and at the end (all formed at the end in brackets), the largest |w|, the residual, the active kernels and why the path stopped (referee round 74: tolerance, budget, dictionary exhausted):
 
-| target | outcome (H) | negative along the path, at the end (H) | max\|w\| (H) | residual (H) | active |
-|---|---|---|---|---|---|
-| σ* 0.04, equal | not fitted (exact, null cluster) | 10, 0 (10, 2) | 1 (1) | 7.5e-07 (1.3e-13) | 21 |
-| σ* 0.06, equal | not fitted (cancellation) | 14, 12 (14, 7) | 0.929 (3.24) | 9.7e-06 (4.3e-10) | 21 |
-| σ* 0.06, A₂ 0.9 | stopped by the budget (cancellation) | 12, 12 (12, 7) | 2.39 (2.84) | 1.4e-06 (8.1e-10) | 20 |
-| σ* 0.06, c₂ +0.01 | not fitted (cancellation) | 11, 11 (11, 7) | 2.26 (2.85) | 9.5e-07 (4.4e-10) | 21 |
+| target | outcome (H) | visible negative along the path, at the end (H) | max\|w\| (H) | residual (H) | active | stop |
+|---|---|---|---|---|---|---|
+| σ* 0.04, equal | not fitted (exact, null cluster) | 10, 0 [0] (10, 2 [2]) | 1 (1) | 7.5e-07 (1.3e-13) | 21 | dictionary |
+| σ* 0.06, equal | not fitted (cancellation) | 14, 12 [12] (14, 7 [7]) | 0.929 (3.24) | 9.7e-06 (4.3e-10) | 21 | dictionary |
+| σ* 0.06, A₂ 0.9 | stopped by the budget (cancellation) | 12, 6 [12] (12, 7 [7]) | 2.39 (2.84) | 1.4e-06 (8.1e-10) | 20 | budget |
+| σ* 0.06, c₂ +0.01 | not fitted (cancellation) | 11, 6 [11] (11, 6 [7]) | 2.26 (2.85) | 9.5e-07 (4.4e-10) | 21 | dictionary |
 
 ### H3. The separation scan
 
 σ* = 0.06, equal amplitudes 1, at ±c (2c in units of σ₀ in brackets; H's ±0.08 is 1.33σ₀), H's columns:
 
-| separation | outcome | negative kernels along the path (most negative w) | at the end | smallest width | sub-sample, negative widths (all active) | max\|w\| | residual |
-|---|---|---|---|---|---|---|---|
-| ±0.05 (0.83σ₀) | stopped by the budget | 10 (-0.240) | 10 | 3.23e-02 | 0, 0 | 1.42 | 6.5e-06 |
-| ±0.08 (1.33σ₀) | cancellation | 14 (-0.610) | 7 | 4.96e-02 | 6, 0 | 3.24 | 4.3e-10 |
-| ±0.1 (1.67σ₀) | exact | 0 (+0.000) | 0 | 6.00e-02 | 0, 0 | 1 | 3.3e-10 |
-| ±0.12 (2.00σ₀) | exact | 0 (-0.000) | 0 | 6.00e-02 | 0, 0 | 1 | 2.5e-12 |
-| ±0.15 (2.50σ₀) | coinciding pair | 0 (+0.305) | 0 | 6.00e-02 | 0, 0 | 1 | 5.8e-16 |
-| ±0.2 (3.33σ₀) | coinciding pair | 0 (+0.231) | 0 | 6.00e-02 | 0, 0 | 0.631 | 2.3e-15 |
+| separation | outcome | visible negative kernels along the path (most negative w) | at the end (all formed) | smallest visible width | sub-sample, negative widths (all active; formed) | formed invisible | max\|w\| | residual |
+|---|---|---|---|---|---|---|---|---|
+| ±0.05 (0.83σ₀) | stopped by the budget | 10 (-0.240) | 10 (10) | 3.23e-02 | 0, 0 (0, 0) | 0 | 1.42 | 6.5e-06 |
+| ±0.08 (1.33σ₀) | cancellation | 14 (-0.610) | 7 (7) | 4.96e-02 | 6, 0 (0, 0) | 0 | 3.24 | 4.3e-10 |
+| ±0.1 (1.67σ₀) | exact | 0 (+0.000) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 3.3e-10 |
+| ±0.12 (2.00σ₀) | exact | 0 (-0.000) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 2.5e-12 |
+| ±0.15 (2.50σ₀) | coinciding pair | 0 (+0.305) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 1 | 5.8e-16 |
+| ±0.2 (3.33σ₀) | coinciding pair | 0 (+0.231) | 0 (0) | 6.00e-02 | 0, 0 (0, 0) | 0 | 0.631 | 2.3e-15 |
 
 ### HL. The real loop on H's targets (referee round 68: the asymmetric ones, to τ = 10⁵)
 
-The free law from α = 0 at the masses ε (`loop_nd`, rtol 10⁻⁹) at the times τ: the formed kernels (|w| above 1% of the smallest amplitude), of the other sign, the smallest formed width, the formed kernels centred outside the samples' window, the largest |w|, the residual:
+The free law from α = 0 at the masses ε (`loop_nd`, rtol 10⁻⁹) at the times τ: the formed kernels (|w| above 1% of the smallest amplitude), those visible on the samples (largest φ there at least 1e-10; referee round 74) of the other sign, the invisible formed ones, the smallest visible width, the formed kernels centred outside the samples' window, the largest |w|, the residual:
 
-| target | ε | τ | formed | of the other sign (most negative w) | smallest width | outside the window | max\|w\| | residual |
-|---|---|---|---|---|---|---|---|---|
-| σ* 0.04, equal | 1e-06 | 1600 | 9 | 6 (-0.027) | 0.036 | 0 | 0.951 | 7.8e-04 |
-| σ* 0.04, equal | 1e-06 | 6400 | 2 | 0 | 0.040 | 0 | 0.995 | 6.7e-05 |
-| σ* 0.04, equal | 1e-06 | 25000 | 2 | 0 | 0.040 | 0 | 0.999 | 1.7e-05 |
-| σ* 0.04, equal | 1e-06 | 100000 | 2 | 0 | 0.040 | 0 | 1 | 5.3e-06 |
-| σ* 0.04, equal | 1e-08 | 1600 | 9 | 8 (-0.408) | 0.024 | 0 | 0.716 | 7.2e-02 |
-| σ* 0.04, equal | 1e-08 | 6400 | 2 | 0 | 0.040 | 0 | 0.998 | 2.0e-05 |
-| σ* 0.04, equal | 1e-08 | 25000 | 2 | 0 | 0.040 | 0 | 1 | 4.6e-06 |
-| σ* 0.04, equal | 1e-08 | 100000 | 2 | 0 | 0.040 | 0 | 1 | 1.5e-06 |
-| σ* 0.06, equal | 1e-06 | 1600 | 7 | 6 (-0.389) | 0.037 | 0 | 0.979 | 2.7e-02 |
-| σ* 0.06, equal | 1e-06 | 6400 | 9 | 6 (-0.112) | 0.047 | 0 | 0.572 | 1.4e-04 |
-| σ* 0.06, equal | 1e-06 | 25000 | 11 | 8 (-0.078) | 0.046 | 0 | 0.638 | 7.0e-05 |
-| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0.043 | 0 | 0.705 | 2.5e-05 |
-| σ* 0.06, equal | 1e-08 | 1600 | 7 | 6 (-0.389) | 0.037 | 0 | 0.979 | 2.7e-02 |
-| σ* 0.06, equal | 1e-08 | 6400 | 13 | 12 (-0.456) | 0.024 | 0 | 0.958 | 2.1e-02 |
-| σ* 0.06, equal | 1e-08 | 25000 | 17 | 14 (-0.211) | 0.049 | 2 | 0.799 | 3.5e-05 |
-| σ* 0.06, equal | 1e-08 | 100000 | 15 | 12 (-0.208) | 0.059 | 2 | 0.929 | 9.8e-06 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 1600 | 7 | 6 (-0.392) | 0.037 | 0 | 0.974 | 2.7e-02 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 6400 | 9 | 6 (-0.448) | 0.000 | 0 | 1.58 | 2.3e-05 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 25000 | 9 | 6 (-0.438) | 0.000 | 0 | 1.63 | 8.3e-06 |
-| σ* 0.06, A₂ 0.99 | 1e-06 | 100000 | 9 | 6 (-0.430) | 0.000 | 0 | 1.67 | 3.3e-06 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 1600 | 7 | 6 (-0.392) | 0.037 | 0 | 0.974 | 2.7e-02 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 6400 | 14 | 13 (-0.472) | 0.020 | 0 | 0.953 | 2.1e-02 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 25000 | 14 | 12 (-0.550) | 0.000 | 0 | 2.3 | 4.7e-06 |
-| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 12 (-0.539) | 0.000 | 0 | 2.38 | 1.8e-06 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 1600 | 7 | 6 (-0.407) | 0.036 | 0 | 0.958 | 2.6e-02 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 6400 | 8 | 6 (-0.432) | 0.001 | 0 | 1.74 | 2.1e-05 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 25000 | 8 | 6 (-0.422) | 0.001 | 0 | 1.78 | 7.3e-06 |
-| σ* 0.06, A₂ 0.95 | 1e-06 | 100000 | 8 | 6 (-0.416) | 0.001 | 0 | 1.82 | 2.8e-06 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 1600 | 7 | 6 (-0.407) | 0.036 | 0 | 0.958 | 2.6e-02 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 6400 | 13 | 12 (-0.479) | 0.023 | 0 | 0.946 | 2.1e-02 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 25000 | 14 | 12 (-0.547) | 0.000 | 0 | 2.29 | 4.6e-06 |
-| σ* 0.06, A₂ 0.95 | 1e-08 | 100000 | 14 | 12 (-0.537) | 0.000 | 0 | 2.37 | 1.8e-06 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 1600 | 8 | 6 (-0.469) | 0.001 | 0 | 1.55 | 2.9e-04 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 6400 | 8 | 6 (-0.432) | 0.001 | 0 | 1.74 | 2.0e-05 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 25000 | 8 | 6 (-0.423) | 0.001 | 0 | 1.79 | 7.2e-06 |
-| σ* 0.06, A₂ 0.9 | 1e-06 | 100000 | 8 | 6 (-0.416) | 0.001 | 0 | 1.82 | 2.8e-06 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 1600 | 7 | 6 (-0.427) | 0.035 | 0 | 0.946 | 2.5e-02 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 6400 | 14 | 12 (-0.586) | 0.010 | 0 | 1.25 | 6.3e-03 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 25000 | 14 | 12 (-0.542) | 0.000 | 0 | 2.3 | 4.6e-06 |
-| σ* 0.06, A₂ 0.9 | 1e-08 | 100000 | 14 | 12 (-0.532) | 0.000 | 0 | 2.37 | 1.8e-06 |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 1600 | 2 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 6400 | 2 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 25000 | 2 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
-| σ* 0.06, c₂ +0.01 | 1e-06 | 100000 | 2 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 1600 | 7 | 6 (-0.391) | 0.038 | 0 | 0.934 | 3.5e-02 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 6400 | 13 | 11 (-0.504) | 0.000 | 0 | 2.02 | 1.3e-05 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 25000 | 13 | 11 (-0.491) | 0.000 | 0 | 2.12 | 3.9e-06 |
-| σ* 0.06, c₂ +0.01 | 1e-08 | 100000 | 13 | 11 (-0.482) | 0.000 | 0 | 2.19 | 1.6e-06 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 1600 | 6 | 4 (-0.402) | 0.001 | 0 | 1.51 | 7.4e-05 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 6400 | 6 | 4 (-0.387) | 0.001 | 0 | 1.58 | 1.0e-05 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 25000 | 6 | 4 (-0.382) | 0.001 | 0 | 1.6 | 3.2e-06 |
-| σ* 0.06, σ₂ 0.065 | 1e-06 | 100000 | 6 | 4 (-0.379) | 0.001 | 0 | 1.62 | 1.2e-06 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 1600 | 7 | 6 (-0.403) | 0.038 | 0 | 1.01 | 2.3e-02 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 6400 | 13 | 12 (-0.474) | 0.025 | 0 | 0.991 | 1.7e-02 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 25000 | 13 | 11 (-0.645) | 0.000 | 0 | 2.59 | 5.8e-06 |
-| σ* 0.06, σ₂ 0.065 | 1e-08 | 100000 | 13 | 11 (-0.631) | 0.000 | 0 | 2.69 | 2.1e-06 |
+| target | ε | τ | formed | visible of the other sign (most negative w) | invisible | smallest visible width | outside the window | max\|w\| | residual |
+|---|---|---|---|---|---|---|---|---|---|
+| σ* 0.04, equal | 1e-06 | 1600 | 9 | 6 (-0.027) | 0 | 0.036 | 0 | 0.951 | 7.8e-04 |
+| σ* 0.04, equal | 1e-06 | 6400 | 2 | 0 | 0 | 0.040 | 0 | 0.995 | 6.7e-05 |
+| σ* 0.04, equal | 1e-06 | 25000 | 2 | 0 | 0 | 0.040 | 0 | 0.999 | 1.7e-05 |
+| σ* 0.04, equal | 1e-06 | 100000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 5.3e-06 |
+| σ* 0.04, equal | 1e-08 | 1600 | 9 | 8 (-0.408) | 0 | 0.024 | 0 | 0.716 | 7.2e-02 |
+| σ* 0.04, equal | 1e-08 | 6400 | 2 | 0 | 0 | 0.040 | 0 | 0.998 | 2.0e-05 |
+| σ* 0.04, equal | 1e-08 | 25000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 4.6e-06 |
+| σ* 0.04, equal | 1e-08 | 100000 | 2 | 0 | 0 | 0.040 | 0 | 1 | 1.5e-06 |
+| σ* 0.06, equal | 1e-06 | 1600 | 7 | 6 (-0.389) | 0 | 0.037 | 0 | 0.979 | 2.7e-02 |
+| σ* 0.06, equal | 1e-06 | 6400 | 9 | 6 (-0.112) | 0 | 0.047 | 0 | 0.572 | 1.4e-04 |
+| σ* 0.06, equal | 1e-06 | 25000 | 11 | 8 (-0.078) | 0 | 0.046 | 0 | 0.638 | 7.0e-05 |
+| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0 | 0.043 | 0 | 0.705 | 2.5e-05 |
+| σ* 0.06, equal | 1e-08 | 1600 | 7 | 6 (-0.389) | 0 | 0.037 | 0 | 0.979 | 2.7e-02 |
+| σ* 0.06, equal | 1e-08 | 6400 | 13 | 12 (-0.456) | 0 | 0.024 | 0 | 0.958 | 2.1e-02 |
+| σ* 0.06, equal | 1e-08 | 25000 | 17 | 14 (-0.211) | 0 | 0.049 | 2 | 0.799 | 3.5e-05 |
+| σ* 0.06, equal | 1e-08 | 100000 | 15 | 12 (-0.208) | 0 | 0.059 | 2 | 0.929 | 9.8e-06 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 1600 | 7 | 6 (-0.392) | 0 | 0.037 | 0 | 0.974 | 2.7e-02 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 6400 | 9 | 3 (-0.448) | 3 | 0.044 | 0 | 1.58 | 2.3e-05 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 25000 | 9 | 3 (-0.438) | 3 | 0.047 | 0 | 1.63 | 8.3e-06 |
+| σ* 0.06, A₂ 0.99 | 1e-06 | 100000 | 9 | 3 (-0.430) | 3 | 0.049 | 0 | 1.67 | 3.3e-06 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1600 | 7 | 6 (-0.392) | 0 | 0.037 | 0 | 0.974 | 2.7e-02 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 6400 | 14 | 13 (-0.472) | 0 | 0.020 | 0 | 0.953 | 2.1e-02 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 25000 | 14 | 6 (-0.550) | 6 | 0.038 | 0 | 2.3 | 4.7e-06 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 6 (-0.539) | 6 | 0.040 | 0 | 2.38 | 1.8e-06 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 1600 | 7 | 6 (-0.407) | 0 | 0.036 | 0 | 0.958 | 2.6e-02 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 6400 | 8 | 3 (-0.432) | 3 | 0.050 | 0 | 1.74 | 2.1e-05 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 25000 | 8 | 3 (-0.422) | 3 | 0.052 | 0 | 1.78 | 7.3e-06 |
+| σ* 0.06, A₂ 0.95 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 1600 | 7 | 6 (-0.407) | 0 | 0.036 | 0 | 0.958 | 2.6e-02 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 6400 | 13 | 12 (-0.479) | 0 | 0.023 | 0 | 0.946 | 2.1e-02 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 25000 | 14 | 6 (-0.547) | 6 | 0.038 | 0 | 2.29 | 4.6e-06 |
+| σ* 0.06, A₂ 0.95 | 1e-08 | 100000 | 14 | 6 (-0.537) | 6 | 0.040 | 0 | 2.37 | 1.8e-06 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 1600 | 8 | 4 (-0.469) | 2 | 0.001 | 0 | 1.55 | 2.9e-04 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 6400 | 8 | 3 (-0.432) | 3 | 0.050 | 0 | 1.74 | 2.0e-05 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 25000 | 8 | 3 (-0.423) | 3 | 0.052 | 0 | 1.79 | 7.2e-06 |
+| σ* 0.06, A₂ 0.9 | 1e-06 | 100000 | 8 | 3 (-0.416) | 3 | 0.053 | 0 | 1.82 | 2.8e-06 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 1600 | 7 | 6 (-0.427) | 0 | 0.035 | 0 | 0.946 | 2.5e-02 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 6400 | 14 | 12 (-0.586) | 0 | 0.010 | 0 | 1.25 | 6.3e-03 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 25000 | 14 | 6 (-0.542) | 6 | 0.038 | 0 | 2.3 | 4.6e-06 |
+| σ* 0.06, A₂ 0.9 | 1e-08 | 100000 | 14 | 6 (-0.532) | 6 | 0.040 | 0 | 2.37 | 1.8e-06 |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 1600 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 6400 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 25000 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
+| σ* 0.06, c₂ +0.01 | 1e-06 | 100000 | 2 | 0 | 0 | 0.060 | 0 | 1 | 4.6e-09 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 1600 | 7 | 6 (-0.391) | 0 | 0.038 | 0 | 0.934 | 3.5e-02 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 6400 | 13 | 6 (-0.504) | 5 | 0.035 | 0 | 2.02 | 1.3e-05 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 25000 | 13 | 6 (-0.491) | 5 | 0.038 | 0 | 2.12 | 3.9e-06 |
+| σ* 0.06, c₂ +0.01 | 1e-08 | 100000 | 13 | 6 (-0.482) | 5 | 0.040 | 0 | 2.19 | 1.6e-06 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 1600 | 6 | 3 (-0.402) | 1 | 0.001 | 0 | 1.51 | 7.4e-05 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 6400 | 6 | 2 (-0.387) | 2 | 0.056 | 0 | 1.58 | 1.0e-05 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 25000 | 6 | 2 (-0.382) | 2 | 0.057 | 0 | 1.6 | 3.2e-06 |
+| σ* 0.06, σ₂ 0.065 | 1e-06 | 100000 | 6 | 2 (-0.379) | 2 | 0.058 | 0 | 1.62 | 1.2e-06 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 1600 | 7 | 6 (-0.403) | 0 | 0.038 | 0 | 1.01 | 2.3e-02 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 6400 | 13 | 12 (-0.474) | 0 | 0.025 | 0 | 0.991 | 1.7e-02 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 25000 | 13 | 7 (-0.645) | 4 | 0.034 | 0 | 2.59 | 5.8e-06 |
+| σ* 0.06, σ₂ 0.065 | 1e-08 | 100000 | 13 | 7 (-0.631) | 4 | 0.036 | 0 | 2.69 | 2.1e-06 |
+
+### HLL. Two of HL's cells to τ = 10⁷ (referee round 74)
+
+HL's columns:
+
+| target | ε | τ | formed | visible of the other sign (most negative w) | invisible | smallest visible width | outside the window | max\|w\| | residual |
+|---|---|---|---|---|---|---|---|---|---|
+| σ* 0.06, equal | 1e-06 | 100000 | 11 | 8 (-0.052) | 0 | 0.043 | 0 | 0.705 | 2.5e-05 |
+| σ* 0.06, equal | 1e-06 | 1e+06 | 11 | 8 (-0.036) | 0 | 0.041 | 0 | 0.783 | 7.1e-06 |
+| σ* 0.06, equal | 1e-06 | 1e+07 | 11 | 8 (-0.025) | 0 | 0.039 | 0 | 0.839 | 2.3e-06 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 100000 | 14 | 6 (-0.539) | 6 | 0.040 | 0 | 2.38 | 1.8e-06 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+06 | 14 | 6 (-0.526) | 6 | 0.043 | 0 | 2.48 | 4.4e-07 |
+| σ* 0.06, A₂ 0.99 | 1e-08 | 1e+07 | 14 | 6 (-0.515) | 6 | 0.045 | 0 | 2.55 | 1.2e-07 |
 
 Numbers are produced by `experiments/exp_moving_width.py`; nothing is edited by hand.
