@@ -3216,3 +3216,46 @@ minimised, so it measured that solve as better than it was, and every difference
 the residual exactly costs a tenth of a second an end and turns the claim into a measurement: the anchored residual reaches the optimum to
 10⁻¹², its own floor quadratic in its frozen rounding, and it is the residual, not the restarts, that passes the direct subtraction's
 floor. Describe the solver that ran: here thousands of stall re-anchors, not the periodic ones the text named.
+
+## Round 76 (adversarial review of Proposition D‴.60 as revised after round 69, 2026-10-29)
+
+**Design.** One referee, not modifying the repository. D3bw: Proposition D‴.60 as revised after round 69, with its code and results at
+eeef69c (`review/REVIEW_round76_D3bw.md`). The referee:
+- regenerated the md byte for byte, ran the 47 tests and reran twelve cells with the script's own job functions (C7 ×4, EDGE ×3, C3 ×2,
+  C ×2, W2 ×1), equal to the raw in every field; looked up every number of D60.md in the md;
+- re-derived (i)'s sensitivity and Bode's integral and (ii)'s Floquet sums by hand;
+- ran C7's band verdict like for like (C's loop under ±n for C7's band cases and for draws 1–3; draw 7's windows tiled every 10
+  periods; draws 1–3 out of sample), fine scans of the raise (the noise-free loop, single tones, the band's windows, draw 3 near its
+  leave), the edge outside its window (m = 1.5, 24; k_e = 2.5, 80; WFR at k_e = 20, 40; kernel 3; ω_ref = 0.1, 0.4) with the power law's
+  standard errors, dense traces of the anatomy, and s* scaled and permuted;
+- ran 50 single-point mutants of the new code and 16 replicas of round 69's survivors.
+
+**Verdicts (D3bw).** Reproducibility, (i), (ii) (one Re missing), C4 and W2 (like for like; the rise's excess over s²⟨w₂⟩ steady before
+the leave, a growing higher order rather than a selection at it), the noise-free edge (monotone on a fine grid) and "single tones never
+jump" hold. Three majors: C7's "the least window edge decides the jump" is not a test — a second-order proxy at period 300 against the
+least of eight windows from periods 0–185, 11 of 14 with each run's own coefficient, dependent on the window count, 8 of 12 out of sample
+against a constant guess's 6 of 12 — although the same windows, compared in time with each run's own coefficient, flag the windows that
+hold the leaves; under noise the edge is not a threshold (ejecting bands with gaps), and the bands, not "the drift sets when … the
+fluctuation when", explain C6's draw 3; the (k_e/v₁)^{1/2} scaling interpolates inside its fitted window and leaves out the orbit's
+speed. Minors: E·s² clean at 13.1 rad/s only; the anatomy's sign argument at the onset only, its downward leg not borne out; s*'s
+denominator, its draw-specific part carrying no information; 27 behaviour-changing mutants surviving; md residue; New and the bursting
+analogy. Cosmetic: a Re, kernel 3's jump, a sign check.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bw-1 | major | C7's verdict not a test | C8 (`c8_job`, `c8_lines`, `c8_verdict`, `c8_confusion`, `c8_flags`): C's run and, every 10 periods p, the window from the fit with kernel 1 raised by the run's own offset δ(p) under the run's own noise from p; the rules 'leave' and 'jump' against the noise-free edge as a null rule, in sample (draw 7, 13 runs) and out of sample (53 runs): the leave's window flagged in 27 of 33, an earlier window in 2 of 1184, no false alarm in the 20 runs that never left, against the null's 31 of 33, 465 of 1184 and 10 false alarms; the misses named in (iii); "the edge decides the jump" dropped from (iii), the Status and New |
+| D3bw-2 | major | The edge under noise not a threshold | C7 rescanned at every raise of a fine grid (0.0025 to 0.2, 0.005 to 0.4, 0.02 to 1), no bisection: the leaving and the jumping sets as bands (`bands_of`, `scan_sets`) — one interval at every configuration without noise, not an interval in 18 of 120 windows under the band —; C9 and C9D (`c9_pairs`, `c9_own_job`): C6's draws' windows every 5 periods around their leaves, the window's loop at the run's own offset leaving with the run in 20 of the 48 pairs, never while it stays, staying while it leaves in 3 (windows 1–4 periods before the leave, which the window 5 periods earlier flags), each of the 12 runs flagged in a window containing its leave; C6's conclusion rewritten (draw 3's raised runs in the gap between two bands) |
+| D3bw-3 | major | The scaling's window and the orbit's speed | `edge_fit` with standard errors over its window (α = 0.537 ± 0.025, β = 0.555 ± 0.028; residuals −0.054 … +0.141 in the log); EDGE run outside it (`edge_job`'s ω_ref; k_e = 2.5, 80; m = 1.5, 24; WFR at k_e = 20, 40; kernel 3 at three more settings; ω_ref = 0.1, 0.4 at three configurations): 0.87–1.13 times the law at m = 1.5, 24, k_e = 80 and for kernel 3, 1.53 times at k_e = 2.5, 1.17–1.61 under WFR (no ejection to Δ = 1 at k_e = 40), ∝ ω_ref^{0.71–0.77}; (iii) calls it an interpolation; the law dropped from New |
+| D3bw-4 | minor | E·s² | the tones under ±n (C7: the half-sum and the half-difference, E per tone and level, the '>1' rows kept) and at C2's levels 0.04–0.08: E·s² describes a tone's edge to s ≈ 0.02–0.03, beyond which it leaves the grid and comes back at 0.06–0.08; for tones an edge from one start does not decide (at 0.08 the drifts pass the edges from the start without a jump) |
+| D3bw-5 | minor | The anatomy | the sign argument at the onset only; detachment non-returning on 1024 outputs a period (`edge_run`'s trace: kernel 1 at t/T = 0.594, kernel 3 at 0.401); the offsets below the edge both ways; at k_e = 2.5 a return and an end at +0.214; under noise both directions (C3: +1.39 … +1.41, with the third kernel, in 3 of 11 and 8 of 11 draws) |
+| D3bw-6 | minor | s* | 33 of the 77 testable draw-configurations; `star_null` (the draws' ⟨w₂⟩ permuted within each configuration, 200 times: 33.56 on average, 32–35, at least 33 in 181); the consistent windows 0.20–0.50 of s* wide; "the configuration's, not the draw's"; the lists complete |
+| D3bw-7 | minor | Surviving mutants | tests: `c7_job`'s noise, windows and configuration and `c7_lines`' sets, ±n, '>1' and bands; `edge_run`'s trace and `edge_job`; `edge_lines` with kernel-3, WFR, ω_ref and out-of-window rows; `edge_fit`'s standard errors and window; s*'s kernel 3, null and widths; C8's verdicts, confusion, flags, job, lines and totals; C9's pairs, own job, lines and part, and `main`'s C9D dispatch; `c3_job`'s fake loop, C4's lines, `w2_cases`, `b5_lines`, `a2_rows`' reference, the raised start's sign. 39 single-point mutants of this round's code: all killed (9 only after tests added in a second pass; 3 of them equivalent on the data) |
+| D3bw-8 | minor | md residue | C3's comparison with (ii)'s even part at its saturation dropped; '>1' windows counted above every raise in the median; the '>1' rows kept; C7 prints the grid's raises, no bisection midpoints |
+| D3bw-9 | minor | Sources and novelty | New restricted to what is derived or measured; "a drift, then a jump, as in bursting but without return"; bursting described as intermittent (Anderson 1985) |
+| D3bw-10 | cosmetic | Loose ends | the mode sum's Re; "at 0.32 one jump, of the third kernel"; the raised start's test checks the sign |
+
+**Lesson.** A threshold measured under noise has to be shown to be one before it is used as one: scanned finely, the raises that eject a
+kernel form bands with gaps, and a bisected "edge" is the lower boundary of whichever band the grid meets. A criterion meant to decide
+events is tested at the events' time, on each run's own state and on draws it was not built on, against a null rule: here the same
+windows that failed as a static verdict anticipate 27 of 33 leaves on new draws with 2 flags in 1184 earlier windows, where the noise-free
+edge flags 465.
