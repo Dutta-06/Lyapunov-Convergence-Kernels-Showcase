@@ -3064,3 +3064,44 @@ three-kernel block's constant, and once it was seen as such every stage — τ�
 Counting kernels needs the criterion that the samples can see: spikes invisible on every sample had been read as a fit narrower than
 the samples. And a law's constant checked against a run shows what the derivation leaves out — here the slaved coefficients' share of
 the metric, and after it E's next order.
+
+## Round 77 (adversarial review of Proposition D‴.58 as revised after round 70, 2026-10-28)
+
+**Design.** One referee, not modifying the repository. D3bx: Proposition D‴.58 as revised after round 70, with its code and results at
+39a8820 (`review/REVIEW_round77_D3bx.md`). The referee:
+- regenerated the md byte for byte, reran all 12 B4 cells, B3 at two rows and B2 at three blocks bit-identically, and compared all 22 B3
+  'path' restarts with B's stored first polishes;
+- at every B4 start ran `lm_fit` in both precisions, evaluated the long-double end in both, measured the objective's rounding noise,
+  scanned the damping at the double stall, restarted `lm_fit` from its end, and ran the same solve in pure double with its residual about
+  an anchor (as is, re-anchored once, every 2000 steps); at the two blocks below 10⁻¹⁰ also compensated summation, identity scaling,
+  μ₀ = 10⁻¹⁰ and the polish's TRF from the final blocks;
+- tested `b3_binds` on nine synthetic cases, the Schur bound at the 20 first blocks under 22 centre scalings, and A5's first-term rates
+  and the tail's onset;
+- ran 99 single-point mutants and a control.
+
+**Verdicts (D3bx).** Reproducibility, B3's restarts (22 of 22 the stored first polish), the extended-precision core and every number hold.
+Three majors: the floor is not the arithmetic's — the same solve in pure double with its residual evaluated about an anchor reaches the
+long-double end from all 12 starts, and at the double stalls the objective computed in double still resolves the gap (the rounding
+destroys the step, not the objective); "censored by the floor", 'neither' and the soft floor's 0.1% crossing do not follow — at 3/4,
+K = 11 the restart spent its budget, B4's double solve from that block passes the experiment's own 0.1% test, the polish's TRF from the
+final blocks stops 4–8 times above the double solve's excess, and the excesses depend on the start and the solver; 11 surviving mutants
+change B3 or B4 on a rerun. Minors: `b3_binds`' labels; the rerun guard and n0; B3 restarts the first polish only; B2's "whether … depends
+on the units" against the Schur bound; A5's slower fall shown at two widths; cosmetic.
+
+| id | sev. | issue | fix (where) |
+|---|---|---|---|
+| D3bx-1 | major | The floor is not the arithmetic's | B4 rerun with `lm_fit(anchored=True)`: double, the residual r = r₀ − Σ_kφ₀_k[(w_k − w₀_k) + w_k·expm1(Δ_k)] about an anchor, re-anchored every 2000 accepted steps and at a stall, stopping flat, stall or cap, its end also after 1, 2 and 3·10⁵ iterations: from all 12 starts −1.4·10⁻⁸ … +7·10⁻¹² from the long-double end (the cap from 7, each end within 3.1·10⁻¹⁰ over its last 2·10⁵ iterations); the optimum-start rows in B4's summary (the double stall 2.4·10⁻⁸ … 2.3·10⁻⁵ above); B4's legend, `lm_fit`'s docstring, the test and (iii), Status and Numerics: the floor of the residual as these solvers evaluate it (f − Φ(c)w by direct subtraction), not the arithmetic's; "no step … as double resolves it" deleted; round 70's "the floor is the arithmetic's" withdrawn |
+| D3bx-2 | major | Censored, 'neither', the soft floor | `b3_binds` carries the stop ("neither (the budget spent)", "neither (the solve's stop, status 3)"); B4's TRF column: the polish's own solve with 5·10⁵ evaluations and no gradient test stops on its step test 1.5·10⁻⁷ … 1.5·10⁻² above the long-double end from the final blocks (1.5·10⁻² and 5.3·10⁻³ at the two below 10⁻¹⁰); B3's excesses against B4's long-double end below 2·10⁻⁹ (1.0235 and 1.0484 at the two); (iii): the two ends not reached by the polish's solve (its step test at 1/4, its budget at 3/4), the double solve at 3/4, K = 11 1.0007 times the stored optimum, the stall's excess the solver's (non-monotone; at most 2.3·10⁻⁵ from the stored optima), "censored by the floor" and the 0.1% crossing dropped |
+| D3bx-3 | major | Surviving mutants | Tests: `b3_restart` judges the seed from the start's amplitudes with the path's step (a 1.5σ move accepted at 2σ, rejected at 1σ); `b3_job` on the variant without the gradient test; `first_nonoptimal` with unequal polish counts and e_opt ≠ 1, and the guard on the stored first polish; `path_polishes` passes each call's settings to the solve; `b4_jobs` with two variants at one width (the row's variant, not the first) and an optimum in [10⁻⁹, 2·10⁻⁹); `part_B4` and `main --only B4` with a fake pool; a long `lm_fit` descent from the (1/4, K = 5) block (10.85 times the optimum to 1 + 5·10⁻⁹ in 7996 iterations); the anchored solve (cap, marks, the flat stop, each step's decrease when re-anchored after every step, long double refused); 24 of 24 targeted mutants of the round's code killed |
+| D3bx-4 | minor | `b3_binds`' labels | labels from the ends that reach the optimum and are accepted; "(and the radius)" only where every reaching end is rejected; "nothing" an inconsistency; below 2·10⁻⁹ judged against B4's long-double end |
+| D3bx-5 | minor | The rerun guard and n0 | `b3_job` refuses a 'path' restart whose status or evaluations differ from the stored first polish (`first_nonoptimal` carries it); B3: "the 'path' restart reproduces the first polish B stored — its stop and evaluations — at 22 of 22 blocks"; n0 counts every call, a block without kernels having no polish — the guard checks it |
+| D3bx-6 | minor | The first polish only | (iii): the first polish's settings bind; at (1, grid +0.05) all 24 polishes stop on the gradient test and are rejected, their ends not logged; only the first polish is restarted — at four of the six radius-bound blocks the path made 22–24 rejected polishes of the block, the later ones from flowed states |
+| D3bx-7 | minor | B2's units | `b2_line` and (iii): never faster in a common scaling of the centres (a Schur complement, for Kaufman's form; the Golub–Pereyra form used differs by a term ∝ the residual), how much slower unit-dependent; unit norm not a common scaling; the condition numbers with the centres in x, the polish's parameters, and TRF's Coleman–Li v^{1/2} |
+| D3bx-8 | minor | A5's slower fall | `a5_lines`: the Mercer frame's tail overtakes its first term from K ≈ 2/(q(2 − v′)) = 70.0, 22.0, 10.2, 8.0, which the K tested pass only at τ/σ = 2; Status: the slower fall shown at τ/σ = 1, 2 only, at the tail's onset, its rate not shown |
+| D3bx-9 | cosmetic | Wording | "its duals within 10⁻⁴"; A5's ratios .4f; variable projection's condition number printed once; B4's ratios quoted against the long-double end |
+
+**Lesson.** The control for "the arithmetic's floor" is the best method in that arithmetic, not the same method in a wider one. An
+anchored residual — its rounding fixed once, the change from the anchor computed to its own accuracy — lets a pure-double solve pass the
+long-double end, and the floor becomes a property of how the solvers evaluate the residual, not of the problem or the arithmetic. A
+verdict such as "neither" must carry the solve's stop, and excesses measured from one kind of start against an unconverged reference are
+the solver's, not a law.

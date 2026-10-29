@@ -305,12 +305,13 @@ def path_polishes(r_, var, stop_after=None):
 
 def first_nonoptimal(b):
     """B's path b (its stored blocks): the first block with polishes whose error is at least 1 + OPT_TOL times the optimum's, as
-    dict(n0 — the number of polish calls before its first —, k, e, e_opt, n_polish), or None."""
+    dict(n0 — the number of polish calls before its first —, k, e, e_opt, n_polish, first — its first polish's stored stop —), or None
+    (the stored blocks are those with kernels: a block without kernels has no polish, so n0 counts every call)."""
     n0 = 0
     for o in b['blocks']:
         n_i = len(o['polish']) if 'polish' in o else 0
         if o['k'] > 0 and n_i > 0 and abs(o['e'] / o['e_opt'] - 1) >= OPT_TOL:
-            return dict(n0=n0, k=int(o['k']), e=float(o['e']), e_opt=float(o['e_opt']), n_polish=n_i)
+            return dict(n0=n0, k=int(o['k']), e=float(o['e']), e_opt=float(o['e_opt']), n_polish=n_i, first=dict(o['polish'][0]))
         n0 += n_i
     return None
 
@@ -330,8 +331,13 @@ def b3_job(args):
         _, K, f, calls = path_polishes(r_, var, stop_after=blk['n0'])
         if len(calls) <= blk['n0'] or calls[blk['n0']]['c'].size != blk['k']:
             raise RuntimeError(f"B3 {r_} {var}: the rerun's polish {blk['n0']} is not the stored block's ({len(calls)} calls)")
-        return b3_restart(r_, var, K, f, calls[blk['n0']], blk['k'], blk['e_opt'], blk['e'] / blk['e_opt'], blk['n_polish'], step,
-                          nfev, gt, t0)
+        out = b3_restart(r_, var, K, f, calls[blk['n0']], blk['k'], blk['e_opt'], blk['e'] / blk['e_opt'], blk['n_polish'], step,
+                         nfev, gt, t0)
+        fs = blk.get('first') or {}                                      # referee round 77: the 'path' restart is the stored polish
+        if any(fs.get(k) is not None and out['path'][k] != fs[k] for k in ('status', 'nfev')):
+            raise RuntimeError(f"B3 {r_} {var}: the 'path' restart {out['path']['status']}/{out['path']['nfev']} is not the stored "
+                               f"first polish {fs.get('status')}/{fs.get('nfev')}")
+        return out
     R, K, f, calls = path_polishes(r_, var)
     rf, ss, n0 = float(np.sqrt(np.mean(f ** 2))), sigma_star(r_), 0
     for i, b in enumerate(blocks(R)):
@@ -382,26 +388,40 @@ def part_B3(B):
         return pool.map(b3_job, b3_jobs(B), chunksize=1)
 
 
-def b3_binds(q):
-    """What bounds a B3 block's range end: the settings whose change carries the restart to the optimum (the budget, the gradient test,
-    both), the seed rule's radius where an end at the optimum is rejected, or nothing (the path's own settings reach it, accepted)."""
-    reach = lambda k: q[k]['ratio'] < 1 + OPT_TOL
+def b3_binds(q, ref=1.0):
+    """What bounds a B3 block's range end (referee rounds 70, 77), from the restarts' ends that reach the optimum — judged against ref, the
+    optimum's error over the stored optimum's (below B4_MAX B4's long-double end) — and that the path's seed rule accepts: the fewest
+    settings whose change gives such an end (the budget, the gradient test, either alone, or both); where every end that reaches it is
+    rejected, the fewest settings that reach it "(and the radius)", and the radius alone where the path's own settings reach it; "neither"
+    with the both-changed restart's stop (its budget spent, or the solve's own stop); an inconsistency where the path's own polish reaches
+    it, accepted."""
+    reach = lambda k: q[k]['ratio'] / ref < 1 + OPT_TOL
+    ok = lambda k: reach(k) and q[k]['accepted']
+    name = lambda ks: {('budget',): 'the budget', ('no test',): 'the gradient test'}.get(tuple(ks), 'the budget or the gradient test')
     if reach('path'):
-        return 'the radius' if not q['path']['accepted'] else 'nothing'
-    out = [k for k in ('budget', 'no test') if reach(k)]
-    lab = ('the budget' if out == ['budget'] else 'the gradient test' if out == ['no test'] else 'the budget or the gradient test'
-           if out else 'the budget and the gradient test' if reach('budget, no test') else 'neither')
-    rej = [k for k in B3_KEYS if reach(k) and not q[k]['accepted']]
-    return lab + (' (and the radius)' if rej else '')
+        return 'the radius' if not q['path']['accepted'] else "nothing (inconsistent: the path's own polish reaches it, accepted)"
+    for test in (ok, reach):
+        one = [k for k in ('budget', 'no test') if test(k)]
+        tail = '' if test is ok else ' (and the radius)'
+        if one:
+            return name(one) + tail
+        if test('budget, no test'):
+            return 'the budget and the gradient test' + tail
+    st = q['budget, no test']['status']
+    return 'neither (' + ('the budget spent' if st == 0 else f"the solve's stop, status {st}") + ')'
 
 
-def b3_lines(B3):
-    """B3's table and summary (referee round 70): per block the restarts' stops, errors and the seed rule, and what bounds its end."""
+def b3_lines(B3, B4=None, B=None):
+    """B3's table and summary (referee rounds 70, 77): per block the restarts' stops, errors and the seed rule, and what bounds its end —
+    judged, below B4_MAX, against B4's long-double end (from the path's block), the better optimum there; with B, the 'path' restarts
+    against the first polishes B stored (their stops and evaluations)."""
     if B3 is None or len(B3) == 0:                                    # raw-loaded: an object array
         return []
     rows = [q for q in B3 if q.get('k') is not None]
+    refs = {(q['r'], q['k']): q['long double']['ratio'] for q in (B4 if B4 is not None else []) if q['start'] == 'block'}
+    ref = lambda q: refs.get((q['r'], q['k']), 1.0)
     cell = lambda x: f"{x['status']}/{x['nfev']}, {x['ratio']:.5f}, {x['move']:.2f}σ {'a' if x['accepted'] else 'r'}"
-    out = ['', "### B3. The range ends: the polish restarted from its recorded start, one setting at a time (referee rounds 65, 70)", '',
+    out = ['', "### B3. The range ends: the polish restarted from its recorded start, one setting at a time (referee rounds 65, 70, 77)", '',
            f"Each path's first non-optimal block (its error at least {1 + OPT_TOL:g} times the optimum's): the path rerun with every polish's "
            "start recorded, and from the block's first polish's start — its error over the optimum's — the polish's own solve "
            f"(`polish_block`, TRF) with the path's budget and gradient test, with {B3_BIG:g} evaluations and the test, with the path's budget "
@@ -412,23 +432,34 @@ def b3_lines(B3):
            '|---|---|---|---|---|---|' + '---|' * len(B3_KEYS) + '---|']
     for q in rows:
         out.append(f"| {q['r']:g} | {q['var']} | {q['k']} | {q['e_opt']:.2e}{'†' if q['e_opt'] < E_FLOOR else ''} | {q['e_start']:.4g} | "
-                   f"{q['e_block']:.4g} | " + ' | '.join(cell(q[k]) for k in B3_KEYS) + f" | {b3_binds(q)} |")
+                   f"{q['e_block']:.4g} | " + ' | '.join(cell(q[k]) for k in B3_KEYS) + f" | {b3_binds(q, ref(q))} |")
     up = [q for q in rows if q['e_opt'] >= E_FLOOR]
     cnt = {}
     for q in up:
-        cnt.setdefault(b3_binds(q), []).append(f"{q['r']:g} ({q['var']})")
+        cnt.setdefault(b3_binds(q, ref(q)), []).append(f"{q['r']:g} ({q['var']})")
     lo = [q for q in rows if q['e_opt'] < E_FLOOR]
     both = lambda q: q['budget, no test']
+    if B is not None and len(B):
+        first = {(b['r'], b['var']): (first_nonoptimal(b) or {}).get('first') for b in B}
+        cmp = [(q, first.get((q['r'], q['var']))) for q in rows]
+        cmp = [(q, fs) for q, fs in cmp if fs is not None]
+        same = [q for q, fs in cmp if (q['path']['status'], q['path']['nfev']) == (fs.get('status'), fs.get('nfev'))]
+        out += ['', f"The 'path' restart reproduces the first polish B stored — its stop and evaluations — at {len(same)} of {len(cmp)} blocks"
+                + (" (not at " + '; '.join(f"{q['r']:g} ({q['var']})" for q, _ in cmp if q not in same) + ")" if len(same) < len(cmp) else '')
+                + "."]
     out += ['', f"Above {E_FLOOR:g} ({len(up)} blocks: τ/σ (variant)) the end is bounded by", '']
     out += [f"- {k}: {len(v)} — {'; '.join(v)}" + (';' if i < len(cnt) - 1 else '.') for i, (k, v) in enumerate(sorted(cnt.items()))]
     if lo:
         out += ['', f"Below it ({len(lo)} blocks) the restart with both changed stops at " + ', '.join(
-            f"{both(q)['ratio']:.4f} ({both(q)['status']}/{both(q)['nfev']})" for q in lo) + " times the optimum."]
+            f"{both(q)['ratio']:.4f} ({both(q)['status']}/{both(q)['nfev']}: {b3_binds(q, ref(q))})" for q in lo) + " times the stored "
+            "optimum" + (", " + ', '.join(f"{both(q)['ratio'] / ref(q):.4f}" for q in lo) + " times B4's long-double end" if all(
+                (q['r'], q['k']) in refs for q in lo) else '') + "."]
     by = {}
     for q in rows:
-        by.setdefault(float(f"{q['e_opt']:.3g}"), []).append(both(q)['ratio'] - 1)
-    out += ['', "The restart with both changed: its end over the optimum, minus 1, by the optimum (the floor is soft; a negative value — "
-            "the end below the best optimum found, which is converged only to that): " + '; '.join(
+        by.setdefault(float(f"{q['e_opt']:.3g}"), []).append(both(q)['ratio'] / ref(q) - 1)
+    out += ['', "The restart with both changed (the polish's TRF): its end over the optimum, minus 1 — below " + f"{B4_MAX:g} over B4's "
+            "long-double end —, by the optimum (one solver from one kind of start; a negative value is the end below the stored optimum, "
+            "converged only to that): " + '; '.join(
                 f"{e:.3g}: {min(v):+.1e}" + (f" … {max(v):+.1e}" if max(v) > min(v) else '') for e, v in sorted(by.items(), reverse=True))
             + '.', '']
     return out
@@ -437,21 +468,45 @@ def b3_lines(B3):
 
 B4_CAP, B4_MAX = 400_000, 2e-9                                        # B4 (referee round 70): the solve's iterations; the blocks below
 B4_PREC = (('double', np.float64), ('long double', np.longdouble))    # B4: the parameters' and the residual's arithmetic
+B4_ANCHOR, B4_FLAT = 2000, 1e-10                                       # B4 (referee round 77): the anchored double's re-anchoring period
+                                                                       # (accepted steps) and its stop: ½‖r‖² over a period falls by less
+B4_MARKS = (100_000, 200_000, 300_000)                                 # B4 (round 77): the anchored double's end after these iterations
 
 
-def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20):
+def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20, anchored=False, anchor_every=B4_ANCHOR, marks=None):
     """B4 (referee round 70): Levenberg–Marquardt on the joint fit in (w, c) on X_B — the parameters and the residual f − Φ(c)w in dtype
     (np.float64 or np.longdouble), the Jacobian and the damped step in double: the least-squares problem [J; μ^{1/2}D]d ≈ [−r; 0], D the
     columns' largest norms so far (its condition is the Jacobian's, not its square's). A step is accepted when the objective ½‖r‖²
     computed in dtype decreases; Nielsen's damping from μ = mu0, near Gauss–Newton — the slow modes' curvature is ~10⁻¹⁷ of the largest,
     and a larger damping shrinks their steps' predicted decrease below the objective's rounding. Stops after max_iter iterations ('cap')
-    or once μ exceeds 10¹⁰⁰ without a decrease ('stall': no step the arithmetic resolves decreases the objective). Returns (the
-    parameters (w, c) in dtype, iterations, accepted steps, stop)."""
+    or once μ exceeds 10¹⁰⁰ without a decrease ('stall': no step the solve computes decreases the objective as its residual evaluates
+    it). Referee round 77, anchored (double only): the residual about an anchor (w₀, c₀), r = r₀ − Σ_k φ₀_k[(w_k − w₀_k) +
+    w_k·expm1(Δ_k)], Δ_k = (c_k − c₀_k)(2x − c_k − c₀_k)/(2σ²), r₀ = f − Φ(c₀)w₀ by direct subtraction — its rounding fixed, the change
+    computed to its own relative accuracy —, re-anchored every anchor_every accepted steps and at a stall; it stops at a stall right
+    after an anchor, or ('flat') once a period's accepted steps lower the objective, as that anchor computes it, by less than B4_FLAT of
+    itself. marks: a dict whose keys are iteration counts, given the parameters after that many iterations. Returns (the parameters
+    (w, c) in dtype, iterations, accepted steps, stop)."""
     x, fd = X_B.astype(dtype), np.asarray(f, float).astype(dtype)
     n = len(w)
     p = np.r_[np.asarray(w, float), np.asarray(c, float)].astype(dtype)
     s2 = 2 * dtype(SIG) ** 2
-    resid = lambda p_: fd - np.exp(-(x[:, None] - p_[None, n:]) ** 2 / s2) @ p_[:n]
+    anc = {}
+    if anchored:
+        if dtype is not np.float64:
+            raise ValueError("lm_fit: the anchored residual is double's")
+
+        def set_anchor(p_):
+            anc['w'], anc['c'] = p_[:n].copy(), p_[n:].copy()
+            anc['P'] = np.exp(-(X_B[:, None] - anc['c'][None, :]) ** 2 / (2 * SIG ** 2))
+            anc['r'] = np.asarray(f, float) - anc['P'] @ anc['w']
+            anc['acc'], anc['F'] = 0, float(anc['r'] @ anc['r'] / 2)
+
+        def resid(p_):
+            dl = (p_[None, n:] - anc['c'][None, :]) * (2 * X_B[:, None] - p_[None, n:] - anc['c'][None, :]) / (2 * SIG ** 2)
+            return anc['r'] - (anc['P'] * ((p_[:n] - anc['w'])[None, :] + p_[None, :n] * np.expm1(dl))).sum(axis=1)
+        set_anchor(p)
+    else:
+        resid = lambda p_: fd - np.exp(-(x[:, None] - p_[None, n:]) ** 2 / s2) @ p_[:n]
 
     def jac(p_):
         q = p_.astype(float)
@@ -463,6 +518,8 @@ def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20):
     D = np.linalg.norm(J, axis=0)
     mu, nu, it, acc = mu0, 2.0, 0, 0
     while it < max_iter:
+        if marks is not None and it in marks:
+            marks[it] = p.copy()
         it += 1
         r64 = r.astype(float)
         d = np.linalg.lstsq(np.r_[J, np.sqrt(mu) * np.diag(D)], np.r_[-r64, np.zeros(2 * n)], rcond=None)[0]
@@ -477,9 +534,22 @@ def lm_fit(f, w, c, dtype, max_iter=B4_CAP, mu0=1e-20):
             mu, nu = max(mu * max(1 / 3, 1 - (2 * rho - 1) ** 3), 1e-40), 2.0
             J = jac(p)
             D = np.maximum(D, np.linalg.norm(J, axis=0))
+            if anchored:
+                anc['acc'] += 1
+                if anc['acc'] >= anchor_every:                          # re-anchor: r₀ afresh at the current point
+                    if anc['F'] - F < B4_FLAT * anc['F']:
+                        return p, it, acc, 'flat'
+                    set_anchor(p)
+                    r = resid(p)
+                    F = r @ r / 2
         else:
             mu, nu = mu * nu, 2 * nu
             if mu > 1e100:
+                if anchored and anc['acc'] > 0:                         # a stall since the last anchor: re-anchor and go on
+                    set_anchor(p)
+                    r = resid(p)
+                    F, mu, nu = r @ r / 2, mu0, 2.0
+                    continue
                 return p, it, acc, 'stall'
     return p, it, acc, 'cap'
 
@@ -494,7 +564,9 @@ def lm_rms(f, p, n):
 def b4_job(args):
     """B4 (referee round 70): from one start — the path's block ('block') or the stored optimum's centres with least-squares amplitudes
     ('optimum') — `lm_fit` with the residual in double and in long double (B4_PREC): the start's error and each end's over the stored
-    optimum's (the rms in long double), its iterations, accepted steps and stop, and long double's ε (an error if not extended)."""
+    optimum's (the rms in long double), its iterations, accepted steps and stop, and long double's ε (an error if not extended); referee
+    round 77: the same solve in double with the residual about an anchor ('anchored'), and the polish's own TRF with B3_BIG evaluations
+    and no gradient test ('trf': its status and evaluations); the anchored end's error also after B4_MARKS iterations ('marks')."""
     r_, var, k, start, w0, c0, e_opt = args
     warnings.filterwarnings('ignore')
     t0 = time.time()
@@ -507,9 +579,18 @@ def b4_job(args):
     for key, dt in B4_PREC:
         p, it, acc, stop = lm_fit(f, w0, c0, dt)
         out[key] = dict(ratio=lm_rms(f, p, k) / rf / e_opt, it=it, acc=acc, stop=stop)
+    marks = dict.fromkeys(B4_MARKS)
+    p, it, acc, stop = lm_fit(f, w0, c0, np.float64, anchored=True, marks=marks)  # referee round 77: double, the residual about an anchor
+    out['anchored'] = dict(ratio=lm_rms(f, p, k) / rf / e_opt, it=it, acc=acc, stop=stop,
+                           marks=[[m, lm_rms(f, q, k) / rf / e_opt] for m, q in marks.items() if q is not None])
+    K = RT.Bumps(X_B, SIG)                                              # the polish's own solve from the same start: TRF, B3's budget,
+    wp, cp, info = RT.polish_block(K, f, np.asarray(w0, float), np.asarray(c0, float), np.ones(k), max_nfev=B3_BIG, info=True,
+                                   gtol=None)                          # no gradient test
+    out['trf'] = dict(ratio=lm_rms(f, np.r_[wp, cp], k) / rf / e_opt, status=int(info['status']), nfev=int(info['nfev']))
     out['secs'] = time.time() - t0
     print(f"  B4 tau/sigma {r_} ({var}) K {k} from the {start}: {out['e_start']:.6g} → " + ', '.join(
-        f"{key} {out[key]['ratio']:.6f} ({out[key]['it']}, {out[key]['stop']})" for key, _ in B4_PREC) + f" [{out['secs']:.0f}s]",
+        f"{key} {out[key]['ratio']:.6f} ({out[key]['it']}, {out[key]['stop']})" for key in [k for k, _ in B4_PREC] + ['anchored'])
+          + f", TRF {out['trf']['ratio']:.6f} ({out['trf']['status']}/{out['trf']['nfev']}) [{out['secs']:.0f}s]",
           flush=True)
     return out
 
@@ -540,33 +621,62 @@ def part_B4(B, B3):
 
 
 def b4_lines(B4):
-    """B4's table and summary (referee round 70): the same solve in double and in long double from the blocks near the floor."""
+    """B4's table and summary (referee rounds 70, 77): the same solve in double and in long double from the blocks near the floor, in
+    double about an anchor, and the polish's own TRF; every end against the long-double end from the path's block."""
     if B4 is None or len(B4) == 0:                                    # raw-loaded: an object array
         return []
     cell = lambda x: f"{x['ratio']:.6f}, {x['it']}/{x['acc']}, {x['stop']}"
-    out = ['', "### B4. The floor: the same solve with the residual in double and in long double (referee round 70)", '',
+    tcell = lambda x: f"{x['ratio']:.6f}, {x['status']}/{x['nfev']}"
+    has = 'anchored' in B4[0]
+    out = ['', "### B4. The floor: the same solve with the residual in double, in long double" + (" and about an anchor (referee rounds 70, 77)"
+                                                                                                  if has else " (referee round 70)"), '',
            f"B3's blocks whose optimum is below {B4_MAX:g}, from the path's block and from the stored optimum (its centres with "
            "least-squares amplitudes): Levenberg–Marquardt on the joint fit in (w, c) (`lm_fit`: the Jacobian and the step in double; the "
-           f"parameters and the residual in double or in long double (its ε {B4[0]['eps']:.3g}), a step accepted when the objective so "
-           "computed decreases) — the "
-           "start's error and each end's over the optimum's (the rms in long double), its iterations/accepted steps and its stop (stall: no "
-           f"step the arithmetic resolves decreases the objective; cap: {B4_CAP:g} iterations); † the optimum below {E_FLOOR:g}:", '',
-           "| τ/σ | variant | K | optimum | start | its error | " + ' | '.join(k for k, _ in B4_PREC) + ' |',
-           '|---|---|---|---|---|---|' + '---|' * len(B4_PREC)]
+           f"parameters and the residual f − Φ(c)w, by direct subtraction, in double or in long double (its ε {B4[0]['eps']:.3g})"
+           + (f", or in double about an anchor (w₀, c₀) — r = r₀ − Σ_kφ₀_k[(w_k − w₀_k) + w_k·expm1(Δ_k)], Δ_k = (c_k − c₀_k)(2x − c_k − c₀_k)/"
+              f"(2σ²), re-anchored every {B4_ANCHOR:g} accepted steps and at a stall —" if has else '')
+           + "; a step accepted when the objective so computed decreases)" + (f" and the polish's own TRF (`polish_block`, {B3_BIG:g} "
+           "evaluations, no gradient test)" if has else '') + ": the start's error and each end's over the optimum's (the rms in long double), "
+           "its iterations/accepted steps and its stop (stall: no step the solve computes decreases the objective as its residual "
+           f"evaluates it; cap: {B4_CAP:g} iterations" + (f"; flat: an anchor's {B4_ANCHOR:g} accepted steps lower it by less than "
+           f"{B4_FLAT:g} of itself" if has else '') + ")" + ("; TRF's cell its status/evaluations" if has else '') + "; † the optimum "
+           f"below {E_FLOOR:g}:", '',
+           "| τ/σ | variant | K | optimum | start | its error | " + ' | '.join(k for k, _ in B4_PREC)
+           + (' | double, anchored | TRF |' if has else ' |'), '|---|---|---|---|---|---|' + '---|' * (len(B4_PREC) + 2 * has)]
     for q in B4:
         out.append(f"| {q['r']:g} | {q['var']} | {q['k']} | {q['e_opt']:.2e}{'†' if q['e_opt'] < E_FLOOR else ''} | {q['start']} | "
-                   f"{q['e_start']:.6g} | " + ' | '.join(cell(q[k]) for k, _ in B4_PREC) + ' |')
+                   f"{q['e_start']:.6g} | " + ' | '.join(cell(q[k]) for k, _ in B4_PREC)
+                   + (f" | {cell(q['anchored'])} | {tcell(q['trf'])} |" if has else ' |'))
     key = lambda q: (q['r'], q['k'])
     blk = sorted((q for q in B4 if q['start'] == 'block'), key=lambda q: -q['e_opt'])
     opt = {key(q): q for q in B4 if q['start'] == 'optimum'}
+    ld = {key(q): q['long double']['ratio'] for q in blk}
     lab = lambda q: f"{q['e_opt']:.3g} (τ/σ = {q['r']:g}, K = {q['k']})"
     both = [q for q in blk if key(q) in opt]
-    out += ['', "From the path's blocks, the end in double over the end in long double, minus 1, by the optimum: " + '; '.join(
-        f"{lab(q)}: {q['double']['ratio'] / q['long double']['ratio'] - 1:+.1e}" for q in blk) + '.'
+    over = lambda q, k: q[k]['ratio'] / ld[key(q)] - 1
+    out += ['', "Each end over the long-double end from the path's block, minus 1, by the optimum — from the path's blocks, double: " + '; '.join(
+        f"{lab(q)}: {over(q, 'double'):+.1e}" for q in blk) + (" — from the stored optima, double: " + '; '.join(
+            f"{lab(q)}: {over(opt[key(q)], 'double'):+.1e}" for q in both) if both else '') + '.'
             + (" In long double the ends from the block and from the stored optimum agree within "
                f"{max(abs(q['long double']['ratio'] / opt[key(q)]['long double']['ratio'] - 1) for q in both):.1e}; the stored optimum over "
-               "that end, minus 1: " + '; '.join(f"{lab(q)}: {1 / opt[key(q)]['long double']['ratio'] - 1:+.1e}" for q in both) + '.'
-               if both else ''), '']
+               "that end, minus 1: " + '; '.join(f"{lab(q)}: {1 / ld[key(q)] - 1:+.1e}" for q in both) + '.' if both else '')]
+    if has:
+        an = [over(q, 'anchored') for q in B4 if key(q) in ld]
+        cap = [q for q in B4 if key(q) in ld and q['anchored']['stop'] == 'cap']
+        late = lambda q: [x for m, x in q['anchored']['marks'] if m >= B4_MARKS[1]] + [q['anchored']['ratio']]
+        spread = lambda q: (max(late(q)) - min(late(q))) / ld[key(q)]
+        out += ['', f"The anchored double, from every start, over the long-double end from the path's block, minus 1: {min(an):+.1e} … "
+                f"{max(an):+.1e} (its stops: " + ', '.join(f"{k} {sum(q['anchored']['stop'] == k for q in B4)}" for k in ('flat', 'stall', 'cap')
+                                                            if any(q['anchored']['stop'] == k for q in B4)) + ")"
+                + ("; at the cap, the same after " + ', '.join(f"{m:g}" for m, _ in cap[0]['anchored']['marks']) + f" and {B4_CAP:g} "
+                   "iterations: " + '; '.join(f"{lab(q)} from the {q['start']}: " + ', '.join(
+                       f"{x / ld[key(q)] - 1:+.2e}" for _, x in q['anchored']['marks']) + f", {over(q, 'anchored'):+.2e}" for q in cap)
+                   + f" — over its last {B4_CAP - B4_MARKS[1]:g} iterations each end moves within " + f"{max(spread(q) for q in cap):.1e}"
+                   if cap else '') + '.', '',
+                "The polish's TRF from the path's blocks, over the long-double end, minus 1: " + '; '.join(
+                    f"{lab(q)}: {over(q, 'trf'):+.1e} ({q['trf']['status']}/{q['trf']['nfev']})" for q in blk)
+                + ("; from the stored optima: " + '; '.join(f"{lab(q)}: {over(opt[key(q)], 'trf'):+.1e}" for q in both) if both else '') + '.']
+    out.append('')
     return out
 
 def gh_defect_v(n, K, v):
@@ -634,8 +744,13 @@ def a5_lines(A5):
         f_ = x['frames']
         e = x['e_mframe']
         out.append(f"| {x['r']:g} | " + ' | '.join(f"{f_[k]['v']:.6f}, {f_[k]['vp']:.6f}" for k in ('t', 'q', 'λ'))
-                   + f" | {', '.join(f'{e[i - 1] / e[i]:.4g}' for i in range(len(e) - 3, len(e)))} at K = {x['Ks'][-3]}–{x['Ks'][-1]} "
+                   + f" | {', '.join(f'{e[i - 1] / e[i]:.4f}' for i in range(len(e) - 3, len(e)))} at K = {x['Ks'][-3]}–{x['Ks'][-1]} "
                    f"({1 / x['t']:.4g}, {1 / x['q']:.4g}) |")
+    on = [(x['r'], 2 / (x['q'] * (2 - x['frames']['q']['vp'])), x['Ks'][-1]) for x in A5['rows']]
+    out += ['', "The Mercer frame's rule in its own frame: its first tail ratio grows like (v′ − 2)K², so its second term exceeds its first "
+            "(the ratio of the two ≈ q²(2 − v′)²K²/4) from K ≈ 2/(q(2 − v′)): " + '; '.join(
+                f"{k:.1f} at τ/σ = {r_:g} (the last K tested {kl})" for r_, k, kl in on) + " — the ratio per kernel shows its rate only "
+            "beyond that K (referee round 77)."]
     ok = [c_ for c_ in A5['check'] if c_['ok']]
     out += ['', f"The first tail ratio D_{{2K+2}}/D_{{2K}} = −v′K(K + 2) + (v′ − 1)(K + 1)(2K + 1) (`gh_defect_v`, exact) at "
                 f"v′ = {', '.join(sorted({c_['v'] for c_ in A5['check']}, key=lambda s: Fraction(s)))}, K = 1 … "
@@ -692,12 +807,17 @@ def b2_line(B2):
             f"counted ({sum(h for h, u in zip(hit, up) if not u)} reached). From the first non-optimal block of each path: "
             f"{sum(hit[i] for i in fu)} of {len(fu)}" + (f" (the others {', '.join(f'{v:.4g}' for v in sorted(fw))} times above it)" if fw else '')
             + (f"; on {nb} {'path' if nb == 1 else 'paths'} the first non-optimal block's optimum is below {E_FLOOR:g}" if nb else '') + "."
-            + (f" There the Jacobian's condition number is {sp_('cond_joint_x', '.2g')} for the joint fit in (w, c) in the polish's own "
-               f"units ({sp_('cond_joint', '.2g')} with the centres in units of σ) and {sp_('cond_vp_x', '.2g')} ({sp_('cond_vp', '.2g')}) for "
-               f"variable projection's in c alone (analytic); the ratio of their smallest singular values, variable projection's over the "
-               f"joint fit's, depends on the units: {sp_('smin_ratio', '.3g')} (median {md_('smin_ratio')}) with the centres in units of σ, "
-               f"{sp_('smin_ratio_x', '.3g')} (median {md_('smin_ratio_x')}) in the polish's, {sp_('smin_ratio_eq', '.3g')} (median "
-               f"{md_('smin_ratio_eq')}) with every column scaled to unit norm." if fu and 'smin_ratio_eq' in B2[fu[0]] else ''),
+            + (f" There the Jacobian's condition number is {sp_('cond_joint_x', '.2g')} for the joint fit in (w, c) with the centres in x, "
+               f"the polish's parameters ({sp_('cond_joint', '.2g')} with the centres in units of σ) and {sp_('cond_vp_x', '.2g')} for variable projection's "
+               f"in c alone (analytic; the same in either unit of the centres); the ratio of their smallest singular values, variable "
+               f"projection's over the joint fit's, is at least 1 in any common scaling of the centres for Kaufman's form of the former, "
+               f"the centre columns projected off the amplitudes' (referee round 77: the joint fit's smallest singular value is at most "
+               f"theirs — a Schur complement), from which the analytic Golub–Pereyra form used here differs by a term proportional to the "
+               f"residual; its size depends on the units: {sp_('smin_ratio', '.3g')} (median {md_('smin_ratio')}) with the "
+               f"centres in units of σ, {sp_('smin_ratio_x', '.3g')} (median {md_('smin_ratio_x')}) in x, "
+               f"{sp_('smin_ratio_eq', '.3g')} (median {md_('smin_ratio_eq')}) with every column scaled to unit norm, which scales the two "
+               f"problems' centre columns differently; TRF itself works in Coleman–Li's variables, the bounded amplitudes scaled by "
+               f"v^{{1/2}}." if fu and 'smin_ratio_eq' in B2[fu[0]] else ''),
             '']
 
 
@@ -1050,7 +1170,7 @@ def report(A=None, B=None, C=None, D=None, B2=None, A5=None, B3=None, B4=None):
                   f"non-optimal blocks with an optimum above 10⁻⁷: {sum(o['e_opt'] > 1e-7 for o in no)}; the non-optimal blocks' errors "
                   f"{min(o['e'] for o in no):.2e} … {max(o['e'] for o in no):.2e}." if no else "none."), '']
         L_ += b2_line(B2)
-        L_ += b3_lines(B3)
+        L_ += b3_lines(B3, B4, B)
         L_ += b4_lines(B4)
         L_ += entry_lines(B)
         for b in [x for x in B if x['var'] == VARIANTS_B[0][0]]:
